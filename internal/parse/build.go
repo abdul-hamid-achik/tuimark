@@ -404,7 +404,17 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 	if parent != nil {
 		ptag = parent.Tag
 	}
+	if b.v2 && ptag == "tabs" && tag != "tab" {
+		// SPEC §6.10.1, V016: a tabs holds tab elements only.
+		b.errN(n, "V016", "<tabs> children must be <tab> elements, got <%s>", tag)
+		return
+	}
 	switch tag {
+	case "tab":
+		// SPEC §6.10.1, V016 (only a version="2" document gets here).
+		if ptag != "tabs" {
+			b.errN(n, "V016", "<tab> must be a direct child of <tabs>")
+		}
 	case "tui":
 		if parent != nil {
 			b.errN(n, "V001", "<tui> is only valid as the document root")
@@ -954,6 +964,12 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				b.diag(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "a table's <item> is the row template: it takes class and class:NAME only, no children (found <%s>); the cells come from the <column> elements", c.Name)
 				continue
 			}
+			if b.v2 && (n.Tag == "sparkline" || n.Tag == "hints") {
+				// SPEC §6.11, §6.12: no children (a hints' items come
+				// from the keymap).
+				b.diag(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<%s> takes no children (found <%s>)", n.Tag, c.Name)
+				continue
+			}
 			if leafKinds[n.Tag] {
 				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<%s> cannot contain elements (found <%s>)", n.Tag, c.Name)
 				continue
@@ -1005,6 +1021,10 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 		switch {
 		case b.v2 && n.Tag == "table":
 			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <table>; a column's cell template is the body of its <column>")
+		case b.v2 && n.Tag == "tabs":
+			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <tabs>; put it inside a <tab>, and name the tab with label=")
+		case b.v2 && (n.Tag == "sparkline" || n.Tag == "hints"):
+			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "<%s> takes no text", n.Tag)
 		case b.tableItem(n):
 			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "a table's <item> is the row template and takes no text; the cells come from the <column> elements")
 		default:
@@ -1123,15 +1143,23 @@ func (b *builder) checkNode(n *ir.Node) {
 		// V001/V002, and any id there V004: SPEC §6.8 item 8.)
 		focusable = false
 	}
-	if focusable && n.ID == "" && !(b.v2 && n.Tag == "table") {
+	if focusable && n.ID == "" && !(b.v2 && (n.Tag == "table" || n.Tag == "tabs")) {
 		// (A table needs an id whether or not it is focusable: checkTable.)
 		b.errN(n, "V012", "<%s> is focusable and needs an id", n.Tag)
 	}
 	if b.v2 {
 		b.checkAliases(n)
 		b.checkMultiSelect(n)
-		if n.Tag == "table" {
+		switch n.Tag {
+		case "table":
 			b.checkTable(n)
+		case "tabs", "tab":
+			b.checkTabs(n)
+		case "sparkline":
+			// SPEC §6.11: bind is required.
+			if _, ok := n.Attr("bind"); !ok {
+				b.errN(n, "V003", "<sparkline> needs bind=\"path\": the numeric array it draws")
+			}
 		}
 	}
 	if n.Tag == "list" {
@@ -1190,6 +1218,69 @@ func (b *builder) checkTable(n *ir.Node) {
 	if _, ok := n.Attr("key"); n.Each != "" && !ok && !nested {
 		b.warnN(n, "B006", "<table each=%q> has no key=; the cursor follows the row index", eachAttr)
 	}
+}
+
+// checkTabs applies the structure rules of SPEC §6.10.1 to a tabs or a
+// tab: both need an id (V012: the tab ids are the bound values, the
+// switch-to targets, and the label keys; the tabs id keeps the remembered
+// tab); a tabs needs at least one tab (V017); a tab needs a non-empty
+// label (V003). Inside a list <item> or a container each template they
+// are already V001 as a whole, so they get no V012 (an id there would be
+// V004).
+func (b *builder) checkTabs(n *ir.Node) {
+	nested := listItem(n.Parent) != nil || b.eachContainer(n) != nil
+	if n.ID == "" && !nested {
+		if n.Tag == "tabs" {
+			b.errN(n, "V012", "<tabs> needs an id: it keeps the remembered tab, and move-* and to=\"#id\" name it")
+		} else {
+			b.errN(n, "V012", "<tab> needs an id: it is the value of the tabs' bind, the target of switch-to, and its label's key")
+		}
+	}
+	if n.Tag == "tabs" {
+		tabs := 0
+		for _, c := range n.Children {
+			if c.Tag == "tab" {
+				tabs++
+			}
+		}
+		if tabs == 0 {
+			b.errN(n, "V017", "<tabs> needs at least one <tab>")
+		}
+		return
+	}
+	if l, ok := n.Attr("label"); !ok || l == "" {
+		b.errN(n, "V003", "<tab> needs a non-empty label=: it is the text of its label in the strip")
+	}
+}
+
+// checkTabFocus reports B005 for a tab focus="#id" that names no node, a
+// node inside a list <item>, or a node outside that tab (SPEC §6.10.1).
+func (b *builder) checkTabFocus(n *ir.Node) {
+	if n.Tag == "tab" {
+		if f, ok := n.Attr("focus"); ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
+			id := f[1:]
+			if why := b.idTarget(id); why == idMissing {
+				b.errN(n, "B005", "focus=%q refers to an id that does not exist", f)
+			} else if why != "" {
+				b.errN(n, "B005", "focus=%q %s", f, why)
+			} else if !inside(b.doc.IDs[id], n) {
+				b.errN(n, "B005", "focus=%q names a node outside this tab; a tab's focus= names a node inside it", f)
+			}
+		}
+	}
+	for _, c := range n.Children {
+		b.checkTabFocus(c)
+	}
+}
+
+// inside reports whether n is anc or one of its descendants.
+func inside(n, anc *ir.Node) bool {
+	for p := n; p != nil; p = p.Parent {
+		if p == anc {
+			return true
+		}
+	}
+	return false
 }
 
 // checkAliases reports V011 for an each alias equal to the alias of an
@@ -1449,6 +1540,9 @@ func (b *builder) checkKeymap() {
 			} else if why != "" {
 				b.errN(s, "B005", "focus=%q %s", f, why)
 			}
+		}
+		if b.v2 {
+			b.checkTabFocus(s)
 		}
 	}
 }

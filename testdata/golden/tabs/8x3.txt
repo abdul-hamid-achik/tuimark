@@ -1,0 +1,12 @@
+=== grid 8x3 ===
+▸‹ 7 pr…
+processe
+        
+=== nodes ===
+main       screen  8x3 @(0,0)
+nav        tabs    8x2 @(0,0)
+-          text    8x1 @(0,0) selected
+processes  tab     8x1 @(0,1)
+-          text    8x1 @(0,1)
+=== errors ===
+ok

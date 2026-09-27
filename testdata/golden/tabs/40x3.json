@@ -1,0 +1,83 @@
+{
+  "cols": 40,
+  "rows": 3,
+  "ok": true,
+  "focus": null,
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 3
+    },
+    {
+      "id": "nav",
+      "tag": "tabs",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 2
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 11,
+      "h": 1,
+      "text": "1 overview",
+      "key": "overview",
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 13,
+      "y": 0,
+      "w": 12,
+      "h": 1,
+      "text": "7 processes",
+      "key": "processes",
+      "selected": true,
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 27,
+      "y": 0,
+      "w": 11,
+      "h": 1,
+      "text": "8 settings",
+      "key": "settings",
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "id": "processes",
+      "tag": "tab",
+      "x": 0,
+      "y": 1,
+      "w": 40,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 40,
+      "h": 1,
+      "text": "processes panel"
+    }
+  ],
+  "grid": [
+    " 1 overview  ▸7 processes   8 settings  ",
+    "processes panel                         ",
+    "                                        "
+  ]
+}

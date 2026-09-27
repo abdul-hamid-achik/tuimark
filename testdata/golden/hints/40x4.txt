@@ -1,0 +1,28 @@
+=== grid 40x4 ===
+filter                                  
+alpha                                   
+beta                                    
+q quit  / filter  space mark  ^A all    
+=== nodes ===
+main    screen  40x4 @(0,0)
+filter  input   40x1 @(0,0)
+items   list    40x2 @(0,1) focus
+-       item    40x1 @(0,1) selected
+-       text    40x1 @(0,1)
+-       item    40x1 @(0,2)
+-       text    40x1 @(0,2)
+keys    hints   40x1 @(0,3)
+-       row     6x1 @(0,3)
+-       text    1x1 @(0,3)
+-       text    4x1 @(2,3)
+-       row     8x1 @(8,3)
+-       text    1x1 @(8,3)
+-       text    6x1 @(10,3)
+-       row     10x1 @(18,3)
+-       text    5x1 @(18,3)
+-       text    4x1 @(24,3)
+-       row     6x1 @(30,3)
+-       text    2x1 @(30,3)
+-       text    3x1 @(33,3)
+=== errors ===
+ok

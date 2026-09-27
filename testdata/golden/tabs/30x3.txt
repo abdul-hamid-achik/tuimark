@@ -1,0 +1,14 @@
+=== grid 30x3 ===
+ 1 ovr  ▸7 proc   8 cfg       
+processes panel               
+                              
+=== nodes ===
+main       screen  30x3 @(0,0)
+nav        tabs    30x2 @(0,0)
+-          text    6x1 @(0,0)
+-          text    7x1 @(8,0) selected
+-          text    6x1 @(17,0)
+processes  tab     30x1 @(0,1)
+-          text    30x1 @(0,1)
+=== errors ===
+ok

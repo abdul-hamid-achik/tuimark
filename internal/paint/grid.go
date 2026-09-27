@@ -544,9 +544,13 @@ var eighths = [8]rune{' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉'}
 // mark paints the mark of a checked row in its mark channel (SPEC §6.14):
 // the first width(mark) columns of the channel, on the first content row,
 // in the row's style (so a reverse selection covers it). The channel's
-// last column stays blank.
+// last column stays blank. A tab label's mark slot (SPEC §6.10.4) is
+// painted the same way on the active tab's label only.
 func (p *painter) mark(b *layout.Box, st cellStyle) {
-	if !b.Checked || b.Chan <= 0 || b.Mark == "" || b.Content.H <= 0 {
+	if b.Chan <= 0 || b.Mark == "" || b.Content.H <= 0 {
+		return
+	}
+	if !b.Checked && !(b.Role == layout.RoleTabLabel && b.Selected) {
 		return
 	}
 	ch := layout.Rect{X: b.Content.X - b.Chan, Y: b.Content.Y, W: b.Chan, H: 1}
@@ -591,6 +595,8 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		p.text(clip, x, c.Y, label, st)
 	case "input":
 		p.input(b, clip, st)
+	case "sparkline":
+		p.sparkline(b, clip, st)
 	case "progress":
 		if c.W <= 0 || c.H <= 0 {
 			return
@@ -634,6 +640,69 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		} else {
 			for x := v.X; x < v.X+v.W; x++ {
 				p.set(b.Clip, x, o.Y, '─', st)
+			}
+		}
+	}
+}
+
+// sparkRamp holds the partial bars of a sparkline, level 1 (▁) to 7 (▇)
+// of a row (SPEC §6.11); index 0 is unused.
+var sparkRamp = [8]rune{' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇'}
+
+// sparkline paints the last W values of a sparkline's series as bars,
+// right-aligned in its W × H content box (SPEC §6.11): column j shows
+// element len − W + j when that index is ≥ 0. lo is min= or the smallest
+// shown number, hi max= or the largest; nothing is painted when no shown
+// value is a number. A number's level is 4H when hi ≤ lo, else
+// floor((vc − lo)·8H/(hi − lo) + 0.5) in double precision, in this order,
+// with vc the value clamped to [lo, hi], clamped to [0, 8H]. Row r,
+// counted from the bottom, paints █ when the level is at least 8(r + 1),
+// nothing when it is at most 8r, else ramp glyph level − 8r. Gaps paint
+// nothing; painted cells take the node's style.
+func (p *painter) sparkline(b *layout.Box, clip layout.Rect, st cellStyle) {
+	c := b.Content
+	n, w, h := len(b.Series), c.W, c.H
+	if n == 0 || w <= 0 || h <= 0 {
+		return
+	}
+	lo, hi, shown := math.Inf(1), math.Inf(-1), false
+	for j := max(0, w-n); j < w; j++ {
+		v := b.Series[n-w+j]
+		if math.IsNaN(v) {
+			continue
+		}
+		shown = true
+		lo, hi = math.Min(lo, v), math.Max(hi, v)
+	}
+	if !shown {
+		return
+	}
+	if b.HasLo {
+		lo = b.Lo
+	}
+	if b.HasHi {
+		hi = b.Hi
+	}
+	top := 8 * h
+	vis := p.visible(c, clip)
+	for x := vis.X; x < vis.X+vis.W; x++ {
+		i := n - w + (x - c.X)
+		if i < 0 || math.IsNaN(b.Series[i]) {
+			continue
+		}
+		level := 4 * h
+		if hi > lo {
+			vc := math.Min(math.Max(b.Series[i], lo), hi)
+			f := math.Floor((vc-lo)*float64(top)/(hi-lo) + 0.5)
+			level = int(math.Min(math.Max(f, 0), float64(top)))
+		}
+		for y := vis.Y; y < vis.Y+vis.H; y++ {
+			r := c.Y + h - 1 - y // counted from the bottom row
+			switch {
+			case level >= 8*(r+1):
+				p.set(clip, x, y, '█', st)
+			case level > 8*r:
+				p.set(clip, x, y, sparkRamp[level-8*r], st)
 			}
 		}
 	}

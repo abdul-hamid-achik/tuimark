@@ -36,5 +36,38 @@
     "sizes": ["30x5"],
     "json": ["30x5"],
     "frozen": false
+  },
+  {
+    "name": "tabs",
+    "file": "specs/fixtures/tabs.tui",
+    "data": "specs/fixtures/tabs.json",
+    "sizes": ["8x3", "12x3", "20x3", "30x3", "40x3"],
+    "json": ["40x3"],
+    "frozen": false
+  },
+  {
+    "name": "hints",
+    "file": "specs/fixtures/hints.tui",
+    "data": "specs/fixtures/hints.json",
+    "sizes": ["20x4", "40x4"],
+    "json": ["40x4"],
+    "frozen": false
+  },
+  {
+    "name": "hints-filter",
+    "file": "specs/fixtures/hints.tui",
+    "data": "specs/fixtures/hints.json",
+    "input": "focus:#filter",
+    "sizes": ["40x4"],
+    "json": ["40x4"],
+    "frozen": false
+  },
+  {
+    "name": "grid",
+    "file": "specs/fixtures/grid.tui",
+    "data": "specs/fixtures/grid.json",
+    "sizes": ["20x5", "30x5"],
+    "json": ["20x5", "30x5"],
+    "frozen": false
   }
 ]

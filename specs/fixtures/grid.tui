@@ -1,0 +1,13 @@
+<tui version="2">
+  <style>
+    #g { layout: grid; grid-columns: 3; grid-min-width: 8; gap: 1; }
+  </style>
+  <screen id="main">
+    <box id="g" each="xs as x" key="x.id">
+      <col>
+        <text>{x.t}</text>
+        <text if="x.more">{x.more}</text>
+      </col>
+    </box>
+  </screen>
+</tui>

@@ -1,0 +1,16 @@
+<tui version="2">
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="/" action="focus" to="#filter" label="filter"/>
+    <bind keys="esc" action="filter_cancel" when="#filter" label="cancel"/>
+    <bind keys="space" action="check-toggle" when="#items:focus" label="mark"/>
+    <bind keys="ctrl+a" action="check-all" keycap="^A" label="all"/>
+  </keymap>
+  <screen id="main" focus="#items">
+    <input id="filter" bind="query" placeholder="filter"/>
+    <list id="items" each="items as it" key="it.id" checked="marked">
+      <item><text>{it.name}</text></item>
+    </list>
+    <hints id="keys"/>
+  </screen>
+</tui>

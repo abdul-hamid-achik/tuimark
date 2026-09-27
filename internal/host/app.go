@@ -91,6 +91,11 @@ type App struct {
 	modalStack []modalEntry // modals that took the focus trap, bottom first
 	pending    []Event
 	focusReq   *focusRequest
+	// tabMem is the tab the runtime remembers per tabs id, for a tabs
+	// without bind (SPEC §6.10.2); tabPrev is the active tab per tabs id in
+	// the last frame, for the activation focus rule (§6.10.3).
+	tabMem  map[string]string
+	tabPrev map[string]string
 	// dirty is set by a built-in action of SPEC §8.4 that changed what the
 	// live frame shows (TakeDirty).
 	dirty bool
@@ -143,6 +148,7 @@ func newApp(src []byte, path, dir string) *App {
 		scrolls: map[string][2]int{}, wake: make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
 		segGen:     map[string]uint64{}, tables: map[*ir.Node]*tableCache{},
+		tabMem: map[string]string{}, tabPrev: map[string]string{},
 	}
 	if path == "" {
 		a.file = ""
@@ -504,6 +510,8 @@ type savedState struct {
 	scrolls    map[string][2]int
 	lists      map[string]*listState
 	inputs     map[string]*inputState
+	tabMem     map[string]string
+	tabPrev    map[string]string
 }
 
 func (a *App) saveState() savedState {
@@ -532,11 +540,20 @@ func (a *App) saveState() savedState {
 		r := *a.focusReq
 		req = &r
 	}
-	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, ls, in}
+	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, ls, in, copyStrings(a.tabMem), copyStrings(a.tabPrev)}
 }
 
 func (a *App) restoreState(s savedState) {
 	a.screen, a.focus, a.focusInit, a.focusReq = s.screen, s.focus, s.focusInit, s.focusReq
 	a.openModals, a.modalStack, a.pending, a.last = s.openModals, s.modalStack, s.pending, s.last
 	a.scrolls, a.lists, a.inputs = s.scrolls, s.lists, s.inputs
+	a.tabMem, a.tabPrev = s.tabMem, s.tabPrev
+}
+
+func copyStrings(m map[string]string) map[string]string {
+	out := make(map[string]string, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
 }

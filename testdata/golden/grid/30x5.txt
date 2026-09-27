@@ -1,0 +1,20 @@
+=== grid 30x5 ===
+alpha     beta      gamma     
+                              
+delta                         
++1                            
+                              
+=== nodes ===
+main  screen  30x5 @(0,0)
+g     box     30x4 @(0,0)
+-     col     9x1 @(0,0)
+-     text    9x1 @(0,0)
+-     col     9x1 @(10,0)
+-     text    9x1 @(10,0)
+-     col     10x1 @(20,0)
+-     text    10x1 @(20,0)
+-     col     9x2 @(0,2)
+-     text    9x1 @(0,2)
+-     text    9x1 @(0,3)
+=== errors ===
+ok

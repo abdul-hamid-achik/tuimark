@@ -20,6 +20,8 @@ func FuzzRender(f *testing.F) {
 	}
 	f.Add(v1(`<col><text>{a}</text><list id="l" each="rows as r"><item><text>{r}</text></item></list><input id="q" bind="a"/></col><modal id="m" open="true" title="t"><button id="b">x</button></modal>`))
 	f.Add(v1(`<row style="gap: 4; padding: 1 2 3 4"><box style="dock: left; width: 50%"/><scroll axis="both"><text wrap="wrap">a b c</text></scroll><progress value="50"/><rule axis="y"/><spacer/></row>`))
+	// version="2": tabs (nested, bound, disabled), hints, a sparkline, grids.
+	f.Add(`<tui version="2"><keymap><bind keys="tab" action="move-next" to="#t" label="next"/><bind keys="a" action="switch-to" to="#y" keycap="A" label="y"/></keymap><screen id="s"><tabs id="t" bind="a" mark="▸" gap="1" focusable="true"><tab id="x" label="xx" short="x" focus="#q"><input id="q"/></tab><tab id="y" label="yy" disabled="true"><tabs id="u"><tab id="z" label="z"><text>z</text></tab></tabs></tab></tabs><hints id="h" scope="all"/><hints id="h2" style="layout: column"/><sparkline bind="rows" min="-1" max="2" height="2"/><box style="layout: grid; grid-columns: 3; grid-min-width: 4; gap: 1; align: center" each="rows as r"><text>{r}</text></box><scroll style="layout: grid; grid-columns: 2"><text>a</text><text>b</text><text>c</text></scroll></screen></tui>`)
 	f.Fuzz(func(t *testing.T, src string) {
 		a := doc(t, src)
 		_ = a.Bind("", map[string]any{"a": "x", "rows": []any{"1", "2"}})

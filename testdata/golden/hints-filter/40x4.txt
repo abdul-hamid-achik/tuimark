@@ -1,0 +1,21 @@
+=== grid 40x4 ===
+filter                                  
+alpha                                   
+beta                                    
+esc cancel                              
+=== nodes ===
+main    screen  40x4 @(0,0)
+filter  input   40x1 @(0,0) focus
+items   list    40x2 @(0,1)
+-       item    40x1 @(0,1) selected
+-       text    40x1 @(0,1)
+-       item    40x1 @(0,2)
+-       text    40x1 @(0,2)
+keys    hints   40x1 @(0,3)
+-       row     10x1 @(0,3)
+-       text    3x1 @(0,3)
+-       text    6x1 @(4,3)
+=== errors ===
+ok
+=== events ===
+none

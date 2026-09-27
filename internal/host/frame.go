@@ -68,6 +68,24 @@ type builder struct {
 	byID   map[string]*layout.Box
 	// tables holds the tables inflated in step 1, for step 7.
 	tables map[*layout.Box]*tableFrame
+	// rc is the state of the render this builder's pass belongs to.
+	rc *renderCtx
+	// chain holds the source nodes of the focus chain (the focused node
+	// and its ancestors): their boxes match :focus-within (SPEC §10.1).
+	chain map[*ir.Node]bool
+	// scopes holds the scope each tab was inflated in, for its content
+	// (step 3).
+	scopes map[*layout.Box]*scope
+}
+
+// renderCtx is what one render keeps across its passes (SPEC §18 step 4
+// repeats steps 1-4): the focus when it started and whether it is the
+// screen's first frame, and the tabs whose activation focus rule
+// (§6.10.3) it has already applied.
+type renderCtx struct {
+	focusStart string
+	initial    bool
+	tabDone    map[string]bool
 }
 
 func (fb *builder) report(n *ir.Node, sev, code, format string, args ...any) {
@@ -97,6 +115,8 @@ func (a *App) render(cols, rows int, theme string) *Frame {
 			a.restoreState(saved)
 		}
 		a.screen, a.focusInit, a.focus, a.focusReq = req.prevScreen, req.prevInit, req.prev, nil
+		// Its tab activations are undone with it (SPEC §6.10.3).
+		a.undoTabActs(req.acts)
 	}
 	return a.renderOnce(cols, rows, theme)
 }
@@ -158,6 +178,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		}
 		root = a.doc.Screens[a.screen]
 	}
+	rc := &renderCtx{focusStart: a.focus, initial: !a.focusInit, tabDone: map[string]bool{}}
 	initFocus := ""
 	if !a.focusInit {
 		a.focusInit = true
@@ -170,15 +191,15 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	var fb *builder
 	var rootBox *layout.Box
 	for pass := 0; pass < 3; pass++ {
-		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}}
+		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
 		rootBox = fb.inflate(root, nil, nil, false) // step 1
-		markFocusChain(fb.byID[a.focus])
-		rootBox = fb.cascade(casc, rootBox)       // step 2
-		changed := fb.activateTabs(casc, rootBox) // step 3
-		if !a.resolveFocus(f, fb, rootBox) && !changed {
+		rootBox = fb.cascade(casc, rootBox)         // step 2
+		fb.activateTabs(casc, rootBox)              // step 3
+		if !a.resolveFocus(f, fb, rootBox) {
 			break // step 4
 		}
 	}
+	a.tabPrev = fb.activeTabs(rootBox)
 	// screen@focus gives initial focus like any other focus change: on:focus
 	// fires once (resolveFocus reports the case where it had to pick another
 	// target).
@@ -234,28 +255,25 @@ func (fb *builder) cascade(casc *css.Cascade, rootBox *layout.Box) *layout.Box {
 	return fb.dropUndisplayed(rootBox)
 }
 
-// activateTabs is step 3 of SPEC §18: for each tabs, outermost first, it
-// picks the active tab among the visible ones, drops the other tab nodes,
-// creates one label per visible tab, inflates the active tab's content,
-// and cascades the labels and that content. It reports whether an active
-// tab changed, which repeats steps 1-4 like a focus change. No tabs
-// widget is built yet, so this stage has nothing to do.
-func (fb *builder) activateTabs(*css.Cascade, *layout.Box) bool { return false }
-
-// buildHints is step 5 of SPEC §18: it builds the items of each hints by
-// running the key dispatch of §8.6 on the frame after step 4, and
-// cascades them. No hints widget is built yet, so this stage has nothing
-// to do.
-func (fb *builder) buildHints(*css.Cascade, *layout.Box) {}
-
-// markFocusChain sets FocusWithin on the focused box and each of its
-// ancestors up to the screen, through a modal (a modal's parent is its
-// screen): the nodes :focus-within matches (SPEC §10.1). With nothing
-// focused nothing is marked.
-func markFocusChain(b *layout.Box) {
-	for ; b != nil; b = b.Parent {
-		b.FocusWithin = true
+// focusChainIR returns the source nodes of the focus chain: the focused
+// node and its ancestors up to the screen (a modal's parent is its
+// screen). Their boxes match :focus-within (SPEC §10.1), which inflate
+// marks as it creates them, so that the content a tab activation inflates
+// in step 3 and the ancestors cascaded before it agree. A focused node is
+// never inside a list row or an each template, so each source node of the
+// chain has at most one box. With nothing focused it is empty. When the
+// focused node turns out not to be in the frame, focus moves and the
+// next pass marks the new chain. The caller holds a.mu.
+func (a *App) focusChainIR() map[*ir.Node]bool {
+	n := a.focusTarget(a.focus)
+	if a.focus == "" || n == nil {
+		return nil
 	}
+	m := map[*ir.Node]bool{}
+	for p := n; p != nil && p.Kind != "tui"; p = p.Parent {
+		m[p] = true
+	}
+	return m
 }
 
 // dropUndisplayed applies display: none to the boxes computeStyles cannot
@@ -470,6 +488,9 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	if n.ID != "" && n.ID == a.focus && !inItem {
 		b.Focused = true
 	}
+	if !inItem && fb.chain[n] {
+		b.FocusWithin = true
+	}
 	switch n.Kind {
 	case "text":
 		b.Text = fb.interp(n, n.Text, sc)
@@ -530,12 +551,28 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		// part is generated after layout (§18 step 7).
 		fb.inflateTable(n, b, sc)
 		return b
-	case "sparkline", "hints":
+	case "sparkline":
+		fb.inflateSparkline(n, b, sc)
+		return b
+	case "hints":
 		// No children: a hints' items come from the keymap (step 5).
 		return b
+	case "tabs":
+		if m, ok := n.Attr("mark"); ok {
+			if w := layout.Width(m); w >= 1 && w <= 2 {
+				b.Mark = m
+			}
+		}
 	case "tab":
 		// Step 1 creates the tab nodes of a tabs but not their content:
-		// only the active tab's content is inflated, in step 3.
+		// only the active tab's content is inflated, in step 3, in the
+		// scope the tab was inflated in.
+		if sc != nil {
+			if fb.scopes == nil {
+				fb.scopes = map[*layout.Box]*scope{}
+			}
+			fb.scopes[b] = sc
+		}
 		return b
 	case "col", "row", "box":
 		if n.Each != "" && a.doc.V2 {
@@ -889,6 +926,11 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 	req := a.focusReq
 	a.focusReq = nil
 	if req != nil && a.focus != req.target {
+		// A request that focus left behind: its tab activations are
+		// undone, and a pass without them decides (SPEC §6.10.3).
+		if a.undoTabActs(req.acts) {
+			return true
+		}
 		req = nil
 	}
 	fallback := ""
@@ -937,6 +979,12 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 	if req != nil {
 		if focusable(req.target) {
 			req.landed = true
+			// A request that activated tabs (action="focus" only) gives
+			// their on:select events, outermost first, before its
+			// target's on:focus (SPEC §6.10.3).
+			if req.fire {
+				a.pending = append(a.pending, tabSelects(req.acts)...)
+			}
 			if req.fire && req.target != req.prev {
 				if b := fb.byID[req.target]; b != nil && b.Src != nil {
 					if act, ok := b.Src.On["focus"]; ok {
@@ -947,6 +995,24 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 			return a.focus != before
 		}
 		a.focus = fallback
+		// The activations of a request that cannot land are undone with
+		// it (SPEC §6.10.3); the frame is then built again without them,
+		// and that pass decides where focus goes.
+		if a.undoTabActs(req.acts) {
+			return true
+		}
+	}
+	// A tab change moves focus that was on the strip, in the old tab, or
+	// nowhere into the new tab (SPEC §6.10.3); focus that lands this way
+	// fires on:focus, as initial focus does.
+	if id, ok := fb.tabFocus(root, list); ok && id != a.focus {
+		a.focus = id
+		if b := fb.byID[id]; b != nil && b.Src != nil && id != before {
+			if act, ok := b.Src.On["focus"]; ok {
+				a.pending = append(a.pending, Event{Action: act, Source: id, Keys: map[string]any{}})
+			}
+		}
+		return true
 	}
 	if focusable(a.focus) {
 		return a.focus != before
@@ -963,7 +1029,15 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 		}
 	}
 	if a.focus == "" && len(list) > 0 {
-		a.focus = list[0].ID
+		// On a screen's first frame, the first tabs whose active tab's
+		// focus= can take focus comes before the first focusable node
+		// (SPEC §6.10.3).
+		if fb.rc != nil && fb.rc.initial && len(fb.modals) == 0 {
+			a.focus = initialTabFocus(root, list)
+		}
+		if a.focus == "" {
+			a.focus = list[0].ID
+		}
 	}
 	if a.focus != before {
 		if b := fb.byID[a.focus]; b != nil && b.Src != nil {

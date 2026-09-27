@@ -93,6 +93,29 @@ type Box struct {
 	// (wrap: wrap paints as truncate).
 	Fixed bool
 
+	// Role names what the runtime generated a box for (SPEC §6.10.4,
+	// §6.12): a tab label (RoleTabLabel), a hint item row (RoleHintItem),
+	// or one of its two texts (RoleHintKey, RoleHintLabel); "" for a node
+	// of the document and for a table's rows and cells. Generated boxes
+	// are Fixed: their geometry comes from their widget.
+	Role string
+	// Tabs state (version="2", SPEC §6.10). On a tabs box: TabList is its
+	// visible tabs in document order (the active one included; the others
+	// are not in Children), and TabActive is the active tab, or nil when
+	// no tab is visible; Mark is its mark. On a tab label: Full and Short
+	// are L(t) and S(t) (the label, and the short label or the label), and
+	// For is its tab. Layout sets the label's Text to its tier text.
+	TabList     []*Box
+	TabActive   *Box
+	Full, Short string
+	For         *Box
+	// Sparkline values (version="2", SPEC §6.11): Series holds the bound
+	// array, one value per element, NaN for a gap (null or not a number);
+	// Lo and Hi are min= and max= when HasLo and HasHi.
+	Series       []float64
+	Lo, Hi       float64
+	HasLo, HasHi bool
+
 	// Scroll state: offset in, clamped offset and content size out.
 	ScrollX, ScrollY int
 	Follow           int // list: index of the item to keep visible (-1 none)
@@ -182,10 +205,18 @@ func (b *Box) frameV() int { return 2*b.border() + b.pad(0) + b.pad(2) }
 // pad returns one padding side (top, right, bottom, left), bounded.
 func (b *Box) pad(side int) int { return clampCells(b.Style.Pad[side]) }
 
+// The roles of generated boxes (Box.Role).
+const (
+	RoleTabLabel  = "tab-label"
+	RoleHintItem  = "hint-item"
+	RoleHintKey   = "hint-key"
+	RoleHintLabel = "hint-label"
+)
+
 // IsContainer reports whether the kind lays out children.
 func (b *Box) IsContainer() bool {
 	switch b.Kind {
-	case "col", "row", "box", "scroll", "list", "item", "screen", "modal", "table":
+	case "col", "row", "box", "scroll", "list", "item", "screen", "modal", "table", "tabs", "tab", "hints":
 		return true
 	}
 	return false
@@ -194,13 +225,29 @@ func (b *Box) IsContainer() bool {
 // Scrolls reports whether b is a viewport: <scroll>, <list>, <table>
 // (version="2"), or a container with overflow: scroll (which scrolls like
 // a <scroll> on the y axis; axis= is allowed only on <scroll> and <rule>,
-// SPEC v0.2 §11.4). A table row ignores overflow (SPEC §6.9.3), so it is
-// never one.
+// SPEC v0.2 §11.4). A table row ignores overflow (SPEC §6.9.3), and so do
+// a tabs, a hints, and the boxes they generate (§11.3), so none of them is
+// ever one.
 func (b *Box) Scrolls() bool {
-	if b.Fixed {
+	if b.Fixed || b.Kind == "tabs" || b.Kind == "hints" {
 		return false
 	}
 	return b.Kind == "scroll" || b.Kind == "list" || b.Kind == "table" || (b.Style.Overflow == "scroll" && b.IsContainer())
+}
+
+// IsGrid reports whether b lays out its in-flow children as a grid (SPEC
+// §11.7): layout: grid on a screen, box, col, row, scroll, item, tab, or
+// modal. On any other tag the value is accepted and ignored (a table, a
+// tabs, and a hints have their own layouts; a list stacks its rows).
+func (b *Box) IsGrid() bool {
+	if b.Style.Layout != "grid" || b.Fixed {
+		return false
+	}
+	switch b.Kind {
+	case "screen", "box", "col", "row", "scroll", "item", "tab", "modal":
+		return true
+	}
+	return false
 }
 
 // Direction returns "row" or "column".

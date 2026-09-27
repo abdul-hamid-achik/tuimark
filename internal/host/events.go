@@ -46,6 +46,11 @@ type focusRequest struct {
 	prevInit   bool   // focusInit before the first pending request
 	fire       bool   // queue the target's on:focus once it lands
 	landed     bool   // set by resolveFocus when the target took focus
+	// acts are the inactive tabs the request activated, outermost first
+	// (SPEC §6.10.3): their on:select events come before the target's
+	// on:focus when it lands (action="focus" only), and they are undone
+	// when it does not.
+	acts []tabAct
 }
 
 // focusTarget returns the node a focus move to id may target: nil for an
@@ -78,6 +83,12 @@ func (a *App) requestFocus(id string, fire bool) {
 	req := &focusRequest{target: id, prev: a.focus, prevScreen: a.screen, prevInit: a.focusInit, fire: fire}
 	if p := a.focusReq; p != nil {
 		req.prev, req.prevScreen, req.prevInit = p.prev, p.prevScreen, p.prevInit
+		req.acts = p.acts
+	}
+	// A target inside inactive tabs activates them as part of the request
+	// (SPEC §6.10.3).
+	if a.doc.V2 {
+		req.acts = append(req.acts, a.openTabsFor(id)...)
 	}
 	a.setFocus(id)
 	a.focusReq = req

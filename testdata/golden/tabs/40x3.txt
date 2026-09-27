@@ -1,0 +1,14 @@
+=== grid 40x3 ===
+ 1 overview  ▸7 processes   8 settings  
+processes panel                         
+                                        
+=== nodes ===
+main       screen  40x3 @(0,0)
+nav        tabs    40x2 @(0,0)
+-          text    11x1 @(0,0)
+-          text    12x1 @(13,0) selected
+-          text    11x1 @(27,0)
+processes  tab     40x1 @(0,1)
+-          text    40x1 @(0,1)
+=== errors ===
+ok

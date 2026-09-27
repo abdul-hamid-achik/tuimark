@@ -129,6 +129,12 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 		// Its own layout (SPEC §6.9.3): layout, gap between rows, align,
 		// and justify do not apply; its rows come after layout.
 		e.tableLayout(b, childClip)
+	case b.Kind == "tabs":
+		// The label strip and the active tab below it (SPEC §6.10.4).
+		e.tabsLayout(b, childClip)
+	case b.Kind == "hints":
+		// The items that fit, in order (SPEC §6.12).
+		e.hintsLayout(b, childClip)
 	case b.Scrolls():
 		// Also with no children: the offset clamps to 0 and the content
 		// extent is the content box (SPEC §13.2, scroll).
@@ -564,10 +570,15 @@ func (e *Engine) allocate(b *Box, kids []*Box, main, cross int, report bool) (si
 	return sizes, crossSizes, anyFr
 }
 
-// flex allocates and places in-flow children of b inside area.
+// flex allocates and places in-flow children of b inside area; a grid
+// container places them with the grid of SPEC §11.7 instead.
 func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect) {
 	n := len(kids)
 	if n == 0 {
+		return
+	}
+	if b.IsGrid() {
+		e.grid(b, kids, area, clip)
 		return
 	}
 	row := b.Direction() == "row"
@@ -700,11 +711,19 @@ func (b *Box) scrollsOn(horizontal bool) bool {
 // its other axes, holding a child that is (in flow or docked; modals are
 // never children). Leaves never are. Computed bottom-up once per frame.
 func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
-	if !b.IsContainer() {
+	if !b.IsContainer() || b.Kind == "hints" {
+		// A hints is a leaf for shrinking: its items never shrink (SPEC
+		// §6.12).
 		return false
 	}
 	if b.scrollsOn(horizontal) {
 		return true
+	}
+	if b.IsGrid() {
+		// A grid container is shrinkable only on the scroll axes of a
+		// viewport (SPEC §11.4, §11.7 item 7): its row heights come from
+		// intrinsic sizes.
+		return false
 	}
 	key := axisKey{b, horizontal}
 	if v, ok := e.shrink[key]; ok {
@@ -833,6 +852,22 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 		v = 0
 	case "table":
 		v = tableIntrinsic(b, horizontal)
+	case "sparkline":
+		// SPEC §6.11: the array's length across (0 when it is not an
+		// array), one row down.
+		if horizontal {
+			v = clampCells(len(b.Series))
+		} else {
+			v = 1
+		}
+	case "tabs":
+		inner := avail - fv
+		if !horizontal {
+			inner = avail - fh
+		}
+		v = e.tabsIntrinsic(b, horizontal, max(0, inner))
+	case "hints":
+		v = hintsIntrinsic(b, horizontal)
 	default:
 		if b.IsContainer() {
 			inner := avail - fv
@@ -878,6 +913,12 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 	alongMain := row == horizontal
 	n := len(flow)
 	total := 0
+	if b.IsGrid() {
+		// SPEC §11.7 item 6: the grid's own measure of its in-flow
+		// children; docked children stack around it as in any container.
+		total = e.gridIntrinsic(b, flow, horizontal, avail)
+		n = 0
+	}
 	if n > 0 {
 		// Sizes on the other axis, needed to measure wrapped text.
 		others := make([]int, n)

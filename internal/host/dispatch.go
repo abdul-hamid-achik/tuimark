@@ -205,12 +205,13 @@ func (a *App) whenMatches(sel *css.Selector, v keyView) bool {
 //     when it has on:submit;
 //   - a list or a table with at least one row: up, down, home, end, pgup,
 //     pgdn;
+//   - a (focusable) tabs with at least one enabled visible tab: left and
+//     right;
 //   - any other viewport: up, down, left, right, pgup, pgdn, home, end;
 //   - after those, any node other than an input, a list, or a table that
 //     has on:click: enter and space, which fire it.
 //
-// (A focusable tabs consumes left and right; it arrives with that
-// widget.) The caller holds a.mu.
+// The caller holds a.mu.
 func (a *App) consumes(b *layout.Box, k Key) bool {
 	switch b.Kind {
 	case "input":
@@ -235,6 +236,12 @@ func (a *App) consumes(b *layout.Box, k Key) bool {
 		// A list never fires on:click from the keyboard (v1), nor does a
 		// table (SPEC §8.6).
 		return false
+	case "tabs":
+		// A focused (so focusable) tabs with an enabled visible tab
+		// consumes left and right (SPEC §6.10.4 item 8).
+		if (k.Name == "left" || k.Name == "right") && len(enabledTabs(b)) > 0 {
+			return true
+		}
 	}
 	if b.Scrolls() {
 		switch k.Name {
@@ -354,6 +361,14 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 			return a.moveList(b, func(i, _, p int) int { return i + p })
 		}
 		return nil
+	case "tabs":
+		// left and right act as move-prev and move-next on it.
+		switch k.Name {
+		case "left":
+			return a.activateTab(b, stepTab(b, "move-prev"))
+		case "right":
+			return a.activateTab(b, stepTab(b, "move-next"))
+		}
 	}
 	if b.Scrolls() {
 		off := a.scrolls[b.ID]
@@ -430,7 +445,7 @@ func (a *App) moveList(b *layout.Box, to func(index, rows, page int) int) []Even
 // the frame, so only compatibility applies to it. The caller holds a.mu.
 func (a *App) builtinTarget(v keyView, kb *parse.KeyBind) (*layout.Box, bool) {
 	if kb.Action == "switch-to" {
-		return nil, a.switchable(kb.To)
+		return a.switchable(v, kb.To)
 	}
 	t := v.focused
 	if kb.To != "" {
@@ -452,11 +467,11 @@ func isMove(action string) bool {
 }
 
 // compatible reports whether t can take a built-in action (SPEC §8.4):
-// move-* needs a list or a table with at least one row, or a viewport
-// that is neither; check-* a list or a table that has checked=, whose
-// value is an array or missing (never B008), with at least one row. (A
-// tabs with an enabled visible tab arrives with that widget.) The caller
-// holds a.mu.
+// move-* needs a list or a table with at least one row, a tabs with an
+// enabled visible tab (not for move-page-*), or a viewport that is none of
+// them; check-* a list or a table that has checked=, whose value is an
+// array or missing (never B008), with at least one row. The caller holds
+// a.mu.
 func (a *App) compatible(action string, t *layout.Box) bool {
 	switch {
 	case isMove(action):
@@ -464,7 +479,10 @@ func (a *App) compatible(action string, t *layout.Box) bool {
 		case "list", "table":
 			return a.rows(t) > 0
 		case "tabs":
-			return false
+			if action == "move-page-down" || action == "move-page-up" {
+				return false
+			}
+			return len(enabledTabs(t)) > 0
 		}
 		return t.Scrolls()
 	case action == "check-toggle" || action == "check-all" || action == "check-none":
@@ -499,12 +517,40 @@ func (a *App) checkedArray(b *layout.Box) (keys []any, ok bool) {
 	return arr, isArr
 }
 
-// switchable reports whether switch-to can act on the node id (SPEC §8.4):
-// a screen. (A visible, enabled tab whose tabs is in the frame arrives with
-// the tabs widget.) The caller holds a.mu.
-func (a *App) switchable(id string) bool {
+// switchable reports whether switch-to can act on the node id on v (SPEC
+// §8.4): a screen, or a tab that is visible and not disabled (§6.10.2)
+// and whose tabs is in the frame; the tab itself is usually inactive,
+// never in the frame. For a tab it returns its tabs box as the target.
+// The caller holds a.mu.
+func (a *App) switchable(v keyView, id string) (*layout.Box, bool) {
 	n := a.doc.IDs[id]
-	return n != nil && n.Kind == "screen"
+	if n == nil {
+		return nil, false
+	}
+	if n.Kind == "screen" {
+		return nil, true
+	}
+	t, tab := tabOf(v, n)
+	return t, tab != nil
+}
+
+// tabOf returns, for the tab node n, its tabs box in the frame v and its
+// tab box there when that tab is visible and not disabled; nil, nil
+// otherwise.
+func tabOf(v keyView, n *ir.Node) (t, tab *layout.Box) {
+	if n.Kind != "tab" || n.Parent == nil || n.Parent.Kind != "tabs" || n.Parent.ID == "" {
+		return nil, nil
+	}
+	t = v.byID[n.Parent.ID]
+	if t == nil || t.Kind != "tabs" || !v.inFrame(t) {
+		return nil, nil
+	}
+	for _, c := range t.TabList {
+		if c.Src == n && !c.Disabled {
+			return t, c
+		}
+	}
+	return nil, nil
 }
 
 // runBuiltin applies a built-in action of SPEC §8.4 to the target
@@ -514,6 +560,11 @@ func (a *App) switchable(id string) bool {
 func (a *App) runBuiltin(kb *parse.KeyBind, t *layout.Box) []Event {
 	switch kb.Action {
 	case "switch-to":
+		if n := a.doc.IDs[kb.To]; n != nil && n.Kind == "tab" {
+			// A user activation of that tab (SPEC §6.10.2).
+			_, tab := tabOf(a.liveView(), n)
+			return a.activateTab(t, tab)
+		}
 		// As Set("@screen", id) does.
 		prev := a.screen
 		a.switchScreen(kb.To)
@@ -523,6 +574,11 @@ func (a *App) runBuiltin(kb *parse.KeyBind, t *layout.Box) []Event {
 		return nil
 	case "check-toggle", "check-all", "check-none":
 		return a.check(t, kb.Action)
+	}
+	if t.Kind == "tabs" {
+		// move-next/move-prev wrap over the enabled visible tabs;
+		// move-first/move-last go to the first or last of them.
+		return a.activateTab(t, stepTab(t, kb.Action))
 	}
 	if t.Kind == "list" || t.Kind == "table" {
 		// The cursor moved without an event when the widget has no

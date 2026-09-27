@@ -9,11 +9,12 @@ import (
 
 // SPEC v0.2b §18 step 1: a tabs' tab nodes are created, but not their
 // content (only the active tab's content is inflated, in step 3), so
-// nothing inside a tab is resolved; and a table's column and row
-// templates are templates, never inflated as they stand.
+// nothing inside an inactive tab is resolved, while the inactive tab's
+// own guard is; and a table's column and row templates are templates,
+// never inflated as they stand.
 func TestStepOneInflatesTabNodesOnly(t *testing.T) {
 	a := doc(t, `<tui version="2"><screen id="s">
-<tabs id="n"><tab id="a" label="a"><text>{missing.one}</text></tab><tab id="b" label="b" class:hot="missing.two"/></tabs>
+<tabs id="n"><tab id="a" label="a"/><tab id="b" label="b" class:hot="missing.two"><text>{missing.one}</text></tab></tabs>
 <table id="t" each="rows as r" key="r"><item class:x="r.x"/><column>{r.y}</column></table>
 </screen></tui>`)
 	_ = a.Bind("rows", []any{})
@@ -29,8 +30,10 @@ func TestStepOneInflatesTabNodesOnly(t *testing.T) {
 	if !strings.Contains(joined, "missing.two") {
 		t.Errorf("a tab node's own guard is evaluated in step 1:\n%s", joined)
 	}
+	// Step 3 leaves the two labels and the active tab, a, with its (empty)
+	// content; b is only in the tabs' visible list.
 	tabs := f.ByID["n"]
-	if tabs == nil || len(tabs.Children) != 2 || len(tabs.Children[0].Children) != 0 {
+	if tabs == nil || len(tabs.Children) != 3 || tabs.Children[2].ID != "a" || len(tabs.Children[2].Children) != 0 || len(tabs.TabList) != 2 {
 		t.Fatalf("tabs %+v", tabs)
 	}
 }
@@ -43,10 +46,10 @@ func TestTabOwnStyleIgnoresEmptyAndFocusWithin(t *testing.T) {
 <screen id="s"><tabs id="n"><tab id="a" label="a"/></tabs></screen></tui>`)
 	f := a.Frame(10, 2)
 	tabs := f.ByID["n"]
-	if tabs == nil || len(tabs.Children) != 1 {
+	if tabs == nil || tabs.TabActive == nil {
 		t.Fatal("tab:empty dropped the tab while its own style was computed")
 	}
-	tab := tabs.Children[0]
+	tab := tabs.TabActive
 	if tab.Style.Bold || !tab.Style.Italic {
 		t.Errorf("tab style %+v", tab.Style)
 	}

@@ -192,7 +192,7 @@ takes over), proving the loop end to end. This one example touches:
 Every `<tui>` document declares `version="1"` or `version="2"`. A
 `version="1"` document keeps the vocabulary and meaning it has always had,
 and its dumps stay byte-identical. `version="2"` opts into the 0.2b
-vocabulary (SPEC §5.1); this build implements its foundations:
+vocabulary (SPEC §5.1); this build implements all of it except the mouse:
 
 - **The version gate.** In a `version="1"` document each 0.2b tag is
   `V001`, each 0.2b attribute `V002`, and each 0.2b value, property,
@@ -284,6 +284,87 @@ vocabulary (SPEC §5.1); this build implements its foundations:
 - **`bar: eighths`** on a `progress` fills eighths of a cell: `e =
   floor(W·8·v/100 + 0.5)` gives `e div 8` full cells and the partial glyph
   `▏▎▍▌▋▊▉` number `e mod 8`; `bar: block`, the default, is the v1 bar.
+- **`<tabs>` and `<tab>`.** A `tabs` paints a one-row strip of labels
+  and, right below it, the content of its active `tab`; inactive tabs are
+  never inflated or laid out, and widgets inside them keep their state by
+  id (list cursors, input text, scroll offsets, a nested `tabs`' tab).
+
+  ```xml
+  <tabs id="nav" bind="view" mark="▸" gap="2" on:select="view_changed">
+    <tab id="overview" label="1 overview" short="1 ovr"> … </tab>
+    <tab id="processes" label="7 processes" short="7 proc" focus="#procs"> … </tab>
+  </tabs>
+  ```
+
+  With `bind`, the active tab is the visible tab whose id is the bound
+  string (`null` or a missing path, `B003`, give the first visible tab;
+  any other value gives it too and reports `B010`; fallbacks never write
+  the store); without `bind`, the runtime remembers the tab per `tabs` id.
+  A user activation (`switch-to`, `move-next`/`move-prev`/`move-first`/
+  `move-last` on the `tabs`, `left`/`right` on a focused
+  `focusable="true"` `tabs`, `action="focus"` into an inactive tab) writes
+  the tab's id to `bind` (or remembers it) and fires `on:select` with
+  `value` = the id; a host `Set` activates without `on:select`. Disabled
+  tabs are skipped by those keys and actions. Labels come in three tiers
+  so the strip always fits: every `label` when they fit (with `gap`
+  between them and a mark slot of `width(mark)` in front of each), else
+  every `short`, else the active tab's alone as `‹ label ›` (then
+  `‹ short ›`, then truncated). Labels are generated `text` nodes (class
+  `tab-label`, `key` = the tab id, `:selected` on the active one,
+  `:disabled` on a disabled tab), styled with `.tab-label` or
+  `tabs > text`; they ignore their own sizes, spacing, borders, and
+  `display`. When the active tab changes and focus was on the strip,
+  inside the old tab, or nowhere, focus moves to the new tab's `focus=`
+  target, else its first focusable node, else the screen's rule; the
+  `on:select` comes first, then that node's `on:focus`. Focus elsewhere
+  stays. On a screen's first frame, `screen@focus` wins, then the first
+  `tabs` whose active tab has a `focus=` that can take focus. A `tabs`
+  and every `tab` need an id (`V012`), a `tabs` needs a `tab` (`V017`)
+  and holds only tabs (`V016`), a `tab` needs a non-empty `label`
+  (`V003`), and a `tab focus=` must name a node inside it (`B005`).
+- **`<sparkline bind="cpu.hist" min="0" max="100"/>`** draws the last
+  values of a numeric array as bars, one column per value, eight levels
+  per row, right-aligned in its box (`null` is a gap). Without `min`/`max`
+  the smallest and largest shown values are the range; a flat series sits
+  at half height. It is as wide as the array by default and one row high
+  (give it a `height` for more levels). A value that is not an array, or
+  an element that is neither a number nor `null`, is `B009`.
+- **`<hints>`** shows key hints generated from the keymap: a `<bind>` with
+  a `label` is a hint row, and `keycap` replaces the key text shown.
+  `scope="active"` (the default) shows the rows that one of their keys
+  would fire right now, through the same key dispatch `Run()` and `play`
+  use: a key the focused input takes, a row shadowed by an earlier row
+  with the same key, an `esc` row under a modal with `on:escape`, and a
+  built-in whose target does not match are all hidden. `scope="all"` shows
+  every hint row (a help screen). Items are laid out along the row (or
+  down, with `layout: column`), `gap` apart; an item that does not fit is
+  left out with every item after it. Each item is a generated `row`
+  (`hints > row`, `gap: 1` by default) holding a `.hint-key` and a
+  `.hint-label` text.
+
+  ```xml
+  <bind keys="space" action="check-toggle" when="#procs:focus" label="mark"/>
+  <bind keys="ctrl+a" action="check-all" keycap="^A" label="all"/>
+  …
+  <hints id="keys"/>
+  ```
+
+- **`layout: grid`** (on `screen`, `box`, `col`, `row`, `scroll`, `item`,
+  `tab`, `modal`) places the in-flow children in equal columns, row by
+  row. `grid-columns: K` is the column count (1–12); with
+  `grid-min-width: M` the count adapts to the width,
+  `clamp(floor((W + gap) / (M + gap)), 1, K)`, so a responsive grid needs
+  no `@media`. `gap` separates columns and rows; a row is as tall as its
+  tallest child, and `align` places a shorter one. A child's `width`,
+  `min-width`, `max-width`, `flex`, and an `fr`/`%` `height` are ignored
+  (`L007`, a warning, when the document wrote them). A grid box is never
+  shrinkable; put it in a `<scroll>` (or make it a `scroll`/`overflow:
+  scroll` grid) to fit it to the space left and scroll its rows.
+
+  ```css
+  #cores { layout: grid; grid-columns: 4; grid-min-width: 22; gap: 1; }
+  ```
+
 - **`each` on `col`, `row`, and `box`.** Every child element is the
   template, inflated once per array element, in array order, with the alias
   in scope; the container itself is not repeated, and its own `if`,
@@ -314,13 +395,16 @@ vocabulary (SPEC §5.1); this build implements its foundations:
 - **Built-in actions** (keymap rows only; `V003` in `on:*`): `move-next`,
   `move-prev`, `move-first`, `move-last`, `move-page-down`, and
   `move-page-up` move a list's or a table's cursor (writing its `bind`,
-  firing `on:select` when it moved) or a viewport's offset; `check-toggle`,
+  firing `on:select` when it moved) or a viewport's offset, and
+  `move-next`/`move-prev` (wrapping) and `move-first`/`move-last` move a
+  `tabs`' active tab over its enabled visible tabs; `check-toggle`,
   `check-all`, and `check-none` change a list's or a table's `checked`
-  array;
-  `switch-to` (which needs `to=`) switches screens. The target is the node
-  `to=` names, else the focused node. A row whose target is missing from
-  the frame, disabled, or incompatible (an empty list or table, one without
-  `checked`, a button) does not match, and the key goes on to the next
+  array; `switch-to` (which needs `to=`) activates a tab (a visible,
+  enabled one whose `tabs` is in the frame) or switches screens. The
+  target is the node `to=` names, else the focused node. A row whose
+  target is missing from the frame, disabled, or incompatible (an empty
+  list or table, one without `checked`, a button, `move-page-*` on a
+  `tabs`) does not match, and the key goes on to the next
   rows, so `<bind keys="ctrl+a" action="check-all"/>` never steals
   `ctrl+a` from a widget without `checked`; a matching row takes its key
   even when nothing changes. `B007` (an error, reported without data)
@@ -335,20 +419,18 @@ vocabulary (SPEC §5.1); this build implements its foundations:
   anywhere inside `#pane`. The event of a host action still names the
   focused node as its `source`. `version="1"` keeps matching the focused
   node only.
-- **One key dispatch** serves `Run()` and `play`: `esc` fires the top
-  modal's `on:escape`; then the focused, enabled widget consumes its own
-  keys (an input its typing and editing keys, a list or a table with rows
-  `up`, `down`, `home`, `end`, `pgup`, `pgdn`, another viewport the arrows
-  and paging keys, any other node with `on:click` except a list or a table
-  `enter` and `space`); then the first
-  keymap row whose keys, `when`, and built-in target match; then `tab`,
-  `shift+tab`, and `ctrl+c`.
-- The tags `tabs tab sparkline hints`, the properties `grid-columns
-  grid-min-width` and `layout: grid`, `mouse` on `<tui>`, and
-  `label`/`keycap` on `<bind>` are accepted by the gate in a `version="2"`
-  document but are not laid out, painted, or run by this build yet: those
-  tags dump as one empty node each, and a built-in aimed at a `tabs` or a
-  `tab` does not match yet.
+- **One key dispatch** serves `Run()`, `play`, and `<hints>`: `esc` fires
+  the top modal's `on:escape`; then the focused, enabled widget consumes
+  its own keys (an input its typing and editing keys, a list or a table
+  with rows `up`, `down`, `home`, `end`, `pgup`, `pgdn`, a focusable
+  `tabs` with an enabled tab `left` and `right`, another viewport the
+  arrows and paging keys, any other node with `on:click` except a list or
+  a table `enter` and `space`); then the first keymap row whose keys,
+  `when`, and built-in target match; then `tab`, `shift+tab`, and
+  `ctrl+c`.
+- `mouse` on `<tui>` is accepted by the gate in a `version="2"` document
+  (and carried in `tuimark ir`), but this build does not turn the mouse on
+  yet.
 
 ## CLI reference
 
@@ -628,8 +710,11 @@ golden, with a short diff hint on failure; the command exits 2 on any
 mismatch, 1 on an I/O error (a document or golden file that can't be
 read). `--update` (re)writes the goldens for every entry whose `frozen` is
 not `true` — `spike`'s goldens are frozen and must never be regenerated;
-`inbox`, `stacked`, `unicode`, and `table` (the SPEC §6.9.5 literal
-fixture, `specs/fixtures/table.{tui,json}`, pinned at 30x5) are not.
+`inbox`, `stacked`, `unicode`, and the SPEC literal fixtures under
+`specs/fixtures/` are not: `table` (§6.9.5, at 30x5), `tabs` (§6.10.5, the
+strip at 8, 12, 20, 30, and 40 columns), `hints` and `hints-filter`
+(§6.12, the second after the `play` step `focus:#filter`), and `grid`
+(§11.7, at 20 and 30 columns).
 Adding another fixture just needs another
 row in the manifest and a golden directory; nothing else in the runner is
 fixture-specific.
@@ -788,7 +873,10 @@ module; the only supported entry points are the functions above.
 
 - `go test ./...` — the Go test suite: parser/CSS/layout/IR unit tests, the
   SPEC §21 conformance tests (`conformance_test.go` for tests 1-9,
-  `phase_test.go` for tests 10-14), the formatter's
+  `phase_test.go` for tests 10-14, and the 0.2b literal fixtures and
+  gates through the public API in `conformance_v02b_test.go`,
+  `conformance_p2_test.go`, `conformance_p3_test.go`, and
+  `conformance_p4_test.go`), the formatter's
   idempotence/semantics-preservation tests, the IR-vs-schema test, the
   `AGENTS.md`-does-not-drift test, and the CLI's own exit-code/output tests.
   It also runs `tuimark test testdata/golden` itself
@@ -842,8 +930,11 @@ repeating 1–4 while focus or an active tab changes (at most three rounds),
 (5) build the items of each `hints`, (6) measure and allocate, (7) generate
 the visible rows of each `table`, (8) paint. A table resolves every row in
 stage 1 (keys, guards, cell texts, the columns' measures) and gets its rows
-in stage 7, once layout knows its body height and offset. Stages 3 and 5
-are in place for the widgets that arrive later in 0.2b and do nothing yet.
+in stage 7, once layout knows its body height and offset. Stage 3
+inflates only the active tab's content, so inactive tabs cost nothing;
+stage 5 runs the key dispatch without side effects to decide which hints
+apply; layout then picks the tab label tier and drops the hint items that
+do not fit.
 
 Package map:
 
@@ -852,10 +943,10 @@ Package map:
 | `internal/ir` | node, scalar, diagnostic, binding-grammar, and key-token types shared by the other packages |
 | `internal/parse` | the XML tokenizer (`xml.go`), the IR builder (`build.go`), the canonical formatter (`format.go`), and source-IR-as-JSON (`irjson.go`) |
 | `internal/css` | the TCSS parser, selectors, cascade, themes/tokens, and `@media` |
-| `internal/layout` | the integer flex engine (SPEC §11): box model, measure, allocate |
+| `internal/layout` | the integer flex engine (SPEC §11): box model, measure, allocate; `layout: grid`, the tab strip, and the hint items (`widgets.go`); the table (`table.go`) |
 | `internal/paint` | the cell grid, borders, titles, widgets, and the ANSI frame diff |
 | `internal/dump` | the text and JSON frame dump (SPEC §13) |
-| `internal/host` | the JSON store, bind/each/if inflation, cascade application, focus, the key dispatch of SPEC §8.6 with the built-in actions (`dispatch.go`, shared by `Run` and `play`), event dispatch, and the `Run` loop |
+| `internal/host` | the JSON store, bind/each/if inflation, cascade application, focus, the key dispatch of SPEC §8.6 with the built-in actions (`dispatch.go`, shared by `Run`, `play`, and the hints), tabs (`tabs.go`), hints and sparklines (`hints.go`), tables (`table.go`), event dispatch, and the `Run` loop |
 | `internal/agentsdoc` | generates `AGENTS.md` from the catalogs the packages above expose |
 
 `cmd/tuimark` is the CLI built on top of these packages; the root package
@@ -1017,8 +1108,11 @@ kept with the maintainer's project notes, outside this repository.
   `when` over the focus chain, `each` on containers, multi-select on
   `list` and `table`, `:checked`/`:focus-within`, `table`/`column` (with
   the `table` golden at 30x5, the SPEC §6.9.5 fixture in
-  `specs/fixtures/table.{tui,json}`), `scrollbar`, and `bar: eighths`.
-  Still to come: `sparkline`, `layout: grid`, `hints`, `tabs`, the mouse,
+  `specs/fixtures/table.{tui,json}`), `scrollbar`, `bar: eighths`,
+  `tabs`/`tab` (with focus on activation and focus requests into
+  inactive tabs), `sparkline`, `hints` with `label`/`keycap`, and
+  `layout: grid` (goldens `tabs`, `hints`, `hints-filter`, and `grid`, the
+  SPEC literal fixtures in `specs/fixtures/`). Still to come: the mouse
   and `examples/monitor`.
 
 ## License

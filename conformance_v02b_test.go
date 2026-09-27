@@ -38,8 +38,8 @@ var gateCases = []struct {
 	// A column outside a table is V016 in version="2" (SPEC §6.9.1): the
 	// valid form there is inside one.
 	{"tag column", v1Screen(`<column>x</column>`), "V001", `<tui version="2"><screen id="main"><table id="t" each="xs as x" key="x"><column>x</column></table></screen></tui>`},
-	{"tag tabs", v1Screen(`<tabs id="n"><text>x</text></tabs>`), "V001", ""},
-	{"tag tab", v1Screen(`<tab id="a" label="a"/>`), "V001", ""},
+	{"tag tabs", v1Screen(`<tabs id="n"><text>x</text></tabs>`), "V001", `<tui version="2"><screen id="main"><tabs id="n"><tab id="a" label="a"><text>x</text></tab></tabs></screen></tui>`},
+	{"tag tab", v1Screen(`<tab id="a" label="a"/>`), "V001", `<tui version="2"><screen id="main"><tabs id="n"><tab id="a" label="a"/></tabs></screen></tui>`},
 	{"tag sparkline", v1Screen(`<sparkline bind="xs"/>`), "V001", ""},
 	{"tag hints", v1Screen(`<hints/>`), "V001", ""},
 	{"attr mouse", `<tui version="1" mouse="true"><screen id="main"/></tui>`, "V002", ""},

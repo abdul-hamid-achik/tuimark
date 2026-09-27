@@ -1,0 +1,9 @@
+<tui version="2">
+  <screen id="main">
+    <tabs id="nav" bind="view" mark="▸" gap="2">
+      <tab id="overview" label="1 overview" short="1 ovr"><text>overview panel</text></tab>
+      <tab id="processes" label="7 processes" short="7 proc"><text>processes panel</text></tab>
+      <tab id="settings" label="8 settings" short="8 cfg"><text>settings panel</text></tab>
+    </tabs>
+  </screen>
+</tui>

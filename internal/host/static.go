@@ -67,8 +67,9 @@ func (a *App) checkDocks(themes []string) ir.Diags {
 			el := &staticEl{n: n, parent: parent}
 			st := casc.Compute(el, ps, a.toDecls(n.Hints), a.toDecls(n.Inline))
 			// A table's columns and row template ignore dock (SPEC
-			// §6.9.3): the table places them.
-			if parent != nil && n.Kind != "modal" && st.Dock != "" && parent.n.Kind != "table" {
+			// §6.9.3), and so does a tab (§6.10.4): their widget
+			// places them.
+			if parent != nil && n.Kind != "modal" && st.Dock != "" && parent.n.Kind != "table" && parent.n.Kind != "tabs" {
 				row := (&layout.Box{Kind: parent.n.Kind, Style: *ps}).Direction() == "row"
 				if layout.DockConflict(st, row) {
 					d := ir.At(n, a.file, ir.Error, "V010", "%s", layout.DockConflictMsg(st.Dock))

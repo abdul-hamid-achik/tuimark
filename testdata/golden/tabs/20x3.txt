@@ -1,0 +1,12 @@
+=== grid 20x3 ===
+▸‹ 7 processes ›    
+processes panel     
+                    
+=== nodes ===
+main       screen  20x3 @(0,0)
+nav        tabs    20x2 @(0,0)
+-          text    16x1 @(0,0) selected
+processes  tab     20x1 @(0,1)
+-          text    20x1 @(0,1)
+=== errors ===
+ok
