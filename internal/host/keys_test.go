@@ -23,6 +23,11 @@ func inputNames(ins []Input) string {
 			out = append(out, fmt.Sprintf("paste(%q)", in.Paste))
 			continue
 		}
+		if in.IsMouse {
+			// An SGR report is a mouse event since 0.2b (SPEC §26.8).
+			out = append(out, fmt.Sprintf("mouse(%s@%d,%d)", in.Mouse.Kind, in.Mouse.X, in.Mouse.Y))
+			continue
+		}
 		out = append(out, in.Key.Name)
 	}
 	return strings.Join(out, " ")
@@ -384,11 +389,11 @@ func FuzzDecoder(f *testing.F) {
 		var d decoder
 		ins, _ := d.feed([]byte(s), true)
 		for _, in := range ins {
-			if !in.IsPaste && in.Key.Name == "" {
+			if !in.IsPaste && !in.IsMouse && in.Key.Name == "" {
 				t.Fatalf("empty key from %q", s)
 			}
 		}
-		noise := "\x1b[?2027;2$y\x1b]11;rgb:1/2/3\x1b\\\x1b[M q#\x1b[<0;9;9m\x1b[?64;1c"
+		noise := "\x1b[?2027;2$y\x1b]11;rgb:1/2/3\x1b\\\x1b[M q#\x1b[<35;9;9M\x1b[?64;1c"
 		if got := feedSplit(noise + s); got != whole {
 			t.Fatalf("replies before %q changed it: %q, want %q", s, got, whole)
 		}

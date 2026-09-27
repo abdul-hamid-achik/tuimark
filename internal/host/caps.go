@@ -42,6 +42,11 @@ const (
 	// (SPEC v0.2b §26.2); only when the theme is resolved from the
 	// terminal (theme="auto").
 	queryBackground = "\x1b]11;?\a"
+	// mouseModesOn and mouseModesOff turn mode 1000 (presses, releases,
+	// and the wheel) and mode 1006 (SGR encoding) on and off together
+	// (SPEC v0.2b §26.11). Mode 1003 (motion) is never written.
+	mouseModesOn  = "\x1b[?1000h\x1b[?1006h"
+	mouseModesOff = "\x1b[?1000l\x1b[?1006l"
 )
 
 // probeWait is how long the capability probe waits for its DA1 sentinel
@@ -257,18 +262,41 @@ type termSession struct {
 
 	mu       sync.Mutex
 	grapheme bool // mode 2027 was turned on: leaving turns it off
+	mouse    bool // the mouse modes are on: leaving turns them off
 }
 
 // leave is the leave sequence: mode 2027 off when the session turned it
-// on, then leaveScreen. The loop's own way out and the signal restore
+// on, the mouse modes off while they are on (SPEC v0.2b §26.1), then
+// leaveScreen. The loop's own way out and the signal restore
 // path both write it.
 func (s *termSession) leave() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	out := ""
 	if s.grapheme {
-		return graphemeOff + leaveScreen
+		out += graphemeOff
 	}
-	return leaveScreen
+	if s.mouse {
+		out += mouseModesOff
+	}
+	return out + leaveScreen
+}
+
+// mouseChange returns the sequence that brings the terminal's mouse
+// modes to on, or "" when they are already there, and records the new
+// state (SPEC v0.2b §26.11). It is recorded before the sequence is
+// written, so a restore that races with the write still turns them off.
+func (s *termSession) mouseChange(on bool) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.mouse == on {
+		return ""
+	}
+	s.mouse = on
+	if on {
+		return mouseModesOn
+	}
+	return mouseModesOff
 }
 
 // setGrapheme records that mode 2027 is being turned on. It is recorded

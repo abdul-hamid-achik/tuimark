@@ -27,6 +27,9 @@ type Frame struct {
 	// V2 is set when the document is version="2": dumps of the frame
 	// carry the nodes' classes (SPEC §13.2).
 	V2 bool
+	// Mouse is the value of the document's mouse attribute on this frame
+	// (SPEC v0.2b §8.5): mouse events act only while it is true.
+	Mouse bool
 }
 
 // Dump returns the frame's dump (SPEC §13.2), with the --cells map when
@@ -211,6 +214,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		}
 	}
 	a.trackModals(fb)
+	f.Mouse = fb.mouseOn()
 	fb.buildHints(casc, rootBox) // step 5
 	eng := &layout.Engine{File: a.file}
 	if rootBox == nil {

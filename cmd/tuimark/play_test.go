@@ -319,12 +319,15 @@ func TestPlayInvalidKeyTokenIsUsageError(t *testing.T) {
 	}
 }
 
-func TestPlayReservedMouseAndThemeStepsAreUsageErrors(t *testing.T) {
+// SPEC v0.2b §21 test 28 as amended (mouse steps are valid, test 47): on a
+// document without the mouse they change nothing and fire nothing.
+func TestPlayMouseStepsWithoutMouseDoNothing(t *testing.T) {
 	tui, data := writePlayFixture(t)
+	_, base, _ := runCLI("play", tui, "--data", data)
 	for _, step := range []string{"click:1,2", "wheel-up:1,2", "wheel-down:1,2"} {
-		code, _, errw := runCLI("play", tui, "--data", data, "--input", step)
-		if code != 1 || !strings.Contains(errw, "0.2b") {
-			t.Errorf("--input %s: exit %d, stderr %q, want exit 1 mentioning 0.2b", step, code, errw)
+		code, out, errw := runCLI("play", tui, "--data", data, "--input", step)
+		if code != 0 || out != base {
+			t.Errorf("--input %s: exit %d, stderr %q; the output differs from no steps:\n%s", step, code, errw, out)
 		}
 	}
 }
@@ -365,16 +368,16 @@ func TestPlayScriptSteps(t *testing.T) {
 }
 
 // SPEC v0.2b §15.4 (amended by Phase 6, test 47): {"theme": …} is a step
-// now (TestPlayThemeSteps); the mouse members stay usage errors until the
-// mouse steps are implemented.
-func TestPlayScriptReservedMembersAreUsageErrors(t *testing.T) {
+// (TestPlayThemeSteps), and so are the mouse members (TestPlayMouseSteps
+// in p5_test.go).
+func TestPlayScriptMouseMembersAreSteps(t *testing.T) {
 	tui, data := writePlayFixture(t)
-	for _, line := range []string{`{"click":[1,2]}`, `{"wheel":"up","at":[1,2]}`} {
+	for _, line := range []string{`{"click":[1,2]}`, `{"wheel":"up","at":[1,2]}`, `{"at":[1,2],"wheel":"down"}`} {
 		scriptPath := filepath.Join(t.TempDir(), "s.ndjson")
 		writeFile(t, scriptPath, line)
 		code, _, errw := runCLI("play", tui, "--data", data, "--script", scriptPath)
-		if code != 1 || !strings.Contains(errw, "0.2b") {
-			t.Errorf("script line %s: exit %d, stderr %q, want exit 1 mentioning 0.2b", line, code, errw)
+		if code != 0 {
+			t.Errorf("script line %s: exit %d, stderr %q, want 0", line, code, errw)
 		}
 	}
 }

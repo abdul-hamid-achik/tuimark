@@ -69,5 +69,150 @@
     "sizes": ["20x5", "30x5"],
     "json": ["20x5", "30x5"],
     "frozen": false
+  },
+  {
+    "name": "monitor-processes",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "sizes": ["57x24", "58x24", "78x24", "100x30"],
+    "json": ["100x30"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-processes-styles",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "sizes": ["80x24"],
+    "json": ["80x24"],
+    "styles": true,
+    "cells": true,
+    "frozen": false
+  },
+  {
+    "name": "monitor-tabs",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "sizes": ["120x24", "80x24", "40x24"],
+    "json": [],
+    "frozen": false
+  },
+  {
+    "name": "monitor-overview",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "1",
+    "sizes": ["58x24", "80x24", "120x30"],
+    "json": ["120x30"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-overview-light",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "1",
+    "theme": "light",
+    "sizes": ["120x30"],
+    "json": ["120x30"],
+    "styles": true,
+    "frozen": false
+  },
+  {
+    "name": "monitor-cpu",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "2",
+    "sizes": ["40x12", "40x24", "80x24", "120x30"],
+    "json": ["40x12", "80x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-settings",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "8 down",
+    "sizes": ["80x24"],
+    "json": ["80x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-select",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "down down space ctrl+a ctrl+d space",
+    "sizes": ["80x24"],
+    "json": ["80x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-tabs",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "tab tab shift+tab 9 tab click:70,1",
+    "sizes": ["120x24"],
+    "json": ["120x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-hints",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "/ set:filter_open=true focus:#filter",
+    "sizes": ["120x24"],
+    "json": ["120x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-filter",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "/ set:filter_open=true focus:#filter tab text:ch",
+    "sizes": ["120x24"],
+    "json": ["120x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-kill",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "K set:kill_open=true",
+    "sizes": ["80x24"],
+    "json": ["80x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-kill-force",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "X set:kill_open=true set:kill_force=true",
+    "sizes": ["80x24"],
+    "json": [],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-detail",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "enter set:detail_open=true K space j",
+    "sizes": ["77x24", "78x24"],
+    "json": ["78x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-mouse-off",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "set:mouse_enabled=false click:80,1",
+    "sizes": ["120x24"],
+    "json": ["120x24"],
+    "frozen": false
+  },
+  {
+    "name": "monitor-play-wheel",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "wheel-down:20,5 wheel-down:20,5",
+    "sizes": ["80x24"],
+    "json": ["80x24"],
+    "frozen": false
   }
 ]

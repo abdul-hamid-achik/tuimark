@@ -1,0 +1,52 @@
+version: 1
+name: monitor_x10
+intent: |
+    A terminal that sends legacy X10 mouse reports (CSI M and three raw
+    bytes, no 1006 encoding) must never turn a report into keys (SPEC v0.2
+    §26.8, v0.2b §29 Mouse 13): a click at column 81 carries the byte q as
+    its column coordinate, and examples/monitor binds q to quit. The X10
+    press and release are consumed whole and give no mouse event either,
+    so the app keeps running, stays on the Processes tab, and still takes
+    the keys that follow.
+target:
+    cmd: ["${vars.monitor}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "PID NAME"
+        timeoutMs: 5000
+    - send:
+        bytes: '\x1b[M q%\x1b[M#q%'
+    - send:
+        bytes: '\x1b[M q&'
+    - send:
+        bytes: '\x1b[M#q&'
+    - press: "2"
+    - wait:
+        screen:
+            contains: "▸2 cpu"
+        timeoutMs: 3000
+    - snapshot: after
+outcomes:
+    - id: x10_click_at_column_81_does_not_quit
+      description: after X10 press and release reports whose column byte is q, the app is still running and the next key (2) switches to the CPU tab
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/after.txt"
+                if grep -q "▸2 cpu" "$f" && grep -q "cores" "$f"; then
+                  echo '{"ok": true, "evidence": "the app kept running and handled 2 after the X10 reports"}'
+                else
+                  echo '{"ok": false, "evidence": "the X10 reports quit the app or reached the keymap"}'
+                fi
+    - id: still_running
+      description: the process has not exited
+      verify:
+        screen:
+            contains: "▸2 cpu"
+contractHash: sha256:5ce1e5343cc27d0f6e98858b000689097a0c856e90201d38b2f33ad471718db1

@@ -1,0 +1,676 @@
+{
+  "host": "studio-01",
+  "sampled_at": "12:00:00",
+  "status_label": "● LIVE",
+  "live": true,
+  "paused": false,
+  "waiting": false,
+  "stale": false,
+  "view": "processes",
+  "mouse_enabled": true,
+  "cpu": {
+    "label": "cpu 23%",
+    "pct": 23,
+    "hist": [60,68,59,66,83,78,64,71,77,60,46,52,49,27,20,30,22,6,13,27,20,15,34,47,40,45,67,72,62,70,85,75,62,70,72,52,40,47,41,19,17,27,18,5,16,29,22,21,42,52,45,53,74,74,64,73,85,71,59,67]
+  },
+  "mem": {
+    "label": "mem 61%",
+    "pct": 61,
+    "hist": [69,67,71,68,59,59,61,54,48,51,52,46,45,52,53,49,54,62,62,60,67,73,69,68,74,74,67,66,70,64,56,57,58,51,46,51,51,45,46,54,54,51,57,65,64,63,70,74,69,69,75,73,65,65,68,61,54,56,56,49]
+  },
+  "load": "load 1.20 0.98 0.75",
+  "top": [
+    {
+      "pid": 412,
+      "name": "WindowServer",
+      "cpu": "87.3%"
+    },
+    {
+      "pid": 0,
+      "name": "kernel_task",
+      "cpu": "64.0%"
+    },
+    {
+      "pid": 8810,
+      "name": "Code Helper (Renderer)",
+      "cpu": "41.8%"
+    },
+    {
+      "pid": 4242,
+      "name": "微信",
+      "cpu": "25.6%"
+    },
+    {
+      "pid": 9921,
+      "name": "node",
+      "cpu": "18.2%"
+    }
+  ],
+  "cores": [
+    {
+      "id": "c0",
+      "label": "cpu0 12%",
+      "pct": 12
+    },
+    {
+      "id": "c1",
+      "label": "cpu1 48%",
+      "pct": 48
+    },
+    {
+      "id": "c2",
+      "label": "cpu2 7%",
+      "pct": 7
+    },
+    {
+      "id": "c3",
+      "label": "cpu3 91%",
+      "pct": 91
+    },
+    {
+      "id": "c4",
+      "label": "cpu4 33%",
+      "pct": 33
+    },
+    {
+      "id": "c5",
+      "label": "cpu5 26%",
+      "pct": 26
+    },
+    {
+      "id": "c6",
+      "label": "cpu6 64%",
+      "pct": 64
+    },
+    {
+      "id": "c7",
+      "label": "cpu7 3%",
+      "pct": 3
+    },
+    {
+      "id": "c8",
+      "label": "cpu8 18%",
+      "pct": 18
+    },
+    {
+      "id": "c9",
+      "label": "cpu9 55%",
+      "pct": 55
+    },
+    {
+      "id": "c10",
+      "label": "cpu10 40%",
+      "pct": 40
+    },
+    {
+      "id": "c11",
+      "label": "cpu11 9%",
+      "pct": 9
+    }
+  ],
+  "h": {
+    "name": "NAME",
+    "cpu": "CPU%▼",
+    "mem": "MEM"
+  },
+  "procs": [
+    {
+      "pid": 412,
+      "name": "WindowServer",
+      "cpu": "87.3",
+      "mem": "1.4G",
+      "io": "12.4M/s",
+      "threads": 24,
+      "user": "_windowserver",
+      "protected": false,
+      "cpu_hot": true
+    },
+    {
+      "pid": 0,
+      "name": "kernel_task",
+      "cpu": "64.0",
+      "mem": "2.1G",
+      "io": "3.1M/s",
+      "threads": 512,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": true
+    },
+    {
+      "pid": 8810,
+      "name": "Code Helper (Renderer)",
+      "cpu": "41.8",
+      "mem": "904M",
+      "io": "220K/s",
+      "threads": 31,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": true
+    },
+    {
+      "pid": 4242,
+      "name": "微信",
+      "cpu": "25.6",
+      "mem": "612M",
+      "io": "84K/s",
+      "threads": 58,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 9921,
+      "name": "node",
+      "cpu": "18.2",
+      "mem": "388M",
+      "io": "1.9M/s",
+      "threads": 12,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 3377,
+      "name": "🦊 firefox",
+      "cpu": "12.9",
+      "mem": "1.1G",
+      "io": "640K/s",
+      "threads": 96,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 15023,
+      "name": "go",
+      "cpu": "9.7",
+      "mem": "221M",
+      "io": "0B/s",
+      "threads": 18,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 1,
+      "name": "launchd",
+      "cpu": "8.4",
+      "mem": "44M",
+      "io": "12K/s",
+      "threads": 5,
+      "user": "root",
+      "protected": true,
+      "cpu_hot": false
+    },
+    {
+      "pid": 702,
+      "name": "mds_stores",
+      "cpu": "7.1",
+      "mem": "130M",
+      "io": "4.8M/s",
+      "threads": 9,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 1330,
+      "name": "com.apple.WebKit.WebContent.xpc-service (monitorcli.dev)",
+      "cpu": "6.6",
+      "mem": "498M",
+      "io": "310K/s",
+      "threads": 22,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 611,
+      "name": "coreaudiod",
+      "cpu": "5.2",
+      "mem": "27M",
+      "io": "0B/s",
+      "threads": 11,
+      "user": "_coreaudiod",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 2210,
+      "name": "Slack Helper (GPU)",
+      "cpu": "4.9",
+      "mem": "310M",
+      "io": "96K/s",
+      "threads": 17,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 18841,
+      "name": "tuimark",
+      "cpu": "4.3",
+      "mem": "19M",
+      "io": "2K/s",
+      "threads": 8,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 530,
+      "name": "bluetoothd",
+      "cpu": "3.8",
+      "mem": "14M",
+      "io": "1K/s",
+      "threads": 6,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 7015,
+      "name": "Terminal",
+      "cpu": "3.4",
+      "mem": "166M",
+      "io": "8K/s",
+      "threads": 7,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 988,
+      "name": "cloudd",
+      "cpu": "2.9",
+      "mem": "58M",
+      "io": "44K/s",
+      "threads": 10,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 1502,
+      "name": "Spotlight",
+      "cpu": "2.5",
+      "mem": "72M",
+      "io": "0B/s",
+      "threads": 6,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 3190,
+      "name": "Docker Desktop",
+      "cpu": "2.2",
+      "mem": "702M",
+      "io": "120K/s",
+      "threads": 41,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 2451,
+      "name": "postgres",
+      "cpu": "1.9",
+      "mem": "96M",
+      "io": "310K/s",
+      "threads": 7,
+      "user": "_postgres",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 2452,
+      "name": "postgres: writer",
+      "cpu": "1.7",
+      "mem": "12M",
+      "io": "88K/s",
+      "threads": 1,
+      "user": "_postgres",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 4410,
+      "name": "redis-server",
+      "cpu": "1.5",
+      "mem": "9M",
+      "io": "4K/s",
+      "threads": 5,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 380,
+      "name": "logd",
+      "cpu": "1.3",
+      "mem": "33M",
+      "io": "260K/s",
+      "threads": 4,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 5620,
+      "name": "Finder",
+      "cpu": "1.1",
+      "mem": "140M",
+      "io": "0B/s",
+      "threads": 9,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 6632,
+      "name": "zsh",
+      "cpu": "0.9",
+      "mem": "4M",
+      "io": "0B/s",
+      "threads": 1,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 411,
+      "name": "hidd",
+      "cpu": "0.8",
+      "mem": "11M",
+      "io": "0B/s",
+      "threads": 7,
+      "user": "_hidd",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 7710,
+      "name": "ssh-agent",
+      "cpu": "0.7",
+      "mem": "2M",
+      "io": "0B/s",
+      "threads": 1,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 820,
+      "name": "powerd",
+      "cpu": "0.6",
+      "mem": "6M",
+      "io": "0B/s",
+      "threads": 3,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 8120,
+      "name": "Mail",
+      "cpu": "0.5",
+      "mem": "210M",
+      "io": "12K/s",
+      "threads": 14,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 931,
+      "name": "configd",
+      "cpu": "0.5",
+      "mem": "8M",
+      "io": "0B/s",
+      "threads": 6,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 9030,
+      "name": "Calendar",
+      "cpu": "0.4",
+      "mem": "96M",
+      "io": "0B/s",
+      "threads": 5,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 1044,
+      "name": "notifyd",
+      "cpu": "0.4",
+      "mem": "3M",
+      "io": "0B/s",
+      "threads": 3,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 9350,
+      "name": "Music",
+      "cpu": "0.3",
+      "mem": "150M",
+      "io": "0B/s",
+      "threads": 11,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 1160,
+      "name": "distnoted",
+      "cpu": "0.3",
+      "mem": "5M",
+      "io": "0B/s",
+      "threads": 2,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 9811,
+      "name": "gopls",
+      "cpu": "0.2",
+      "mem": "320M",
+      "io": "0B/s",
+      "threads": 16,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 1275,
+      "name": "trustd",
+      "cpu": "0.2",
+      "mem": "9M",
+      "io": "0B/s",
+      "threads": 3,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 10230,
+      "name": "Preview",
+      "cpu": "0.1",
+      "mem": "88M",
+      "io": "0B/s",
+      "threads": 4,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 1390,
+      "name": "syslogd",
+      "cpu": "0.1",
+      "mem": "2M",
+      "io": "1K/s",
+      "threads": 3,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 10555,
+      "name": "Notes",
+      "cpu": "0.1",
+      "mem": "74M",
+      "io": "0B/s",
+      "threads": 6,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 1501,
+      "name": "usbd",
+      "cpu": "0.0",
+      "mem": "3M",
+      "io": "0B/s",
+      "threads": 2,
+      "user": "root",
+      "protected": false,
+      "cpu_hot": false
+    },
+    {
+      "pid": 11020,
+      "name": "sleep",
+      "cpu": "0.0",
+      "mem": "1M",
+      "io": "0B/s",
+      "threads": 1,
+      "user": "abdul",
+      "protected": false,
+      "cpu_hot": false
+    }
+  ],
+  "cursor_pid": 412,
+  "marked_pids": [],
+  "filter_open": false,
+  "query": "",
+  "kill_open": false,
+  "kill_force": false,
+  "kill_rows": [
+    {
+      "pid": 1,
+      "state": "[BLOCKED ]",
+      "name": "launchd",
+      "note": "protected",
+      "blocked": true
+    },
+    {
+      "pid": 4242,
+      "state": "[ELIGIBLE]",
+      "name": "微信",
+      "note": "",
+      "blocked": false
+    }
+  ],
+  "detail_open": false,
+  "detail": {
+    "title": "process detail · 微信 · pid 4242",
+    "present": true,
+    "rows": [
+      {
+        "k": "pid",
+        "label": "pid",
+        "value": "4242"
+      },
+      {
+        "k": "name",
+        "label": "name",
+        "value": "微信"
+      },
+      {
+        "k": "user",
+        "label": "user",
+        "value": "abdul"
+      },
+      {
+        "k": "state",
+        "label": "state",
+        "value": "running"
+      },
+      {
+        "k": "cpu",
+        "label": "cpu",
+        "value": "25.6%"
+      },
+      {
+        "k": "mem",
+        "label": "memory",
+        "value": "612M"
+      },
+      {
+        "k": "threads",
+        "label": "threads",
+        "value": "58"
+      },
+      {
+        "k": "started",
+        "label": "started",
+        "value": "09:14:02"
+      }
+    ]
+  },
+  "settings": [
+    {
+      "key": "theme",
+      "label": "theme",
+      "value": "auto",
+      "dirty": false,
+      "error": false
+    },
+    {
+      "key": "refresh",
+      "label": "refresh interval",
+      "value": "1s",
+      "dirty": false,
+      "error": false
+    },
+    {
+      "key": "mouse",
+      "label": "mouse",
+      "value": "on",
+      "dirty": false,
+      "error": false
+    },
+    {
+      "key": "units",
+      "label": "memory units",
+      "value": "binary",
+      "dirty": false,
+      "error": false
+    },
+    {
+      "key": "sort",
+      "label": "default sort",
+      "value": "cpu",
+      "dirty": false,
+      "error": false
+    },
+    {
+      "key": "confirm",
+      "label": "confirm kill",
+      "value": "on",
+      "dirty": false,
+      "error": false
+    }
+  ],
+  "setting_cursor": "theme",
+  "settings_status": "",
+  "settings_saved": false,
+  "settings_failed": false,
+  "help_open": false
+}

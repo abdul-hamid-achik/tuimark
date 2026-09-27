@@ -1,0 +1,59 @@
+version: 1
+name: monitor_theme
+intent: |
+    examples/monitor's studio.tui has theme="auto" and a studio.tcss whose
+    @media (theme: light) block gives :root a light palette (SPEC v0.2b
+    §10.5, §17.4.2). Run with TUIMARK_THEME=light it paints the light
+    palette (panel #f3efeb, accent #c8102e); run again with TUIMARK_THEME
+    and COLORFGBG unset in a terminal that does not answer the OSC 11
+    background query, the probe gives up after at most 250 ms and the
+    first frame arrives promptly in the dark palette (panel #231e1b,
+    accent #e0443e), the default (SPEC §26.4).
+target:
+    cmd: ["sh", "-c", "TUIMARK_THEME=light ${vars.monitor}; TUIMARK_THEME= COLORFGBG= ${vars.monitor}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "PID NAME"
+        timeoutMs: 5000
+    - snapshot: light
+    - press: q
+    - wait:
+        screen:
+            notContains: "PID NAME"
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "PID NAME"
+        timeoutMs: 1500
+    - snapshot: dark
+outcomes:
+    - id: tuimark_theme_light_paints_light
+      description: with TUIMARK_THEME=light the identity row uses the light palette (the ◆ in accent #c8102e on panel #f3efeb)
+      verify:
+        script:
+            runtime: shell
+            run: |
+                j=$(tr -d ' \n' < "$GLYPHRUN_RUN_DIR/snapshots/light.json")
+                if echo "$j" | grep -Eq '"x":0,"y":0,[^}]*"style":\{"fg":"#c8102e","bg":"#f3efeb"'; then
+                  echo '{"ok": true, "evidence": "cell 0,0 is #c8102e on #f3efeb"}'
+                else
+                  echo '{"ok": false, "evidence": "cell 0,0 is not in the light palette"}'
+                fi
+    - id: auto_without_answer_is_dark
+      description: with TUIMARK_THEME unset and no OSC 11 answer, the first frame arrives within the wait and uses the dark palette (the ◆ in accent #e0443e on panel #231e1b)
+      verify:
+        script:
+            runtime: shell
+            run: |
+                j=$(tr -d ' \n' < "$GLYPHRUN_RUN_DIR/snapshots/dark.json")
+                if echo "$j" | grep -Eq '"x":0,"y":0,[^}]*"style":\{"fg":"#e0443e","bg":"#231e1b"'; then
+                  echo '{"ok": true, "evidence": "cell 0,0 is #e0443e on #231e1b"}'
+                else
+                  echo '{"ok": false, "evidence": "cell 0,0 is not in the dark palette"}'
+                fi
+contractHash: sha256:f3990aac4c5de0841577163a42d6b66fb8ff96d9f7af2370bbda62e201ffed46

@@ -176,3 +176,76 @@ func TestRunPtyV2(t *testing.T) {
 		}
 	})
 }
+
+// runMousePtyChild runs Run on the pty with modeDoc and the mouse on. A
+// pick turns the mouse off when TUIMARK_PTY_MOUSE_OFF is set.
+func runMousePtyChild(t *testing.T) {
+	a := doc(t, modeDoc)
+	_ = a.Bind("", map[string]any{"m": true, "rows": []any{"a", "b"}})
+	a.On("pick", func(ev Event) error {
+		fmt.Fprintf(os.Stderr, "EVENT pick %v\n", ev.Keys["r"])
+		if os.Getenv("TUIMARK_PTY_MOUSE_OFF") != "" {
+			return a.Set("m", false)
+		}
+		return nil
+	})
+	err := a.Run(os.Stdout)
+	fmt.Fprintf(os.Stderr, "RUN-RETURNED %v\n", err)
+	os.Exit(0)
+}
+
+// SPEC v0.2b §21 test 44 through Run on a pty: mouse="m" true writes
+// CSI ?1000h CSI ?1006h before the first frame's bytes; an SGR click acts;
+// Set("m", false) makes the next frame write CSI ?1000l CSI ?1006l; the
+// leave sequence turns the modes off only while they are on; ?1003h is
+// never written.
+func TestRunPtyMouse(t *testing.T) {
+	if os.Getenv(ptyChildEnv) == "run-mouse" {
+		runMousePtyChild(t)
+		return
+	}
+	for _, off := range []bool{false, true} {
+		t.Run(fmt.Sprintf("off=%v", off), func(t *testing.T) {
+			env := []string{"TERM=xterm-256color", "TUIMARK_COLOR=truecolor"}
+			if off {
+				env = append(env, "TUIMARK_PTY_MOUSE_OFF=1")
+			}
+			r := startPtyChildEnv(t, "TestRunPtyMouse", "run-mouse", env)
+			if !r.waitFor(r.screen, "\x1b[c", 10*time.Second) {
+				t.Fatalf("no probe; %s", r.describe())
+			}
+			r.write(t, "\x1b[?64c")
+			if !r.waitFor(r.screen, mouseModesOn, 5*time.Second) {
+				t.Fatalf("no mouse modes; %s", r.describe())
+			}
+			time.Sleep(100 * time.Millisecond)
+			r.write(t, "\x1b[<0;1;2M\x1b[<0;1;2m")
+			if !r.waitFor(r.stderr, "EVENT pick b", 5*time.Second) {
+				t.Fatalf("the click did not act; %s", r.describe())
+			}
+			if off && !r.waitFor(r.screen, mouseModesOff, 5*time.Second) {
+				t.Fatalf("the modes did not turn off; %s", r.describe())
+			}
+			r.write(t, "\x03")
+			if !r.wait(10 * time.Second) {
+				t.Fatalf("ctrl+c did not quit; %s", r.describe())
+			}
+			r.slave.Close()
+			time.Sleep(50 * time.Millisecond)
+			s := r.screen.String()
+			probeEnd := strings.Index(s, "\x1b[c") + len("\x1b[c")
+			on, first := strings.Index(s, mouseModesOn), strings.Index(s[probeEnd:], "a")
+			if on < probeEnd || first < 0 || on > probeEnd+first {
+				t.Errorf("modes on at %d, probe end %d, first frame text at %d", on, probeEnd, probeEnd+first)
+			}
+			if strings.Contains(s, "\x1b[?1003h") || strings.Count(s, mouseModesOff) != 1 {
+				t.Errorf("mode writes: %q", s)
+			}
+			leave := s[strings.LastIndex(s, "\x1b[?2004l"):]
+			before := s[:strings.LastIndex(s, "\x1b[?2004l")]
+			if off == strings.HasSuffix(before, mouseModesOff) || strings.Contains(leave, mouseModesOff) {
+				t.Errorf("leave (off=%v): %q", off, s[max(0, len(s)-80):])
+			}
+		})
+	}
+}

@@ -192,7 +192,7 @@ takes over), proving the loop end to end. This one example touches:
 Every `<tui>` document declares `version="1"` or `version="2"`. A
 `version="1"` document keeps the vocabulary and meaning it has always had,
 and its dumps stay byte-identical. `version="2"` opts into the 0.2b
-vocabulary (SPEC §5.1); this build implements all of it except the mouse:
+vocabulary (SPEC §5.1); this build implements all of it:
 
 - **The version gate.** In a `version="1"` document each 0.2b tag is
   `V001`, each 0.2b attribute `V002`, and each 0.2b value, property,
@@ -428,9 +428,26 @@ vocabulary (SPEC §5.1); this build implements all of it except the mouse:
   a table `enter` and `space`); then the first keymap row whose keys,
   `when`, and built-in target match; then `tab`, `shift+tab`, and
   `ctrl+c`.
-- `mouse` on `<tui>` is accepted by the gate in a `version="2"` document
-  (and carried in `tuimark ir`), but this build does not turn the mouse on
-  yet.
+- **The mouse.** `<tui version="2" mouse="mouse_enabled">` turns mouse
+  input on while its flag (`true`, `false`, a path, or `!path`; default
+  `false`, so the terminal keeps its native text selection) is truthy. It
+  is evaluated on every frame: a host or a Settings screen switches it
+  with `Set`, and `Run()` writes `CSI ?1000h CSI ?1006h` (SGR reports) or
+  `CSI ?1000l CSI ?1006l` before the next frame, and turns it off on the
+  way out. A missing path is `B002` and counts as false. Only the left
+  button and the wheel act, on the frame on the screen; while a modal is
+  open only events inside the top modal count. A click acts on the
+  release, when press and release land on the same node (the same layer
+  and child-index path, so two rows sharing a template `id` differ).
+  Walking up from the node under the pointer, the first rule that applies
+  decides: a disabled or `visibility: hidden` node stops the walk; a tab
+  label activates its tab; a list or table row focuses its widget
+  (`on:focus`) and moves the cursor there (`on:select`); a `column` with
+  `on:click` fires it without moving focus; a node with `on:click` takes
+  focus if it can and fires it; any other focusable node takes focus. The
+  wheel moves a list or table cursor by one (`on:select`, focus stays), a
+  tab strip by one tab (wrapping), or another viewport by one row. The
+  hit test is the one `tuimark inspect --at X,Y` uses.
 
 ## CLI reference
 
@@ -538,8 +555,10 @@ record starts with `ev` and `t` (milliseconds since `Run()` started):
 `start` (version and size), `caps` (whether the probe ran, the color
 profile, synchronized output, grapheme mode, and the effective theme with
 where it came from), then one record per `key` (by token), `paste` (its
-normalized length), `action` (the §8.2 payload), `frame` (microseconds
-and bytes written), and `resize`, and finally `end` with its reason
+normalized length), `mouse` (kind `press`, `release`, `wheel-up`, or
+`wheel-down`, and the 0-based cell; only while the mouse is on), `mode`
+(each mouse mode change written), `action` (the §8.2 payload), `frame`
+(microseconds and bytes written), and `resize`, and finally `end` with its reason
 (`quit`, `eof`, `signal`, or `error`). While an enabled `secret` input has
 focus, `key` and `paste` records are just `{"ev", "t", "redacted": true}`,
 and that input's events are logged without their `value`. A write error
@@ -596,14 +615,16 @@ With neither, the session is just the first frame (step 0).
 | `set:PATH=JSON` | `Set(PATH, json.Unmarshal(JSON))`; `PATH` may be empty (the store root) or the reserved `@focus`/`@screen`/`@theme` (`set:@theme="light"`) |
 | `focus:#ID` | `Set("@focus", "ID")` (the `#` is optional); fires no `on:focus`, like `Set` |
 | `resize:COLSxROWS` | the terminal size changes, handled like `Run()` handles `SIGWINCH` |
-| `click:X,Y`, `wheel-up:X,Y`, `wheel-down:X,Y` | the 0.2b mouse steps; a usage error in this build |
+| `click:X,Y`, `wheel-up:X,Y`, `wheel-down:X,Y` | a left click (press and release) or one wheel report at cell (X, Y), 0-based as in the dump, on the current frame (`version="2"` mouse, SPEC §8.5). With the document's `mouse` false the step changes nothing and fires nothing; a cell outside the current grid is a usage error |
 
 The equivalent `--script` line for each: `{"key":"..."}`, `{"text":"..."}`,
 `{"paste":"..."}`, `{"set":{"path":"...","value":...}}`, `{"focus":"#..."}`,
 `{"resize":[COLS,ROWS]}`. `{"theme":"light"}` (`"dark"`, `"light"`, or
 `"auto"`) is `Set("@theme", value)`, like `set:@theme="light"`; since
-`play` never probes the terminal, `auto` is `dark`. `{"click":...}` and
-`{"wheel":...}` are the same usage error as the mouse steps above.
+`play` never probes the terminal, `auto` is `dark`. `{"click":[X,Y]}` is
+`click:X,Y`, and `{"wheel":"up","at":[X,Y]}` (or `"down"`) is
+`wheel-up:X,Y`/`wheel-down:X,Y` — the one step object with two members,
+exactly those two.
 
 A `quit` (a keymap `quit`, or `ctrl+c` with nothing else claiming it) ends
 the session early: later steps are never applied. `--format json` prints
@@ -616,8 +637,8 @@ adds `"frames"`, one `{"step", "input", "events", "dump"}` per applied step
 dump, with one such section per step when `--frames` is given.
 
 Exit codes: **0** the final dump is ok; **2** it has an error-severity
-diagnostic; **1** a usage or I/O error (an unparseable step, a reserved
-step, a `Set` error such as a bad path or an unknown screen) — nothing is
+diagnostic; **1** a usage or I/O error (an unparseable step, a mouse step
+outside the grid, a `Set` error such as a bad path or an unknown screen) — nothing is
 printed to stdout in that case, only `tuimark: play: step N (INPUT):
 REASON` to stderr.
 
@@ -862,6 +883,31 @@ module; the only supported entry points are the functions above.
   See `examples/agent/README.md` for the tool sandbox, the two providers,
   and the keys and main flags (`./bin/agent --help` lists all flags).
 
+- `examples/monitor` — the 0.2b acceptance fixture (SPEC §17.4): monitor
+  studio's Overview (a panel grid with sparklines and eighths gauges),
+  CPU (a core grid in a scroll with a scrollbar), Processes (a table
+  whose columns follow the width by `@media`, multi-select with `▸`, a
+  filter input, the kill confirmation, and the process detail), and
+  Settings, under a nine-label tab strip and a contextual `<hints>` bar,
+  in a `version="2"` document with `theme="auto"` and the mouse on.
+  `studio.tui` and `studio.tcss` are the SPEC's literal text;
+  `sample.json` pins the rows the goldens assert; `main.go` is a host with
+  no layout, width, padding, truncation, or column code — a seeded fake
+  collector and the named actions (sorting with the arrow as data, the
+  filter, kill and force kill, the pinned detail, settings that switch
+  the mouse and the theme) through the public API only. Its goldens are
+  the `monitor-*` entries of `testdata/golden/manifest.json`, and
+  `specs/glyphrun/monitor_*.yml` drive the built binary.
+
+  ```sh
+  go build -o bin/monitor ./examples/monitor
+  ./bin/monitor
+  ./bin/monitor --theme light        # Set("@theme", "light") before Run
+  ./bin/monitor --dump 120x30        # print Dump() as JSON instead of running
+  ./bin/tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json \
+    --cols 120 --input "tab tab 9 tab click:70,1"
+  ```
+
 - `examples/stacked/{app.tui,theme.tcss}` — the phase-1 media fixture (SPEC
   §4, §21 test 10): the inbox layout with static text, where `@media
   (max-cols: 80)` stacks `#sidebar` above `#detail`. It only feeds the
@@ -875,8 +921,9 @@ module; the only supported entry points are the functions above.
   SPEC §21 conformance tests (`conformance_test.go` for tests 1-9,
   `phase_test.go` for tests 10-14, and the 0.2b literal fixtures and
   gates through the public API in `conformance_v02b_test.go`,
-  `conformance_p2_test.go`, `conformance_p3_test.go`, and
-  `conformance_p4_test.go`), the formatter's
+  `conformance_p2_test.go`, `conformance_p3_test.go`,
+  `conformance_p4_test.go`, and the `examples/monitor` acceptance checks in
+  `conformance_p5_test.go`), the formatter's
   idempotence/semantics-preservation tests, the IR-vs-schema test, the
   `AGENTS.md`-does-not-drift test, and the CLI's own exit-code/output tests.
   It also runs `tuimark test testdata/golden` itself
@@ -894,16 +941,17 @@ module; the only supported entry points are the functions above.
   touched by `--update`.
 - `glyph run specs/glyphrun/*.yml` — terminal end-to-end specs driven by
   Glyphrun (the `glyph` CLI) against the real interactive hosts
-  (`examples/inbox`, `examples/dashboard`, `examples/agent`) and the
-  `tuimark` CLI itself. All four binaries must exist under `bin/` before
-  running the specs — build them first:
+  (`examples/inbox`, `examples/dashboard`, `examples/monitor`,
+  `examples/agent`) and the `tuimark` CLI itself. All five binaries must
+  exist under `bin/` before running the specs — build them first:
   ```sh
   go build -o bin/tuimark ./cmd/tuimark
   go build -o bin/inbox ./examples/inbox
   go build -o bin/dashboard ./examples/dashboard
+  go build -o bin/monitor ./examples/monitor
   go build -o bin/agent ./examples/agent
   ```
-  or run `task build` (see `Taskfile.yml`), which builds all four in one
+  or run `task build` (see `Taskfile.yml`), which builds all five in one
   step; `task glyph` builds and then runs every spec; `task verify` runs
   fmt, vet, test, build, golden, and glyph in order — the full local gate.
   See `glyphrun.config.yml` and `glyph docs` for the spec format.
@@ -1075,6 +1123,14 @@ kept with the maintainer's project notes, outside this repository.
   waits briefly for more bytes before it's delivered as the `esc` key, so a
   bare Escape press can be told apart from the start of a longer
   escape/CSI sequence.
+- **A dropped mouse event also ends a pending press.** A left release
+  always ends the press before it; a press or release that the mouse
+  ignores (outside the top modal, outside the grid, or while `mouse` is
+  false) acts on nothing and leaves no press pending, so a later release
+  never completes a click that started under a closed mouse or behind a
+  modal. The wheel over a tab strip with no enabled tab, or over a viewport
+  without an `id` (its offset is kept by id), stops there and changes
+  nothing.
 
 ## Status per phase (SPEC §4)
 
@@ -1099,8 +1155,9 @@ kept with the maintainer's project notes, outside this repository.
   changes version (`tuimark ir` still emits `"version": "0.1"`); `<tui
   version="2">` and the rest of the proposal's new vocabulary are 0.2b
   (ADR 0009).
-- **Phase 6 (v0.2b)** — in progress. Done: the `version="2"` gate for the
-  whole 0.2b vocabulary (with the `(requires version="2")` hint in
+- **Phase 6 (v0.2b)** — implemented; the SPEC §24 trial with a fresh
+  agent (§21 test 74) is still to be run and recorded. Done: the
+  `version="2"` gate for the whole 0.2b vocabulary (with the `(requires version="2")` hint in
   `version="1"` documents), IR `0.2` and the 0.2b schemas, `class:NAME` and
   the dump's `classes`, the SPEC §18 frame order, `theme="auto"` (OSC 11,
   `COLORFGBG`), `@media (theme)`, `Set("@theme")`, `tuimark inspect`,
@@ -1112,8 +1169,10 @@ kept with the maintainer's project notes, outside this repository.
   `tabs`/`tab` (with focus on activation and focus requests into
   inactive tabs), `sparkline`, `hints` with `label`/`keycap`, and
   `layout: grid` (goldens `tabs`, `hints`, `hints-filter`, and `grid`, the
-  SPEC literal fixtures in `specs/fixtures/`). Still to come: the mouse
-  and `examples/monitor`.
+  SPEC literal fixtures in `specs/fixtures/`), the mouse (SGR reports,
+  click on release, the wheel, `play`'s `click:`/`wheel-*:` steps), and
+  the acceptance fixture `examples/monitor` with its `monitor-*` goldens
+  and `specs/glyphrun/monitor_*.yml` specs.
 
 ## License
 

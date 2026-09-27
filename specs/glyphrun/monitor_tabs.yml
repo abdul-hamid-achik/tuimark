@@ -1,0 +1,137 @@
+version: 1
+name: monitor_tabs
+intent: |
+    examples/monitor (SPEC v0.2b §17.4) switches its nine tabs from the
+    keyboard and the mouse, with the tab strip declared in studio.tui and
+    no layout code in the host: the digits 1-9 activate their tab
+    (switch-to), tab and shift+tab (and l and h) move to the next and
+    previous tab and wrap from 9 trends back to 1 overview, and a left
+    click on the "7 processes" label (SGR mouse, SPEC §8.5) activates it
+    and puts focus on the process table, whose hint keys then show in the
+    bar. The active label carries the ▸ mark; at 120 columns every label
+    shows its full text (tier 1).
+target:
+    cmd: ["${vars.monitor}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "▸7 processes"
+        timeoutMs: 5000
+    - snapshot: start
+    - press: "1"
+    - wait:
+        screen:
+            contains: "▸1 overview"
+        timeoutMs: 2000
+    - snapshot: overview
+    - press: "2"
+    - wait:
+        screen:
+            contains: "▸2 cpu"
+        timeoutMs: 2000
+    - press: "8"
+    - wait:
+        screen:
+            contains: "▸8 settings"
+        timeoutMs: 2000
+    - snapshot: settings
+    - press: "9"
+    - wait:
+        screen:
+            contains: "▸9 trends"
+        timeoutMs: 2000
+    - press: tab
+    - wait:
+        screen:
+            contains: "▸1 overview"
+        timeoutMs: 2000
+    - snapshot: wrapped_forward
+    - press: shift+tab
+    - wait:
+        screen:
+            contains: "▸9 trends"
+        timeoutMs: 2000
+    - snapshot: wrapped_back
+    - press: l
+    - wait:
+        screen:
+            contains: "▸1 overview"
+        timeoutMs: 2000
+    - press: l
+    - wait:
+        screen:
+            contains: "▸2 cpu"
+        timeoutMs: 2000
+    - press: h
+    - wait:
+        screen:
+            contains: "▸1 overview"
+        timeoutMs: 2000
+    - snapshot: before_click
+    - mouse:
+        x: 70
+        y: 1
+        button: left
+        action: click
+    - wait:
+        screen:
+            contains: "▸7 processes"
+        timeoutMs: 2000
+    - wait:
+        screen:
+            contains: "space mark"
+        timeoutMs: 2000
+    - snapshot: clicked
+outcomes:
+    - id: digits_switch_tabs
+      description: pressing 1, 2, 8, and 9 activates the overview, cpu, settings, and trends tabs (switch-to); the overview shows its cpu panel and the settings tab its settings list
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "▸1 overview" "$d/overview.txt" && grep -q "cpu 23%" "$d/overview.txt" && grep -q "▸8 settings" "$d/settings.txt" && grep -q "refresh interval" "$d/settings.txt"; then
+                  echo '{"ok": true, "evidence": "overview and settings snapshots show their tab active and their content"}'
+                else
+                  echo '{"ok": false, "evidence": "a digit did not activate its tab"}'
+                fi
+    - id: tab_wraps_both_ways
+      description: tab from 9 trends wraps to 1 overview, and shift+tab from 1 overview wraps back to 9 trends
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "▸1 overview" "$d/wrapped_forward.txt" && grep -q "▸9 trends" "$d/wrapped_back.txt"; then
+                  echo '{"ok": true, "evidence": "wrapped_forward shows 1 overview active, wrapped_back shows 9 trends active"}'
+                else
+                  echo '{"ok": false, "evidence": "tab or shift+tab did not wrap"}'
+                fi
+    - id: l_and_h_move_tabs
+      description: l and h move to the next and previous tab like tab and shift+tab
+      verify:
+        script:
+            runtime: shell
+            run: |
+                if grep -q "▸1 overview" "$GLYPHRUN_RUN_DIR/snapshots/before_click.txt"; then
+                  echo '{"ok": true, "evidence": "l, l, h from 9 trends ends on 1 overview"}'
+                else
+                  echo '{"ok": false, "evidence": "l/h did not move the active tab"}'
+                fi
+    - id: click_on_label_activates_processes
+      description: a left click on the "7 processes" label activates the processes tab and focuses the process table, so the bar shows the table's hints
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/clicked.txt"
+                if grep -q "▸7 processes" "$f" && grep -q "PID NAME" "$f" && grep -q "space mark" "$f"; then
+                  echo '{"ok": true, "evidence": "the clicked snapshot shows 7 processes active, the table, and its space mark hint"}'
+                else
+                  echo '{"ok": false, "evidence": "the click on the label did not activate the processes tab or focus the table"}'
+                fi
+contractHash: sha256:2a797128f9e42d3594177def0b4820931312c701b8f7704ecbf16d83465e6254

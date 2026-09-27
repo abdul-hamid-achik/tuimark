@@ -101,6 +101,9 @@ type App struct {
 	dirty bool
 	wake  chan struct{}
 	last  *Frame
+	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
+	// §26.11): the next left release ends it. nil when none is pending.
+	press *hitIdentity
 
 	// Theme selection (SPEC §26.4). hostTheme is the reserved Set path
 	// @theme (dark, light, or auto; "" until the host sets it); flagTheme

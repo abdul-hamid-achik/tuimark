@@ -9,11 +9,12 @@ vars:
 
 tasks:
   build:
-    desc: Build tuimark, inbox, dashboard, and (once it has Go files) agent into bin/.
+    desc: Build tuimark, inbox, dashboard, monitor, and (once it has Go files) agent into bin/.
     cmds:
       - go build -o bin/tuimark ./cmd/tuimark
       - go build -o bin/inbox ./examples/inbox
       - go build -o bin/dashboard ./examples/dashboard
+      - go build -o bin/monitor ./examples/monitor
       - |
         if ls {{.AGENT_DIR}}/*.go >/dev/null 2>&1; then
           go build -o bin/agent ./{{.AGENT_DIR}}

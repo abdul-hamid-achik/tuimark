@@ -1,0 +1,155 @@
+version: 1
+name: monitor_kill
+intent: |
+    The kill confirmation of examples/monitor (SPEC v0.2b §17.4) is a
+    modal declared in studio.tui over data the host derives: K asks about
+    the cursor row, X asks for a forced kill and shows "SIGKILL cannot be
+    caught"; a protected process is listed as [BLOCKED ] in the danger
+    color (a class:blocked guard, laid out by CSS); n and esc cancel; y
+    confirms and the eligible process leaves the table; while the modal is
+    open it holds focus, so the table keys (j, space) and the tab keys (2)
+    reach nothing behind it.
+target:
+    cmd: ["${vars.monitor}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "PID NAME"
+        timeoutMs: 5000
+    - press: K
+    - wait:
+        screen:
+            contains: "kill processes"
+        timeoutMs: 2000
+    - snapshot: ask
+    - press: n
+    - wait:
+        screen:
+            notContains: "kill processes"
+        timeoutMs: 2000
+    - snapshot: cancelled_n
+    - press: j
+    - press: j
+    - press: j
+    - press: j
+    - press: j
+    - press: j
+    - press: j
+    - press: K
+    - wait:
+        screen:
+            contains: "[BLOCKED ]"
+        timeoutMs: 2000
+    - snapshot: blocked
+    - press: j
+    - press: "2"
+    - press: space
+    - wait:
+        screen:
+            contains: "y confirm"
+        timeoutMs: 2000
+    - snapshot: while_open
+    - press: esc
+    - wait:
+        screen:
+            notContains: "kill processes"
+        timeoutMs: 2000
+    - snapshot: cancelled_esc
+    - press: enter
+    - wait:
+        screen:
+            contains: "process detail · launchd"
+        timeoutMs: 2000
+    - snapshot: cursor_kept
+    - press: esc
+    - wait:
+        screen:
+            notContains: "process detail"
+        timeoutMs: 2000
+    - press: k
+    - press: k
+    - press: k
+    - press: k
+    - press: X
+    - wait:
+        screen:
+            contains: "SIGKILL cannot be caught"
+        timeoutMs: 2000
+    - snapshot: force
+    - press: y
+    - wait:
+        screen:
+            notContains: "kill processes"
+        timeoutMs: 2000
+    - wait:
+        screen:
+            notContains: "4242"
+        timeoutMs: 2000
+    - snapshot: confirmed
+outcomes:
+    - id: k_opens_the_confirmation
+      description: K opens the kill confirmation for the cursor row (WindowServer, pid 412) with its yes/no buttons and the y/n hints
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/ask.txt"
+                if grep -q "\[ELIGIBLE\]     412 WindowServer" "$f" && grep -q "y confirm  n cancel" "$f" && ! grep -q "SIGKILL" "$f"; then
+                  echo '{"ok": true, "evidence": "the ask snapshot lists WindowServer as eligible, with the y/n hints and no SIGKILL warning"}'
+                else
+                  echo '{"ok": false, "evidence": "K did not open the confirmation for the cursor row"}'
+                fi
+    - id: n_and_esc_cancel
+      description: n and esc both close the confirmation without killing anything
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if ! grep -q "kill processes" "$d/cancelled_n.txt" && grep -q "WindowServer" "$d/cancelled_n.txt" && ! grep -q "kill processes" "$d/cancelled_esc.txt" && grep -q "launchd" "$d/cancelled_esc.txt"; then
+                  echo '{"ok": true, "evidence": "both cancelled snapshots show the table without the modal, nothing removed"}'
+                else
+                  echo '{"ok": false, "evidence": "n or esc did not cancel cleanly"}'
+                fi
+    - id: blocked_rows_in_danger_color
+      description: the protected launchd is listed as [BLOCKED ] with a protected note, painted in the theme's danger color (#e0443e)
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                j=$(tr -d ' \n' < "$d/blocked.json")
+                if grep -q "\[BLOCKED \]       1 launchd protected" "$d/blocked.txt" && echo "$j" | grep -Eq '"char":"B","width":1,"style":\{"fg":"#e0443e"'; then
+                  echo '{"ok": true, "evidence": "the blocked row is laid out and its B is #e0443e"}'
+                else
+                  echo '{"ok": false, "evidence": "the blocked row is missing or not in the danger color"}'
+                fi
+    - id: modal_holds_the_keys
+      description: while the confirmation is open, j, space, and 2 reach nothing behind it; the tab stays Processes, no row gets marked, and the cursor stays on launchd
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "▸7 processes" "$d/cancelled_esc.txt" && ! grep -q "│▸" "$d/cancelled_esc.txt" && grep -q "process detail · launchd" "$d/cursor_kept.txt"; then
+                  echo '{"ok": true, "evidence": "the tab, the marks, and the cursor did not change while the modal was open"}'
+                else
+                  echo '{"ok": false, "evidence": "a key reached the table or the tabs through the modal"}'
+                fi
+    - id: x_warns_and_y_confirms
+      description: X asks for a forced kill with the SIGKILL warning, and y confirms it, so 微信 (pid 4242) leaves the table
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "SIGKILL cannot be caught" "$d/force.txt" && grep -q "4242" "$d/force.txt" && ! grep -q "4242" "$d/confirmed.txt" && ! grep -q "kill processes" "$d/confirmed.txt"; then
+                  echo '{"ok": true, "evidence": "force shows the warning for pid 4242; confirmed no longer lists it"}'
+                else
+                  echo '{"ok": false, "evidence": "X or y did not work"}'
+                fi
+contractHash: sha256:05e98291e02133f03c579bdd72709f6346dd9c63e2ec4ac561ab228ec534b37d

@@ -112,7 +112,9 @@ func (a *App) Validate() []Diagnostic { return a.h.Validate() }
 
 // Run drives the app in the terminal until quit. Input is read from
 // stdin in raw mode; frames are written to w. It returns nil on quit, and
-// nothing is left reading stdin when it returns. Printable keys that
+// nothing is left reading stdin when it returns. A version="2" document's
+// mouse attribute turns mouse reporting on while it is true (left clicks
+// and the wheel act; see the SPEC's mouse section). Printable keys that
 // arrive together for the focused input (a paste) are typed as one edit
 // with one on:change carrying the final value. SIGTERM, SIGHUP, and
 // SIGINT also stop it: the terminal is restored first (cooked mode, main

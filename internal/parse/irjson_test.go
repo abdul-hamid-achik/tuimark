@@ -176,16 +176,22 @@ func (v *schemaValidator) validate(schema map[string]any, data any, path string)
 	return errs
 }
 
+// Every example's IR validates against the schema of its version (SPEC
+// v0.2b §21 test 68): IR "0.1" against schema/ir.v0.1.json, IR "0.2" (a
+// version="2" document such as examples/monitor) against ir.v0.2.json.
 func TestIRValidatesAgainstSchema(t *testing.T) {
-	schemaRaw, err := os.ReadFile("../../schema/ir.v0.1.json")
-	if err != nil {
-		t.Fatal(err)
+	schemas := map[string]map[string]any{}
+	for version, path := range map[string]string{"0.1": "../../schema/ir.v0.1.json", "0.2": "../../schema/ir.v0.2.json"} {
+		schemaRaw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var schema map[string]any
+		if err := json.Unmarshal(schemaRaw, &schema); err != nil {
+			t.Fatalf("schema is not valid JSON: %v", err)
+		}
+		schemas[version] = schema
 	}
-	var schema map[string]any
-	if err := json.Unmarshal(schemaRaw, &schema); err != nil {
-		t.Fatalf("schema is not valid JSON: %v", err)
-	}
-	v := &schemaValidator{root: schema}
 
 	for _, f := range allExampleFiles(t) {
 		f := f
@@ -208,8 +214,13 @@ func TestIRValidatesAgainstSchema(t *testing.T) {
 			if err := json.Unmarshal(b, &data); err != nil {
 				t.Fatal(err)
 			}
+			schema := schemas[irDoc.Version]
+			if schema == nil {
+				t.Fatalf("%s: IR version %q has no schema", f, irDoc.Version)
+			}
+			v := &schemaValidator{root: schema}
 			if errs := v.validate(schema, data, "$"); len(errs) > 0 {
-				t.Errorf("%s: IR does not validate against schema/ir.v0.1.json:\n%s\n--- IR ---\n%s", f, strings.Join(errs, "\n"), b)
+				t.Errorf("%s: IR does not validate against schema/ir.v%s.json:\n%s\n--- IR ---\n%s", f, irDoc.Version, strings.Join(errs, "\n"), b)
 			}
 		})
 	}

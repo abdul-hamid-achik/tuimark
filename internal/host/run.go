@@ -49,8 +49,13 @@ var escTimeout = 25 * time.Millisecond
 // first frame, handle the queued input, and loop. Frames are written in the color profile of §26.3, wrapped in
 // synchronized output when the terminal supports it (§26.6), with CHA
 // re-positioning after complex clusters unless mode 2027 is on (§26.5).
-// Every way out (quit, EOF, error, stop signal) writes the leave sequence:
-// mode 2027 off (when Run turned it on), bracketed paste off, attributes
+// The mouse modes follow the document's mouse attribute, evaluated on every
+// frame: a frame whose value differs from the terminal's modes writes CSI
+// ?1000h CSI ?1006h (or the l forms) before its own bytes, and SGR reports
+// are handled with the keys, in arrival order, against the live frame
+// (SPEC v0.2b §8.5, §26.11). Every way out (quit, EOF, error, stop signal)
+// writes the leave sequence: mode 2027 off (when Run turned it on), the
+// mouse modes off (while they are on), bracketed paste off, attributes
 // reset, cursor shown, main screen.
 //
 // SIGTERM, SIGHUP, and SIGINT (SIGINT only from outside: raw mode turns
@@ -450,11 +455,22 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		if cols != lastCols || rows != lastRows {
 			if lastCols >= 0 {
 				lg.write("resize", member{"cols", cols}, member{"rows", rows})
+				// A resize drops a pending left press (SPEC v0.2b §26.11).
+				a.DropPress()
 			}
 			prev = nil
 			lastCols, lastRows = cols, rows
 		}
 		f := a.Frame(cols, rows)
+		// The mouse modes follow the frame's mouse value: a change is
+		// written in one write before the frame's bytes, outside the
+		// synchronized output wrapper (SPEC v0.2b §26.11).
+		if m := sess.mouseChange(f.Mouse); m != "" {
+			if _, err := io.WriteString(out, m); err != nil {
+				return err
+			}
+			lg.write("mode", member{"mouse", f.Mouse})
+		}
 		s := paint.DiffWith(prev, f.Grid, opts)
 		if syncFrames {
 			s = syncBegin + s + syncEnd
@@ -553,8 +569,26 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				}
 				continue
 			}
+			if ins[0].IsMouse {
+				// A mouse event is resolved against the live frame, in
+				// arrival order with keys and pastes (SPEC v0.2b §26.11).
+				if err := signaled(); err != nil {
+					return true, err
+				}
+				focus := a.Focus()
+				m := ins[0].Mouse
+				ins = ins[1:]
+				evs, on := a.HandleMouse(m)
+				if on {
+					lg.write("mouse", member{"kind", m.Kind.String()}, member{"x", m.X}, member{"y", m.Y})
+				}
+				if stop, err := dispatch(evs, focus); stop {
+					return true, err
+				}
+				continue
+			}
 			n := 1
-			for n < len(ins) && !ins[n].IsPaste {
+			for n < len(ins) && !ins[n].IsPaste && !ins[n].IsMouse {
 				n++
 			}
 			keys := make([]Key, n)

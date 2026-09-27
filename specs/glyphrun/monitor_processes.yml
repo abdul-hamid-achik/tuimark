@@ -1,0 +1,265 @@
+version: 1
+name: monitor_processes
+intent: |
+    The Processes tab of examples/monitor (SPEC v0.2b §17.4) is a table
+    declared in studio.tui: j and k move the cursor row (reverse video;
+    enter opens the detail of the cursor row, which names it); space
+    checks the cursor row and shows ▸ in its mark channel, ctrl+a checks
+    every row and ctrl+d none; c twice reverses the CPU order and the arrow
+    in the header turns from ▼ to ▲; / opens the filter row, typed text
+    filters the rows by name, and esc restores the list and closes the
+    row; ctrl+u clears the filter text (native to the input, no keymap
+    row); tab while the filter is focused applies it and keeps the
+    Processes tab active; the mouse wheel over the table moves the cursor
+    without moving focus; and a bracketed paste into the filter becomes
+    filter text and never reaches the keymap (a pasted q does not quit, a
+    pasted K does not open the kill confirmation).
+target:
+    cmd: ["${vars.monitor}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "PID NAME"
+        timeoutMs: 5000
+    - snapshot: start
+    - press: j
+    - press: enter
+    - wait:
+        screen:
+            contains: "process detail · kernel_task"
+        timeoutMs: 2000
+    - press: esc
+    - wait:
+        screen:
+            notContains: "process detail"
+        timeoutMs: 2000
+    - snapshot: after_j
+    - press: j
+    - press: k
+    - press: enter
+    - wait:
+        screen:
+            contains: "process detail · kernel_task"
+        timeoutMs: 2000
+    - snapshot: after_jk
+    - press: esc
+    - wait:
+        screen:
+            notContains: "process detail"
+        timeoutMs: 2000
+    - mouse:
+        x: 20
+        y: 8
+        button: wheelDown
+    - press: enter
+    - wait:
+        screen:
+            contains: "process detail · Code Helper (Renderer)"
+        timeoutMs: 2000
+    - snapshot: wheeled
+    - press: esc
+    - wait:
+        screen:
+            notContains: "process detail"
+        timeoutMs: 2000
+    - press: space
+    - wait:
+        screen:
+            contains: "│▸    8810"
+        timeoutMs: 2000
+    - snapshot: marked_one
+    - press: ctrl+a
+    - wait:
+        screen:
+            contains: "│▸     412"
+        timeoutMs: 2000
+    - snapshot: marked_all
+    - press: ctrl+d
+    - wait:
+        screen:
+            notContains: "│▸"
+        timeoutMs: 2000
+    - snapshot: marked_none
+    - press: c
+    - press: c
+    - wait:
+        screen:
+            contains: "CPU%▲"
+        timeoutMs: 2000
+    - snapshot: reversed
+    - press: c
+    - wait:
+        screen:
+            contains: "CPU%▼"
+        timeoutMs: 2000
+    - press: /
+    - wait:
+        screen:
+            contains: "/ filter"
+        timeoutMs: 2000
+    - type: "fire"
+    - wait:
+        screen:
+            notContains: "WindowServer"
+        timeoutMs: 2000
+    - snapshot: filtered
+    - press: esc
+    - wait:
+        screen:
+            contains: "WindowServer"
+        timeoutMs: 2000
+    - wait:
+        screen:
+            notContains: "/ fire"
+        timeoutMs: 2000
+    - snapshot: restored
+    - press: /
+    - wait:
+        screen:
+            contains: "/ filter"
+        timeoutMs: 2000
+    - type: "xyz"
+    - wait:
+        screen:
+            contains: "/ xyz"
+        timeoutMs: 2000
+    - press: ctrl+u
+    - wait:
+        screen:
+            contains: "/ filter"
+        timeoutMs: 2000
+    - snapshot: cleared
+    - type: "go"
+    - wait:
+        screen:
+            contains: "/ go"
+        timeoutMs: 2000
+    - press: tab
+    - wait:
+        screen:
+            contains: "space mark"
+        timeoutMs: 2000
+    - snapshot: applied
+    - press: /
+    - wait:
+        screen:
+            contains: "esc cancel"
+        timeoutMs: 2000
+    - press: ctrl+u
+    - wait:
+        screen:
+            contains: "/ filter"
+        timeoutMs: 2000
+    - paste: "qK"
+    - wait:
+        screen:
+            contains: "/ qK"
+        timeoutMs: 2000
+    - snapshot: pasted
+outcomes:
+    - id: j_and_k_move_the_cursor
+      description: the cursor starts on the first row (reverse video); j moves it to the second row (kernel_task, the detail enter opens names it), and j then k leaves it there
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                s=$(tr -d ' \n' < "$d/start.json"); a=$(tr -d ' \n' < "$d/after_j.json")
+                if echo "$s" | grep -Eq '"x":20,"y":4,[^}]*"style":\{[^}]*"reverse":true' && echo "$a" | grep -Eq '"x":20,"y":5,[^}]*"style":\{[^}]*"reverse":true' && ! echo "$a" | grep -Eq '"x":20,"y":4,[^}]*"style":\{[^}]*"reverse":true' && grep -q "kernel_task" "$d/after_jk.txt"; then
+                  echo '{"ok": true, "evidence": "reverse row at y 4 at start and y 5 after j; after j k the detail names kernel_task"}'
+                else
+                  echo '{"ok": false, "evidence": "the reverse cursor row did not follow j and k"}'
+                fi
+    - id: marks_follow_space_ctrl_a_ctrl_d
+      description: space marks the cursor row with ▸, ctrl+a marks every row, ctrl+d clears every mark
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                one=$(grep -c "│▸" "$d/marked_one.txt"); all=$(grep -c "│▸" "$d/marked_all.txt"); none=$(grep -c "│▸" "$d/marked_none.txt")
+                if [ "$one" = 1 ] && [ "$all" -ge 18 ] && [ "$none" = 0 ]; then
+                  echo "{\"ok\": true, \"evidence\": \"marked rows: $one after space, $all after ctrl+a, $none after ctrl+d\"}"
+                else
+                  echo "{\"ok\": false, \"evidence\": \"marked rows: $one after space, $all after ctrl+a, $none after ctrl+d\"}"
+                fi
+    - id: c_twice_reverses_the_order
+      description: the first c sorts by CPU descending, the second reverses it and the header arrow becomes ▲
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/reversed.txt"
+                if grep -q "CPU%▲" "$f" && ! grep -q "CPU%▼" "$f"; then
+                  echo '{"ok": true, "evidence": "the reversed snapshot shows CPU%▲ in the header"}'
+                else
+                  echo '{"ok": false, "evidence": "c twice did not reverse the order"}'
+                fi
+    - id: filter_and_escape_restore
+      description: / opens the filter, typing filters the rows by name, esc restores the full list and closes the filter row
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "firefox" "$d/filtered.txt" && ! grep -q "WindowServer" "$d/filtered.txt" && grep -q "WindowServer" "$d/restored.txt" && ! grep -q "/ fire" "$d/restored.txt"; then
+                  echo '{"ok": true, "evidence": "filtered shows only firefox; restored shows the full list without the filter row"}'
+                else
+                  echo '{"ok": false, "evidence": "the filter or its esc restore did not work"}'
+                fi
+    - id: ctrl_u_clears_the_filter
+      description: ctrl+u in the focused filter clears its text (the input consumes it natively), so the placeholder shows again
+      verify:
+        script:
+            runtime: shell
+            run: |
+                if grep -q "/ filter" "$GLYPHRUN_RUN_DIR/snapshots/cleared.txt"; then
+                  echo '{"ok": true, "evidence": "the cleared snapshot shows the filter placeholder"}'
+                else
+                  echo '{"ok": false, "evidence": "ctrl+u did not clear the filter"}'
+                fi
+    - id: tab_in_filter_keeps_the_tab
+      description: tab while the filter is focused applies the filter (focus back on the table) and does not switch to the next tab
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/applied.txt"
+                if grep -q "▸7 processes" "$f" && grep -q "/ go" "$f" && grep -q "space mark" "$f"; then
+                  echo '{"ok": true, "evidence": "Processes still active, the filter text kept, the table focused"}'
+                else
+                  echo '{"ok": false, "evidence": "tab in the filter switched tabs or did not apply the filter"}'
+                fi
+    - id: wheel_moves_the_cursor
+      description: the mouse wheel over the table moves the cursor down one row (the detail of the cursor row names the third process) without moving focus
+      verify:
+        script:
+            runtime: shell
+            run: |
+                if grep -q "process detail · Code Helper (Renderer)" "$GLYPHRUN_RUN_DIR/snapshots/wheeled.txt"; then
+                  echo '{"ok": true, "evidence": "after one wheel down from the second row, enter opens the third row detail"}'
+                else
+                  echo '{"ok": false, "evidence": "the wheel did not move the cursor, or it moved focus away from the table"}'
+                fi
+    - id: paste_never_reaches_the_keymap
+      description: a bracketed paste of "qK" into the filter becomes filter text; the app does not quit and the kill confirmation does not open
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/pasted.txt"
+                if grep -q "/ qK" "$f" && ! grep -q "kill processes" "$f"; then
+                  echo '{"ok": true, "evidence": "the pasted snapshot shows qK in the filter and no kill modal"}'
+                else
+                  echo '{"ok": false, "evidence": "the paste reached the keymap"}'
+                fi
+    - id: app_still_running
+      description: after the paste the app is still running
+      verify:
+        screen:
+            contains: "/ qK"
+contractHash: sha256:2d83ccee6aec54edff5586eba6114b625daa745785f3a88c3f1772fd3573c4c2

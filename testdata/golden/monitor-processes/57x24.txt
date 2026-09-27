@@ -1,0 +1,135 @@
+=== grid 57x24 ===
+◆ monitor studio-01                       ● LIVE 12:00:00
+▸‹ 7 processes ›                                         
+╭───────────────────────────────────────────────────────╮
+│      PID NAME                                    CPU%▼┃
+│      412 WindowServer                             87.3┃
+│        0 kernel_task                              64.0┃
+│     8810 Code Helper (Renderer)                   41.8┃
+│     4242 微信                                     25.6┃
+│     9921 node                                     18.2┃
+│     3377 🦊 firefox                               12.9┃
+│    15023 go                                        9.7┃
+│        1 launchd                                   8.4│
+│      702 mds_stores                                7.1│
+│     1330 com.apple.WebKit.WebContent.xpc-serv…     6.6│
+│      611 coreaudiod                                5.2│
+│     2210 Slack Helper (GPU)                        4.9│
+│    18841 tuimark                                   4.3│
+│      530 bluetoothd                                3.8│
+│     7015 Terminal                                  3.4│
+│      988 cloudd                                    2.9│
+│     1502 Spotlight                                 2.5│
+│     3190 Docker Desktop                            2.2│
+╰───────────────────────────────────────────────────────╯
+q quit  ? help  1-9 tabs  p pause  r refresh  space mark 
+=== nodes ===
+studio     screen  57x24 @(0,0)
+app        col     57x24 @(0,0)
+identity   row     57x1 @(0,0)
+-          text    9x1 @(0,0)
+-          text    9x1 @(10,0)
+-          spacer  21x1 @(20,0)
+-          text    6x1 @(42,0)
+-          text    8x1 @(49,0)
+nav        tabs    57x22 @(0,1)
+-          text    16x1 @(0,1) selected
+processes  tab     57x21 @(0,2)
+-          col     57x21 @(0,2)
+procs      table   57x21 @(0,2) focus
+c-pid      column  7x1 @(3,3)
+c-name     column  37x1 @(11,3)
+c-cpu      column  7x1 @(49,3)
+-          item    55x1 @(1,4) selected
+-          text    7x1 @(3,4)
+-          text    37x1 @(11,4)
+-          text    7x1 @(49,4)
+-          item    55x1 @(1,5)
+-          text    7x1 @(3,5)
+-          text    37x1 @(11,5)
+-          text    7x1 @(49,5)
+-          item    55x1 @(1,6)
+-          text    7x1 @(3,6)
+-          text    37x1 @(11,6)
+-          text    7x1 @(49,6)
+-          item    55x1 @(1,7)
+-          text    7x1 @(3,7)
+-          text    37x1 @(11,7)
+-          text    7x1 @(49,7)
+-          item    55x1 @(1,8)
+-          text    7x1 @(3,8)
+-          text    37x1 @(11,8)
+-          text    7x1 @(49,8)
+-          item    55x1 @(1,9)
+-          text    7x1 @(3,9)
+-          text    37x1 @(11,9)
+-          text    7x1 @(49,9)
+-          item    55x1 @(1,10)
+-          text    7x1 @(3,10)
+-          text    37x1 @(11,10)
+-          text    7x1 @(49,10)
+-          item    55x1 @(1,11)
+-          text    7x1 @(3,11)
+-          text    37x1 @(11,11)
+-          text    7x1 @(49,11)
+-          item    55x1 @(1,12)
+-          text    7x1 @(3,12)
+-          text    37x1 @(11,12)
+-          text    7x1 @(49,12)
+-          item    55x1 @(1,13)
+-          text    7x1 @(3,13)
+-          text    37x1 @(11,13)
+-          text    7x1 @(49,13)
+-          item    55x1 @(1,14)
+-          text    7x1 @(3,14)
+-          text    37x1 @(11,14)
+-          text    7x1 @(49,14)
+-          item    55x1 @(1,15)
+-          text    7x1 @(3,15)
+-          text    37x1 @(11,15)
+-          text    7x1 @(49,15)
+-          item    55x1 @(1,16)
+-          text    7x1 @(3,16)
+-          text    37x1 @(11,16)
+-          text    7x1 @(49,16)
+-          item    55x1 @(1,17)
+-          text    7x1 @(3,17)
+-          text    37x1 @(11,17)
+-          text    7x1 @(49,17)
+-          item    55x1 @(1,18)
+-          text    7x1 @(3,18)
+-          text    37x1 @(11,18)
+-          text    7x1 @(49,18)
+-          item    55x1 @(1,19)
+-          text    7x1 @(3,19)
+-          text    37x1 @(11,19)
+-          text    7x1 @(49,19)
+-          item    55x1 @(1,20)
+-          text    7x1 @(3,20)
+-          text    37x1 @(11,20)
+-          text    7x1 @(49,20)
+-          item    55x1 @(1,21)
+-          text    7x1 @(3,21)
+-          text    37x1 @(11,21)
+-          text    7x1 @(49,21)
+keys       hints   57x1 @(0,23)
+-          row     6x1 @(0,23)
+-          text    1x1 @(0,23)
+-          text    4x1 @(2,23)
+-          row     6x1 @(8,23)
+-          text    1x1 @(8,23)
+-          text    4x1 @(10,23)
+-          row     8x1 @(16,23)
+-          text    3x1 @(16,23)
+-          text    4x1 @(20,23)
+-          row     7x1 @(26,23)
+-          text    1x1 @(26,23)
+-          text    5x1 @(28,23)
+-          row     9x1 @(35,23)
+-          text    1x1 @(35,23)
+-          text    7x1 @(37,23)
+-          row     10x1 @(46,23)
+-          text    5x1 @(46,23)
+-          text    4x1 @(52,23)
+=== errors ===
+ok

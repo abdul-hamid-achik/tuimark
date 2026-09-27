@@ -24,6 +24,8 @@ const (
 	stepSet
 	stepFocus
 	stepResize
+	stepClick // click:X,Y or {"click":[X,Y]} (SPEC v0.2b §15.4)
+	stepWheel // wheel-up:X,Y, wheel-down:X,Y, or {"wheel":…,"at":[X,Y]}
 )
 
 // playStep is one step of a play session, already parsed and validated.
@@ -40,17 +42,35 @@ type playStep struct {
 	focus string // stepFocus
 	cols  int    // stepResize
 	rows  int    // stepResize
+	x, y  int    // stepClick, stepWheel: the 0-based cell
+	dir   int    // stepWheel: -1 up, +1 down
 }
 
-// reservedStep reports the usage error for a mouse step of SPEC v0.2b
-// §15.4 this build does not run yet, or "" when tok/member is not one of
-// them. The `theme` script step is a step (Set("@theme", value)).
-func reservedStep(name string) string {
-	switch name {
-	case "click", "wheel-up", "wheel-down", "wheel":
-		return fmt.Sprintf("%q is a 0.2b mouse step, not implemented in this build", name)
+// parseCoord parses one coordinate of a mouse step: a decimal integer
+// (SPEC v0.2b §15.4). Whether the cell lies inside the grid is decided
+// when the step is applied, against the size in effect then.
+func parseCoord(s string) (int, error) {
+	digits := strings.TrimPrefix(s, "-")
+	if digits == "" || len(digits) > 9 || strings.Trim(digits, "0123456789") != "" {
+		return 0, fmt.Errorf("%q is not a decimal integer", s)
 	}
-	return ""
+	return strconv.Atoi(s)
+}
+
+// parseCell parses the "X,Y" of click:X,Y, wheel-up:X,Y, and
+// wheel-down:X,Y (SPEC v0.2b §15.4).
+func parseCell(s string) (x, y int, err error) {
+	xs, ys, ok := strings.Cut(s, ",")
+	if !ok {
+		return 0, 0, fmt.Errorf("want X,Y")
+	}
+	if x, err = parseCoord(xs); err != nil {
+		return 0, 0, err
+	}
+	if y, err = parseCoord(ys); err != nil {
+		return 0, 0, err
+	}
+	return x, y, nil
 }
 
 // parseInputSteps splits --input on runs of ASCII spaces (leading/trailing
@@ -86,8 +106,21 @@ func parseInputToken(tok string) (playStep, error) {
 	case strings.HasPrefix(tok, "resize:"):
 		return parseResizeToken(tok)
 	case strings.HasPrefix(tok, "click:"), strings.HasPrefix(tok, "wheel-up:"), strings.HasPrefix(tok, "wheel-down:"):
-		name, _, _ := strings.Cut(tok, ":")
-		return playStep{}, fmt.Errorf("%s", reservedStep(name))
+		// SPEC v0.2b §15.4: a left click (press and release) or one
+		// wheel report at cell (X, Y), 0-based as in the dump.
+		name, cell, _ := strings.Cut(tok, ":")
+		x, y, err := parseCell(cell)
+		if err != nil {
+			return playStep{}, fmt.Errorf("%s: %v", name, err)
+		}
+		st := playStep{kind: stepClick, raw: tok, x: x, y: y}
+		switch name {
+		case "wheel-up":
+			st.kind, st.dir = stepWheel, -1
+		case "wheel-down":
+			st.kind, st.dir = stepWheel, 1
+		}
+		return st, nil
 	}
 	if !ir.ValidKey(tok) {
 		return playStep{}, fmt.Errorf("not a valid key token")
@@ -288,29 +321,80 @@ func parseScriptSteps(path string) ([]playStep, error) {
 	return steps, nil
 }
 
-// parseScriptLine decodes one --script line (SPEC §15.4): "Each object
-// holds exactly one of these members" — key, text, paste, set, focus,
-// resize, or (0.2b) theme, matched exactly and case-sensitively, with the
-// click/wheel mouse steps rejected as not implemented yet. Before this, plain json.Unmarshal into a
-// struct with pointer fields matched member names case-insensitively
-// (accepting "KEY"), silently dropped an unknown member such as "extra",
-// and kept only the last of a duplicate member (finding 24).
+// scriptMembers names the step members of a --script line (SPEC v0.2b
+// §15.4), for error messages.
+const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme"
+
+// parseScriptCell decodes the [X,Y] of a click or wheel script step: a
+// JSON array of exactly two integers (SPEC v0.2b §15.4).
+func parseScriptCell(name string, raw json.RawMessage) (x, y int, err error) {
+	var elems []json.RawMessage
+	if err := json.Unmarshal(raw, &elems); err != nil {
+		return 0, 0, fmt.Errorf("%s: want [X,Y]: %v", name, err)
+	}
+	if len(elems) != 2 {
+		return 0, 0, fmt.Errorf("%s: want exactly [X,Y] (2 elements), got %d", name, len(elems))
+	}
+	if err := json.Unmarshal(elems[0], &x); err != nil {
+		return 0, 0, fmt.Errorf("%s: X must be an integer: %v", name, err)
+	}
+	if err := json.Unmarshal(elems[1], &y); err != nil {
+		return 0, 0, fmt.Errorf("%s: Y must be an integer: %v", name, err)
+	}
+	return x, y, nil
+}
+
+// parseScriptWheel decodes {"wheel": "up" | "down", "at": [X,Y]}, the one
+// step whose object holds two members, exactly these two (SPEC v0.2b
+// §15.4).
+func parseScriptWheel(line string, members map[string]json.RawMessage) (playStep, error) {
+	for name := range members {
+		if name != "wheel" && name != "at" {
+			return playStep{}, fmt.Errorf("wheel: unknown member %q (want exactly \"wheel\" and \"at\")", name)
+		}
+	}
+	atRaw, ok := members["at"]
+	if !ok {
+		return playStep{}, fmt.Errorf("wheel: wants {\"wheel\": \"up\" or \"down\", \"at\": [X,Y]}")
+	}
+	dir, err := decodeStringMember("wheel", members["wheel"])
+	if err != nil {
+		return playStep{}, err
+	}
+	st := playStep{kind: stepWheel, raw: line}
+	switch dir {
+	case "up":
+		st.dir = -1
+	case "down":
+		st.dir = 1
+	default:
+		return playStep{}, fmt.Errorf("wheel: want \"up\" or \"down\", got %q", dir)
+	}
+	if st.x, st.y, err = parseScriptCell("at", atRaw); err != nil {
+		return playStep{}, err
+	}
+	return st, nil
+}
+
+// parseScriptLine decodes one --script line (SPEC v0.2b §15.4): "Each
+// object holds exactly one of these members" — key, text, paste, set,
+// focus, resize, click, or theme, matched exactly and case-sensitively —
+// except the wheel step, whose object holds exactly wheel and at. Before
+// this, plain json.Unmarshal into a struct with pointer fields matched
+// member names case-insensitively (accepting "KEY"), silently dropped an
+// unknown member such as "extra", and kept only the last of a duplicate
+// member (finding 24).
 func parseScriptLine(line string) (playStep, error) {
 	members, err := decodeObjectMembers([]byte(line))
 	if err != nil {
 		return playStep{}, fmt.Errorf("bad JSON: %v", err)
 	}
-	// A reserved member name is a usage error even alongside another
-	// member (the §15.4 example `{"wheel":"up","at":[X,Y]}}` has two), so
-	// this check runs before the exactly-one-member count below.
-	for name := range members {
-		if r := reservedStep(name); r != "" {
-			return playStep{}, fmt.Errorf("%s", r)
-		}
+	if _, ok := members["wheel"]; ok {
+		return parseScriptWheel(line, members)
 	}
 	switch len(members) {
 	case 0:
-		return playStep{}, fmt.Errorf("no known step member (want one of key, text, paste, set, focus, resize, theme)")
+		return playStep{}, fmt.Errorf("no known step member (want one of %s)", scriptMembers)
 	default:
 		if len(members) > 1 {
 			return playStep{}, fmt.Errorf("more than one step member on one line")
@@ -353,6 +437,13 @@ func parseScriptLine(line string) (playStep, error) {
 		return parseScriptSet(line, raw)
 	case "resize":
 		return parseScriptResize(line, raw)
+	case "click":
+		// SPEC v0.2b §15.4: {"click":[X,Y]} is click:X,Y.
+		x, y, err := parseScriptCell("click", raw)
+		if err != nil {
+			return playStep{}, err
+		}
+		return playStep{kind: stepClick, raw: line, x: x, y: y}, nil
 	case "theme":
 		// SPEC v0.2b §15.4: {"theme": "dark" | "light" | "auto"} is
 		// Set("@theme", value); play never probes, so auto is dark.
@@ -365,7 +456,7 @@ func parseScriptLine(line string) (playStep, error) {
 		}
 		return playStep{kind: stepSet, raw: line, path: host.ThemePath, value: s}, nil
 	}
-	return playStep{}, fmt.Errorf("unknown step member %q (want one of key, text, paste, set, focus, resize, theme)", name)
+	return playStep{}, fmt.Errorf("unknown step member %q (want one of %s)", name, scriptMembers)
 }
 
 // playSession replays steps against app through the same primitives Run's
@@ -469,8 +560,16 @@ func (s *playSession) handleText(step int, str string) {
 			ins = ins[1:]
 			continue
 		}
+		if ins[0].IsMouse {
+			// An SGR report in the text is a mouse event, as in Run: one
+			// outside the grid is dropped, not an error (SPEC v0.2b
+			// §26.11).
+			s.handleMouse(step, ins[0].Mouse)
+			ins = ins[1:]
+			continue
+		}
 		n := 1
-		for n < len(ins) && !ins[n].IsPaste {
+		for n < len(ins) && !ins[n].IsPaste && !ins[n].IsMouse {
 			n++
 		}
 		keys := make([]host.Key, n)
@@ -490,6 +589,26 @@ func (s *playSession) handlePaste(step int, payload string) {
 		return
 	}
 	if len(evs) > 0 || s.app.Focus() != focus {
+		s.draw()
+	}
+}
+
+// handleMouse applies one mouse event to the live frame (SPEC v0.2b §8.5)
+// and dispatches its events, redrawing when they fired, focus moved, or a
+// cursor, an offset, or a tab changed, exactly as Run's loop dispatches a
+// mouse event (internal/host/run.go). While the frame's mouse is off it
+// changes nothing and fires nothing.
+func (s *playSession) handleMouse(step int, m host.Mouse) {
+	if s.quit {
+		return
+	}
+	focus := s.app.Focus()
+	evs, _ := s.app.HandleMouse(m)
+	s.dispatchAll(step, evs)
+	if s.quit {
+		return
+	}
+	if changed := s.app.TakeDirty(); len(evs) > 0 || s.app.Focus() != focus || changed {
 		s.draw()
 	}
 }
@@ -542,6 +661,27 @@ func (s *playSession) run(steps []playStep) {
 			}
 		case stepResize:
 			s.cols, s.rows = st.cols, st.rows
+			// A resize drops a pending left press, as in Run (SPEC
+			// v0.2b §26.11).
+			s.app.DropPress()
+		case stepClick, stepWheel:
+			// SPEC v0.2b §15.4: handled by §8.5 on the current settled
+			// frame; a cell outside the current grid is a usage error.
+			if st.x < 0 || st.y < 0 || st.x >= s.cols || st.y >= s.rows {
+				s.usageErr = fmt.Errorf("cell %d,%d is outside the %dx%d grid", st.x, st.y, s.cols, s.rows)
+				s.usageStep, s.usageRaw = stepNum, st.raw
+				return
+			}
+			if st.kind == stepClick {
+				s.handleMouse(stepNum, host.Mouse{Kind: host.MousePress, X: st.x, Y: st.y})
+				s.handleMouse(stepNum, host.Mouse{Kind: host.MouseRelease, X: st.x, Y: st.y})
+				break
+			}
+			kind := host.MouseWheelDown
+			if st.dir < 0 {
+				kind = host.MouseWheelUp
+			}
+			s.handleMouse(stepNum, host.Mouse{Kind: kind, X: st.x, Y: st.y})
 		}
 		if !s.quit {
 			s.settle(stepNum)

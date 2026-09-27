@@ -1,0 +1,131 @@
+version: 1
+name: monitor_resize
+intent: |
+    examples/monitor (SPEC v0.2b §17.4) follows the terminal size with no
+    host code: resizing 120 → 99 → 77 → 57 → 40 columns drops the process
+    table's columns by @media (USER and I/O below 100 columns, THR below
+    78, MEM below 58), the tab strip goes from full labels (tier 1) to
+    short labels (tier 2) and then to the active label alone, ‹ 7 processes
+    › (tier 3); on the CPU tab the core grid goes from four columns at 120
+    to one at 40.
+target:
+    cmd: ["${vars.monitor}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "USER"
+        timeoutMs: 5000
+    - snapshot: w120
+    - resize:
+        cols: 99
+        rows: 24
+    - wait:
+        screen:
+            notContains: "USER"
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "7 proc"
+        timeoutMs: 3000
+    - snapshot: w99
+    - resize:
+        cols: 77
+        rows: 24
+    - wait:
+        screen:
+            matches: "MEM +[┃│]"
+        timeoutMs: 3000
+    - snapshot: w77
+    - resize:
+        cols: 57
+        rows: 24
+    - wait:
+        screen:
+            matches: "CPU%▼[┃│]"
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "‹ 7 processes ›"
+        timeoutMs: 3000
+    - snapshot: w57
+    - resize:
+        cols: 40
+        rows: 24
+    - wait:
+        screen:
+            contains: "studio-01      ● LIVE"
+        timeoutMs: 3000
+    - wait:
+        screen:
+            matches: "CPU%▼[┃│]"
+        timeoutMs: 3000
+    - snapshot: w40
+    - press: "2"
+    - wait:
+        screen:
+            contains: "‹ 2 cpu ›"
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "cpu1 "
+        timeoutMs: 3000
+    - snapshot: cores40
+    - resize:
+        cols: 120
+        rows: 24
+    - wait:
+        screen:
+            contains: "4 thermal"
+        timeoutMs: 3000
+    - wait:
+        screen:
+            matches: "cpu0 .*cpu1 .*cpu2 .*cpu3 "
+        timeoutMs: 3000
+    - snapshot: cores120
+outcomes:
+    - id: columns_follow_the_width
+      description: the table shows PID, NAME, CPU%, MEM, THR, I/O, USER at 120; drops I/O and USER at 99, THR at 77, MEM at 57; three columns stay at 40
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "THR .*I/O USER" "$d/w120.txt" \
+                  && grep -q "MEM  THR" "$d/w99.txt" && ! grep -q "I/O" "$d/w99.txt" \
+                  && grep -q "MEM" "$d/w77.txt" && ! grep -q "THR" "$d/w77.txt" \
+                  && grep -q "PID NAME .*CPU%" "$d/w57.txt" && ! grep -q "MEM" "$d/w57.txt" \
+                  && grep -q "PID NAME .*CPU%" "$d/w40.txt"; then
+                  echo '{"ok": true, "evidence": "7, 5, 4, 3, 3 columns at 120, 99, 77, 57, 40"}'
+                else
+                  echo '{"ok": false, "evidence": "the column set did not follow the width"}'
+                fi
+    - id: labels_follow_the_width
+      description: full labels at 120, short labels at 99 and 77, the active label alone at 57 and 40
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "1 overview   2 cpu" "$d/w120.txt" && grep -q "1 ovr   2 cpu" "$d/w99.txt" && grep -q "1 ovr   2 cpu" "$d/w77.txt" \
+                  && grep -q "▸‹ 7 processes ›" "$d/w57.txt" && grep -q "▸‹ 7 processes ›" "$d/w40.txt" && ! grep -q "1 ovr" "$d/w40.txt"; then
+                  echo '{"ok": true, "evidence": "tier 1 at 120, tier 2 at 99 and 77, tier 3 at 57 and 40"}'
+                else
+                  echo '{"ok": false, "evidence": "the tab strip did not follow the width"}'
+                fi
+    - id: cores_follow_the_width
+      description: the CPU tab lays the cores out one per row at 40 columns and four per row at 120
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "cpu0 " "$d/cores40.txt" && ! grep -q "cpu0 .*cpu1 " "$d/cores40.txt" && grep -q "cpu0 .*cpu1 .*cpu2 .*cpu3 " "$d/cores120.txt"; then
+                  echo '{"ok": true, "evidence": "one core per row at 40, cpu0-cpu3 on one row at 120"}'
+                else
+                  echo '{"ok": false, "evidence": "the core grid did not follow the width"}'
+                fi
+contractHash: sha256:ab5906a0d230973a7e9154421fa5f4192420ff4d6d0b7893bc9b3dd96cca2ef3

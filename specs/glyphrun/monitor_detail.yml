@@ -1,0 +1,139 @@
+version: 1
+name: monitor_detail
+intent: |
+    The process detail of examples/monitor (SPEC v0.2b §17.4) is a modal
+    declared in studio.tui: enter on the process table opens the detail of
+    the cursor row; while it is open it holds focus, so K, space, and j do
+    nothing (no kill confirmation, no mark, no cursor move); r refreshes
+    it; q, enter, and esc each close it. The host keeps the detail pinned
+    to its pid: when that process leaves the snapshot (the fake collector's
+    short-lived "sleep" exits after a few samples) the detail says "This
+    process is no longer present in the latest snapshot."
+target:
+    cmd: ["${vars.monitor}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "PID NAME"
+        timeoutMs: 5000
+    - press: end
+    - press: enter
+    - wait:
+        screen:
+            contains: "process detail · sleep · pid 11020"
+        timeoutMs: 2000
+    - snapshot: sleep_detail
+    - wait:
+        screen:
+            contains: "no longer present"
+        timeoutMs: 8000
+    - press: r
+    - wait:
+        screen:
+            contains: "no longer present"
+        timeoutMs: 2000
+    - snapshot: vanished
+    - press: q
+    - wait:
+        screen:
+            notContains: "process detail"
+        timeoutMs: 2000
+    - press: home
+    - press: enter
+    - wait:
+        screen:
+            contains: "process detail · WindowServer · pid 412"
+        timeoutMs: 2000
+    - snapshot: opened
+    - press: K
+    - press: space
+    - press: j
+    - press: r
+    - wait:
+        screen:
+            contains: "enter close  r refresh"
+        timeoutMs: 2000
+    - snapshot: keys_ignored
+    - press: q
+    - wait:
+        screen:
+            notContains: "process detail"
+        timeoutMs: 2000
+    - snapshot: closed_q
+    - press: enter
+    - wait:
+        screen:
+            contains: "process detail · WindowServer · pid 412"
+        timeoutMs: 2000
+    - snapshot: reopened
+    - press: enter
+    - wait:
+        screen:
+            notContains: "process detail"
+        timeoutMs: 2000
+    - snapshot: closed_enter
+    - press: enter
+    - wait:
+        screen:
+            contains: "process detail"
+        timeoutMs: 2000
+    - press: esc
+    - wait:
+        screen:
+            notContains: "process detail"
+        timeoutMs: 2000
+    - snapshot: closed_esc
+outcomes:
+    - id: enter_opens_the_cursor_row_detail
+      description: enter on the table opens the detail of the cursor row, with its rows in two columns at 120 columns and the close/refresh hints
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/opened.txt"
+                if grep -q "process detail · WindowServer · pid 412" "$f" && grep -q "pid .*412.*name .*WindowServer" "$f" && grep -q "enter close  r refresh" "$f"; then
+                  echo '{"ok": true, "evidence": "the opened snapshot shows the WindowServer detail in two columns with its hints"}'
+                else
+                  echo '{"ok": false, "evidence": "enter did not open the cursor row detail"}'
+                fi
+    - id: keys_do_nothing_while_open
+      description: K, space, and j pressed while the detail is open open no kill confirmation, mark nothing, and leave the cursor on WindowServer
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if ! grep -q "kill processes" "$d/closed_q.txt" && grep -q "process detail · WindowServer" "$d/keys_ignored.txt" && ! grep -q "│▸" "$d/closed_q.txt" && grep -q "process detail · WindowServer" "$d/reopened.txt"; then
+                  echo '{"ok": true, "evidence": "no kill modal, no marks, and the reopened detail is still WindowServer"}'
+                else
+                  echo '{"ok": false, "evidence": "a key reached the table through the detail"}'
+                fi
+    - id: q_enter_esc_close
+      description: q, enter, and esc each close the detail
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if ! grep -q "process detail" "$d/closed_q.txt" && ! grep -q "process detail" "$d/closed_enter.txt" && ! grep -q "process detail" "$d/closed_esc.txt" && grep -q "PID NAME" "$d/closed_esc.txt"; then
+                  echo '{"ok": true, "evidence": "all three closed snapshots show the table without the detail"}'
+                else
+                  echo '{"ok": false, "evidence": "q, enter, or esc did not close the detail"}'
+                fi
+    - id: vanished_pid_is_reported
+      description: the detail pinned to a process that left the snapshot says it is no longer present, also after r refreshes it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if grep -q "process detail · sleep · pid 11020" "$d/sleep_detail.txt" && grep -q "This process is no longer present in the latest snapshot." "$d/vanished.txt"; then
+                  echo '{"ok": true, "evidence": "the sleep detail turned into the no longer present line"}'
+                else
+                  echo '{"ok": false, "evidence": "the vanished pid was not reported"}'
+                fi
+contractHash: sha256:d7a1685d05834920e7d0142ab6a663a07fe4742e9e30448fce981d3ebefddc45

@@ -8,13 +8,16 @@ import (
 )
 
 // Input is one unit of terminal input the decoder produces (SPEC v0.2
-// §26.8): a key (§8.1 tokens) or a bracketed paste (§26.7). Terminal
-// replies (OSC, DCS, SOS, PM, APC, DA1, DA2, DECRPM, CPR) and mouse
-// reports (SGR and X10) are consumed and produce nothing.
+// §26.8): a key (§8.1 tokens), a bracketed paste (§26.7), or, in 0.2b, a
+// mouse event decoded from an SGR report (§26.8, §8.5). Terminal replies
+// (OSC, DCS, SOS, PM, APC, DA1, DA2, DECRPM, CPR) and X10 mouse reports
+// are consumed and produce nothing.
 type Input struct {
-	Key     Key    // the key, when IsPaste is false
+	Key     Key    // the key, when IsPaste and IsMouse are false
 	IsPaste bool   // a bracketed paste
 	Paste   string // the paste payload as received (at most maxPaste bytes, not normalized; HandlePaste normalizes it)
+	IsMouse bool   // a mouse event (SPEC v0.2b §26.8)
+	Mouse   Mouse  // the mouse event, when IsMouse is set
 }
 
 // Decoder limits (SPEC v0.2 §26.7, §26.8).
@@ -60,18 +63,19 @@ const (
 func DecodeKeys(b []byte) []Key {
 	var keys []Key
 	for _, in := range DecodeInput(b) {
-		if !in.IsPaste {
+		if !in.IsPaste && !in.IsMouse {
 			keys = append(keys, in.Key)
 		}
 	}
 	return keys
 }
 
-// DecodeInput decodes complete raw-mode terminal input into keys and
-// pastes, as Run decodes one read that the esc timeout then ends (SPEC
-// v0.2 §26.8): a lone ESC at the end is the esc key, and any other
-// incomplete trailing sequence, including a paste without its end marker,
-// is dropped. `tuimark play` decodes its text: steps with it.
+// DecodeInput decodes complete raw-mode terminal input into keys, pastes,
+// and (SPEC v0.2b) mouse events from SGR reports, as Run decodes one read
+// that the esc timeout then ends (SPEC v0.2 §26.8): a lone ESC at the end
+// is the esc key, and any other incomplete trailing sequence, including a
+// paste without its end marker, is dropped. `tuimark play` decodes its
+// text: steps with it.
 func DecodeInput(b []byte) []Input {
 	var d decoder
 	ins, _ := d.feed(b, true)
@@ -198,6 +202,8 @@ func (d *decoder) feed(b []byte, final bool) (ins []Input, reps []reply) {
 		switch u.kind {
 		case unitKey:
 			ins = append(ins, Input{Key: u.key})
+		case unitMouse:
+			ins = append(ins, Input{IsMouse: true, Mouse: u.mouse})
 		case unitReply:
 			reps = append(reps, u.reply)
 		case unitPaste:
@@ -297,6 +303,7 @@ const (
 	unitKey                   // a key
 	unitReply                 // a reply the probe reads
 	unitPaste                 // CSI 200 ~: a paste starts
+	unitMouse                 // an SGR mouse report that gives an event (v0.2b)
 )
 
 // unit is one decoded item at the start of the input.
@@ -304,6 +311,7 @@ type unit struct {
 	kind    unitKind
 	n       int // bytes consumed; 0 means incomplete (wait for more input)
 	key     Key
+	mouse   Mouse
 	reply   reply
 	discard discardMode // the bound cut the sequence: discard its rest
 }
@@ -432,9 +440,16 @@ func scanCSI(p []byte) unit {
 			return unit{kind: unitReply, n: n, reply: r}
 		}
 		return unit{n: n}
+	case private == '<' && (final == 'M' || final == 'm'):
+		// An SGR mouse report: a mouse event or nothing, never a key
+		// (SPEC v0.2b §26.8).
+		if m, ok := parseSGRMouse(params[1:], final); ok {
+			return unit{kind: unitMouse, n: n, mouse: m}
+		}
+		return unit{n: n}
 	case private != 0:
-		// DA2 (CSI > … c), SGR mouse (CSI < … M or m), and every other
-		// private-parameter sequence: replies, never keys.
+		// DA2 (CSI > … c) and every other private-parameter sequence:
+		// replies, never keys.
 		return unit{n: n}
 	case final == '~' && string(params) == "200":
 		return unit{kind: unitPaste, n: n}
@@ -445,6 +460,47 @@ func scanCSI(p []byte) unit {
 	// CPR (CSI … R), a paste end marker outside a paste, and any other CSI
 	// whose final byte is not a key.
 	return unit{n: n}
+}
+
+// parseSGRMouse decodes the parameters "Cb;Cx;Cy" of an SGR mouse report
+// CSI < Cb ; Cx ; Cy M|m (SPEC v0.2b §26.8). Cb, Cx, and Cy are decimal,
+// Cx and Cy 1-based. With b = Cb without its modifier bits 4, 8, and 16:
+// b = 0 is the left button, a press on M and a release on m; b = 64 is
+// wheel up and b = 65 wheel down, on M. Every other value (motion, bit 32;
+// the middle and right buttons, 1 and 2; the horizontal wheel, 66 and 67;
+// releases of the wheel) gives no event, and so does a parameter that is
+// not a decimal number or a count other than three.
+func parseSGRMouse(params []byte, final byte) (Mouse, bool) {
+	parts := strings.Split(string(params), ";")
+	if len(parts) != 3 {
+		return Mouse{}, false
+	}
+	var v [3]int
+	for i, p := range parts {
+		if p == "" || len(p) > 9 {
+			return Mouse{}, false
+		}
+		for _, c := range []byte(p) {
+			if c < '0' || c > '9' {
+				return Mouse{}, false
+			}
+		}
+		v[i], _ = strconv.Atoi(p)
+	}
+	m := Mouse{X: v[1] - 1, Y: v[2] - 1}
+	switch b := v[0] &^ (4 | 8 | 16); {
+	case b == 0 && final == 'M':
+		m.Kind = MousePress
+	case b == 0 && final == 'm':
+		m.Kind = MouseRelease
+	case b == 64 && final == 'M':
+		m.Kind = MouseWheelUp
+	case b == 65 && final == 'M':
+		m.Kind = MouseWheelDown
+	default:
+		return Mouse{}, false
+	}
+	return m, true
 }
 
 // parseDECRPM parses the parameters of a DECRPM reply, "?Pd;Ps$".

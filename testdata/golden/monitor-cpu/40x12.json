@@ -1,0 +1,669 @@
+{
+  "cols": 40,
+  "rows": 12,
+  "ok": true,
+  "focus": "nav",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "studio",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 12
+    },
+    {
+      "id": "app",
+      "tag": "col",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 12
+    },
+    {
+      "id": "identity",
+      "tag": "row",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 9,
+      "h": 1,
+      "text": "◆ monitor",
+      "classes": [
+        "brand"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 10,
+      "y": 0,
+      "w": 9,
+      "h": 1,
+      "text": "studio-01",
+      "classes": [
+        "muted"
+      ]
+    },
+    {
+      "tag": "spacer",
+      "x": 20,
+      "y": 0,
+      "w": 4,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 25,
+      "y": 0,
+      "w": 6,
+      "h": 1,
+      "text": "● LIVE",
+      "classes": [
+        "status",
+        "live"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 32,
+      "y": 0,
+      "w": 8,
+      "h": 1,
+      "text": "12:00:00",
+      "classes": [
+        "muted"
+      ]
+    },
+    {
+      "id": "nav",
+      "tag": "tabs",
+      "x": 0,
+      "y": 1,
+      "w": 40,
+      "h": 10,
+      "focused": true
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 10,
+      "h": 1,
+      "text": "‹ 2 cpu ›",
+      "key": "cpu",
+      "selected": true,
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "id": "cpu",
+      "tag": "tab",
+      "x": 0,
+      "y": 2,
+      "w": 40,
+      "h": 9
+    },
+    {
+      "id": "cores-view",
+      "tag": "scroll",
+      "x": 0,
+      "y": 2,
+      "w": 40,
+      "h": 9,
+      "scroll": {
+        "y": 0,
+        "h": 23
+      },
+      "classes": [
+        "panel"
+      ]
+    },
+    {
+      "id": "cores",
+      "tag": "box",
+      "x": 1,
+      "y": 3,
+      "w": 38,
+      "h": 23
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 3,
+      "w": 38,
+      "h": 1,
+      "key": "c0",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 3,
+      "w": 9,
+      "h": 1,
+      "text": "cpu0 12%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 3,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 5,
+      "w": 38,
+      "h": 1,
+      "key": "c1",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 5,
+      "w": 9,
+      "h": 1,
+      "text": "cpu1 48%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 5,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 7,
+      "w": 38,
+      "h": 1,
+      "key": "c2",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 7,
+      "w": 9,
+      "h": 1,
+      "text": "cpu2 7%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 7,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 9,
+      "w": 38,
+      "h": 1,
+      "key": "c3",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 9,
+      "w": 9,
+      "h": 1,
+      "text": "cpu3 91%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 9,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 11,
+      "w": 38,
+      "h": 1,
+      "key": "c4",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 11,
+      "w": 9,
+      "h": 1,
+      "text": "cpu4 33%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 11,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 13,
+      "w": 38,
+      "h": 1,
+      "key": "c5",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 13,
+      "w": 9,
+      "h": 1,
+      "text": "cpu5 26%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 13,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 15,
+      "w": 38,
+      "h": 1,
+      "key": "c6",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 15,
+      "w": 9,
+      "h": 1,
+      "text": "cpu6 64%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 15,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 17,
+      "w": 38,
+      "h": 1,
+      "key": "c7",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 17,
+      "w": 9,
+      "h": 1,
+      "text": "cpu7 3%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 17,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 19,
+      "w": 38,
+      "h": 1,
+      "key": "c8",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 19,
+      "w": 9,
+      "h": 1,
+      "text": "cpu8 18%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 19,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 21,
+      "w": 38,
+      "h": 1,
+      "key": "c9",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 21,
+      "w": 9,
+      "h": 1,
+      "text": "cpu9 55%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 21,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 23,
+      "w": 38,
+      "h": 1,
+      "key": "c10",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 23,
+      "w": 9,
+      "h": 1,
+      "text": "cpu10 40%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 23,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 25,
+      "w": 38,
+      "h": 1,
+      "key": "c11",
+      "classes": [
+        "core"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 25,
+      "w": 9,
+      "h": 1,
+      "text": "cpu11 9%",
+      "classes": [
+        "core-label"
+      ]
+    },
+    {
+      "tag": "progress",
+      "x": 11,
+      "y": 25,
+      "w": 28,
+      "h": 1,
+      "classes": [
+        "gauge"
+      ]
+    },
+    {
+      "id": "keys",
+      "tag": "hints",
+      "x": 0,
+      "y": 11,
+      "w": 40,
+      "h": 1
+    },
+    {
+      "tag": "row",
+      "x": 0,
+      "y": 11,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "text": "q",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 2,
+      "y": 11,
+      "w": 4,
+      "h": 1,
+      "text": "quit",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 8,
+      "y": 11,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 8,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "text": "?",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 10,
+      "y": 11,
+      "w": 4,
+      "h": 1,
+      "text": "help",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 16,
+      "y": 11,
+      "w": 8,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 16,
+      "y": 11,
+      "w": 3,
+      "h": 1,
+      "text": "1-9",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 20,
+      "y": 11,
+      "w": 4,
+      "h": 1,
+      "text": "tabs",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 26,
+      "y": 11,
+      "w": 7,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 26,
+      "y": 11,
+      "w": 1,
+      "h": 1,
+      "text": "p",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 28,
+      "y": 11,
+      "w": 5,
+      "h": 1,
+      "text": "pause",
+      "classes": [
+        "hint-label"
+      ]
+    }
+  ],
+  "grid": [
+    "◆ monitor studio-01      ● LIVE 12:00:00",
+    "▸‹ 2 cpu ›                              ",
+    "╭─ cores ──────────────────────────────╮",
+    "│cpu0 12%  ███▍░░░░░░░░░░░░░░░░░░░░░░░░┃",
+    "│                                      ┃",
+    "│cpu1 48%  █████████████▌░░░░░░░░░░░░░░│",
+    "│                                      │",
+    "│cpu2 7%   ██░░░░░░░░░░░░░░░░░░░░░░░░░░│",
+    "│                                      │",
+    "│cpu3 91%  █████████████████████████▌░░│",
+    "╰──────────────────────────────────────╯",
+    "q quit  ? help  1-9 tabs  p pause       "
+  ],
+  "events": [
+    {
+      "step": 1,
+      "action": "view_changed",
+      "source": "nav",
+      "keys": {},
+      "value": "cpu"
+    }
+  ]
+}
