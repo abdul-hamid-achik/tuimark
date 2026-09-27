@@ -13,6 +13,8 @@
 //	tuimark ir       FILE
 //	tuimark agents
 //	tuimark test     [DIR] [--update] [--allow-breaking]
+//	tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
+//	                      [--theme dark|light] [--strict] [--json]
 //
 // Exit codes: 0 ok, 1 I/O or crash, 2 validation errors.
 package main
@@ -21,9 +23,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/abdul-hamid-achik/tuimark/internal/host"
 )
 
-const version = "0.2.0-a"
+// version is the runtime's (SPEC §24: tuimark 0.2.0-a, 0.2.0-b).
+const version = host.Version
 
 const usage = `tuimark — a view language for terminals
 
@@ -41,6 +46,9 @@ usage:
   tuimark agents                              print AGENTS.md generated from the catalog
   tuimark test     [DIR] [--update] [--allow-breaking]
                                                check dump goldens under DIR (default testdata/golden)
+  tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
+                        [--theme dark|light] [--strict] [--json]
+                                               explain one node: path, classes, pseudo-classes, styles
   tuimark version
 
 exit codes: 0 ok, 1 I/O or crash, 2 validation errors
@@ -81,6 +89,8 @@ func (c *cli) run(args []string) int {
 		return c.cmdAgents(rest)
 	case "test":
 		return c.cmdTest(rest)
+	case "inspect":
+		return c.cmdInspect(rest)
 	case "version", "--version", "-v":
 		fmt.Fprintln(c.stdout, "tuimark", version)
 		return 0

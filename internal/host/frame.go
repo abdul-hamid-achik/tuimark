@@ -22,27 +22,41 @@ type Frame struct {
 	Focus      string
 	Focusables []*layout.Box
 	ByID       map[string]*layout.Box
+	// Theme is the frame's effective theme, dark or light (SPEC §26.4).
+	Theme string
+	// V2 is set when the document is version="2": dumps of the frame
+	// carry the nodes' classes (SPEC §13.2).
+	V2 bool
+}
+
+// Dump returns the frame's dump (SPEC §13.2), with the --cells map when
+// cells is set.
+func (f *Frame) Dump(cells bool) *dump.Dump {
+	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2})
 }
 
 // Dump renders the current state at cols×rows (negative sizes clamp to 0)
 // and returns its dump. It is a snapshot: the runtime state a render
 // advances (focus, pending events, modal tracking, viewport offsets, list
 // pages, the last frame) is put back afterwards, so dumps at several sizes
-// do not depend on their order. Frame is the call that advances it.
+// do not depend on their order. Frame is the call that advances it. The
+// theme is the tools' (SPEC §26.4): @theme, else the document's, auto as
+// dark; never TUIMARK_THEME or a theme Run probed (MUST 13).
 func (a *App) Dump(cols, rows int, cells bool) *dump.Dump {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	saved := a.saveState()
 	defer a.restoreState(saved)
-	f := a.render(cols, rows)
-	return dump.Build(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, cells)
+	return a.render(cols, rows, a.toolTheme()).Dump(cells)
 }
 
-// Frame renders and returns the raw frame (for the terminal loop and tests).
+// Frame renders and returns the raw frame (for the terminal loop and
+// tests). Its theme is frameTheme: while Run runs, TUIMARK_THEME and the
+// theme Run resolved for auto take part.
 func (a *App) Frame(cols, rows int) *Frame {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.render(cols, rows)
+	return a.render(cols, rows, a.frameTheme())
 }
 
 type builder struct {
@@ -74,12 +88,12 @@ func (fb *builder) report(n *ir.Node, sev, code, format string, args ...any) {
 // render changed is put back (pending events, modal tracking, list and
 // input state), the screen, focus, and focusInit return to their values
 // before the request, and the frame is built on the original screen.
-func (a *App) render(cols, rows int) *Frame {
+func (a *App) render(cols, rows int, theme string) *Frame {
 	if req := a.focusReq; req != nil && !a.doc.Spike && a.screen != req.prevScreen && a.focus == req.target {
-		if !a.modalOpenOn(req, cols, rows) {
+		if !a.modalOpenOn(req, cols, rows, theme) {
 			saved := a.saveState()
 			trial := a.focusReq
-			f := a.renderOnce(cols, rows)
+			f := a.renderOnce(cols, rows, theme)
 			if trial.landed {
 				return f
 			}
@@ -87,26 +101,47 @@ func (a *App) render(cols, rows int) *Frame {
 		}
 		a.screen, a.focusInit, a.focus, a.focusReq = req.prevScreen, req.prevInit, req.prev, nil
 	}
-	return a.renderOnce(cols, rows)
+	return a.renderOnce(cols, rows, theme)
 }
 
 // modalOpenOn reports whether the screen a cross-screen focus request
 // leaves shows a modal in a frame built now (store changes made in the
 // same tick count). The runtime state is left untouched. The caller holds
 // a.mu.
-func (a *App) modalOpenOn(req *focusRequest, cols, rows int) bool {
+func (a *App) modalOpenOn(req *focusRequest, cols, rows int, theme string) bool {
 	saved := a.saveState()
 	defer a.restoreState(saved)
 	a.screen, a.focusInit, a.focus, a.focusReq = req.prevScreen, req.prevInit, req.prev, nil
-	return len(a.renderOnce(cols, rows).Modals) > 0
+	return len(a.renderOnce(cols, rows, theme).Modals) > 0
 }
 
-// renderOnce builds one frame on the active screen. The caller holds a.mu.
-func (a *App) renderOnce(cols, rows int) *Frame {
+// renderOnce builds one frame on the active screen under an effective
+// theme (dark or light), in the order of SPEC §18:
+//
+//  1. inflate the active screen and its open modals (if, hidden, each,
+//     text, class guards; the tab nodes of a tabs but not their content);
+//  2. cascade, and drop display: none subtrees;
+//  3. activate one tab per tabs, outermost first, and build its labels and
+//     content (activateTabs);
+//  4. resolve focus, repeating steps 1-4 while focus or an active tab
+//     changes, at most three rounds as in v1;
+//  5. build the items of each hints from the key dispatch on this tree
+//     (buildHints);
+//  6. measure and allocate (§11);
+//  7. generate, cascade, and place the visible rows of each table
+//     (placeTableRows);
+//  8. paint (§12).
+//
+// "The frame" of §6.12 and §8.4 is the tree after step 4. Steps 2, 3, 5,
+// and 7 are one cascade, with the frame's media and theme; the order only
+// fixes when each node exists. The caller holds a.mu.
+func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	cols, rows = max(cols, 0), max(rows, 0)
-	f := &Frame{Cols: cols, Rows: rows}
+	theme = css.EffectiveTheme(theme)
+	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2}
+	static := a.staticFor(theme)
 	if a.doc.Root == nil {
-		f.Diags = append(f.Diags, a.static...)
+		f.Diags = append(f.Diags, static...)
 		f.Grid = paint.NewGrid(cols, rows)
 		f.ByID = map[string]*layout.Box{}
 		a.last = f
@@ -115,7 +150,7 @@ func (a *App) renderOnce(cols, rows int) *Frame {
 	root := a.doc.Root
 	if !a.doc.Spike {
 		if len(a.doc.Screens) == 0 {
-			f.Diags = append(f.Diags, a.static...)
+			f.Diags = append(f.Diags, static...)
 			f.Grid = paint.NewGrid(cols, rows)
 			f.ByID = map[string]*layout.Box{}
 			a.last = f
@@ -134,20 +169,17 @@ func (a *App) renderOnce(cols, rows int) *Frame {
 			initFocus = a.focus
 		}
 	}
-	casc := css.NewCascade(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: a.doc.Theme})
+	casc := css.NewCascade(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: theme})
 	var fb *builder
 	var rootBox *layout.Box
 	for pass := 0; pass < 3; pass++ {
 		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}}
-		rootBox = fb.inflate(root, nil, nil, false)
-		for _, b := range append([]*layout.Box{rootBox}, fb.modals...) {
-			if b != nil {
-				computeStyles(casc, b, rootBoxStyle(b, rootBox))
-			}
-		}
-		rootBox = fb.dropUndisplayed(rootBox)
-		if !a.resolveFocus(f, fb, rootBox) {
-			break
+		rootBox = fb.inflate(root, nil, nil, false) // step 1
+		markFocusChain(fb.byID[a.focus])
+		rootBox = fb.cascade(casc, rootBox)       // step 2
+		changed := fb.activateTabs(casc, rootBox) // step 3
+		if !a.resolveFocus(f, fb, rootBox) && !changed {
+			break // step 4
 		}
 	}
 	// screen@focus gives initial focus like any other focus change: on:focus
@@ -161,13 +193,15 @@ func (a *App) renderOnce(cols, rows int) *Frame {
 		}
 	}
 	a.trackModals(fb)
+	fb.buildHints(casc, rootBox) // step 5
 	eng := &layout.Engine{File: a.file}
 	if rootBox == nil {
 		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: css.Initial()}
 	}
-	eng.Layout(rootBox, fb.modals, cols, rows)
+	eng.Layout(rootBox, fb.modals, cols, rows) // step 6
+	fb.placeTableRows(casc, rootBox)           // step 7
 	f.Root, f.Modals = rootBox, fb.modals
-	f.Grid = paint.Paint(rootBox, fb.modals, cols, rows)
+	f.Grid = paint.Paint(rootBox, fb.modals, cols, rows) // step 8
 	f.ByID = fb.byID
 	f.Focus = a.focus
 	// Remember scroll offsets clamped by layout.
@@ -178,7 +212,7 @@ func (a *App) renderOnce(cols, rows int) *Frame {
 	// The static token check and the cascade can report the same V003.
 	var diags ir.Diags
 	seen := map[string]bool{}
-	for _, ds := range []ir.Diags{a.static, casc.Diags, fb.diags, eng.Diags} {
+	for _, ds := range []ir.Diags{static, casc.Diags, fb.diags, eng.Diags} {
 		for _, d := range ds {
 			if k := d.String(); !seen[k] {
 				seen[k] = true
@@ -189,6 +223,48 @@ func (a *App) renderOnce(cols, rows int) *Frame {
 	f.Diags = diags.Sorted()
 	a.last = f
 	return f
+}
+
+// cascade is step 2 of SPEC §18: it computes the style of the screen tree
+// and of each open modal (a modal inherits from its screen) and drops
+// display: none subtrees, the screen root and the modals included.
+func (fb *builder) cascade(casc *css.Cascade, rootBox *layout.Box) *layout.Box {
+	for _, b := range append([]*layout.Box{rootBox}, fb.modals...) {
+		if b != nil {
+			computeStyles(casc, b, rootBoxStyle(b, rootBox))
+		}
+	}
+	return fb.dropUndisplayed(rootBox)
+}
+
+// activateTabs is step 3 of SPEC §18: for each tabs, outermost first, it
+// picks the active tab among the visible ones, drops the other tab nodes,
+// creates one label per visible tab, inflates the active tab's content,
+// and cascades the labels and that content. It reports whether an active
+// tab changed, which repeats steps 1-4 like a focus change. No tabs
+// widget is built yet, so this stage has nothing to do.
+func (fb *builder) activateTabs(*css.Cascade, *layout.Box) bool { return false }
+
+// buildHints is step 5 of SPEC §18: it builds the items of each hints by
+// running the key dispatch of §8.6 on the frame after step 4, and
+// cascades them. No hints widget is built yet, so this stage has nothing
+// to do.
+func (fb *builder) buildHints(*css.Cascade, *layout.Box) {}
+
+// placeTableRows is step 7 of SPEC §18: after layout, for each laid-out
+// table, it generates rows o to min(o + V, n) − 1 and their body cells,
+// cascades them, and places them (§6.9.3). No table widget is built yet,
+// so this stage has nothing to do.
+func (fb *builder) placeTableRows(*css.Cascade, *layout.Box) {}
+
+// markFocusChain sets FocusWithin on the focused box and each of its
+// ancestors up to the screen, through a modal (a modal's parent is its
+// screen): the nodes :focus-within matches (SPEC §10.1). With nothing
+// focused nothing is marked.
+func markFocusChain(b *layout.Box) {
+	for ; b != nil; b = b.Parent {
+		b.FocusWithin = true
+	}
 }
 
 // dropUndisplayed applies display: none to the boxes computeStyles cannot
@@ -231,7 +307,7 @@ func (a *App) rememberScroll(b *layout.Box) {
 
 // computeStyles runs the cascade top-down and drops display:none subtrees.
 func computeStyles(c *css.Cascade, b *layout.Box, parent *css.Style) {
-	b.Style = c.Compute(b, parent, b.Hints, b.Inline)
+	b.Style = c.Compute(subjectOf(b), parent, b.Hints, b.Inline)
 	kept := b.Children[:0]
 	for _, ch := range b.Children {
 		computeStyles(c, ch, &b.Style)
@@ -242,11 +318,33 @@ func computeStyles(c *css.Cascade, b *layout.Box, parent *css.Style) {
 	b.Children = kept
 }
 
+// subjectOf is the element the cascade matches as the subject when it
+// computes b's own style. While a tab's own style is computed, :empty and
+// :focus-within never match that tab: its style, display included, is
+// needed before its content exists (SPEC §10.1, §18 step 2). Everywhere
+// else, as a parent in a child selector for instance, it matches normally.
+func subjectOf(b *layout.Box) css.Element {
+	if b.Kind == "tab" {
+		return tabSubject{b}
+	}
+	return b
+}
+
+// tabSubject is a tab box as the subject of its own cascade.
+type tabSubject struct{ *layout.Box }
+
+func (t tabSubject) HasPseudo(p string) bool {
+	if p == "empty" || p == "focus-within" {
+		return false
+	}
+	return t.Box.HasPseudo(p)
+}
+
 // toDecls converts a node's hints or style="" declarations for the cascade.
 func (a *App) toDecls(ps []ir.Prop) []css.Decl {
 	out := make([]css.Decl, len(ps))
 	for i, p := range ps {
-		out[i] = css.Decl{Prop: p.Name, Value: p.Value, Line: p.Line, Col: p.Col, File: a.file}
+		out[i] = css.Decl{Prop: p.Name, Value: p.Value, Line: p.Line, Col: p.Col, File: a.file, Attr: p.Attr}
 	}
 	return out
 }
@@ -357,8 +455,9 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 			return nil
 		}
 	}
+	classes, guardOn := fb.classes(n, sc)
 	b := &layout.Box{
-		Tag: n.Tag, Kind: n.Kind, ID: n.ID, Classes: n.Classes, Parent: parent, Src: n,
+		Tag: n.Tag, Kind: n.Kind, ID: n.ID, Classes: classes, GuardOn: guardOn, Parent: parent, Src: n,
 		Hints: a.toDecls(n.Hints), Inline: a.toDecls(n.Inline), Follow: -1, Index: -1,
 		Axis: n.Attrs["axis"],
 	}
@@ -424,6 +523,17 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		fb.inflateList(n, b, sc)
 		return b
 	}
+	switch n.Kind {
+	case "table", "sparkline", "hints":
+		// Their children are templates (a table's columns and row
+		// template) or none at all: the table's rows are generated after
+		// layout (§18 step 7), a hints' items from the keymap (step 5).
+		return b
+	case "tab":
+		// Step 1 creates the tab nodes of a tabs but not their content:
+		// only the active tab's content is inflated, in step 3.
+		return b
+	}
 	for _, c := range n.Children {
 		cb := fb.inflate(c, b, sc, inItem)
 		if cb == nil {
@@ -438,6 +548,52 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		b.Children = append(b.Children, cb)
 	}
 	return b
+}
+
+// classes returns an element's classes (SPEC §6.13): its class names in
+// order, then the names of its truthy class:NAME guards in attribute
+// order, without repeats. A guard's path is resolved in the element's
+// scope (aliases of enclosing each included); a missing path is B002 and
+// the class is not added. Without guards (every version="1" element) it
+// is the class list itself. on is the truthiness of each guard.
+func (fb *builder) classes(n *ir.Node, sc *scope) (out []string, on []bool) {
+	if len(n.ClassGuards) == 0 {
+		return n.Classes, nil
+	}
+	out = append([]string(nil), n.Classes...)
+	on = make([]bool, len(n.ClassGuards))
+	for i, cg := range n.ClassGuards {
+		if !fb.guard(n, "class:"+cg.Name, cg.Guard, sc) {
+			continue
+		}
+		on[i] = true
+		dup := false
+		for _, c := range out {
+			if c == cg.Name {
+				dup = true
+				break
+			}
+		}
+		if !dup {
+			out = append(out, cg.Name)
+		}
+	}
+	return out, on
+}
+
+// guard evaluates a path or !path guard written in attribute attr; a
+// missing path is B002 (warning) and counts as false.
+func (fb *builder) guard(n *ir.Node, attr, v string, sc *scope) bool {
+	g, err := ir.ParseGuard(v)
+	if err != nil {
+		return false
+	}
+	val, found := sc.resolve(fb.a.store, g.Path)
+	if !found {
+		fb.report(n, ir.Warning, "B002", "%s=%q: path %q is missing", attr, v, g.Path)
+		return false
+	}
+	return ir.Truthy(val) != g.Neg
 }
 
 func typeName(v any) string {

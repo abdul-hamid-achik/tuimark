@@ -58,7 +58,7 @@ func startPtyChild(t *testing.T, test, mode string) *ptyRig {
 
 // terminalEnv are the variables Run's color detection, probe, and
 // environment overrides read (SPEC v0.2 §26.10).
-var terminalEnv = []string{"TERM", "TERM_PROGRAM", "SSH_TTY", "WT_SESSION", "COLORTERM", "NO_COLOR", "TUIMARK_COLOR", "TUIMARK_THEME", "TUIMARK_SYNC"}
+var terminalEnv = []string{"TERM", "TERM_PROGRAM", "SSH_TTY", "WT_SESSION", "COLORTERM", "NO_COLOR", "TUIMARK_COLOR", "TUIMARK_THEME", "TUIMARK_SYNC", "TUIMARK_LOG", "COLORFGBG"}
 
 // startPtyChildEnv is startPtyChild with a pinned terminal environment:
 // with env non-nil, the child gets this process's environment without the

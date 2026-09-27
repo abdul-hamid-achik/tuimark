@@ -169,3 +169,34 @@ func Truthy(v any) bool {
 	}
 	return true
 }
+
+// IsGuardName reports whether s matches the guardname production of SPEC
+// §7, the NAME of a class:NAME attribute: [a-z_][a-z0-9_-]*.
+func IsGuardName(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c == '_', c >= 'a' && c <= 'z':
+		case (c >= '0' && c <= '9') || c == '-':
+			if i == 0 {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+// IsFlag reports whether s matches the flag production of SPEC §7: true,
+// false, a path, or !path (hidden, disabled, open, mouse).
+func IsFlag(s string) bool {
+	if s == "true" || s == "false" {
+		return true
+	}
+	_, err := ParseGuard(s)
+	return err == nil
+}

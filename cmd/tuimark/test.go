@@ -30,6 +30,7 @@ type goldenEntry struct {
 	Input  string   `json:"input,omitempty"`  // play steps (§15.4); exclusive with Script
 	Script string   `json:"script,omitempty"` // a play script path; exclusive with Input
 	Styles bool     `json:"styles,omitempty"` // JSON goldens include theme and styles
+	Cells  bool     `json:"cells,omitempty"`  // JSON goldens include cells (SPEC v0.2b §15.5)
 }
 
 // theme returns the entry's theme value and whether the field was given
@@ -241,10 +242,9 @@ func (c *cli) cmdTest(args []string) int {
 	if err != nil {
 		return c.fail(err)
 	}
-	// Strict decoding (finding 28): a typo like "stlyes", or the 0.2b
-	// "cells" field, is a manifest error (exit 1), not silently ignored.
-	// §28.24: "theme, input, script, styles are the only additions in
-	// 0.2a."
+	// Strict decoding (finding 28): a typo like "stlyes" is a manifest
+	// error (exit 1), not silently ignored. §28.24: "theme, input, script,
+	// styles are the only additions in 0.2a"; 0.2b adds "cells" (§15.5).
 	var entries []goldenEntry
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
@@ -275,7 +275,7 @@ func (c *cli) cmdTest(args []string) int {
 				continue
 			}
 		}
-		freshPerSize := hasPlay || e.Styles
+		freshPerSize := hasPlay || e.Styles || e.Cells
 		themeVal, themeSet := e.theme()
 
 		// A plain (non-play, non-styles) entry loads once: App.Dump is a
@@ -333,7 +333,7 @@ func (c *cli) cmdTest(args []string) int {
 					continue
 				}
 				if hasPlay {
-					sess := newPlaySession(app, cols, rows, false, e.Styles, false)
+					sess := newPlaySession(app, cols, rows, e.Cells, e.Styles, false)
 					sess.run(steps)
 					if sess.usageErr != nil {
 						fmt.Fprintf(c.stdout, "FAIL %s %s: play step %d (%s): %v\n", e.Name, size, sess.usageStep, sess.usageRaw, sess.usageErr)
@@ -344,10 +344,7 @@ func (c *cli) cmdTest(args []string) int {
 					events = sess.events
 					isPlay = true
 				} else {
-					f := app.Frame(cols, rows)
-					d = dump.Build(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, false)
-					d.Theme = effectiveTheme(app)
-					d.Styles = dump.BuildStyles(f.Grid)
+					d = frameDump(app.Frame(cols, rows), e.Cells, e.Styles)
 				}
 			} else {
 				d = sharedApp.Dump(cols, rows, false)

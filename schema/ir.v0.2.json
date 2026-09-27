@@ -14,6 +14,7 @@
         "title": { "type": "string" },
         "theme": { "type": "string" },
         "focus": { "type": "string" },
+        "mouse": { "type": "string" },
         "actions": { "type": "array", "items": { "type": "string" } }
       }
     },
@@ -29,7 +30,9 @@
           "keys": { "type": "string" },
           "action": { "type": "string" },
           "when": { "type": "string" },
-          "to": { "type": "string" }
+          "to": { "type": "string" },
+          "label": { "type": "string" },
+          "keycap": { "type": "string" }
         }
       }
     },
@@ -42,7 +45,8 @@
         "col", "row", "box", "scroll", "spacer",
         "text", "rule",
         "list", "item", "input", "button", "progress",
-        "modal"
+        "modal",
+        "table", "column", "tabs", "tab", "sparkline", "hints"
       ]
     },
     "node": {

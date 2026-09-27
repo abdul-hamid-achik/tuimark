@@ -41,18 +41,18 @@ func (s *staticEl) ParentElement() css.Element {
 // screens, closed modals, false if= branches, hidden nodes, and list item
 // templates (not expanded). Each node's style comes from its presentational
 // hints, style="", and the author rules without state pseudo-classes, at
-// every validate breakpoint. Layout keeps its own V010 as a fallback for
-// what only a render can decide; Validate dedupes the two by String().
-// Modals are layers, never docked, so they are skipped like at layout time.
-// Caller holds a.mu.
-func (a *App) checkDocks() ir.Diags {
+// every validate breakpoint and under each of themes (the themes Validate
+// renders). Layout keeps its own V010 as a fallback for what only a render
+// can decide; Validate dedupes the two by String(). Modals are layers,
+// never docked, so they are skipped like at layout time. Caller holds a.mu.
+func (a *App) checkDocks(themes []string) ir.Diags {
 	var out ir.Diags
 	if a.doc.Root == nil {
 		return out
 	}
 	seen := map[string]bool{}
-	for _, cols := range validateCols {
-		casc := css.NewCascade(a.sheets, css.Env{Cols: cols, Rows: 24, Theme: a.doc.Theme})
+	for _, env := range dockEnvs(themes) {
+		casc := css.NewCascade(a.sheets, env)
 		var walk func(n *ir.Node, parent *staticEl, ps *css.Style)
 		walk = func(n *ir.Node, parent *staticEl, ps *css.Style) {
 			switch n.Kind {
@@ -81,6 +81,17 @@ func (a *App) checkDocks() ir.Diags {
 			}
 		}
 		walk(a.doc.Root, nil, nil)
+	}
+	return out
+}
+
+// dockEnvs are the validate breakpoints (× 24 rows) under each theme.
+func dockEnvs(themes []string) []css.Env {
+	var out []css.Env
+	for _, th := range themes {
+		for _, cols := range validateCols {
+			out = append(out, css.Env{Cols: cols, Rows: 24, Theme: th})
+		}
 	}
 	return out
 }

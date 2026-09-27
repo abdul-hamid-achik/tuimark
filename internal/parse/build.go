@@ -29,6 +29,10 @@ type KeyBind struct {
 	When      string
 	WhenSel   *css.Selector
 	To        string // id without '#'
+	Label     string // version="2": the hint label (SPEC §6.12); "" when absent
+	Keycap    string // version="2": the key text a hint shows instead of the key
+	HasLabel  bool
+	HasKeycap bool
 	Line, Col int
 }
 
@@ -37,7 +41,12 @@ type Document struct {
 	File    string
 	Spike   bool
 	Version string
-	Theme   string
+	// V2 is true for a <tui version="2"> document: it accepts the 0.2b
+	// vocabulary (SPEC §5.1). Any other version is checked as "1".
+	V2    bool
+	Theme string // the theme attribute: dark, light, auto (version="2"), or "" when absent
+	// Mouse is the mouse attribute as written (version="2", SPEC §8.5).
+	Mouse   string
 	Root    *ir.Node   // <tui> or <app>
 	Screens []*ir.Node // v1 only
 	Styles  []StyleRef
@@ -126,7 +135,8 @@ func without(m map[string]bool, names ...string) map[string]bool {
 // rows), so these are V002 on an <item> and anywhere inside one.
 var itemFocusAttrs = map[string]bool{"focusable": true, "on:click": true, "on:focus": true}
 
-// TagAttrs is the attribute catalog per tag (V002 outside it).
+// TagAttrs is the attribute catalog per tag of a version="1" document
+// (V002 outside it). TagAttrsV2 adds what version="2" accepts.
 var TagAttrs = map[string]map[string]bool{
 	"tui":      only("version", "theme"),
 	"style":    only("src"),
@@ -148,6 +158,54 @@ var TagAttrs = map[string]map[string]bool{
 	"modal":    with("open", "bind", "on:escape", "on:open", "on:close"),
 }
 
+// TagAttrsV2 is what a version="2" document accepts on top of TagAttrs:
+// the attributes marked † in SPEC §6.15, and the rows of the six new tags.
+// Every tag except tui, style, keymap, and bind also takes class:NAME
+// (noClassGuard), and a table's <item> takes only class and class:NAME.
+var TagAttrsV2 = map[string]map[string]bool{
+	"tui":       only("mouse"),
+	"bind":      only("label", "keycap"),
+	"col":       only("each", "key"),
+	"row":       only("each", "key"),
+	"box":       only("each", "key"),
+	"list":      only("checked", "mark", "on:change"),
+	"table":     with("each", "key", "bind", "checked", "mark", "placeholder", "on:select", "on:change"),
+	"column":    only("id", "class", "title", "width", "style", "on:click"),
+	"tabs":      with("bind", "mark", "on:select"),
+	"tab":       only("id", "class", "title", "hidden", "disabled", "if", "style", "gap", "pad", "border", "label", "short", "focus"),
+	"sparkline": with("bind", "min", "max"),
+	"hints":     with("scope"),
+}
+
+// tableItemAttrs are the attributes of a table's row template <item>
+// (SPEC §6.9.1, §6.15), besides class:NAME.
+var tableItemAttrs = only("class")
+
+// noClassGuard are the tags that take no class:NAME (SPEC §6.13).
+var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true}
+
+// ClassGuardPrefix starts every class:NAME attribute (SPEC §6.13).
+const ClassGuardPrefix = "class:"
+
+// attrAllowed reports whether a tag takes an attribute, and whether only
+// a version="2" document accepts it there (SPEC §6.15). parent is the
+// element's parent tag.
+func attrAllowed(tag, parent, name string) (ok, v2Only bool) {
+	if strings.HasPrefix(name, ClassGuardPrefix) {
+		return !noClassGuard[tag], true
+	}
+	if tag == "item" && parent == "table" {
+		return tableItemAttrs[name], true
+	}
+	if ir.IsKindV2(tag) {
+		return TagAttrsV2[tag][name], true
+	}
+	if TagAttrs[tag][name] {
+		return true, false
+	}
+	return TagAttrsV2[tag][name], true
+}
+
 // Focusable-by-default kinds that therefore need an id (V012).
 var needsID = map[string]bool{"list": true, "input": true, "button": true, "modal": true}
 
@@ -157,6 +215,10 @@ var leafKinds = map[string]bool{"text": true, "input": true, "button": true, "pr
 type builder struct {
 	doc  *Document
 	file string
+	// v2 is the document's version="2" (SPEC §5.1), known before any
+	// element is built: the root's version decides how every tag,
+	// attribute, value, selector, and action is checked.
+	v2 bool
 	// droppedIn maps a node to the unknown-tag children content() kept
 	// out of its Children, in document order.
 	droppedIn map[*ir.Node][]*ir.Node
@@ -176,6 +238,12 @@ func listItem(n *ir.Node) *ir.Node {
 		}
 	}
 	return nil
+}
+
+// v2Hint reports a version="2" item in a version="1" document: the
+// message ends with ` (requires version="2")` (SPEC §5.1).
+func (b *builder) v2Hint(line, col int, n *ir.Node, code, format string, args ...any) {
+	b.diag(ir.Error, code, line, col, n.Path, n.ID, format+"%s", append(args, ir.VersionHint)...)
 }
 
 // listHint is the advice given for a focus target inside a list row.
@@ -220,6 +288,14 @@ func Parse(src []byte, file string) *Document {
 	case "app":
 		doc.Spike = true
 	case "tui":
+		// The version decides every check below (SPEC §5.1), whatever the
+		// attribute order: <tui theme="auto" version="2"> is valid.
+		for _, a := range raw.Attrs {
+			if a.Name == "version" && a.Value == "2" {
+				b.v2 = true
+			}
+		}
+		doc.V2 = b.v2
 	default:
 		b.diag(ir.Error, "V005", raw.Line, raw.Col, "/", "", "document root must be <tui> (or the phase-0 alias <app>), got <%s>", raw.Name)
 		return doc
@@ -315,7 +391,11 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 		b.errN(n, "V001", "<app> is the phase-0 root alias; inside <tui> use <screen>")
 		return
 	}
-	if !ir.IsKind(tag) {
+	if ir.IsKindV2(tag) && !b.v2 {
+		b.v2Hint(n.Line, n.Col, n, "V001", "tag <%s>", tag)
+		return
+	}
+	if !ir.IsKindIn(tag, b.v2) {
 		b.errN(n, "V001", "unknown tag <%s>", tag)
 		return
 	}
@@ -337,8 +417,12 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 			b.errN(n, "V001", "<bind> must be inside <keymap>")
 		}
 	case "item":
-		if ptag != "list" {
-			b.errN(n, "V001", "<item> must be a direct child of <list>")
+		if ptag != "list" && !(b.v2 && ptag == "table") {
+			if b.v2 {
+				b.errN(n, "V001", "<item> must be a direct child of <list> or <table>")
+			} else {
+				b.errN(n, "V001", "<item> must be a direct child of <list>")
+			}
 		}
 	case "modal":
 		if ptag != "screen" {
@@ -358,12 +442,16 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 	// SPEC §8.3 makes these focusable by default, but inside a list row
 	// nothing is ever focused: the list is, and navigates its rows. Reject
 	// them rather than render a widget that can never respond.
-	if needsID[tag] {
+	if needsID[tag] || statefulV2[tag] {
 		if it := listItem(parent); it != nil {
 			b.errN(n, "V001", "<%s> inside a list <item> can never take focus: %s", tag, listHint(it))
 		}
 	}
 }
+
+// statefulV2 are the version="2" tags that keep per-node state by id and
+// so cannot sit inside a list <item> either (SPEC §6.8 item 8).
+var statefulV2 = map[string]bool{"table": true, "tabs": true, "tab": true}
 
 // tagKnown reports whether tag is in the closed vocabulary at all (SPEC §6,
 // §6.7), independent of whether it appears in a valid context: false for
@@ -388,7 +476,7 @@ func (b *builder) tagKnown(tag string) bool {
 		}
 		return false
 	}
-	return ir.IsKind(tag)
+	return ir.IsKindIn(tag, b.v2)
 }
 
 func (b *builder) attrErr(n *ir.Node, a RawAttr, code, format string, args ...any) {
@@ -463,7 +551,12 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			b.attrErr(n, a, "V002", "unknown attribute %q on <%s> (phase-0 attributes: id class width height gap pad border)", name, tag)
 			return
 		}
-	} else if allowed, known := TagAttrs[tag]; known {
+	} else if b.tagKnown(tag) {
+		ptag := ""
+		if n.Parent != nil && (b.v2 || n.Parent.Tag != "table") {
+			ptag = n.Parent.Tag
+		}
+		allowed, v2Only := attrAllowed(tag, ptag, name)
 		if itemFocusAttrs[name] {
 			if it := listItem(n); it == n {
 				b.attrErr(n, a, "V002", "attribute %q is not allowed on a list <item>: %s", name, listHint(it))
@@ -475,12 +568,16 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 				return
 			}
 		}
-		if !allowed[name] {
+		if !allowed {
 			if strings.HasPrefix(name, "on:") && !eventNames[strings.TrimPrefix(name, "on:")] {
 				b.attrErr(n, a, "V002", "unknown event %q on <%s>", name, tag)
 			} else {
 				b.attrErr(n, a, "V002", "attribute %q is not allowed on <%s>", name, tag)
 			}
+			return
+		}
+		if v2Only && !b.v2 {
+			b.v2Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
 			return
 		}
 	} else {
@@ -496,6 +593,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			return
 		}
 		n.On[strings.TrimPrefix(name, "on:")] = val
+		return
+	}
+	if strings.HasPrefix(name, ClassGuardPrefix) {
+		b.classGuard(n, a)
 		return
 	}
 	switch name {
@@ -516,19 +617,19 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			b.attrErr(n, a, "V003", "%s: %v", name, err)
 			return
 		}
-		n.Hints = append(n.Hints, ir.Prop{Name: name, Value: val, Line: a.Line, Col: a.Col})
+		n.Hints = append(n.Hints, ir.Prop{Name: name, Value: val, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "gap":
 		if err := css.CheckDecl("gap", val); err != nil {
 			b.attrErr(n, a, "V003", "%v", err)
 			return
 		}
-		n.Hints = append(n.Hints, ir.Prop{Name: "gap", Value: val, Line: a.Line, Col: a.Col})
+		n.Hints = append(n.Hints, ir.Prop{Name: "gap", Value: val, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "pad":
 		if err := css.CheckDecl("padding", val); err != nil {
 			b.attrErr(n, a, "V003", "pad: %v", err)
 			return
 		}
-		n.Hints = append(n.Hints, ir.Prop{Name: "padding", Value: val, Line: a.Line, Col: a.Col})
+		n.Hints = append(n.Hints, ir.Prop{Name: "padding", Value: val, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "border":
 		v := val
 		switch val {
@@ -541,18 +642,18 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			b.attrErr(n, a, "V003", "border=%q: want 1, 0, none, single, double, rounded, or thick", val)
 			return
 		}
-		n.Hints = append(n.Hints, ir.Prop{Name: "border", Value: v, Line: a.Line, Col: a.Col})
+		n.Hints = append(n.Hints, ir.Prop{Name: "border", Value: v, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "wrap":
 		if err := css.CheckDecl("wrap", val); err != nil {
 			b.attrErr(n, a, "V003", "%v", err)
 			return
 		}
-		n.Hints = append(n.Hints, ir.Prop{Name: "wrap", Value: val, Line: a.Line, Col: a.Col})
+		n.Hints = append(n.Hints, ir.Prop{Name: "wrap", Value: val, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "style":
 		// Recover per declaration (like a <style> rule's block), so one
 		// typo does not also drop every other, valid declaration in the
 		// same style="" attribute.
-		decls, errs := css.ParseDeclsAll(val)
+		decls, errs := css.ParseDeclsAllIn(val, b.v2)
 		for _, err := range errs {
 			b.attrErr(n, a, "V003", "%v", err)
 		}
@@ -597,7 +698,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if !ir.IsPath(val) {
 			b.attrErr(n, a, "V003", "key=%q is not a path", val)
 		}
-	case "title", "placeholder", "label":
+	case "title", "placeholder", "label", "keycap", "short", "mark":
 		// XML attribute-value normalization: tabs and line breaks are spaces
 		// (these values paint on one line).
 		clean := b.sanitize(n, a.Line, a.Col, strings.Map(func(r rune) rune {
@@ -607,12 +708,14 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			return r
 		}, val))
 		n.Attrs[name] = clean
-		if name != "label" && !b.doc.Spike {
+		if (name == "title" || name == "placeholder") && !b.doc.Spike {
 			if _, err := ir.ParseInterp(clean); err != nil {
 				b.attrErr(n, a, "V003", "%s: %v", name, err)
 			}
-		} else if name == "label" && ir.HasInterp(clean) {
-			b.attrErr(n, a, "V003", "label: {path} is only allowed in <text>, title, and placeholder")
+		} else if name != "title" && name != "placeholder" && ir.HasInterp(clean) {
+			// label, keycap, short, and mark are literal text (SPEC §6.10.1,
+			// §6.12).
+			b.attrErr(n, a, "V003", "%s: {path} is only allowed in <text>, title, and placeholder", name)
 		}
 	case "axis":
 		ok := val == "x" || val == "y" || (tag == "scroll" && val == "both")
@@ -628,16 +731,49 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			b.attrErr(n, a, "V003", "value=%q: want a number 0-100", val)
 		}
 	case "version":
-		if val != "1" {
-			b.attrErr(n, a, "V003", "version=%q: this runtime reads version=\"1\"", val)
+		// SPEC §5.1: exactly "1" or "2"; any other value is V003 and the
+		// document is checked and rendered as version="1".
+		if val != "1" && val != "2" {
+			b.attrErr(n, a, "V003", "version=%q: want \"1\" or \"2\" (the document is read as version=\"1\")", val)
 		}
 		b.doc.Version = val
 	case "theme":
+		if val == "auto" {
+			if !b.v2 {
+				b.v2Hint(a.Line, a.Col, n, "V003", "theme=%q", val)
+				return
+			}
+			b.doc.Theme = val
+			return
+		}
 		if _, ok := css.Themes[val]; !ok {
-			b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light)", val)
+			if b.v2 {
+				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light; or auto)", val)
+			} else {
+				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light)", val)
+			}
 			return
 		}
 		b.doc.Theme = val
+	case "mouse":
+		// SPEC §8.5: a flag, evaluated every frame.
+		if !ir.IsFlag(val) {
+			b.attrErr(n, a, "V003", "mouse=%q: want true, false, a path, or !path", val)
+			return
+		}
+		b.doc.Mouse = val
+	case "checked":
+		if !ir.IsPath(val) {
+			b.attrErr(n, a, "V003", "checked=%q is not a path", val)
+		}
+	case "scope":
+		if val != "active" && val != "all" {
+			b.attrErr(n, a, "V003", "scope=%q: want active or all", val)
+		}
+	case "min", "max":
+		if !isNumber(val) {
+			b.attrErr(n, a, "V003", "%s=%q: want a number such as 0, -5, or 0.25", name, val)
+		}
 	case "focus":
 		if !strings.HasPrefix(val, "#") || !isIDName(val[1:]) {
 			b.attrErr(n, a, "V003", "focus=%q: want #id", val)
@@ -645,6 +781,36 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 	case "keys", "action", "when", "to", "src":
 		// validated with the keymap / stylesheet loader
 	}
+}
+
+// classGuard records a class:NAME="guard" attribute of a version="2"
+// element (SPEC §6.13): NAME must be a guardname and the value path or
+// !path, else V015. An uppercase letter in NAME is already V002 (attribute
+// names are lowercase, SPEC §5), and a repeated NAME is a repeated
+// attribute, V005.
+func (b *builder) classGuard(n *ir.Node, a RawAttr) {
+	name := strings.TrimPrefix(a.Name, ClassGuardPrefix)
+	if !ir.IsGuardName(name) {
+		b.attrErr(n, a, "V015", "%s: %q is not a class name for a guard ([a-z_][a-z0-9_-]*)", a.Name, name)
+		return
+	}
+	if _, err := ir.ParseGuard(a.Value); err != nil {
+		b.attrErr(n, a, "V015", "%s=%q: a class guard is path or !path", a.Name, a.Value)
+		return
+	}
+	n.ClassGuards = append(n.ClassGuards, ir.ClassGuard{Name: name, Guard: a.Value})
+}
+
+// attrText is an attribute as written, `name="value"` (`tuimark inspect`
+// names a presentational attribute that way, SPEC §15.7).
+func attrText(a RawAttr) string { return a.Name + `="` + a.Value + `"` }
+
+// isNumber matches the number production of SPEC §7 (sparkline min and
+// max): an optional '-', digits, and optionally '.' and digits.
+func isNumber(s string) bool {
+	s = strings.TrimPrefix(s, "-")
+	_, _, ok := ir.ParseDecimalLit(s)
+	return ok
 }
 
 // isPercent reports whether s is a plain decimal in 0-100, compared on the
@@ -747,12 +913,14 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 		if n.Attrs["src"] != "" && !isXMLWhitespaceOnly(body) {
 			b.errN(n, "V013", "<style> takes either src or an inline body, not both")
 		}
-	case "text", "button":
+	case "text", "button", "column":
 		// Trim the source indentation (spaces or tabs) first, so only control
-		// characters inside the text itself are V007.
+		// characters inside the text itself are V007. A version="2"
+		// <column>'s body is its cell template, a template like a <text>
+		// body (SPEC §6.9.1, §7).
 		clean := b.sanitize(n, textLine, textCol, NormalizeText(body))
 		n.Text = NormalizeText(clean)
-		if n.Tag == "text" && !b.doc.Spike {
+		if (n.Tag == "text" || n.Tag == "column") && !b.doc.Spike {
 			if _, err := ir.ParseInterp(n.Text); err != nil {
 				b.diag(ir.Error, "V003", textLine, textCol, n.Path, n.ID, "%v", err)
 			}
@@ -775,7 +943,7 @@ func (b *builder) checkStructure() {
 		return
 	}
 	if _, ok := root.Attr("version"); !ok {
-		b.errN(root, "V014", "<tui> needs version=\"1\"")
+		b.errN(root, "V014", "<tui> needs version=\"1\" (or version=\"2\")")
 	}
 	for _, c := range root.Children {
 		if c.Tag == "screen" {
@@ -784,10 +952,15 @@ func (b *builder) checkStructure() {
 		if c.Tag == "keymap" {
 			for _, k := range c.Children {
 				if k.Tag == "bind" {
-					b.doc.Keymap = append(b.doc.Keymap, KeyBind{
+					kb := KeyBind{
 						KeysRaw: k.Attrs["keys"], Action: k.Attrs["action"], When: k.Attrs["when"],
 						To: k.Attrs["to"], Line: k.Line, Col: k.Col,
-					})
+					}
+					if b.v2 {
+						kb.Label, kb.HasLabel = k.Attr("label")
+						kb.Keycap, kb.HasKeycap = k.Attr("keycap")
+					}
+					b.doc.Keymap = append(b.doc.Keymap, kb)
 				}
 			}
 		}
@@ -951,13 +1124,20 @@ func (b *builder) checkKeymap() {
 				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "unknown key %q (see the key token list: a-z 0-9 enter esc tab backspace space arrows home end pgup pgdn ctrl+x shift+tab)", tok)
 			}
 		}
-		if k.Action == "" {
+		switch {
+		case k.Action == "":
 			b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "<bind> needs action=")
-		} else if !ir.IsIdent(k.Action) {
+		case ir.IsBuiltinActionV2(k.Action):
+			// SPEC §8.4: the hyphenated built-ins are version="2" keymap
+			// actions (ADR 0006).
+			if !b.v2 {
+				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "action=%q: built-in action%s", k.Action, ir.VersionHint)
+			}
+		case !ir.IsIdent(k.Action):
 			b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "action=%q: an action is a plain name", k.Action)
 		}
 		if k.When != "" {
-			sel, err := css.ParseSelector(k.When)
+			sel, err := css.ParseSelectorIn(k.When, b.v2)
 			if err == nil && sel.Root {
 				err = fmt.Errorf(":root is not a node selector")
 			}

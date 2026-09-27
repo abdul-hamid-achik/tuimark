@@ -42,12 +42,13 @@ type playStep struct {
 	rows  int    // stepResize
 }
 
-// reservedStep reports the usage error for a step §15.4 reserves for 0.2b
-// (mouse, `--script`'s "theme"), or "" when tok/member is not one of them.
+// reservedStep reports the usage error for a mouse step of SPEC v0.2b
+// §15.4 this build does not run yet, or "" when tok/member is not one of
+// them. The `theme` script step is a step (Set("@theme", value)).
 func reservedStep(name string) string {
 	switch name {
-	case "click", "wheel-up", "wheel-down", "wheel", "theme":
-		return fmt.Sprintf("%q is reserved for 0.2b (mouse/theme steps)", name)
+	case "click", "wheel-up", "wheel-down", "wheel":
+		return fmt.Sprintf("%q is a 0.2b mouse step, not implemented in this build", name)
 	}
 	return ""
 }
@@ -288,9 +289,9 @@ func parseScriptSteps(path string) ([]playStep, error) {
 }
 
 // parseScriptLine decodes one --script line (SPEC §15.4): "Each object
-// holds exactly one of these members" — key, text, paste, set, focus, or
-// resize, matched exactly and case-sensitively, with click/wheel/theme
-// rejected as reserved for 0.2b. Before this, plain json.Unmarshal into a
+// holds exactly one of these members" — key, text, paste, set, focus,
+// resize, or (0.2b) theme, matched exactly and case-sensitively, with the
+// click/wheel mouse steps rejected as not implemented yet. Before this, plain json.Unmarshal into a
 // struct with pointer fields matched member names case-insensitively
 // (accepting "KEY"), silently dropped an unknown member such as "extra",
 // and kept only the last of a duplicate member (finding 24).
@@ -309,7 +310,7 @@ func parseScriptLine(line string) (playStep, error) {
 	}
 	switch len(members) {
 	case 0:
-		return playStep{}, fmt.Errorf("no known step member (want one of key, text, paste, set, focus, resize)")
+		return playStep{}, fmt.Errorf("no known step member (want one of key, text, paste, set, focus, resize, theme)")
 	default:
 		if len(members) > 1 {
 			return playStep{}, fmt.Errorf("more than one step member on one line")
@@ -352,8 +353,19 @@ func parseScriptLine(line string) (playStep, error) {
 		return parseScriptSet(line, raw)
 	case "resize":
 		return parseScriptResize(line, raw)
+	case "theme":
+		// SPEC v0.2b §15.4: {"theme": "dark" | "light" | "auto"} is
+		// Set("@theme", value); play never probes, so auto is dark.
+		s, err := decodeStringMember("theme", raw)
+		if err != nil {
+			return playStep{}, err
+		}
+		if s != "dark" && s != "light" && s != "auto" {
+			return playStep{}, fmt.Errorf("theme: want \"dark\", \"light\", or \"auto\", got %q", s)
+		}
+		return playStep{kind: stepSet, raw: line, path: host.ThemePath, value: s}, nil
 	}
-	return playStep{}, fmt.Errorf("unknown step member %q (want one of key, text, paste, set, focus, resize)", name)
+	return playStep{}, fmt.Errorf("unknown step member %q (want one of key, text, paste, set, focus, resize, theme)", name)
 }
 
 // playSession replays steps against app through the same primitives Run's
@@ -483,13 +495,7 @@ func (s *playSession) handlePaste(step int, payload string) {
 // buildDump builds the dump of the session's current frame with this
 // session's --cells/--styles flags.
 func (s *playSession) buildDump() *dump.Dump {
-	f := s.frame
-	d := dump.Build(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, s.cellsFlag)
-	if s.stylesFlag {
-		d.Theme = effectiveTheme(s.app)
-		d.Styles = dump.BuildStyles(f.Grid)
-	}
-	return d
+	return frameDump(s.frame, s.cellsFlag, s.stylesFlag)
 }
 
 // snapshot records this step's PlayFrame when --frames is set.

@@ -12,9 +12,11 @@ import (
 // The environment variables Run reads (SPEC v0.2 §26.10). Dump, Validate,
 // and the deterministic CLI commands never read them.
 const (
-	envColor = "TUIMARK_COLOR" // truecolor | 256 | 16 | none
-	envTheme = "TUIMARK_THEME" // dark | light
-	envSync  = "TUIMARK_SYNC"  // 0 | 1
+	envColor     = "TUIMARK_COLOR" // truecolor | 256 | 16 | none
+	envTheme     = "TUIMARK_THEME" // dark | light
+	envSync      = "TUIMARK_SYNC"  // 0 | 1
+	envLog       = "TUIMARK_LOG"   // a file path (SPEC v0.2b §26.12)
+	envColorFGBG = "COLORFGBG"     // the theme="auto" fallback (SPEC v0.2b §26.4)
 )
 
 // Terminal sequences of a Run session (SPEC v0.2 §26.9).
@@ -36,6 +38,10 @@ const (
 	querySync     = "\x1b[?2026$p" // DECRQM: synchronized output
 	queryGrapheme = "\x1b[?2027$p" // DECRQM: grapheme clustering
 	queryDA1      = "\x1b[c"       // DA1, the probe's sentinel
+	// queryBackground asks for the terminal's background color, OSC 11
+	// (SPEC v0.2b §26.2); only when the theme is resolved from the
+	// terminal (theme="auto").
+	queryBackground = "\x1b]11;?\a"
 )
 
 // probeWait is how long the capability probe waits for its DA1 sentinel
@@ -57,6 +63,8 @@ type runConfig struct {
 	profile paint.Profile
 	theme   string // "" keeps the document's theme
 	sync    syncMode
+	fgbg    string // the theme COLORFGBG gives, "" for none (§26.4)
+	log     string // TUIMARK_LOG, "" for no log (§26.12)
 }
 
 // readRunConfig reads and checks TUIMARK_COLOR, TUIMARK_THEME, and
@@ -86,6 +94,11 @@ func readRunConfig(getenv func(string) string) (runConfig, error) {
 	default:
 		return cfg, fmt.Errorf("tuimark: %s=%q: want 0 or 1", envSync, v)
 	}
+	// COLORFGBG has no invalid value: anything else gives no theme.
+	// TUIMARK_LOG is any path; only a path that cannot be opened fails
+	// (openRunLog).
+	cfg.fgbg = ThemeFromCOLORFGBG(getenv(envColorFGBG))
+	cfg.log = getenv(envLog)
 	return cfg, nil
 }
 
@@ -119,6 +132,21 @@ func probeQueries(s syncMode) string {
 		q += querySync
 	}
 	return q + queryGrapheme + queryDA1
+}
+
+// probePlan decides the probe of SPEC v0.2b §26.2: whether it runs, and
+// whether the skip rule leaves the DECRQM queries out. themeQuery is set
+// when the theme is resolved from the terminal: the write then starts
+// with OSC 11. The probe runs when the output is a terminal, TERM is not
+// dumb, and at least one query other than DA1 is to be sent: under the
+// Apple Terminal/SSH skip rule that is only OSC 11 (so a skipped terminal
+// gets OSC 11 and DA1, and only for theme="auto").
+func probePlan(getenv func(string) string, outTTY bool, s syncMode, themeQuery bool) (probe, skipDECRQM bool) {
+	if !outTTY || getenv("TERM") == "dumb" {
+		return false, false
+	}
+	decrqm := shouldProbe(getenv, outTTY, s)
+	return decrqm || themeQuery, !decrqm
 }
 
 // knownProbeTerms are TERM substrings of terminals the probe skip rule
@@ -157,13 +185,15 @@ func shouldProbe(getenv func(string) string, outTTY bool, s syncMode) bool {
 // termCaps is what the probe found (SPEC v0.2 §26.2). A missing reply
 // means "not supported".
 type termCaps struct {
-	sync     int  // Ps of the DECRPM reply for mode 2026 (0: none)
-	grapheme int  // Ps of the DECRPM reply for mode 2027 (0: none)
-	done     bool // the DA1 sentinel arrived: later replies are ignored
+	sync     int    // Ps of the DECRPM reply for mode 2026 (0: none)
+	grapheme int    // Ps of the DECRPM reply for mode 2027 (0: none)
+	bg       string // the background of the first OSC 11 reply: dark, light, or "" (none)
+	done     bool   // the DA1 sentinel arrived: later replies are ignored
 }
 
 // record takes one reply; it reports whether the probe is over (the DA1
-// sentinel arrived).
+// sentinel arrived). Only the first OSC 11 reply whose SPEC is rgb: or
+// rgba: records the background (SPEC v0.2b §26.2).
 func (c *termCaps) record(r reply) bool {
 	if c.done {
 		return true
@@ -171,12 +201,29 @@ func (c *termCaps) record(r reply) bool {
 	switch {
 	case r.da1:
 		c.done = true
+	case r.osc11:
+		if c.bg == "" {
+			c.bg = r.bg
+		}
 	case r.mode == 2026:
 		c.sync = r.value
 	case r.mode == 2027:
 		c.grapheme = r.value
 	}
 	return c.done
+}
+
+// graphemeState names mode 2027's state for the caps record of
+// TUIMARK_LOG (SPEC v0.2b §26.12): enabled (Run turned it on), already
+// (it was on), or none.
+func (c termCaps) graphemeState() string {
+	switch {
+	case c.turnGraphemeOn():
+		return "enabled"
+	case c.graphemeActive():
+		return "already"
+	}
+	return "none"
 }
 
 // syncSupported: DEC 2026 is used for Ps 1 or 2 only.
@@ -199,6 +246,14 @@ type termSession struct {
 	probe   bool          // run the capability probe (§26.2)
 	sync    syncMode      // TUIMARK_SYNC
 	wait    time.Duration // the probe's cap; probeWait when 0
+	// themeQuery puts OSC 11 at the start of the probe (the theme is
+	// resolved from the terminal, SPEC v0.2b §26.2); skipDECRQM leaves the
+	// DECRQM queries out (the skip rule applies).
+	themeQuery bool
+	skipDECRQM bool
+	fgbg       string  // the theme COLORFGBG gives, "" for none
+	log        *runLog // TUIMARK_LOG, nil for none
+	eof        bool    // the session ended because the input ended
 
 	mu       sync.Mutex
 	grapheme bool // mode 2027 was turned on: leaving turns it off
@@ -223,6 +278,20 @@ func (s *termSession) setGrapheme() {
 	s.mu.Lock()
 	s.grapheme = true
 	s.mu.Unlock()
+}
+
+// queries is the probe's write, in one string (SPEC v0.2b §26.2): OSC 11
+// when the theme is resolved from the terminal, then the DECRQM queries
+// unless the skip rule leaves them out, then the DA1 sentinel.
+func (s *termSession) queries() string {
+	q := ""
+	if s.themeQuery {
+		q = queryBackground
+	}
+	if s.skipDECRQM {
+		return q + queryDA1
+	}
+	return q + probeQueries(s.sync)
 }
 
 // probeCap is the probe's wait.

@@ -26,6 +26,10 @@ type Selector struct {
 // Pseudos allowed in v1.
 var allowedPseudos = map[string]bool{"focus": true, "selected": true, "disabled": true, "empty": true}
 
+// v2Pseudos are the pseudo-classes only version="2" documents accept, in
+// stylesheets and in keymap when= selectors (SPEC §5.1, §10.1).
+var v2Pseudos = map[string]bool{"checked": true, "focus-within": true}
+
 // nonRenderedTags are catalog tags (SPEC §6.1) that never become a laid-out
 // Box: host.inflate builds no node for them, and the cascade never matches
 // or inherits through them (the screen, not <tui>, is the root of the
@@ -96,11 +100,16 @@ func (c Compound) matches(el Element) bool {
 	return true
 }
 
-// ParseSelectorList parses `a, b > c` into selectors.
-func ParseSelectorList(src string) ([]Selector, error) {
+// ParseSelectorList parses `a, b > c` into selectors (version="1").
+func ParseSelectorList(src string) ([]Selector, error) { return ParseSelectorListIn(src, false) }
+
+// ParseSelectorListIn is ParseSelectorList for a document of the given
+// version: a version="2" document also accepts the six new type
+// selectors and :checked and :focus-within (SPEC §5.1).
+func ParseSelectorListIn(src string, v2 bool) ([]Selector, error) {
 	var out []Selector
 	for _, part := range strings.Split(src, ",") {
-		sel, err := ParseSelector(part)
+		sel, err := ParseSelectorIn(part, v2)
 		if err != nil {
 			return nil, err
 		}
@@ -109,8 +118,12 @@ func ParseSelectorList(src string) ([]Selector, error) {
 	return out, nil
 }
 
-// ParseSelector parses one selector (no commas).
-func ParseSelector(src string) (Selector, error) {
+// ParseSelector parses one selector (no commas) of a version="1" document.
+func ParseSelector(src string) (Selector, error) { return ParseSelectorIn(src, false) }
+
+// ParseSelectorIn parses one selector (no commas) for a document of the
+// given version.
+func ParseSelectorIn(src string, v2 bool) (Selector, error) {
 	text := strings.TrimSpace(src)
 	if text == "" {
 		return Selector{}, fmt.Errorf("empty selector")
@@ -151,7 +164,7 @@ func ParseSelector(src string) (Selector, error) {
 				return Selector{}, fmt.Errorf("selector %q: the descendant combinator (space) is not supported; use '>'", text)
 			}
 		}
-		comp, n, err := parseCompound(text[i:], text)
+		comp, n, err := parseCompound(text[i:], text, v2)
 		if err != nil {
 			return Selector{}, err
 		}
@@ -166,7 +179,7 @@ func ParseSelector(src string) (Selector, error) {
 	return sel, nil
 }
 
-func parseCompound(s, whole string) (Compound, int, error) {
+func parseCompound(s, whole string, v2 bool) (Compound, int, error) {
 	var c Compound
 	i := 0
 	readIdent := func() string {
@@ -178,7 +191,10 @@ func parseCompound(s, whole string) (Compound, int, error) {
 	}
 	if i < len(s) && isIdentStart(s[i]) {
 		c.Tag = readIdent()
-		if !ir.IsKind(c.Tag) {
+		if ir.IsKindV2(c.Tag) && !v2 {
+			return c, 0, fmt.Errorf("selector %q: type %q%s", whole, c.Tag, ir.VersionHint)
+		}
+		if !ir.IsKindIn(c.Tag, v2) {
 			return c, 0, fmt.Errorf("selector %q: unknown type %q (not in the tag catalog)", whole, c.Tag)
 		}
 		if nonRenderedTags[c.Tag] {
@@ -216,7 +232,13 @@ func parseCompound(s, whole string) (Compound, int, error) {
 			if p == "root" {
 				return c, 0, fmt.Errorf("selector %q: :root must stand alone", whole)
 			}
-			if !allowedPseudos[p] {
+			if v2Pseudos[p] && !v2 {
+				return c, 0, fmt.Errorf("selector %q: pseudo-class :%s%s", whole, p, ir.VersionHint)
+			}
+			if !allowedPseudos[p] && !v2Pseudos[p] {
+				if v2 {
+					return c, 0, fmt.Errorf("selector %q: pseudo-class :%s is not supported (use :focus :selected :disabled :empty :checked :focus-within)", whole, p)
+				}
 				return c, 0, fmt.Errorf("selector %q: pseudo-class :%s is not supported (use :focus :selected :disabled :empty)", whole, p)
 			}
 			c.Pseudos = append(c.Pseudos, p)

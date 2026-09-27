@@ -12,8 +12,17 @@ import (
 	"strings"
 )
 
-// Version is the source IR version emitted by `tuimark ir`.
+// Version is the source IR version `tuimark ir` emits for version="1"
+// documents and the spike (SPEC §13.1).
 const Version = "0.1"
+
+// VersionV2 is the source IR version `tuimark ir` emits for version="2"
+// documents (SPEC §13.1, §23.2).
+const VersionV2 = "0.2"
+
+// VersionHint ends the message of every V001, V002, and V003 that a
+// version="2" item gets in a version="1" document (SPEC §5.1).
+const VersionHint = ` (requires version="2")`
 
 // Kinds is the closed tag vocabulary (SPEC §6). Anything else is V001.
 var Kinds = []string{
@@ -22,6 +31,43 @@ var Kinds = []string{
 	"text", "rule",
 	"list", "item", "input", "button", "progress",
 	"modal",
+}
+
+// KindsV2 are the tags only a <tui version="2"> document accepts (SPEC
+// §5.1, §6): 23 kinds in all with Kinds.
+var KindsV2 = []string{"table", "column", "tabs", "tab", "sparkline", "hints"}
+
+// IsKindV2 reports whether tag is one of the version="2" tags.
+func IsKindV2(tag string) bool {
+	for _, k := range KindsV2 {
+		if k == tag {
+			return true
+		}
+	}
+	return false
+}
+
+// IsKindIn reports whether tag is in the catalog of a document of the
+// given version: Kinds, plus KindsV2 when v2.
+func IsKindIn(tag string, v2 bool) bool {
+	return IsKind(tag) || (v2 && IsKindV2(tag))
+}
+
+// BuiltinActionsV2 are the hyphenated built-in actions of SPEC §8.4,
+// accepted in keymap rows of version="2" documents only (ADR 0006).
+var BuiltinActionsV2 = []string{
+	"move-next", "move-prev", "move-first", "move-last", "move-page-down", "move-page-up",
+	"check-toggle", "check-all", "check-none", "switch-to",
+}
+
+// IsBuiltinActionV2 reports whether name is a hyphenated built-in action.
+func IsBuiltinActionV2(name string) bool {
+	for _, a := range BuiltinActionsV2 {
+		if a == name {
+			return true
+		}
+	}
+	return false
 }
 
 // SpikeKinds is the phase-0 vocabulary accepted under an <app> root.
@@ -44,24 +90,34 @@ func IsKind(tag string) bool {
 type Node struct {
 	// Tag is the source tag name; Kind is the IR kind. They differ only for
 	// the spike alias <app>, whose kind is "col".
-	Tag      string
-	Kind     string
-	ID       string
-	Classes  []string
-	Attrs    map[string]string // every attribute as written, in source form
-	Order    []string          // attribute names in source order
-	Bind     string
-	Each     string
-	If       string
-	On       map[string]string // event name (without "on:") -> action
-	Hints    []Prop            // presentational attributes (width, pad, ...) as CSS declarations
-	Inline   []Prop            // style="" declarations
-	Text     string
-	Children []*Node
-	Parent   *Node
+	Tag     string
+	Kind    string
+	ID      string
+	Classes []string
+	Attrs   map[string]string // every attribute as written, in source form
+	Order   []string          // attribute names in source order
+	Bind    string
+	Each    string
+	If      string
+	On      map[string]string // event name (without "on:") -> action
+	// ClassGuards are the class:NAME attributes of a version="2" element,
+	// in attribute order (SPEC §6.13).
+	ClassGuards []ClassGuard
+	Hints       []Prop // presentational attributes (width, pad, ...) as CSS declarations
+	Inline      []Prop // style="" declarations
+	Text        string
+	Children    []*Node
+	Parent      *Node
 
 	Line, Col int
 	Path      string
+}
+
+// ClassGuard is one class:NAME="guard" attribute: the class NAME is on the
+// element while the guard (path or !path) is truthy (SPEC §6.13).
+type ClassGuard struct {
+	Name  string
+	Guard string
 }
 
 // Attr returns an attribute value and whether it was present.
@@ -77,6 +133,9 @@ func (n *Node) Attr(name string) (string, bool) {
 type Prop struct {
 	Name, Value string
 	Line, Col   int
+	// Attr is the presentational attribute as written (`pad="1"`), for a
+	// declaration that comes from one; "" for style="" declarations.
+	Attr string
 }
 
 // ScalarKind is the unit of a Size.

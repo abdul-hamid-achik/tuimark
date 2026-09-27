@@ -80,7 +80,10 @@ func (a *App) Bind(path string, v any) error { return a.h.Bind(path, v) }
 
 // Set is Bind for a running app: it also schedules a redraw and is safe to
 // call from any goroutine. The reserved paths "@focus" ("#id") and
-// "@screen" ("id") move focus and switch screens.
+// "@screen" ("id") move focus and switch screens; "@theme" ("dark",
+// "light", or "auto") sets the host's theme, which beats the document's
+// theme attribute in Dump, Validate, and Run (TUIMARK_THEME still wins in
+// Run); any other value is an error and changes nothing.
 func (a *App) Set(path string, v any) error { return a.h.Set(path, v) }
 
 // On registers the handler for a named action.

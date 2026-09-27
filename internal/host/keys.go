@@ -83,6 +83,11 @@ type reply struct {
 	da1   bool // a DA1 reply, CSI ? … c: the probe's sentinel
 	mode  int  // a DECRPM reply, CSI ? Pd ; Ps $ y: Pd
 	value int  // and Ps
+	// bg is the theme of an OSC 11 background reply, ESC ] 11 ; SPEC
+	// (dark or light; "" for a SPEC that records nothing), SPEC v0.2b
+	// §26.2. osc11 marks such a reply.
+	osc11 bool
+	bg    string
 }
 
 // decoder is the stateful input decoder behind Run's loop. A read may cut
@@ -508,9 +513,12 @@ func scanString(p []byte, osc bool) unit {
 	limit := min(len(p), maxStringSeq)
 	for k := 2; k < limit; k++ {
 		if osc && p[k] == 0x07 {
-			return unit{n: k + 1}
+			return oscUnit(p[2:k], k+1)
 		}
 		if p[k] == 0x1b && k+1 < limit && p[k+1] == '\\' {
+			if osc {
+				return oscUnit(p[2:k], k+2)
+			}
 			return unit{n: k + 2}
 		}
 	}
@@ -522,6 +530,18 @@ func scanString(p []byte, osc bool) unit {
 		return unit{n: maxStringSeq, discard: mode}
 	}
 	return unit{}
+}
+
+// oscUnit is a complete OSC whose body (between ESC ] and its terminator)
+// is body: an OSC 11 background reply, "11;SPEC", is a reply the probe
+// reads (SPEC v0.2b §26.2, §26.8); any other OSC produces nothing. Either
+// way it never produces a key.
+func oscUnit(body []byte, n int) unit {
+	spec, ok := bytes.CutPrefix(body, []byte("11;"))
+	if !ok {
+		return unit{n: n}
+	}
+	return unit{kind: unitReply, n: n, reply: reply{osc11: true, bg: ThemeFromOSC11(string(spec))}}
 }
 
 // pasteSpaces is step 3 of the paste normalization.

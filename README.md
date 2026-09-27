@@ -187,6 +187,54 @@ takes over), proving the loop end to end. This one example touches:
 - **Keymap and actions** (SPEC §8): a global `<bind>` for `quit`, and
   `on:select="open"` as a named action the host would register with `On`.
 
+## Document versions: `version="1"` and `version="2"`
+
+Every `<tui>` document declares `version="1"` or `version="2"`. A
+`version="1"` document keeps the vocabulary and meaning it has always had,
+and its dumps stay byte-identical. `version="2"` opts into the 0.2b
+vocabulary (SPEC §5.1); this build implements its foundations:
+
+- **The version gate.** In a `version="1"` document each 0.2b tag is
+  `V001`, each 0.2b attribute `V002`, and each 0.2b value, property,
+  pseudo-class, media feature, or built-in action `V003`, with a message
+  that ends in `(requires version="2")`. A `.tcss` file is checked against
+  the version of the document that loads it, so one stylesheet can serve
+  both. Any other `version` is `V003`, and the document is read as
+  `version="1"`.
+- **`class:NAME="path"`** (or `!path`) on any rendered element adds the
+  class `NAME` while the guard is truthy, evaluated every frame in the
+  element's scope (a missing path is `B002`). `NAME` is lowercase,
+  `[a-z_][a-z0-9_-]*` (`V015` otherwise; an uppercase letter is `V002`).
+  The JSON dump of a `version="2"` document lists each node's `classes`:
+  its `class` names, then its truthy guards, without repeats.
+- **`theme="auto"`.** `Run()` asks the terminal for its background color
+  (OSC 11, waiting at most 250 ms, so the first frame is already in the
+  right theme), falls back to `COLORFGBG`, then to `dark`. Every command
+  and `Dump()`/`Validate()` treat `auto` as `dark`, and `validate` checks an
+  `auto` document under both themes.
+- **`@media (theme: dark)` / `@media (theme: light)`** hold per-theme rules
+  and `:root` palettes. Tokens apply in document order, so a light block
+  goes after the base `:root` it refines:
+
+  ```css
+  :root { --brand: #e0443e; }
+  @media (theme: light) { :root { --brand: #c8102e; --bg: #fbfaf8; } }
+  #title { color: $brand; }
+  ```
+
+- **`:focus-within`** matches the focused node and each ancestor up to the
+  screen (through a modal); nothing while nothing is focused.
+- The tags `table column tabs tab sparkline hints`, the properties
+  `grid-columns grid-min-width scrollbar bar` and `layout: grid`, the
+  `:checked` pseudo-class, `each`/`key` on `col`/`row`/`box`,
+  `checked`/`mark` on `list`, `mouse` on `<tui>`, `label`/`keycap` on
+  `<bind>`, and the hyphenated built-in actions (`move-next`, …,
+  `switch-to`) are accepted by the gate in a `version="2"` document but
+  are not laid out, painted, or run by this build yet: the new tags dump
+  as one empty node each, a keymap row naming a built-in never matches
+  (its key goes on to the next row; the built-ins are never `B004`), and
+  `when` still matches the focused node only.
+
 ## CLI reference
 
 ```
@@ -202,6 +250,8 @@ tuimark fmt      FILE [--write] [--check]
 tuimark ir       FILE
 tuimark agents
 tuimark test     [DIR] [--update] [--allow-breaking]
+tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
+                      [--theme dark|light] [--strict] [--json]
 tuimark version
 ```
 
@@ -215,9 +265,10 @@ tuimark version
 - `validate` prints diagnostics (or, with `--json`, the full shape
   including the action catalog) without laying out a frame for its own
   sake — it still renders internally at 40/80/120×24 to catch
-  layout/bind problems. Without `--data`, bind-dependent checks (`B001`,
-  `B002`, `B003`) are skipped, since every path would otherwise read as
-  "missing". `--catalog FILE` (a JSON list of action names, or
+  layout/bind problems (under both themes, dark first, for a `theme="auto"`
+  document without `--theme`). Without `--data`, bind-dependent checks
+  (`B001`–`B003`, and the 0.2b `B008`–`B010`) are skipped, since every path
+  would otherwise read as "missing". `--catalog FILE` (a JSON list of action names, or
   `{"actions":[...]}`) turns unresolved actions into `B004` warnings.
 - `preview` writes the text dump to stdout, and also paints an ANSI frame
   first when stdout is a TTY, in the color profile from `--color`, else
@@ -234,11 +285,15 @@ tuimark version
   step, ahead of "apply stylesheet + media") — a node's `style` map holds
   only its own presentation attributes and `style=""`, not rules matched
   from a `<style>` sheet. It exits like every other command (**2** on any
-  diagnostic with error severity, including stylesheet-only errors) and
-  never emits a node outside `schema/ir.v0.1.json`'s `kind` enum (`tuimark
-  ir` always emits `"version": "0.1"`: 0.2a introduces no new document
-  version, so `schema/ir.v0.2.json` stays reserved for a future
-  `version="2"`).
+  diagnostic with error severity, including stylesheet-only errors). A
+  `version="1"` document (and the spike) gives `"version": "0.1"`, valid
+  against `schema/ir.v0.1.json`; a `version="2"` document gives
+  `"version": "0.2"`, valid against `schema/ir.v0.2.json`, which adds the
+  six new kinds, `app.mouse`, and the keymap's `label`/`keycap`
+  (`class:NAME` attributes stay in `attrs` under their full names). Its
+  `tokens` are resolved for the document's theme with `auto` as `dark`; a
+  `:root` rule inside `@media (theme: …)` counts only for that theme.
+- `inspect` explains one node of one frame (below).
 - `agents` prints `AGENTS.md`, generated from the runtime's own catalogs so
   it cannot drift; `AGENTS.md` at the repo root must equal this output,
   enforced by `internal/agentsdoc`'s `TestAGENTSDoesNotDrift` (regenerate
@@ -248,14 +303,21 @@ tuimark version
 
 ### `--theme` and `dump --styles`
 
-`--theme dark|light` (on `dump`, `validate`, `preview`, and `play`)
-overrides the document's own `theme` attribute for that one render — the
-same override `Run()`'s `TUIMARK_THEME` environment variable applies for a
-live session (SPEC §26.4). Any other value the flag is explicitly given —
-including `auto` (reserved for a later, terminal-background-probing theme
-— SPEC §27.2) and `""` — is a usage error that exits 1 before anything is
-rendered; only leaving `--theme` off entirely keeps the document's own
-theme. The golden manifest's `theme` field (below) follows the same rule.
+`--theme dark|light` (on `dump`, `validate`, `preview`, `play`, and
+`inspect`) overrides the document's own `theme` attribute for that one
+render — the same override `Run()`'s `TUIMARK_THEME` environment variable
+applies for a live session (SPEC §26.4). Any other value the flag is
+explicitly given — including `auto` (no tool probes the terminal) and `""`
+— is a usage error that exits 1 before anything is rendered; only leaving
+`--theme` off entirely keeps the document's own theme, and a document's
+`theme="auto"` is `dark` in every tool. The golden manifest's `theme`
+field (below) follows the same rule.
+
+The host's theme, `Set("@theme", "dark"|"light"|"auto")` (a reserved path,
+in both document versions), beats both the document's theme and
+`--theme`; in `Run()`, `TUIMARK_THEME` beats it, and `auto` resolves from
+the terminal's background. Whatever `Run()` probed never reaches `Dump()`
+or `Validate()`.
 
 ### Environment variables (`Run()` and `preview --color`)
 
@@ -269,6 +331,22 @@ counts as unset.
 | `TUIMARK_COLOR` | `truecolor`, `256`, `16`, `none` | forces the color profile (SPEC §26.3), instead of detecting it from `TERM`/`COLORTERM`/`NO_COLOR`/`WT_SESSION` |
 | `TUIMARK_THEME` | `dark`, `light` | overrides the document's `theme`, same as `--theme` (SPEC §26.4) |
 | `TUIMARK_SYNC` | `0`, `1` | forces synchronized-output framing off or on, instead of probing the terminal (SPEC §26.6) |
+| `TUIMARK_LOG` | a file path | writes an NDJSON log of the session (below); a path that cannot be opened makes `Run` return an error before touching the terminal |
+| `COLORFGBG` | set by some terminals | the fallback for `theme="auto"` when the terminal does not answer the background query: its last `;` field, 0–6 and 8 dark, 7 and 9–15 light |
+
+**`TUIMARK_LOG=FILE`** (SPEC §26.12) makes `Run()` write one JSON object
+per line to `FILE` — created with mode `0600`, or truncated and narrowed
+to `0600` — so diagnostics never land on the terminal `Run()` owns. Each
+record starts with `ev` and `t` (milliseconds since `Run()` started):
+`start` (version and size), `caps` (whether the probe ran, the color
+profile, synchronized output, grapheme mode, and the effective theme with
+where it came from), then one record per `key` (by token), `paste` (its
+normalized length), `action` (the §8.2 payload), `frame` (microseconds
+and bytes written), and `resize`, and finally `end` with its reason
+(`quit`, `eof`, `signal`, or `error`). While an enabled `secret` input has
+focus, `key` and `paste` records are just `{"ev", "t", "redacted": true}`,
+and that input's events are logged without their `value`. A write error
+stops the logging, never the app.
 
 `preview` also reads `TUIMARK_COLOR` — but only when stdout is a TTY (so a
 plain, redirected `preview` never depends on the environment), and only as
@@ -318,15 +396,17 @@ With neither, the session is just the first frame (step 0).
 | `KEY` | one key: a named key (`enter esc tab backspace space up down left right home end pgup pgdn shift+tab`), `ctrl+a`..`ctrl+z`, or any other single printable ASCII character but `,` (write `/`, not `slash` — there are no aliases) |
 | `text:STR` | STR's bytes, decoded like real terminal input: a run of printable characters going to a focused input is one edit and one `on:change` (the same coalescing `Run()` does for fast typing or an unbracketed paste); characters that go elsewhere reach the keymap one by one |
 | `paste:STR` | one bracketed paste. Normalized (CRLF/CR/LF/TAB → space, ANSI/control bytes stripped) and delivered as one edit/`on:change` when an enabled input has focus; discarded — never reaching the keymap or a built-in — otherwise, so a paste containing `q` can never quit |
-| `set:PATH=JSON` | `Set(PATH, json.Unmarshal(JSON))`; `PATH` may be empty (the store root) or the reserved `@focus`/`@screen` |
+| `set:PATH=JSON` | `Set(PATH, json.Unmarshal(JSON))`; `PATH` may be empty (the store root) or the reserved `@focus`/`@screen`/`@theme` (`set:@theme="light"`) |
 | `focus:#ID` | `Set("@focus", "ID")` (the `#` is optional); fires no `on:focus`, like `Set` |
 | `resize:COLSxROWS` | the terminal size changes, handled like `Run()` handles `SIGWINCH` |
-| `click:X,Y`, `wheel-up:X,Y`, `wheel-down:X,Y` | reserved for the 0.2b mouse; a usage error now |
+| `click:X,Y`, `wheel-up:X,Y`, `wheel-down:X,Y` | the 0.2b mouse steps; a usage error in this build |
 
 The equivalent `--script` line for each: `{"key":"..."}`, `{"text":"..."}`,
 `{"paste":"..."}`, `{"set":{"path":"...","value":...}}`, `{"focus":"#..."}`,
-`{"resize":[COLS,ROWS]}`; `{"click":...}`, `{"wheel":...}`, and
-`{"theme":...}` are the same reserved usage error.
+`{"resize":[COLS,ROWS]}`. `{"theme":"light"}` (`"dark"`, `"light"`, or
+`"auto"`) is `Set("@theme", value)`, like `set:@theme="light"`; since
+`play` never probes the terminal, `auto` is `dark`. `{"click":...}` and
+`{"wheel":...}` are the same usage error as the mouse steps above.
 
 A `quit` (a keymap `quit`, or `ctrl+c` with nothing else claiming it) ends
 the session early: later steps are never applied. `--format json` prints
@@ -357,9 +437,11 @@ comments and works on any well-formed document regardless of catalog or
 binding errors (only not-well-formed XML, `V005`, is refused):
 
 - 2-space indentation, one element per line.
-- Attributes reordered to `id`, `class`, then the rest in source order.
+- Attributes reordered to `id`, `class`, the `class:NAME` guards in source
+  order, then the rest in source order.
 - Elements with no children and no text self-close (`<box id="a"/>`).
-- `<text>`/`<button>` bodies that fit on one line stay inline
+- `<text>`/`<button>` bodies (and a `version="2"` `<column>`'s cell
+  template) that fit on one line stay inline
   (`<text>hi</text>`); multi-line bodies are indented one level, one output
   line per text line.
 - Inline `<style>` bodies are re-indented one level and re-escaped (`&`,
@@ -374,6 +456,38 @@ Default prints the formatted document to stdout; `--write` rewrites the
 file in place; `--check` prints the file name and exits 2 if it is not
 already formatted (no write). Both `examples/spike/inbox.tui` and
 `examples/inbox/app.tui` already pass `fmt --check`.
+
+### `tuimark inspect`
+
+```sh
+tuimark inspect app.tui --data sample.json --at 12,3 --json
+tuimark inspect app.tui --data sample.json --id inbox
+```
+
+`inspect` renders one frame exactly as `dump` does with the same flags
+(it is deterministic, like `dump`) and explains one node of it: "why does
+this cell look like this?" `--at X,Y` (0-based, as in the dump) picks the
+node the cell belongs to — the node whose id owns the cell in the `--cells`
+map, then down through its anonymous children that contain the cell (a list
+row, a text); `--id ID` picks the first laid-out node with that id. Exactly
+one of the two is required.
+
+`--json` prints `cols`, `rows`, `ok`, the `node` (as in the dump), its
+layout `path` (`/screen#main/col#app/list#inbox/item[3]/text`), the `cell`
+(with `--at`), the `pseudo`-classes that match it, one entry per class it
+could have (`{"name", "from", "guard", "active", "used"}`: `from` is
+`class` or `class:NAME`; `used` tells whether any selector of the loaded
+stylesheets or of the built-in sheet names it), and one `style` entry per
+TCSS property, in a fixed order: its computed `value`, its `origin`
+(`ua`, `attribute`, `author`, `inline`, `inherited`, or `initial`), the
+winning `rule` (file, line, column, selector as written — or the attribute
+as written, or `style=""` — specificity, and `@media` condition), and the
+declarations it `overridden`, highest priority first. The text form (the
+default) shows the same, one line per property that is not `initial`.
+
+A cell outside the grid, an id no laid-out node has, or a malformed value
+exits 1 with nothing on stdout; a frame with an error-severity diagnostic
+exits 2 and still prints the report.
 
 ### `tuimark test` and the golden manifest
 
@@ -411,6 +525,7 @@ An entry also takes these optional fields:
 | `input` | `play` steps (`--input`'s grammar, above); the goldens for this entry are then `play` output (an `=== events ===`/`"events"` section too) instead of plain `dump` output |
 | `script` | a `play` script path (`--script`'s grammar), exclusive with `input` |
 | `styles` | `true` to have the JSON goldens include `"theme"` and `"styles"` |
+| `cells` | `true` to have the JSON goldens include `"cells"` (0.2b) |
 
 **`--update`'s superset check.** For a non-frozen entry and a size where a
 JSON golden already exists, `--update` refuses to overwrite it unless the
@@ -453,11 +568,14 @@ module; the only supported entry points are the functions above.
 - **`Bind`/`Set`** coerce `v` to JSON-shaped data (`null | bool | number |
   string | array | object`) at the boundary; `NaN`/`±Inf` are rejected, as
   are values with no JSON shape (channels, funcs). `Set` additionally
-  schedules a redraw and is safe from any goroutine. Two paths are
-  reserved for hosts, not markup: `Set("@focus", "#id")` moves focus and
+  schedules a redraw and is safe from any goroutine. Three paths are
+  reserved for hosts, not markup: `Set("@focus", "#id")` moves focus,
   `Set("@screen", "id")` switches the active screen — the SPEC says only
-  "the host switches by id" without naming an API, and these two paths are
-  how this runtime exposes it without growing the public surface.
+  "the host switches by id" without naming an API, and these paths are how
+  this runtime exposes it without growing the public surface — and
+  `Set("@theme", "dark"|"light"|"auto")` sets the host's theme (any other
+  value is an error and changes nothing), for `Run()` and for
+  `Dump()`/`Validate()` alike.
 - **`Event`** is the payload a handler receives: `Action` (the name),
   `Source` (the firing node's `id`), `Keys` (a snapshot of the selected
   item's `each` aliases, e.g. `{"item": "t-12"}`), and `Value` (the input's
@@ -594,6 +712,15 @@ focus + hit-test
 paint buffer
 diff previous frame → ANSI   # Run() only
 ```
+
+Each frame is built in the order SPEC §18 fixes for 0.2b: (1) inflate the
+active screen and its open modals (`if`, `hidden`, text, class guards; a
+`tabs`' tab nodes but not their content), (2) cascade and drop
+`display: none`, (3) activate one tab per `tabs`, (4) resolve focus,
+repeating 1–4 while focus or an active tab changes (at most three rounds),
+(5) build the items of each `hints`, (6) measure and allocate, (7) generate
+the visible rows of each `table`, (8) paint. Stages 3, 5, and 7 are in
+place for the widgets that arrive later in 0.2b and do nothing yet.
 
 Package map:
 
@@ -758,6 +885,15 @@ kept with the maintainer's project notes, outside this repository.
   changes version (`tuimark ir` still emits `"version": "0.1"`); `<tui
   version="2">` and the rest of the proposal's new vocabulary are 0.2b
   (ADR 0009).
+- **Phase 6 (v0.2b)** — in progress. Done: the `version="2"` gate for the
+  whole 0.2b vocabulary (with the `(requires version="2")` hint in
+  `version="1"` documents), IR `0.2` and the 0.2b schemas, `class:NAME` and
+  the dump's `classes`, the SPEC §18 frame order, `theme="auto"` (OSC 11,
+  `COLORFGBG`), `@media (theme)`, `Set("@theme")`, `tuimark inspect`, and
+  `TUIMARK_LOG`. Still to come: the key dispatch and built-in actions,
+  `each` on containers, multi-select, `sparkline`, `layout: grid`,
+  `hints`, `tabs`, `table`, `bar: eighths`, `scrollbar`, the mouse, and
+  `examples/monitor`.
 
 ## License
 

@@ -36,13 +36,17 @@ var escTimeout = 25 * time.Millisecond
 //
 // Before it touches the terminal, Run reads TUIMARK_COLOR, TUIMARK_THEME,
 // and TUIMARK_SYNC (SPEC v0.2 §26.10); an invalid value is returned as an
-// error with nothing written and no raw mode. The session (§26.1): enter
+// error with nothing written and no raw mode. It also opens the
+// TUIMARK_LOG file when that variable is set (SPEC v0.2b §26.12), and a
+// file it cannot open is such an error too. The session (§26.1): enter
 // the alternate screen with bracketed paste on; probe the terminal's
 // capabilities once when w is a terminal (§26.2: DECRQM 2026 and 2027
-// with a DA1 sentinel, at most probeWait), queuing the keys and pastes
-// that arrive meanwhile; turn grapheme mode 2027 on when the terminal
-// reports it off; then draw the first frame, handle the queued input, and
-// loop. Frames are written in the color profile of §26.3, wrapped in
+// with a DA1 sentinel, at most probeWait; OSC 11 first when the theme is
+// auto, and, under the Apple Terminal/SSH skip rule, only OSC 11 and DA1),
+// queuing the keys and pastes that arrive meanwhile; resolve theme="auto"
+// from the background reply, else COLORFGBG, else dark (§26.4); turn
+// grapheme mode 2027 on when the terminal reports it off; then draw the
+// first frame, handle the queued input, and loop. Frames are written in the color profile of §26.3, wrapped in
 // synchronized output when the terminal supports it (§26.6), with CHA
 // re-positioning after complex clusters unless mode 2027 is on (§26.5).
 // Every way out (quit, EOF, error, stop signal) writes the leave sequence:
@@ -61,10 +65,20 @@ var escTimeout = 25 * time.Millisecond
 // the process ends with the signal's default action. When Run returns,
 // nothing is left reading stdin.
 func (a *App) Run(w io.Writer) (err error) {
+	start := time.Now()
 	cfg, err := readRunConfig(os.Getenv)
 	if err != nil {
 		return err
 	}
+	// TUIMARK_LOG (SPEC v0.2b §26.12) is opened with the environment,
+	// before the terminal is touched; its end record is written last, on
+	// every way out, with the error Run finally returns.
+	lg, err := openRunLog(cfg.log, start)
+	if err != nil {
+		return err
+	}
+	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg}
+	defer func() { lg.end(endReason(err, sess)) }()
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
 		return errors.New("tuimark: Run needs an interactive terminal on stdin (use Dump for headless output)")
@@ -74,7 +88,11 @@ func (a *App) Run(w io.Writer) (err error) {
 	if f, ok := w.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
 		sizeFd, outTTY = int(f.Fd()), true
 	}
-	sess := &termSession{profile: cfg.profile, sync: cfg.sync, probe: shouldProbe(os.Getenv, outTTY, cfg.sync)}
+	// theme="auto" (or @theme "auto") without TUIMARK_THEME puts OSC 11 in
+	// the probe (§26.2, ADR 0010).
+	themeQuery := a.wantsTerminalTheme(cfg.theme)
+	sess.probe, sess.skipDECRQM = probePlan(os.Getenv, outTTY, cfg.sync, themeQuery)
+	sess.themeQuery = themeQuery && sess.probe
 	defer a.overrideTheme(cfg.theme)()
 	// Catch the signals before raw mode; release them only after the
 	// terminal is restored (defers run last-in, first-out).
@@ -231,6 +249,21 @@ func watchSignals(caught <-chan os.Signal, toLoop chan<- os.Signal, loopDone <-c
 	}
 }
 
+// endReason names how a Run session ended, for the end record of
+// TUIMARK_LOG (SPEC v0.2b §26.12): signal, error, eof, or quit.
+func endReason(err error, sess *termSession) string {
+	var se *SignalError
+	switch {
+	case errors.As(err, &se):
+		return "signal"
+	case err != nil:
+		return "error"
+	case sess.eof:
+		return "eof"
+	}
+	return "quit"
+}
+
 // SignalError is what Run returns when a signal stopped it.
 type SignalError struct{ Signal os.Signal }
 
@@ -316,6 +349,14 @@ func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <
 func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, sigs <-chan os.Signal, sess *termSession) error {
 	io.WriteString(out, enterScreen)
 	defer func() { io.WriteString(out, sess.leave()) }()
+	// What the session resolved theme="auto" to is forgotten when it ends
+	// (Dump and Validate never see it, MUST 13).
+	defer a.endRun()
+	lg := sess.log
+	if lg != nil {
+		c, r := size()
+		lg.write("start", member{"version", Version}, member{"cols", c}, member{"rows", r})
+	}
 
 	reads := make(chan chunk, 16)
 	done := make(chan struct{})
@@ -350,7 +391,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	var queued []Input
 	var endErr error
 	if sess.probe {
-		if _, err := io.WriteString(out, probeQueries(sess.sync)); err != nil {
+		if _, err := io.WriteString(out, sess.queries()); err != nil {
 			return err
 		}
 		capTimer := time.NewTimer(sess.probeCap())
@@ -388,14 +429,28 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	}
 	opts := paint.Options{Profile: sess.profile, NoCHA: caps.graphemeActive()}
 	syncFrames := sess.syncFrames(caps)
+	// theme="auto" (§26.4): the probe's background, else COLORFGBG, else
+	// dark, for the first frame and for a later @theme "auto".
+	_, autoFrom := a.resolveAuto(caps.bg, sess.fgbg)
+	if lg != nil {
+		a.mu.Lock()
+		theme, from := a.frameTheme(), a.themeSource(autoFrom)
+		a.mu.Unlock()
+		lg.write("caps", member{"probe", sess.probe}, member{"color", sess.profile.String()}, member{"sync", syncFrames},
+			member{"grapheme", caps.graphemeState()}, member{"theme", theme}, member{"theme_from", from})
+	}
 
 	var prev *paint.Grid
 	lastCols, lastRows := -1, -1
 	// draw writes one frame in one write, wrapped in synchronized output
 	// when it is on (§26.6).
 	draw := func() error {
+		t0 := time.Now()
 		cols, rows := size()
 		if cols != lastCols || rows != lastRows {
+			if lastCols >= 0 {
+				lg.write("resize", member{"cols", cols}, member{"rows", rows})
+			}
 			prev = nil
 			lastCols, lastRows = cols, rows
 		}
@@ -408,12 +463,18 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			return err
 		}
 		prev = f.Grid
+		if lg != nil {
+			lg.write("frame", member{"us", time.Since(t0).Microseconds()}, member{"bytes", len(s)})
+		}
 		return nil
 	}
 	// runEvents dispatches events and pending lifecycle events until quiet.
 	runEvents := func(evs []Event) (bool, error) {
 		for round := 0; round < 8; round++ {
 			for _, ev := range evs {
+				if lg != nil {
+					lg.action(ev, a.secretInput(ev.Source))
+				}
 				quit, err := a.Dispatch(ev)
 				if err != nil || quit {
 					return quit, err
@@ -480,6 +541,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 					return true, err
 				}
 				focus := a.Focus()
+				if lg != nil {
+					lg.paste(NormalizePaste(ins[0].Paste), a.secretFocused())
+				}
 				evs := a.HandlePaste(ins[0].Paste)
 				ins = ins[1:]
 				if stop, err := dispatch(evs, focus); stop {
@@ -501,7 +565,13 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 					return true, err
 				}
 				focus := a.Focus()
+				secret := lg != nil && a.secretFocused()
 				evs, used := a.HandleKeyRun(keys)
+				if lg != nil {
+					for _, k := range keys[:used] {
+						lg.key(k, secret)
+					}
+				}
 				keys = keys[used:]
 				if stop, err := dispatch(evs, focus); stop {
 					return true, err
@@ -521,6 +591,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		if c.err != nil {
 			if errors.Is(c.err, io.EOF) {
+				sess.eof = true
 				return true, nil
 			}
 			return true, c.err
@@ -545,6 +616,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		if endErr != nil {
 			if errors.Is(endErr, io.EOF) {
+				sess.eof = true
 				return nil
 			}
 			return endErr

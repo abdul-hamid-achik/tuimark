@@ -29,6 +29,13 @@ type Node struct {
 	// overflow: scroll container), also when it has nothing to scroll, and
 	// is nil on every other node (SPEC v0.2 §13.2).
 	Scroll *Scroll `json:"scroll,omitempty"`
+	// Classes are the node's classes in the order of SPEC §6.13 (its class
+	// names, then its truthy class:NAME guards, without repeats). They are
+	// emitted only in dumps of version="2" documents, so a version="1"
+	// dump stays byte-identical to 0.2a's (SPEC §13.2, ADR 0003).
+	Classes []string `json:"classes,omitempty"`
+	// Checked marks a checked row of a list or table (SPEC §6.14).
+	Checked bool `json:"checked,omitempty"`
 }
 
 // Scroll is a viewport's scroll state (SPEC v0.2 §13.2). Its members come
@@ -214,8 +221,39 @@ type Play struct {
 	Frames []PlayFrame `json:"frames,omitempty"`
 }
 
-// Build assembles a dump from a painted frame.
+// Options are what a dump carries beyond the frame itself.
+type Options struct {
+	Cells bool // the --cells map
+	// V2 is set for a version="2" document: nodes carry their classes
+	// (SPEC §13.2).
+	V2 bool
+}
+
+// NodeOf is the dump node of a laid-out box (SPEC §13.2). v2 adds the
+// node's classes, which only dumps of version="2" documents carry.
+func NodeOf(n *layout.Box, v2 bool) Node {
+	dn := Node{ID: n.ID, Tag: n.Tag, X: n.X, Y: n.Y, W: n.W, H: n.H, Focused: n.Focused, Selected: n.Selected, Key: n.Key, Scroll: scrollOf(n), Checked: n.Checked}
+	switch n.Kind {
+	case "text", "button":
+		dn.Text = n.Text
+	case "input":
+		dn.Text = layout.InputShown(n) // one • per cluster when secret
+	}
+	if v2 && len(n.Classes) > 0 {
+		dn.Classes = append([]string(nil), n.Classes...)
+	}
+	return dn
+}
+
+// Build assembles a dump from a painted frame of a version="1" document
+// (BuildWith with only the cells option).
 func Build(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.Grid, diags ir.Diags, focus string, cells bool) *Dump {
+	return BuildWith(cols, rows, root, modals, g, diags, focus, Options{Cells: cells})
+}
+
+// BuildWith assembles a dump from a painted frame.
+func BuildWith(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.Grid, diags ir.Diags, focus string, o Options) *Dump {
+	cells := o.Cells
 	d := &Dump{Cols: cols, Rows: rows, OK: !diags.HasErrors(), Errors: []ir.Diagnostic(diags), Nodes: []Node{}}
 	if d.Errors == nil {
 		d.Errors = []ir.Diagnostic{}
@@ -229,14 +267,7 @@ func Build(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.Grid
 			if !n.Laid {
 				return
 			}
-			dn := Node{ID: n.ID, Tag: n.Tag, X: n.X, Y: n.Y, W: n.W, H: n.H, Focused: n.Focused, Selected: n.Selected, Key: n.Key, Scroll: scrollOf(n)}
-			switch n.Kind {
-			case "text", "button":
-				dn.Text = n.Text
-			case "input":
-				dn.Text = layout.InputShown(n) // one • per cluster when secret
-			}
-			d.Nodes = append(d.Nodes, dn)
+			d.Nodes = append(d.Nodes, NodeOf(n, o.V2))
 		})
 	}
 	if root != nil {
@@ -254,19 +285,26 @@ func Build(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.Grid
 		d.Cells = make([]Cell, 0, g.W*g.H)
 		for y := 0; y < g.H; y++ {
 			for x := 0; x < g.W; x++ {
-				c := g.At(x, y)
-				dc := Cell{X: x, Y: y, Ch: c.Grapheme(), ID: c.Owner}
-				switch {
-				case c.Cont && x > 0:
-					dc.ID = g.At(x-1, y).Owner // a continuation belongs to its lead
-				case c.Wide:
-					dc.W = 2
-				}
-				d.Cells = append(d.Cells, dc)
+				d.Cells = append(d.Cells, CellAt(g, x, y))
 			}
 		}
 	}
 	return d
+}
+
+// CellAt is the --cells entry of column x, row y of g (SPEC v0.2 §13.2):
+// a lead cell's cluster (w 2 when it is two columns wide), or a
+// continuation ("" and its lead's id). (x, y) must be inside g.
+func CellAt(g *paint.Grid, x, y int) Cell {
+	c := g.At(x, y)
+	dc := Cell{X: x, Y: y, Ch: c.Grapheme(), ID: c.Owner}
+	switch {
+	case c.Cont && x > 0:
+		dc.ID = g.At(x-1, y).Owner // a continuation belongs to its lead
+	case c.Wide:
+		dc.W = 2
+	}
+	return dc
 }
 
 // JSON renders the dump as indented JSON.
@@ -276,6 +314,27 @@ func JSON(d *Dump) ([]byte, error) {
 		return nil, err
 	}
 	return append(b, '\n'), nil
+}
+
+// NodeLine is one node line of the text dump (SPEC §13.3): `id-or-dash
+// tag WxH @(x,y)`, the id and tag padded to idw and tagw, then the focus,
+// selected, and checked markers that apply.
+func NodeLine(n Node, idw, tagw int) string {
+	id := n.ID
+	if id == "" {
+		id = "-"
+	}
+	line := fmt.Sprintf("%-*s  %-*s  %dx%d @(%d,%d)", idw, id, tagw, n.Tag, n.W, n.H, n.X, n.Y)
+	if n.Focused {
+		line += " focus"
+	}
+	if n.Selected {
+		line += " selected"
+	}
+	if n.Checked {
+		line += " checked"
+	}
+	return line
 }
 
 // Text renders the human dump format (SPEC §13.3).
@@ -293,18 +352,7 @@ func Text(d *Dump) string {
 		tagw = max(tagw, len(n.Tag))
 	}
 	for _, n := range d.Nodes {
-		id := n.ID
-		if id == "" {
-			id = "-"
-		}
-		line := fmt.Sprintf("%-*s  %-*s  %dx%d @(%d,%d)", idw, id, tagw, n.Tag, n.W, n.H, n.X, n.Y)
-		if n.Focused {
-			line += " focus"
-		}
-		if n.Selected {
-			line += " selected"
-		}
-		b.WriteString(line)
+		b.WriteString(NodeLine(n, idw, tagw))
 		b.WriteByte('\n')
 	}
 	b.WriteString("=== errors ===\n")

@@ -78,10 +78,28 @@ Inside a list `<item>` nothing takes focus (the list does and navigates its rows
 
 Bindings contain no spaces: `{path}`, `if="path"`, `if="!path"`, and exactly one space on each side of `as` in `each="path as alias"`.
 
+Only in a `<tui version="2">` document (V002 with `(requires version="2")` in a version="1" one): the additions to the tags above, and the full attribute sets of the new tags:
+
+- `bind`: keycap, label
+- `box`: each, key
+- `col`: each, key
+- `column`: class, id, on:click, style, title, width
+- `hints`: border, class, disabled, focusable, gap, height, hidden, id, if, on:click, on:focus, pad, scope, style, title, width
+- `list`: checked, mark, on:change
+- `row`: each, key
+- `sparkline`: bind, border, class, disabled, focusable, gap, height, hidden, id, if, max, min, on:click, on:focus, pad, style, title, width
+- `tab`: border, class, disabled, focus, gap, hidden, id, if, label, pad, short, style, title
+- `table`: bind, border, checked, class, disabled, each, focusable, gap, height, hidden, id, if, key, mark, on:change, on:click, on:focus, on:select, pad, placeholder, style, title, width
+- `tabs`: bind, border, class, disabled, focusable, gap, height, hidden, id, if, mark, on:click, on:focus, on:select, pad, style, title, width
+- `tui`: mouse
+- `item` inside a `table`: class only (plus `class:NAME`)
+- every tag except `tui`, `style`, `keymap`, and `bind`: `class:NAME` (the name is open and lowercase, `[a-z_][a-z0-9_-]*`; the value is `path` or `!path`)
+
 ### CSS properties
 
 - `align`: start | center | end | stretch
 - `background`: $token | var(--token) | ansi-name | #rgb | #rrggbb | default
+- `bar`: block | eighths (version="2" stylesheets only)
 - `bold`: true | false
 - `border`: none | single | double | rounded | thick
 - `border-color`: $token | var(--token) | ansi-name | #rgb | #rrggbb | default
@@ -92,10 +110,12 @@ Bindings contain no spaces: `{path}`, `if="path"`, `if="!path"`, and exactly one
 - `dock`: top | right | bottom | left
 - `flex`: number >= 0
 - `gap`: 0-4
+- `grid-columns`: integer 1-12 (version="2" stylesheets only)
+- `grid-min-width`: integer >= 1 (version="2" stylesheets only)
 - `height`: N | N% | Nfr | auto
 - `italic`: true | false
 - `justify`: start | center | end | space-between
-- `layout`: column | row
+- `layout`: column | row | grid (version="2")
 - `margin`: 1-4 cell values (T R B L)
 - `max-height`: N | N% | Nfr | auto
 - `max-width`: N | N% | Nfr | auto
@@ -104,6 +124,7 @@ Bindings contain no spaces: `{path}`, `if="path"`, `if="!path"`, and exactly one
 - `overflow`: hidden | scroll
 - `padding`: 1-4 cell values (T R B L)
 - `reverse`: true | false
+- `scrollbar`: none | auto (version="2" stylesheets only)
 - `title-color`: $token | var(--token) | ansi-name | #rgb | #rrggbb | default
 - `underline`: true | false
 - `visibility`: visible | hidden
@@ -120,9 +141,9 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 
 | Code | Pass | When |
 |---|---|---|
-| V001 | parse | unknown tag |
-| V002 | parse | unknown attribute |
-| V003 | parse | bad unit / color / token / CSS property |
+| V001 | parse | unknown tag; a version="2" tag in a version="1" document (message ends with `(requires version="2")`) |
+| V002 | parse | unknown attribute; a version="2" attribute in a version="1" document (with the same hint) |
+| V003 | parse | bad unit / color / token / CSS property; a `version` other than 1 or 2; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint) |
 | V004 | parse | duplicate id |
 | V005 | parse | not well-formed XML |
 | V006 | parse | `style src` include cycle |
@@ -140,22 +161,37 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 | L005 | layout | more than one bottom-docked status (warning) |
 | L006 | layout | a scroll/list/overflow: scroll viewport can never show part of its content (warning) |
 | B001 | bind | `each` path is not an array |
-| B002 | bind | `if` path missing |
+| B002 | bind | `if` path missing; also a `class:NAME` guard path |
 | B003 | bind | bind path missing (`--strict` upgrades to error) |
 | B004 | bind | action not in catalog |
 | B005 | bind | keymap `to`/`when` id missing |
 | B006 | bind | `list` + `each` without `key` (warning) |
+| V015 | parse | a `class:NAME` whose NAME is not `[a-z_][a-z0-9_-]*` or whose value is not `path` / `!path` (version="2") |
 
 ### v0.2a: interaction, styles, and theme
 
 - `tuimark play FILE --data sample.json --input "STEPS" --format json` replays keys, `text:`, `paste:`, `set:`, `focus:`, and `resize:` steps against the document without a TTY (or `--script FILE.ndjson` for steps that need embedded spaces or explicit JSON) and prints the final dump plus every action that fired (`events`), so an agent can check that typing into a search box, or moving a list selection, fires the right `on:` action before wiring a Go handler. `--frames` adds one settled frame per applied step.
 - `tuimark dump FILE --styles --format json` (also `play --styles`) adds `theme` and per-row `styles` spans to the dump, so `:focus`, `:selected`, theme tokens, and a `reverse` selection are checked by diffing JSON instead of eyeballing `preview`.
-- `--theme dark|light` on `dump`, `validate`, `preview`, and `play` overrides the document's `theme` for that render (`Run`'s equivalent is `TUIMARK_THEME`). `auto` and any other value the flag is explicitly given — including `""` — are usage errors in 0.2a; only leaving `--theme` off keeps the document's theme. `theme="auto"` is 0.2b.
+- `--theme dark|light` on `dump`, `validate`, `preview`, `play`, and `inspect` overrides the document's `theme` for that render (`Run`'s equivalent is `TUIMARK_THEME`). `auto` and any other value the flag is explicitly given — including `""` — are usage errors (no tool probes the terminal); only leaving `--theme` off keeps the document's theme. A document's `theme="auto"` (version="2") is `dark` in every tool.
 - `preview --color truecolor|256|16|none` picks the ANSI grid's color profile; without it, `preview` falls back to `TUIMARK_COLOR`, then to the same detection `Run()` uses (SPEC §26.3) — read only when stdout is a TTY, resolved once per `preview`.
 - `Run()` also reads `TUIMARK_THEME` and `TUIMARK_SYNC` (forces synchronized-output framing off/`0`/on/`1`); `dump`, `validate`, `play`, `ir`, `fmt`, and `test` never read any `TUIMARK_*` variable, so their output never depends on the environment.
 - `L006` (new in 0.2a) means a `scroll`/`list`/`overflow: scroll` viewport can never show part of its content: 0 cells on its scroll axis while it has content there, or clipped by an ancestor that does not itself scroll on that axis. Give it a size, or put it in a `<scroll>`.
 - `"wide": true` on a dump means some row holds a cluster wider than one column or made of more than one code point (an emoji, CJK, a combining mark): index `cells`, not `grid` by rune, when it is set.
 - `tuimark test --update` refuses to rewrite a non-frozen JSON golden that is not a superset of the one on disk (same fields, same values, nothing removed or changed; new members/nodes may only be added when arrays keep their length) and exits 2 naming the first differing JSON Pointer; `--allow-breaking` writes it anyway, for a reviewed, deliberate change.
+
+### version="2" (0.2b)
+
+- `<tui version="2">` opts a document into the 0.2b vocabulary; everything a version="1" document accepts keeps its meaning there. In a version="1" document each 0.2b tag is V001, each 0.2b attribute V002, and each 0.2b value, property, pseudo-class, media feature, or built-in action V003, with a message ending in `(requires version="2")`. A `.tcss` file has no version of its own: it is checked against the version of the document that loads it. Any `version` other than `1` or `2` is V003, and the document is read as version="1".
+- Tags only version="2" accepts: table column tabs tab sparkline hints. This build parses them but does not lay them out or paint them yet: each dumps as one empty node.
+- `class:NAME="path"` (or `!path`) adds the class NAME while the guard is truthy; a missing path is B002 and adds nothing. The JSON dump of a version="2" document lists each node's `classes` (its `class` names, then its truthy guards, no repeats); a version="1" dump never has `classes`. The names `tab-label`, `hint-key`, and `hint-label` are reserved for classes the runtime gives generated nodes.
+- `theme="auto"`: `Run()` asks the terminal for its background (OSC 11, waiting at most 250 ms before the first frame), falls back to `COLORFGBG`, then to `dark`. Every command and `Dump()`/`Validate()` treat `auto` as `dark`; `validate` checks an `auto` document under both themes, dark first, and reports each diagnostic once.
+- `@media (theme: dark)` and `@media (theme: light)` (version="2" stylesheets) hold per-theme rules and `:root` palettes. Tokens apply in document order, so put a `@media (theme: light) { :root { … } }` block after the base `:root` it refines. `@media (theme: auto)` is V003.
+- `Set("@theme", "dark"|"light"|"auto")` (a reserved path, both versions) is the host's theme: it beats the document's theme and `--theme`, and `TUIMARK_THEME` beats it in `Run()`. `play` sets it with `set:@theme="light"` or the script step `{"theme":"light"}`.
+- Properties only version="2" stylesheets accept: `grid-columns`, `grid-min-width`, `scrollbar`, `bar`, and the value `layout: grid`. This build computes them (`inspect` shows them) but layout and paint do not apply them yet. Pseudo-classes: `:focus-within` matches the focused node and each ancestor up to the screen, through a modal, and nothing while nothing is focused; `:checked` is accepted but matches nothing until multi-select lands.
+- Keymap rows of a version="2" document take `label` and `keycap` (literal text, carried in `tuimark ir`) and the hyphenated built-in actions (move-next, move-prev, move-first, move-last, move-page-down, move-page-up, check-toggle, check-all, check-none, switch-to), which this build accepts (built in: never B004) but does not run yet: a row naming one never matches, so its key goes on to the next row. `when` still matches the focused node only.
+- `tuimark inspect FILE --at X,Y --json` (or `--id ID`) answers "why does this cell look like this?": the node that cell belongs to, its layout path, its pseudo-classes, every class it could have (with guards, and whether any rule names it), and every property with the rule that won and the rules that lost. It renders exactly as `dump` does with the same flags.
+- `tuimark ir` prints `"version": "0.2"` for a version="2" document (validated by `schema/ir.v0.2.json`): the new kinds, `app.mouse`, the keymap's `label`/`keycap`, and `class:NAME` attributes under their full names in `attrs`.
+- `TUIMARK_LOG=FILE` makes `Run()` write an NDJSON log of the session (mode 0600): start, capabilities and the resolved theme, keys, pastes, actions, frames, resizes, end. While a `secret` input has focus, key and paste records are redacted, and that input's events never carry their value. Only `Run()` reads it.
 
 ### Notes
 
@@ -202,7 +238,7 @@ go test -race ./internal/host/
 
 ### Package boundaries
 
-- `cmd/tuimark` — the CLI: flag parsing, output formatting, the golden-manifest runner behind `tuimark test` (including its v0.2a superset check), the `tuimark play` step parser and headless session engine (built only from `internal/host`'s exported `App` methods — `Frame`, `HandleKeyRun`, `HandlePaste`, `Dispatch`, `TakePending`, `Focus`, `SetTheme`), and the theme/`:root` token table for `tuimark ir`. Parsing, cascade, layout, and paint rules live in `internal/**`.
+- `cmd/tuimark` — the CLI: flag parsing, output formatting, the golden-manifest runner behind `tuimark test` (including its v0.2a superset check), the `tuimark play` step parser and headless session engine (built only from `internal/host`'s exported `App` methods — `Frame`, `HandleKeyRun`, `HandlePaste`, `Dispatch`, `TakePending`, `Focus`, `SetTheme`), `tuimark inspect` (`Frame` plus `Inspect`), and the theme/`:root` token table for `tuimark ir`. Parsing, cascade, layout, and paint rules live in `internal/**`.
 - `tuimark.go` (package `tuimark`, repo root) — the only public surface: the package functions `Load` and `Parse`, `App`'s methods `Bind, Set, On, Catalog, Dump, Validate, Run` (SPEC §18), the `App` type itself, the aliases `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, and `ErrQuit`. Nothing else is exported from it.
 - `internal/ir` — node/scalar/diagnostic/binding-grammar/key-token types, the tag-kind catalog (`Kinds`, `SpikeKinds`), the spike attribute whitelist (`SpikeAttrs`), and the key-token catalog (`NamedKeys`/`ValidKey`).
 - `internal/parse` — the XML tokenizer, the IR builder (including the per-tag attribute catalog, `TagAttrs`), the formatter (`fmt`), and IR-as-JSON (`ir`).
@@ -210,7 +246,7 @@ go test -race ./internal/host/
 - `internal/layout` — the integer flex engine.
 - `internal/paint` — the cell grid, borders, widget painters, and the ANSI frame diff.
 - `internal/dump` — the text and JSON frame dump.
-- `internal/host` — the JSON store, inflation, cascade application, focus, events, and the `Run` loop.
+- `internal/host` — the JSON store, inflation, cascade application, focus, events, and the `Run` loop (with the capability/theme probe and `TUIMARK_LOG`). A frame is built in the SPEC §18 order: inflate, cascade, tab activation, focus, hints, layout, table rows, paint; the stages for the widgets not built yet are in place and do nothing.
 - `internal/agentsdoc` — generates this file from the catalogs above.
 - Application code — `examples/**`, or any external module — uses only the root `tuimark` package. Inside the repo, `internal/layout` is imported by `internal/paint`, `internal/dump`, and `internal/host`; `internal/paint` is imported by `internal/dump`, `internal/host`, and `cmd/tuimark` (for `preview`'s ANSI frame). SPEC §3 forbids importing `internal/layout`/`internal/paint` from application code outside this repo, not from other packages inside it.
 

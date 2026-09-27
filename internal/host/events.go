@@ -286,6 +286,14 @@ func (a *App) handleKey(k Key) []Event {
 		if !containsKey(kb.Keys, k.Name) {
 			continue
 		}
+		// The hyphenated built-ins of SPEC §8.4 (version="2") match only
+		// when their target does; this build does not run them yet, so
+		// such a row never matches and the key goes on to later rows, as
+		// for a row whose target is missing. It is never dispatched as a
+		// host action.
+		if ir.IsBuiltinActionV2(kb.Action) {
+			continue
+		}
 		if kb.WhenSel != nil && (fb == nil || !kb.WhenSel.Matches(fb)) {
 			continue
 		}
@@ -535,16 +543,23 @@ func (a *App) Focus() string {
 func (a *App) Static() ir.Diags {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	themes := a.validateThemes()
 	out := append(ir.Diags(nil), a.static...)
 	seen := map[string]bool{}
 	for _, d := range out {
 		seen[d.String()] = true
 	}
-	for _, d := range a.checkDocks() {
-		if !seen[d.String()] {
-			seen[d.String()] = true
-			out = append(out, d)
+	add := func(ds ir.Diags) {
+		for _, d := range ds {
+			if !seen[d.String()] {
+				seen[d.String()] = true
+				out = append(out, d)
+			}
 		}
 	}
+	for _, th := range themes {
+		add(a.tokenCheck(th))
+	}
+	add(a.checkDocks(themes))
 	return out.Sorted()
 }

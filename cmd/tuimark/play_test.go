@@ -364,9 +364,12 @@ func TestPlayScriptSteps(t *testing.T) {
 	}
 }
 
+// SPEC v0.2b §15.4 (amended by Phase 6, test 47): {"theme": …} is a step
+// now (TestPlayThemeSteps); the mouse members stay usage errors until the
+// mouse steps are implemented.
 func TestPlayScriptReservedMembersAreUsageErrors(t *testing.T) {
 	tui, data := writePlayFixture(t)
-	for _, line := range []string{`{"click":[1,2]}`, `{"wheel":"up","at":[1,2]}`, `{"theme":"light"}`} {
+	for _, line := range []string{`{"click":[1,2]}`, `{"wheel":"up","at":[1,2]}`} {
 		scriptPath := filepath.Join(t.TempDir(), "s.ndjson")
 		writeFile(t, scriptPath, line)
 		code, _, errw := runCLI("play", tui, "--data", data, "--script", scriptPath)

@@ -61,17 +61,15 @@ func CheckTokens(sheets []*Sheet, theme string, inline ...Decl) ir.Diags {
 	return out.Sorted()
 }
 
-// KnownTokens is the set of token names a document can reference: the
-// theme's (Themes[theme], "dark" when theme is empty or unknown) plus every
-// `--token` defined in a :root rule of any sheet, whatever its @media.
+// KnownTokens is the set of token names a document can reference under
+// an effective theme: the theme's (Themes[theme], "dark" when theme is
+// empty, auto, or unknown) plus every `--token` defined in a :root rule of
+// any sheet, whatever its size @media, and, for a rule inside
+// `@media (theme: …)`, only when it names this theme (SPEC §10.4:
+// required tokens are checked per effective theme).
 func KnownTokens(sheets []*Sheet, theme string) map[string]bool {
-	if theme == "" {
-		theme = "dark"
-	}
-	base, ok := Themes[theme]
-	if !ok {
-		base = Themes["dark"]
-	}
+	theme = EffectiveTheme(theme)
+	base := Themes[theme]
 	known := make(map[string]bool, len(base))
 	for k := range base {
 		known[k] = true
@@ -79,6 +77,9 @@ func KnownTokens(sheets []*Sheet, theme string) map[string]bool {
 	for _, sh := range sheets {
 		for _, r := range sh.Rules {
 			if !ruleIsRoot(r) {
+				continue
+			}
+			if r.Media.IsTheme() && r.Media.Value != theme {
 				continue
 			}
 			for _, d := range r.Decls {
@@ -93,6 +94,50 @@ func ruleIsRoot(r Rule) bool {
 	for _, sel := range r.Selectors {
 		if sel.Root {
 			return true
+		}
+	}
+	return false
+}
+
+// IRTokens is the token table `tuimark ir` prints (SPEC §13.1): the base
+// set of the theme (EffectiveTheme: auto is dark there), then every :root
+// declaration of every sheet in document order, a later one replacing an
+// earlier one. Size @media conditions are ignored; a :root rule inside
+// `@media (theme: …)` counts only when it names this theme.
+func IRTokens(sheets []*Sheet, theme string) map[string]string {
+	theme = EffectiveTheme(theme)
+	base := Themes[theme]
+	tokens := make(map[string]string, len(base))
+	for k, v := range base {
+		tokens[k] = v
+	}
+	for _, sh := range sheets {
+		for _, r := range sh.Rules {
+			if !ruleIsRoot(r) || (r.Media.IsTheme() && r.Media.Value != theme) {
+				continue
+			}
+			for _, d := range r.Decls {
+				tokens[strings.TrimPrefix(d.Prop, "--")] = d.Value
+			}
+		}
+	}
+	return tokens
+}
+
+// NamesClass reports whether some selector of the sheets names the class
+// .name, under any @media (`tuimark inspect`'s "used", SPEC §15.7).
+func NamesClass(sheets []*Sheet, name string) bool {
+	for _, sh := range sheets {
+		for _, r := range sh.Rules {
+			for _, sel := range r.Selectors {
+				for _, p := range sel.Parts {
+					for _, c := range p.Classes {
+						if c == name {
+							return true
+						}
+					}
+				}
+			}
 		}
 	}
 	return false

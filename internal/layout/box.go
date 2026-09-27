@@ -39,11 +39,19 @@ type Box struct {
 	Kind    string // IR kind
 	ID      string
 	Classes []string
+	// GuardOn is the truthiness of each class:NAME guard of Src, in
+	// attribute order, as this frame evaluated it (SPEC §6.13); nil when
+	// Src has no guards.
+	GuardOn []bool
 	Parent  *Box
 	Src     *ir.Node
 
-	// Pseudo-class state.
+	// Pseudo-class state. FocusWithin is set on every node of the focus
+	// chain (the focused node and its ancestors up to the screen, through a
+	// modal) and Checked on a checked list or table row; only version="2"
+	// selectors can name :focus-within and :checked (SPEC §10.1).
 	Focused, Selected, Disabled bool
+	FocusWithin, Checked        bool
 
 	// Computed style (set by the host before Layout).
 	Style css.Style
@@ -112,6 +120,10 @@ func (b *Box) HasPseudo(p string) bool {
 		return b.Disabled
 	case "empty":
 		return len(b.Children) == 0 && b.Text == ""
+	case "focus-within":
+		return b.FocusWithin
+	case "checked":
+		return b.Checked
 	}
 	return false
 }

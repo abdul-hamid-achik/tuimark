@@ -48,7 +48,8 @@
         "col", "row", "box", "scroll", "spacer",
         "text", "rule",
         "list", "item", "input", "button", "progress",
-        "modal"
+        "modal",
+        "table", "column", "tabs", "tab", "sparkline", "hints"
       ]
     },
     "node": {
@@ -66,7 +67,13 @@
         "key": { "type": "string", "minLength": 1 },
         "focused": { "const": true },
         "selected": { "const": true },
-        "scroll": { "$ref": "#/$defs/scroll" }
+        "scroll": { "$ref": "#/$defs/scroll" },
+        "classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "checked": { "const": true }
       }
     },
     "scroll": {

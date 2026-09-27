@@ -113,11 +113,17 @@ func themeFlagSet(fs *flag.FlagSet) bool {
 	return set
 }
 
-// effectiveTheme is the theme --styles reports (SPEC v0.2 §13.2 "theme"):
-// App.Theme(), which is whatever applyTheme set, else the document's own
-// theme, else "dark".
-func effectiveTheme(app *host.App) string {
-	return app.Theme()
+// frameDump builds the dump of a rendered frame with the --cells and
+// --styles fields (SPEC §13.2). The --styles theme is the frame's
+// effective theme (§26.4): @theme when a play step set it, else --theme,
+// else the document's, with auto as dark; never "auto".
+func frameDump(f *host.Frame, cells, styles bool) *dump.Dump {
+	d := f.Dump(cells)
+	if styles {
+		d.Theme = f.Theme
+		d.Styles = dump.BuildStyles(f.Grid)
+	}
+	return d
 }
 
 func (c *cli) cmdDump(args []string) int {
@@ -152,12 +158,7 @@ func (c *cli) cmdDump(args []string) int {
 		return c.fail(err)
 	}
 	app.SetStrict(*strict)
-	f := app.Frame(*cols, *rows)
-	d := dump.Build(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, *cells)
-	if *styles {
-		d.Theme = effectiveTheme(app)
-		d.Styles = dump.BuildStyles(f.Grid)
-	}
+	d := frameDump(app.Frame(*cols, *rows), *cells, *styles)
 	if *format == "json" {
 		b, err := dump.JSON(d)
 		if err != nil {
@@ -229,10 +230,13 @@ func (c *cli) cmdValidate(args []string) int {
 	app.SetStrict(*strict)
 	diags := app.Validate()
 	if *data == "" {
-		// Without data every bind path is "missing"; report only data-free checks.
+		// Without data every bind path is "missing"; report only data-free
+		// checks: B001-B003 and B008-B010 depend on the data, B007 is
+		// static (SPEC §14).
 		var kept ir.Diags
 		for _, d := range diags {
-			if d.Code == "B001" || d.Code == "B002" || d.Code == "B003" {
+			switch d.Code {
+			case "B001", "B002", "B003", "B008", "B009", "B010":
 				continue
 			}
 			kept = append(kept, d)
@@ -287,7 +291,7 @@ func renderPreview(w io.Writer, app *host.App, cols, rows int, tty bool, prof pa
 		return d.OK
 	}
 	f := app.Frame(cols, rows)
-	d := dump.Build(cols, rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, false)
+	d := f.Dump(false)
 	fmt.Fprint(w, paint.FullWith(f.Grid, paint.Options{Profile: prof}))
 	fmt.Fprint(w, dump.Text(d))
 	return d.OK

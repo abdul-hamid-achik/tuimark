@@ -19,19 +19,24 @@ type IR struct {
 }
 
 // IRApp is the document's top-level identity (SPEC §13.1's "app" object).
-// Title and Focus come from the main (first) <screen>; v1-only.
+// Title and Focus come from the main (first) <screen>; v1-only. Mouse is
+// the version="2" mouse attribute as written, omitted when absent (IR 0.2).
 type IRApp struct {
 	Title string `json:"title"`
 	Theme string `json:"theme"`
 	Focus string `json:"focus"`
+	Mouse string `json:"mouse,omitempty"`
 }
 
-// IRBind is one <keymap><bind> row.
+// IRBind is one <keymap><bind> row. Label and Keycap (IR 0.2) are
+// present exactly when the row writes them.
 type IRBind struct {
-	Keys   string `json:"keys"`
-	Action string `json:"action"`
-	When   string `json:"when,omitempty"`
-	To     string `json:"to,omitempty"`
+	Keys   string  `json:"keys"`
+	Action string  `json:"action"`
+	When   string  `json:"when,omitempty"`
+	To     string  `json:"to,omitempty"`
+	Label  *string `json:"label,omitempty"`
+	Keycap *string `json:"keycap,omitempty"`
 }
 
 // IRNode is one element of the source IR tree.
@@ -64,7 +69,10 @@ var structuralAttrs = map[string]bool{
 	"border": true, "wrap": true,
 }
 
-// BuildIR converts a parsed Document into the source IR (SPEC §13.1).
+// BuildIR converts a parsed Document into the source IR (SPEC §13.1):
+// version "0.1" for a version="1" document and the spike, "0.2" for a
+// version="2" document (IR 0.2 adds the six kinds, app.mouse, and the
+// keymap's label and keycap; class:NAME stays in attrs, §13.1).
 //
 // tokens is the resolved theme token table: the built-in theme's tokens
 // overridden by any :root custom properties in the document's stylesheets
@@ -73,9 +81,13 @@ var structuralAttrs = map[string]bool{
 // concern), so callers that read from disk — cmd/tuimark's `ir` command,
 // internal/host — compute tokens and pass them in.
 func BuildIR(doc *Document, tokens map[string]string) *IR {
+	version := ir.Version
+	if doc.V2 {
+		version = ir.VersionV2
+	}
 	out := &IR{
-		Version:     "0.1",
-		App:         IRApp{Theme: doc.Theme},
+		Version:     version,
+		App:         IRApp{Theme: doc.Theme, Mouse: doc.Mouse},
 		Stylesheets: stylesheetPaths(doc.Styles),
 		Tokens:      copyTokens(tokens),
 		Keymap:      buildKeymap(doc.Keymap),
@@ -115,6 +127,14 @@ func buildKeymap(kb []KeyBind) []IRBind {
 		e := IRBind{Keys: k.KeysRaw, Action: k.Action, When: k.When}
 		if k.To != "" {
 			e.To = "#" + k.To
+		}
+		if k.HasLabel {
+			l := k.Label
+			e.Label = &l
+		}
+		if k.HasKeycap {
+			c := k.Keycap
+			e.Keycap = &c
 		}
 		out = append(out, e)
 	}

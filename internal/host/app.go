@@ -18,6 +18,10 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
+// Version is the runtime version: `tuimark version` prints it and the
+// start record of TUIMARK_LOG carries it (SPEC v0.2b §26.12).
+const Version = "0.2.0-a"
+
 // Event is the payload a handler receives (SPEC §8.2).
 type Event struct {
 	Action string         `json:"action"`
@@ -56,16 +60,20 @@ type inputState struct {
 
 // App is a loaded document plus its runtime state.
 type App struct {
-	mu       sync.Mutex
-	doc      *parse.Document
-	file     string // display name used in diagnostics
-	path     string // path on disk ("" for Parse)
-	dir      string
-	sheets   []*css.Sheet
-	static   ir.Diags
-	store    any
-	handlers map[string]Handler
-	strict   bool
+	mu     sync.Mutex
+	doc    *parse.Document
+	file   string // display name used in diagnostics
+	path   string // path on disk ("" for Parse)
+	dir    string
+	sheets []*css.Sheet
+	// static holds the diagnostics decidable without rendering that do
+	// not depend on the theme; tokenDiags caches the token check (V003
+	// for an unknown $token) per effective theme (staticFor).
+	static     ir.Diags
+	tokenDiags map[string]ir.Diags
+	store      any
+	handlers   map[string]Handler
+	strict     bool
 
 	screen     int
 	focus      string
@@ -79,6 +87,16 @@ type App struct {
 	focusReq   *focusRequest
 	wake       chan struct{}
 	last       *Frame
+
+	// Theme selection (SPEC §26.4). hostTheme is the reserved Set path
+	// @theme (dark, light, or auto; "" until the host sets it); flagTheme
+	// is the tools' --theme (SetTheme); runEnvTheme is TUIMARK_THEME while
+	// Run runs; runAuto is the theme Run resolved auto to (the probe's
+	// background, else COLORFGBG, else dark), "" outside Run.
+	hostTheme   string
+	flagTheme   string
+	runEnvTheme string
+	runAuto     string
 }
 
 // modalEntry is a modal that took the focus trap when it became the top
@@ -114,6 +132,7 @@ func newApp(src []byte, path, dir string) *App {
 		store: map[string]any{}, handlers: map[string]Handler{},
 		lists: map[string]*listState{}, inputs: map[string]*inputState{},
 		scrolls: map[string][2]int{}, wake: make(chan struct{}, 1),
+		tokenDiags: map[string]ir.Diags{},
 	}
 	if path == "" {
 		a.file = ""
@@ -130,9 +149,12 @@ func (a *App) loadStyles() {
 	if a.path != "" {
 		self, _ = filepath.Abs(a.path)
 	}
+	// A stylesheet is checked against the version of the document that
+	// loads it (SPEC §5.1).
+	v2 := a.doc.V2
 	for _, s := range a.doc.Styles {
 		if s.Src == "" {
-			sh, diags := css.ParseInlineSheet(s.Body, a.file, s.BodyLine, s.BodyCol)
+			sh, diags := css.ParseInlineSheetIn(s.Body, a.file, s.BodyLine, s.BodyCol, v2)
 			a.static = append(a.static, diags...)
 			a.sheets = append(a.sheets, sh)
 			continue
@@ -163,13 +185,32 @@ func (a *App) loadStyles() {
 			a.static = append(a.static, d)
 			continue
 		}
-		sh, diags := css.ParseSheet(string(body), filepath.Base(p))
+		sh, diags := css.ParseSheetIn(string(body), filepath.Base(p), v2)
 		a.static = append(a.static, diags...)
 		a.sheets = append(a.sheets, sh)
 	}
-	// Token references in every rule, including rules no render matches
-	// (other sizes, closed modals, other screens), are checked once here.
-	a.static = append(a.static, css.CheckTokens(a.sheets, a.doc.Theme, a.doc.InlineDecls()...)...)
+}
+
+// staticFor returns the static diagnostics of a render under an effective
+// theme: the theme-independent ones plus the token check for that theme.
+// Token references in every rule, including rules no render matches
+// (other sizes, closed modals, other screens), are checked once per theme
+// (SPEC §10.4: a token is checked against the theme's set and the :root
+// rules that match under it). The caller holds a.mu.
+func (a *App) staticFor(theme string) ir.Diags {
+	return append(append(ir.Diags(nil), a.static...), a.tokenCheck(theme)...)
+}
+
+// tokenCheck is css.CheckTokens for one effective theme, cached. The
+// caller holds a.mu.
+func (a *App) tokenCheck(theme string) ir.Diags {
+	theme = css.EffectiveTheme(theme)
+	ds, ok := a.tokenDiags[theme]
+	if !ok {
+		ds = css.CheckTokens(a.sheets, theme, a.doc.InlineDecls()...)
+		a.tokenDiags[theme] = ds
+	}
+	return ds
 }
 
 // Files returns the document path and every stylesheet path (for --watch).
@@ -210,10 +251,15 @@ func (a *App) Bind(path string, v any) error {
 }
 
 // Set is Bind plus a redraw request for a running app. The reserved paths
-// "@focus" ("#id") and "@screen" ("id") move focus and switch screens.
+// "@focus" ("#id") and "@screen" ("id") move focus and switch screens;
+// "@theme" ("dark", "light", or "auto") sets the theme the host chose
+// (SPEC §18, §26.4).
 func (a *App) Set(path string, v any) error {
 	return a.set(path, v, true)
 }
+
+// ThemePath is the reserved Set path of the host's theme (SPEC §18).
+const ThemePath = "@theme"
 
 func (a *App) set(path string, v any, redraw bool) error {
 	jv, err := ToJSON(v)
@@ -231,6 +277,15 @@ func (a *App) set(path string, v any, redraw bool) error {
 			a.mu.Unlock()
 			return fmt.Errorf("tuimark: no screen with id %q", s)
 		}
+	case ThemePath:
+		// SPEC §18: reserved in both versions; it does not live in the
+		// store. Any other value is an error and changes nothing.
+		s, ok := jv.(string)
+		if !ok || (s != "dark" && s != "light" && s != "auto") {
+			a.mu.Unlock()
+			return fmt.Errorf("tuimark: %s must be \"dark\", \"light\", or \"auto\" (got %s)", ThemePath, jsonText(jv))
+		}
+		a.hostTheme = s
 	default:
 		if path != "" && !validStorePath(path) {
 			a.mu.Unlock()
@@ -290,6 +345,14 @@ func (a *App) On(action string, h Handler) {
 // Builtins are the actions every runtime implements.
 var Builtins = map[string]bool{"quit": true, "focus": true}
 
+// isBuiltin reports whether a keymap action is built in: quit and focus,
+// or, in a version="2" document, a hyphenated built-in of SPEC §8.4 (a
+// version="1" document cannot name one: V003). Built-ins never produce
+// B004 and are listed with Builtin: true.
+func (a *App) isBuiltin(name string) bool {
+	return Builtins[name] || (a.doc.V2 && ir.IsBuiltinActionV2(name))
+}
+
 // Catalog lists the actions the document references.
 func (a *App) Catalog() []ActionSpec {
 	a.mu.Lock()
@@ -298,7 +361,7 @@ func (a *App) Catalog() []ActionSpec {
 	get := func(name string) *ActionSpec {
 		s, ok := specs[name]
 		if !ok {
-			s = &ActionSpec{Name: name, Builtin: Builtins[name], Sources: []string{}}
+			s = &ActionSpec{Name: name, Builtin: a.isBuiltin(name), Sources: []string{}}
 			_, s.Registered = a.handlers[name]
 			specs[name] = s
 		}
@@ -347,7 +410,7 @@ func (a *App) CheckCatalog(known map[string]bool) ir.Diags {
 		return out
 	}
 	for _, k := range a.doc.Keymap {
-		if k.Action != "" && !Builtins[k.Action] && !known[k.Action] {
+		if k.Action != "" && !a.isBuiltin(k.Action) && !known[k.Action] {
 			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw), File: a.file, Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
 		}
 	}
@@ -366,12 +429,16 @@ var validateCols = []int{40, 80, 120}
 
 // Validate returns static diagnostics, V010 for every node of the document
 // (checkDocks), plus layout/bind diagnostics at the documented breakpoints
-// (40, 80, 120 columns × 24 rows). It leaves the runtime state untouched.
+// (40, 80, 120 columns × 24 rows), under the effective theme, or, for a
+// theme="auto" document that nothing overrides, under both themes, dark
+// first, each diagnostic reported once (SPEC §15.1). It leaves the
+// runtime state untouched.
 func (a *App) Validate() ir.Diags {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	saved := a.saveState()
 	defer a.restoreState(saved)
+	themes := a.validateThemes()
 	out := append(ir.Diags(nil), a.static...)
 	seen := map[string]bool{}
 	for _, d := range out {
@@ -385,10 +452,15 @@ func (a *App) Validate() ir.Diags {
 			}
 		}
 	}
+	for _, th := range themes {
+		add(a.tokenCheck(th))
+	}
 	if a.doc.Root != nil {
-		add(a.checkDocks())
-		for _, cols := range validateCols {
-			add(a.render(cols, 24).Diags)
+		add(a.checkDocks(themes))
+		for _, th := range themes {
+			for _, cols := range validateCols {
+				add(a.render(cols, 24, th).Diags)
+			}
 		}
 	}
 	return out.Sorted()

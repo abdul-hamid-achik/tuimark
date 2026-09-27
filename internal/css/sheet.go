@@ -20,35 +20,57 @@ type Decl struct {
 	// already attributed through that Sheet's File, so this is normally
 	// left empty there.
 	File string
+	// Attr is the presentational attribute as written (`pad="1"`) for a
+	// declaration the host converted from one; "" otherwise.
+	Attr string
 }
 
 // Media is a one-feature media condition.
 type Media struct {
-	Feature string // max-cols | min-cols | max-rows | min-rows
+	Feature string // max-cols | min-cols | max-rows | min-rows | theme (version="2")
 	N       int
+	Value   string // the theme feature's value: dark | light
+	// Text is the condition as written, trimmed: "(max-cols: 80)".
+	Text string
 }
 
-// Matches reports whether the condition holds for a terminal size.
+// Matches reports whether the condition holds for a terminal size. A
+// theme condition never holds here: use MatchesEnv.
 func (m *Media) Matches(cols, rows int) bool {
+	return m.MatchesEnv(Env{Cols: cols, Rows: rows})
+}
+
+// MatchesEnv reports whether the condition holds for a frame's size and
+// effective theme (SPEC §10.5: theme matches when the frame's effective
+// theme, dark or light, equals the value).
+func (m *Media) MatchesEnv(env Env) bool {
 	if m == nil {
 		return true
 	}
 	switch m.Feature {
 	case "max-cols":
-		return cols <= m.N
+		return env.Cols <= m.N
 	case "min-cols":
-		return cols >= m.N
+		return env.Cols >= m.N
 	case "max-rows":
-		return rows <= m.N
+		return env.Rows <= m.N
 	case "min-rows":
-		return rows >= m.N
+		return env.Rows >= m.N
+	case "theme":
+		return EffectiveTheme(env.Theme) == m.Value
 	}
 	return false
 }
 
+// IsTheme reports whether m is a theme condition.
+func (m *Media) IsTheme() bool { return m != nil && m.Feature == "theme" }
+
 func (m *Media) String() string {
 	if m == nil {
 		return ""
+	}
+	if m.Feature == "theme" {
+		return fmt.Sprintf("(theme: %s)", m.Value)
 	}
 	return fmt.Sprintf("(%s: %d)", m.Feature, m.N)
 }
@@ -74,6 +96,7 @@ type sheetParser struct {
 	col   int
 	file  string
 	diags ir.Diags
+	v2    bool // the document that loads the sheet is version="2" (SPEC §5.1)
 }
 
 func (p *sheetParser) eof() bool { return p.pos >= len(p.src) }
@@ -150,27 +173,40 @@ func (p *sheetParser) readUntil(stops string) string {
 	return b.String()
 }
 
-// ParseSheet parses TCSS source. Diagnostics use code V003.
-func ParseSheet(src, file string) (*Sheet, ir.Diags) {
+// ParseSheet parses TCSS source loaded by a version="1" document.
+// Diagnostics use code V003.
+func ParseSheet(src, file string) (*Sheet, ir.Diags) { return ParseSheetIn(src, file, false) }
+
+// ParseSheetIn parses TCSS source for a document of the given version: a
+// stylesheet has no version of its own and is checked against the version
+// of the document that loads it (SPEC §5.1).
+func ParseSheetIn(src, file string, v2 bool) (*Sheet, ir.Diags) {
 	// A leading UTF-8 BOM is common from Windows editors; internal/parse's
 	// XML reader already strips one, so a .tcss file (which has no such
 	// reader in front of it) should not choke on one either.
 	src = strings.TrimPrefix(src, "\ufeff")
-	return parseSheetAt(src, file, 1, 1)
+	return parseSheetAt(src, file, 1, 1, v2)
 }
 
 // parseSheetAt parses source that starts at a given document position
 // (inline <style> bodies report positions inside the .tui file).
-func parseSheetAt(src, file string, line, col int) (*Sheet, ir.Diags) {
-	p := &sheetParser{src: strings.ReplaceAll(src, "\r\n", "\n"), file: file, line: line, col: col}
+func parseSheetAt(src, file string, line, col int, v2 bool) (*Sheet, ir.Diags) {
+	p := &sheetParser{src: strings.ReplaceAll(src, "\r\n", "\n"), file: file, line: line, col: col, v2: v2}
 	sheet := &Sheet{File: file}
 	p.rules(sheet, nil)
 	return sheet, p.diags
 }
 
-// ParseInlineSheet parses a <style> body located at line:col of file.
+// ParseInlineSheet parses a <style> body of a version="1" document located
+// at line:col of file.
 func ParseInlineSheet(src, file string, line, col int) (*Sheet, ir.Diags) {
-	return parseSheetAt(src, file, line, col)
+	return parseSheetAt(src, file, line, col, false)
+}
+
+// ParseInlineSheetIn is ParseInlineSheet for a document of the given
+// version.
+func ParseInlineSheetIn(src, file string, line, col int, v2 bool) (*Sheet, ir.Diags) {
+	return parseSheetAt(src, file, line, col, v2)
 }
 
 func (p *sheetParser) rules(sheet *Sheet, media *Media) {
@@ -205,7 +241,7 @@ func (p *sheetParser) rules(sheet *Sheet, media *Media) {
 			continue
 		}
 		p.advance(1)
-		sels, err := ParseSelectorList(selText)
+		sels, err := ParseSelectorListIn(selText, p.v2)
 		decls := p.block()
 		if err != nil {
 			p.errAt(line, col, "%v", err)
@@ -237,7 +273,7 @@ func (p *sheetParser) rules(sheet *Sheet, media *Media) {
 					p.errAt(d.Line, d.Col, "token %s: %v", d.Prop, err)
 					continue
 				}
-			} else if err := CheckDecl(d.Prop, d.Value); err != nil {
+			} else if err := CheckDeclIn(d.Prop, d.Value, p.v2); err != nil {
 				p.errAt(d.Line, d.Col, "%v", err)
 				continue
 			}
@@ -311,7 +347,7 @@ func (p *sheetParser) atRule(sheet *Sheet, outer *Media) {
 	}
 	p.advance(1)
 	head = strings.TrimSpace(head)
-	media, err := parseMedia(head)
+	media, err := parseMedia(head, p.v2)
 	if err == nil && outer != nil {
 		err = fmt.Errorf("nested @media is not supported")
 	}
@@ -325,7 +361,7 @@ func (p *sheetParser) atRule(sheet *Sheet, outer *Media) {
 	p.rules(sheet, media)
 }
 
-func parseMedia(head string) (*Media, error) {
+func parseMedia(head string, v2 bool) (*Media, error) {
 	if !strings.HasPrefix(head, "@media") {
 		name := strings.Fields(head)
 		n := head
@@ -349,14 +385,28 @@ func parseMedia(head string) (*Media, error) {
 	feat := strings.TrimSpace(inner[:colon])
 	switch feat {
 	case "max-cols", "min-cols", "max-rows", "min-rows":
+	case "theme":
+		// SPEC §10.5: version="2" only; the value is dark or light, never
+		// auto (auto is never an effective theme).
+		if !v2 {
+			return nil, fmt.Errorf("@media feature %q%s", feat, ir.VersionHint)
+		}
+		val := strings.TrimSpace(inner[colon+1:])
+		if val != "dark" && val != "light" {
+			return nil, fmt.Errorf("@media %s: the theme feature takes dark or light", cond)
+		}
+		return &Media{Feature: feat, Value: val, Text: cond}, nil
 	default:
+		if v2 {
+			return nil, fmt.Errorf("@media feature %q is not supported (max-cols, min-cols, max-rows, min-rows, theme)", feat)
+		}
 		return nil, fmt.Errorf("@media feature %q is not supported (max-cols, min-cols, max-rows, min-rows)", feat)
 	}
 	n, err := strconv.Atoi(strings.TrimSpace(inner[colon+1:]))
 	if err != nil || n < 0 {
 		return nil, fmt.Errorf("@media %s: value must be a whole number of cells", cond)
 	}
-	return &Media{Feature: feat, N: n}, nil
+	return &Media{Feature: feat, N: n, Text: cond}, nil
 }
 
 // ParseDeclsAll parses a style="" attribute body, the same way a
@@ -364,7 +414,11 @@ func parseMedia(head string) (*Media, error) {
 // (sheetParser.block): each `prop: value` is checked on its own, an
 // invalid one is dropped and reported, and every valid one is kept. So one
 // typo in style="a: 1; b: 2; c: 3" does not also drop the good b and c.
-func ParseDeclsAll(src string) ([]Decl, []error) {
+// The declarations are checked for a version="1" document.
+func ParseDeclsAll(src string) ([]Decl, []error) { return ParseDeclsAllIn(src, false) }
+
+// ParseDeclsAllIn is ParseDeclsAll for a document of the given version.
+func ParseDeclsAllIn(src string, v2 bool) ([]Decl, []error) {
 	var out []Decl
 	var errs []error
 	for _, part := range strings.Split(src, ";") {
@@ -378,7 +432,7 @@ func ParseDeclsAll(src string) ([]Decl, []error) {
 			continue
 		}
 		d := Decl{Prop: strings.TrimSpace(part[:colon]), Value: strings.TrimSpace(part[colon+1:])}
-		if err := CheckDecl(d.Prop, d.Value); err != nil {
+		if err := CheckDeclIn(d.Prop, d.Value, v2); err != nil {
 			errs = append(errs, err)
 			continue
 		}

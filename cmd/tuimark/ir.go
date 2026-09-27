@@ -3,44 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
-// irTokens resolves the theme + :root token table for a loaded document,
-// media conditions ignored (SPEC §13.1). This is the one piece of token
-// resolution that lives outside internal/parse: it needs the app's already
-// -loaded stylesheets (host.App.Sheets, which resolved style src= against
-// the document's directory), so parse.BuildIR takes the result as a plain
-// map instead of reaching into the host itself.
+// irTokens resolves the theme + :root token table for a loaded document
+// (SPEC §13.1): size media conditions ignored, a :root rule inside
+// @media (theme: …) counted only when it names the tools' theme (the
+// document's, with auto as dark; `ir` takes no --theme). This is the one
+// piece of token resolution that lives outside internal/parse: it needs
+// the app's already-loaded stylesheets (host.App.Sheets, which resolved
+// style src= against the document's directory), so parse.BuildIR takes
+// the result as a plain map instead of reaching into the host itself.
 func irTokens(theme string, sheets []*css.Sheet) map[string]string {
-	if theme == "" {
-		theme = "dark"
-	}
-	base, ok := css.Themes[theme]
-	if !ok {
-		base = css.Themes["dark"]
-	}
-	tokens := make(map[string]string, len(base))
-	for k, v := range base {
-		tokens[k] = v
-	}
-	for _, sh := range sheets {
-		for _, r := range sh.Rules {
-			for _, sel := range r.Selectors {
-				if !sel.Root {
-					continue
-				}
-				for _, d := range r.Decls {
-					tokens[strings.TrimPrefix(d.Prop, "--")] = d.Value
-				}
-			}
-		}
-	}
-	return tokens
+	return css.IRTokens(sheets, theme)
 }
 
 func (c *cli) cmdIR(args []string) int {

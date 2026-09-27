@@ -25,9 +25,9 @@ type diagCode struct {
 }
 
 var diagCodes = []diagCode{
-	{"V001", "parse", "unknown tag"},
-	{"V002", "parse", "unknown attribute"},
-	{"V003", "parse", "bad unit / color / token / CSS property"},
+	{"V001", "parse", "unknown tag; a version=\"2\" tag in a version=\"1\" document (message ends with `(requires version=\"2\")`)"},
+	{"V002", "parse", "unknown attribute; a version=\"2\" attribute in a version=\"1\" document (with the same hint)"},
+	{"V003", "parse", "bad unit / color / token / CSS property; a `version` other than 1 or 2; a version=\"2\" value, property, pseudo-class, media feature, or built-in action in a version=\"1\" document (with the hint)"},
 	{"V004", "parse", "duplicate id"},
 	{"V005", "parse", "not well-formed XML"},
 	{"V006", "parse", "`style src` include cycle"},
@@ -45,11 +45,12 @@ var diagCodes = []diagCode{
 	{"L005", "layout", "more than one bottom-docked status (warning)"},
 	{"L006", "layout", "a scroll/list/overflow: scroll viewport can never show part of its content (warning)"},
 	{"B001", "bind", "`each` path is not an array"},
-	{"B002", "bind", "`if` path missing"},
+	{"B002", "bind", "`if` path missing; also a `class:NAME` guard path"},
 	{"B003", "bind", "bind path missing (`--strict` upgrades to error)"},
 	{"B004", "bind", "action not in catalog"},
 	{"B005", "bind", "keymap `to`/`when` id missing"},
 	{"B006", "bind", "`list` + `each` without `key` (warning)"},
+	{"V015", "parse", "a `class:NAME` whose NAME is not `[a-z_][a-z0-9_-]*` or whose value is not `path` / `!path` (version=\"2\")"},
 }
 
 // kindGroups is the SPEC §22 Catalog block, grouped exactly as it appears
@@ -126,10 +127,31 @@ func Markdown() string {
 	writeKeyTokens(&b)
 	writeDiagnosticCodes(&b)
 	writeV02aSection(&b)
+	writeV02bSection(&b)
 	writeNotes(&b)
 	writeRuntimeSection(&b)
 
 	return strings.TrimRight(b.String(), "\n") + "\n"
+}
+
+// writeV02bSection documents what the 0.2b foundations add for an
+// authoring agent (SPEC §22's version="2" section): the version gate, the
+// vocabulary it accepts, class:NAME and the dump's classes, the theme
+// work, and the tools (`inspect`, `TUIMARK_LOG`). It states plainly what
+// the version gate accepts that this build does not lay out yet.
+func writeV02bSection(b *strings.Builder) {
+	b.WriteString("### version=\"2\" (0.2b)\n\n")
+	b.WriteString("- `<tui version=\"2\">` opts a document into the 0.2b vocabulary; everything a version=\"1\" document accepts keeps its meaning there. In a version=\"1\" document each 0.2b tag is V001, each 0.2b attribute V002, and each 0.2b value, property, pseudo-class, media feature, or built-in action V003, with a message ending in `(requires version=\"2\")`. A `.tcss` file has no version of its own: it is checked against the version of the document that loads it. Any `version` other than `1` or `2` is V003, and the document is read as version=\"1\".\n")
+	b.WriteString("- Tags only version=\"2\" accepts: " + strings.Join(ir.KindsV2, " ") + ". This build parses them but does not lay them out or paint them yet: each dumps as one empty node.\n")
+	b.WriteString("- `class:NAME=\"path\"` (or `!path`) adds the class NAME while the guard is truthy; a missing path is B002 and adds nothing. The JSON dump of a version=\"2\" document lists each node's `classes` (its `class` names, then its truthy guards, no repeats); a version=\"1\" dump never has `classes`. The names `tab-label`, `hint-key`, and `hint-label` are reserved for classes the runtime gives generated nodes.\n")
+	b.WriteString("- `theme=\"auto\"`: `Run()` asks the terminal for its background (OSC 11, waiting at most 250 ms before the first frame), falls back to `COLORFGBG`, then to `dark`. Every command and `Dump()`/`Validate()` treat `auto` as `dark`; `validate` checks an `auto` document under both themes, dark first, and reports each diagnostic once.\n")
+	b.WriteString("- `@media (theme: dark)` and `@media (theme: light)` (version=\"2\" stylesheets) hold per-theme rules and `:root` palettes. Tokens apply in document order, so put a `@media (theme: light) { :root { … } }` block after the base `:root` it refines. `@media (theme: auto)` is V003.\n")
+	b.WriteString("- `Set(\"@theme\", \"dark\"|\"light\"|\"auto\")` (a reserved path, both versions) is the host's theme: it beats the document's theme and `--theme`, and `TUIMARK_THEME` beats it in `Run()`. `play` sets it with `set:@theme=\"light\"` or the script step `{\"theme\":\"light\"}`.\n")
+	b.WriteString("- Properties only version=\"2\" stylesheets accept: `grid-columns`, `grid-min-width`, `scrollbar`, `bar`, and the value `layout: grid`. This build computes them (`inspect` shows them) but layout and paint do not apply them yet. Pseudo-classes: `:focus-within` matches the focused node and each ancestor up to the screen, through a modal, and nothing while nothing is focused; `:checked` is accepted but matches nothing until multi-select lands.\n")
+	b.WriteString("- Keymap rows of a version=\"2\" document take `label` and `keycap` (literal text, carried in `tuimark ir`) and the hyphenated built-in actions (" + strings.Join(ir.BuiltinActionsV2, ", ") + "), which this build accepts (built in: never B004) but does not run yet: a row naming one never matches, so its key goes on to the next row. `when` still matches the focused node only.\n")
+	b.WriteString("- `tuimark inspect FILE --at X,Y --json` (or `--id ID`) answers \"why does this cell look like this?\": the node that cell belongs to, its layout path, its pseudo-classes, every class it could have (with guards, and whether any rule names it), and every property with the rule that won and the rules that lost. It renders exactly as `dump` does with the same flags.\n")
+	b.WriteString("- `tuimark ir` prints `\"version\": \"0.2\"` for a version=\"2\" document (validated by `schema/ir.v0.2.json`): the new kinds, `app.mouse`, the keymap's `label`/`keycap`, and `class:NAME` attributes under their full names in `attrs`.\n")
+	b.WriteString("- `TUIMARK_LOG=FILE` makes `Run()` write an NDJSON log of the session (mode 0600): start, capabilities and the resolved theme, keys, pastes, actions, frames, resizes, end. While a `secret` input has focus, key and paste records are redacted, and that input's events never carry their value. Only `Run()` reads it.\n\n")
 }
 
 // writeNotes documents runtime behavior that the SPEC leaves implicit or
@@ -184,7 +206,7 @@ func writeRuntimeSection(b *strings.Builder) {
 	b.WriteString("```\n\n")
 
 	b.WriteString("### Package boundaries\n\n")
-	b.WriteString("- `cmd/tuimark` — the CLI: flag parsing, output formatting, the golden-manifest runner behind `tuimark test` (including its v0.2a superset check), the `tuimark play` step parser and headless session engine (built only from `internal/host`'s exported `App` methods — `Frame`, `HandleKeyRun`, `HandlePaste`, `Dispatch`, `TakePending`, `Focus`, `SetTheme`), and the theme/`:root` token table for `tuimark ir`. Parsing, cascade, layout, and paint rules live in `internal/**`.\n")
+	b.WriteString("- `cmd/tuimark` — the CLI: flag parsing, output formatting, the golden-manifest runner behind `tuimark test` (including its v0.2a superset check), the `tuimark play` step parser and headless session engine (built only from `internal/host`'s exported `App` methods — `Frame`, `HandleKeyRun`, `HandlePaste`, `Dispatch`, `TakePending`, `Focus`, `SetTheme`), `tuimark inspect` (`Frame` plus `Inspect`), and the theme/`:root` token table for `tuimark ir`. Parsing, cascade, layout, and paint rules live in `internal/**`.\n")
 	b.WriteString("- `tuimark.go` (package `tuimark`, repo root) — the only public surface: the package functions `Load` and `Parse`, `App`'s methods `Bind, Set, On, Catalog, Dump, Validate, Run` (SPEC §18), the `App` type itself, the aliases `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, and `ErrQuit`. Nothing else is exported from it.\n")
 	b.WriteString("- `internal/ir` — node/scalar/diagnostic/binding-grammar/key-token types, the tag-kind catalog (`Kinds`, `SpikeKinds`), the spike attribute whitelist (`SpikeAttrs`), and the key-token catalog (`NamedKeys`/`ValidKey`).\n")
 	b.WriteString("- `internal/parse` — the XML tokenizer, the IR builder (including the per-tag attribute catalog, `TagAttrs`), the formatter (`fmt`), and IR-as-JSON (`ir`).\n")
@@ -192,7 +214,7 @@ func writeRuntimeSection(b *strings.Builder) {
 	b.WriteString("- `internal/layout` — the integer flex engine.\n")
 	b.WriteString("- `internal/paint` — the cell grid, borders, widget painters, and the ANSI frame diff.\n")
 	b.WriteString("- `internal/dump` — the text and JSON frame dump.\n")
-	b.WriteString("- `internal/host` — the JSON store, inflation, cascade application, focus, events, and the `Run` loop.\n")
+	b.WriteString("- `internal/host` — the JSON store, inflation, cascade application, focus, events, and the `Run` loop (with the capability/theme probe and `TUIMARK_LOG`). A frame is built in the SPEC §18 order: inflate, cascade, tab activation, focus, hints, layout, table rows, paint; the stages for the widgets not built yet are in place and do nothing.\n")
 	b.WriteString("- `internal/agentsdoc` — generates this file from the catalogs above.\n")
 	b.WriteString("- Application code — `examples/**`, or any external module — uses only the root `tuimark` package. Inside the repo, `internal/layout` is imported by `internal/paint`, `internal/dump`, and `internal/host`; `internal/paint` is imported by `internal/dump`, `internal/host`, and `cmd/tuimark` (for `preview`'s ANSI frame). SPEC §3 forbids importing `internal/layout`/`internal/paint` from application code outside this repo, not from other packages inside it.\n\n")
 
@@ -240,6 +262,12 @@ func writeAttrsPerTag(b *strings.Builder) {
 	b.WriteString("\n")
 	b.WriteString("Inside a list `<item>` nothing takes focus (the list does and navigates its rows): no `input`, `button`, `list`, or `modal` (V001), and no `focusable`, `on:click`, or `on:focus` (V002) anywhere in the row. Handle a row with the list's `on:select`, or a keymap row such as `<bind keys=\"d\" action=\"delete\" when=\"#rows:focus\"/>` for `<list id=\"rows\">` (its event identifies the selected row).\n\n")
 	b.WriteString("Bindings contain no spaces: `{path}`, `if=\"path\"`, `if=\"!path\"`, and exactly one space on each side of `as` in `each=\"path as alias\"`.\n\n")
+	b.WriteString("Only in a `<tui version=\"2\">` document (V002 with `(requires version=\"2\")` in a version=\"1\" one): the additions to the tags above, and the full attribute sets of the new tags:\n\n")
+	for _, tag := range sortedKeys(parse.TagAttrsV2) {
+		fmt.Fprintf(b, "- `%s`: %s\n", tag, strings.Join(sortedKeys(parse.TagAttrsV2[tag]), ", "))
+	}
+	b.WriteString("- `item` inside a `table`: class only (plus `class:NAME`)\n")
+	b.WriteString("- every tag except `tui`, `style`, `keymap`, and `bind`: `class:NAME` (the name is open and lowercase, `[a-z_][a-z0-9_-]*`; the value is `path` or `!path`)\n\n")
 }
 
 func writeCSSProperties(b *strings.Builder) {
@@ -247,7 +275,11 @@ func writeCSSProperties(b *strings.Builder) {
 	names := css.PropertyNames()
 	sort.Strings(names)
 	for _, name := range names {
-		fmt.Fprintf(b, "- `%s`: %s\n", name, css.PropertyValues(name))
+		v2 := ""
+		if css.PropertyV2(name) {
+			v2 = " (version=\"2\" stylesheets only)"
+		}
+		fmt.Fprintf(b, "- `%s`: %s%s\n", name, css.PropertyValues(name), v2)
 	}
 	b.WriteString("\n")
 }
@@ -291,7 +323,7 @@ func writeV02aSection(b *strings.Builder) {
 	b.WriteString("### v0.2a: interaction, styles, and theme\n\n")
 	b.WriteString("- `tuimark play FILE --data sample.json --input \"STEPS\" --format json` replays keys, `text:`, `paste:`, `set:`, `focus:`, and `resize:` steps against the document without a TTY (or `--script FILE.ndjson` for steps that need embedded spaces or explicit JSON) and prints the final dump plus every action that fired (`events`), so an agent can check that typing into a search box, or moving a list selection, fires the right `on:` action before wiring a Go handler. `--frames` adds one settled frame per applied step.\n")
 	b.WriteString("- `tuimark dump FILE --styles --format json` (also `play --styles`) adds `theme` and per-row `styles` spans to the dump, so `:focus`, `:selected`, theme tokens, and a `reverse` selection are checked by diffing JSON instead of eyeballing `preview`.\n")
-	b.WriteString("- `--theme dark|light` on `dump`, `validate`, `preview`, and `play` overrides the document's `theme` for that render (`Run`'s equivalent is `TUIMARK_THEME`). `auto` and any other value the flag is explicitly given — including `\"\"` — are usage errors in 0.2a; only leaving `--theme` off keeps the document's theme. `theme=\"auto\"` is 0.2b.\n")
+	b.WriteString("- `--theme dark|light` on `dump`, `validate`, `preview`, `play`, and `inspect` overrides the document's `theme` for that render (`Run`'s equivalent is `TUIMARK_THEME`). `auto` and any other value the flag is explicitly given — including `\"\"` — are usage errors (no tool probes the terminal); only leaving `--theme` off keeps the document's theme. A document's `theme=\"auto\"` (version=\"2\") is `dark` in every tool.\n")
 	b.WriteString("- `preview --color truecolor|256|16|none` picks the ANSI grid's color profile; without it, `preview` falls back to `TUIMARK_COLOR`, then to the same detection `Run()` uses (SPEC §26.3) — read only when stdout is a TTY, resolved once per `preview`.\n")
 	b.WriteString("- `Run()` also reads `TUIMARK_THEME` and `TUIMARK_SYNC` (forces synchronized-output framing off/`0`/on/`1`); `dump`, `validate`, `play`, `ir`, `fmt`, and `test` never read any `TUIMARK_*` variable, so their output never depends on the environment.\n")
 	b.WriteString("- `L006` (new in 0.2a) means a `scroll`/`list`/`overflow: scroll` viewport can never show part of its content: 0 cells on its scroll axis while it has content there, or clipped by an ancestor that does not itself scroll on that axis. Give it a size, or put it in a `<scroll>`.\n")

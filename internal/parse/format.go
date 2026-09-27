@@ -7,8 +7,9 @@ import (
 
 // Format returns the canonical formatting of a .tui document (`tuimark
 // fmt`): 2-space indentation, one element per line, attributes reordered to
-// id, class, then the rest in source order, self-closing leaf elements, and
-// <text>/<button> bodies collapsed to one line when they fit. It works on
+// id, class, the class:NAME guards in source order (SPEC §15.1), then the
+// rest in source order, self-closing leaf elements, and <text>/<button>
+// (and <column> cell template) bodies collapsed to one line when they fit. It works on
 // the lossless tree from ParseXML, not the validated IR, so it formats any
 // well-formed document regardless of catalog or binding errors.
 //
@@ -78,17 +79,21 @@ func gatherText(n *RawNode) string {
 	return b.String()
 }
 
-// canonicalAttrs orders attributes id, class, then the rest in source order.
+// canonicalAttrs orders attributes id, class, the class:NAME guards in
+// source order, then the rest in source order.
 func canonicalAttrs(n *RawNode) []RawAttr {
 	var id, class *RawAttr
+	var guards []RawAttr
 	rest := make([]RawAttr, 0, len(n.Attrs))
 	for i := range n.Attrs {
 		a := n.Attrs[i]
-		switch a.Name {
-		case "id":
+		switch {
+		case a.Name == "id":
 			id = &a
-		case "class":
+		case a.Name == "class":
 			class = &a
+		case strings.HasPrefix(a.Name, ClassGuardPrefix):
+			guards = append(guards, a)
 		default:
 			rest = append(rest, a)
 		}
@@ -100,6 +105,7 @@ func canonicalAttrs(n *RawNode) []RawAttr {
 	if class != nil {
 		out = append(out, *class)
 	}
+	out = append(out, guards...)
 	return append(out, rest...)
 }
 
@@ -129,7 +135,7 @@ func writeNode(b *strings.Builder, n *RawNode, depth int) {
 	indent := strings.Repeat("  ", depth)
 	open := openTag(n, depth)
 
-	if (n.Name == "text" || n.Name == "button") && onlySimpleText(n) {
+	if (n.Name == "text" || n.Name == "button" || n.Name == "column") && onlySimpleText(n) {
 		writeTextBody(b, n, depth, open)
 		return
 	}
