@@ -214,5 +214,14 @@
     "sizes": ["80x24"],
     "json": ["80x24"],
     "frozen": false
+  },
+  {
+    "name": "monitor-play-empty",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "input": "set:procs=[]",
+    "sizes": ["100x30"],
+    "json": [],
+    "frozen": false
   }
 ]

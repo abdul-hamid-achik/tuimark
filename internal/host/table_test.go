@@ -256,6 +256,45 @@ func TestTablePlaceholder(t *testing.T) {
 	}
 }
 
+// 52 (unsized). An unsized empty table auto-fits to header + max(n, p)
+// rows, p = 1 with a placeholder (SPEC §6.9.3), so it keeps one body row
+// for the placeholder instead of collapsing to its header; its intrinsic
+// width is at least the placeholder's, so in a row it is not cut to "…";
+// inside a scroll (unbounded) V = max(n, p) too. Without a placeholder an
+// empty table stays header-only, and rows replace the placeholder row.
+func TestTablePlaceholderUnsized(t *testing.T) {
+	const tbl = `<table id="t" each="rows as r" key="r"%s><column%s>{r}</column></table>`
+	ph := fmt.Sprintf(tbl, ` placeholder="no results — 空"`, ` title="Name"`)
+	cases := []struct {
+		name, body string
+		w, h, y    int // the table's size, and the grid row of its first body row
+		line       string
+	}{
+		{"col", ph, 20, 2, 1, "  no results — 空   "},
+		// Untitled (no header) in a row: 15 cells wide, not 1.
+		{"row", `<row>` + fmt.Sprintf(tbl, ` placeholder="no results — 空"`, "") + `</row>`, 15, 4, 0, "no results — 空     "},
+		{"scroll", `<scroll>` + ph + `</scroll>`, 20, 2, 1, "  no results — 空   "},
+		{"no placeholder", fmt.Sprintf(tbl, "", ` title="Name"`), 20, 1, 1, strings.Repeat(" ", 20)},
+	}
+	for _, c := range cases {
+		a := doc(t, `<tui version="2"><screen id="s">`+c.body+`</screen></tui>`)
+		bindJSON(t, a, `{"rows":[]}`)
+		f := a.Frame(20, 4)
+		if b := f.ByID["t"]; b.W != c.w || b.H != c.h {
+			t.Errorf("%s: table %dx%d, want %dx%d", c.name, b.W, b.H, c.w, c.h)
+		}
+		if got := f.Grid.Lines()[c.y]; got != c.line {
+			t.Errorf("%s: body row %q, want %q", c.name, got, c.line)
+		}
+	}
+	// One row replaces the placeholder row: same height, no jump.
+	a := doc(t, `<tui version="2"><screen id="s">`+ph+`</screen></tui>`)
+	bindJSON(t, a, `{"rows":["a"]}`)
+	if f := a.Frame(20, 4); f.ByID["t"].H != 2 || strings.Contains(strings.Join(f.Grid.Lines(), ""), "no results") {
+		t.Errorf("one row: %dx%d %q", f.ByID["t"].W, f.ByID["t"].H, f.Grid.Lines())
+	}
+}
+
 // 53. Diagnostics that read every row are reported once per template or
 // guard and path, and the same whatever the scroll offset; L006 for a
 // table whose body viewport is 0 rows while it has rows; B001 for a
@@ -603,5 +642,132 @@ func TestTableColumnRuleAlignsHeaderOnly(t *testing.T) {
 	bindJSON(t, a, `{"rows":[{"id":1,"cpu":"1.5","mem":"x"}]}`)
 	if got := a.Frame(12, 2).Grid.Lines(); got[0] != "    CPU  M  " || got[1] != "1.5      x  " {
 		t.Errorf("grid %q", got)
+	}
+}
+
+// §6.14: keyID is keyEqual (the same JSON type and the same value
+// formatted as text), so the key sets that check-all and :checked use
+// give the same answers as a scan with keyEqual.
+func TestKeyIDIsKeyEqual(t *testing.T) {
+	vals := []any{
+		nil, "", "null", true, "true", false, float64(123), "123", float64(1.5), "1.5",
+		[]any{float64(1)}, "[1]", map[string]any{"a": float64(1), "b": "x"},
+		map[string]any{"b": "x", "a": float64(1)}, `{"a":1,"b":"x"}`,
+	}
+	for _, x := range vals {
+		for _, y := range vals {
+			if (keyID(x) == keyID(y)) != keyEqual(x, y) {
+				t.Errorf("keyID(%#v) == keyID(%#v) is %v, keyEqual is %v", x, y, keyID(x) == keyID(y), keyEqual(x, y))
+			}
+		}
+	}
+	if s := newKeySet([]any{float64(2), "a"}); !s.has(float64(2)) || s.has("2") || !s.has("a") || keySet(nil).has("a") {
+		t.Error("keySet membership")
+	}
+}
+
+// §6.14, §21 test 73 (cost). check-all builds one key set of the checked
+// array (O(n + |R|) and no allocation per pair), not a scan of R per row
+// that formats both sides of every comparison (quadratic: 1.2 s at 10k
+// rows); a frame looks up :checked in a key set kept while the checked
+// array is unchanged, so a frame with |R| checked keys costs no more than
+// one with none, and the bound cursor row is found in an index kept
+// with the rows. Semantics are those of §6.14: existing elements first,
+// stale keys kept, then the row keys in data order, each once. Every
+// write of the checked array (Set of it or under it, a whole-store write,
+// a check-* action) builds the set again.
+func TestCheckedScales(t *testing.T) {
+	const n = 5000
+	a := doc(t, `<tui version="2"><keymap><bind keys="x" action="check-toggle" to="#t"/></keymap>
+<screen id="s" focus="#t"><table id="t" each="rows as r" key="r.id" bind="cur" checked="m" on:change="ch" style="height: 20">
+<column title="N">{r.id}</column></table></screen></tui>`)
+	rows := strings.TrimSuffix(rowsJSON(n), "]") + `,{"id":7,"n":"dup"}]`
+	bindJSON(t, a, fmt.Sprintf(`{"cur":%d,"m":["gone",3],"rows":%s}`, n-1, rows))
+	tb := a.Frame(40, 22).ByID["t"]
+	var evs []Event
+	allocs := testing.AllocsPerRun(1, func() {
+		_ = a.Set("m", []any{"gone", float64(3)})
+		a.mu.Lock()
+		evs = a.check(tb, "check-all")
+		a.mu.Unlock()
+	})
+	if allocs > 5*n {
+		t.Errorf("check-all over %d rows: %.0f allocations, want at most %d (linear)", n, allocs, 5*n)
+	}
+	got, ok := a.Get("m")
+	m, _ := got.([]any)
+	if !ok || len(m) != n+1 || m[0] != "gone" || m[1] != float64(3) || m[2] != float64(0) || m[4] != float64(2) || m[5] != float64(4) || m[n] != float64(n-1) {
+		t.Fatalf("check-all: %d keys, head %v", len(m), m[:min(len(m), 6)])
+	}
+	if len(evs) != 1 || evs[0].Action != "ch" {
+		t.Errorf("check-all events %v", evs)
+	}
+	a.mu.Lock()
+	if again := a.check(tb, "check-all"); again != nil {
+		t.Errorf("check-all with every key checked fired %v", again)
+	}
+	a.mu.Unlock()
+
+	// A frame with every key checked, the cursor on the last row (the
+	// deepest scan for the old per-row lookup), against one with none.
+	frameAllocs := func() float64 { return testing.AllocsPerRun(3, func() { a.Frame(40, 22) }) }
+	all := frameAllocs()
+	_ = a.Set("m", []any{})
+	none := frameAllocs()
+	if all > none+100 {
+		t.Errorf("a frame with %d checked keys: %.0f allocations, %.0f with none", n+1, all, none)
+	}
+	// The bound cursor is found in an index kept with the rows, not by
+	// formatting every row key each frame: O(V), not O(n).
+	if none > n/5 {
+		t.Errorf("a frame that changed nothing, cursor bound to row %d: %.0f allocations, want at most %d", n-1, none, n/5)
+	}
+
+	// Every write of the checked array rebuilds the set.
+	checked := func() (out []int) {
+		for _, c := range a.Frame(40, 22).ByID["t"].Children {
+			if c.Kind == "item" && c.Checked {
+				out = append(out, c.Index)
+			}
+		}
+		return out
+	}
+	steps := []struct {
+		name  string
+		write func()
+		want  string
+	}{
+		{"Set", func() { _ = a.Set("m", []any{float64(n - 1)}) }, fmt.Sprint([]int{n - 1})},
+		{"Set under", func() { _ = a.Set("m.0", float64(n-2)) }, fmt.Sprint([]int{n - 2})},
+		{"check-toggle", func() { keysAt(a, 40, 22, r('x')) }, fmt.Sprint([]int{n - 2, n - 1})},
+		{"whole store", func() {
+			bindJSON(t, a, fmt.Sprintf(`{"cur":%d,"m":[%d],"rows":%s}`, n-1, n-3, rows))
+		}, fmt.Sprint([]int{n - 3})},
+	}
+	for _, s := range steps {
+		s.write()
+		if got := fmt.Sprint(checked()); got != s.want {
+			t.Errorf("after %s: checked rows %s, want %s", s.name, got, s.want)
+		}
+	}
+
+	// The cursor index: the first row whose key equals the bound value (row
+	// 7, not the duplicate at row n), the same JSON type only (a string
+	// "9" matches nothing and the cursor stays), rebuilt with the rows.
+	cursor := func() int { a.Frame(40, 22); a.mu.Lock(); defer a.mu.Unlock(); return a.lists["t"].index }
+	for _, c := range []struct {
+		path string
+		v    any
+		want int
+	}{
+		{"cur", float64(7), 7},
+		{"cur", "9", 7},
+		{"cur", float64(9), 9},
+		{"rows", []any{map[string]any{"id": float64(5)}, map[string]any{"id": float64(9)}}, 1},
+	} {
+		_ = a.Set(c.path, c.v)
+		if got := cursor(); got != c.want {
+			t.Errorf("Set(%s, %#v): cursor %d, want %d", c.path, c.v, got, c.want)
+		}
 	}
 }

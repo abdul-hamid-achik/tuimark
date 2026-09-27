@@ -41,7 +41,8 @@ func benchApp(b *testing.B) *App {
 
 // BenchmarkFrame is SPEC v0.2b §21 test 73 (a SHOULD, recorded, not a
 // gate): one frame of a 1000-row, 7-column table at 200×60, with a warm
-// measure cache (only the cursor moved since the last frame) and with a
+// measure cache (only the cursor moved since the last frame), the same
+// with every row checked and the cursor in the last rows, and with a
 // cold one (the rows are resolved again, as after a Set of the array).
 func BenchmarkFrame(b *testing.B) {
 	b.Run("warm", func(b *testing.B) {
@@ -50,6 +51,23 @@ func BenchmarkFrame(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_ = a.Set("cur", float64(1000+i%1000))
+			a.Frame(200, 60)
+		}
+	})
+	b.Run("checked", func(b *testing.B) {
+		// Every row checked and the cursor in the last rows: the :checked
+		// lookup of each visible row is a key-set hit, not a scan of the
+		// checked array.
+		a := benchApp(b)
+		marked := make([]any, 1000)
+		for i := range marked {
+			marked[i] = float64(1000 + i)
+		}
+		_ = a.Set("marked", marked)
+		a.Frame(200, 60)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_ = a.Set("cur", float64(1940+i%60))
 			a.Frame(200, 60)
 		}
 	})

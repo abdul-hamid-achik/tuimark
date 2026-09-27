@@ -325,6 +325,24 @@ func TestMonitorAcceptance(t *testing.T) {
 			t.Errorf("focus %v", d.Focus)
 		}
 	})
+	t.Run("play empty", func(t *testing.T) {
+		// An empty procs (a filter that matches nothing): the auto-fit
+		// #procs keeps one body row, and "no results" is painted on it
+		// (SPEC §6.9.3, §6.9.4).
+		g := gridOf(t, "monitor-play-empty", "100x30")
+		if !strings.HasPrefix(g[3], "│      PID NAME") || strings.TrimSpace(strings.Trim(g[4], "│")) != "no results" || !strings.HasPrefix(g[5], "╰") {
+			t.Errorf("no placeholder row: %q", g[2:6])
+		}
+		var procs string
+		for _, l := range nodeLines(t, "monitor-play-empty", "100x30") {
+			if strings.HasPrefix(l, "procs ") {
+				procs = strings.Join(strings.Fields(l)[:3], " ")
+			}
+		}
+		if procs != "procs table 100x4" {
+			t.Errorf("procs node %q, want procs table 100x4", procs)
+		}
+	})
 }
 
 // §24: validate reports no error on examples/monitor under both themes

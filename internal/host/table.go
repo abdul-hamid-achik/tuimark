@@ -66,6 +66,26 @@ type tableData struct {
 	on      [][][]bool
 	measure []int
 	diags   ir.Diags
+	// first maps a key (keyID) to the first row that has it, built on the
+	// first rowOf and kept with the rows.
+	first map[string]int
+}
+
+// rowOf returns the index of the first row, in array order, whose key
+// equals v (keyEqual; SPEC §6.9.2), or -1: a lookup in an index built
+// once per resolved rows, so a frame with a bound cursor does not format
+// every row key again. The caller holds a.mu.
+func (td *tableData) rowOf(v any) int {
+	if td.first == nil {
+		td.first = make(map[string]int, len(td.keys))
+		for i := len(td.keys) - 1; i >= 0; i-- {
+			td.first[keyID(td.keys[i])] = i
+		}
+	}
+	if i, ok := td.first[keyID(v)]; ok {
+		return i
+	}
+	return -1
 }
 
 // tableFrame is a table of the frame being built, between step 1 and
@@ -73,7 +93,7 @@ type tableData struct {
 type tableFrame struct {
 	plan    *tablePlan
 	data    *tableData
-	checked []any
+	checked keySet
 	sel     int
 }
 
@@ -369,11 +389,8 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 			fb.missingBind(n, n.Bind)
 		}
 		if found && v != nil {
-			for i, k := range td.keys {
-				if keyEqual(k, v) {
-					sel = i
-					break
-				}
+			if i := td.rowOf(v); i >= 0 {
+				sel = i
 			}
 		}
 	}
@@ -385,9 +402,10 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	ls.index = sel
 	// SPEC §6.14: the checked row keys, and the mark channel of every
 	// row, the header row's too (§6.9.3).
-	var checked []any
+	var checked keySet
 	if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
-		checked, _ = fb.checkedKeys(n, path, sc)
+		keys, _ := fb.checkedKeys(n, path, sc)
+		checked = fb.checkedSet(n, path, keys, sc)
 		if m, ok := n.Attr("mark"); ok {
 			if w := layout.Width(m); w >= 1 && w <= 2 {
 				b.MarkChan, b.Mark = w+1, m
@@ -459,7 +477,7 @@ func (fb *builder) placeRows(casc *css.Cascade, t *layout.Box) {
 			Tag: "item", Kind: "item", Parent: t, Src: p.item, Follow: -1, Index: i,
 			Fixed: true, Disabled: t.Disabled, Mark: t.Mark,
 			Classes: guardClasses(p.item, rowOn), GuardOn: rowOn,
-			Selected: i == tf.sel, Checked: hasKey(tf.checked, td.keys[i]), Key: Format(td.keys[i]),
+			Selected: i == tf.sel, Checked: tf.checked.has(td.keys[i]), Key: Format(td.keys[i]),
 		}
 		for _, col := range cols {
 			j := p.colIndex[col.Src]

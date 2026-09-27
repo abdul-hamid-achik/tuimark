@@ -269,14 +269,22 @@ vocabulary (SPEC §5.1); this build implements all of it:
   `#procs > item > text.hot` colors only the hot cells. Rows and cells
   ignore their own sizes, borders, padding, and margins. `placeholder` is
   painted dim and centered on the first body row when the array is empty
-  (it is not a node). `checked`/`mark` and the `move-*`/`check-*`
-  built-ins work as on a list. Diagnostics: `V012` without `id`, `V017`
-  without `each` or a `column`, `V016` for misplaced children or text,
-  `B006` without `key`, `L003` when the columns' cell and `%` widths and
-  min-widths exceed the table, `L006` for a body of 0 rows that has rows.
+  (it is not a node); an unsized empty table with a `placeholder` keeps
+  that one body row (and is at least as wide as the text), so it never
+  auto-fits down to its header and hides it. `checked`/`mark` and the
+  `move-*`/`check-*` built-ins work as on a list. Diagnostics: `V012`
+  without `id`, `V017` without `each` or a `column`, `V016` for misplaced
+  children or text, `B006` without `key`, `L003` when the columns' cell
+  and `%` widths and min-widths exceed the table, `L006` for a body of 0
+  rows that has rows.
   Cell and guard paths are resolved on every row and reported once per
   path, so the diagnostics never depend on the scroll offset; the resolved
-  rows are cached until a store path they read is set again.
+  rows are cached until a store path they read is set again, so every
+  change to the array costs one pass over its rows whatever the column
+  widths. The bound cursor row and the checked keys are looked up in key
+  sets kept with the rows and the checked array, so `check-all` is linear
+  and a frame with thousands of checked rows costs what one with none
+  does.
 - **`scrollbar: auto`** on a viewport (`scroll`, `list`, `table`, or an
   `overflow: scroll` box) that scrolls on y, has a border, is at least 3
   rows tall, and has more content than fits paints a thumb over its right
@@ -950,8 +958,9 @@ module; the only supported entry points are the functions above.
   test. `go test -race ./...` runs the same suite with the race detector.
 - `go test -run xxx -bench BenchmarkFrame ./internal/host/` — SPEC §21 test
   73 (recorded, not a gate): one 200×60 frame of a 1000-row, 7-column
-  table, with a warm row cache (only the cursor moved) and a cold one (the
-  rows resolved again, as after a `Set` of the array).
+  table, with a warm row cache (only the cursor moved), the same with every
+  row checked and the cursor in the last rows, and a cold one (the rows
+  resolved again, as after a `Set` of the array).
 - `tuimark test` — the golden dump runner described above, runnable on its
   own (`./bin/tuimark test`) for a faster loop while iterating; `--update`
   regenerates the non-frozen goldens for a human to review and commit. The

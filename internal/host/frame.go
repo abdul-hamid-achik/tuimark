@@ -3,6 +3,7 @@ package host
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
@@ -700,6 +701,64 @@ func hasKey(keys []any, k any) bool {
 	return false
 }
 
+// keyID is a row key's identity for SPEC §6.14 equality: its JSON type
+// and its value formatted as text. keyID(a) == keyID(b) exactly when
+// keyEqual(a, b), since a type name never holds a NUL.
+func keyID(v any) string { return typeName(v) + "\x00" + Format(v) }
+
+// keySet is a set of row keys by keyID: membership in O(1), where hasKey
+// scans the array and formats both sides of every comparison.
+type keySet map[string]struct{}
+
+func newKeySet(keys []any) keySet {
+	s := make(keySet, len(keys))
+	for _, k := range keys {
+		s[keyID(k)] = struct{}{}
+	}
+	return s
+}
+
+// has reports whether k equals some key of s (keyEqual).
+func (s keySet) has(k any) bool {
+	if len(s) == 0 {
+		return false
+	}
+	_, ok := s[keyID(k)]
+	return ok
+}
+
+// checkedCache is the key set of a list's or table's checked array, with
+// the store stamp it was built at.
+type checkedCache struct {
+	stamp []uint64
+	set   keySet
+}
+
+// checkedSet returns keys, the checked array of list or table node n read
+// at path this frame, as a keySet, so :checked costs O(1) per row. In the
+// document's scope it is kept per node while the store member that path
+// is under is unchanged (a Set of it, a check-* action, or a whole-store
+// write builds it again), so a frame that changed nothing there does not
+// read the array; inside an each scope it is built every frame. The
+// caller holds a.mu.
+func (fb *builder) checkedSet(n *ir.Node, path string, keys []any, sc *scope) keySet {
+	if len(keys) == 0 {
+		return nil
+	}
+	if sc != nil {
+		return newKeySet(keys)
+	}
+	a := fb.a
+	head, _, _ := strings.Cut(path, ".")
+	st := a.stamp([]string{head})
+	if c := a.checkedSets[n]; c != nil && sameStamp(c.stamp, st) {
+		return c.set
+	}
+	s := newKeySet(keys)
+	a.checkedSets[n] = &checkedCache{stamp: st, set: s}
+	return s
+}
+
 // classes returns an element's classes (SPEC §6.13): its class names in
 // order, then the names of its truthy class:NAME guards in attribute
 // order, without repeats. A guard's path is resolved in the element's
@@ -873,11 +932,12 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	ls.index = sel
 	// SPEC §6.14 (version="2"): the checked row keys, and the mark channel
 	// every row reserves when the list has checked and mark.
-	var checked []any
+	var checked keySet
 	chanW, mark := 0, ""
 	if a.doc.V2 {
 		if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
-			checked, _ = fb.checkedKeys(n, path, sc)
+			keys, _ := fb.checkedKeys(n, path, sc)
+			checked = fb.checkedSet(n, path, keys, sc)
 			if m, ok := n.Attr("mark"); ok {
 				if w := layout.Width(m); w >= 1 && w <= 2 {
 					chanW, mark = w+1, m
@@ -891,7 +951,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 			continue
 		}
 		ib.Selected = i == sel
-		ib.Checked = hasKey(checked, e.key)
+		ib.Checked = checked.has(e.key)
 		ib.Chan, ib.Mark = chanW, mark
 		ib.Key = Format(e.key)
 		ib.Index = i

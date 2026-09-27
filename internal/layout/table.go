@@ -32,15 +32,33 @@ func tableHeader(cols []*Box) int {
 	return 0
 }
 
+// tablePlaceholderRow is 1 when table t has no rows and has a placeholder
+// attribute (even one that resolves to the empty string), else 0: an
+// empty table asks for one body row to paint its placeholder on (SPEC
+// §6.9.3, §6.9.4), so an auto-fit table does not collapse to its header
+// and hide it.
+func tablePlaceholderRow(t *Box) int {
+	if clampCells(t.Rows) > 0 {
+		return 0
+	}
+	if _, ok := t.Src.Attr("placeholder"); ok {
+		return 1
+	}
+	return 0
+}
+
 // tableIntrinsic is the content-driven size of a table without its border
 // and padding (SPEC §6.9.3): across, the mark channel, the visible
 // columns' intrinsic widths (a Cell column's cell size, another column's
 // measure clamped by its min-width and max-width), and the gaps between
-// them; down, the header row and one row per row of the array.
+// them, and at least the placeholder's width when the placeholder row is
+// shown; down, the header row and max(n, p) body rows, where p is the
+// placeholder row (tablePlaceholderRow).
 func tableIntrinsic(t *Box, horizontal bool) int {
 	cols := TableColumns(t)
+	p := tablePlaceholderRow(t)
 	if !horizontal {
-		return tableHeader(cols) + clampCells(t.Rows)
+		return tableHeader(cols) + max(clampCells(t.Rows), p)
 	}
 	v := clampCells(t.MarkChan)
 	if k := len(cols); k > 0 {
@@ -52,6 +70,9 @@ func tableIntrinsic(t *Box, horizontal bool) int {
 		} else {
 			v += clampAxis(c, true, clampCells(c.Measure), -1)
 		}
+	}
+	if p == 1 {
+		v = max(v, Width(t.Placeholder))
 	}
 	return clampCells(v)
 }

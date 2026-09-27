@@ -1,0 +1,92 @@
+=== grid 100x30 ===
+◆ monitor studio-01                                                                  ● LIVE 12:00:00
+ 1 ovr   2 cpu   3 mem   4 thm   5 dsk   6 net  ▸7 proc   8 cfg   9 trd                             
+╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+│      PID NAME                                           CPU%▼      MEM  THR       I/O USER       │
+│                                            no results                                            │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+q quit  ? help  1-9 tabs  p pause  r refresh  c sort cpu  m sort mem  / filter  enter details       
+=== nodes ===
+studio     screen  100x30 @(0,0)
+app        col     100x30 @(0,0)
+identity   row     100x1 @(0,0)
+-          text    9x1 @(0,0)
+-          text    9x1 @(10,0)
+-          spacer  64x1 @(20,0)
+-          text    6x1 @(85,0)
+-          text    8x1 @(92,0)
+nav        tabs    100x28 @(0,1)
+-          text    6x1 @(0,1)
+-          text    6x1 @(8,1)
+-          text    6x1 @(16,1)
+-          text    6x1 @(24,1)
+-          text    6x1 @(32,1)
+-          text    6x1 @(40,1)
+-          text    7x1 @(48,1) selected
+-          text    6x1 @(57,1)
+-          text    6x1 @(65,1)
+processes  tab     100x27 @(0,2)
+-          col     100x27 @(0,2)
+procs      table   100x4 @(0,2) focus
+c-pid      column  7x1 @(3,3)
+c-name     column  44x1 @(11,3)
+c-cpu      column  7x1 @(56,3)
+c-mem      column  8x1 @(64,3)
+c-thr      column  4x1 @(73,3)
+c-io       column  9x1 @(78,3)
+c-user     column  10x1 @(88,3)
+keys       hints   100x1 @(0,29)
+-          row     6x1 @(0,29)
+-          text    1x1 @(0,29)
+-          text    4x1 @(2,29)
+-          row     6x1 @(8,29)
+-          text    1x1 @(8,29)
+-          text    4x1 @(10,29)
+-          row     8x1 @(16,29)
+-          text    3x1 @(16,29)
+-          text    4x1 @(20,29)
+-          row     7x1 @(26,29)
+-          text    1x1 @(26,29)
+-          text    5x1 @(28,29)
+-          row     9x1 @(35,29)
+-          text    1x1 @(35,29)
+-          text    7x1 @(37,29)
+-          row     10x1 @(46,29)
+-          text    1x1 @(46,29)
+-          text    8x1 @(48,29)
+-          row     10x1 @(58,29)
+-          text    1x1 @(58,29)
+-          text    8x1 @(60,29)
+-          row     8x1 @(70,29)
+-          text    1x1 @(70,29)
+-          text    6x1 @(72,29)
+-          row     13x1 @(80,29)
+-          text    5x1 @(80,29)
+-          text    7x1 @(86,29)
+=== errors ===
+ok
+=== events ===
+none

@@ -692,11 +692,19 @@ func (a *App) check(b *layout.Box, action string) []Event {
 			next = append(append(next, old...), k)
 		}
 	case "check-all":
+		// One keySet of R and of what is appended, so check-all is
+		// O(n + |R|), not a scan of R per row (O(n·|R|)).
 		next = append(next, old...)
+		seen := newKeySet(old)
 		for _, k := range ls.keys {
-			if !hasKey(next, k) {
+			id := keyID(k)
+			if _, ok := seen[id]; !ok {
+				seen[id] = struct{}{}
 				next = append(next, k)
 			}
+		}
+		if len(next) == len(old) {
+			return nil // nothing appended: R is unchanged
 		}
 	}
 	if sameKeys(old, next) {

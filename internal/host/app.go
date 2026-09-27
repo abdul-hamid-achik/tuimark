@@ -80,6 +80,10 @@ type App struct {
 	storeGen uint64
 	segGen   map[string]uint64
 	tables   map[*ir.Node]*tableCache
+	// checkedSets keeps, per list or table node, the key set of its
+	// checked array while the store member it reads is unchanged
+	// (checkedSet).
+	checkedSets map[*ir.Node]*checkedCache
 
 	screen     int
 	focus      string
@@ -151,7 +155,8 @@ func newApp(src []byte, path, dir string) *App {
 		scrolls: map[string][2]int{}, wake: make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
 		segGen:     map[string]uint64{}, tables: map[*ir.Node]*tableCache{},
-		tabMem: map[string]string{}, tabPrev: map[string]string{},
+		checkedSets: map[*ir.Node]*checkedCache{},
+		tabMem:      map[string]string{}, tabPrev: map[string]string{},
 	}
 	if path == "" {
 		a.file = ""
