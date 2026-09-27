@@ -130,6 +130,24 @@ func TestKill(t *testing.T) {
 	}
 }
 
+// The open confirmation keeps focus on the modal, not on a button: a
+// focused "yes (y)" would confirm the kill on enter or space.
+func TestKillConfirmationFocusesTheModal(t *testing.T) {
+	m, hs := loadMonitor(t)
+	fire(t, hs, "kill_ask", tuimark.Event{})
+	d, err := m.ui.Dump(80, 24)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Focus == nil || *d.Focus != "kill" {
+		focus := "none"
+		if d.Focus != nil {
+			focus = *d.Focus
+		}
+		t.Fatalf("focus is %s with the confirmation open, want the modal (kill)", focus)
+	}
+}
+
 // diagnose pins the detail to the cursor row; once that pid leaves the
 // snapshot the detail says so.
 func TestDetailVanishes(t *testing.T) {

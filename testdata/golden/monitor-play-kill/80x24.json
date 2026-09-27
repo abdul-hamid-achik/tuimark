@@ -2,7 +2,7 @@
   "cols": 80,
   "rows": 24,
   "ok": true,
-  "focus": "kill-yes",
+  "focus": "kill",
   "errors": [],
   "nodes": [
     {
@@ -1444,7 +1444,8 @@
       "x": 8,
       "y": 6,
       "w": 64,
-      "h": 12
+      "h": 12,
+      "focused": true
     },
     {
       "id": "kill-rows",
@@ -1575,8 +1576,7 @@
       "y": 9,
       "w": 11,
       "h": 1,
-      "text": "yes (y)",
-      "focused": true
+      "text": "yes (y)"
     },
     {
       "id": "kill-no",
