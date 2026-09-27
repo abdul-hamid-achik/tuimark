@@ -236,6 +236,9 @@ func NodeOf(n *layout.Box, v2 bool) Node {
 	switch n.Kind {
 	case "text", "button":
 		dn.Text = n.Text
+	case "column":
+		// A table's header cell: its resolved title (SPEC §13.2).
+		dn.Text = n.Text
 	case "input":
 		dn.Text = layout.InputShown(n) // one • per cluster when secret
 	}

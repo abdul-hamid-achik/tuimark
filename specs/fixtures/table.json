@@ -1,0 +1,8 @@
+{
+  "cur": 7,
+  "rows": [
+    { "pid": 1, "name": "launchd", "cpu": 0.5 },
+    { "pid": 7, "name": "微信", "cpu": 12 },
+    { "pid": 42, "name": "a-very-long-process-name", "cpu": 3.25 }
+  ]
+}

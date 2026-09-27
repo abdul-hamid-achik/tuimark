@@ -77,6 +77,22 @@ type Box struct {
 	Chan int
 	Mark string
 
+	// Table state (version="2", SPEC §6.9.3). The host sets, on a table
+	// box before Layout, Rows (n, the number of rows of its each array)
+	// and MarkChan (c, the width of its mark channel: width(mark) + 1 with
+	// checked and mark, else 0), and on each of its column boxes Measure
+	// (the widest of the resolved title and the cell texts of every row).
+	// Layout sets Header (1 while the header row is shown, else 0) and
+	// View (V, the body viewport height) on the table.
+	Rows, MarkChan int
+	Header, View   int
+	Measure        int
+	// Fixed marks a box whose geometry its table sets (a column's header
+	// cell, a row, a body cell; SPEC §6.9.3): it ignores its own border,
+	// padding, margin, sizes, layout, and overflow, and a cell never wraps
+	// (wrap: wrap paints as truncate).
+	Fixed bool
+
 	// Scroll state: offset in, clamped offset and content size out.
 	ScrollX, ScrollY int
 	Follow           int // list: index of the item to keep visible (-1 none)
@@ -169,17 +185,22 @@ func (b *Box) pad(side int) int { return clampCells(b.Style.Pad[side]) }
 // IsContainer reports whether the kind lays out children.
 func (b *Box) IsContainer() bool {
 	switch b.Kind {
-	case "col", "row", "box", "scroll", "list", "item", "screen", "modal":
+	case "col", "row", "box", "scroll", "list", "item", "screen", "modal", "table":
 		return true
 	}
 	return false
 }
 
-// Scrolls reports whether b is a viewport: <scroll>, <list>, or a container
-// with overflow: scroll (which scrolls like a <scroll> on the y axis; axis=
-// is allowed only on <scroll> and <rule>, SPEC v0.2 §11.4).
+// Scrolls reports whether b is a viewport: <scroll>, <list>, <table>
+// (version="2"), or a container with overflow: scroll (which scrolls like
+// a <scroll> on the y axis; axis= is allowed only on <scroll> and <rule>,
+// SPEC v0.2 §11.4). A table row ignores overflow (SPEC §6.9.3), so it is
+// never one.
 func (b *Box) Scrolls() bool {
-	return b.Kind == "scroll" || b.Kind == "list" || (b.Style.Overflow == "scroll" && b.IsContainer())
+	if b.Fixed {
+		return false
+	}
+	return b.Kind == "scroll" || b.Kind == "list" || b.Kind == "table" || (b.Style.Overflow == "scroll" && b.IsContainer())
 }
 
 // Direction returns "row" or "column".

@@ -224,8 +224,66 @@ vocabulary (SPEC §5.1); this build implements its foundations:
 
 - **`:focus-within`** matches the focused node and each ancestor up to the
   screen (through a modal); nothing while nothing is focused. **`:checked`**
-  matches a list row whose key is in the list's `checked` array. Both count
-  +10, like the other pseudo-classes.
+  matches a list or table row whose key is in the widget's `checked` array.
+  Both count +10, like the other pseudo-classes.
+- **`<table>` and `<column>`.** A table shows one row per element of an
+  array, in columns. Each `<column>`'s body is its cell template, resolved
+  on each row; its `title` is the header text. At most one attribute-only
+  `<item class="…" class:NAME="…"/>` is the row template.
+
+  ```xml
+  <table id="procs" each="procs as p" key="p.pid" bind="cursor_pid"
+         checked="marked" mark="▸" placeholder="no results" on:select="moved">
+    <item class:blocked="p.protected"/>
+    <column id="c-pid" class="num" title="PID" width="7">{p.pid}</column>
+    <column id="c-name" title="Name" width="1fr">{p.name}</column>
+    <column id="c-cpu" class="num" title="CPU%" class:hot="p.cpu_hot">{p.cpu}</column>
+  </table>
+  ```
+
+  It is focusable and keeps a cursor like a list: it consumes `up`,
+  `down`, `home`, `end`, `pgup`, and `pgdn` while it has rows (a page is
+  its body height), writes the cursor row's key, with its JSON type, to
+  `bind`, and fires `on:select` with `keys` = `{alias: key}`. The bound
+  value selects the first row whose key equals it (`7` and `"7"` differ);
+  when none does, the cursor keeps its index. The scroll offset follows
+  the cursor whatever moved it (a key, a `Set`, a re-sort, a resize), and
+  only the rows in the body viewport are laid out, painted, and dumped:
+  `scroll.h` is the row count, the header excluded. Inside a `<scroll>`,
+  an unsized table lays out every row. Column widths: `width` in cells;
+  `%` of the width left after the mark channel; `fr` shares what is left
+  and is then clamped by `min-width`/`max-width`; unset or `auto` is the
+  widest of the title and the cell texts on every row. Columns that do not
+  fit are clipped; `display: none` on a column (under `@media`, say) hides
+  its header and its cells. The header row is shown when a visible column
+  has a `title` attribute, and the `column` nodes are its cells in the dump
+  (their `text` is the resolved title). Cells never wrap: `wrap: wrap`
+  truncates. A rule on a `column` styles its header cell only; body cells
+  are `table > item > text` nodes without an id that carry the column's
+  `class` plus its `class:NAME` guards evaluated on their row, so
+  `.num { content-align: end; }` aligns a whole column and
+  `#procs > item > text.hot` colors only the hot cells. Rows and cells
+  ignore their own sizes, borders, padding, and margins. `placeholder` is
+  painted dim and centered on the first body row when the array is empty
+  (it is not a node). `checked`/`mark` and the `move-*`/`check-*`
+  built-ins work as on a list. Diagnostics: `V012` without `id`, `V017`
+  without `each` or a `column`, `V016` for misplaced children or text,
+  `B006` without `key`, `L003` when the columns' cell and `%` widths and
+  min-widths exceed the table, `L006` for a body of 0 rows that has rows.
+  Cell and guard paths are resolved on every row and reported once per
+  path, so the diagnostics never depend on the scroll offset; the resolved
+  rows are cached until a store path they read is set again.
+- **`scrollbar: auto`** on a viewport (`scroll`, `list`, `table`, or an
+  `overflow: scroll` box) that scrolls on y, has a border, is at least 3
+  rows tall, and has more content than fits paints a thumb over its right
+  border: `┃` on `single`/`rounded` borders, `█` on `double`/`thick`. With
+  `track = h − 2`, `length = max(1, track·view/content)` and
+  `pos = (track − length)·offset/(content − view)` (integer division; for
+  a table, `view` is its body height and `content` its rows). It never
+  takes layout space. `scrollbar: none` is the default.
+- **`bar: eighths`** on a `progress` fills eighths of a cell: `e =
+  floor(W·8·v/100 + 0.5)` gives `e div 8` full cells and the partial glyph
+  `▏▎▍▌▋▊▉` number `e mod 8`; `bar: block`, the default, is the v1 bar.
 - **`each` on `col`, `row`, and `box`.** Every child element is the
   template, inflated once per array element, in array order, with the alias
   in scope; the container itself is not repeated, and its own `if`,
@@ -242,8 +300,8 @@ vocabulary (SPEC §5.1); this build implements its foundations:
   <row id="tags" each="tags as t" key="t"><text class="tag">{t}</text></row>
   ```
 
-- **Multi-select.** `checked="path"` on a `list` (which needs `each` and
-  `key`, `V018` otherwise) holds the keys of the checked rows: an array in
+- **Multi-select.** `checked="path"` on a `list` or a `table` (which needs
+  `each` and `key`, `V018` otherwise) holds the keys of the checked rows: an array in
   the store that the runtime reads and writes. A missing path counts as
   `[]` (`B003`); any other value is `B008`, shows nothing checked, and is
   never overwritten. `mark="✓"` (1 or 2 columns, and only with `checked`)
@@ -255,12 +313,13 @@ vocabulary (SPEC §5.1); this build implements its foundations:
   is implicit: bind `space`, `ctrl+a`, … yourself.
 - **Built-in actions** (keymap rows only; `V003` in `on:*`): `move-next`,
   `move-prev`, `move-first`, `move-last`, `move-page-down`, and
-  `move-page-up` move a list's cursor (writing its `bind`, firing
-  `on:select` when it moved) or a viewport's offset; `check-toggle`,
-  `check-all`, and `check-none` change a list's `checked` array;
+  `move-page-up` move a list's or a table's cursor (writing its `bind`,
+  firing `on:select` when it moved) or a viewport's offset; `check-toggle`,
+  `check-all`, and `check-none` change a list's or a table's `checked`
+  array;
   `switch-to` (which needs `to=`) switches screens. The target is the node
   `to=` names, else the focused node. A row whose target is missing from
-  the frame, disabled, or incompatible (an empty list, a list without
+  the frame, disabled, or incompatible (an empty list or table, one without
   `checked`, a button) does not match, and the key goes on to the next
   rows, so `<bind keys="ctrl+a" action="check-all"/>` never steals
   `ctrl+a` from a widget without `checked`; a matching row takes its key
@@ -278,17 +337,18 @@ vocabulary (SPEC §5.1); this build implements its foundations:
   node only.
 - **One key dispatch** serves `Run()` and `play`: `esc` fires the top
   modal's `on:escape`; then the focused, enabled widget consumes its own
-  keys (an input its typing and editing keys, a list with rows `up`,
-  `down`, `home`, `end`, `pgup`, `pgdn`, another viewport the arrows and
-  paging keys, any other node with `on:click` `enter` and `space`); then the first
+  keys (an input its typing and editing keys, a list or a table with rows
+  `up`, `down`, `home`, `end`, `pgup`, `pgdn`, another viewport the arrows
+  and paging keys, any other node with `on:click` except a list or a table
+  `enter` and `space`); then the first
   keymap row whose keys, `when`, and built-in target match; then `tab`,
   `shift+tab`, and `ctrl+c`.
-- The tags `table column tabs tab sparkline hints`, the properties
-  `grid-columns grid-min-width scrollbar bar` and `layout: grid`, `mouse` on
-  `<tui>`, and `label`/`keycap` on `<bind>` are accepted by the gate in a
-  `version="2"` document but are not laid out, painted, or run by this
-  build yet: the new tags dump as one empty node each, and a built-in
-  aimed at a `table`, a `tabs`, or a `tab` does not match yet.
+- The tags `tabs tab sparkline hints`, the properties `grid-columns
+  grid-min-width` and `layout: grid`, `mouse` on `<tui>`, and
+  `label`/`keycap` on `<bind>` are accepted by the gate in a `version="2"`
+  document but are not laid out, painted, or run by this build yet: those
+  tags dump as one empty node each, and a built-in aimed at a `tabs` or a
+  `tab` does not match yet.
 
 ## CLI reference
 
@@ -568,7 +628,9 @@ golden, with a short diff hint on failure; the command exits 2 on any
 mismatch, 1 on an I/O error (a document or golden file that can't be
 read). `--update` (re)writes the goldens for every entry whose `frozen` is
 not `true` — `spike`'s goldens are frozen and must never be regenerated;
-`inbox` and `stacked`'s are not. Adding another fixture just needs another
+`inbox`, `stacked`, `unicode`, and `table` (the SPEC §6.9.5 literal
+fixture, `specs/fixtures/table.{tui,json}`, pinned at 30x5) are not.
+Adding another fixture just needs another
 row in the manifest and a golden directory; nothing else in the runner is
 fixture-specific.
 
@@ -733,6 +795,10 @@ module; the only supported entry points are the functions above.
   (`cmd/tuimark/main_test.go`'s `TestTestCommandPasses`), so a golden
   mismatch fails `go test ./...` (and `task verify`) same as any other
   test. `go test -race ./...` runs the same suite with the race detector.
+- `go test -run xxx -bench BenchmarkFrame ./internal/host/` — SPEC §21 test
+  73 (recorded, not a gate): one 200×60 frame of a 1000-row, 7-column
+  table, with a warm row cache (only the cursor moved) and a cold one (the
+  rows resolved again, as after a `Set` of the array).
 - `tuimark test` — the golden dump runner described above, runnable on its
   own (`./bin/tuimark test`) for a faster loop while iterating; `--update`
   regenerates the non-frozen goldens for a human to review and commit. The
@@ -774,8 +840,10 @@ active screen and its open modals (`if`, `hidden`, text, class guards; a
 `display: none`, (3) activate one tab per `tabs`, (4) resolve focus,
 repeating 1–4 while focus or an active tab changes (at most three rounds),
 (5) build the items of each `hints`, (6) measure and allocate, (7) generate
-the visible rows of each `table`, (8) paint. Stages 3, 5, and 7 are in
-place for the widgets that arrive later in 0.2b and do nothing yet.
+the visible rows of each `table`, (8) paint. A table resolves every row in
+stage 1 (keys, guards, cell texts, the columns' measures) and gets its rows
+in stage 7, once layout knows its body height and offset. Stages 3 and 5
+are in place for the widgets that arrive later in 0.2b and do nothing yet.
 
 Package map:
 
@@ -947,9 +1015,11 @@ kept with the maintainer's project notes, outside this repository.
   `COLORFGBG`), `@media (theme)`, `Set("@theme")`, `tuimark inspect`,
   `TUIMARK_LOG`, the written-out key dispatch with the built-in actions and
   `when` over the focus chain, `each` on containers, multi-select on
-  `list`, and `:checked`/`:focus-within`. Still to come: `sparkline`,
-  `layout: grid`, `hints`, `tabs`, `table`, `bar: eighths`, `scrollbar`,
-  the mouse, and `examples/monitor`.
+  `list` and `table`, `:checked`/`:focus-within`, `table`/`column` (with
+  the `table` golden at 30x5, the SPEC §6.9.5 fixture in
+  `specs/fixtures/table.{tui,json}`), `scrollbar`, and `bar: eighths`.
+  Still to come: `sparkline`, `layout: grid`, `hints`, `tabs`, the mouse,
+  and `examples/monitor`.
 
 ## License
 

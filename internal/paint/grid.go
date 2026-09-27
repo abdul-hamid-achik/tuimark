@@ -4,6 +4,8 @@
 package paint
 
 import (
+	"math"
+	"math/bits"
 	"strings"
 	"unicode/utf8"
 
@@ -407,24 +409,36 @@ func (p *painter) box(b *layout.Box, owner string) {
 			}
 		}
 		p.border(b, owner)
+		p.scrollbar(b, owner)
 		p.content(b, base)
 		p.mark(b, base)
 	}
 	for _, c := range b.Children {
 		p.box(c, owner)
 	}
+	if visible && b.Kind == "table" {
+		p.placeholder(b, base)
+	}
 }
 
-func (p *painter) border(b *layout.Box, owner string) {
-	set, ok := borders[b.Style.Border]
-	if !ok || b.W < 2 || b.H < 2 {
-		return
-	}
+// borderStyle is the style of b's border cells: its border-color, else
+// its color, on its background.
+func borderStyle(b *layout.Box, owner string) cellStyle {
 	fg := b.Style.BorderColor
 	if !fg.IsSet() {
 		fg = b.Style.Color
 	}
-	st := cellStyle{fg: fg, bg: b.Style.Background, owner: owner, clearOwner: true}
+	return cellStyle{fg: fg, bg: b.Style.Background, owner: owner, clearOwner: true}
+}
+
+func (p *painter) border(b *layout.Box, owner string) {
+	set, ok := borders[b.Style.Border]
+	if !ok || b.W < 2 || b.H < 2 || b.Fixed {
+		// A table's header cells, rows, and body cells ignore their own
+		// border (SPEC §6.9.3).
+		return
+	}
+	st := borderStyle(b, owner)
 	x0, y0, x1, y1 := b.X, b.Y, b.X+b.W-1, b.Y+b.H-1
 	clip := b.Clip
 	p.set(clip, x0, y0, set[0], st)
@@ -454,6 +468,79 @@ func (p *painter) border(b *layout.Box, owner string) {
 	}
 }
 
+// thumbs are the scrollbar glyphs per border style (SPEC §12.3): a ┃ would
+// not show on a thick border, so double and thick borders get █.
+var thumbs = map[string]rune{"single": '┃', "rounded": '┃', "double": '█', "thick": '█'}
+
+// scrollbar paints the thumb of a viewport with scrollbar: auto over its
+// right border (SPEC §12.3), when it scrolls on y, its content is taller
+// than its viewport, it has a border, and its outer height h is at least
+// 3. With track = h − 2, view the viewport's content-box height, content
+// its content extent on y (for a table, its body viewport V and its n
+// rows), and offset its offset:
+//
+//	length = max(1, floor(track * view / content))
+//	pos    = floor((track − length) * offset / (content − view))
+//
+// the thumb covers rows y+1+pos to y+pos+length of the right border, in
+// the border's style, clipped like the border, owned like it. It never
+// takes layout space.
+func (p *painter) scrollbar(b *layout.Box, owner string) {
+	glyph, ok := thumbs[b.Style.Border]
+	if !ok || b.Style.Scrollbar != "auto" || b.H < 3 || b.W < 1 {
+		return
+	}
+	if _, sy := b.ScrollAxes(); !sy {
+		return
+	}
+	view, content := b.Content.H, b.ContentH
+	if b.Kind == "table" {
+		view, content = b.View, b.Rows
+	}
+	if content <= view || view < 0 {
+		return
+	}
+	track := b.H - 2
+	length := max(1, mulDiv(track, view, content))
+	pos := mulDiv(track-length, min(max(b.ScrollY, 0), content-view), content-view)
+	st := borderStyle(b, owner)
+	x := b.X + b.W - 1
+	for y := b.Y + 1 + pos; y <= b.Y+pos+length; y++ {
+		p.set(b.Clip, x, y, glyph, st)
+	}
+}
+
+// mulDiv returns floor(a * b / c) for a, b ≥ 0 and c > 0 whose quotient
+// is at most a (b ≤ c), without overflowing the product.
+func mulDiv(a, b, c int) int {
+	if a <= 0 || b <= 0 || c <= 0 {
+		return 0
+	}
+	hi, lo := bits.Mul64(uint64(a), uint64(b))
+	q, _ := bits.Div64(hi, lo, uint64(c))
+	return int(q)
+}
+
+// placeholder paints a table's placeholder when it has no rows (SPEC
+// §6.9.4): the text, resolved in the table's scope and cut to the content
+// width W with Truncate, dim, on the first body row, at content x +
+// floor((W − width(text)) / 2). Nothing is painted when the body viewport
+// has no row. It creates no node.
+func (p *painter) placeholder(t *layout.Box, st cellStyle) {
+	c := t.Content
+	if t.Rows > 0 || t.Placeholder == "" || t.View <= 0 || c.W <= 0 {
+		return
+	}
+	text := layout.Truncate(t.Placeholder, c.W)
+	st.attrs |= Dim
+	x := c.X + max(0, (c.W-layout.Width(text))/2)
+	p.text(t.Clip.Intersect(c), x, c.Y+t.Header, text, st)
+}
+
+// eighths are the partial blocks of bar: eighths, 1/8 to 7/8 of a cell
+// (SPEC §12.4).
+var eighths = [8]rune{' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉'}
+
 // mark paints the mark of a checked row in its mark channel (SPEC §6.14):
 // the first width(mark) columns of the channel, on the first content row,
 // in the row's style (so a reverse selection covers it). The channel's
@@ -480,11 +567,17 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 	c := b.Content
 	clip := b.Clip.Intersect(c)
 	switch b.Kind {
-	case "text":
+	case "text", "column":
 		// Each line is painted whole from its aligned origin and clipped at
 		// the content box, cluster by cluster (SPEC v0.2 §11.5.2, §12.1): a
-		// wide cluster straddling the right edge paints a space.
-		lines := layout.Lines(b.Text, c.W, b.Style.Wrap)
+		// wide cluster straddling the right edge paints a space. A table's
+		// header cell (its column, whose text is its resolved title) and
+		// body cells never wrap: wrap: wrap paints as truncate (§6.9.4).
+		mode := b.Style.Wrap
+		if b.Fixed && mode == "wrap" {
+			mode = "truncate"
+		}
+		lines := layout.Lines(b.Text, c.W, mode)
 		for i, line := range lines {
 			if i >= c.H {
 				break
@@ -509,11 +602,22 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		if v > 100 {
 			v = 100
 		}
-		filled := int(float64(c.W)*v/100 + 0.5)
+		// bar: block (the default, v1): int(W·v/100 + 0.5) full cells.
+		// bar: eighths (SPEC §12.4): e = floor(W·8·v/100 + 0.5) eighths,
+		// in double precision and in this order: e div 8 full cells, then
+		// the partial glyph e mod 8 when it is not 0, in the node's style.
+		// The rest is ░ with dim either way; only the first row is painted.
+		filled, part := int(float64(c.W)*v/100+0.5), 0
+		if b.Style.Bar == "eighths" {
+			e := int(math.Floor(float64(c.W)*8*v/100 + 0.5))
+			filled, part = e/8, e%8
+		}
 		vis := p.visible(layout.Rect{X: c.X, Y: c.Y, W: c.W, H: 1}, clip)
 		for x := vis.X - c.X; x < vis.X-c.X+vis.W; x++ {
 			if x < filled {
 				p.set(clip, c.X+x, c.Y, '█', st)
+			} else if x == filled && part > 0 {
+				p.set(clip, c.X+x, c.Y, eighths[part], st)
 			} else {
 				dim := st
 				dim.attrs |= Dim

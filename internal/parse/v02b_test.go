@@ -47,8 +47,8 @@ func TestVersionTwoAttributeRows(t *testing.T) {
 		name, body, codes string
 	}{
 		{"table row", `<table id="t" each="xs as x" key="x" bind="c" checked="m" mark="▸" placeholder="none" on:select="s" on:change="c" class:hot="h"><item class="r" class:dim="d"/><column id="c" class="n" title="N" width="5" style="bold: true" on:click="k">{x}</column></table>`, ""},
-		{"table item extra attr", `<table id="t" each="xs as x"><item id="i"/><column>{x}</column></table>`, "V002"},
-		{"column hidden", `<table id="t" each="xs as x"><column hidden="true">{x}</column></table>`, "V002"},
+		{"table item extra attr", `<table id="t" each="xs as x" key="x"><item id="i"/><column>{x}</column></table>`, "V002"},
+		{"column hidden", `<table id="t" each="xs as x" key="x"><column hidden="true">{x}</column></table>`, "V002"},
 		{"tabs row", `<tabs id="n" bind="v" mark="▸" on:select="s" focusable="true"><tab id="a" label="1 a" short="1" focus="#i" gap="1" pad="1" border="single" if="x" hidden="false" disabled="false"><input id="i"/></tab></tabs>`, ""},
 		{"tab width", `<tabs id="n"><tab id="a" label="a" width="5"/></tabs>`, "V002"},
 		{"tab label path", `<tabs id="n"><tab id="a" label="{x}"/></tabs>`, "V003"},

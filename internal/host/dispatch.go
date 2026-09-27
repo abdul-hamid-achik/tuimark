@@ -203,13 +203,14 @@ func (a *App) whenMatches(sel *css.Selector, v keyView) bool {
 //   - an input: every single-character key and space (typed), backspace,
 //     ctrl+h, ctrl+u, left, right, home, end, ctrl+a, ctrl+e, and enter
 //     when it has on:submit;
-//   - a list with at least one row: up, down, home, end, pgup, pgdn;
+//   - a list or a table with at least one row: up, down, home, end, pgup,
+//     pgdn;
 //   - any other viewport: up, down, left, right, pgup, pgdn, home, end;
-//   - after those, any node other than an input or a list that has
-//     on:click: enter and space, which fire it.
+//   - after those, any node other than an input, a list, or a table that
+//     has on:click: enter and space, which fire it.
 //
-// (A table consumes what a list does, and a focusable tabs left and
-// right; they arrive with those widgets.) The caller holds a.mu.
+// (A focusable tabs consumes left and right; it arrives with that
+// widget.) The caller holds a.mu.
 func (a *App) consumes(b *layout.Box, k Key) bool {
 	switch b.Kind {
 	case "input":
@@ -224,14 +225,15 @@ func (a *App) consumes(b *layout.Box, k Key) bool {
 			return ok
 		}
 		return false
-	case "list":
+	case "list", "table":
 		if a.rows(b) > 0 {
 			switch k.Name {
 			case "up", "down", "home", "end", "pgup", "pgdn":
 				return true
 			}
 		}
-		// A list never fires on:click from the keyboard (v1).
+		// A list never fires on:click from the keyboard (v1), nor does a
+		// table (SPEC §8.6).
 		return false
 	}
 	if b.Scrolls() {
@@ -248,7 +250,7 @@ func (a *App) consumes(b *layout.Box, k Key) bool {
 }
 
 // rows is the number of rows of a list (its each array's elements, or
-// its static items), as the last render inflated them.
+// its static items) or of a table, as the last render inflated them.
 func (a *App) rows(b *layout.Box) int {
 	if ls := a.lists[b.ID]; ls != nil {
 		return len(ls.keys)
@@ -334,7 +336,9 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 			}
 		}
 		return nil
-	case "list":
+	case "list", "table":
+		// A table moves its cursor exactly as a list does, with P =
+		// max(1, V), its body viewport (SPEC §6.9.2).
 		switch k.Name {
 		case "up":
 			return a.moveList(b, func(i, _, _ int) int { return i - 1 })
@@ -389,11 +393,12 @@ func (a *App) clickKey(b *layout.Box) []Event {
 	return nil
 }
 
-// moveList moves a list's cursor as a user move: to(index, rows, page)
-// gives the new index, which is clamped and never wraps (page is P =
-// max(1, content height)). When the index changed, the new row's key,
-// with its JSON type, is written to bind and on:select fires; the list
-// follows its cursor in the next frame. The caller holds a.mu.
+// moveList moves a list's or a table's cursor as a user move:
+// to(index, rows, page) gives the new index, which is clamped and never
+// wraps (page is P = max(1, content height) for a list, max(1, V) for a
+// table). When the index changed, the new row's key, with its JSON type,
+// is written to bind and on:select fires; the widget follows its cursor
+// in the next frame. The caller holds a.mu.
 func (a *App) moveList(b *layout.Box, to func(index, rows, page int) int) []Event {
 	ls := a.lists[b.ID]
 	if ls == nil || len(ls.keys) == 0 {
@@ -408,6 +413,7 @@ func (a *App) moveList(b *layout.Box, to func(index, rows, page int) int) []Even
 	if b.Src.Bind != "" {
 		if root, err := assign(a.store, b.Src.Bind, ls.keys[idx]); err == nil {
 			a.store = root
+			a.wrote(b.Src.Bind)
 		}
 	}
 	if act, ok := b.Src.On["select"]; ok {
@@ -446,23 +452,23 @@ func isMove(action string) bool {
 }
 
 // compatible reports whether t can take a built-in action (SPEC §8.4):
-// move-* needs a list with at least one row or a viewport that is not a
-// list; check-* a list that has checked=, whose value is an array or
-// missing (never B008), with at least one row. (A table, and a tabs with
-// an enabled visible tab, arrive with those widgets.) The caller holds
-// a.mu.
+// move-* needs a list or a table with at least one row, or a viewport
+// that is neither; check-* a list or a table that has checked=, whose
+// value is an array or missing (never B008), with at least one row. (A
+// tabs with an enabled visible tab arrives with that widget.) The caller
+// holds a.mu.
 func (a *App) compatible(action string, t *layout.Box) bool {
 	switch {
 	case isMove(action):
 		switch t.Kind {
-		case "list":
+		case "list", "table":
 			return a.rows(t) > 0
-		case "table", "tabs":
+		case "tabs":
 			return false
 		}
 		return t.Scrolls()
 	case action == "check-toggle" || action == "check-all" || action == "check-none":
-		if t.Kind != "list" || a.rows(t) == 0 {
+		if (t.Kind != "list" && t.Kind != "table") || a.rows(t) == 0 {
 			return false
 		}
 		_, ok := a.checkedArray(t)
@@ -471,12 +477,12 @@ func (a *App) compatible(action string, t *layout.Box) bool {
 	return false
 }
 
-// checkedArray returns the checked= array of a list (SPEC §6.14): the
-// array, or nil when the path is missing (it counts as []); ok is false
-// when the list has no checked= or its value is present and not an array
-// (B008), which the runtime never overwrites. A list is never inside an
-// each template, so its path resolves against the store. The caller holds
-// a.mu.
+// checkedArray returns the checked= array of a list or a table (SPEC
+// §6.14): the array, or nil when the path is missing (it counts as []);
+// ok is false when the widget has no checked= or its value is present and
+// not an array (B008), which the runtime never overwrites. A list or a
+// table is never inside an each template, so its path resolves against
+// the store. The caller holds a.mu.
 func (a *App) checkedArray(b *layout.Box) (keys []any, ok bool) {
 	if !a.doc.V2 || b.Src == nil {
 		return nil, false
@@ -518,8 +524,8 @@ func (a *App) runBuiltin(kb *parse.KeyBind, t *layout.Box) []Event {
 	case "check-toggle", "check-all", "check-none":
 		return a.check(t, kb.Action)
 	}
-	if t.Kind == "list" {
-		// The cursor moved without an event when the list has no
+	if t.Kind == "list" || t.Kind == "table" {
+		// The cursor moved without an event when the widget has no
 		// on:select: the live frame is stale all the same.
 		if ls := a.lists[t.ID]; ls != nil {
 			prev := ls.index
@@ -549,10 +555,10 @@ func (a *App) runBuiltin(kb *parse.KeyBind, t *layout.Box) []Event {
 	return nil
 }
 
-// moveViewport moves the offset of a viewport that is not a list on its
-// scroll axis (y, or x when it scrolls only on x): by one for
-// move-next/move-prev, to 0 or its maximum for move-first/move-last, by
-// its content-box size for move-page-*, clamped to [0, maximum] of the
+// moveViewport moves the offset of a viewport that is not a list or a
+// table on its scroll axis (y, or x when it scrolls only on x): by one
+// for move-next/move-prev, to 0 or its maximum for move-first/move-last,
+// by its content-box size for move-page-*, clamped to [0, maximum] of the
 // live frame. The caller holds a.mu.
 func (a *App) moveViewport(b *layout.Box, action string) {
 	off := a.scrolls[b.ID]
@@ -585,8 +591,8 @@ func (a *App) moveViewport(b *layout.Box, action string) {
 	}
 }
 
-// check applies check-toggle, check-all, or check-none to a list (SPEC
-// §6.14). With K the key of the cursor row and R the array: check-toggle
+// check applies check-toggle, check-all, or check-none to a list or a
+// table (SPEC §6.14). With K the key of the cursor row and R the array: check-toggle
 // removes every element equal to K when there is one, else appends K with
 // its JSON type; check-all appends, in data order, every row key (over all
 // rows of the array, not only the visible ones) that equals no element of
@@ -629,6 +635,7 @@ func (a *App) check(b *layout.Box, action string) []Event {
 		return nil
 	}
 	a.store = root
+	a.wrote(b.Src.Attrs["checked"])
 	a.dirty = true
 	if act, ok := b.Src.On["change"]; ok {
 		ev := a.eventFor(act, b)

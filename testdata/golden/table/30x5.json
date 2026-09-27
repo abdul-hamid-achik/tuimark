@@ -1,0 +1,186 @@
+{
+  "cols": 30,
+  "rows": 5,
+  "ok": true,
+  "focus": "t",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 5
+    },
+    {
+      "id": "t",
+      "tag": "table",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 4,
+      "focused": true,
+      "scroll": {
+        "y": 0,
+        "h": 3
+      }
+    },
+    {
+      "id": "c-pid",
+      "tag": "column",
+      "x": 0,
+      "y": 0,
+      "w": 5,
+      "h": 1,
+      "text": "PID",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "id": "c-name",
+      "tag": "column",
+      "x": 6,
+      "y": 0,
+      "w": 19,
+      "h": 1,
+      "text": "Name"
+    },
+    {
+      "id": "c-cpu",
+      "tag": "column",
+      "x": 26,
+      "y": 0,
+      "w": 4,
+      "h": 1,
+      "text": "CPU%",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 1,
+      "key": "1"
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 5,
+      "h": 1,
+      "text": "1",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 6,
+      "y": 1,
+      "w": 19,
+      "h": 1,
+      "text": "launchd"
+    },
+    {
+      "tag": "text",
+      "x": 26,
+      "y": 1,
+      "w": 4,
+      "h": 1,
+      "text": "0.5",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 2,
+      "w": 30,
+      "h": 1,
+      "key": "7",
+      "selected": true
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 2,
+      "w": 5,
+      "h": 1,
+      "text": "7",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 6,
+      "y": 2,
+      "w": 19,
+      "h": 1,
+      "text": "微信"
+    },
+    {
+      "tag": "text",
+      "x": 26,
+      "y": 2,
+      "w": 4,
+      "h": 1,
+      "text": "12",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 3,
+      "w": 30,
+      "h": 1,
+      "key": "42"
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 3,
+      "w": 5,
+      "h": 1,
+      "text": "42",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 6,
+      "y": 3,
+      "w": 19,
+      "h": 1,
+      "text": "a-very-long-process-name"
+    },
+    {
+      "tag": "text",
+      "x": 26,
+      "y": 3,
+      "w": 4,
+      "h": 1,
+      "text": "3.25",
+      "classes": [
+        "num"
+      ]
+    }
+  ],
+  "grid": [
+    "  PID Name                CPU%",
+    "    1 launchd              0.5",
+    "    7 微信                  12",
+    "   42 a-very-long-proces… 3.25",
+    "                              "
+  ],
+  "wide": true
+}

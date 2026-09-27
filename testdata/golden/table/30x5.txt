@@ -1,0 +1,26 @@
+=== grid 30x5 ===
+  PID Name                CPU%
+    1 launchd              0.5
+    7 微信                  12
+   42 a-very-long-proces… 3.25
+                              
+=== nodes ===
+main    screen  30x5 @(0,0)
+t       table   30x4 @(0,0) focus
+c-pid   column  5x1 @(0,0)
+c-name  column  19x1 @(6,0)
+c-cpu   column  4x1 @(26,0)
+-       item    30x1 @(0,1)
+-       text    5x1 @(0,1)
+-       text    19x1 @(6,1)
+-       text    4x1 @(26,1)
+-       item    30x1 @(0,2) selected
+-       text    5x1 @(0,2)
+-       text    19x1 @(6,2)
+-       text    4x1 @(26,2)
+-       item    30x1 @(0,3)
+-       text    5x1 @(0,3)
+-       text    19x1 @(6,3)
+-       text    4x1 @(26,3)
+=== errors ===
+ok

@@ -125,6 +125,10 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 	}
 	childClip := b.Clip.Intersect(b.Content)
 	switch {
+	case b.Kind == "table":
+		// Its own layout (SPEC §6.9.3): layout, gap between rows, align,
+		// and justify do not apply; its rows come after layout.
+		e.tableLayout(b, childClip)
 	case b.Scrolls():
 		// Also with no children: the offset clamps to 0 and the content
 		// extent is the content box (SPEC §13.2, scroll).
@@ -746,6 +750,11 @@ func (e *Engine) neverShown(v *Box, horizontal bool) string {
 	unit, size, axis := "rows", "height", "y"
 	pos, length := v.Y, v.H
 	content, natural := v.Content.H, v.ContentH
+	if v.Kind == "table" {
+		// A table's viewport is its body, its content its n rows (SPEC
+		// §6.9.3).
+		content, natural = v.View, v.Rows
+	}
 	if horizontal {
 		unit, size, axis = "columns", "width", "x"
 		pos, length = v.X, v.W
@@ -822,6 +831,8 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 		}
 	case "spacer":
 		v = 0
+	case "table":
+		v = tableIntrinsic(b, horizontal)
 	default:
 		if b.IsContainer() {
 			inner := avail - fv

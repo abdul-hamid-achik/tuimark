@@ -74,6 +74,12 @@ type App struct {
 	store      any
 	handlers   map[string]Handler
 	strict     bool
+	// storeGen counts replacements of the whole store and segGen the
+	// writes under each top-level member (wrote), so a table knows when a
+	// path its cached rows read may have changed (tableData).
+	storeGen uint64
+	segGen   map[string]uint64
+	tables   map[*ir.Node]*tableCache
 
 	screen     int
 	focus      string
@@ -136,6 +142,7 @@ func newApp(src []byte, path, dir string) *App {
 		lists: map[string]*listState{}, inputs: map[string]*inputState{},
 		scrolls: map[string][2]int{}, wake: make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
+		segGen:     map[string]uint64{}, tables: map[*ir.Node]*tableCache{},
 	}
 	if path == "" {
 		a.file = ""
@@ -306,12 +313,26 @@ func (a *App) set(path string, v any, redraw bool) error {
 			return err
 		}
 		a.store = root
+		a.wrote(path)
 	}
 	a.mu.Unlock()
 	if redraw {
 		a.Wake()
 	}
 	return nil
+}
+
+// wrote records a write of path into the store ("" is the whole store):
+// every cached table whose rows read a path under the same top-level
+// member, or any path after a whole-store write, computes them again.
+// The caller holds a.mu.
+func (a *App) wrote(path string) {
+	if path == "" {
+		a.storeGen++
+		return
+	}
+	head, _, _ := strings.Cut(path, ".")
+	a.segGen[head]++
 }
 
 func validStorePath(p string) bool {

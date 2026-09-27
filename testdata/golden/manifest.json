@@ -28,5 +28,13 @@
     "sizes": ["40x24", "80x24", "120x24"],
     "json": ["80x24"],
     "frozen": false
+  },
+  {
+    "name": "table",
+    "file": "specs/fixtures/table.tui",
+    "data": "specs/fixtures/table.json",
+    "sizes": ["30x5"],
+    "json": ["30x5"],
+    "frozen": false
   }
 ]

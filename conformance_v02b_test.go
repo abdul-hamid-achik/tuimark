@@ -35,7 +35,9 @@ var gateCases = []struct {
 	name, v1, code, v2 string
 }{
 	{"tag table", v1Screen(`<table id="t" each="xs as x" key="x"><column>{x}</column></table>`), "V001", ""},
-	{"tag column", v1Screen(`<column>x</column>`), "V001", ""},
+	// A column outside a table is V016 in version="2" (SPEC §6.9.1): the
+	// valid form there is inside one.
+	{"tag column", v1Screen(`<column>x</column>`), "V001", `<tui version="2"><screen id="main"><table id="t" each="xs as x" key="x"><column>x</column></table></screen></tui>`},
 	{"tag tabs", v1Screen(`<tabs id="n"><text>x</text></tabs>`), "V001", ""},
 	{"tag tab", v1Screen(`<tab id="a" label="a"/>`), "V001", ""},
 	{"tag sparkline", v1Screen(`<sparkline bind="xs"/>`), "V001", ""},
@@ -108,7 +110,10 @@ func TestVersionGate(t *testing.T) {
 			}
 			// The bind checks depend on the data, which these documents do
 			// not bind (validate without --data skips them, §14).
-			v2 := strings.Replace(c.v1, `version="1"`, `version="2"`, 1)
+			v2 := c.v2
+			if v2 == "" {
+				v2 = strings.Replace(c.v1, `version="1"`, `version="2"`, 1)
+			}
 			for _, d := range validateSrc(t, v2) {
 				if strings.HasPrefix(d.Code, "B") {
 					continue

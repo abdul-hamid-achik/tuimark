@@ -122,7 +122,9 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 	}
 	ev.Source = b.ID
 	switch b.Kind {
-	case "list":
+	case "list", "table":
+		// A table always has each: keys = {alias: key of the cursor row}
+		// (SPEC §8.2).
 		ls := a.lists[b.ID]
 		if ls != nil && ls.index < len(ls.keys) {
 			if ls.each {
@@ -149,6 +151,7 @@ func (a *App) setInputValue(b *layout.Box, v string) {
 	if b.Src != nil && b.Src.Bind != "" {
 		if root, err := assign(a.store, b.Src.Bind, v); err == nil {
 			a.store = root
+			a.wrote(b.Src.Bind)
 		}
 		return
 	}

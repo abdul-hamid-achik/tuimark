@@ -425,6 +425,11 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 				b.errN(n, "V001", "<item> must be a direct child of <list>")
 			}
 		}
+	case "column":
+		// SPEC §6.9.1, V016 (only a version="2" document gets here).
+		if ptag != "table" {
+			b.errN(n, "V016", "<column> must be a direct child of <table>")
+		}
 	case "modal":
 		if ptag != "screen" {
 			b.errN(n, "L004", "<modal> must be a direct child of <screen> (and come last)")
@@ -438,6 +443,9 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 		}
 		if ptag == "list" {
 			b.errN(n, "V001", "<list> children must be <item>, got <%s>", tag)
+		}
+		if ptag == "table" && b.v2 {
+			b.errN(n, "V016", "<table> children must be <column> elements and at most one <item> (the row template), got <%s>", tag)
 		}
 	}
 	// SPEC §8.3 makes these focusable by default, but inside a list row
@@ -935,6 +943,17 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<text> cannot contain elements (found <%s>)", c.Name)
 				continue
 			}
+			// SPEC §6.9.1: a column's body is its cell template (text
+			// only); a table's <item> is the row template, with no
+			// children.
+			if b.v2 && n.Tag == "column" {
+				b.diag(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<column> holds its cell template as text, with {path} for the row's values; it cannot contain elements (found <%s>)", c.Name)
+				continue
+			}
+			if b.tableItem(n) {
+				b.diag(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "a table's <item> is the row template: it takes class and class:NAME only, no children (found <%s>); the cells come from the <column> elements", c.Name)
+				continue
+			}
 			if leafKinds[n.Tag] {
 				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<%s> cannot contain elements (found <%s>)", n.Tag, c.Name)
 				continue
@@ -980,10 +999,24 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 			b.errN(n, "V003", "button label: {path} is only allowed in <text>, title, and placeholder")
 		}
 	default:
-		if !isXMLWhitespaceOnly(body) {
+		if isXMLWhitespaceOnly(body) {
+			break
+		}
+		switch {
+		case b.v2 && n.Tag == "table":
+			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <table>; a column's cell template is the body of its <column>")
+		case b.tableItem(n):
+			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "a table's <item> is the row template and takes no text; the cells come from the <column> elements")
+		default:
 			b.diag(ir.Error, "V013", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <%s>; wrap it in <text>", n.Tag)
 		}
 	}
+}
+
+// tableItem reports whether n is the row template <item> of a table (a
+// version="2" document; SPEC §6.9.1).
+func (b *builder) tableItem(n *ir.Node) bool {
+	return b.v2 && n.Tag == "item" && n.Parent != nil && n.Parent.Tag == "table"
 }
 
 // checkStructure applies document-level rules that need the whole tree.
@@ -1090,12 +1123,16 @@ func (b *builder) checkNode(n *ir.Node) {
 		// V001/V002, and any id there V004: SPEC §6.8 item 8.)
 		focusable = false
 	}
-	if focusable && n.ID == "" {
+	if focusable && n.ID == "" && !(b.v2 && n.Tag == "table") {
+		// (A table needs an id whether or not it is focusable: checkTable.)
 		b.errN(n, "V012", "<%s> is focusable and needs an id", n.Tag)
 	}
 	if b.v2 {
 		b.checkAliases(n)
 		b.checkMultiSelect(n)
+		if n.Tag == "table" {
+			b.checkTable(n)
+		}
 	}
 	if n.Tag == "list" {
 		items := 0
@@ -1117,6 +1154,41 @@ func (b *builder) checkNode(n *ir.Node) {
 		if n.Text != "" {
 			b.errN(n, "V013", "<%s> takes no content", n.Tag)
 		}
+	}
+}
+
+// checkTable applies the structure rules of SPEC §6.9.1 to a table: it
+// needs an id (V012: its cursor and offset are kept by it), each= (V017),
+// and at least one <column> child (V017); a second <item> is V016; without
+// key= it reports B006 (a warning), as a list does. Inside a list <item>
+// or a container each template a table is already V001 as a whole, so it
+// gets neither V012 (an id there would be V004) nor B006.
+func (b *builder) checkTable(n *ir.Node) {
+	nested := listItem(n.Parent) != nil || b.eachContainer(n) != nil
+	if n.ID == "" && !nested {
+		b.errN(n, "V012", "<table> needs an id: its cursor and scroll offset are kept by it, and to=\"#id\" names it")
+	}
+	eachAttr, hasEach := n.Attr("each")
+	if !hasEach {
+		b.errN(n, "V017", "<table> needs each=\"path as alias\": its rows are the elements of an array")
+	}
+	cols, items := 0, 0
+	for _, c := range n.Children {
+		switch c.Tag {
+		case "column":
+			cols++
+		case "item":
+			items++
+			if items == 2 {
+				b.errN(c, "V016", "a <table> has at most one <item>, its row template")
+			}
+		}
+	}
+	if cols == 0 {
+		b.errN(n, "V017", "<table> needs at least one <column>")
+	}
+	if _, ok := n.Attr("key"); n.Each != "" && !ok && !nested {
+		b.warnN(n, "B006", "<table each=%q> has no key=; the cursor follows the row index", eachAttr)
 	}
 }
 

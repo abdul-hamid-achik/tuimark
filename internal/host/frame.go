@@ -66,16 +66,12 @@ type builder struct {
 	seen   map[string]bool
 	modals []*layout.Box
 	byID   map[string]*layout.Box
+	// tables holds the tables inflated in step 1, for step 7.
+	tables map[*layout.Box]*tableFrame
 }
 
 func (fb *builder) report(n *ir.Node, sev, code, format string, args ...any) {
-	d := ir.At(n, fb.a.file, sev, code, format, args...)
-	k := d.String()
-	if fb.seen[k] {
-		return
-	}
-	fb.seen[k] = true
-	fb.diags = append(fb.diags, d)
+	fb.add(ir.At(n, fb.a.file, sev, code, format, args...))
 }
 
 // render runs the whole pipeline. The caller holds a.mu.
@@ -252,12 +248,6 @@ func (fb *builder) activateTabs(*css.Cascade, *layout.Box) bool { return false }
 // to do.
 func (fb *builder) buildHints(*css.Cascade, *layout.Box) {}
 
-// placeTableRows is step 7 of SPEC §18: after layout, for each laid-out
-// table, it generates rows o to min(o + V, n) − 1 and their body cells,
-// cascades them, and places them (§6.9.3). No table widget is built yet,
-// so this stage has nothing to do.
-func (fb *builder) placeTableRows(*css.Cascade, *layout.Box) {}
-
 // markFocusChain sets FocusWithin on the focused box and each of its
 // ancestors up to the screen, through a modal (a modal's parent is its
 // screen): the nodes :focus-within matches (SPEC §10.1). With nothing
@@ -302,6 +292,12 @@ func (a *App) rememberScroll(b *layout.Box) {
 	if b.Kind == "list" && b.ID != "" {
 		if ls := a.lists[b.ID]; ls != nil {
 			ls.page = max(1, b.Content.H)
+		}
+	}
+	if b.Kind == "table" && b.ID != "" && b.Laid {
+		// P = max(1, V), the body viewport (SPEC §6.9.2).
+		if ls := a.lists[b.ID]; ls != nil {
+			ls.page = max(1, b.View)
 		}
 	}
 }
@@ -409,9 +405,12 @@ func (fb *builder) interp(n *ir.Node, s string, sc *scope) string {
 	return out
 }
 
+// focusableByDefault reports the kinds that take focus without
+// focusable="true" (SPEC §8.3): input, list, button, modal, and, in
+// version="2" documents (the only ones that can hold one), table.
 func focusableByDefault(kind string) bool {
 	switch kind {
-	case "input", "list", "button", "modal":
+	case "input", "list", "button", "modal", "table":
 		return true
 	}
 	return false
@@ -525,10 +524,14 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		return b
 	}
 	switch n.Kind {
-	case "table", "sparkline", "hints":
-		// Their children are templates (a table's columns and row
-		// template) or none at all: the table's rows are generated after
-		// layout (§18 step 7), a hints' items from the keymap (step 5).
+	case "table":
+		// Its columns are its header cells; its row template and the
+		// columns' cell templates are resolved on every row, whose visible
+		// part is generated after layout (§18 step 7).
+		fb.inflateTable(n, b, sc)
+		return b
+	case "sparkline", "hints":
+		// No children: a hints' items come from the keymap (step 5).
 		return b
 	case "tab":
 		// Step 1 creates the tab nodes of a tabs but not their content:
