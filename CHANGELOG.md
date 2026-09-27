@@ -7,6 +7,12 @@ line.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Release.** The release workflow now publishes the Homebrew cask. For
+  v0.2.0 the cask upload failed on a template function GoReleaser does not
+  define, and the cask was published by hand from the release's checksums.
+
 ## [0.2.0] - 2026-09-27
 
 The first public release. It implements version 0.2 of the language in two

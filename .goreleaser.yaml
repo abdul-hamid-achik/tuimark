@@ -83,7 +83,7 @@ homebrew_casks:
     repository:
       owner: abdul-hamid-achik
       name: homebrew-tap
-      token: '{{ envOrDefault "HOMEBREW_TAP_TOKEN" "" }}'
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     directory: Casks
     homepage: "https://github.com/abdul-hamid-achik/tuimark"
     description: "Declarative view language for terminal UIs (.tui markup, .tcss styles)"
@@ -95,7 +95,7 @@ homebrew_casks:
           if OS.mac?
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/tuimark"]
           end
-    skip_upload: '{{ if envOrDefault "HOMEBREW_TAP_TOKEN" "" }}false{{ else }}true{{ end }}'
+    skip_upload: "{{ if .Env.HOMEBREW_TAP_TOKEN }}false{{ else }}true{{ end }}"
 
 release:
   github:
