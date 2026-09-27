@@ -123,8 +123,8 @@ func TestRunLogFileTypes(t *testing.T) {
 		}
 		// The start record carries the runtime version of the cut (SPEC
 		// v0.2b §26.12 example, §24).
-		if recs[0]["version"] != "0.2.0-b" {
-			t.Errorf("start version %v, want 0.2.0-b", recs[0]["version"])
+		if recs[0]["version"] != Version {
+			t.Errorf("start version %v, want %s", recs[0]["version"], Version)
 		}
 	})
 }

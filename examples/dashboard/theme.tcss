@@ -39,3 +39,7 @@ modal { border-color: $accent; }
 @media (min-cols: 81) {
   #pipeline { width: 32; }
 }
+
+/* The confirm buttons sit on one line; a bare row would stretch to the
+   modal height (row defaults to 1fr) and paint a tall focused block. */
+#confirmModal > col > row { height: 1; }

@@ -287,7 +287,7 @@ go test -race ./internal/host/
 
 ### Documentation boundary
 
-- `docs/` is reserved for the public Tuimark website (to be built, likely VitePress). Put only publishable content there: landing page, user guides, public reference, static assets. It does not exist yet; do not create it for anything else.
+- `docs/` is the public Tuimark website (VitePress, deployed from `main`). Put only publishable content there: landing page, user guides, public reference, static assets. Its reference pages and screenshots are generated: run `task docs-gen` after changing the CLI, the catalogs, or an example, and `task docs-check` to confirm nothing is stale.
 - Design decisions, ADRs, specs in progress, plans, handoffs, review findings, and progress logs live outside this repository, in the maintainer's Obsidian vault at `~/notes/projects/tuimark/` (ADRs under `adrs/NNNN-title.md`, the topic-organized decision record in `design-decisions.md`). Never add them to the repo, and never link public docs to those private paths.
 - The SPEC itself lives there too (ADR 0012), not in this repository. The repository keeps only a frozen copy of its §22 block, `internal/agentsdoc/testdata/spec22.md`, for the AGENTS.md prefix test; set `TUIMARK_SPEC` to the SPEC's path to check that copy against the source.
 - In the repo, `README.md` is the front page (user-facing clarifications go in its "Language notes") and `AGENTS.md` is generated from `internal/agentsdoc`.
@@ -299,7 +299,7 @@ Only when the SPEC itself adds one: SPEC §1 forbids inventing tags, CSS propert
 - **A diagnostic code.** Implement the check where it belongs (`internal/ir`, `internal/parse`, `internal/css`, `internal/layout`, or `internal/host`), add its row to the `diagCodes` table in `internal/agentsdoc/agentsdoc.go`, add a probe/regression test that triggers it, then regenerate this file.
 - **A CSS property.** Add it to `internal/css`'s property table (parsing, `PropertyNames`/`PropertyValues`, and the cascade), add a test in `internal/css`, then regenerate this file so "### CSS properties" above picks it up.
 - **A tag attribute.** Add it to `internal/parse`'s `TagAttrs` catalog and whatever in `internal/ir`/`internal/host` needs to read it, add a parser/build test, then regenerate this file so "### Attributes per tag" above picks it up.
-- **Regenerating this file.** `go run ./cmd/tuimark agents > AGENTS.md`, then `go test ./internal/agentsdoc`: `TestAGENTSDoesNotDrift` and `TestAGENTSStartsWithSpec22Verbatim` must stay green. Never hand-edit `AGENTS.md`.
+- **Regenerating this file.** `go run ./cmd/tuimark agents --repo > AGENTS.md`, then `go test ./internal/agentsdoc`: `TestAGENTSDoesNotDrift` and `TestAGENTSStartsWithSpec22Verbatim` must stay green. Never hand-edit `AGENTS.md`.
 
 ### Glyphrun conventions (`specs/glyphrun/`)
 

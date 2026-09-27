@@ -10,15 +10,15 @@ import (
 
 // TestAGENTSDoesNotDrift asserts the repo's AGENTS.md is exactly
 // Markdown()'s output, so the two can never fall out of sync: regenerate
-// it with `tuimark agents > AGENTS.md` instead of hand-editing.
+// it with `tuimark agents --repo > AGENTS.md` instead of hand-editing.
 func TestAGENTSDoesNotDrift(t *testing.T) {
-	want := Markdown()
+	want := RepoMarkdown()
 	got, err := os.ReadFile("../../AGENTS.md")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if string(got) != want {
-		t.Errorf("AGENTS.md is out of date; regenerate it with `tuimark agents > AGENTS.md`.\n--- want ---\n%s\n--- got ---\n%s", want, got)
+		t.Errorf("AGENTS.md is out of date; regenerate it with `tuimark agents --repo > AGENTS.md`.\n--- want ---\n%s\n--- got ---\n%s", want, got)
 	}
 }
 
@@ -126,7 +126,7 @@ func TestAGENTSStartsWithSpec22Verbatim(t *testing.T) {
 // commands, package boundaries, hard rules, how to add things, and the
 // Glyphrun conventions used under specs/glyphrun/.
 func TestRuntimeSectionFollowsNotes(t *testing.T) {
-	md := Markdown()
+	md := RepoMarkdown()
 
 	notesIdx := strings.Index(md, "### Notes")
 	runtimeIdx := strings.Index(md, "## Working on the Tuimark runtime")
@@ -178,14 +178,14 @@ func TestRuntimeSectionFollowsNotes(t *testing.T) {
 		"a design-decision entry in the project notes",
 		// documentation boundary (ADR: docs/ is the public site only)
 		"### Documentation boundary",
-		"`docs/` is reserved for the public Tuimark website",
+		"`docs/` is the public Tuimark website",
 		"~/notes/projects/tuimark/",
 		// adding things
 		"### Adding things",
 		"A diagnostic code.",
 		"A CSS property.",
 		"A tag attribute.",
-		"go run ./cmd/tuimark agents > AGENTS.md",
+		"go run ./cmd/tuimark agents --repo > AGENTS.md",
 		// glyphrun conventions
 		"### Glyphrun conventions",
 		"glyph spec verify <spec> --stamp",
@@ -268,5 +268,21 @@ func TestNotesSectionCoversClarifications(t *testing.T) {
 func TestNoDocsDecisionsReference(t *testing.T) {
 	if strings.Contains(Markdown(), "docs/decisions") {
 		t.Fatal("AGENTS.md must not point at docs/decisions.md; decisions live outside the repo")
+	}
+}
+
+// TestUserBriefingHasNoMaintainerSection: `tuimark agents` prints Markdown()
+// for anyone authoring UIs, so it must not carry the repository-only
+// maintainer section or the maintainer's notes location; those live only in
+// the repository's AGENTS.md (RepoMarkdown).
+func TestUserBriefingHasNoMaintainerSection(t *testing.T) {
+	md := Markdown()
+	for _, bad := range []string{"## Working on the Tuimark runtime", "~/notes/"} {
+		if strings.Contains(md, bad) {
+			t.Errorf("Markdown() (the `tuimark agents` output) contains %q", bad)
+		}
+	}
+	if !strings.HasPrefix(RepoMarkdown(), strings.TrimRight(md, "\n")) {
+		t.Error("RepoMarkdown() must start with Markdown()")
 	}
 }

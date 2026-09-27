@@ -85,8 +85,9 @@ func sortedKeys[V any](m map[string]V) []string {
 	return out
 }
 
-// Markdown generates AGENTS.md: SPEC §22 verbatim, followed by generated
-// reference sections built from the code's own catalogs.
+// Markdown generates the agent briefing `tuimark agents` prints: SPEC §22
+// verbatim, followed by generated reference sections built from the code's
+// own catalogs. The repository's AGENTS.md is RepoMarkdown().
 func Markdown() string {
 	var b strings.Builder
 
@@ -137,8 +138,18 @@ func Markdown() string {
 	writeV02aSection(&b)
 	writeV02bSection(&b)
 	writeNotes(&b)
-	writeRuntimeSection(&b)
 
+	return strings.TrimRight(b.String(), "\n") + "\n"
+}
+
+// RepoMarkdown generates the repository's AGENTS.md: the user-facing
+// briefing Markdown() returns (what `tuimark agents` prints for anyone
+// authoring UIs) plus the maintainer section for agents changing the
+// runtime itself, which only makes sense inside this repository.
+func RepoMarkdown() string {
+	var b strings.Builder
+	b.WriteString(strings.TrimRight(Markdown(), "\n") + "\n\n")
+	writeRuntimeSection(&b)
 	return strings.TrimRight(b.String(), "\n") + "\n"
 }
 
@@ -252,7 +263,7 @@ func writeRuntimeSection(b *strings.Builder) {
 	b.WriteString("- Every behavior change ships with a regression test and a design-decision entry in the project notes explaining it (see \"Documentation boundary\" below).\n\n")
 
 	b.WriteString("### Documentation boundary\n\n")
-	b.WriteString("- `docs/` is reserved for the public Tuimark website (to be built, likely VitePress). Put only publishable content there: landing page, user guides, public reference, static assets. It does not exist yet; do not create it for anything else.\n")
+	b.WriteString("- `docs/` is the public Tuimark website (VitePress, deployed from `main`). Put only publishable content there: landing page, user guides, public reference, static assets. Its reference pages and screenshots are generated: run `task docs-gen` after changing the CLI, the catalogs, or an example, and `task docs-check` to confirm nothing is stale.\n")
 	b.WriteString("- Design decisions, ADRs, specs in progress, plans, handoffs, review findings, and progress logs live outside this repository, in the maintainer's Obsidian vault at `~/notes/projects/tuimark/` (ADRs under `adrs/NNNN-title.md`, the topic-organized decision record in `design-decisions.md`). Never add them to the repo, and never link public docs to those private paths.\n")
 	b.WriteString("- The SPEC itself lives there too (ADR 0012), not in this repository. The repository keeps only a frozen copy of its §22 block, `internal/agentsdoc/testdata/spec22.md`, for the AGENTS.md prefix test; set `TUIMARK_SPEC` to the SPEC's path to check that copy against the source.\n")
 	b.WriteString("- In the repo, `README.md` is the front page (user-facing clarifications go in its \"Language notes\") and `AGENTS.md` is generated from `internal/agentsdoc`.\n\n")
@@ -262,7 +273,7 @@ func writeRuntimeSection(b *strings.Builder) {
 	b.WriteString("- **A diagnostic code.** Implement the check where it belongs (`internal/ir`, `internal/parse`, `internal/css`, `internal/layout`, or `internal/host`), add its row to the `diagCodes` table in `internal/agentsdoc/agentsdoc.go`, add a probe/regression test that triggers it, then regenerate this file.\n")
 	b.WriteString("- **A CSS property.** Add it to `internal/css`'s property table (parsing, `PropertyNames`/`PropertyValues`, and the cascade), add a test in `internal/css`, then regenerate this file so \"### CSS properties\" above picks it up.\n")
 	b.WriteString("- **A tag attribute.** Add it to `internal/parse`'s `TagAttrs` catalog and whatever in `internal/ir`/`internal/host` needs to read it, add a parser/build test, then regenerate this file so \"### Attributes per tag\" above picks it up.\n")
-	b.WriteString("- **Regenerating this file.** `go run ./cmd/tuimark agents > AGENTS.md`, then `go test ./internal/agentsdoc`: `TestAGENTSDoesNotDrift` and `TestAGENTSStartsWithSpec22Verbatim` must stay green. Never hand-edit `AGENTS.md`.\n\n")
+	b.WriteString("- **Regenerating this file.** `go run ./cmd/tuimark agents --repo > AGENTS.md`, then `go test ./internal/agentsdoc`: `TestAGENTSDoesNotDrift` and `TestAGENTSStartsWithSpec22Verbatim` must stay green. Never hand-edit `AGENTS.md`.\n\n")
 
 	b.WriteString("### Glyphrun conventions (`specs/glyphrun/`)\n\n")
 	b.WriteString("- After a deliberate change to a spec's `intent` or `outcomes`, run `glyph spec verify <spec> --stamp` to refresh its `contractHash`; a stale hash otherwise means the contract drifted without review. A spec with no `contractHash` line at all is not checked by this convention (`glyph spec verify` reports `contractHashValid: false` for it but `glyph run` still passes it) — stamp every new spec once its contract is settled.\n")

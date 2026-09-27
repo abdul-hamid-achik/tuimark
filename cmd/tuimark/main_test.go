@@ -625,8 +625,8 @@ func TestIRRejectsUnknownKind(t *testing.T) {
 	}
 }
 
-// finding 5 / decisiones.md ronda 1: "tuimark ir sale con 2 (diagnósticos a
-// stderr, nada a stdout) si el documento tiene errores" — including errors
+// `tuimark ir` exits 2 (diagnostics on stderr, nothing on stdout) when the
+// document has errors — including errors
 // that live only in the document's stylesheets (V003 inside <style>/.tcss,
 // V006 for a bad style src=, and the CheckTokens unknown-token diagnostics),
 // which validate and dump already treat as fatal. Before the fix, cmdIR

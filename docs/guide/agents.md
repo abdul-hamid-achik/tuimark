@@ -11,10 +11,10 @@ Tuimark was designed for a coding agent to write. An agent is good at editing te
 
 `tuimark agents` prints a complete briefing for an agent: what to edit and what not to, the loop to follow, the tags and the attributes each takes, every CSS property and its values, the key tokens, every diagnostic code, and the behavior worth knowing. It is generated from the runtime's own catalogs, so it always matches the binary that printed it.
 
-Put it where your agent looks for instructions. Its last section, *Working on the Tuimark runtime*, is for people changing Tuimark itself; in your own project you can leave it out:
+Put it where your agent looks for instructions:
 
 ```sh
-tuimark agents | sed '/^## Working on the Tuimark runtime/,$d' > AGENTS.md
+tuimark agents > AGENTS.md
 ```
 
 Regenerate it when you upgrade Tuimark. The [reference](/reference/) pages on this site are generated from the same output.

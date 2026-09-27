@@ -595,7 +595,7 @@ tuimark version
 - `agents` prints `AGENTS.md`, generated from the runtime's own catalogs so
   it cannot drift; `AGENTS.md` at the repo root must equal this output,
   enforced by `internal/agentsdoc`'s `TestAGENTSDoesNotDrift` (regenerate
-  with `go run ./cmd/tuimark agents > AGENTS.md`).
+  with `go run ./cmd/tuimark agents --repo > AGENTS.md`).
 - `test` runs the golden dump comparisons driven by
   `testdata/golden/manifest.json` (below).
 - `version` (also `--version` or `-v`) prints `tuimark 0.2.0`; release

@@ -102,7 +102,7 @@ func (fb *builder) report(n *ir.Node, sev, code, format string, args ...any) {
 //
 // A focus request that switched screens (setFocus) is a no-op while the
 // screen it leaves has a modal open in this frame, including a modal
-// opened in the same tick: focus stays trapped in the modal (decisiones).
+// opened in the same tick: focus stays trapped in the modal.
 // Otherwise it is tried on the target's screen first. When the target
 // cannot take focus there (resolveFocus did not mark the request landed),
 // the request is a no-op too (SPEC §8.3). Either way everything the trial

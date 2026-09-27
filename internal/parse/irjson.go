@@ -177,7 +177,7 @@ func nodeAttrs(n *ir.Node) map[string]string {
 // nodeStyle merges presentational attributes (already normalized: pad ->
 // padding, border 1/0 -> single/none) with style="" declarations, which
 // take precedence, matching the cascade's presentation-hints-then-inline
-// precedence (decisiones.md).
+// precedence.
 func nodeStyle(n *ir.Node) map[string]string {
 	out := map[string]string{}
 	for _, p := range n.Hints {

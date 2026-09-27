@@ -33,6 +33,7 @@ builds:
       - -X main.version={{ .Version }}
       - -X main.commit={{ .ShortCommit }}
       - -X main.date={{ .CommitDate }}
+      - -X github.com/abdul-hamid-achik/tuimark/internal/host.Version={{ .Version }}
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:

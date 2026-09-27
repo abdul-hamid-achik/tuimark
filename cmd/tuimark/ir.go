@@ -46,8 +46,8 @@ func (c *cli) cmdIR(args []string) int {
 	// doc.Diags: app.Static() additionally holds V003 for rules inside
 	// <style>/.tcss, V006 for a bad style src=, and the unknown-token
 	// diagnostics from css.CheckTokens — all of which validate and dump
-	// already report as errors on the same document (decisiones.md,
-	// ronda 1: "tuimark ir sale con 2 ... si el documento tiene errores").
+	// already report as errors on the same document, so `ir` exits 2 whenever
+	// they would.
 	diags := app.Static()
 	if doc.Root == nil || diags.HasErrors() {
 		for _, d := range diags.Sorted() {
