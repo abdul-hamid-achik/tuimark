@@ -74,12 +74,30 @@ jobs:
       - name: Run race-enabled tests
         run: go test -race -count=1 ./...
 
+      # The release notes are the tag's CHANGELOG.md section, after the
+      # install commands; a tag without a section fails the release.
+      - name: Extract release notes from CHANGELOG.md
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          notes="$RUNNER_TEMP/release-notes.md"
+          {
+            printf '```sh\nbrew install --cask abdul-hamid-achik/tap/tuimark\ngo install github.com/abdul-hamid-achik/tuimark/cmd/tuimark@%s\n```\n\nDocs: https://tuimark.vercel.app\n' "$TAG"
+            awk -v h="## [$version]" 'index($0, h) == 1 { f = 1; next } /^## \[/ { if (f) exit } f' CHANGELOG.md
+          } > "$notes"
+          if [ "$(wc -l < "$notes")" -le 6 ]; then
+            echo "::error::CHANGELOG.md has no section for $version"
+            exit 1
+          fi
+          echo "RELEASE_NOTES=$notes" >> "$GITHUB_ENV"
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:
           distribution: goreleaser
           version: "v2.17.0"
-          args: release --clean
+          args: release --clean --release-notes=${{ env.RELEASE_NOTES }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # PAT with write access to abdul-hamid-achik/homebrew-tap. When it
