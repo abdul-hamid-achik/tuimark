@@ -20,5 +20,13 @@
     "sizes": ["40x24", "80x24", "120x24"],
     "json": [],
     "frozen": false
+  },
+  {
+    "name": "unicode",
+    "file": "examples/unicode/app.tui",
+    "data": "examples/unicode/sample.json",
+    "sizes": ["40x24", "80x24", "120x24"],
+    "json": ["80x24"],
+    "frozen": false
   }
 ]

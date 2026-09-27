@@ -9,10 +9,11 @@ import (
 
 // Engine lays out one frame and collects L-diagnostics.
 type Engine struct {
-	File  string
-	Diags ir.Diags
-	memo  map[memoKey]int
-	seen  map[string]bool
+	File   string
+	Diags  ir.Diags
+	memo   map[memoKey]int
+	shrink map[axisKey]bool
+	seen   map[string]bool
 }
 
 type memoKey struct {
@@ -21,12 +22,22 @@ type memoKey struct {
 	avail      int
 }
 
+type axisKey struct {
+	b          *Box
+	horizontal bool
+}
+
 // Layout places root to fill (at most) cols×rows, then centers each open
-// modal over the root. Every placed box gets Laid=true.
+// modal over the root. Every placed box gets Laid=true. Viewports that can
+// never show part of their content are reported last, as L006 (SPEC §11.3
+// pass 7).
 func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 	if e.memo == nil {
 		e.memo = map[memoKey]int{}
 		e.seen = map[string]bool{}
+	}
+	if e.shrink == nil {
+		e.shrink = map[axisKey]bool{}
 	}
 	screen := Rect{0, 0, cols, rows}
 	w := min(clampAxis(root, true, resolveRoot(root.Style.Width, cols), cols), cols)
@@ -40,6 +51,10 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 		x := root.X + (root.W-mw)/2
 		y := root.Y + (root.H-mh)/2
 		e.place(m, Rect{x, y, mw, mh}, screen)
+	}
+	e.checkViewports(root)
+	for _, m := range modals {
+		e.checkViewports(m)
 	}
 }
 
@@ -105,13 +120,16 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 		W: max(0, b.W-b.frameH()),
 		H: max(0, b.H-b.frameV()),
 	}
-	if !b.IsContainer() || len(b.Children) == 0 {
+	if !b.IsContainer() {
 		return
 	}
 	childClip := b.Clip.Intersect(b.Content)
 	switch {
 	case b.Scrolls():
+		// Also with no children: the offset clamps to 0 and the content
+		// extent is the content box (SPEC §13.2, scroll).
 		e.scrollLayout(b, childClip)
+	case len(b.Children) == 0:
 	default:
 		area := e.dock(b, b.Content, childClip)
 		var flow []*Box
@@ -120,7 +138,7 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 				flow = append(flow, c)
 			}
 		}
-		e.flex(b, flow, area, childClip, false)
+		e.flex(b, flow, area, childClip)
 	}
 }
 
@@ -153,6 +171,25 @@ func mainSpec(b *Box, horizontal bool) ir.Scalar {
 		return ir.Scalar{Kind: ir.Auto}
 	}
 	return sizeSpec(b, horizontal)
+}
+
+// authorFr returns the declaration the document wrote that gives b an fr
+// weight along the parent's main axis, for a message ("flex: N" or
+// "height: Nfr"), or "" when b has none: its weight, if any, comes from
+// the built-in sheet (col/row 1fr, spacer flex: 1). Only sizes the
+// document wrote count, as for V010 (DockConflict).
+func authorFr(b *Box, horizontal bool) string {
+	if b.Style.FlexSet && b.Style.Flex > 0 && !b.Style.FlexUA {
+		return "flex: " + b.Style.FlexLit
+	}
+	s, ua := b.Style.Height, b.Style.HeightUA
+	if horizontal {
+		s, ua = b.Style.Width, b.Style.WidthUA
+	}
+	if s.Kind == ir.Fr && !ua {
+		return axisName(horizontal) + ": " + s.String()
+	}
+	return ""
 }
 
 // DockConflict reports the V010 condition (SPEC §14) for a box with
@@ -287,7 +324,11 @@ func isStretch(align string) bool { return align == "" || align == "stretch" }
 
 // crossSize resolves a child's border-box size on the parent's cross axis.
 // mainSize is the child's main-axis size when already known (rows), else -1.
-func (e *Engine) crossSize(parent, k *Box, row bool, cross, mainSize int, report bool) int {
+// fit is set when the cross allocation is bounded (the parent does not
+// scroll on its cross axis) and this is layout, not measuring: then an auto
+// child that is shrinkable on the cross axis is capped to the available
+// cross size under a non-stretch align (SPEC §11.4 auto-fit rule 4).
+func (e *Engine) crossSize(parent, k *Box, row bool, cross, mainSize int, fit, report bool) int {
 	horizontal := !row // cross axis of a row is vertical
 	s := sizeSpec(k, horizontal)
 	cs, ce := margins(k, horizontal)
@@ -314,6 +355,9 @@ func (e *Engine) crossSize(parent, k *Box, row bool, cross, mainSize int, report
 			v = avail
 		} else {
 			v = e.intrinsic(k, horizontal, max(mainSize, 0))
+			if fit && e.shrinkable(k, horizontal) {
+				v = min(v, avail)
+			}
 			if report {
 				if horizontal {
 					k.autoW = true
@@ -338,7 +382,15 @@ func axisName(horizontal bool) string {
 // mainSizes allocates slots (including margins) along the main axis per
 // SPEC §11.4. crossSizes must be known for column parents (auto heights of
 // wrapped text depend on width) and may be nil for rows.
-func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes []int, unbounded, report bool) (sizes []int, anyFr bool) {
+//
+// unbounded is set when b is a viewport distributing its content along one
+// of its own scroll axes: children keep their natural size there. fit
+// turns on auto-fit for bounded allocations (layout; measuring passes
+// false and stays exactly v0.1): an auto child that is shrinkable on this
+// axis is deferred until fixed cells, percents, and the other auto
+// children are served, and then takes its intrinsic size capped by what is
+// left, in document order, before the fr split.
+func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes []int, unbounded, fit, report bool) (sizes []int, anyFr bool) {
 	n := len(kids)
 	sizes = make([]int, n)
 	if n == 0 {
@@ -350,8 +402,14 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 		specs[i] = mainSpec(k, horizontal)
 		if specs[i].Kind == ir.Fr {
 			if unbounded {
-				if report {
-					e.report(k, ir.Error, "L001", "%s: %s inside a scrolling %s has no leftover to share; use cells or auto", axisName(horizontal), specs[i], b.Kind)
+				// L001 (SPEC v0.2 §11.3): no leftover to share along a
+				// viewport's own scroll axis, so the child is auto there.
+				// A weight from the built-in sheet (col/row 1fr, spacer
+				// flex: 1) is not reported, as for V010: the document
+				// never wrote it, and <scroll><col>…</col></scroll> is
+				// valid.
+				if decl := authorFr(k, horizontal); report && decl != "" {
+					e.report(k, ir.Error, "L001", "%s inside a scrolling %s has no leftover to share; use cells or auto", decl, b.Kind)
 				}
 				specs[i] = ir.Scalar{Kind: ir.Auto}
 				continue
@@ -378,6 +436,9 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 	// L003 sums what cannot shrink: fixed cells and min bounds.
 	fixedSum := 0
 	fixedOrMin := false
+	// Auto-fit (SPEC §11.4): shrinkable auto children, in document order,
+	// with their intrinsic sizes.
+	var deferred, deferredIntr []int
 	for i, k := range kids {
 		ms, me := margins(k, horizontal)
 		s := specs[i]
@@ -399,12 +460,23 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 			take = percent(main, s)
 		case ir.Auto:
 			take = e.intrinsic(k, horizontal, cross)
+			// Sized by its content, capped or not: still auto for L002.
 			if report {
 				if horizontal {
 					k.autoW = true
 				} else {
 					k.autoH = true
 				}
+			}
+			if fit && !unbounded && e.shrinkable(k, horizontal) {
+				deferred = append(deferred, i)
+				deferredIntr = append(deferredIntr, take)
+				if hasMin(k, horizontal) {
+					// Only the min cannot shrink.
+					fixedSum += clampAxis(k, horizontal, 0, main) + ms + me
+					fixedOrMin = true
+				}
+				continue
 			}
 		case ir.Fr:
 			weights[i] = s
@@ -428,6 +500,16 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 	}
 	if remain < 0 {
 		remain = 0
+	}
+	// Deferred children: content size capped by what is left, then min/max
+	// (a min larger than what is left overflows, as in v0.1). The first may
+	// leave 0 to the next; sharing space is what fr is for.
+	for j, i := range deferred {
+		k := kids[i]
+		ms, me := margins(k, horizontal)
+		size := clampAxis(k, horizontal, min(deferredIntr[j], max(0, remain-ms-me)), main)
+		sizes[i] = size + ms + me
+		remain = max(0, remain-sizes[i])
 	}
 	if anyFr {
 		var frs []int
@@ -453,8 +535,33 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 	return sizes, anyFr
 }
 
+// allocate sizes the in-flow children of b in a main×cross area (SPEC
+// §11.4): the slots along b's main axis and the border-box sizes across it.
+// An axis on which b itself scrolls is unbounded; the others are bounded
+// and auto-fit applies there.
+func (e *Engine) allocate(b *Box, kids []*Box, main, cross int, report bool) (sizes, crossSizes []int, anyFr bool) {
+	n := len(kids)
+	row := b.Direction() == "row"
+	mainUnbounded, crossUnbounded := b.scrollsOn(row), b.scrollsOn(!row)
+	if !row {
+		crossSizes = make([]int, n)
+		for i, k := range kids {
+			crossSizes[i] = e.crossSize(b, k, row, cross, -1, !crossUnbounded, report)
+		}
+	}
+	sizes, anyFr = e.mainSizes(b, kids, row, main, crossSizes, mainUnbounded, true, report)
+	if row {
+		crossSizes = make([]int, n)
+		for i, k := range kids {
+			ms, me := margins(k, true)
+			crossSizes[i] = e.crossSize(b, k, row, cross, max(0, sizes[i]-ms-me), !crossUnbounded, report)
+		}
+	}
+	return sizes, crossSizes, anyFr
+}
+
 // flex allocates and places in-flow children of b inside area.
-func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect, unbounded bool) {
+func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect) {
 	n := len(kids)
 	if n == 0 {
 		return
@@ -464,21 +571,7 @@ func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect, unbounded bool)
 	if row {
 		main, cross = area.W, area.H
 	}
-	var crossSizes []int
-	if !row {
-		crossSizes = make([]int, n)
-		for i, k := range kids {
-			crossSizes[i] = e.crossSize(b, k, row, cross, -1, true)
-		}
-	}
-	sizes, anyFr := e.mainSizes(b, kids, row, main, crossSizes, unbounded, true)
-	if row {
-		crossSizes = make([]int, n)
-		for i, k := range kids {
-			ms, me := margins(k, true)
-			crossSizes[i] = e.crossSize(b, k, row, cross, max(0, sizes[i]-ms-me), true)
-		}
-	}
+	sizes, crossSizes, anyFr := e.allocate(b, kids, main, cross, true)
 	gap := b.Style.Gap
 	total := gap * (n - 1)
 	for _, s := range sizes {
@@ -533,12 +626,7 @@ func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect, unbounded bool)
 // the scroll axis and is shifted by the (clamped) offset.
 func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	area := b.Content
-	axis := b.Axis
-	if b.Kind == "list" || axis == "" {
-		axis = "y"
-	}
-	scrollY := axis == "y" || axis == "both"
-	scrollX := axis == "x" || axis == "both"
+	scrollX, scrollY := b.ScrollAxes()
 	kids := b.Children
 	contentW, contentH := area.W, area.H
 	if scrollY {
@@ -551,11 +639,8 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	offX, offY := b.ScrollX, b.ScrollY
 	row := b.Direction() == "row"
 	if b.Follow >= 0 && b.Follow < len(kids) && !row {
-		crossSizes := make([]int, len(kids))
-		for i, k := range kids {
-			crossSizes[i] = e.crossSize(b, k, row, contentW, -1, false)
-		}
-		sizes, _ := e.mainSizes(b, kids, row, contentH, crossSizes, scrollY, false)
+		// The same allocation flex makes below, without diagnostics.
+		sizes, _, _ := e.allocate(b, kids, contentH, contentW, false)
 		top := 0
 		for i := 0; i < b.Follow; i++ {
 			top += sizes[i] + b.Style.Gap
@@ -572,8 +657,123 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	offX = max(0, min(offX, contentW-area.W))
 	b.ScrollX, b.ScrollY = offX, offY
 	virtual := Rect{area.X - offX, area.Y - offY, contentW, contentH}
-	unbounded := (scrollY && !row) || (scrollX && row)
-	e.flex(b, kids, virtual, clip, unbounded)
+	e.flex(b, kids, virtual, clip)
+}
+
+// ScrollAxes reports the axes b scrolls on (SPEC §11.4): for a scroll, its
+// axis= attribute (y by default, x, or both); y for a list and for an
+// overflow: scroll container, which cannot take axis= (it is V002 there).
+// A value the parser rejected (V003) scrolls on y, the default, so every
+// viewport scrolls on at least one axis. Boxes that are not viewports
+// scroll on neither.
+func (b *Box) ScrollAxes() (x, y bool) {
+	if !b.Scrolls() {
+		return false, false
+	}
+	if b.Kind == "scroll" {
+		switch b.Axis {
+		case "x":
+			return true, false
+		case "both":
+			return true, true
+		}
+	}
+	return false, true
+}
+
+// scrollsOn reports whether b scrolls on the horizontal (x) or vertical (y)
+// axis.
+func (b *Box) scrollsOn(horizontal bool) bool {
+	x, y := b.ScrollAxes()
+	if horizontal {
+		return x
+	}
+	return y
+}
+
+// shrinkable reports whether b is shrinkable on one axis (SPEC §11.4): a
+// viewport on its scroll axes, and any container, a viewport included on
+// its other axes, holding a child that is (in flow or docked; modals are
+// never children). Leaves never are. Computed bottom-up once per frame.
+func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
+	if !b.IsContainer() {
+		return false
+	}
+	if b.scrollsOn(horizontal) {
+		return true
+	}
+	key := axisKey{b, horizontal}
+	if v, ok := e.shrink[key]; ok {
+		return v
+	}
+	v := false
+	for _, c := range b.Children {
+		if e.shrinkable(c, horizontal) {
+			v = true
+			break
+		}
+	}
+	e.shrink[key] = v
+	return v
+}
+
+// checkViewports reports L006 (SPEC §11.4) once per laid-out viewport V
+// under b that can never show part of its content on one of its scroll
+// axes A: (a) its content box is 0 cells on A while its content is not
+// empty there, or (b) its outer rect sticks out, on A, of the content box
+// of an ancestor below the nearest ancestor that scrolls on A. Clipping by
+// an ancestor that scrolls on A is by design and never reported.
+func (e *Engine) checkViewports(b *Box) {
+	b.Walk(func(v *Box) {
+		if !v.Laid {
+			return
+		}
+		sx, sy := v.ScrollAxes()
+		for _, horizontal := range []bool{false, true} {
+			if (horizontal && !sx) || (!horizontal && !sy) {
+				continue
+			}
+			if msg := e.neverShown(v, horizontal); msg != "" {
+				e.report(v, ir.Warning, "L006", "%s", msg)
+				return
+			}
+		}
+	})
+}
+
+// neverShown returns the L006 message for viewport v on one axis, or "".
+func (e *Engine) neverShown(v *Box, horizontal bool) string {
+	unit, size, axis := "rows", "height", "y"
+	pos, length := v.Y, v.H
+	content, natural := v.Content.H, v.ContentH
+	if horizontal {
+		unit, size, axis = "columns", "width", "x"
+		pos, length = v.X, v.W
+		content, natural = v.Content.W, v.ContentW
+	}
+	// scrollLayout sets the extent to max(content box, natural content), so
+	// with a 0-cell content box it is the natural content extent.
+	if content == 0 && natural > 0 {
+		return fmt.Sprintf("%s gets 0 %s on its scroll axis but has content there, so it can never show it; give it a cells, %%, or fr %s, or more room in its parent", v.Kind, unit, size)
+	}
+	for p := v.Parent; p != nil && !p.scrollsOn(horizontal); p = p.Parent {
+		lo, hi := p.Content.Y, p.Content.Y+p.Content.H
+		if horizontal {
+			lo, hi = p.Content.X, p.Content.X+p.Content.W
+		}
+		if pos < lo || pos+length > hi {
+			return fmt.Sprintf("%s is clipped on %s by %s, which does not scroll, so part of its content can never be shown; give it a cells, %%, or fr %s, or more room in %s", v.Kind, axis, describe(p), size, describe(p))
+		}
+	}
+	return ""
+}
+
+// describe names a box for a message: its tag, plus #id when it has one.
+func describe(b *Box) string {
+	if b.ID != "" {
+		return b.Tag + "#" + b.ID
+	}
+	return b.Tag
 }
 
 // intrinsic returns b's content-driven border-box size on one axis.
@@ -600,7 +800,7 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 		}
 	case "input":
 		if horizontal {
-			v = max(Width(b.Text), Width(b.Placeholder)) + 1
+			v = max(Width(InputShown(b)), Width(b.Placeholder)) + 1
 		} else {
 			v = 1
 		}
@@ -675,14 +875,14 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 				others[i] = avail
 			}
 		} else if row {
-			sizes, _ := e.mainSizes(b, flow, true, avail, nil, false, false)
+			sizes, _ := e.mainSizes(b, flow, true, avail, nil, false, false, false)
 			for i, k := range flow {
 				ms, me := margins(k, true)
 				others[i] = max(0, sizes[i]-ms-me)
 			}
 		} else {
 			for i, k := range flow {
-				others[i] = e.crossSize(b, k, false, avail, -1, false)
+				others[i] = e.crossSize(b, k, false, avail, -1, false, false)
 			}
 		}
 		for i, k := range flow {

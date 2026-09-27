@@ -1,0 +1,79 @@
+version: 1
+name: inbox_paste_search
+intent: |
+    a bracketed paste into the focused search box lands as one atomic edit
+    (SPEC v0.2 §26.7), not as a stream of individual keystrokes: pasting
+    text with an embedded raw CR (a byte a typed Enter key would also
+    produce) normalizes the CR to a space and inserts the whole, unbroken
+    result at once. The embedded CR never reaches the keymap or the
+    input's on:submit handler as an Enter keypress, so the search does not
+    fire early on a partial query; only the user's own later Enter key
+    submits the full, normalized text.
+target:
+    cmd: ["${vars.inbox}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "mail  deploy"
+        timeoutMs: 5000
+    - snapshot: home
+    - paste: "europe\rzzzz"
+    - wait:
+        screen:
+            contains: "europe zzzz"
+        timeoutMs: 3000
+    - snapshot: mid_paste
+    - press: enter
+    - wait:
+        screen:
+            contains: "0 match"
+        timeoutMs: 3000
+    - snapshot: after_submit
+    - press: tab
+    - press: q
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: paste_lands_as_one_unbroken_edit
+      description: the whole paste (with its embedded CR normalized to a space) shows up in the search box as one literal string, not truncated or interleaved with anything else
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/mid_paste.txt"
+                if grep -q "europe zzzz" "$f"; then
+                  echo '{"ok": true, "evidence": "mid_paste snapshot shows the full normalized paste (\"europe zzzz\") as one string in the search box"}'
+                else
+                  echo '{"ok": false, "evidence": "mid_paste snapshot does not show the complete normalized paste text"}'
+                fi
+    - id: embedded_cr_never_fires_submit_early
+      description: the embedded CR (which a real Enter keypress would also produce) never reached the input's on:submit handler while the paste was landing, so the status and ticket count are still whatever they were before the paste, not the (0-match) result of an early, partial search
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/mid_paste.txt"
+                if grep -q "connected" "$f" && grep -q "3 tickets" "$f"; then
+                  echo '{"ok": true, "evidence": "mid_paste snapshot still reads status=connected, 3 tickets: the embedded CR inside the paste never triggered on:submit"}'
+                else
+                  echo '{"ok": false, "evidence": "status or ticket count changed before the real Enter was pressed: the embedded CR was treated as a keypress"}'
+                fi
+    - id: real_enter_submits_the_full_normalized_query
+      description: only the user's own Enter (after the paste finished) submits the search, and it uses the complete normalized text, not a fragment of it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/after_submit.txt"
+                if grep -q '0 match "europe zzzz"' "$f" && grep -q "0 tickets" "$f"; then
+                  echo '{"ok": true, "evidence": "after_submit snapshot reads: 0 match \"europe zzzz\", 0 tickets: the real Enter searched for the whole pasted-and-normalized text"}'
+                else
+                  echo '{"ok": false, "evidence": "the submitted query was not the full normalized paste text"}'
+                fi
+contractHash: sha256:0aa06dd8ec95b01ddc09f113bd788bfb8a01283a36d96629b41053842c7e9395

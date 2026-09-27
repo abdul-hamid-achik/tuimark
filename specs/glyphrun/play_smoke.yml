@@ -1,0 +1,46 @@
+version: 1
+name: play_smoke
+intent: |
+    `tuimark play` (D1) runs a mix of step kinds against a document and data
+    file with no custom Go handlers: `key` (down), `set` (writing a store
+    path directly, as a coding agent driving the app without simulating
+    keystrokes would), and `resize`, in one headless session, and prints a
+    settled text dump with a clean exit. A smoke test of the tool itself,
+    not of any one app's business logic.
+target:
+    cmd: ["${vars.tuimark}", "play", "specs/fixtures/unsized_list.tui", "--data", "specs/fixtures/unsized_list.json", "--cols", "20", "--rows", "10", "--input", 'down down set:selected="r15" resize:30x12']
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 80
+steps:
+    - wait:
+        screen:
+            contains: "=== events ==="
+        timeoutMs: 5000
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: resize_step_took_effect
+      description: the `resize:30x12` step changed the session's grid dimensions for the final dump
+      verify:
+        screen:
+            contains: "=== grid 30x12 ==="
+    - id: set_step_moved_the_bound_selection
+      description: "the `set:selected=\"r15\"` step wrote the store path directly (no keystrokes) and the list's selection, and its auto-scrolled view, followed it to r15"
+      verify:
+        screen:
+            contains: "r15"
+    - id: fixed_box_unaffected_by_the_terminal_resize
+      description: the app's own explicitly-sized box (20x10) is untouched by resizing the outer session to 30x12
+      verify:
+        screen:
+            contains: "app   col     20x10 @(0,0)"
+    - id: clean_exit
+      description: the session settles and the process exits 0 with no diagnostics
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:1d49a41bef76694f487e5de50ed7d98f317560dba96f7df88b2eb443384256fa

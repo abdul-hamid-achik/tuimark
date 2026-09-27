@@ -190,13 +190,18 @@ takes over), proving the loop end to end. This one example touches:
 ## CLI reference
 
 ```
-tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json] [--cells] [--strict]
-tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json]
-tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch]
+tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json]
+                      [--cells] [--styles] [--strict] [--theme dark|light]
+tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json] [--theme dark|light]
+tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch] [--theme dark|light]
+                      [--color truecolor|256|16|none]
+tuimark play     FILE [--cols 80] [--rows 24] [--data FILE.json] [--theme dark|light]
+                      [--input STEPS | --script FILE.ndjson]
+                      [--format text|json] [--cells] [--styles] [--frames] [--strict]
 tuimark fmt      FILE [--write] [--check]
 tuimark ir       FILE
 tuimark agents
-tuimark test     [DIR] [--update]
+tuimark test     [DIR] [--update] [--allow-breaking]
 tuimark version
 ```
 
@@ -204,7 +209,9 @@ tuimark version
   diagnostics) by default, or `--format json` for the machine-readable
   shape agents parse (SPEC §13.2). `--data FILE.json` binds the file as the
   JSON store first. `--cells` (JSON only) adds per-cell `{x,y,ch,id}`
-  ownership. `--strict` upgrades missing bind paths (`B003`) to errors.
+  ownership; `--strict` upgrades missing bind paths (`B003`) to errors;
+  `--theme`/`--styles` are below. Exits **2** when the dump has an
+  error-severity diagnostic.
 - `validate` prints diagnostics (or, with `--json`, the full shape
   including the action catalog) without laying out a frame for its own
   sake — it still renders internally at 40/80/120×24 to catch
@@ -213,8 +220,14 @@ tuimark version
   "missing". `--catalog FILE` (a JSON list of action names, or
   `{"actions":[...]}`) turns unresolved actions into `B004` warnings.
 - `preview` writes the text dump to stdout, and also paints an ANSI frame
-  first when stdout is a TTY. `--watch` re-renders whenever the document,
-  its stylesheets, or `--data` change (polled every 150ms).
+  first when stdout is a TTY, in the color profile from `--color`, else
+  `TUIMARK_COLOR`, else detection (the same order and detection rule
+  `Run()` uses; see "Environment variables" below) — resolved once per
+  `preview`, including across `--watch` reloads. `--watch` re-renders
+  whenever the document, its stylesheets, or `--data` change (polled
+  every 150ms).
+- `play` replays input against a document with no TTY and prints the
+  resulting dump plus the actions it fired (below).
 - `fmt` is the canonical formatter (below).
 - `ir` prints the source IR as JSON (SPEC §13.1): a document's parsed shape
   from *before* the stylesheet cascade (SPEC §18's "parse .tui → source IR"
@@ -222,13 +235,114 @@ tuimark version
   only its own presentation attributes and `style=""`, not rules matched
   from a `<style>` sheet. It exits like every other command (**2** on any
   diagnostic with error severity, including stylesheet-only errors) and
-  never emits a node outside `schema/ir.v0.1.json`'s `kind` enum.
+  never emits a node outside `schema/ir.v0.1.json`'s `kind` enum (`tuimark
+  ir` always emits `"version": "0.1"`: 0.2a introduces no new document
+  version, so `schema/ir.v0.2.json` stays reserved for a future
+  `version="2"`).
 - `agents` prints `AGENTS.md`, generated from the runtime's own catalogs so
   it cannot drift; `AGENTS.md` at the repo root must equal this output,
   enforced by `internal/agentsdoc`'s `TestAGENTSDoesNotDrift` (regenerate
   with `go run ./cmd/tuimark agents > AGENTS.md`).
 - `test` runs the golden dump comparisons driven by
   `testdata/golden/manifest.json` (below).
+
+### `--theme` and `dump --styles`
+
+`--theme dark|light` (on `dump`, `validate`, `preview`, and `play`)
+overrides the document's own `theme` attribute for that one render — the
+same override `Run()`'s `TUIMARK_THEME` environment variable applies for a
+live session (SPEC §26.4). Any other value the flag is explicitly given —
+including `auto` (reserved for a later, terminal-background-probing theme
+— SPEC §27.2) and `""` — is a usage error that exits 1 before anything is
+rendered; only leaving `--theme` off entirely keeps the document's own
+theme. The golden manifest's `theme` field (below) follows the same rule.
+
+### Environment variables (`Run()` and `preview --color`)
+
+`Run()` reads three environment variables before it touches the terminal
+(SPEC §26.10); an invalid value is a usage error and `Run` returns before
+entering raw mode. Values are exact and case-sensitive; an empty value
+counts as unset.
+
+| Variable | Values | Meaning |
+|---|---|---|
+| `TUIMARK_COLOR` | `truecolor`, `256`, `16`, `none` | forces the color profile (SPEC §26.3), instead of detecting it from `TERM`/`COLORTERM`/`NO_COLOR`/`WT_SESSION` |
+| `TUIMARK_THEME` | `dark`, `light` | overrides the document's `theme`, same as `--theme` (SPEC §26.4) |
+| `TUIMARK_SYNC` | `0`, `1` | forces synchronized-output framing off or on, instead of probing the terminal (SPEC §26.6) |
+
+`preview` also reads `TUIMARK_COLOR` — but only when stdout is a TTY (so a
+plain, redirected `preview` never depends on the environment), and only as
+a fallback: `--color` on the command line wins first. An invalid
+`TUIMARK_COLOR` makes `preview` exit 1 before writing anything, the same
+way it makes `Run()` return an error. `dump`, `validate`, `play`, `ir`,
+`fmt`, `test`, `Dump()`, and `Validate()` never read any `TUIMARK_*`
+variable, so their output never depends on the environment.
+
+`dump --styles` (also `play --styles`; JSON output only) adds two fields to
+the dump: `"theme"`, the effective theme, and `"styles"`, one array of
+spans per row. Each span (`{"x", "w", "fg", "bg", "a"}`) is a maximal run of
+adjacent columns sharing a foreground, background, and attribute set; every
+row's spans are contiguous and cover every column. Colors are canonical —
+`"#rrggbb"` (lowercase), an ANSI name such as `"bright-cyan"`, or
+`"default"` for an unset color — and are never downsampled (downsampling is
+only a `Run()`/`preview` terminal-output concern). `"a"` lists whichever of
+`bold`, `dim`, `italic`, `underline`, `reverse` are on, in that order, and
+is omitted when none are. This is how a test asserts `:focus`, `:selected`,
+and `reverse`-selection styling by diffing JSON instead of reading
+`preview`'s ANSI output by eye.
+
+### `tuimark play`
+
+```sh
+tuimark play app.tui --data sample.json \
+  --input "text:log tab down" --format json
+```
+
+`play` loads a fresh app from `FILE` (`--data` binds the store root, as for
+`dump`) and replays a session against it with no TTY: the same primitives
+`Run()`'s event loop uses (key/paste decoding and coalescing, event
+dispatch, the lifecycle-event settle loop), just never touching a real
+terminal. Built-in actions (`quit`, `focus`) run; a host action registered
+with `On` does not exist here, so it is only ever *recorded*, never
+executed — `play` checks what the document *would* dispatch, not a Go
+handler's own logic (simulate a handler's effect with a `set:` step, or
+test the Go side with `go test` or Glyphrun).
+
+Steps come from `--input "STEP STEP ..."` (space-separated; a run of spaces
+is one separator) or `--script FILE.ndjson` (one JSON object per line, for
+steps whose payload needs an embedded space or explicit JSON), never both.
+With neither, the session is just the first frame (step 0).
+
+| `--input` step | Meaning |
+|---|---|
+| `KEY` | one key: a named key (`enter esc tab backspace space up down left right home end pgup pgdn shift+tab`), `ctrl+a`..`ctrl+z`, or any other single printable ASCII character but `,` (write `/`, not `slash` — there are no aliases) |
+| `text:STR` | STR's bytes, decoded like real terminal input: a run of printable characters going to a focused input is one edit and one `on:change` (the same coalescing `Run()` does for fast typing or an unbracketed paste); characters that go elsewhere reach the keymap one by one |
+| `paste:STR` | one bracketed paste. Normalized (CRLF/CR/LF/TAB → space, ANSI/control bytes stripped) and delivered as one edit/`on:change` when an enabled input has focus; discarded — never reaching the keymap or a built-in — otherwise, so a paste containing `q` can never quit |
+| `set:PATH=JSON` | `Set(PATH, json.Unmarshal(JSON))`; `PATH` may be empty (the store root) or the reserved `@focus`/`@screen` |
+| `focus:#ID` | `Set("@focus", "ID")` (the `#` is optional); fires no `on:focus`, like `Set` |
+| `resize:COLSxROWS` | the terminal size changes, handled like `Run()` handles `SIGWINCH` |
+| `click:X,Y`, `wheel-up:X,Y`, `wheel-down:X,Y` | reserved for the 0.2b mouse; a usage error now |
+
+The equivalent `--script` line for each: `{"key":"..."}`, `{"text":"..."}`,
+`{"paste":"..."}`, `{"set":{"path":"...","value":...}}`, `{"focus":"#..."}`,
+`{"resize":[COLS,ROWS]}`; `{"click":...}`, `{"wheel":...}`, and
+`{"theme":...}` are the same reserved usage error.
+
+A `quit` (a keymap `quit`, or `ctrl+c` with nothing else claiming it) ends
+the session early: later steps are never applied. `--format json` prints
+the final dump (with `--cells`/`--styles` as for `dump`) plus `"events"` —
+every dispatched action, in order, each `{"step", "action", "source",
+"keys", "value"}` — always present, `[]` when nothing fired. `--frames`
+adds `"frames"`, one `{"step", "input", "events", "dump"}` per applied step
+(step 0 included). `--format text` appends an `=== events ===` section
+(`STEP ACTION SOURCE KEYS VALUE`, or the single line `none`) after the text
+dump, with one such section per step when `--frames` is given.
+
+Exit codes: **0** the final dump is ok; **2** it has an error-severity
+diagnostic; **1** a usage or I/O error (an unparseable step, a reserved
+step, a `Set` error such as a bad path or an unknown screen) — nothing is
+printed to stdout in that case, only `tuimark: play: step N (INPUT):
+REASON` to stderr.
 
 Exit codes, uniform across every command: **0** ok, **1** usage, I/O, or
 crash, **2** validation errors (or, for `fmt --check` / `test`, "not
@@ -288,6 +402,30 @@ not `true` — `spike`'s goldens are frozen and must never be regenerated;
 `inbox` and `stacked`'s are not. Adding another fixture just needs another
 row in the manifest and a golden directory; nothing else in the runner is
 fixture-specific.
+
+An entry also takes these optional fields:
+
+| Field | Meaning |
+|---|---|
+| `theme` | `"dark"` or `"light"`, as `--theme` |
+| `input` | `play` steps (`--input`'s grammar, above); the goldens for this entry are then `play` output (an `=== events ===`/`"events"` section too) instead of plain `dump` output |
+| `script` | a `play` script path (`--script`'s grammar), exclusive with `input` |
+| `styles` | `true` to have the JSON goldens include `"theme"` and `"styles"` |
+
+**`--update`'s superset check.** For a non-frozen entry and a size where a
+JSON golden already exists, `--update` refuses to overwrite it unless the
+newly rendered JSON is a **superset** of the one on disk: every scalar that
+was there keeps its exact value, every array keeps its exact length (element
+by element a superset too), and an object may only gain new members. When it
+is not — a value changed, an array grew or shrank, a member disappeared —
+neither the `.json` nor the paired `.txt` golden is written for that size;
+`tuimark test` instead prints `FAIL NAME SIZE (json): update removes or
+changes POINTER` (an RFC 6901 JSON Pointer to the first offending location)
+and exits 2. This catches an accidental regression at update time instead of
+only at the next `git diff`. `--allow-breaking` skips the check for one run,
+for a reviewed, deliberate change (a moved node from an auto-fit change, for
+example) — record why in the project's decision log alongside the updated
+goldens.
 
 ## Public Go API
 
@@ -541,6 +679,33 @@ kept with the maintainer's project notes, outside this repository.
   modal.tui --cols 80 --rows 24` shows `actions` and both buttons at
   height 1, not stretched to the modal's height).
 
+- **Built-in defaults beyond §10.6, and `list`/`input` have no border.**
+  §10.6 only lists defaults for `screen col row box text`. The runtime
+  fills the rest of the gap with: `scroll`/`list`/`item { layout: column
+  }`, `modal { layout: column; border: single }`, `spacer { flex: 1 }`,
+  `input, button, progress, rule { width: auto; height: auto }`, and
+  `list > item:selected { reverse: true }`. In particular, `list` and
+  `input` get no default `border` (only `modal` does), so a `border-color`
+  rule on either — including a `:focus`/`:selected` variant — changes
+  nothing unless that same element (or selector) also sets `border:
+  single|double|rounded|thick` somewhere. This is why the SPEC §17 inbox
+  fixture's own `theme.tcss` (`list:focus { border-color: $focus; }`,
+  `input:focus { border-color: $focus; }`) has no visible effect at all:
+  `dump --styles` and `play --input tab --styles` produce byte-identical
+  `styles` regardless of which of `#query`/`#inbox` is focused. `border`
+  also needs 2 rows or columns of the element's own size, so a one-row
+  `<input>` could not show one anyway; show focus on it with `color`,
+  `background`, `bold`, or `reverse` instead — `examples/agent` and
+  `examples/dashboard` both do this for `button:focus { reverse: true; }`
+  — or give the element an explicit `border: single` first if a colored
+  border is what you want, as `examples/agent`'s
+  `#composer`/`#transcript` and `examples/dashboard`'s
+  `#pipeline`/`#mainpanel`/`#logScroll` do (their `list:focus`/
+  `scroll:focus { border-color: $focus; }` works precisely because those
+  elements already carry `border: single`). These three files stay
+  byte-identical to SPEC §17 on purpose, so this note documents the trap
+  rather than fixing the fixture.
+
 - **Focused `list` key handling** (SPEC §8.3). §8.3 says only "`list`
   consumes `up`/`down`", but a focused, non-empty `list` also consumes
   `home`, `end`, `pgup`, and `pgdn` — all six move the selection (firing
@@ -582,6 +747,17 @@ kept with the maintainer's project notes, outside this repository.
   focus, `validate --strict --catalog`, `Run()`.
 - **Phase 4 (agent polish)** — done: `fmt`, `ir`, `test`, `agents`, `dump
   --cells`, the `examples/agent` harness, this README.
+- **Phase 5 (v0.2a: runtime, terminal, and tools)** — grapheme-cluster width
+  (ADR 0002, `github.com/rivo/uniseg`) and the `wide`/`--cells` dump fields;
+  auto-fit `scroll`/`list` sizing with the `L006` diagnostic (ADR 0007);
+  `Run()`'s capability probe, color profiles, theme selection, bracketed
+  paste, and input decoder (SPEC §26); and the headless tools this delivery
+  adds — `tuimark play`, `dump --styles`, `--theme` on
+  `dump`/`validate`/`preview`/`play`, the `tuimark test --update` superset
+  check, and `schema/ir.v0.2.json`/`schema/dump.v0.2.json`. No 0.2a document
+  changes version (`tuimark ir` still emits `"version": "0.1"`); `<tui
+  version="2">` and the rest of the proposal's new vocabulary are 0.2b
+  (ADR 0009).
 
 ## License
 

@@ -496,3 +496,127 @@ func TestInitialFocusEvent(t *testing.T) {
 		t.Errorf("fallback focus: pending = %+v focus %q", p, c.Focus())
 	}
 }
+
+// editOps applies input steps the way `tuimark play` and Run do, drawing a
+// frame before each one: "text:S" decodes S as one read and types it
+// (printable runs coalesce, HandleKeyRun), "key:NAME" presses a named key,
+// "paste:S" is a bracketed paste of S. It returns every event.
+func editOps(a *App, ops ...string) []Event {
+	var out []Event
+	for _, op := range ops {
+		kind, arg, _ := strings.Cut(op, ":")
+		a.Frame(20, 2)
+		switch kind {
+		case "text":
+			keys := DecodeKeys([]byte(arg))
+			for len(keys) > 0 {
+				evs, n := a.HandleKeyRun(keys)
+				out = append(out, evs...)
+				keys = keys[n:]
+				a.Frame(20, 2)
+			}
+		case "key":
+			out = append(out, a.HandleKey(Key{Name: arg})...)
+		case "paste":
+			out = append(out, a.HandlePaste(arg)...)
+		}
+	}
+	a.Frame(20, 2)
+	return out
+}
+
+// SPEC v0.2 §21 test 21 and §12.1: an input edits by grapheme cluster. The
+// cursor sits between clusters; left and right step over a whole cluster;
+// backspace and ctrl+h delete the whole cluster before the cursor; an
+// insertion (a key, a coalesced burst, a paste) that merges with the
+// cluster after the cursor leaves the cursor after the merged cluster; a
+// cursor left inside a cluster stands after it. on:change carries the
+// whole new value. A secret input shows one • per cluster, in the grid and
+// in the node text.
+func TestInputEditingByCluster(t *testing.T) {
+	const src = `<tui version="1"><screen id="main" focus="#q"><col>` +
+		`<input id="q" bind="q" on:change="changed"/><input id="s" secret="true" bind="s"/>` +
+		`</col></screen></tui>`
+	const family = "👨‍👩‍👧"
+	cases := []struct {
+		name string
+		ops  []string
+		want string
+	}{
+		{"backspace after a skin-tone emoji removes both code points", []string{"text:a👍🏽", "key:backspace"}, "a"},
+		{"ctrl+h erases a whole cluster too", []string{"text:a👍🏽", "key:ctrl+h"}, "a"},
+		{"a cluster typed one code point per key", []string{"text:👍", "text:🏽", "key:backspace"}, ""},
+		{"left steps over a cluster", []string{"text:a👍🏽b", "key:left", "key:left", "text:X"}, "aX👍🏽b"},
+		{"right steps over a cluster", []string{"text:a👍🏽b", "key:home", "key:right", "key:right", "text:X"}, "a👍🏽Xb"},
+		{"right steps over a ZWJ family", []string{"text:" + family + "z", "key:home", "key:right", "text:X"}, family + "Xz"},
+		{"backspace inside the value removes the family", []string{"text:x" + family + "y", "key:left", "key:backspace"}, "xy"},
+		{"a paste that merges into a flag leaves the cursor after it", []string{"text:🇸z", "key:home", "paste:🇺", "text:X"}, "🇺🇸Xz"},
+		{"a typed regional indicator merges the same way", []string{"text:🇸z", "key:home", "text:🇺", "text:X"}, "🇺🇸Xz"},
+		{"a combining mark typed before a base joins the previous cluster", []string{"text:ab", "key:left", "text:́", "text:X"}, "áXb"},
+		{"left and right at the ends stay put", []string{"text:é👍🏽", "key:right", "key:home", "key:left", "text:X"}, "Xé👍🏽"},
+		{"ascii is unchanged", []string{"text:hello", "key:left", "key:backspace", "key:left", "text:X"}, "heXlo"},
+	}
+	for _, c := range cases {
+		a := doc(t, src)
+		_ = a.Bind("", map[string]any{"q": "", "s": ""})
+		evs := editOps(a, c.ops...)
+		if got := get(t, a, "q"); got != c.want {
+			t.Errorf("%s: value %q, want %q", c.name, got, c.want)
+			continue
+		}
+		if len(evs) == 0 || evs[len(evs)-1].Action != "changed" || evs[len(evs)-1].Value != c.want {
+			t.Errorf("%s: last on:change %+v, want the value %q", c.name, evs, c.want)
+		}
+	}
+
+	// A cursor stored inside a cluster (between 👍 and 🏽) stands after it.
+	a := doc(t, src)
+	_ = a.Bind("", map[string]any{"q": "a👍🏽b", "s": ""})
+	a.Frame(20, 2)
+	a.mu.Lock()
+	a.input("q").cursor = 2
+	a.mu.Unlock()
+	editOps(a, "text:X")
+	if got := get(t, a, "q"); got != "a👍🏽Xb" {
+		t.Errorf("mid-cluster cursor then X: %q", got)
+	}
+	a.mu.Lock()
+	a.input("q").cursor = 2
+	a.mu.Unlock()
+	editOps(a, "key:backspace")
+	if got := get(t, a, "q"); got != "aXb" {
+		t.Errorf("mid-cluster cursor then backspace: %q, want the whole cluster deleted", got)
+	}
+	// The event of a single backspace carries the value after it.
+	a = doc(t, src)
+	_ = a.Bind("", map[string]any{"q": "", "s": ""})
+	if evs := editOps(a, "text:a👍🏽", "key:backspace"); len(evs) != 2 || evs[0].Value != "a👍🏽" || evs[1].Value != "a" {
+		t.Errorf("on:change values %+v, want \"a👍🏽\" then \"a\"", evs)
+	}
+
+	// Secret: one • per cluster, in the grid and in the node text, after
+	// cluster edits too.
+	s := doc(t, src)
+	_ = s.Bind("", map[string]any{"q": "", "s": ""})
+	_ = s.Set("@focus", "#s")
+	secret := func(want string) {
+		t.Helper()
+		d := s.Dump(20, 2, false)
+		n, ok := nodeByID(d, "s")
+		if !ok || n.Text != want || !strings.HasPrefix(d.Grid[1], want+" ") {
+			t.Errorf("secret: node %+v grid %q, want %q", n, d.Grid[1], want)
+		}
+	}
+	editOps(s, "text:a👍🏽"+family)
+	if got := get(t, s, "s"); got != "a👍🏽"+family {
+		t.Fatalf("secret value %q", got)
+	}
+	secret("•••")
+	editOps(s, "key:left", "text:🇺🇸")
+	secret("••••")
+	editOps(s, "key:backspace")
+	secret("•••")
+	if got := get(t, s, "s"); got != "a👍🏽"+family {
+		t.Errorf("secret value after the edits %q", got)
+	}
+}

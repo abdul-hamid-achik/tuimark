@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
+	"github.com/abdul-hamid-achik/tuimark/internal/paint"
 )
 
 // runCLI runs the command as a fresh process would, but captures stdout and
@@ -203,6 +204,24 @@ func TestDumpCellsJSON(t *testing.T) {
 	}
 	if strings.Contains(out2, `"cells"`) {
 		t.Errorf("dump without --cells must omit the cells key:\n%s", out2)
+	}
+}
+
+// finding 27 / SPEC v0.2 §15.1: "--theme takes dark or light ... Any
+// other value, auto included, is a usage error." dump, validate, and
+// preview must all reject an explicitly empty --theme, not silently keep
+// the document's own theme (applyTheme's default-vs-given ambiguity).
+func TestEmptyThemeIsUsageError(t *testing.T) {
+	for _, cmd := range []string{"dump", "validate", "preview"} {
+		t.Run(cmd, func(t *testing.T) {
+			code, out, errw := runCLI(cmd, spikeFixture, "--theme", "")
+			if code != 1 {
+				t.Fatalf("%s --theme \"\": exit %d, want 1; stdout=%s stderr=%s", cmd, code, out, errw)
+			}
+			if !strings.Contains(errw, "dark or light") {
+				t.Errorf("%s --theme \"\": want the dark-or-light usage error, got:\n%s", cmd, errw)
+			}
+		})
 	}
 }
 
@@ -412,7 +431,7 @@ func TestRenderPreviewAlwaysIncludesTextDump(t *testing.T) {
 		t.Fatal(err)
 	}
 	var tty bytes.Buffer
-	ok := renderPreview(&tty, app, 40, 6, true)
+	ok := renderPreview(&tty, app, 40, 6, true, paint.TrueColor)
 	if !ok {
 		t.Fatal("renderPreview reported !ok for a clean fixture")
 	}
@@ -432,7 +451,7 @@ func TestRenderPreviewAlwaysIncludesTextDump(t *testing.T) {
 		t.Fatal(err)
 	}
 	var plain bytes.Buffer
-	renderPreview(&plain, app2, 40, 6, false)
+	renderPreview(&plain, app2, 40, 6, false, paint.TrueColor)
 	plainOut := plain.String()
 	if strings.Contains(plainOut, "\x1b[") {
 		t.Errorf("non-TTY preview must not paint ANSI:\n%q", plainOut)
@@ -484,6 +503,84 @@ func TestPreviewInvalidExits2(t *testing.T) {
 	}
 	if !strings.Contains(out, "V001") {
 		t.Errorf("preview output missing V001:\n%s", out)
+	}
+}
+
+// findings 9/22/34 / SPEC v0.2 §15.1 ("preview ... [--color
+// truecolor|256|16|none]"), §26.3 ("TUIMARK_COLOR (for preview, --color
+// comes before it)"), §26.10 ("an invalid TUIMARK_* value is a usage
+// error: ... preview exits 1 when it would paint ANSI (it does not read
+// the variable otherwise)"). Before the fix, cmdPreview had no --color
+// flag at all ("flag provided but not defined: -color") and never called
+// paint.DetectProfile, so renderPreview always painted paint.Full
+// (truecolor) regardless of the environment.
+func TestPreviewColorFlagIsAccepted(t *testing.T) {
+	code, _, errw := runCLI("preview", spikeFixture, "--color", "256")
+	if code != 0 {
+		t.Fatalf("--color 256: exit %d, want 0; stderr=%s", code, errw)
+	}
+}
+
+func TestPreviewColorFlagRejectsUnknownValue(t *testing.T) {
+	// --color is validated whether or not stdout is a TTY (like --theme):
+	// runCLI's stdout is a *bytes.Buffer, never a TTY, so this also proves
+	// the check does not depend on tty-ness.
+	code, out, errw := runCLI("preview", spikeFixture, "--color", "bogus")
+	if code != 1 {
+		t.Fatalf("--color bogus: exit %d, want 1; stdout=%s stderr=%s", code, out, errw)
+	}
+	if !strings.Contains(errw, "--color") {
+		t.Errorf("want the usage error to name --color:\n%s", errw)
+	}
+}
+
+// TUIMARK_COLOR must never be read when stdout is not a TTY (SPEC §26.10:
+// "it does not read the variable otherwise"), so an invalid value must not
+// make a non-TTY preview fail.
+func TestPreviewIgnoresTUIMARKColorWhenNotATTY(t *testing.T) {
+	t.Setenv("TUIMARK_COLOR", "bogus")
+	code, _, errw := runCLI("preview", spikeFixture)
+	if code != 0 {
+		t.Fatalf("non-TTY preview with an invalid TUIMARK_COLOR: exit %d, want 0; stderr=%s", code, errw)
+	}
+}
+
+func TestUsageMentionsPreviewColorFlag(t *testing.T) {
+	if !strings.Contains(usage, "--color truecolor|256|16|none") {
+		t.Errorf("usage text is missing preview's --color flag:\n%s", usage)
+	}
+}
+
+// resolveColorProfile is preview's testable core (cmdPreview only calls it
+// when stdout is a TTY, which a unit test cannot fake portably): --color
+// wins over TUIMARK_COLOR, which wins over detection, and an invalid
+// TUIMARK_COLOR is an error (SPEC v0.2 §26.3, §26.10).
+func TestResolveColorProfile(t *testing.T) {
+	env := func(vals map[string]string) func(string) string {
+		return func(k string) string { return vals[k] }
+	}
+
+	p, err := resolveColorProfile("256", env(map[string]string{"TUIMARK_COLOR": "truecolor"}))
+	if err != nil || p != paint.ANSI256 {
+		t.Errorf("--color must win over TUIMARK_COLOR: got %v, %v", p, err)
+	}
+
+	p, err = resolveColorProfile("", env(map[string]string{"TUIMARK_COLOR": "16"}))
+	if err != nil || p != paint.ANSI16 {
+		t.Errorf("no --color: want TUIMARK_COLOR=16 to apply: got %v, %v", p, err)
+	}
+
+	p, err = resolveColorProfile("", env(map[string]string{"NO_COLOR": "1"}))
+	if err != nil || p != paint.NoColor {
+		t.Errorf("no --color/TUIMARK_COLOR: want detection (NO_COLOR) to apply: got %v, %v", p, err)
+	}
+
+	if _, err := resolveColorProfile("", env(map[string]string{"TUIMARK_COLOR": "bogus"})); err == nil {
+		t.Error("an invalid TUIMARK_COLOR must be an error")
+	}
+
+	if _, err := resolveColorProfile("bogus", env(nil)); err == nil {
+		t.Error("an invalid --color must be an error")
 	}
 }
 

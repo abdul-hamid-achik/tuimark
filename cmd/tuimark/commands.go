@@ -80,6 +80,46 @@ func checkSize(cols, rows int) error {
 	return nil
 }
 
+// applyTheme overrides the document's effective theme (SPEC v0.2 §26.4:
+// "--theme when given, else the document's, else dark") through
+// App.SetTheme, the hook behind the CLI's --theme and Run's TUIMARK_THEME.
+// set is whether the flag (or manifest field) was given at all, not
+// whether its value is non-empty: an explicitly empty value (--theme "",
+// or a manifest `"theme": ""`) is given, and SPEC §15.1 makes "any other
+// value ... a usage error", so it must fail exactly like `--theme auto`
+// (finding 27), not be treated as absent. what names the flag/field in
+// the error message. When set is false, nothing changes.
+func applyTheme(app *host.App, theme string, set bool, what string) error {
+	if !set {
+		return nil
+	}
+	if err := app.SetTheme(theme); err != nil {
+		return fmt.Errorf("%s must be dark or light (got %q)", what, theme)
+	}
+	return nil
+}
+
+// themeFlagSet reports whether --theme was given on the command line at
+// all (as opposed to left at its "" default), so an explicitly empty
+// value can be told apart from an absent flag (finding 27). fs must
+// already have been parsed.
+func themeFlagSet(fs *flag.FlagSet) bool {
+	set := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "theme" {
+			set = true
+		}
+	})
+	return set
+}
+
+// effectiveTheme is the theme --styles reports (SPEC v0.2 §13.2 "theme"):
+// App.Theme(), which is whatever applyTheme set, else the document's own
+// theme, else "dark".
+func effectiveTheme(app *host.App) string {
+	return app.Theme()
+}
+
 func (c *cli) cmdDump(args []string) int {
 	fs := c.newFlags("dump")
 	cols := fs.Int("cols", 80, "terminal columns")
@@ -87,7 +127,9 @@ func (c *cli) cmdDump(args []string) int {
 	format := fs.String("format", "text", "text or json")
 	data := fs.String("data", "", "JSON file bound as the data store")
 	cells := fs.Bool("cells", false, "include per-cell ownership (json only)")
+	styles := fs.Bool("styles", false, "include theme and per-row style spans (json only)")
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
+	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -106,8 +148,16 @@ func (c *cli) cmdDump(args []string) int {
 	if err != nil {
 		return c.fail(err)
 	}
+	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
+		return c.fail(err)
+	}
 	app.SetStrict(*strict)
-	d := app.Dump(*cols, *rows, *cells)
+	f := app.Frame(*cols, *rows)
+	d := dump.Build(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, *cells)
+	if *styles {
+		d.Theme = effectiveTheme(app)
+		d.Styles = dump.BuildStyles(f.Grid)
+	}
 	if *format == "json" {
 		b, err := dump.JSON(d)
 		if err != nil {
@@ -160,6 +210,7 @@ func (c *cli) cmdValidate(args []string) int {
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
 	catalog := fs.String("catalog", "", "JSON list of host actions; unknown actions warn B004")
 	data := fs.String("data", "", "JSON file bound as the data store (enables bind checks)")
+	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -170,6 +221,9 @@ func (c *cli) cmdValidate(args []string) int {
 	}
 	app, err := load(file, *data)
 	if err != nil {
+		return c.fail(err)
+	}
+	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
 		return c.fail(err)
 	}
 	app.SetStrict(*strict)
@@ -224,7 +278,9 @@ func isTTY(f *os.File) bool { return term.IsTerminal(int(f.Fd())) }
 // grid first when stdout is a TTY (SPEC §15: "writes the text dump to
 // stdout. If stdout is a TTY, it MAY also paint ANSI" — an addition, not a
 // replacement, so the plain `=== grid ===` section is always present).
-func renderPreview(w io.Writer, app *host.App, cols, rows int, tty bool) bool {
+// prof is the color profile the ANSI grid is painted in (SPEC v0.2 §15.1,
+// §26.3); it is ignored when tty is false.
+func renderPreview(w io.Writer, app *host.App, cols, rows int, tty bool, prof paint.Profile) bool {
 	if !tty {
 		d := app.Dump(cols, rows, false)
 		fmt.Fprint(w, dump.Text(d))
@@ -232,9 +288,22 @@ func renderPreview(w io.Writer, app *host.App, cols, rows int, tty bool) bool {
 	}
 	f := app.Frame(cols, rows)
 	d := dump.Build(cols, rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, false)
-	fmt.Fprint(w, paint.Full(f.Grid))
+	fmt.Fprint(w, paint.FullWith(f.Grid, paint.Options{Profile: prof}))
 	fmt.Fprint(w, dump.Text(d))
 	return d.OK
+}
+
+// resolveColorProfile picks preview's ANSI color profile (SPEC v0.2 §15.1:
+// "the color profile from `--color`, else `TUIMARK_COLOR`, else detection
+// (§26.3)"). It is only called when stdout is a TTY: §26.10 says preview
+// "does not read the variable otherwise". color is the (already
+// flag.Parse-validated as non-empty-or-known) --color value; "" means the
+// flag was not given.
+func resolveColorProfile(color string, getenv func(string) string) (paint.Profile, error) {
+	if color != "" {
+		return paint.ParseProfile(color)
+	}
+	return paint.DetectProfile(getenv)
 }
 
 func (c *cli) cmdPreview(args []string) int {
@@ -243,6 +312,8 @@ func (c *cli) cmdPreview(args []string) int {
 	rows := fs.Int("rows", 24, "terminal rows")
 	data := fs.String("data", "", "JSON file bound as the data store")
 	watch := fs.Bool("watch", false, "re-render when the document, stylesheets, or data change")
+	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
+	color := fs.String("color", "", "truecolor, 256, 16, or none; the ANSI grid's color profile")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -254,15 +325,35 @@ func (c *cli) cmdPreview(args []string) int {
 	if err := checkSize(*cols, *rows); err != nil {
 		return c.fail(err)
 	}
+	// --color is validated whether or not stdout is a TTY, the same way
+	// --theme is (SPEC v0.2 §15.1: "Any other value ... is a usage error").
+	if *color != "" {
+		if _, err := paint.ParseProfile(*color); err != nil {
+			return c.fail(fmt.Errorf("--color must be truecolor, 256, 16, or none (got %q)", *color))
+		}
+	}
+	themeSet := themeFlagSet(fs)
 	tty := c.stdout == io.Writer(os.Stdout) && isTTY(os.Stdout)
 	app, err := load(file, *data)
 	if err != nil {
 		return c.fail(err)
 	}
+	if err := applyTheme(app, *theme, themeSet, "--theme"); err != nil {
+		return c.fail(err)
+	}
+	// Detection runs once per preview (SPEC v0.2 §26.3), before anything is
+	// written, and only when the ANSI grid will actually be painted.
+	var prof paint.Profile
+	if tty {
+		prof, err = resolveColorProfile(*color, os.Getenv)
+		if err != nil {
+			return c.fail(err)
+		}
+	}
 	if tty && *watch {
 		fmt.Fprint(c.stdout, "\x1b[H\x1b[2J")
 	}
-	ok := renderPreview(c.stdout, app, *cols, *rows, tty)
+	ok := renderPreview(c.stdout, app, *cols, *rows, tty, prof)
 	if !*watch {
 		if !ok {
 			return 2
@@ -288,10 +379,14 @@ func (c *cli) cmdPreview(args []string) int {
 			fmt.Fprintln(c.stdout, "tuimark:", err)
 			continue
 		}
+		if err := applyTheme(next, *theme, themeSet, "--theme"); err != nil {
+			fmt.Fprintln(c.stdout, "tuimark:", err)
+			continue
+		}
 		app = next
 		files = append(app.Files(), *data)
 		stamp = fingerprint(files)
-		renderPreview(c.stdout, app, *cols, *rows, tty)
+		renderPreview(c.stdout, app, *cols, *rows, tty, prof)
 	}
 }
 

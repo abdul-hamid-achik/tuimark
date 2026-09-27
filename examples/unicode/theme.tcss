@@ -1,0 +1,18 @@
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --border: #30363d;
+  --panel: #161b22;
+  --focus: cyan;
+}
+
+screen { layout: column; color: $fg; background: $bg; }
+#app { layout: column; width: 100%; height: 100%; }
+#header, #status { height: 1; background: $panel; }
+#body { flex: 1; layout: row; gap: 0; }
+#panel { border-color: $border; }
+#detail { border-color: $border; }
+.title { bold: true; }
+.muted { color: $muted; }
+list:focus { border-color: $focus; }

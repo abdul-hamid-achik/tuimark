@@ -1,0 +1,34 @@
+<tui version="1" theme="dark">
+  <style src="theme.tcss"/>
+  <screen id="main">
+    <col id="app" width="100%" height="100%">
+      <row id="header" class="chrome">
+        <text>中文 emoji café 🔥</text>
+      </row>
+      <row id="body">
+        <col id="panel" width="26" border="1">
+          <text class="title">配置 🎉</text>
+          <list id="items" each="rows as r" key="r.id" bind="selected">
+            <item>
+              <row>
+                <text class="muted">{r.id}</text>
+                <text>{r.label}</text>
+              </row>
+            </item>
+          </list>
+        </col>
+        <col id="detail" width="1fr" border="1">
+          <text class="title">note</text>
+          <scroll>
+            <text wrap="wrap">{note}</text>
+          </scroll>
+        </col>
+      </row>
+      <row id="status" class="chrome">
+        <text>{status}</text>
+        <spacer/>
+        <text>{count} rows</text>
+      </row>
+    </col>
+  </screen>
+</tui>

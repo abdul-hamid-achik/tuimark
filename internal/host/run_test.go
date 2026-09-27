@@ -407,3 +407,40 @@ func TestLoopLoneEscIsEscKey(t *testing.T) {
 	pw.Close()
 	<-done
 }
+
+// Finding 14 (SPEC v0.2 §26.7, §26.8), loop level: a paste start marker
+// that the terminal's writes split with a gap longer than the esc timeout
+// still starts a paste when the rest of the marker arrives, so the paste
+// never reaches the keymap: with the list focused its x does not fire the
+// keymap row and its q does not quit. A split right after ESC delivers
+// the esc key first (the timeout decided it), then the paste.
+func TestLoopPasteMarkerSplitByTimeout(t *testing.T) {
+	for _, split := range []int{1, 2, 3, 4, 5} {
+		rig := startLoop(t, func(a *App) {
+			a.doc.Keymap = append(a.doc.Keymap, a.doc.Keymap[0])
+			a.doc.Keymap[len(a.doc.Keymap)-1].Keys = []string{"x"}
+			a.doc.Keymap[len(a.doc.Keymap)-1].Action = "xkey"
+			a.On("xkey", func(ev Event) error { t.Errorf("split %d: the paste reached the keymap (x)", split); return nil })
+		})
+		rig.next(t) // on:focus
+		rig.send(t, "\t")
+		rig.waitScreen(t, "[]")
+		marker := "\x1b[200~"
+		rig.send(t, marker[:split])
+		time.Sleep(4 * escTimeout) // the esc timeout decides the pending start
+		rig.send(t, marker[split:]+"abc xq\x1b[201~")
+		rig.send(t, "\x1b[B")
+		if ev := rig.next(t); ev.Action != "pick" || ev.Keys["r"] != "b" {
+			t.Fatalf("split %d: after the paste %+v, want the list to move", split, ev)
+		}
+		select {
+		case err := <-rig.done:
+			t.Fatalf("split %d: the paste quit the loop (%v)", split, err)
+		default:
+		}
+		rig.send(t, "q")
+		if err := rig.wait(t); err != nil {
+			t.Fatal(err)
+		}
+	}
+}

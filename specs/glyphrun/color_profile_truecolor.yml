@@ -1,0 +1,50 @@
+version: 1
+name: color_profile_truecolor
+intent: |
+    Run's color profile detection (SPEC v0.2 §26.3) picks TrueColor when
+    COLORTERM=truecolor: examples/inbox paints its theme's RGB colors
+    (--panel #161b22, --fg #e6edf3, ...) as 24-bit truecolor SGR
+    (`38;2;r;g;b`/`48;2;r;g;b`), exactly reproducing the authored hex,
+    instead of xterm-256 palette indices. Proven at the decoded-cell level:
+    the terminal's own reported style for a themed cell is the exact hex
+    color the theme authored, which only 38;2 (not 38;5, a lossy
+    256-color quantization) can reproduce byte for byte.
+target:
+    cmd: ["${vars.inbox}"]
+    cwd: "."
+    env:
+        TERM: xterm-256color
+        COLORTERM: truecolor
+        # This spec exercises detection itself (SPEC v0.2 §26.3), so it
+        # must not inherit glyphrun.config.yml's TUIMARK_COLOR pin (finding
+        # 10) or a caller-exported TUIMARK_COLOR/NO_COLOR/WT_SESSION:
+        # target.env overrides both.
+        TUIMARK_COLOR: ""
+        NO_COLOR: ""
+        WT_SESSION: ""
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "mail  deploy"
+        timeoutMs: 5000
+outcomes:
+    - id: header_bg_is_exact_truecolor_hex
+      description: "the header cell's background is the theme's --panel color exactly, #161b22, not a quantized 256-color index"
+      verify:
+        cell:
+            x: 0
+            y: 0
+            style:
+                bg: "#161b22"
+    - id: header_fg_is_exact_truecolor_hex
+      description: "the header cell's foreground is the theme's --fg color exactly, #e6edf3"
+      verify:
+        cell:
+            x: 0
+            y: 0
+            style:
+                fg: "#e6edf3"
+contractHash: sha256:afde929c040a97ddd4b60fde6d1392cd706f019d0f2afc6699576959aade6751

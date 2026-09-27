@@ -237,3 +237,71 @@ func TestEachProducesThreeItems(t *testing.T) {
 		}
 	}
 }
+
+// SPEC v0.2 §11.4 auto-fit on the §17 fixture (ADR 0007). The detail
+// <scroll> sits in an auto box; where the ticket body fits (every golden
+// size) nothing changes. In a short terminal the v0.1 box overflowed
+// #detail (78x4 in 3 content rows at 80x15) and the body could never be
+// scrolled into view; now the box fits #detail and the scroll gets the rows
+// under the title.
+func TestInboxDetailAutoFit(t *testing.T) {
+	app := phInboxApp(t)
+	for _, c := range []struct {
+		cols, rows  int
+		box, scroll string
+	}{
+		{80, 15, "78x3@(1,10)", "78x2@(1,11)"},
+		{40, 12, "38x3@(1,7)", "38x2@(1,8)"},
+	} {
+		d := phDump(t, app, c.cols, c.rows)
+		det := phNode(t, d, "detail")
+		var box, scroll tuimark.DumpNode
+		for i, n := range d.Nodes {
+			if n.Tag == "scroll" {
+				scroll, box = n, d.Nodes[i-2]
+			}
+		}
+		if box.Tag != "box" || phGeom(box) != c.box || phGeom(scroll) != c.scroll {
+			t.Errorf("%dx%d: box %s scroll %s, want %s %s", c.cols, c.rows, phGeom(box), phGeom(scroll), c.box, c.scroll)
+		}
+		if scroll.Y+scroll.H > det.Y+det.H-1 {
+			t.Errorf("%dx%d: scroll %s overflows #detail %s", c.cols, c.rows, phGeom(scroll), phGeom(det))
+		}
+		if len(d.Errors) != 0 {
+			t.Errorf("%dx%d: %v", c.cols, c.rows, d.Errors)
+		}
+	}
+}
+
+// SPEC v0.2 §13.2/§17: the inbox's viewports, the list and the detail
+// <scroll>, dump `scroll` (offset and extent), also with nothing to
+// scroll; where the detail body no longer fits it scrolls over its full
+// extent.
+func TestInboxViewportsDumpScroll(t *testing.T) {
+	app := phInboxApp(t)
+	for _, c := range []struct {
+		cols, rows   int
+		list, scroll string
+	}{
+		{80, 24, `{"y":0,"h":5}`, `{"y":0,"h":3}`},
+		{120, 24, `{"y":0,"h":19}`, `{"y":0,"h":2}`},
+		{80, 15, `{"y":0,"h":5}`, `{"y":0,"h":3}`},
+	} {
+		d := phDump(t, app, c.cols, c.rows)
+		var got []string
+		for _, n := range d.Nodes {
+			if n.Scroll == nil {
+				continue
+			}
+			b, err := json.Marshal(n.Scroll)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got = append(got, n.Tag+"#"+n.ID+" "+string(b))
+		}
+		want := []string{"list#inbox " + c.list, "scroll# " + c.scroll}
+		if strings.Join(got, "; ") != strings.Join(want, "; ") {
+			t.Errorf("%dx%d: %v, want %v", c.cols, c.rows, got, want)
+		}
+	}
+}

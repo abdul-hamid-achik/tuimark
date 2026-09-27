@@ -13,10 +13,6 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/paint"
 )
 
-// leaveScreen resets attributes, shows the cursor, and leaves the
-// alternate screen.
-const leaveScreen = "\x1b[0m\x1b[?25h\x1b[?1049l"
-
 // signalGrace is how long Run lets the loop return on its own after a stop
 // signal (a handler may be running) before it ends the process with the
 // signal's default action. Tests shorten or lengthen it.
@@ -29,27 +25,57 @@ const signalRestoreWait = 50 * time.Millisecond
 
 // escTimeout is how long an ESC (or an unterminated escape sequence) at
 // the end of a read waits for the rest of the sequence before it is
-// decoded as it stands: a lone ESC is then the esc key. Tests lengthen it.
+// decoded as it stands: a lone ESC is then the esc key and any other
+// pending sequence is dropped (decoder.flush). The discard of an
+// over-long sequence and the bytes the paste marker guard holds end the
+// same way. Tests lengthen it.
 var escTimeout = 25 * time.Millisecond
 
 // Run drives the app in the terminal: raw mode on stdin, the alternate
 // screen on w, frame diffs as ANSI. It returns nil on quit.
+//
+// Before it touches the terminal, Run reads TUIMARK_COLOR, TUIMARK_THEME,
+// and TUIMARK_SYNC (SPEC v0.2 §26.10); an invalid value is returned as an
+// error with nothing written and no raw mode. The session (§26.1): enter
+// the alternate screen with bracketed paste on; probe the terminal's
+// capabilities once when w is a terminal (§26.2: DECRQM 2026 and 2027
+// with a DA1 sentinel, at most probeWait), queuing the keys and pastes
+// that arrive meanwhile; turn grapheme mode 2027 on when the terminal
+// reports it off; then draw the first frame, handle the queued input, and
+// loop. Frames are written in the color profile of §26.3, wrapped in
+// synchronized output when the terminal supports it (§26.6), with CHA
+// re-positioning after complex clusters unless mode 2027 is on (§26.5).
+// Every way out (quit, EOF, error, stop signal) writes the leave sequence:
+// mode 2027 off (when Run turned it on), bracketed paste off, attributes
+// reset, cursor shown, main screen.
 //
 // SIGTERM, SIGHUP, and SIGINT (SIGINT only from outside: raw mode turns
 // ctrl+c into a key) stop Run like a quit that restores the terminal first
 // (cooked mode, main screen, visible cursor), and Run then returns a
 // non-nil error naming the signal, so the caller can exit with a failure
 // status. That holds even when the loop was stopping anyway (a handler
-// returned ErrQuit, or input ended) as the signal came in. A handler that
-// is still running when the signal arrives cannot hold the terminal: it is
-// restored right away, and if Run has not returned within signalGrace (one
-// second), or a second signal arrives, the process ends with the signal's
-// default action. When Run returns, nothing is left reading stdin.
+// returned ErrQuit, or input ended) as the signal came in, and during the
+// probe. A handler that is still running when the signal arrives cannot
+// hold the terminal: it is restored right away, and if Run has not
+// returned within signalGrace (one second), or a second signal arrives,
+// the process ends with the signal's default action. When Run returns,
+// nothing is left reading stdin.
 func (a *App) Run(w io.Writer) (err error) {
+	cfg, err := readRunConfig(os.Getenv)
+	if err != nil {
+		return err
+	}
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
 		return errors.New("tuimark: Run needs an interactive terminal on stdin (use Dump for headless output)")
 	}
+	sizeFd := fd
+	outTTY := false
+	if f, ok := w.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+		sizeFd, outTTY = int(f.Fd()), true
+	}
+	sess := &termSession{profile: cfg.profile, sync: cfg.sync, probe: shouldProbe(os.Getenv, outTTY, cfg.sync)}
+	defer a.overrideTheme(cfg.theme)()
 	// Catch the signals before raw mode; release them only after the
 	// terminal is restored (defers run last-in, first-out).
 	caught, release := stopSignals()
@@ -81,16 +107,12 @@ func (a *App) Run(w io.Writer) (err error) {
 			_ = term.Restore(fd, old)
 			s := ""
 			if leave {
-				s = leaveScreen
+				s = sess.leave()
 			}
 			out.close(s)
 		})
 	}
 	defer restore(false)
-	sizeFd := fd
-	if f, ok := w.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
-		sizeFd = int(f.Fd())
-	}
 	size := func() (int, int) {
 		c, r, err := term.GetSize(sizeFd)
 		if err != nil || c <= 0 || r <= 0 {
@@ -106,7 +128,7 @@ func (a *App) Run(w io.Writer) (err error) {
 	go func() {
 		watched <- watchSignals(caught, sigs, loopDone, func() { restoreWithin(func() { restore(true) }, time.Second) }, signalGrace, reraise)
 	}()
-	err = a.loop(os.Stdin, out, size, resizeSignal(stop), sigs)
+	err = a.session(os.Stdin, out, size, resizeSignal(stop), sigs, sess)
 	close(loopDone)
 	// A signal the loop did not take (it returned for a quit or EOF while
 	// the signal was on its way) still makes Run report it.
@@ -217,7 +239,10 @@ func (e *SignalError) Error() string {
 }
 
 // Loop is the terminal event loop behind Run, with injectable input,
-// output, size, and resize notifications (tests drive it with pipes).
+// output, size, and resize notifications (tests drive it with pipes). It
+// writes Run's enter and leave sequences (bracketed paste included) but
+// never probes the terminal: frames are truecolor, not synchronized, with
+// CHA re-positioning.
 func (a *App) Loop(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}) error {
 	return a.loop(in, out, size, resize, nil)
 }
@@ -283,8 +308,14 @@ func startReader(in io.Reader, reads chan<- chunk, done <-chan struct{}) <-chan 
 // loop is Loop plus sigs: a signal stops the loop (terminal restored by the
 // deferred writes and Run's defers) and is returned as a *SignalError.
 func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, sigs <-chan os.Signal) error {
-	io.WriteString(out, "\x1b[?1049h\x1b[?25l\x1b[H\x1b[2J")
-	defer io.WriteString(out, leaveScreen)
+	return a.session(in, out, size, resize, sigs, &termSession{})
+}
+
+// session is loop in a terminal session sess: Run's probe, color profile,
+// synchronized output, and grapheme mode (SPEC v0.2 §26).
+func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, sigs <-chan os.Signal, sess *termSession) error {
+	io.WriteString(out, enterScreen)
+	defer func() { io.WriteString(out, sess.leave()) }()
 
 	reads := make(chan chunk, 16)
 	done := make(chan struct{})
@@ -301,8 +332,67 @@ func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <
 		}
 	}()
 
+	// dec decodes every byte read (SPEC v0.2 §26.8). It keeps the
+	// undecoded tail of the input: a UTF-8 rune, an escape sequence, or a
+	// paste end marker the last read cut in two. The next read completes
+	// it; an ESC-led tail that nothing follows within escTimeout is
+	// decoded as it stands (a lone ESC is the esc key), and when it was a
+	// start of the paste start marker the next read may still complete
+	// the marker (decoder.flush). A paste waits for its end marker however
+	// long it takes.
+	var dec decoder
+
+	// The capability probe (§26.2), once, before the first frame. Keys and
+	// pastes that arrive before it ends are queued and handled after the
+	// first frame, and so is the end of the input. The esc timeout is not
+	// armed meanwhile, so a reply that arrives in pieces is not cut.
+	var caps termCaps
+	var queued []Input
+	var endErr error
+	if sess.probe {
+		if _, err := io.WriteString(out, probeQueries(sess.sync)); err != nil {
+			return err
+		}
+		capTimer := time.NewTimer(sess.probeCap())
+		defer capTimer.Stop()
+	probe:
+		for {
+			select {
+			case c := <-reads:
+				ins, reps := dec.feed(c.data, c.err != nil)
+				queued = append(queued, ins...)
+				for _, r := range reps {
+					caps.record(r)
+				}
+				if c.err != nil {
+					endErr = c.err
+					break probe
+				}
+				if caps.done {
+					break probe
+				}
+			case <-capTimer.C:
+				break probe
+			case s := <-sigs:
+				return &SignalError{Signal: s}
+			}
+		}
+	}
+	// Grapheme width parity (§26.5): mode 2027 when the terminal reports
+	// it off (Ps = 2); no CHA re-positioning while it is on.
+	if caps.turnGraphemeOn() {
+		sess.setGrapheme()
+		if _, err := io.WriteString(out, graphemeOn); err != nil {
+			return err
+		}
+	}
+	opts := paint.Options{Profile: sess.profile, NoCHA: caps.graphemeActive()}
+	syncFrames := sess.syncFrames(caps)
+
 	var prev *paint.Grid
 	lastCols, lastRows := -1, -1
+	// draw writes one frame in one write, wrapped in synchronized output
+	// when it is on (§26.6).
 	draw := func() error {
 		cols, rows := size()
 		if cols != lastCols || rows != lastRows {
@@ -310,7 +400,11 @@ func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <
 			lastCols, lastRows = cols, rows
 		}
 		f := a.Frame(cols, rows)
-		if _, err := io.WriteString(out, paint.Diff(prev, f.Grid)); err != nil {
+		s := paint.DiffWith(prev, f.Grid, opts)
+		if syncFrames {
+			s = syncBegin + s + syncEnd
+		}
+		if _, err := io.WriteString(out, s); err != nil {
 			return err
 		}
 		prev = f.Grid
@@ -346,50 +440,83 @@ func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <
 		}
 		return false, nil
 	}
-	// handleKeys handles keys in order. A stop signal that arrives while
-	// they run (handlers may be slow) is honored before the next key.
-	// Printable keys in a row that go to the focused input are one edit
-	// with one on:change (HandleKeyRun), so a paste costs one frame, not
-	// one per character.
-	handleKeys := func(keys []Key) (stop bool, err error) {
-		for len(keys) > 0 {
-			select {
-			case s := <-sigs:
-				return true, &SignalError{Signal: s}
-			default:
-			}
-			focus := a.Focus()
-			evs, n := a.HandleKeyRun(keys)
-			keys = keys[n:]
-			quit, err := runEvents(evs)
-			if err != nil {
+	// dispatch runs the events of one key or paste. A frame is drawn when
+	// they fired something or focus moved: handlers may open modals and
+	// keys may move focus, and later input in the same read must see the
+	// new frame (:focus, modal trap, focusables).
+	dispatch := func(evs []Event, focus string) (stop bool, err error) {
+		quit, err := runEvents(evs)
+		if err != nil {
+			return true, err
+		}
+		if quit {
+			return true, nil
+		}
+		if len(evs) > 0 || a.Focus() != focus {
+			if err := draw(); err != nil {
 				return true, err
 			}
-			if quit {
-				return true, nil
+		}
+		return false, nil
+	}
+	// handleInputs handles keys and pastes in order. A stop signal that
+	// arrives while they run (handlers may be slow) is honored before the
+	// next one. Printable keys in a row that go to the focused input are
+	// one edit with one on:change (HandleKeyRun), so a paste on a terminal
+	// without bracketed paste costs one frame, not one per character. A
+	// bracketed paste is one edit too, or nothing (HandlePaste).
+	handleInputs := func(ins []Input) (stop bool, err error) {
+		signaled := func() error {
+			select {
+			case s := <-sigs:
+				return &SignalError{Signal: s}
+			default:
+				return nil
 			}
-			if len(evs) > 0 || a.Focus() != focus {
-				// Handlers may open modals and keys may move focus; later
-				// keys in the same read must see the new frame (:focus,
-				// modal trap, focusables).
-				if err := draw(); err != nil {
+		}
+		for len(ins) > 0 {
+			if ins[0].IsPaste {
+				if err := signaled(); err != nil {
+					return true, err
+				}
+				focus := a.Focus()
+				evs := a.HandlePaste(ins[0].Paste)
+				ins = ins[1:]
+				if stop, err := dispatch(evs, focus); stop {
+					return true, err
+				}
+				continue
+			}
+			n := 1
+			for n < len(ins) && !ins[n].IsPaste {
+				n++
+			}
+			keys := make([]Key, n)
+			for i := range keys {
+				keys[i] = ins[i].Key
+			}
+			ins = ins[n:]
+			for len(keys) > 0 {
+				if err := signaled(); err != nil {
+					return true, err
+				}
+				focus := a.Focus()
+				evs, used := a.HandleKeyRun(keys)
+				keys = keys[used:]
+				if stop, err := dispatch(evs, focus); stop {
 					return true, err
 				}
 			}
 		}
 		return false, nil
 	}
-	// pending holds the undecoded tail of the input: a UTF-8 rune or an
-	// escape sequence the last read cut in two. The next read completes
-	// it; an ESC-led tail that nothing follows within escTimeout is
-	// decoded as it stands (a lone ESC is the esc key).
-	var pending []byte
 	var escWait <-chan time.Time
 	onChunk := func(c chunk) (stop bool, err error) {
-		keys, rest := decodeKeys(append(pending, c.data...), c.err != nil)
-		pending = append([]byte(nil), rest...)
+		// Replies that arrive after the probe (or without one) are
+		// swallowed without effect.
+		ins, _ := dec.feed(c.data, c.err != nil)
 		escWait = nil
-		if stop, err := handleKeys(keys); stop {
+		if stop, err := handleInputs(ins); stop {
 			return true, err
 		}
 		if c.err != nil {
@@ -401,7 +528,7 @@ func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <
 		if stop, err := settle(); stop {
 			return true, err
 		}
-		if len(pending) > 0 && pending[0] == 0x1b {
+		if dec.escPending() {
 			escWait = time.After(escTimeout)
 		}
 		return false, nil
@@ -411,6 +538,23 @@ func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <
 	}
 	if quit, err := runEvents(nil); quit || err != nil {
 		return err
+	}
+	if len(queued) > 0 || endErr != nil {
+		if stop, err := handleInputs(queued); stop {
+			return err
+		}
+		if endErr != nil {
+			if errors.Is(endErr, io.EOF) {
+				return nil
+			}
+			return endErr
+		}
+		if stop, err := settle(); stop {
+			return err
+		}
+	}
+	if dec.escPending() {
+		escWait = time.After(escTimeout)
 	}
 	for {
 		select {
@@ -429,9 +573,7 @@ func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <
 				continue
 			default:
 			}
-			keys, _ := decodeKeys(pending, true)
-			pending = nil
-			if stop, err := handleKeys(keys); stop {
+			if stop, err := handleInputs(dec.flush()); stop {
 				return err
 			}
 			if stop, err := settle(); stop {

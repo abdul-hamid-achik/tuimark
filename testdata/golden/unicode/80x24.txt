@@ -1,0 +1,68 @@
+=== grid 80x24 ===
+中文 emoji café 🔥                                                              
+┌────────────────────────┐┌────────────────────────────────────────────────────┐
+│配置 🎉                 ││note                                                │
+│1中文测试               ││This note wraps café (a combining accent), 中文测试 │
+│2café latte             ││(wide CJK), and 🔥🎉 (emoji) across several lines   │
+│3emoji 🔥🎉             ││without ever splitting a grapheme cluster in half,  │
+│4naïve                  ││even when the wrap point falls inside a wide        │
+│5中文📦mix              ││character or a combining sequence such as é́.        │
+│6é́ double               ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+│                        ││                                                    │
+└────────────────────────┘└────────────────────────────────────────────────────┘
+ready                                                                     6 rows
+=== nodes ===
+main    screen  80x24 @(0,0)
+app     col     80x24 @(0,0)
+header  row     80x1 @(0,0)
+-       text    18x1 @(0,0)
+body    row     80x22 @(0,1)
+panel   col     26x22 @(0,1)
+-       text    24x1 @(1,2)
+items   list    24x6 @(1,3) focus
+-       item    24x1 @(1,3) selected
+-       row     24x1 @(1,3)
+-       text    1x1 @(1,3)
+-       text    8x1 @(2,3)
+-       item    24x1 @(1,4)
+-       row     24x1 @(1,4)
+-       text    1x1 @(1,4)
+-       text    10x1 @(2,4)
+-       item    24x1 @(1,5)
+-       row     24x1 @(1,5)
+-       text    1x1 @(1,5)
+-       text    10x1 @(2,5)
+-       item    24x1 @(1,6)
+-       row     24x1 @(1,6)
+-       text    1x1 @(1,6)
+-       text    5x1 @(2,6)
+-       item    24x1 @(1,7)
+-       row     24x1 @(1,7)
+-       text    1x1 @(1,7)
+-       text    9x1 @(2,7)
+-       item    24x1 @(1,8)
+-       row     24x1 @(1,8)
+-       text    1x1 @(1,8)
+-       text    8x1 @(2,8)
+detail  col     54x22 @(26,1)
+-       text    52x1 @(27,2)
+-       scroll  52x5 @(27,3)
+-       text    52x5 @(27,3)
+status  row     80x1 @(0,23)
+-       text    5x1 @(0,23)
+-       spacer  69x1 @(5,23)
+-       text    6x1 @(74,23)
+=== errors ===
+ok

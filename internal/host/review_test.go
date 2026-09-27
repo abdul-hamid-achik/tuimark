@@ -331,7 +331,7 @@ func TestLoopStopsOnSignal(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("a signal did not stop the loop")
 	}
-	if got := out.String(); !strings.HasSuffix(got, "\x1b[0m\x1b[?25h\x1b[?1049l") {
+	if got := out.String(); !strings.HasSuffix(got, "\x1b[0m\x1b[?25h\x1b[?7h\x1b[?1049l") {
 		t.Errorf("terminal not restored: …%q", got[max(0, len(got)-24):])
 	}
 }

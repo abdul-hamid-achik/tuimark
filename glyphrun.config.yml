@@ -18,6 +18,13 @@ environments:
       TERM: xterm-256color
       LANG: en_US.UTF-8
       LC_ALL: en_US.UTF-8
+      # SPEC v0.2 §26.10: "Glyphrun specs SHOULD pin TUIMARK_THEME and
+      # TUIMARK_COLOR in glyphrun.config.yml" (finding 10), so the suite
+      # does not depend on the caller's environment. A spec that needs to
+      # exercise detection itself (the color_profile_* specs) overrides
+      # these back to "" in its own target.env, which wins over this file.
+      TUIMARK_THEME: dark
+      TUIMARK_COLOR: truecolor
 
 terminal:
   cols: 120

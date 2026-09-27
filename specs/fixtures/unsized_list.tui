@@ -1,0 +1,11 @@
+<tui version="1" theme="dark">
+  <screen id="main" focus="#rows">
+    <col id="app" width="20" height="10" border="1">
+      <list id="rows" each="items as it" key="it.id" bind="selected">
+        <item>
+          <text>{it.id}</text>
+        </item>
+      </list>
+    </col>
+  </screen>
+</tui>

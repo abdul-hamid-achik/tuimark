@@ -1,12 +1,18 @@
-// Command tuimark validates, dumps, previews, and formats Tuimark documents.
+// Command tuimark validates, dumps, previews, plays, and formats Tuimark
+// documents.
 //
-//	tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json] [--cells]
-//	tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json]
-//	tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch]
+//	tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json]
+//	                      [--cells] [--styles] [--strict] [--theme dark|light]
+//	tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json] [--theme dark|light]
+//	tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch] [--theme dark|light]
+//	                      [--color truecolor|256|16|none]
+//	tuimark play     FILE [--cols 80] [--rows 24] [--data FILE.json] [--theme dark|light]
+//	                      [--input STEPS | --script FILE.ndjson]
+//	                      [--format text|json] [--cells] [--styles] [--frames] [--strict]
 //	tuimark fmt      FILE [--write] [--check]
 //	tuimark ir       FILE
 //	tuimark agents
-//	tuimark test     [DIR]
+//	tuimark test     [DIR] [--update] [--allow-breaking]
 //
 // Exit codes: 0 ok, 1 I/O or crash, 2 validation errors.
 package main
@@ -17,18 +23,24 @@ import (
 	"os"
 )
 
-const version = "0.1.0"
+const version = "0.2.0-a"
 
 const usage = `tuimark — a view language for terminals
 
 usage:
-  tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json] [--cells] [--strict]
-  tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json]
-  tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch]
+  tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json]
+                        [--cells] [--styles] [--strict] [--theme dark|light]
+  tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json] [--theme dark|light]
+  tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch] [--theme dark|light]
+                        [--color truecolor|256|16|none]
+  tuimark play     FILE [--cols 80] [--rows 24] [--data FILE.json] [--theme dark|light]
+                        [--input STEPS | --script FILE.ndjson]
+                        [--format text|json] [--cells] [--styles] [--frames] [--strict]
   tuimark fmt      FILE [--write] [--check]
   tuimark ir       FILE                       print the source IR as JSON
   tuimark agents                              print AGENTS.md generated from the catalog
-  tuimark test     [DIR]                      check dump goldens under DIR (default testdata/golden)
+  tuimark test     [DIR] [--update] [--allow-breaking]
+                                               check dump goldens under DIR (default testdata/golden)
   tuimark version
 
 exit codes: 0 ok, 1 I/O or crash, 2 validation errors
@@ -59,6 +71,8 @@ func (c *cli) run(args []string) int {
 		return c.cmdValidate(rest)
 	case "preview":
 		return c.cmdPreview(rest)
+	case "play":
+		return c.cmdPlay(rest)
 	case "fmt":
 		return c.cmdFmt(rest)
 	case "ir":

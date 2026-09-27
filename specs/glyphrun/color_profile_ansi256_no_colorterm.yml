@@ -1,0 +1,50 @@
+version: 1
+name: color_profile_ansi256_no_colorterm
+intent: |
+    Run's color profile detection (SPEC v0.2 §26.3) picks ANSI256 when TERM
+    ends in "256color" and COLORTERM is unset: examples/inbox paints its
+    theme's RGB colors (--panel #161b22, --fg #e6edf3, ...) as xterm-256
+    palette indices (`38;5;N`/`48;5;N`), never as 24-bit truecolor SGR
+    (`38;2;r;g;b`/`48;2;r;g;b`), even though the theme is authored in hex
+    RGB. Proven at the decoded-cell level: the terminal's own reported style
+    for a themed cell is the literal palette index string ("234") the wire
+    format carried, not a hex color, which only 38;5 (not 38;2) produces.
+target:
+    cmd: ["${vars.inbox}"]
+    cwd: "."
+    env:
+        TERM: xterm-256color
+        COLORTERM: ""
+        # This spec exercises detection itself (SPEC v0.2 §26.3), so it
+        # must not inherit glyphrun.config.yml's TUIMARK_COLOR pin (finding
+        # 10) or a caller-exported TUIMARK_COLOR/NO_COLOR/WT_SESSION:
+        # target.env overrides both.
+        TUIMARK_COLOR: ""
+        NO_COLOR: ""
+        WT_SESSION: ""
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "mail  deploy"
+        timeoutMs: 5000
+outcomes:
+    - id: header_bg_is_a_256_index_not_truecolor_hex
+      description: "the header cell's background (the theme's --panel: #161b22) is reported as the xterm-256 palette index 234, not the hex #161b22 a truecolor SGR would produce"
+      verify:
+        cell:
+            x: 0
+            y: 0
+            style:
+                bg: "234"
+    - id: header_fg_is_a_256_index_not_truecolor_hex
+      description: "the header cell's foreground (the theme's --fg: #e6edf3) is reported as xterm-256 index 255, not hex"
+      verify:
+        cell:
+            x: 0
+            y: 0
+            style:
+                fg: "255"
+contractHash: sha256:c5e7b1229c4c10e6b0fe28ce1df68570d2ab5b302d4b97deb959c78c3d8fef8c

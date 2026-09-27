@@ -5,9 +5,11 @@ package paint
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
+	"github.com/abdul-hamid-achik/tuimark/internal/uniwidth"
 )
 
 // Attribute bits.
@@ -19,14 +21,51 @@ const (
 	Reverse
 )
 
-// Cell is one terminal cell.
+// Cell is one terminal column (SPEC v0.2 §12.1). A lead cell holds one
+// painted grapheme cluster, 1 or 2 columns wide: Ch is its first code point
+// and Ext the code points after it ("" for the usual one-code-point
+// cluster), so Grapheme() is Ch followed by Ext. Wide marks a width-2
+// cluster, whose second column is the next cell: a continuation (Cont),
+// which holds no glyph of its own (Ch 0, Ext "") and carries its lead's
+// style and owner. No cell is ever half of a wide cluster.
 type Cell struct {
 	Ch    rune
+	Ext   string
+	Wide  bool
+	Cont  bool
 	FG    css.Color
 	BG    css.Color
 	Attrs uint8
 	Owner string // id of the nearest id-bearing box that painted this cell
 }
+
+// Grapheme returns the cluster a lead cell holds, or "" for a continuation.
+func (c Cell) Grapheme() string {
+	if c.Cont {
+		return ""
+	}
+	if c.Ext == "" {
+		return string(c.Ch)
+	}
+	return string(c.Ch) + c.Ext
+}
+
+// Width is the number of columns the cell's cluster takes: 2 for a wide
+// lead, 0 for a continuation, 1 otherwise.
+func (c Cell) Width() int {
+	switch {
+	case c.Cont:
+		return 0
+	case c.Wide:
+		return 2
+	}
+	return 1
+}
+
+// Complex reports whether the cell leads a complex cluster (SPEC §11.5.1):
+// width 2 or more than one code point. Complex clusters set the dump's
+// "wide" flag and get CHA re-positioning in Diff and Full.
+func (c Cell) Complex() bool { return !c.Cont && (c.Wide || c.Ext != "") }
 
 // Grid is the painted frame.
 type Grid struct {
@@ -50,33 +89,78 @@ func NewGrid(w, h int) *Grid {
 // At returns the cell at (x, y).
 func (g *Grid) At(x, y int) *Cell { return &g.Cells[y*g.W+x] }
 
-// Lines returns each row as a string of exactly W runes.
+// Lines returns each row as a string exactly W columns wide: the lead
+// cells' clusters concatenated, a wide cluster written once, continuation
+// cells contributing nothing (SPEC v0.2 MUST 6). In a painted grid, a row
+// read as one string segments into exactly its lead cells' clusters (see
+// unjoin), so its width is W. For a grid of one-code-point width-1
+// clusters, which is every ASCII and box-drawing frame, each row is
+// exactly W runes, as in v0.1.
 func (g *Grid) Lines() []string {
 	out := make([]string, g.H)
 	var b strings.Builder
 	for y := 0; y < g.H; y++ {
 		b.Reset()
-		for x := 0; x < g.W; x++ {
-			b.WriteRune(g.Cells[y*g.W+x].Ch)
+		for _, c := range g.Cells[y*g.W : (y+1)*g.W] {
+			if c.Cont {
+				continue
+			}
+			b.WriteRune(c.Ch)
+			b.WriteString(c.Ext)
 		}
 		out[y] = b.String()
 	}
 	return out
 }
 
+// HasComplex reports whether some lead cell holds a complex cluster (SPEC
+// §13.2: the dump's "wide" flag).
+func (g *Grid) HasComplex() bool {
+	for i := range g.Cells {
+		if g.Cells[i].Complex() {
+			return true
+		}
+	}
+	return false
+}
+
 type painter struct {
 	g *Grid
 }
 
+// inside reports whether (x, y) is inside both clip and the grid.
+func (p *painter) inside(clip layout.Rect, x, y int) bool {
+	return clip.Contains(x, y) && x >= 0 && y >= 0 && x < p.g.W && y < p.g.H
+}
+
 func (p *painter) set(clip layout.Rect, x, y int, ch rune, st cellStyle) {
-	if !clip.Contains(x, y) || x < 0 || y < 0 || x >= p.g.W || y >= p.g.H {
+	p.put(clip, x, y, ch, "", 1, st)
+}
+
+// put paints one grapheme cluster (first code point r, the rest ext) of
+// width w at (x, y), by the rules of SPEC v0.2 §12.1: a width-0 cluster is
+// never painted; a cluster is painted only when all its columns are inside
+// clip and the grid; a width-2 cluster whose second column falls outside
+// paints a space, with the same style, in its first column.
+func (p *painter) put(clip layout.Rect, x, y int, r rune, ext string, w int, st cellStyle) {
+	if w <= 0 || !p.inside(clip, x, y) {
 		return
 	}
-	if ch < 0x20 || (ch >= 0x7f && ch <= 0x9f) {
-		ch = ' ' // the grid never carries control characters (SPEC §13.2)
+	if w == 2 && !p.inside(clip, x+1, y) {
+		r, ext, w = ' ', "", 1
+	}
+	if r < 0x20 || (r >= 0x7f && r <= 0x9f) {
+		r, ext = ' ', "" // the grid never carries control characters (SPEC §13.2)
+	}
+	if ext != "" && !utf8.ValidString(ext) {
+		ext = strings.ToValidUTF8(ext, string(utf8.RuneError))
+	}
+	p.unlink(x, y)
+	if w == 2 {
+		p.unlink(x+1, y)
 	}
 	c := p.g.At(x, y)
-	c.Ch = ch
+	c.Ch, c.Ext, c.Wide, c.Cont = r, ext, w == 2, false
 	if st.fg.IsSet() {
 		c.FG = st.fg
 	}
@@ -87,6 +171,125 @@ func (p *painter) set(clip layout.Rect, x, y int, ch rune, st cellStyle) {
 	if st.owner != "" || st.clearOwner {
 		c.Owner = st.owner
 	}
+	if w == 2 {
+		*p.g.At(x+1, y) = Cell{Cont: true, FG: c.FG, BG: c.BG, Attrs: c.Attrs, Owner: c.Owner}
+	}
+}
+
+// unlink breaks the wide cluster that (x, y) is half of, if any, before
+// (x, y) is written: the other half becomes a space and keeps its style,
+// so no cell is ever left as half of a wide cluster (SPEC v0.2 §12.1).
+func (p *painter) unlink(x, y int) {
+	c := p.g.At(x, y)
+	switch {
+	case c.Cont:
+		if x > 0 {
+			l := p.g.At(x-1, y)
+			l.Ch, l.Ext, l.Wide = ' ', "", false
+		}
+		c.Ch, c.Cont = ' ', false
+	case c.Wide:
+		if x+1 < p.g.W {
+			n := p.g.At(x+1, y)
+			n.Ch, n.Ext, n.Cont = ' ', "", false
+		}
+		c.Wide = false
+	}
+}
+
+// settle gives every continuation cell its lead's style and owner again:
+// claiming ownership of a box area (which writes no glyph) may have split
+// the two halves of a wide cluster between owners.
+func (p *painter) settle() {
+	for y := 0; y < p.g.H; y++ {
+		row := p.g.Cells[y*p.g.W : (y+1)*p.g.W]
+		for x := 1; x < len(row); x++ {
+			if row[x].Cont {
+				l := row[x-1]
+				row[x].FG, row[x].BG, row[x].Attrs, row[x].Owner = l.FG, l.BG, l.Attrs, l.Owner
+			}
+		}
+	}
+}
+
+// unjoin makes every row, read as one string, segment into exactly its
+// lead cells' clusters (SPEC v0.2 §12.1, MUST 6). Each string is
+// segmented on its own (§11.5.1), so clusters painted side by side from
+// different strings could join when the row is read whole, in a dump or
+// by the terminal: a regional indicator after a lone one, a Hangul vowel
+// after a leading jamo, a pictograph after a trailing ZWJ, a mark after
+// anything, anything after a Prepend. Scanning a row from the left, the
+// first lead whose cluster joins the one before it becomes a space, with
+// its style and owner (a width-2 lead becomes two spaces); when the lead
+// before it ends with a Prepend code point, which joins whatever follows,
+// that lead becomes a space instead. This repeats until the row reads as
+// its cells. Widths do not change, so layout is unaffected.
+func (p *painter) unjoin() {
+	for y := 0; y < p.g.H; y++ {
+		row := p.g.Cells[y*p.g.W : (y+1)*p.g.W]
+		if !mayJoin(row) {
+			continue
+		}
+		// Each pass turns a lead that is not a space into a space, so
+		// there are at most len(row) passes.
+		for n := 0; n <= len(row); n++ {
+			x := firstJoin(row)
+			if x < 0 {
+				break
+			}
+			c := &row[x]
+			if c.Wide && x+1 < len(row) {
+				r := &row[x+1]
+				r.Ch, r.Ext, r.Cont = ' ', "", false
+			}
+			c.Ch, c.Ext, c.Wide = ' ', "", false
+		}
+	}
+}
+
+// mayJoin reports whether a lead cell of row holds a joiner code point
+// (uniwidth.Joiner), without which the row reads as its cells.
+func mayJoin(row []Cell) bool {
+	for i := range row {
+		if c := &row[i]; !c.Cont && (c.Ext != "" || uniwidth.Joiner(c.Ch)) {
+			return true
+		}
+	}
+	return false
+}
+
+// firstJoin reads row as one string and returns the column of the lead
+// cell unjoin replaces at the first place where it does not segment into
+// the row's lead cells' clusters, or -1 when it does.
+func firstJoin(row []Cell) int {
+	var b strings.Builder
+	var cols, ends []int // each lead's column and the byte offset after it
+	for x := range row {
+		if c := &row[x]; !c.Cont {
+			b.WriteRune(c.Ch)
+			b.WriteString(c.Ext)
+			cols, ends = append(cols, x), append(ends, b.Len())
+		}
+	}
+	s := b.String()
+	i, off, at := 0, 0, -1
+	uniwidth.Each(s, func(c string, _ int) bool {
+		start := off
+		off += len(c)
+		switch {
+		case off == ends[i]:
+			i++
+			return true
+		case off < ends[i]:
+			at = cols[i] // the lead is not one cluster in its row
+		case uniwidth.Count(s[start:ends[i]]+" ") == 1:
+			at = cols[i] // it ends with a Prepend (UAX #29 GB9b)
+		default:
+			at = cols[i+1] // the next lead joins it
+		}
+		return false
+	})
+	return at
 }
 
 // visible is the part of r inside clip and the grid: the only cells paint
@@ -96,11 +299,24 @@ func (p *painter) visible(r, clip layout.Rect) layout.Rect {
 	return r.Intersect(clip).Intersect(layout.Rect{W: p.g.W, H: p.g.H})
 }
 
+// text paints s cluster by cluster from (x, y). Width-0 clusters occupy no
+// column; clusters past the right edge of clip are not visited.
 func (p *painter) text(clip layout.Rect, x, y int, s string, st cellStyle) {
-	for _, r := range s {
-		p.set(clip, x, y, r, st)
-		x++
+	if y < clip.Y || y >= clip.Y+clip.H || y < 0 || y >= p.g.H {
+		return
 	}
+	right := min(clip.X+clip.W, p.g.W)
+	uniwidth.Each(s, func(c string, w int) bool {
+		if x >= right {
+			return false
+		}
+		if w > 0 {
+			r, n := utf8.DecodeRuneInString(c)
+			p.put(clip, x, y, r, c[n:], w, st)
+			x += w
+		}
+		return true
+	})
 }
 
 type cellStyle struct {
@@ -137,6 +353,8 @@ func Paint(root *layout.Box, modals []*layout.Box, cols, rows int) *Grid {
 	for _, m := range modals {
 		p.box(m, "")
 	}
+	p.settle()
+	p.unjoin()
 	return p.g
 }
 
@@ -156,7 +374,7 @@ var borders = map[string][6]rune{
 }
 
 func (p *painter) box(b *layout.Box, owner string) {
-	if !b.Laid {
+	if b == nil || !b.Laid {
 		return
 	}
 	owner = ownerOf(b, owner)
@@ -250,17 +468,19 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 	clip := b.Clip.Intersect(c)
 	switch b.Kind {
 	case "text":
+		// Each line is painted whole from its aligned origin and clipped at
+		// the content box, cluster by cluster (SPEC v0.2 §11.5.2, §12.1): a
+		// wide cluster straddling the right edge paints a space.
 		lines := layout.Lines(b.Text, c.W, b.Style.Wrap)
 		for i, line := range lines {
 			if i >= c.H {
 				break
 			}
-			line = layout.Cut(line, c.W)
 			x := c.X + alignOffset(b.Style.ContentAlign, c.W, layout.Width(line))
 			p.text(clip, x, c.Y+i, line, st)
 		}
 	case "button":
-		label := layout.Cut(layout.ButtonLabel(b), c.W)
+		label := layout.ButtonLabel(b)
 		x := c.X + alignOffset(b.Style.ContentAlign, c.W, layout.Width(label))
 		p.text(clip, x, c.Y, label, st)
 	case "input":
@@ -302,35 +522,66 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 	}
 }
 
+// input paints an input's value, or its dim placeholder, and places the
+// cursor (SPEC v0.2 §12.1). Box.Cursor counts code points; a cursor inside
+// a cluster stands after that cluster. With W the content width and p the
+// width of the clusters before the cursor, the painted window starts at the
+// first cluster when p < W, else at the first cluster s such that the
+// clusters from s up to the cursor are at most W-1 columns; clusters are
+// painted from there while they fit. A secret input shows one • per
+// cluster. For ASCII values this is the v0.1 rule, one rune per cell.
 func (p *painter) input(b *layout.Box, clip layout.Rect, st cellStyle) {
 	c := b.Content
 	if c.W <= 0 || c.H <= 0 {
 		return
 	}
-	runes := []rune(b.Text)
-	if b.Secret {
-		for i := range runes {
-			runes[i] = '•'
+	type cluster struct {
+		s    string
+		w, n int // width, code points
+	}
+	var cl []cluster
+	uniwidth.Each(b.Text, func(s string, w int) bool {
+		if b.Secret {
+			cl = append(cl, cluster{"•", 1, utf8.RuneCountInString(s)})
+		} else {
+			cl = append(cl, cluster{s, w, utf8.RuneCountInString(s)})
+		}
+		return true
+	})
+	// k is the number of clusters before the cursor, pw their width.
+	k, pw := 0, 0
+	for runes := max(b.Cursor, 0); k < len(cl) && runes > 0; k++ {
+		runes -= cl[k].n
+		pw += cl[k].w
+	}
+	start, before := 0, pw // before: width of the clusters from start to the cursor
+	if pw >= c.W {
+		for start < k && before > c.W-1 {
+			before -= cl[start].w
+			start++
 		}
 	}
-	cursor := min(max(b.Cursor, 0), len(runes))
-	if len(runes) == 0 && b.Placeholder != "" {
+	if len(cl) == 0 && b.Placeholder != "" {
 		ph := st
 		ph.attrs |= Dim
 		p.text(clip, c.X, c.Y, layout.Cut(b.Placeholder, c.W), ph)
 	} else {
-		// Keep the cursor visible: show the tail when the value is long.
-		start := 0
-		if cursor >= c.W {
-			start = cursor - c.W + 1
+		x, used := c.X, 0
+		for _, cc := range cl[start:] {
+			if used+cc.w > c.W {
+				break
+			}
+			if cc.w > 0 {
+				r, n := utf8.DecodeRuneInString(cc.s)
+				p.put(clip, x, c.Y, r, cc.s[n:], cc.w, st)
+			}
+			x += cc.w
+			used += cc.w
 		}
-		end := min(len(runes), start+c.W)
-		p.text(clip, c.X, c.Y, string(runes[start:end]), st)
-		cursor -= start
 	}
 	if b.Focused {
-		cx := c.X + min(cursor, c.W-1)
-		if len(runes) == 0 {
+		cx := c.X + min(before, c.W-1)
+		if len(cl) == 0 {
 			cx = c.X
 		}
 		if clip.Contains(cx, c.Y) {

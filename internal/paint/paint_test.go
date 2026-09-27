@@ -318,8 +318,15 @@ func TestGridHasNoControlCharacters(t *testing.T) {
 			}
 		}
 	}
-	if got := g.Lines()[0]; got != "┌─ a b  ───┐" {
+	// Control characters are width-0 clusters (SPEC v0.2 §11.5.1 rule 1): they
+	// occupy no column and are never painted. (v0.1 painted each as a space:
+	// "┌─ a b  ───┐" and "[ o k ]".) Parse and binding strip them first
+	// anyway (V007), so only hand-built boxes carry them here.
+	if got := g.Lines()[0]; got != "┌─ ab ─────┐" {
 		t.Errorf("title = %q", got)
+	}
+	if got := g.Lines()[3]; !strings.HasPrefix(got, "[ ok ]") {
+		t.Errorf("button = %q", got)
 	}
 }
 
@@ -362,7 +369,7 @@ func TestANSI(t *testing.T) {
 	g.At(0, 0).Ch = 'a'
 	g.At(1, 0).Ch = 'b'
 	g.At(1, 0).Attrs = Bold
-	if got := Full(g); got != "\x1b[0;39;49ma\x1b[0;1;39;49mb\x1b[0m\n" {
+	if got := Full(g); got != AutowrapOff+"\x1b[0;39;49ma\x1b[0;1;39;49mb\x1b[0m\n"+AutowrapOn {
 		t.Errorf("Full = %q", got)
 	}
 }

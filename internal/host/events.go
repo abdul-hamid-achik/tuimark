@@ -3,9 +3,11 @@ package host
 import (
 	"errors"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
+	"github.com/abdul-hamid-achik/tuimark/internal/uniwidth"
 )
 
 // Key is one decoded key press. Name is the key token (SPEC §8.1); Rune is
@@ -185,16 +187,78 @@ func (a *App) HandleKeyRun(keys []Key) ([]Event, int) {
 	return a.handleKey(keys[0]), 1
 }
 
-// insertText types text into input b at its cursor: one edit, and one
-// on:change when the input has one. Caller holds a.mu.
-func (a *App) insertText(b *layout.Box, text []rune) []Event {
+// clusterBounds returns the grapheme cluster boundaries of v, counted in
+// code points: 0, then the end of each cluster, the last being the code
+// point count of v (SPEC v0.2 §12.1: an input's cursor stands between
+// clusters).
+func clusterBounds(v string) []int {
+	bounds := []int{0}
+	n := 0
+	uniwidth.Each(v, func(c string, _ int) bool {
+		n += utf8.RuneCountInString(c)
+		bounds = append(bounds, n)
+		return true
+	})
+	return bounds
+}
+
+// boundAtOrAfter returns the first boundary at or after c: a cursor
+// inside a cluster stands after that cluster.
+func boundAtOrAfter(bounds []int, c int) int {
+	for _, b := range bounds {
+		if b >= c {
+			return b
+		}
+	}
+	return bounds[len(bounds)-1]
+}
+
+// boundBefore returns the last boundary before c, or 0.
+func boundBefore(bounds []int, c int) int {
+	p := 0
+	for _, b := range bounds {
+		if b >= c {
+			break
+		}
+		p = b
+	}
+	return p
+}
+
+// boundAfter returns the first boundary after c, or the last one.
+func boundAfter(bounds []int, c int) int {
+	for _, b := range bounds {
+		if b > c {
+			return b
+		}
+	}
+	return bounds[len(bounds)-1]
+}
+
+// inputCursor returns the state of input b, its value as code points, and
+// the value's cluster boundaries, after clamping the cursor to the value
+// and moving it to a cluster boundary (a cursor inside a cluster stands
+// after it, as painting shows it). Caller holds a.mu.
+func (a *App) inputCursor(b *layout.Box) (*inputState, []rune, []int) {
 	st := a.input(b.ID)
-	runes := []rune(a.inputValue(b))
-	st.cursor = min(max(st.cursor, 0), len(runes))
+	v := a.inputValue(b)
+	runes := []rune(v)
+	bounds := clusterBounds(v)
+	st.cursor = boundAtOrAfter(bounds, min(max(st.cursor, 0), len(runes)))
+	return st, runes, bounds
+}
+
+// insertText types text into input b at its cursor: one edit, and one
+// on:change when the input has one. The cursor ends after the inserted
+// text, moved forward to the next cluster boundary when the text merged
+// with the cluster that follows (SPEC v0.2 §12.1). Caller holds a.mu.
+func (a *App) insertText(b *layout.Box, text []rune) []Event {
+	st, runes, _ := a.inputCursor(b)
 	out := make([]rune, 0, len(runes)+len(text))
 	out = append(append(append(out, runes[:st.cursor]...), text...), runes[st.cursor:]...)
-	st.cursor += len(text)
-	a.setInputValue(b, string(out))
+	v := string(out)
+	st.cursor = boundAtOrAfter(clusterBounds(v), st.cursor+len(text))
+	a.setInputValue(b, v)
 	if act, ok := b.Src.On["change"]; ok {
 		return []Event{a.eventFor(act, b)}
 	}
@@ -311,15 +375,16 @@ func (a *App) widgetKey(b *layout.Box, k Key) ([]Event, bool) {
 		if isPrintable(k) {
 			return a.insertText(b, []rune{k.Rune}), true
 		}
-		st := a.input(b.ID)
-		runes := []rune(a.inputValue(b))
-		st.cursor = min(max(st.cursor, 0), len(runes))
+		// The cursor stands between grapheme clusters: left, right, and
+		// backspace move over or delete a whole cluster (SPEC v0.2 §12.1).
+		st, runes, bounds := a.inputCursor(b)
 		changed := false
 		switch {
 		case k.Name == "backspace" || k.Name == "ctrl+h":
 			if st.cursor > 0 {
-				runes = append(runes[:st.cursor-1], runes[st.cursor:]...)
-				st.cursor--
+				p := boundBefore(bounds, st.cursor)
+				runes = append(runes[:p], runes[st.cursor:]...)
+				st.cursor = p
 				changed = true
 			}
 		case k.Name == "ctrl+u":
@@ -327,10 +392,10 @@ func (a *App) widgetKey(b *layout.Box, k Key) ([]Event, bool) {
 				runes, st.cursor, changed = nil, 0, true
 			}
 		case k.Name == "left":
-			st.cursor = max(0, st.cursor-1)
+			st.cursor = boundBefore(bounds, st.cursor)
 			return nil, true
 		case k.Name == "right":
-			st.cursor = min(len(runes), st.cursor+1)
+			st.cursor = boundAfter(bounds, st.cursor)
 			return nil, true
 		case k.Name == "home" || k.Name == "ctrl+a":
 			st.cursor = 0

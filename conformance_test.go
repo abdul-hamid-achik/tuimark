@@ -294,3 +294,364 @@ func TestHugeSizesDumpPromptly(t *testing.T) {
 		t.Fatal("dump/validate of a huge box did not finish: paint walks the logical rect")
 	}
 }
+
+// SPEC v0.2 §21 tests 22–25: auto-fit of unsized viewports (§11.4, ADR
+// 0007) applies to version="1" documents, and L006 reports viewports that
+// can never show part of their content.
+
+func l006IDs(diags []tuimark.Diagnostic) []string {
+	var out []string
+	for _, d := range diags {
+		if d.Code == "L006" {
+			out = append(out, d.ID)
+		}
+	}
+	return out
+}
+
+// 22. A col holding an unsized 2000-row list and a one-line text at 80×24:
+// the list gets the rows left above the text, the text stays on the last
+// row, and the list follows its selection. v0.1 gave the list 80x2000 and
+// pushed the status line off-screen.
+func TestAutoFitLongList(t *testing.T) {
+	app := parseDoc(t, `<tui version="1"><screen id="s"><col>
+  <list id="l" each="rows as r" key="r" bind="sel"><item><text>{r}</text></item></list>
+  <text id="status">status line</text>
+</col></screen></tui>`)
+	rows := make([]string, 2000)
+	for i := range rows {
+		rows[i] = fmt.Sprintf("r%04d", i)
+	}
+	if err := app.Bind("rows", rows); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		sel, first, last string // selection, top visible row, row above the status
+	}{
+		{"r0000", "r0000", "r0022"},
+		{"r1000", "r0978", "r1000"},
+		{"r1999", "r1977", "r1999"},
+	} {
+		if err := app.Bind("sel", c.sel); err != nil {
+			t.Fatal(err)
+		}
+		d := dumpOf(t, app, 80, 24)
+		if !d.OK || len(d.Errors) != 0 {
+			t.Fatalf("%s: %v", c.sel, d.Errors)
+		}
+		if got := geom(node(t, d, "l")); got != "80x23@(0,0)" {
+			t.Errorf("%s: list %s", c.sel, got)
+		}
+		if got := geom(node(t, d, "status")); got != "80x1@(0,23)" {
+			t.Errorf("%s: status %s", c.sel, got)
+		}
+		if !strings.HasPrefix(d.Grid[0], c.first) || !strings.HasPrefix(d.Grid[22], c.last) || !strings.HasPrefix(d.Grid[23], "status line") {
+			t.Errorf("%s: grid rows 0, 22, 23 = %q %q %q", c.sel, d.Grid[0], d.Grid[22], d.Grid[23])
+		}
+		items := 0
+		for _, n := range d.Nodes {
+			if n.Tag == "item" {
+				items++
+				if n.Selected && n.Key != c.sel {
+					t.Errorf("%s: selected item %q", c.sel, n.Key)
+				}
+			}
+		}
+		if items != 2000 {
+			t.Errorf("%s: %d item nodes, want every item laid out", c.sel, items)
+		}
+	}
+	if diags := app.Validate(); len(diags) != 0 {
+		t.Errorf("validate: %v", diags)
+	}
+}
+
+// 23. Auto-fit is a no-op when the content fits and in unbounded
+// allocations.
+func TestAutoFitNoOp(t *testing.T) {
+	app := parseDoc(t, `<tui version="1"><screen id="s"><col>
+  <list id="l" each="rows as r" key="r"><item><text>{r}</text></item></list>
+  <text id="after">after</text>
+</col></screen></tui>`)
+	_ = app.Bind("rows", []string{"a", "b", "c"})
+	d := dumpOf(t, app, 80, 24)
+	if geom(node(t, d, "l")) != "80x3@(0,0)" || geom(node(t, d, "after")) != "80x1@(0,3)" || len(d.Errors) != 0 {
+		t.Errorf("fits: list %s after %s %v", geom(node(t, d, "l")), geom(node(t, d, "after")), d.Errors)
+	}
+	app = parseDoc(t, `<tui version="1"><screen id="s"><scroll id="outer" style="height: 5">
+  <list id="l" each="rows as r" key="r"><item><text>{r}</text></item></list>
+</scroll></screen></tui>`)
+	rows := make([]string, 40)
+	for i := range rows {
+		rows[i] = fmt.Sprint(i)
+	}
+	_ = app.Bind("rows", rows)
+	d = dumpOf(t, app, 80, 24)
+	if geom(node(t, d, "l")) != "80x40@(0,0)" || len(d.Errors) != 0 {
+		t.Errorf("inside a scroll: list %s %v", geom(node(t, d, "l")), d.Errors)
+	}
+	if diags := app.Validate(); len(diags) != 0 {
+		t.Errorf("validate: %v", diags)
+	}
+}
+
+// 24. L006: two stacked unsized lists that overflow (the second gets 0
+// rows), a sized list clipped by a box that does not scroll, and not the
+// same list inside a <scroll>.
+func TestL006(t *testing.T) {
+	rows := make([]string, 40)
+	for i := range rows {
+		rows[i] = fmt.Sprint(i)
+	}
+	cases := []struct {
+		name, body, want string
+	}{
+		{"stacked lists", `<col>
+  <list id="a" each="rows as r" key="r"><item><text>{r}</text></item></list>
+  <list id="b" each="rows as r" key="r"><item><text>{r}</text></item></list>
+</col>`, "b"},
+		{"clipped by a box", `<box style="height: 5">
+  <list id="l" style="height: 10" each="rows as r" key="r"><item><text>{r}</text></item></list>
+</box>`, "l"},
+		{"inside a scroll", `<scroll style="height: 5">
+  <list id="l" style="height: 10" each="rows as r" key="r"><item><text>{r}</text></item></list>
+</scroll>`, ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			app := parseDoc(t, `<tui version="1"><screen id="s">`+c.body+`</screen></tui>`)
+			_ = app.Bind("rows", rows)
+			d := dumpOf(t, app, 80, 24)
+			if got := strings.Join(l006IDs(d.Errors), " "); got != c.want {
+				t.Errorf("dump L006 on %q, want %q: %v", got, c.want, d.Errors)
+			}
+			if !d.OK {
+				t.Errorf("L006 is a warning: %v", d.Errors)
+			}
+			for _, e := range d.Errors {
+				if e.Code == "L006" && e.Severity != "warning" {
+					t.Errorf("severity %q", e.Severity)
+				}
+			}
+			if got := strings.Join(l006IDs(app.Validate()), " "); got != c.want {
+				t.Errorf("validate L006 on %q, want %q", got, c.want)
+			}
+		})
+	}
+	app := parseDoc(t, `<tui version="1"><screen id="s">`+cases[0].body+`</screen></tui>`)
+	_ = app.Bind("rows", rows)
+	d := dumpOf(t, app, 80, 24)
+	if geom(node(t, d, "a")) != "80x24@(0,0)" || geom(node(t, d, "b")) != "80x0@(0,24)" {
+		t.Errorf("document order: a %s b %s", geom(node(t, d, "a")), geom(node(t, d, "b")))
+	}
+}
+
+// 25. The examples with sample data: the viewport geometry at 40, 80, and
+// 120 columns is the v0.1 one (every scrollable there is fr or fits), and
+// no L006 is reported. The before/after comparison (dashboard and agent
+// identical to v0.1 in nodes and grid) is recorded in ADR 0007, section
+// "Comparación (resultado)".
+func TestAutoFitExamplesUnchanged(t *testing.T) {
+	bind := func(t *testing.T, app *tuimark.App, path string) {
+		t.Helper()
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var data map[string]any
+		if err := json.Unmarshal(raw, &data); err != nil {
+			t.Fatal(err)
+		}
+		if err := app.Bind("", data); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, c := range []struct {
+		file, data string
+		cols, rows int
+		want       map[string]string
+	}{
+		{"examples/dashboard/app.tui", "examples/dashboard/sample.json", 40, 24, map[string]string{"steps": "20x16@(1,2)", "logScroll": "15x18@(24,4)"}},
+		{"examples/dashboard/app.tui", "examples/dashboard/sample.json", 80, 24, map[string]string{"steps": "20x16@(1,2)", "logScroll": "55x18@(24,4)"}},
+		{"examples/dashboard/app.tui", "examples/dashboard/sample.json", 120, 30, map[string]string{"steps": "30x22@(1,2)", "logScroll": "85x24@(34,4)"}},
+		{"examples/agent/agent.tui", "examples/agent/sample.json", 40, 24, map[string]string{"transcript": "40x20@(0,0)"}},
+		{"examples/agent/agent.tui", "examples/agent/sample.json", 80, 24, map[string]string{"transcript": "80x19@(0,1)"}},
+		{"examples/agent/agent.tui", "examples/agent/sample.json", 120, 30, map[string]string{"transcript": "89x25@(0,1)", "activity": "28x2@(91,2)", "files": "28x1@(91,16)"}},
+	} {
+		app := load(t, c.file)
+		bind(t, app, c.data)
+		d := dumpOf(t, app, c.cols, c.rows)
+		if !d.OK || len(d.Errors) != 0 {
+			t.Errorf("%s %dx%d: %v", c.file, c.cols, c.rows, d.Errors)
+		}
+		for id, want := range c.want {
+			if got := geom(node(t, d, id)); got != want {
+				t.Errorf("%s %dx%d: #%s = %s, want %s", c.file, c.cols, c.rows, id, got, want)
+			}
+		}
+	}
+}
+
+// scrollOf renders a node's §13.2 scroll member as JSON ("" when absent),
+// so the axis pairs and their order are part of what is compared.
+func scrollOf(t *testing.T, n tuimark.DumpNode) string {
+	t.Helper()
+	if n.Scroll == nil {
+		return ""
+	}
+	b, err := json.Marshal(n.Scroll)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+// 22 (continued). The list dumps `scroll` with the offset it used and
+// h = 2000 plus any gaps (SPEC v0.2 §13.2, §21 test 22).
+func TestAutoFitLongListDumpsScroll(t *testing.T) {
+	rows := make([]string, 2000)
+	for i := range rows {
+		rows[i] = fmt.Sprintf("r%04d", i)
+	}
+	for _, c := range []struct {
+		gap  string
+		sel  string
+		want string
+	}{
+		{"", "r0000", `{"y":0,"h":2000}`},
+		{"", "r1000", `{"y":978,"h":2000}`},
+		{"", "r1999", `{"y":1977,"h":2000}`},
+		{"gap: 1", "r0000", `{"y":0,"h":3999}`},
+		{"gap: 1", "r1999", `{"y":3976,"h":3999}`},
+	} {
+		app := parseDoc(t, `<tui version="1"><screen id="s"><col>
+  <list id="l" style="`+c.gap+`" each="rows as r" key="r" bind="sel"><item><text>{r}</text></item></list>
+  <text id="status">status line</text>
+</col></screen></tui>`)
+		if err := app.Bind("rows", rows); err != nil {
+			t.Fatal(err)
+		}
+		if err := app.Bind("sel", c.sel); err != nil {
+			t.Fatal(err)
+		}
+		d := dumpOf(t, app, 80, 24)
+		if got := scrollOf(t, node(t, d, "l")); got != c.want {
+			t.Errorf("%q %s: scroll %s, want %s", c.gap, c.sel, got, c.want)
+		}
+		if got := scrollOf(t, node(t, d, "status")); got != "" {
+			t.Errorf("a text has no scroll: %s", got)
+		}
+	}
+}
+
+// SPEC v0.2 §11.5.2/§12.1: a secret input is sized by what it paints (one
+// • per cluster), so a CJK secret and an ASCII secret with the same number
+// of clusters give the same geometry and the same grid.
+func TestSecretInputGeometryHidesWidth(t *testing.T) {
+	const doc = `<tui version="1"><screen id="m"><row><input id="s" secret="true" bind="s"/><text id="bar">|</text></row></screen></tui>`
+	var ref *tuimark.Dump
+	for _, v := range []string{"abcd", "微信微信", "👨‍👩‍👧xyz", "​​​​"} {
+		app := parseDoc(t, doc)
+		if err := app.Bind("s", v); err != nil {
+			t.Fatal(err)
+		}
+		d := dumpOf(t, app, 12, 1)
+		if !d.OK {
+			t.Fatalf("%q: %v", v, d.Errors)
+		}
+		in := node(t, d, "s")
+		if in.W != 5 || in.Text != "••••" || d.Grid[0] != "•••• |      " {
+			t.Errorf("%q: input %s text %q grid %q, want 5 wide, 4 bullets painted", v, geom(in), in.Text, d.Grid[0])
+		}
+		if ref == nil {
+			ref = d
+			continue
+		}
+		if geom(node(t, d, "bar")) != geom(node(t, ref, "bar")) || strings.Join(d.Grid, "\n") != strings.Join(ref.Grid, "\n") {
+			t.Errorf("%q: geometry or grid differs from an ASCII secret of the same length", v)
+		}
+	}
+}
+
+// SPEC v0.2 §11.3/§14 L001: an fr weight the document wrote along one of a
+// viewport's own scroll axes; built-in sizes (col/row 1fr, spacer flex: 1)
+// are auto there without a diagnostic, and every other container is a
+// flex parent.
+func TestL001ViewportRule(t *testing.T) {
+	for _, c := range []struct {
+		name, body string
+		l001       bool
+	}{
+		{"scroll > col", `<col><scroll id="sc"><col id="in"><text>a</text><text>b</text></col></scroll><text>status</text></col>`, false},
+		{"scroll > row", `<col><scroll id="sc"><row id="in"><text>a</text></row></scroll><text>status</text></col>`, false},
+		{"scroll > spacer", `<scroll style="height: 3"><text>a</text><spacer/><text>b</text></scroll>`, false},
+		{"x scroll > col", `<col><scroll axis="x"><col id="in"><text>a</text></col></scroll></col>`, false},
+		{"list > item > row", `<list id="l" each="rows as r" key="r"><item><row><text>{r}</text></row></item></list>`, false},
+		{"list > item > col", `<list id="l" each="rows as r" key="r"><item><col><text>{r}</text></col></item></list>`, false},
+		{"overflow: scroll > col", `<box style="overflow: scroll; height: 5"><col id="in"><text>a</text></col></box>`, false},
+		{"overflow: scroll > col with height: 1fr", `<box style="overflow: scroll; height: 5"><col id="in" style="height: 1fr"><text>a</text></col></box>`, true},
+		{"scroll > box with flex: 1", `<scroll style="height: 5"><box id="in" style="flex: 1"><text>a</text></box></scroll>`, true},
+		{"box > col with height: 1fr", `<box style="height: 5"><col id="in" style="height: 1fr"><text>a</text></col></box>`, false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			app := parseDoc(t, `<tui version="1"><screen id="s">`+c.body+`</screen></tui>`)
+			_ = app.Bind("rows", []string{"a", "b"})
+			if got := hasCode(app.Validate(), "L001"); got != c.l001 {
+				t.Errorf("L001 = %v, want %v: %v", got, c.l001, app.Validate())
+			}
+			d := dumpOf(t, app, 20, 6)
+			if d.OK == c.l001 {
+				t.Errorf("dump ok = %v: %v", d.OK, d.Errors)
+			}
+		})
+	}
+	// <scroll><col> lays the col out at its content height (auto on the
+	// scroll axis), and the unsized scroll auto-fits above the status.
+	app := parseDoc(t, `<tui version="1"><screen id="s"><col><scroll id="sc"><col id="in"><text>a</text><text>b</text></col></scroll><text id="st">status</text></col></screen></tui>`)
+	d := dumpOf(t, app, 20, 6)
+	if geom(node(t, d, "in")) != "20x2@(0,0)" || geom(node(t, d, "sc")) != "20x2@(0,0)" || geom(node(t, d, "st")) != "20x1@(0,2)" {
+		t.Errorf("in %s sc %s st %s", geom(node(t, d, "in")), geom(node(t, d, "sc")), geom(node(t, d, "st")))
+	}
+}
+
+// SPEC v0.2 §11.4 shrinkable: a viewport is shrinkable on an axis it does
+// not scroll when a child is, so a long list inside a <scroll axis="x">
+// fits the rows left and the status line stays on the last row.
+func TestAutoFitThroughCrossAxisViewport(t *testing.T) {
+	app := parseDoc(t, `<tui version="1"><screen id="s"><col id="c"><scroll id="sc" axis="x"><list id="l" each="rows as r" key="r"><item><text>{r}</text></item></list></scroll><text id="t2">status</text></col></screen></tui>`)
+	rows := make([]string, 2000)
+	for i := range rows {
+		rows[i] = fmt.Sprint(i)
+	}
+	_ = app.Bind("rows", rows)
+	d := dumpOf(t, app, 80, 24)
+	if len(d.Errors) != 0 {
+		t.Fatalf("%v", d.Errors)
+	}
+	for id, want := range map[string]string{"sc": "80x23@(0,0)", "l": "80x23@(0,0)", "t2": "80x1@(0,23)"} {
+		if got := geom(node(t, d, id)); got != want {
+			t.Errorf("#%s = %s, want %s", id, got, want)
+		}
+	}
+	if got := scrollOf(t, node(t, d, "sc")); got != `{"x":0,"w":80}` {
+		t.Errorf("sc scroll %s", got)
+	}
+	if got := scrollOf(t, node(t, d, "l")); got != `{"y":0,"h":2000}` {
+		t.Errorf("l scroll %s", got)
+	}
+}
+
+// SPEC v0.2 §11.4: axis= is allowed only on scroll and rule; a container
+// with overflow: scroll scrolls on y, also under layout: row.
+func TestOverflowScrollAxisIsY(t *testing.T) {
+	x := strings.Repeat("x", 200)
+	app := parseDoc(t, `<tui version="1"><screen id="s"><col><box id="ov" axis="x" style="overflow: scroll"><text>`+x+`</text></box></col></screen></tui>`)
+	if !hasCode(app.Validate(), "V002") {
+		t.Errorf("axis on a box: %v", app.Validate())
+	}
+	app = parseDoc(t, `<tui version="1"><screen id="s"><row><box id="ov" style="overflow: scroll; layout: row; height: 3"><text>`+x+`</text></box><text id="right">right</text></row></screen></tui>`)
+	d := dumpOf(t, app, 80, 24)
+	if got := scrollOf(t, node(t, d, "ov")); got != `{"y":0,"h":3}` {
+		t.Errorf("overflow: scroll box scroll %s, want y only", got)
+	}
+}

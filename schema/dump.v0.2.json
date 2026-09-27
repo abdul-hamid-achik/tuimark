@@ -1,0 +1,138 @@
+{
+  "$id": "https://tui.local/schema/dump.v0.2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tuimark dump (frame IR)",
+  "$ref": "#/$defs/dump",
+  "$defs": {
+    "dump": {
+      "type": "object",
+      "required": ["cols", "rows", "ok", "focus", "errors", "nodes", "grid"],
+      "additionalProperties": false,
+      "properties": {
+        "cols": { "type": "integer", "minimum": 0 },
+        "rows": { "type": "integer", "minimum": 0 },
+        "ok": { "type": "boolean" },
+        "focus": { "type": ["string", "null"] },
+        "errors": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "grid": { "type": "array", "items": { "type": "string" } },
+        "wide": { "const": true },
+        "cells": { "type": "array", "items": { "$ref": "#/$defs/cell" } },
+        "theme": { "enum": ["dark", "light"] },
+        "styles": {
+          "type": "array",
+          "items": { "type": "array", "items": { "$ref": "#/$defs/span" } }
+        },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+        "frames": { "type": "array", "items": { "$ref": "#/$defs/frame" } }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": ["severity", "code", "msg"],
+      "additionalProperties": false,
+      "properties": {
+        "severity": { "enum": ["error", "warning"] },
+        "code": { "type": "string", "pattern": "^[VLB][0-9]{3}$" },
+        "msg": { "type": "string" },
+        "file": { "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 },
+        "col": { "type": "integer", "minimum": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "tag": {
+      "enum": [
+        "app", "screen",
+        "col", "row", "box", "scroll", "spacer",
+        "text", "rule",
+        "list", "item", "input", "button", "progress",
+        "modal"
+      ]
+    },
+    "node": {
+      "type": "object",
+      "required": ["tag", "x", "y", "w", "h"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "tag": { "$ref": "#/$defs/tag" },
+        "x": { "type": "integer" },
+        "y": { "type": "integer" },
+        "w": { "type": "integer", "minimum": 0 },
+        "h": { "type": "integer", "minimum": 0 },
+        "text": { "type": "string", "minLength": 1 },
+        "key": { "type": "string", "minLength": 1 },
+        "focused": { "const": true },
+        "selected": { "const": true },
+        "scroll": { "$ref": "#/$defs/scroll" }
+      }
+    },
+    "scroll": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "w": { "type": "integer", "minimum": 0 },
+        "h": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "required": ["x", "y", "ch"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "ch": { "type": "string" },
+        "id": { "type": "string", "minLength": 1 },
+        "w": { "const": 2 }
+      }
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^(#[0-9a-f]{6}|default|(bright-)?(black|red|green|yellow|blue|magenta|cyan|white))$"
+    },
+    "span": {
+      "type": "object",
+      "required": ["x", "w", "fg", "bg"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "w": { "type": "integer", "minimum": 1 },
+        "fg": { "$ref": "#/$defs/color" },
+        "bg": { "$ref": "#/$defs/color" },
+        "a": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "enum": ["bold", "dim", "italic", "underline", "reverse"] }
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "required": ["step", "action", "source", "keys", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "step": { "type": "integer", "minimum": 0 },
+        "action": { "type": "string", "minLength": 1 },
+        "source": { "type": "string" },
+        "keys": { "type": "object" },
+        "value": {}
+      }
+    },
+    "frame": {
+      "type": "object",
+      "required": ["step", "input", "events", "dump"],
+      "additionalProperties": false,
+      "properties": {
+        "step": { "type": "integer", "minimum": 0 },
+        "input": { "type": "string" },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+        "dump": { "$ref": "#/$defs/dump" }
+      }
+    }
+  }
+}

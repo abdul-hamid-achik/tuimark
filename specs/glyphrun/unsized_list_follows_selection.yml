@@ -1,0 +1,57 @@
+version: 1
+name: unsized_list_follows_selection
+intent: |
+    a <list> with no explicit height, inside a fixed-height parent, auto-fits
+    to the parent's available space instead of growing to its full content
+    height (ADR 0007 / SPEC v0.2 C1, applied to version="1" documents too),
+    and scrolls to keep the current selection visible: `tuimark play` moves
+    the selection down 10 rows in a 20-row list rendered in an 8-row content
+    box, and the visible window follows the selection to its new position
+    instead of leaving it off-screen or overflowing the box.
+target:
+    cmd: ["${vars.tuimark}", "play", "specs/fixtures/unsized_list.tui", "--data", "specs/fixtures/unsized_list.json", "--cols", "20", "--rows", "10", "--input", "down down down down down down down down down down"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 80
+steps:
+    - wait:
+        screen:
+            contains: "=== events ==="
+        timeoutMs: 5000
+    - snapshot: after_ten_downs
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: box_stays_eight_rows_tall
+      description: the list's border never grows past the 8-row content box its 10-row parent leaves it (auto-fit, not grow-to-content)
+      verify:
+        screen:
+            matches: '┌──────────────────┐\n(.*\n){8}└──────────────────┘'
+    - id: selection_scrolls_into_view
+      description: after moving down 10 rows, row r10 (the new selection) is visible
+      verify:
+        screen:
+            contains: "r10"
+    - id: view_follows_instead_of_growing
+      description: the view scrolled down with the selection (r0 is out of the 8-row window, r11 has not come into it) rather than showing every row or staying pinned at the top
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/after_ten_downs.txt"
+                if grep -q "^r0 *$" "$f"; then
+                  echo '{"ok": false, "evidence": "r0 is still visible: the list did not scroll away from the top"}'
+                elif grep -q "^r11 *$" "$f"; then
+                  echo '{"ok": false, "evidence": "r11 is visible: more than 8 rows are shown, so the list grew instead of auto-fitting"}'
+                else
+                  echo '{"ok": true, "evidence": "exactly the r3..r10 window is visible: the list auto-fit to 8 rows and scrolled to follow the selection"}'
+                fi
+    - id: no_never_shown_warning
+      description: the layout never reports L006 (a viewport that can never show its selection)
+      verify:
+        screen:
+            notContains: "L006"
+contractHash: sha256:5dede68596bce10c6d8e140fc401c8596dabd6f317befa79244e940a3fe43da0

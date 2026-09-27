@@ -156,8 +156,8 @@ func (b *Box) IsContainer() bool {
 }
 
 // Scrolls reports whether b is a viewport: <scroll>, <list>, or a container
-// with overflow: scroll (which scrolls like <scroll>, on the y axis unless
-// axis= says otherwise).
+// with overflow: scroll (which scrolls like a <scroll> on the y axis; axis=
+// is allowed only on <scroll> and <rule>, SPEC v0.2 §11.4).
 func (b *Box) Scrolls() bool {
 	return b.Kind == "scroll" || b.Kind == "list" || (b.Style.Overflow == "scroll" && b.IsContainer())
 }

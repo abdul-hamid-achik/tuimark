@@ -1,0 +1,76 @@
+version: 1
+name: unicode_wide_borders
+intent: |
+    examples/unicode mixes wide CJK characters, an emoji, and combining-mark
+    sequences inside a bordered box and a list, at 40 columns. Column widths
+    are measured with real per-cell East-Asian-width accounting (ADR 0002),
+    so the box's right border sits at the same terminal column on every row
+    regardless of how many wide glyphs or combining marks that row's text
+    contains.
+target:
+    cmd: ["${vars.tuimark}", "preview", "examples/unicode/app.tui", "--data", "examples/unicode/sample.json", "--cols", "40", "--rows", "24"]
+    cwd: "."
+terminal:
+    # tuimark preview paints the 40x24 grid, then (since preview always also
+    # writes the plain-text dump below it) prints ~68 more lines; the PTY
+    # viewport is generous so none of that scrolls the painted grid's rows
+    # out of the captured screen before the wait/snapshot/cell checks run.
+    cols: 80
+    rows: 100
+steps:
+    - wait:
+        screen:
+            contains: "=== grid 40x24 ==="
+        timeoutMs: 3000
+    - snapshot: rendered
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: shows_the_wide_header
+      description: the header row renders the CJK, café, and fire-emoji text
+      verify:
+        screen:
+            contains: "中文 emoji café"
+    - id: panel_right_border_aligned_on_cjk_row
+      description: "the panel's right border (│) sits at column 25 on the row that starts with 4 double-width CJK characters (中文测试), so the wide glyphs did not push it out of place"
+      verify:
+        cell:
+            x: 25
+            y: 3
+            char: "│"
+    - id: panel_right_border_aligned_on_emoji_row
+      description: "the right border also lands at column 25 on the row with an emoji pair (\U0001F525\U0001F389), each 2 columns wide"
+      verify:
+        cell:
+            x: 25
+            y: 5
+            char: "│"
+    - id: panel_right_border_aligned_on_combining_mark_row
+      description: "the right border lands at column 25 on the row built from a base rune plus a combining acute accent (é as e + U+0301), proving the combining mark added no extra column"
+      verify:
+        cell:
+            x: 25
+            y: 4
+            char: "│"
+    - id: panel_right_border_aligned_on_double_combining_row
+      description: "the right border still lands at column 25 on the row with two stacked combining marks on one base rune (e + U+0301 + U+0301)"
+      verify:
+        cell:
+            x: 25
+            y: 8
+            char: "│"
+    - id: panel_top_and_bottom_borders_match
+      description: the panel's top-left and bottom-left corners sit in the same column as the aligned right border's column (0), confirming the whole box is rectangular
+      verify:
+        cell:
+            x: 0
+            y: 1
+            char: "┌"
+    - id: detail_pane_shows_wrapped_wide_text
+      description: the detail pane's wrapped note keeps the CJK phrase intact on its own line instead of splitting a wide character across two
+      verify:
+        screen:
+            contains: "中文测试"
+contractHash: sha256:b206762139648dde775985b377cdd00a410da39c0d44a17e4579bd4802adf34b

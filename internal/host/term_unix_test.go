@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"syscall"
 	"testing"
@@ -52,6 +53,18 @@ type ptyRig struct {
 
 func startPtyChild(t *testing.T, test, mode string) *ptyRig {
 	t.Helper()
+	return startPtyChildEnv(t, test, mode, nil)
+}
+
+// terminalEnv are the variables Run's color detection, probe, and
+// environment overrides read (SPEC v0.2 §26.10).
+var terminalEnv = []string{"TERM", "TERM_PROGRAM", "SSH_TTY", "WT_SESSION", "COLORTERM", "NO_COLOR", "TUIMARK_COLOR", "TUIMARK_THEME", "TUIMARK_SYNC"}
+
+// startPtyChildEnv is startPtyChild with a pinned terminal environment:
+// with env non-nil, the child gets this process's environment without the
+// terminalEnv variables, plus env ("NAME=value" entries).
+func startPtyChildEnv(t *testing.T, test, mode string, env []string) *ptyRig {
+	t.Helper()
 	master, name, err := openPTY()
 	if err != nil {
 		t.Skipf("no pty: %v", err)
@@ -63,7 +76,21 @@ func startPtyChild(t *testing.T, test, mode string) *ptyRig {
 	}
 	r := &ptyRig{master: master, slave: slave, screen: &syncBuf{}, stderr: &syncBuf{}, exited: make(chan struct{})}
 	r.cmd = exec.Command(os.Args[0], "-test.run=^"+test+"$", "-test.count=1")
-	r.cmd.Env = append(os.Environ(), ptyChildEnv+"="+mode)
+	r.cmd.Env = os.Environ()
+	if env != nil {
+		r.cmd.Env = nil
+	next:
+		for _, kv := range os.Environ() {
+			for _, k := range terminalEnv {
+				if strings.HasPrefix(kv, k+"=") {
+					continue next
+				}
+			}
+			r.cmd.Env = append(r.cmd.Env, kv)
+		}
+		r.cmd.Env = append(r.cmd.Env, env...)
+	}
+	r.cmd.Env = append(r.cmd.Env, ptyChildEnv+"="+mode)
 	r.cmd.Stdin, r.cmd.Stdout, r.cmd.Stderr = slave, slave, r.stderr
 	r.cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true, Setctty: true, Ctty: 0}
 	if err := r.cmd.Start(); err != nil {
@@ -325,7 +352,7 @@ func TestRunSignals(t *testing.T) {
 		killedBy(t, r, syscall.SIGHUP)
 		r.slave.Close() // let the copy of the screen finish
 		time.Sleep(50 * time.Millisecond)
-		if s := r.screen.String(); !strings.Contains(s[max(0, strings.Index(s, "STUCKAPP")):], "\x1b[?25h\x1b[?1049l") {
+		if s := r.screen.String(); !strings.Contains(s[max(0, strings.Index(s, "STUCKAPP")):], "\x1b[?25h\x1b[?7h\x1b[?1049l") {
 			t.Errorf("alternate screen not left, cursor not shown: …%q", s[max(0, len(s)-40):])
 		}
 	})
@@ -430,5 +457,209 @@ func TestWatchSignals(t *testing.T) {
 	r.caught <- syscall.SIGINT
 	if s := recv(t, "twice", r.died); s != syscall.SIGINT {
 		t.Errorf("twice: died with %v", s)
+	}
+}
+
+const runPtyDoc = `<tui version="1">
+<style>screen { background: $bg; color: $fg; }</style>
+<keymap><bind keys="ctrl+s" action="stuck"/></keymap>
+<screen id="s" focus="#q">
+  <input id="q" bind="text" on:change="chg" on:focus="hello"/>
+  <list id="l" each="rows as r" key="r" on:select="pick"><item><text>{r}</text></item></list>
+  <text>PTYAPP 微信</text>
+</screen>
+</tui>`
+
+// runPtyChild runs Run on the pty. Every event is reported on stderr;
+// ctrl+s runs a handler that never returns in time.
+func runPtyChild(t *testing.T) {
+	signalGrace = time.Second
+	a := doc(t, runPtyDoc)
+	_ = a.Bind("", map[string]any{"text": "", "rows": []any{"a", "b"}})
+	for _, act := range []string{"chg", "hello", "pick"} {
+		a.On(act, func(ev Event) error {
+			fmt.Fprintf(os.Stderr, "EVENT %s %q\n", ev.Action, fmt.Sprint(ev.Value))
+			return nil
+		})
+	}
+	a.On("stuck", func(Event) error {
+		fmt.Fprintln(os.Stderr, "HANDLER")
+		time.Sleep(time.Hour)
+		return nil
+	})
+	err := a.Run(os.Stdout)
+	fmt.Fprintf(os.Stderr, "RUN-RETURNED %v\n", err)
+	os.Exit(0)
+}
+
+// startRunPty starts runPtyChild with a pinned environment and, when
+// replies is not "", answers the capability probe with them.
+func startRunPty(t *testing.T, env []string, replies string) *ptyRig {
+	t.Helper()
+	r := startPtyChildEnv(t, "TestRunPty", "run", env)
+	if replies != "" {
+		if !r.waitFor(r.screen, "\x1b[?2027$p\x1b[c", 10*time.Second) {
+			t.Fatalf("no probe; screen %q; %s", r.screen.String(), r.describe())
+		}
+		r.write(t, replies)
+	}
+	if !r.waitFor(r.screen, "PTYAPP", 10*time.Second) || !r.waitFor(r.stderr, "EVENT hello", 5*time.Second) {
+		t.Fatalf("the app never rendered; %s", r.describe())
+	}
+	return r
+}
+
+// leaveWith2027 is the leave sequence of a session that turned mode 2027 on.
+const leaveWith2027 = "\x1b[?2027l\x1b[?2004l\x1b[0m\x1b[?25h\x1b[?7h\x1b[?1049l"
+
+// SPEC v0.2 §21 tests 32, 34, 36, and 37 through a real pty: Run probes
+// the terminal, turns bracketed paste and grapheme mode on, delivers a
+// paste as one edit, ignores a paste off an input, honors TUIMARK_THEME,
+// TUIMARK_COLOR, and TUIMARK_SYNC, skips the probe for Apple Terminal and
+// SSH, and writes the leave sequence on quit and on a stop signal, from
+// the loop and from the signal watcher.
+func TestRunPty(t *testing.T) {
+	if os.Getenv(ptyChildEnv) == "run" {
+		runPtyChild(t)
+		return
+	}
+	probeReplies := "\x1b[?2026;2$y\x1b[?2027;2$y\x1b[?64;1;22c"
+	base := []string{"TERM=xterm-256color", "TUIMARK_COLOR=truecolor"}
+	// §21 test 32: CSI 200 ~, q, CR LF, x, CSI 201 ~ with focus on an input
+	// gives "q x" and one on:change; on a list, nothing happens and the app
+	// keeps running. §21 test 36: quit leaves with 2027 and 2004 off.
+	t.Run("paste", func(t *testing.T) {
+		r := startRunPty(t, base, probeReplies)
+		r.write(t, "\x1b[200~q\r\nx\x1b[201~")
+		if !r.waitFor(r.stderr, `EVENT chg "q x"`, 5*time.Second) {
+			t.Fatalf("no change event for the paste; %s", r.describe())
+		}
+		r.write(t, "\t")
+		r.write(t, "\x1b[200~q\x1b[B\x1b[201~")
+		time.Sleep(300 * time.Millisecond)
+		if !r.alive() {
+			t.Fatalf("a paste on the list ended the app; %s", r.describe())
+		}
+		r.write(t, "\x1b[B")
+		if !r.waitFor(r.stderr, `EVENT pick "<nil>"`, 5*time.Second) {
+			t.Fatalf("the list did not move after the paste; %s", r.describe())
+		}
+		if n := strings.Count(r.stderr.String(), "EVENT chg"); n != 1 {
+			t.Errorf("%d change events, want 1; %s", n, r.describe())
+		}
+		if n := strings.Count(r.stderr.String(), "EVENT pick"); n != 1 {
+			t.Errorf("%d select events (the pasted down key must not move the list); %s", n, r.describe())
+		}
+		r.write(t, "\x03")
+		if !r.wait(10 * time.Second) {
+			t.Fatalf("ctrl+c did not quit; %s", r.describe())
+		}
+		if !strings.Contains(r.stderr.String(), "RUN-RETURNED <nil>") {
+			t.Errorf("Run: %s", r.describe())
+		}
+		r.slave.Close()
+		time.Sleep(50 * time.Millisecond)
+		s := r.screen.String()
+		enter := "\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[H\x1b[2J\x1b[?2004h\x1b[?2026$p\x1b[?2027$p\x1b[c\x1b[?2027h\x1b[?2026h"
+		if !strings.HasPrefix(s, enter) {
+			t.Errorf("start = %q, want %q", s[:min(len(s), len(enter)+10)], enter)
+		}
+		if !strings.HasSuffix(s, leaveWith2027) {
+			t.Errorf("leave = %q", s[max(0, len(s)-50):])
+		}
+		if chaRe := regexp.MustCompile(`微\x1b\[\d+G`); chaRe.MatchString(s) {
+			t.Errorf("CHA with mode 2027 on")
+		}
+	})
+	// Finding 14 (§26.7, §26.8): a paste start marker the terminal's writes
+	// split by more than the esc timeout still starts the paste, so its
+	// payload never becomes keys: the ctrl+c byte in it does not quit.
+	t.Run("paste marker split by the esc timeout", func(t *testing.T) {
+		r := startRunPty(t, base, probeReplies)
+		r.write(t, "\t")
+		for _, split := range []string{"\x1b", "\x1b[2", "\x1b[200"} {
+			r.write(t, split)
+			time.Sleep(150 * time.Millisecond)
+			r.write(t, strings.TrimPrefix("\x1b[200~", split)+"ab\x03q\x1b[201~")
+		}
+		time.Sleep(300 * time.Millisecond)
+		if !r.alive() {
+			t.Fatalf("the paste reached the keymap (ctrl+c quit); %s", r.describe())
+		}
+		r.write(t, "\x1b[B")
+		if !r.waitFor(r.stderr, `EVENT pick "<nil>"`, 5*time.Second) {
+			t.Fatalf("the list did not move after the pastes; %s", r.describe())
+		}
+		if n := strings.Count(r.stderr.String(), "EVENT chg"); n != 0 {
+			t.Errorf("%d change events; %s", n, r.describe())
+		}
+		r.write(t, "\x03")
+		if !r.wait(10 * time.Second) {
+			t.Fatalf("ctrl+c did not quit; %s", r.describe())
+		}
+	})
+	// §21 test 36: a stop signal, idle (the loop returns) and with a stuck
+	// handler (the signal watcher restores the terminal), leaves with 2027
+	// and 2004 off.
+	for _, stuck := range []bool{false, true} {
+		t.Run(fmt.Sprintf("signal stuck=%v", stuck), func(t *testing.T) {
+			r := startRunPty(t, base, probeReplies)
+			if stuck {
+				r.write(t, "\x13") // ctrl+s
+				if !r.waitFor(r.stderr, "HANDLER", 5*time.Second) {
+					t.Fatalf("the handler never ran; %s", r.describe())
+				}
+			}
+			r.signal(t, syscall.SIGTERM)
+			if !r.waitFor(r.screen, leaveWith2027, 5*time.Second) {
+				s := r.screen.String()
+				t.Errorf("no leave sequence with 2027 off: %q; %s", s[max(0, len(s)-60):], r.describe())
+			}
+			if !r.wait(10 * time.Second) {
+				t.Fatalf("SIGTERM did not end the child; %s", r.describe())
+			}
+		})
+	}
+	// §21 tests 35 and 37: TUIMARK_THEME and TUIMARK_COLOR change Run's
+	// frames; TUIMARK_SYNC=1 wraps them and leaves the 2026 query out.
+	// TERM=dumb skips the probe; TUIMARK_COLOR still forces the profile.
+	for _, c := range []struct {
+		name     string
+		env      []string
+		replies  string
+		want     []string
+		dontWant []string
+	}{
+		{"light truecolor", []string{"TERM=dumb", "TUIMARK_COLOR=truecolor", "TUIMARK_THEME=light"}, "", []string{"48;2;255;255;255"}, []string{"48;2;13;17;23", "$p", "\x1b[?2026h"}},
+		{"dark truecolor", []string{"TERM=dumb", "TUIMARK_COLOR=truecolor"}, "", []string{"48;2;13;17;23"}, []string{"48;2;255;255;255", "$p"}},
+		{"dark 256", []string{"TERM=dumb", "TUIMARK_COLOR=256"}, "", []string{"48;5;233"}, []string{"48;2;"}},
+		{"none", []string{"TERM=xterm-256color", "NO_COLOR=1", "TUIMARK_SYNC=0"}, "\x1b[?2027;0$y\x1b[?62c", []string{"\x1b[0;7m"}, []string{"48;", "38;", "\x1b[?2026", "2027h"}},
+		{"sync forced", []string{"TERM=xterm-256color", "TUIMARK_SYNC=1"}, "\x1b[?62c", []string{"\x1b[?2027$p\x1b[c", "\x1b[?2026h", "48;5;233"}, []string{"\x1b[?2026$p", "2027h"}},
+		{"Apple Terminal skips the probe", []string{"TERM=xterm-256color", "TERM_PROGRAM=Apple_Terminal"}, "", []string{"48;5;233"}, []string{"$p", "\x1b[c"}},
+		{"SSH skips the probe", []string{"TERM=xterm-256color", "SSH_TTY=/dev/pts/9"}, "", nil, []string{"$p", "\x1b[c"}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			r := startRunPty(t, c.env, c.replies)
+			r.write(t, "\x03")
+			if !r.wait(10 * time.Second) {
+				t.Fatalf("ctrl+c did not quit; %s", r.describe())
+			}
+			r.slave.Close()
+			time.Sleep(50 * time.Millisecond)
+			s := r.screen.String()
+			for _, w := range c.want {
+				if !strings.Contains(s, w) {
+					t.Errorf("no %q in the output", w)
+				}
+			}
+			for _, w := range c.dontWant {
+				if strings.Contains(s, w) {
+					t.Errorf("%q in the output", w)
+				}
+			}
+			if !strings.HasSuffix(s, leaveScreen) {
+				t.Errorf("leave = %q", s[max(0, len(s)-40):])
+			}
+		})
 	}
 }

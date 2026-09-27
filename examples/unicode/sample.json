@@ -1,0 +1,14 @@
+{
+  "status": "ready",
+  "count": 6,
+  "selected": "1",
+  "note": "This note wraps café (a combining accent), 中文测试 (wide CJK), and 🔥🎉 (emoji) across several lines without ever splitting a grapheme cluster in half, even when the wrap point falls inside a wide character or a combining sequence such as é́.",
+  "rows": [
+    { "id": "1", "label": "中文测试" },
+    { "id": "2", "label": "café latte" },
+    { "id": "3", "label": "emoji 🔥🎉" },
+    { "id": "4", "label": "naïve" },
+    { "id": "5", "label": "中文📦mix" },
+    { "id": "6", "label": "é́ double" }
+  ]
+}
