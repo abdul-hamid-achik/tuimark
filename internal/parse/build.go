@@ -3,6 +3,7 @@ package parse
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -677,6 +678,14 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		for _, c := range strings.Fields(val) {
 			if !isIDName(c) {
 				b.attrErr(n, a, "V003", "bad class name %q", c)
+				continue
+			}
+			// In version="2" an element's classes have no repeats, the
+			// first occurrence wins (SPEC v0.2b §6.13): the dump's
+			// classes, selectors, and inspect all read this list.
+			// version="1" keeps the names as written (its IR and dumps
+			// stay byte-identical to 0.2a).
+			if b.v2 && slices.Contains(n.Classes, c) {
 				continue
 			}
 			n.Classes = append(n.Classes, c)

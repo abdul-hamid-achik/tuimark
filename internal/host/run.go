@@ -520,10 +520,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		return false, nil
 	}
-	// dispatch runs the events of one key or paste. A frame is drawn when
-	// they fired something or focus moved: handlers may open modals and
-	// keys may move focus, and later input in the same read must see the
-	// new frame (:focus, modal trap, focusables).
+	// dispatch runs the events of one key, paste, or mouse event. A frame
+	// is drawn when they fired something, focus moved, or (version="2")
+	// the input changed state the frame shows: handlers may open modals,
+	// keys may move focus, and an edit or a cursor move may change what
+	// when, class guards, if, and built-in targets see; later input in the
+	// same read must see the new frame (SPEC v0.2b §8.6).
 	dispatch := func(evs []Event, focus string) (stop bool, err error) {
 		quit, err := runEvents(evs)
 		if err != nil {
@@ -532,8 +534,8 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		if quit {
 			return true, nil
 		}
-		// A built-in action may have changed the frame without an event
-		// or a focus move (TakeDirty).
+		// The input may have changed the frame without an event or a
+		// focus move (TakeDirty).
 		if changed := a.TakeDirty(); len(evs) > 0 || a.Focus() != focus || changed {
 			if err := draw(); err != nil {
 				return true, err

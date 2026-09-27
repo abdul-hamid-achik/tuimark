@@ -525,8 +525,11 @@ func (s *playSession) settle(step int) {
 }
 
 // handleKeys applies keys through HandleKeyRun's coalescing, dispatching
-// each run's events and redrawing when they fired or focus moved so a later
-// key in the same step sees the fresh frame (mirrors internal/host/run.go's
+// each run's events and redrawing when they fired, focus moved, or the
+// key changed state the frame shows (TakeDirty: in a version="2"
+// document, an input's text or cursor, a list or table cursor, an offset,
+// a checked array, a tab, the screen), so a later key in the same step
+// sees the fresh frame (SPEC v0.2b §8.6; mirrors internal/host/run.go's
 // handleKeys).
 func (s *playSession) handleKeys(step int, keys []host.Key) {
 	for len(keys) > 0 && !s.quit {
@@ -537,8 +540,8 @@ func (s *playSession) handleKeys(step int, keys []host.Key) {
 		if s.quit {
 			return
 		}
-		// A built-in action may have changed the frame without an event
-		// or a focus move (TakeDirty), as in Run.
+		// A key may have changed the frame without an event or a focus
+		// move (TakeDirty), as in Run.
 		if changed := s.app.TakeDirty(); len(evs) > 0 || s.app.Focus() != focus || changed {
 			s.draw()
 		}
@@ -577,6 +580,10 @@ func (s *playSession) handleText(step int, str string) {
 	}
 }
 
+// handlePaste applies one bracketed paste and dispatches its events,
+// redrawing when they fired, focus moved, or the paste changed the
+// input's text (TakeDirty), exactly as Run's loop dispatches a paste, so
+// a later input of the same step sees the new text (SPEC v0.2b §8.6).
 func (s *playSession) handlePaste(step int, payload string) {
 	focus := s.app.Focus()
 	evs := s.app.HandlePaste(payload)
@@ -584,7 +591,7 @@ func (s *playSession) handlePaste(step int, payload string) {
 	if s.quit {
 		return
 	}
-	if len(evs) > 0 || s.app.Focus() != focus {
+	if changed := s.app.TakeDirty(); len(evs) > 0 || s.app.Focus() != focus || changed {
 		s.draw()
 	}
 }

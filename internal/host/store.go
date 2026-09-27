@@ -69,6 +69,34 @@ func assign(root any, path string, v any) (any, error) {
 	return assignSegs(root, segs, v, path)
 }
 
+// canAssign reports whether assign(root, path, v) would succeed, without
+// changing anything: every value along the path, before its last segment,
+// is an object, null, or missing (assign creates objects there), or an
+// array indexed by an in-range numeric segment.
+func canAssign(root any, path string) bool {
+	if path == "" {
+		return true
+	}
+	cur := root
+	for _, seg := range strings.Split(path, ".") {
+		switch c := cur.(type) {
+		case nil:
+			return true
+		case map[string]any:
+			cur = c[seg]
+		case []any:
+			i, err := strconv.Atoi(seg)
+			if err != nil || i < 0 || i >= len(c) {
+				return false
+			}
+			cur = c[i]
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 func assignSegs(cur any, segs []string, v any, full string) (any, error) {
 	if len(segs) == 0 {
 		return v, nil

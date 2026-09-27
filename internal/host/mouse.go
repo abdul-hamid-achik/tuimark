@@ -273,7 +273,7 @@ func (a *App) click(f *Frame, h, root *layout.Box) []Event {
 			if inCycle(f, w) && a.focus != w.ID {
 				evs = append(evs, a.focusTo(w.ID)...)
 			}
-			return append(evs, a.userMove(w, func(_, _, _ int) int { return b.Index })...)
+			return append(evs, a.moveList(w, func(_, _, _ int) int { return b.Index })...)
 		case b.Kind == "column":
 			if act, ok := b.Src.On["click"]; ok {
 				return []Event{{Action: act, Source: b.ID, Keys: map[string]any{}}}
@@ -325,9 +325,9 @@ func (a *App) wheel(h, root *layout.Box, x, y, dir int) []Event {
 		case b.Kind == "tabs" && onStrip(b, x, y):
 			return a.activateTab(b, stepTab(b, move))
 		case rowWidget(b) != nil && a.rows(rowWidget(b)) > 0:
-			return a.userMove(rowWidget(b), func(i, _, _ int) int { return i + dir })
+			return a.moveList(rowWidget(b), func(i, _, _ int) int { return i + dir })
 		case (b.Kind == "list" || b.Kind == "table") && a.rows(b) > 0:
-			return a.userMove(b, func(i, _, _ int) int { return i + dir })
+			return a.moveList(b, func(i, _, _ int) int { return i + dir })
 		case b.Scrolls() && b.Kind != "list" && b.Kind != "table":
 			if b.ID != "" {
 				a.moveViewport(b, move)
@@ -339,22 +339,6 @@ func (a *App) wheel(h, root *layout.Box, x, y, dir int) []Event {
 		}
 	}
 	return nil
-}
-
-// userMove moves the cursor of list or table w as a user move (moveList)
-// and marks the live frame stale when the cursor moved, with or without
-// an on:select. The caller holds a.mu.
-func (a *App) userMove(w *layout.Box, to func(index, rows, page int) int) []Event {
-	ls := a.lists[w.ID]
-	if ls == nil {
-		return nil
-	}
-	prev := ls.index
-	evs := a.moveList(w, to)
-	if ls.index != prev {
-		a.dirty = true
-	}
-	return evs
 }
 
 // ownClick is the on:click action of b's own element, "" without one. A

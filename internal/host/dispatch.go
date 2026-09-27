@@ -312,7 +312,7 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 		// The cursor stands between grapheme clusters: left, right, and
 		// backspace move over or delete a whole cluster (SPEC v0.2 §12.1).
 		st, runes, bounds := a.inputCursor(b)
-		changed := false
+		changed, cursor := false, st.cursor
 		switch k.Name {
 		case "backspace", "ctrl+h":
 			if st.cursor > 0 {
@@ -341,11 +341,16 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 			if act, ok := b.Src.On["change"]; ok {
 				return []Event{a.eventFor(act, b)}
 			}
+		} else if st.cursor != cursor {
+			// The frame shows the input's cursor (SPEC v0.2b §8.6).
+			a.markStale()
 		}
 		return nil
 	case "list", "table":
 		// A table moves its cursor exactly as a list does, with P =
-		// max(1, V), its body viewport (SPEC §6.9.2).
+		// max(1, V), its body viewport (SPEC §6.9.2). moveList marks the
+		// live frame stale when the cursor moved, with or without an
+		// on:select, as the built-ins and the wheel do (§8.4, §8.6).
 		switch k.Name {
 		case "up":
 			return a.moveList(b, func(i, _, _ int) int { return i - 1 })
@@ -372,6 +377,7 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 	}
 	if b.Scrolls() {
 		off := a.scrolls[b.ID]
+		prev := off
 		page := max(1, b.Content.H)
 		switch k.Name {
 		case "up":
@@ -395,9 +401,21 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 		}
 		off[0], off[1] = max(0, off[0]), max(0, off[1])
 		a.scrolls[b.ID] = off
+		// The next frame clamps the offset to the viewport's maximum; the
+		// frame is stale only when the clamped offset moved (§8.6).
+		if clampOffset(b, off) != clampOffset(b, prev) {
+			a.markStale()
+		}
 		return nil
 	}
 	return a.clickKey(b)
+}
+
+// clampOffset is off clamped to [0, maximum] on each axis of viewport b
+// as the live frame laid it out: the offset a frame would show.
+func clampOffset(b *layout.Box, off [2]int) [2]int {
+	mx, my := max(0, b.ContentW-b.Content.W), max(0, b.ContentH-b.Content.H)
+	return [2]int{min(max(off[0], 0), mx), min(max(off[1], 0), my)}
 }
 
 // clickKey fires b's on:click for enter or space.
@@ -408,12 +426,13 @@ func (a *App) clickKey(b *layout.Box) []Event {
 	return nil
 }
 
-// moveList moves a list's or a table's cursor as a user move:
-// to(index, rows, page) gives the new index, which is clamped and never
-// wraps (page is P = max(1, content height) for a list, max(1, V) for a
-// table). When the index changed, the new row's key, with its JSON type,
-// is written to bind and on:select fires; the widget follows its cursor
-// in the next frame. The caller holds a.mu.
+// moveList moves a list's or a table's cursor as a user move (a key, a
+// built-in action, a click, or the wheel): to(index, rows, page) gives
+// the new index, which is clamped and never wraps (page is P = max(1,
+// content height) for a list, max(1, V) for a table). When the index
+// changed, the live frame is stale (markStale), the new row's key, with
+// its JSON type, is written to bind, and on:select fires; the widget
+// follows its cursor in the next frame. The caller holds a.mu.
 func (a *App) moveList(b *layout.Box, to func(index, rows, page int) int) []Event {
 	ls := a.lists[b.ID]
 	if ls == nil || len(ls.keys) == 0 {
@@ -425,6 +444,7 @@ func (a *App) moveList(b *layout.Box, to func(index, rows, page int) int) []Even
 		return nil
 	}
 	ls.index = idx
+	a.markStale()
 	if b.Src.Bind != "" {
 		if root, err := assign(a.store, b.Src.Bind, ls.keys[idx]); err == nil {
 			a.store = root
@@ -470,8 +490,8 @@ func isMove(action string) bool {
 // move-* needs a list or a table with at least one row, a tabs with an
 // enabled visible tab (not for move-page-*), or a viewport that is none of
 // them; check-* a list or a table that has checked=, whose value is an
-// array or missing (never B008), with at least one row. The caller holds
-// a.mu.
+// array or missing and writable (never B008; checkedArray), with at least
+// one row. The caller holds a.mu.
 func (a *App) compatible(action string, t *layout.Box) bool {
 	switch {
 	case isMove(action):
@@ -497,10 +517,14 @@ func (a *App) compatible(action string, t *layout.Box) bool {
 
 // checkedArray returns the checked= array of a list or a table (SPEC
 // §6.14): the array, or nil when the path is missing (it counts as []);
-// ok is false when the widget has no checked= or its value is present and
-// not an array (B008), which the runtime never overwrites. A list or a
-// table is never inside an each template, so its path resolves against
-// the store. The caller holds a.mu.
+// ok is false when the widget has no checked=, when its value is present
+// and not an array (B008), which the runtime never overwrites, and when
+// the path is missing because a value along it is present and not an
+// object (checked="sel.marked" with sel a number), which the runtime
+// could not write without overwriting that value: the check-* actions do
+// not match on such a widget (§8.4). A list or a table is never inside an
+// each template, so its path resolves against the store. The caller holds
+// a.mu.
 func (a *App) checkedArray(b *layout.Box) (keys []any, ok bool) {
 	if !a.doc.V2 || b.Src == nil {
 		return nil, false
@@ -511,7 +535,7 @@ func (a *App) checkedArray(b *layout.Box) (keys []any, ok bool) {
 	}
 	v, found := lookup(a.store, path)
 	if !found {
-		return nil, true
+		return nil, canAssign(a.store, path)
 	}
 	arr, isArr := v.([]any)
 	return arr, isArr
@@ -569,7 +593,7 @@ func (a *App) runBuiltin(kb *parse.KeyBind, t *layout.Box) []Event {
 		prev := a.screen
 		a.switchScreen(kb.To)
 		if a.screen != prev {
-			a.dirty = true
+			a.markStale()
 		}
 		return nil
 	case "check-toggle", "check-all", "check-none":
@@ -581,16 +605,8 @@ func (a *App) runBuiltin(kb *parse.KeyBind, t *layout.Box) []Event {
 		return a.activateTab(t, stepTab(t, kb.Action))
 	}
 	if t.Kind == "list" || t.Kind == "table" {
-		// The cursor moved without an event when the widget has no
-		// on:select: the live frame is stale all the same.
-		if ls := a.lists[t.ID]; ls != nil {
-			prev := ls.index
-			defer func() {
-				if ls.index != prev {
-					a.dirty = true
-				}
-			}()
-		}
+		// moveList marks the live frame stale when the cursor moved, with
+		// or without an on:select.
 		switch kb.Action {
 		case "move-next":
 			return a.moveList(t, func(i, _, _ int) int { return i + 1 })
@@ -643,7 +659,7 @@ func (a *App) moveViewport(b *layout.Box, action string) {
 	if cur != off[axis] {
 		off[axis] = cur
 		a.scrolls[b.ID] = off
-		a.dirty = true
+		a.markStale()
 	}
 }
 
@@ -692,7 +708,7 @@ func (a *App) check(b *layout.Box, action string) []Event {
 	}
 	a.store = root
 	a.wrote(b.Src.Attrs["checked"])
-	a.dirty = true
+	a.markStale()
 	if act, ok := b.Src.On["change"]; ok {
 		ev := a.eventFor(act, b)
 		ev.Value = append([]any{}, next...)
@@ -715,10 +731,26 @@ func sameKeys(a, b []any) bool {
 	return true
 }
 
-// TakeDirty reports, and clears, whether a key changed runtime state that
-// the live frame shows without firing an event or moving focus (a cursor,
-// an offset, a checked array, the screen), so Run and play redraw before
-// the next key of the same read is dispatched on that frame.
+// markStale records that an input (a key, a paste, a mouse event, a
+// built-in action) changed state the live frame shows: the store, an
+// input's text or cursor, a list or table cursor, a viewport offset, a
+// checked array, the active tab, or the screen. Run and play then render
+// the frame again before the next input of the same read is dispatched,
+// so its when selectors, class guards, if, and built-in targets see the
+// change (SPEC v0.2b §8.6, TakeDirty). A version="1" document keeps the
+// v0.1 loop, which renders again only when events fired or focus moved,
+// so its frames stay those of 0.2a. The caller holds a.mu.
+func (a *App) markStale() {
+	if a.doc.V2 {
+		a.dirty = true
+	}
+}
+
+// TakeDirty reports, and clears, whether an input changed state the live
+// frame shows (markStale), with or without an event or a focus move, so
+// Run and play render the frame again before the next input of the same
+// read is dispatched on it (SPEC v0.2b §8.6). It is never set in a
+// version="1" document.
 func (a *App) TakeDirty() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()

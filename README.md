@@ -208,7 +208,9 @@ vocabulary (SPEC §5.1); this build implements all of it:
   `NAME` is lowercase, `[a-z_][a-z0-9_-]*` (`V015` otherwise; an
   uppercase letter is `V002`).
   The JSON dump of a `version="2"` document lists each node's `classes`:
-  its `class` names, then its truthy guards, without repeats.
+  its `class` names, then its truthy guards, without repeats (a name that
+  is already there, from `class` or a guard, is not added again, so
+  `class="a b a"` gives `a b`).
 - **`theme="auto"`.** `Run()` asks the terminal for its background color
   (OSC 11, waiting at most 250 ms, so the first frame is already in the
   right theme), falls back to `COLORFGBG`, then to `dark`. Every command
@@ -387,7 +389,13 @@ vocabulary (SPEC §5.1); this build implements all of it:
   `each` and `key`, `V018` otherwise) holds the keys of the checked rows: an array in
   the store that the runtime reads and writes. A missing path counts as
   `[]` (`B003`); any other value is `B008`, shows nothing checked, and is
-  never overwritten. `mark="✓"` (1 or 2 columns, and only with `checked`)
+  never overwritten: the `check-*` rows skip that widget. They skip it too
+  when the path is missing under a value that is not an object
+  (`checked="sel.marked"` with `sel` a number), which the runtime could
+  not write. A list's rows are the elements of its array, even when `if`
+  or `hidden` removes their item: the cursor can rest on such a row and
+  `check-toggle`/`check-all` include it, so filter the array in the host
+  rather than hide items. `mark="✓"` (1 or 2 columns, and only with `checked`)
   reserves `width(mark) + 1` columns at the left of every row, checked or
   not, and paints the mark on the checked ones. `on:change` on a list
   (only with `checked`) fires with the new array as its `value` when
@@ -618,7 +626,7 @@ With neither, the session is just the first frame (step 0).
 | `--input` step | Meaning |
 |---|---|
 | `KEY` | one key: a named key (`enter esc tab backspace space up down left right home end pgup pgdn shift+tab`), `ctrl+a`..`ctrl+z`, or any other single printable ASCII character but `,` (write `/`, not `slash` — there are no aliases) |
-| `text:STR` | STR's bytes, decoded like real terminal input: a run of printable characters going to a focused input is one edit and one `on:change` (the same coalescing `Run()` does for fast typing or an unbracketed paste); characters that go elsewhere reach the keymap one by one |
+| `text:STR` | STR's bytes, decoded like real terminal input: a run of printable characters going to a focused input is one edit and one `on:change` (the same coalescing `Run()` does for fast typing or an unbracketed paste); characters that go elsewhere reach the keymap one by one. In a `version="2"` document each key or paste of the step sees the frame the previous one left, as in `Run()`, so `text:ab\r` and `text:ab enter` fire the same events |
 | `paste:STR` | one bracketed paste. Normalized (CRLF/CR/LF/TAB → space, ANSI/control bytes stripped) and delivered as one edit/`on:change` when an enabled input has focus; discarded — never reaching the keymap or a built-in — otherwise, so a paste containing `q` can never quit |
 | `set:PATH=JSON` | `Set(PATH, json.Unmarshal(JSON))`; `PATH` may be empty (the store root) or the reserved `@focus`/`@screen`/`@theme` (`set:@theme="light"`) |
 | `focus:#ID` | `Set("@focus", "ID")` (the `#` is optional); fires no `on:focus`, like `Set` |
@@ -1133,6 +1141,22 @@ kept with the maintainer's project notes, outside this repository.
   waits briefly for more bytes before it's delivered as the `esc` key, so a
   bare Escape press can be told apart from the start of a longer
   escape/CSI sequence.
+- **Keys of one read see each other's changes** (SPEC v0.2b §8.6). In a
+  `version="2"` document, `Run()` and `play` dispatch each key or paste of
+  one terminal read (or of one `text:` step) on a frame rendered again
+  after the previous one changed anything the frame shows: an input's text
+  or cursor, a list or table cursor, a viewport offset, a checked array, a
+  tab, the screen. `when` selectors, `class:NAME` guards, and `if` see the
+  change, so typing `ab` and `enter` in one read fires
+  `<bind keys="enter" action="go" when="#q.filled"/>` on an input with
+  `class:filled="query"` exactly as two separate reads do. A
+  `version="1"` document keeps the 0.1 loop: the frame is rendered again
+  between keys only when events fired or focus moved.
+- **A `tabs` whose `bind` path cannot be written** (SPEC v0.2b §6.10.2).
+  When a value along the path is not an object (`bind="ui.view"` with `ui`
+  a number), the active tab cannot change: `switch-to`, `move-*`,
+  `left`/`right`, a label click, and the wheel change nothing and fire no
+  `on:select`. A keymap row that names the tabs still takes its key.
 - **A dropped mouse event also ends a pending press.** A left release
   always ends the press before it; a press or release that the mouse
   ignores (outside the top modal, outside the grid, or while `mouse` is

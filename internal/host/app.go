@@ -96,8 +96,8 @@ type App struct {
 	// the last frame, for the activation focus rule (§6.10.3).
 	tabMem  map[string]string
 	tabPrev map[string]string
-	// dirty is set by a built-in action of SPEC §8.4 that changed what the
-	// live frame shows (TakeDirty).
+	// dirty is set, in a version="2" document, by an input that changed
+	// what the live frame shows (markStale, TakeDirty; SPEC v0.2b §8.6).
 	dirty bool
 	wake  chan struct{}
 	last  *Frame

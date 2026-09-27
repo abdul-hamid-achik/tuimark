@@ -360,20 +360,25 @@ func (a *App) activateTab(t, tab *layout.Box) []Event {
 	n := t.Src
 	if n.Bind != "" {
 		if cur, ok := lookup(a.store, n.Bind); !ok || !isString(cur, tab.ID) {
-			if root, err := assign(a.store, n.Bind, tab.ID); err == nil {
-				a.store = root
-				a.wrote(n.Bind)
-				a.dirty = true
+			root, err := assign(a.store, n.Bind, tab.ID)
+			if err != nil {
+				// The bound path cannot be written (a value along it is
+				// not an object): the active tab comes from that path, so
+				// it cannot change, and on:select does not fire.
+				return nil
 			}
+			a.store = root
+			a.wrote(n.Bind)
+			a.markStale()
 		}
 	} else if a.tabMem[t.ID] != tab.ID {
 		a.tabMem[t.ID] = tab.ID
-		a.dirty = true
+		a.markStale()
 	}
 	if t.TabActive == tab {
 		return nil
 	}
-	a.dirty = true
+	a.markStale()
 	if act, ok := n.On["select"]; ok {
 		return []Event{{Action: act, Source: t.ID, Keys: map[string]any{}, Value: tab.ID}}
 	}

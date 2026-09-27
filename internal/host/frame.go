@@ -325,8 +325,14 @@ func (a *App) rememberScroll(b *layout.Box) {
 }
 
 // computeStyles runs the cascade top-down and drops display:none subtrees.
+// A list keeps following the same row: its Follow moves with the child it
+// names, or becomes -1 when display: none dropped that row.
 func computeStyles(c *css.Cascade, b *layout.Box, parent *css.Style) {
 	b.Style = c.Compute(subjectOf(b), parent, b.Hints, b.Inline)
+	var follow *layout.Box
+	if b.Kind == "list" && b.Follow >= 0 && b.Follow < len(b.Children) {
+		follow = b.Children[b.Follow]
+	}
 	kept := b.Children[:0]
 	for _, ch := range b.Children {
 		computeStyles(c, ch, &b.Style)
@@ -335,6 +341,15 @@ func computeStyles(c *css.Cascade, b *layout.Box, parent *css.Style) {
 		}
 	}
 	b.Children = kept
+	if follow != nil {
+		b.Follow = -1
+		for i, ch := range kept {
+			if ch == follow {
+				b.Follow = i
+				break
+			}
+		}
+	}
 }
 
 // subjectOf is the element the cascade matches as the subject when it
@@ -882,8 +897,16 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 		ib.Index = i
 		b.Children = append(b.Children, ib)
 	}
-	if len(entries) > 0 {
-		b.Follow = min(sel, len(b.Children)-1)
+	// The list follows its cursor row (SPEC §6.9.3, §8.4). Follow is an
+	// index into the laid-out children, which skip the rows whose item if
+	// or hidden pruned; a cursor row without an item (still a row, SPEC
+	// v0.2b §6.14) has nothing to follow. computeStyles keeps it on the
+	// same child when display: none drops rows.
+	for j, c := range b.Children {
+		if c.Index == sel {
+			b.Follow = j
+			break
+		}
 	}
 }
 

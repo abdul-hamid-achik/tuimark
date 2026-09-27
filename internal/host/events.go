@@ -158,7 +158,12 @@ func (a *App) inputValue(b *layout.Box) string {
 	return a.input(b.ID).value
 }
 
+// setInputValue writes an input's new text to its bind path, or to its
+// runtime state without bind, and marks the live frame stale (markStale):
+// when selectors, class guards, and if may read that text. The caller
+// holds a.mu.
 func (a *App) setInputValue(b *layout.Box, v string) {
+	a.markStale()
 	if b.Src != nil && b.Src.Bind != "" {
 		if root, err := assign(a.store, b.Src.Bind, v); err == nil {
 			a.store = root
