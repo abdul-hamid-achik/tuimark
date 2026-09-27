@@ -1,0 +1,51 @@
+version: 1
+name: inbox_search
+intent: |
+    a user on the ticket list focuses the search box with "/" (search is
+    focused by default on load, so the user first tabs to the list), types a
+    query, and presses enter: the list is filtered to matching tickets and
+    the status line reports the match count and query.
+target:
+    cmd: ["${vars.inbox}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "mail  deploy"
+        timeoutMs: 5000
+    - snapshot: home
+    - press: tab
+    - press: "/"
+    - type: "europe"
+    - press: enter
+    - wait:
+        screen:
+            contains: "1 match"
+        timeoutMs: 3000
+    - snapshot: filtered
+    - press: tab
+    - press: q
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: list_filters_to_match
+      description: searching "europe" narrows the list to the one matching ticket
+      verify:
+        screen:
+            contains: "cannot deploy europe-west"
+    - id: status_reports_match_count_and_query
+      description: the status line names the filtered count and the query
+      verify:
+        screen:
+            matches: '1 match "europe"'
+    - id: other_tickets_are_hidden
+      description: tickets that do not match the query are no longer listed
+      verify:
+        screen:
+            notContains: "login loop on staging"
+contractHash: sha256:9cb84069359d2cc54076a3f3804bfc016286945940fe75ec282083fb6fd3c940

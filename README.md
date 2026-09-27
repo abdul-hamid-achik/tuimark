@@ -1,0 +1,588 @@
+# Tuimark
+
+Tuimark is a *view language for terminals*. UI is authored as text —
+structure in `.tui` (XML), style in `.tcss` (a reduced CSS), data as JSON,
+behavior as named actions (`on:select="open"`) — and a Go runtime
+interprets those files: it lays out an integer cell grid, paints Unicode,
+and dumps a machine-readable snapshot.
+
+```
+agent edits app.tui + theme.tcss + sample.json
+        ↓
+tuimark dump --format json --cols 80
+        ↓
+grid + node geometry
+        ↓
+agent edits again
+```
+
+The Tuimark specification (the SPEC, currently v0.2) is the source of truth
+for the language and the runtime. It is maintained by the author outside
+this repository; "SPEC §N" references in code and docs point to it. This
+file is the map of what's in the repo and how to drive it.
+
+## What Tuimark is not
+
+Rules the runtime holds to (SPEC §1):
+
+- Not a compiler. `.tui` is interpreted at runtime; nothing generates Go.
+- Not Bubble Tea, Lipgloss, tview, Textual, Ink, or Ratatui — none of those
+  are used as the authoring surface or the public API.
+- Not pixels. One unit is one terminal cell; there is no `px`/`em`/`vh`.
+- Not an open vocabulary. Tags and CSS properties are a closed catalog;
+  an unknown one is a diagnostic (`V001`/`V003`), not a new widget.
+- Not a place for logic. No expressions, filters, function calls, or Go in
+  markup — only literal values, `{path}` interpolation, `each`, and `if`.
+
+## Requirements
+
+- Go 1.22+, no CGO (`internal/layout` and `internal/paint` are the only
+  layout/paint engines involved; there is no C dependency to build).
+- [go-task](https://taskfile.dev) — optional, for the `task verify` /
+  `task build` / `task glyph` shortcuts in `Taskfile.yml`. Each task is a
+  short shell command; without `task`, use the equivalent commands shown
+  under Testing (for example the four `go build` lines), since a couple of
+  tasks use Taskfile template variables (like `{{.AGENT_DIR}}`) that a
+  plain shell won't expand.
+- [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun) (the `glyph`
+  CLI) — optional, only needed to run the terminal end-to-end specs under
+  `specs/glyphrun/`. `go install
+  github.com/abdul-hamid-achik/glyphrun/cmd/glyph@latest`, then run
+  `glyph docs` for its own documentation.
+
+## Build / install
+
+From a checkout (this module is not published yet — there is no
+`go get github.com/abdul-hamid-achik/tuimark` to run against a released
+version):
+
+```sh
+git clone <this-repo>
+cd tuimark
+go build -o bin/tuimark ./cmd/tuimark
+```
+
+`go install` also works against a local checkout:
+
+```sh
+go install ./cmd/tuimark
+```
+
+The module is not published yet. To use it from another module, add
+`replace github.com/abdul-hamid-achik/tuimark => /path/to/your/checkout`
+(or a `go.work`) and import `github.com/abdul-hamid-achik/tuimark`.
+
+## Quickstart
+
+```sh
+go build -o bin/tuimark ./cmd/tuimark
+./bin/tuimark validate examples/spike/inbox.tui
+./bin/tuimark dump examples/spike/inbox.tui --cols 80 --rows 24
+./bin/tuimark dump examples/spike/inbox.tui --cols 80 --rows 24 --format json
+./bin/tuimark preview examples/spike/inbox.tui --cols 80 --rows 24
+```
+
+`dump` prints one frame: the text dump by default, or `--format json` for
+the machine-readable shape (`grid` + `nodes` + `errors`). `preview` writes
+the same text dump, plus an ANSI-painted grid first when stdout is a TTY.
+Bind a JSON file as the data store with `--data`:
+
+```sh
+./bin/tuimark dump examples/inbox/app.tui --data examples/inbox/sample.json --cols 80 --rows 24
+```
+
+Or use it as a library:
+
+```go
+ui, err := tuimark.Load("app.tui")
+if err != nil { return err }
+_ = ui.Bind("tickets", tickets)
+ui.On("open", handleOpen)
+ui.On("quit", func(tuimark.Event) error { return tuimark.ErrQuit })
+return ui.Run(os.Stdout)
+```
+
+## Language tour
+
+A minimal complete app: one list bound to an array, one detail pane bound
+to the selected item, and a media query that stacks them on a narrow
+terminal. Three files:
+
+`app.tui`:
+
+```xml
+<tui version="1" theme="dark">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="q,ctrl+c" action="quit"/>
+  </keymap>
+  <screen id="main" focus="#items">
+    <col id="root">
+      <row id="header">
+        <text>{title}</text>
+      </row>
+      <row id="body">
+        <list id="items" each="tickets as t" key="t.id" bind="selected" on:select="open">
+          <item>
+            <text>{t.title}</text>
+          </item>
+        </list>
+        <box id="detail" if="selected_ticket">
+          <text>{selected_ticket.title}</text>
+        </box>
+        <box id="empty" if="!selected_ticket">
+          <text>no selection</text>
+        </box>
+      </row>
+    </col>
+  </screen>
+</tui>
+```
+
+`theme.tcss`:
+
+```css
+#header { height: 1; }
+#body { layout: row; gap: 1; }
+#items { width: 30%; border: single; }
+#detail, #empty { width: 1fr; border: single; }
+
+@media (max-cols: 60) {
+  #body { layout: column; }
+  #items { width: 100%; height: 8; }
+}
+```
+
+`sample.json`:
+
+```json
+{
+  "title": "tickets",
+  "selected": "t-1",
+  "selected_ticket": { "id": "t-1", "title": "fix the login loop" },
+  "tickets": [
+    { "id": "t-1", "title": "fix the login loop" },
+    { "id": "t-2", "title": "cannot deploy" }
+  ]
+}
+```
+
+```sh
+./bin/tuimark validate app.tui --data sample.json
+./bin/tuimark dump app.tui --data sample.json --cols 80 --rows 24
+./bin/tuimark dump app.tui --data sample.json --cols 60 --rows 24
+```
+
+`validate` reports `ok`, and the two `dump`s show the same layout side by
+side at 80 columns and stacked at 60 (the `@media (max-cols: 60)` block
+takes over), proving the loop end to end. This one example touches:
+
+- **Layout units** (SPEC §9): `N` (`height: 1`, `height: 8`), `N%`
+  (`width: 30%`), `Nfr` (`width: 1fr`, the implicit `1fr` on `col`/`row`),
+  and `auto` (the default for `text`).
+- **TCSS selectors/`@media`** (SPEC §10): `#id` and a comma-list of ids as
+  selectors, and one feature per `@media` block (`max-cols`).
+- **Bindings** (SPEC §7): `{path}` in `<text>` bodies, `each="tickets as
+  t"` on `<list>`, and `if="selected_ticket"` / `if="!selected_ticket"`.
+- **Keymap and actions** (SPEC §8): a global `<bind>` for `quit`, and
+  `on:select="open"` as a named action the host would register with `On`.
+
+## CLI reference
+
+```
+tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json] [--cells] [--strict]
+tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json]
+tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch]
+tuimark fmt      FILE [--write] [--check]
+tuimark ir       FILE
+tuimark agents
+tuimark test     [DIR] [--update]
+tuimark version
+```
+
+- `dump` renders one frame: the text dump (grid + node geometry +
+  diagnostics) by default, or `--format json` for the machine-readable
+  shape agents parse (SPEC §13.2). `--data FILE.json` binds the file as the
+  JSON store first. `--cells` (JSON only) adds per-cell `{x,y,ch,id}`
+  ownership. `--strict` upgrades missing bind paths (`B003`) to errors.
+- `validate` prints diagnostics (or, with `--json`, the full shape
+  including the action catalog) without laying out a frame for its own
+  sake — it still renders internally at 40/80/120×24 to catch
+  layout/bind problems. Without `--data`, bind-dependent checks (`B001`,
+  `B002`, `B003`) are skipped, since every path would otherwise read as
+  "missing". `--catalog FILE` (a JSON list of action names, or
+  `{"actions":[...]}`) turns unresolved actions into `B004` warnings.
+- `preview` writes the text dump to stdout, and also paints an ANSI frame
+  first when stdout is a TTY. `--watch` re-renders whenever the document,
+  its stylesheets, or `--data` change (polled every 150ms).
+- `fmt` is the canonical formatter (below).
+- `ir` prints the source IR as JSON (SPEC §13.1): a document's parsed shape
+  from *before* the stylesheet cascade (SPEC §18's "parse .tui → source IR"
+  step, ahead of "apply stylesheet + media") — a node's `style` map holds
+  only its own presentation attributes and `style=""`, not rules matched
+  from a `<style>` sheet. It exits like every other command (**2** on any
+  diagnostic with error severity, including stylesheet-only errors) and
+  never emits a node outside `schema/ir.v0.1.json`'s `kind` enum.
+- `agents` prints `AGENTS.md`, generated from the runtime's own catalogs so
+  it cannot drift; `AGENTS.md` at the repo root must equal this output,
+  enforced by `internal/agentsdoc`'s `TestAGENTSDoesNotDrift` (regenerate
+  with `go run ./cmd/tuimark agents > AGENTS.md`).
+- `test` runs the golden dump comparisons driven by
+  `testdata/golden/manifest.json` (below).
+
+Exit codes, uniform across every command: **0** ok, **1** usage, I/O, or
+crash, **2** validation errors (or, for `fmt --check` / `test`, "not
+formatted" / "golden mismatch"). On the CLI, `--cols`/`--rows` must be
+between 1 and 1000 (the underlying Go `Dump` itself accepts 0, giving an
+empty grid).
+
+### `tuimark fmt`
+
+Canonical formatting, built on the lossless XML tree so it survives
+comments and works on any well-formed document regardless of catalog or
+binding errors (only not-well-formed XML, `V005`, is refused):
+
+- 2-space indentation, one element per line.
+- Attributes reordered to `id`, `class`, then the rest in source order.
+- Elements with no children and no text self-close (`<box id="a"/>`).
+- `<text>`/`<button>` bodies that fit on one line stay inline
+  (`<text>hi</text>`); multi-line bodies are indented one level, one output
+  line per text line.
+- Inline `<style>` bodies are re-indented one level and re-escaped (`&`,
+  `<`, `]]>`; CDATA is not preserved); relative indentation within the
+  body is kept.
+- Comments are preserved in place.
+- `&lt; &gt; &amp;` are escaped in text, `&quot; &amp; &lt;` in attribute
+  values.
+- Output always ends with exactly one newline.
+
+Default prints the formatted document to stdout; `--write` rewrites the
+file in place; `--check` prints the file name and exits 2 if it is not
+already formatted (no write). Both `examples/spike/inbox.tui` and
+`examples/inbox/app.tui` already pass `fmt --check`.
+
+### `tuimark test` and the golden manifest
+
+`testdata/golden/manifest.json` is a JSON array:
+
+```json
+[
+  {
+    "name": "spike",
+    "file": "examples/spike/inbox.tui",
+    "sizes": ["40x24", "80x24", "120x24"],
+    "json": ["80x24"],
+    "frozen": true
+  }
+]
+```
+
+`data` is optional. For every size in `sizes`, `tuimark test` compares the
+text dump against `DIR/<name>/<size>.txt`; for sizes also listed in
+`json`, it compares the JSON dump against `DIR/<name>/<size>.json`. `DIR`
+defaults to `testdata/golden`. One `PASS`/`FAIL` line is printed per
+golden, with a short diff hint on failure; the command exits 2 on any
+mismatch, 1 on an I/O error (a document or golden file that can't be
+read). `--update` (re)writes the goldens for every entry whose `frozen` is
+not `true` — `spike`'s goldens are frozen and must never be regenerated;
+`inbox` and `stacked`'s are not. Adding another fixture just needs another
+row in the manifest and a golden directory; nothing else in the runner is
+fixture-specific.
+
+## Public Go API
+
+The public surface is deliberately small (package `tuimark`, SPEC §18):
+
+```go
+func Load(path string) (*App, error)
+func Parse(r io.Reader) (*App, error)
+
+func (a *App) Bind(path string, v any) error
+func (a *App) Set(path string, v any) error
+func (a *App) On(action string, h Handler)
+func (a *App) Catalog() []ActionSpec
+func (a *App) Dump(cols, rows int) (*Dump, error)
+func (a *App) Validate() []Diagnostic
+func (a *App) Run(w io.Writer) error
+```
+
+`internal/layout` and `internal/paint` are not importable from outside this
+module; the only supported entry points are the functions above.
+
+- **`Load`/`Parse`** never fail on diagnostics in the document — a bad
+  `.tui` loads fine; read `Validate()` or `Dump()` to see the problems.
+  Only I/O (`Load`) or a read error (`Parse`) returns an error here.
+- **`Bind`/`Set`** coerce `v` to JSON-shaped data (`null | bool | number |
+  string | array | object`) at the boundary; `NaN`/`±Inf` are rejected, as
+  are values with no JSON shape (channels, funcs). `Set` additionally
+  schedules a redraw and is safe from any goroutine. Two paths are
+  reserved for hosts, not markup: `Set("@focus", "#id")` moves focus and
+  `Set("@screen", "id")` switches the active screen — the SPEC says only
+  "the host switches by id" without naming an API, and these two paths are
+  how this runtime exposes it without growing the public surface.
+- **`Event`** is the payload a handler receives: `Action` (the name),
+  `Source` (the firing node's `id`), `Keys` (a snapshot of the selected
+  item's `each` aliases, e.g. `{"item": "t-12"}`), and `Value` (the input's
+  text for events from a focused input, such as `on:change`/`on:submit` or
+  a keymap row; the selected item's id or index for a static, non-`each`
+  list; nil otherwise).
+- **`ErrQuit`**, returned by a handler, stops `Run` cleanly.
+- **`Dump`** is a side-effect-free snapshot: it never moves focus, queues
+  events, or mutates scroll/list/input state, so dumping the same app at
+  several sizes never depends on call order. A negative `cols`/`rows` is
+  an error; 0 gives an empty grid. `Validate` has the same
+  no-side-effects property.
+- **`Run`** drives the app in the terminal (raw mode) until quit.
+  `SIGTERM`, `SIGHUP`, and `SIGINT` also stop it (Unix; on other platforms
+  only `os.Interrupt`): the terminal is restored first (cooked mode, main
+  screen, visible cursor), and `Run` returns a non-nil error naming the
+  signal, so the process can exit with a failure status instead of exiting
+  clean — even when a handler had already returned `ErrQuit` as the signal
+  arrived.
+
+## Examples
+
+- `examples/spike/inbox.tui` — the phase-0 fixture (5 tags: `app col row box
+  text`). Its goldens in `testdata/golden/spike/` are **frozen**: they are
+  never regenerated, by design — a geometry mismatch there is a runtime
+  regression, not a fixture update.
+
+  ```sh
+  ./bin/tuimark dump examples/spike/inbox.tui --cols 80 --rows 24
+  ```
+
+- `examples/inbox/{app.tui,theme.tcss,sample.json}` — the SPEC §17 fixture
+  (keymap, focus, input, list, binding, `each`/`if`, scroll, spacer, media
+  queries; see `examples/dashboard` below for `button`/`modal`/`progress`/
+  `rule`). These three files are kept byte-identical to the SPEC's fixture text;
+  `examples/inbox/main.go` is an interactive host wiring
+  `open`/`search`/`quit`.
+
+  ```sh
+  go build -o bin/inbox ./examples/inbox
+  ./bin/inbox
+  ```
+
+- `examples/dashboard` — a multi-screen host (`app.tui`, `theme.tcss`,
+  `sample.json`, `actions.json`) exercising screen switching and a
+  confirm-style modal; driven by `specs/glyphrun/dashboard_*.yml`.
+
+  ```sh
+  go build -o bin/dashboard ./examples/dashboard
+  ./bin/dashboard
+  ./bin/dashboard -dump 80x24   # print the JSON dump instead of running
+  ```
+
+- `examples/agent` — an interactive host around a scripted or Ollama-backed
+  chat provider (`agent.tui`, `engine.go`, `provider.go`, `tools.go`, its own
+  `README.md`); driven by `specs/glyphrun/agent_*.yml` and has its own Go
+  tests (`go test ./examples/agent`). The whole view is `.tui`/`.tcss`; Go
+  only supplies data and named actions through the public API above.
+
+  ```sh
+  go build -o bin/tuimark ./cmd/tuimark
+  go build -o bin/agent ./examples/agent
+
+  # scripted provider (default), interactive, seeds a demo workspace
+  # (--demo-workspace deletes and recreates the given directory)
+  ./bin/agent --demo-workspace ./demo-workspace
+
+  # headless, machine-readable, one shot
+  ./bin/agent --headless --json --demo-workspace ./demo-workspace -p "list"
+
+  # headless, then print the resulting UI's own JSON dump instead
+  ./bin/agent --headless --dump 120x30 --demo-workspace ./demo-workspace -p "list"
+
+  # the in-process loopback fixture: exercises the real HTTP streaming
+  # client end to end with no model
+  ./bin/agent --fixture --demo-workspace ./demo-workspace
+
+  # a real local Ollama model
+  ./bin/agent --provider ollama --model qwen3.5:0.8b --demo-workspace ./demo-workspace
+  ```
+
+  See `examples/agent/README.md` for the tool sandbox, the two providers,
+  and the keys and main flags (`./bin/agent --help` lists all flags).
+
+- `examples/stacked/{app.tui,theme.tcss}` — the phase-1 media fixture (SPEC
+  §4, §21 test 10): the inbox layout with static text, where `@media
+  (max-cols: 80)` stacks `#sidebar` above `#detail`. It only feeds the
+  goldens in `testdata/golden/stacked/` (text dumps at 40/80/120 cols, not
+  frozen); there is no `main.go` or `sample.json`, so it is not a runnable
+  host.
+
+## Testing
+
+- `go test ./...` — the Go test suite: parser/CSS/layout/IR unit tests, the
+  SPEC §21 conformance tests (`conformance_test.go` for tests 1-9,
+  `phase_test.go` for tests 10-14), the formatter's
+  idempotence/semantics-preservation tests, the IR-vs-schema test, the
+  `AGENTS.md`-does-not-drift test, and the CLI's own exit-code/output tests.
+  It also runs `tuimark test testdata/golden` itself
+  (`cmd/tuimark/main_test.go`'s `TestTestCommandPasses`), so a golden
+  mismatch fails `go test ./...` (and `task verify`) same as any other
+  test. `go test -race ./...` runs the same suite with the race detector.
+- `tuimark test` — the golden dump runner described above, runnable on its
+  own (`./bin/tuimark test`) for a faster loop while iterating; `--update`
+  regenerates the non-frozen goldens for a human to review and commit. The
+  spike goldens under `testdata/golden/spike/` are frozen and never
+  touched by `--update`.
+- `glyph run specs/glyphrun/*.yml` — terminal end-to-end specs driven by
+  Glyphrun (the `glyph` CLI) against the real interactive hosts
+  (`examples/inbox`, `examples/dashboard`, `examples/agent`) and the
+  `tuimark` CLI itself. All four binaries must exist under `bin/` before
+  running the specs — build them first:
+  ```sh
+  go build -o bin/tuimark ./cmd/tuimark
+  go build -o bin/inbox ./examples/inbox
+  go build -o bin/dashboard ./examples/dashboard
+  go build -o bin/agent ./examples/agent
+  ```
+  or run `task build` (see `Taskfile.yml`), which builds all four in one
+  step; `task glyph` builds and then runs every spec; `task verify` runs
+  fmt, vet, test, build, golden, and glyph in order — the full local gate.
+  See `glyphrun.config.yml` and `glyph docs` for the spec format.
+
+## Architecture
+
+The pipeline a document goes through, from source to screen (SPEC §18):
+
+```
+parse .tui → source IR
+apply stylesheet + media(cols, rows, theme)
+inflate bindings + each + if
+layout measure / allocate
+focus + hit-test
+paint buffer
+diff previous frame → ANSI   # Run() only
+```
+
+Package map:
+
+| Package | Role |
+|---|---|
+| `internal/ir` | node, scalar, diagnostic, binding-grammar, and key-token types shared by the other packages |
+| `internal/parse` | the XML tokenizer (`xml.go`), the IR builder (`build.go`), the canonical formatter (`format.go`), and source-IR-as-JSON (`irjson.go`) |
+| `internal/css` | the TCSS parser, selectors, cascade, themes/tokens, and `@media` |
+| `internal/layout` | the integer flex engine (SPEC §11): box model, measure, allocate |
+| `internal/paint` | the cell grid, borders, titles, widgets, and the ANSI frame diff |
+| `internal/dump` | the text and JSON frame dump (SPEC §13) |
+| `internal/host` | the JSON store, bind/each/if inflation, cascade application, focus, event dispatch, and the `Run` loop |
+| `internal/agentsdoc` | generates `AGENTS.md` from the catalogs the packages above expose |
+
+`cmd/tuimark` is the CLI built on top of these packages; the root package
+`tuimark` (this module's public API, in `tuimark.go`) is a thin wrapper
+around `internal/host`.
+
+## Language notes (clarifications of the SPEC)
+
+The SPEC is the source of truth and is not edited here. These are points
+where its text is loose or silent about behavior the runtime actually has;
+the generated `AGENTS.md` carries the same points, more tersely, in its
+`### Notes` section. The full design-decision record (parser edge cases,
+TCSS cascade details, layout arithmetic, focus/signal handling, the CLI) is
+kept with the maintainer's project notes, outside this repository.
+
+- **`<text>`/`<button>` body normalization** (SPEC §6.3, §12). Each line of
+  the body is trimmed of XML whitespace (space, tab, CR) and leading/trailing
+  blank lines are dropped; interior spaces are kept, so
+  `<text>mail  {folder}</text>` keeps its two-space gap. Width (§11.5) and
+  paint (§12) both see the already-trimmed content — `<text> sync</text>`
+  measures 4 cells and paints `sync`, not ` sync`. There is no XML-level way
+  to force a leading or trailing space into the body (CDATA is trimmed the
+  same way, and numeric character references are rejected outright); use
+  `gap`, `padding`, or `margin` on a parent for spacing, or a non-XML space
+  such as U+00A0 (NBSP) if you need it as literal content.
+
+- **Modal visibility: `open` vs `bind`** (SPEC §6.5, §7). A `<modal>`'s
+  `open` attribute takes `true`, `false`, a bare path, or `!path` — never
+  `{path}` (that gives `V003`); truthiness follows the §7 table. `bind` on a
+  `modal` is shorthand for the same thing: a path whose truthiness opens it.
+  Reading `internal/host/frame.go`'s `inflate` for `modal`, the two are not
+  merged or OR'd: if the `open` attribute is present at all, it alone decides
+  visibility and `bind` is ignored outright, even when `open`'s path is
+  falsy and `bind`'s path is truthy. `bind` is only consulted when `open` is
+  absent. In practice, set exactly one of the two on a given modal.
+
+- **Cross-axis stretch inside a modal** (SPEC §11.2, §11.3 pass 4, §6.5).
+  `col`/`row` default to `1fr` on *both* axes, and by default children
+  stretch to fill the cross axis (`align: stretch`). A modal defaults to
+  80%×80% of the screen when unsized, so a `<row>` of buttons placed after
+  other content inside it — the common confirm-dialog shape — inherits all
+  of the modal's leftover height on the main axis, and its buttons then
+  stretch to match on the cross axis. This is easy to miss in a dump's text
+  grid (a button's label still reads as one line) but is very visible once a
+  focused button has `reverse: true`, which paints its *whole* rect: a tall
+  reversed block instead of a one-line button. Give the action row an
+  explicit `height: 1` or `height: auto` — `align: start` alone shrinks the
+  buttons but leaves the row itself still filling the height. For example:
+
+  ```xml
+  <tui version="1">
+    <style>
+      modal { width: 30; height: auto; }
+      #actions { height: 1; gap: 2; justify: center; }
+    </style>
+    <screen id="one" focus="#confirmDelete">
+      <text>hi</text>
+      <modal id="confirmModal" open="true">
+        <text>Delete this item?</text>
+        <row id="actions">
+          <button id="confirmDelete" label="Delete"/>
+          <button id="cancelDelete" label="Cancel"/>
+        </row>
+      </modal>
+    </screen>
+  </tui>
+  ```
+
+  Saved as `modal.tui`, this validates and dumps cleanly
+  (`./bin/tuimark validate modal.tui` reports `ok`; `./bin/tuimark dump
+  modal.tui --cols 80 --rows 24` shows `actions` and both buttons at
+  height 1, not stretched to the modal's height).
+
+- **Focused `list` key handling** (SPEC §8.3). §8.3 says only "`list`
+  consumes `up`/`down`", but a focused, non-empty `list` also consumes
+  `home`, `end`, `pgup`, and `pgdn` — all six move the selection (firing
+  `on:select` when it changes) and never reach the keymap while the list has
+  focus. `left`/`right` are not consumed and fall through as usual. As with
+  every other widget, `j`/`k` are never implicit for a list; bind them
+  yourself in `<keymap>` if you want them.
+
+- **List rows don't take focus individually.** Inside `<item>`, nothing is
+  focusable (no `input`/`button`/`list`/`modal`, no `focusable`,
+  `on:click`, or `on:focus`) — using them inside an `<item>` is an error
+  (`V001` for those tags, `V002` for those attributes). The `<list>` itself
+  is the focusable unit and navigates its own rows. Act on a row via the
+  list's `on:select`, or a keymap row scoped with `when="#list:focus"` that
+  reads the event's `keys`/`value` to see which row fired.
+- **`Dump` is a side-effect-free snapshot.** It never moves focus, queues
+  events, or mutates scroll/list/input state — same for `Validate`. Only the
+  internal frame `Run` drives is "live".
+- **`Run` restores the terminal on signals.** On `SIGTERM`, `SIGHUP`, or
+  `SIGINT`, `Run` puts the terminal back (cooked mode, main screen, visible
+  cursor) and returns a non-nil error naming the signal, so the process can
+  exit with a failure status instead of exiting clean.
+- **`ctrl+c` is the built-in quit** whenever no keymap binding claims it
+  first; bind `ctrl+c` yourself to override or intercept it.
+- **Escape latency is ~25ms.** A trailing `esc` byte at the end of a read
+  waits briefly for more bytes before it's delivered as the `esc` key, so a
+  bare Escape press can be told apart from the start of a longer
+  escape/CSI sequence.
+
+## Status per phase (SPEC §4)
+
+- **Phase 0 (spike)** — done: `app col row box text`, goldens frozen and
+  green.
+- **Phase 1 (style)** — done: TCSS parser, tokens/themes, one-feature
+  `@media`, `preview --watch`.
+- **Phase 2 (interaction)** — done: JSON store, `{path}`/`each`/`if`,
+  `list item input button scroll spacer`, focus/tab, named actions.
+- **Phase 3 (chrome)** — done: `keymap bind progress rule modal`, screen
+  focus, `validate --strict --catalog`, `Run()`.
+- **Phase 4 (agent polish)** — done: `fmt`, `ir`, `test`, `agents`, `dump
+  --cells`, the `examples/agent` harness, this README.
+
+## License
+
+MIT — see `LICENSE`.

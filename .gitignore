@@ -1,0 +1,22 @@
+# Build output
+/bin/
+*.exe
+*.test
+*.out
+
+# glyphrun run artifacts (per-run logs, screens, replays); snapshots are
+# fixtures and stay tracked.
+/.glyphrun/runs/
+
+# Go
+/vendor/
+
+# Editor/OS cruft
+.DS_Store
+*.swp
+
+# agent demo workspaces recreated by specs (bin/agent --demo-workspace)
+/.glyphrun/ws/
+
+# Claude Code scheduler lock
+/.claude/scheduled_tasks.lock

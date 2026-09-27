@@ -1,0 +1,44 @@
+=== grid 80x24 ===
+mail  deploy                                                                    
+┌─ Inbox ──────────────────────────────────────────────────────────────────────┐
+│t-12 login loop on staging                                                    │
+│t-18 cannot deploy europe-west                                                │
+│t-21 stale feature flag cache                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+╭─ Detail ─────────────────────────────────────────────────────────────────────╮
+│login loop on staging                                                         │
+│Users hitting /login are redirected back to /login after a 302.               │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+connected                                                              3 tickets
+=== nodes ===
+main     screen  80x24 @(0,0)
+app      col     80x24 @(0,0)
+header   row     80x1 @(0,0)
+-        text    12x1 @(0,0)
+body     row     80x22 @(0,1)
+sidebar  col     80x5 @(0,1)
+-        text    78x1 @(1,2)
+-        text    78x1 @(1,3)
+-        text    78x1 @(1,4)
+detail   col     80x17 @(0,6)
+-        text    78x1 @(1,7)
+-        text    78x1 @(1,8)
+status   row     80x1 @(0,23)
+-        text    9x1 @(0,23)
+-        spacer  62x1 @(9,23)
+-        text    9x1 @(71,23)
+=== errors ===
+ok

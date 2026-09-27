@@ -1,0 +1,51 @@
+version: 1
+name: agent_edit_approved
+intent: |
+    the agent proposes an edit, the operator approves it with y, and the
+    workspace file is changed exactly as previewed.
+target:
+    cmd: ["./bin/agent", "--demo-workspace", ".glyphrun/ws/edit-approved-ws"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 30
+steps:
+    - wait:
+        screen:
+            contains: "message the agent"
+        timeoutMs: 5000
+    - type: "edit notes.txt: before -> after"
+    - press: enter
+    - wait:
+        screen:
+            contains: "edit_file"
+        timeoutMs: 5000
+    - wait:
+        screen:
+            contains: "- before"
+        timeoutMs: 2000
+    - snapshot: approval_open
+    - press: y
+    - wait:
+        screen:
+            contains: "edited notes.txt"
+        timeoutMs: 5000
+    - snapshot: approved
+    - press: ctrl+c
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: approve_applies_the_edit
+      description: pressing y applies the exact edit to the workspace file
+      verify:
+        file:
+            glob: ../../.glyphrun/ws/edit-approved-ws/notes.txt
+            contains: "after"
+    - id: clean_exit
+      description: ctrl+c quits cleanly after approval
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:90aff91ca8268e183eb67d4648da6e12ca5d354899ce8cff55730ddd25d48be2

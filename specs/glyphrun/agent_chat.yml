@@ -1,0 +1,41 @@
+version: 1
+name: agent_chat
+intent: |
+    a user types a prompt into the composer, the scripted provider's reply
+    streams into the transcript, and ctrl+c quits cleanly.
+target:
+    cmd: ["./bin/agent", "--demo-workspace", ".glyphrun/ws/chat-ws"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 30
+steps:
+    - wait:
+        screen:
+            contains: "message the agent"
+        timeoutMs: 5000
+    - snapshot: home
+    - type: "list"
+    - press: enter
+    - wait:
+        screen:
+            contains: "notes.txt"
+        timeoutMs: 5000
+    - snapshot: reply
+    - press: ctrl+c
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: reply_streams_into_transcript
+      description: the scripted provider's tool result reaches the transcript
+      verify:
+        screen:
+            contains: "main.go"
+    - id: clean_exit
+      description: ctrl+c quits cleanly
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:a42b969c5f9032c626b2771f556cdcec7302b8eb58fea7dd04e7968aa923f3ab

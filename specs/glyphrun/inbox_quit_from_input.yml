@@ -1,0 +1,43 @@
+version: 1
+name: inbox_quit_from_input
+intent: |
+    while the search input has focus, "q" (and any other letter) is typed into
+    the box instead of quitting the app — only the built-in quit path (bound to
+    q on the list, or ctrl+c anywhere) stops the app. Typing the literal word
+    "quit" into the focused search box proves every letter reached the input
+    and the app kept running; ctrl+c then quits cleanly from the same input.
+target:
+    cmd: ["${vars.inbox}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "mail  deploy"
+        timeoutMs: 5000
+    - snapshot: home
+    - type: "quit"
+    - wait:
+        screen:
+            contains: "quit"
+        timeoutMs: 2000
+    - snapshot: quit_typed_into_input
+    - press: ctrl+c
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: q_is_typed_not_quit
+      description: typing "quit" (starting with q) into the focused search box lands as text, proving the app stayed up through every keystroke
+      verify:
+        screen:
+            contains: "quit"
+    - id: ctrl_c_quits_from_input
+      description: ctrl+c quits cleanly even while the search input has focus
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:ef5d6dc4dd7f65832cb77a981a6ac6ef7b37f10eef573f9dafe012debd5255d2

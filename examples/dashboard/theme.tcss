@@ -1,0 +1,41 @@
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --accent: cyan;
+  --ok: green;
+  --warn: yellow;
+  --danger: red;
+  --border: #30363d;
+  --focus: cyan;
+  --panel: #161b22;
+}
+
+screen { layout: column; color: $fg; background: $bg; }
+#shell, #logsShell { layout: column; width: 100%; height: 100%; }
+
+#header, #logsHeader { dock: top; height: 1; background: $panel; }
+#footer, #logsFooter { dock: bottom; height: 1; background: $panel; }
+
+#body { flex: 1; layout: row; gap: 1; }
+#pipeline { width: 26; border: single; border-color: $border; layout: column; }
+#mainpanel { flex: 1; border: single; border-color: $border; layout: column; }
+#steps { flex: 1; }
+#pipelineActions { height: 1; gap: 1; }
+
+#logScroll, #logScroll2 { flex: 1; border: single; border-color: $border; }
+
+.title { bold: true; }
+.muted { color: $muted; }
+
+list:focus, scroll:focus { border-color: $focus; }
+button:focus { reverse: true; }
+modal { border-color: $accent; }
+
+@media (max-cols: 80) {
+  #pipeline { width: 22; }
+}
+
+@media (min-cols: 81) {
+  #pipeline { width: 32; }
+}

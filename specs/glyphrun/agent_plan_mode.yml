@@ -1,0 +1,51 @@
+version: 1
+name: agent_plan_mode
+intent: |
+    ctrl+p switches from build to plan mode, and an edit request in plan mode
+    is refused outright, with no approval modal at all.
+target:
+    cmd: ["./bin/agent", "--demo-workspace", ".glyphrun/ws/plan-ws"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 30
+steps:
+    - wait:
+        screen:
+            contains: "build"
+        timeoutMs: 5000
+    - press: ctrl+p
+    - wait:
+        screen:
+            contains: "plan"
+        timeoutMs: 3000
+    - type: "edit notes.txt: before -> after"
+    - press: enter
+    - wait:
+        screen:
+            contains: "not allowed in plan mode"
+        timeoutMs: 5000
+    - snapshot: refused
+    - press: ctrl+c
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: refused_without_a_modal
+      description: plan mode refuses the edit without ever opening the approval modal
+      verify:
+        screen:
+            notContains: "Approve"
+    - id: file_untouched
+      description: the workspace file is unchanged because the edit was refused
+      verify:
+        file:
+            glob: ../../.glyphrun/ws/plan-ws/notes.txt
+            contains: "before"
+    - id: clean_exit
+      description: ctrl+c quits cleanly after the refusal
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:b2306c030e0a8442d49ad2282ad8c7bc9fbdb7cd2f20250322bea1411b502e65

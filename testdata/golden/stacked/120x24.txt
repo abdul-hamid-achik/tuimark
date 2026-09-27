@@ -1,0 +1,44 @@
+=== grid 120x24 ===
+mail  deploy                                                                                                            
+┌─ Inbox ──────────────────────┐╭─ Detail ─────────────────────────────────────────────────────────────────────────────╮
+│t-12 login loop on staging    ││login loop on staging                                                                 │
+│t-18 cannot deploy europe-west││Users hitting /login are redirected back to /login after a 302.                       │
+│t-21 stale feature flag cache ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+│                              ││                                                                                      │
+└──────────────────────────────┘╰──────────────────────────────────────────────────────────────────────────────────────╯
+connected                                                                                                      3 tickets
+=== nodes ===
+main     screen  120x24 @(0,0)
+app      col     120x24 @(0,0)
+header   row     120x1 @(0,0)
+-        text    12x1 @(0,0)
+body     row     120x22 @(0,1)
+sidebar  col     32x22 @(0,1)
+-        text    30x1 @(1,2)
+-        text    30x1 @(1,3)
+-        text    30x1 @(1,4)
+detail   col     88x22 @(32,1)
+-        text    86x1 @(33,2)
+-        text    86x1 @(33,3)
+status   row     120x1 @(0,23)
+-        text    9x1 @(0,23)
+-        spacer  102x1 @(9,23)
+-        text    9x1 @(111,23)
+=== errors ===
+ok

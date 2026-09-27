@@ -1,0 +1,7 @@
+[
+  "ask_deploy",
+  "start_deploy",
+  "cancel_confirm",
+  "goto_logs",
+  "goto_main"
+]

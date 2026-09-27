@@ -1,0 +1,42 @@
+version: 1
+name: agent_resize
+intent: |
+    the side panel (tool activity / files touched) is visible at 120 columns
+    and disappears once the terminal is resized to 80 columns.
+target:
+    cmd: ["./bin/agent", "--demo-workspace", ".glyphrun/ws/resize-ws"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 30
+steps:
+    - wait:
+        screen:
+            contains: "tools"
+        timeoutMs: 5000
+    - snapshot: wide
+    - resize:
+        cols: 80
+        rows: 30
+    - wait:
+        screen:
+            notContains: "tools"
+        timeoutMs: 3000
+    - snapshot: narrow
+    - press: ctrl+c
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: side_panel_hidden_at_80
+      description: after resizing to 80 columns, the side panel stays hidden
+      verify:
+        screen:
+            notContains: "tools"
+    - id: clean_exit
+      description: ctrl+c quits cleanly after the resize
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:4f7b0ea20f5bd1645c0e2c7a604d44b7876d82b1cb9d3a53ab4475eaed610405

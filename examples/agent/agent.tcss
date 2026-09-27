@@ -1,0 +1,36 @@
+screen { layout: column; color: $fg; background: $bg; }
+#app { layout: column; width: 100%; height: 100%; }
+
+#header, #status { height: 1; background: $panel; gap: 2; }
+.brand { bold: true; }
+.mode { color: $warn; }
+
+#body { flex: 1; layout: row; gap: 1; }
+
+#main-col { flex: 1; layout: column; }
+#transcript { flex: 1; border: single; border-color: $border; }
+.role { color: $accent; bold: true; }
+.muted { color: $muted; }
+
+#composer { height: 3; border: single; border-color: $border; }
+input:focus { border-color: $focus; }
+list:focus { border-color: $focus; }
+
+#side { width: 30; layout: column; gap: 1; }
+.panel { flex: 1; border: single; border-color: $border; layout: column; }
+
+#ctxbar { width: 16; }
+
+.title { bold: true; }
+
+modal#approval, modal#help { width: 60; height: auto; }
+#approval-actions { height: 1; gap: 2; justify: center; }
+button:focus { reverse: true; }
+
+@media (max-cols: 99) {
+  #side { display: none; }
+}
+
+@media (max-cols: 60) {
+  #header { display: none; }
+}

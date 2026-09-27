@@ -1,0 +1,16 @@
+{
+  "environment": "production",
+  "confirm_open": false,
+  "selected_step": "s1",
+  "deploy_progress": 0,
+  "deploy_status": "idle",
+  "current_step_label": "idle",
+  "footer_status": "ready",
+  "logs_text": "12:00:00 ready\n12:00:01 waiting for deploy",
+  "steps": [
+    { "id": "s1", "name": "build", "status": "pending" },
+    { "id": "s2", "name": "test", "status": "pending" },
+    { "id": "s3", "name": "package", "status": "pending" },
+    { "id": "s4", "name": "release", "status": "pending" }
+  ]
+}

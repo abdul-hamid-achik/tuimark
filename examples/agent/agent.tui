@@ -1,0 +1,70 @@
+<tui version="1" theme="dark">
+  <style src="agent.tcss"/>
+  <keymap>
+    <bind keys="ctrl+c" action="quit"/>
+    <bind keys="ctrl+p" action="toggle_mode"/>
+    <bind keys="ctrl+l" action="clear_transcript"/>
+    <bind keys="esc" action="cancel"/>
+    <bind keys="ctrl+h" action="toggle_help"/>
+    <bind keys="?" action="toggle_help"/>
+    <bind keys="y" action="approve"/>
+    <bind keys="n" action="deny"/>
+  </keymap>
+  <screen id="main" focus="#composer">
+    <col id="app">
+      <row id="header" class="chrome">
+        <text class="brand">{app_name}</text>
+        <text class="muted">{provider} / {model}</text>
+        <text class="mode">{mode}</text>
+        <spacer/>
+        <text class="muted">{workspace}</text>
+      </row>
+      <row id="body">
+        <col id="main-col">
+          <list id="transcript" each="messages as m" key="m.id" bind="selected_message" title="transcript">
+            <item>
+              <col>
+                <text class="role">{m.role}</text>
+                <text wrap="wrap">{m.text}</text>
+              </col>
+            </item>
+          </list>
+          <input id="composer" bind="draft" placeholder="message the agent" on:submit="send"/>
+        </col>
+        <col id="side">
+          <box id="tools-panel" class="panel" title="tools">
+            <list id="activity" each="tool_activity as a" key="a.id">
+              <item>
+                <text wrap="wrap">{a.label}</text>
+              </item>
+            </list>
+          </box>
+          <box id="files-panel" class="panel" title="files">
+            <list id="files" each="files_touched as f" key="f.id">
+              <item>
+                <text wrap="wrap">{f.path}</text>
+              </item>
+            </list>
+          </box>
+        </col>
+      </row>
+      <row id="status" class="chrome">
+        <text>{status}</text>
+        <spacer/>
+        <text class="muted">ctx</text>
+        <progress id="ctxbar" bind="context_pct"/>
+      </row>
+    </col>
+    <modal id="approval" open="approval.open" title="{approval.tool}" on:escape="deny">
+      <text wrap="wrap">{approval.preview}</text>
+      <row id="approval-actions">
+        <button id="approve-btn" on:click="approve">Approve</button>
+        <button id="deny-btn" on:click="deny">Deny</button>
+      </row>
+    </modal>
+    <modal id="help" open="help_open" title="help" on:escape="toggle_help">
+      <text wrap="wrap">ctrl+c quit  ·  ctrl+p plan/build  ·  ctrl+l clear transcript  ·  esc cancel  ·  tab cycle focus  ·  y/n approve/deny  ·  ?/ctrl+h this help</text>
+      <button id="help-close" on:click="toggle_help">Close</button>
+    </modal>
+  </screen>
+</tui>

@@ -1,0 +1,7 @@
+<app width="100%" height="100%">
+  <col id="root" width="1fr" height="1fr">
+    <box id="broken" width="1fr" height="1fr">
+      <text>oops
+    </box>
+  </col>
+</app>

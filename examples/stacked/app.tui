@@ -1,0 +1,28 @@
+<tui version="1" theme="dark">
+  <!-- Phase 1 fixture: the inbox layout with static text. theme.tcss
+       stacks #body (sidebar above detail) at 80 columns and below. -->
+  <style src="theme.tcss"/>
+  <screen id="main">
+    <col id="app">
+      <row id="header">
+        <text>mail  deploy</text>
+      </row>
+      <row id="body">
+        <col id="sidebar" title="Inbox">
+          <text class="muted">t-12 login loop on staging</text>
+          <text class="muted">t-18 cannot deploy europe-west</text>
+          <text class="muted">t-21 stale feature flag cache</text>
+        </col>
+        <col id="detail" title="Detail">
+          <text class="title">login loop on staging</text>
+          <text wrap="wrap">Users hitting /login are redirected back to /login after a 302.</text>
+        </col>
+      </row>
+      <row id="status">
+        <text>connected</text>
+        <spacer/>
+        <text>3 tickets</text>
+      </row>
+    </col>
+  </screen>
+</tui>

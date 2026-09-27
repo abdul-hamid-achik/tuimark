@@ -1,0 +1,40 @@
+version: 1
+name: inbox_navigate
+intent: |
+  a user opens the inbox example, moves from the search box to the ticket
+  list, selects another ticket and sees its detail, then quits with q.
+target:
+  cmd: ["${vars.inbox}"]
+  cwd: "."
+terminal:
+  cols: 120
+  rows: 24
+steps:
+  - wait:
+      screen:
+        contains: "mail  deploy"
+      timeoutMs: 5000
+  - snapshot: home
+  - press: tab
+  - press: down
+  - wait:
+      screen:
+        contains: "viewing t-18"
+      timeoutMs: 3000
+  - snapshot: second_ticket
+  - press: q
+  - wait:
+      process:
+        exitCode: 0
+      timeoutMs: 3000
+outcomes:
+  - id: detail_follows_selection
+    description: moving the list selection shows the selected ticket's detail
+    verify:
+      screen:
+        contains: "P1 ticket in deploy. cannot deploy europe-west."
+  - id: clean_exit
+    description: q quits cleanly when the list has focus
+    verify:
+      process:
+        exitCode: 0

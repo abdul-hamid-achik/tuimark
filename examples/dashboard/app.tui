@@ -1,0 +1,77 @@
+<tui version="1" theme="dark">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="q" action="quit"/>
+    <bind keys="d" action="ask_deploy" when="#deployBtn:focus"/>
+    <bind keys="g" action="focus" to="#logScroll2"/>
+    <bind keys="m" action="focus" to="#deployBtn"/>
+  </keymap>
+  <screen id="main" focus="#deployBtn">
+    <col id="shell">
+      <row id="header" class="chrome">
+        <text>deploy dashboard  {environment}</text>
+        <spacer/>
+        <text>{footer_status}</text>
+      </row>
+      <row id="body">
+        <col id="pipeline" title="Pipeline">
+          <list id="steps" each="steps as step" key="step.id" bind="selected_step">
+            <item>
+              <row>
+                <text class="muted">{step.id}</text>
+                <text>{step.name}</text>
+                <spacer/>
+                <text>{step.status}</text>
+              </row>
+            </item>
+          </list>
+          <rule/>
+          <progress id="progressBar" bind="deploy_progress"/>
+          <text>{deploy_status}</text>
+          <row id="pipelineActions">
+            <button id="deployBtn" label="Deploy" on:click="ask_deploy"/>
+            <button id="logsBtn" label="Logs" on:click="goto_logs"/>
+          </row>
+        </col>
+        <col id="mainpanel">
+          <text class="title">{current_step_label}</text>
+          <rule/>
+          <scroll id="logScroll" axis="y" focusable="true" title="Logs">
+            <text wrap="wrap">{logs_text}</text>
+          </scroll>
+        </col>
+      </row>
+      <row id="footer" class="chrome">
+        <text>q quit  tab cycle  enter/d deploy  g logs</text>
+        <spacer/>
+        <text>{environment}</text>
+      </row>
+    </col>
+    <modal id="confirmModal" title="Confirm deploy" open="confirm_open" on:escape="cancel_confirm">
+      <col>
+        <text>Deploy to {environment}?</text>
+        <row>
+          <button id="confirmYes" label="Confirm" on:click="start_deploy"/>
+          <button id="confirmNo" label="Cancel" on:click="cancel_confirm"/>
+        </row>
+      </col>
+    </modal>
+  </screen>
+  <screen id="logs" focus="#backBtn">
+    <col id="logsShell">
+      <row id="logsHeader" class="chrome">
+        <text>full logs  {environment}</text>
+        <spacer/>
+        <button id="backBtn" label="Back" on:click="goto_main"/>
+      </row>
+      <scroll id="logScroll2" axis="y" focusable="true" title="Logs (full)">
+        <text wrap="wrap">{logs_text}</text>
+      </scroll>
+      <row id="logsFooter" class="chrome">
+        <text>{footer_status}</text>
+        <spacer/>
+        <text>m back  q quit</text>
+      </row>
+    </col>
+  </screen>
+</tui>

@@ -1,0 +1,46 @@
+version: 1
+name: agent_fixture_ollama
+intent: |
+    with --fixture, the ollama provider's real HTTP streaming client talks to
+    an in-process loopback fake server; a tool call and its result are visible
+    in the transcript and side panel.
+target:
+    cmd: ["./bin/agent", "--fixture", "--demo-workspace", ".glyphrun/ws/fixture-ws"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 30
+steps:
+    - wait:
+        screen:
+            contains: "message the agent"
+        timeoutMs: 5000
+    - type: "read notes.txt"
+    - press: enter
+    - wait:
+        screen:
+            contains: "loopback HTTP"
+        timeoutMs: 5000
+    - snapshot: reply
+    - press: ctrl+c
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: fixture_reply_visible
+      description: the loopback fixture's streamed reply, including the tool result, reaches the transcript
+      verify:
+        screen:
+            contains: "before"
+    - id: tool_call_recorded
+      description: the read_file tool call the fixture requested shows up in the side panel
+      verify:
+        screen:
+            contains: "read_file notes.txt"
+    - id: clean_exit
+      description: ctrl+c quits cleanly
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:7d1726f4e4de442e910bde51827db23bc8e48999ac4c8033bb6bd78fa6636383

@@ -1,0 +1,45 @@
+version: 1
+name: validate_errors
+intent: |
+    a coding agent runs `tuimark validate` on a broken fixture (unknown tag,
+    duplicate id, unclosed XML). The diagnostic code shows on screen and the
+    process exits with code 2, so the agent's edit loop can tell "the document
+    is broken" from "the document is fine" without parsing ANSI.
+target:
+    cmd: ["sh", "-c", "${vars.tuimark} validate specs/fixtures/bad_unknown_tag.tui; echo ---; ${vars.tuimark} validate specs/fixtures/bad_duplicate_id.tui; echo ---; ${vars.tuimark} validate specs/fixtures/bad_unclosed.tui"]
+    cwd: "."
+terminal:
+    cols: 100
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "V005"
+        timeoutMs: 3000
+    - snapshot: diagnostics
+    - wait:
+        process:
+            exitCode: 2
+        timeoutMs: 3000
+outcomes:
+    - id: shows_unknown_tag_code
+      description: an unknown tag is reported as V001
+      verify:
+        screen:
+            contains: "V001"
+    - id: shows_duplicate_id_code
+      description: a duplicate id is reported as V004
+      verify:
+        screen:
+            contains: "V004"
+    - id: shows_unclosed_xml_code
+      description: unclosed XML is reported as V005
+      verify:
+        screen:
+            contains: "V005"
+    - id: exits_with_validation_error
+      description: the last validate invocation (a broken document) exits 2
+      verify:
+        process:
+            exitCode: 2
+contractHash: sha256:e37590b050cbe24aeaafc48dbe4f29c9ca86e7fd40d7329d42b6cd87fded150b

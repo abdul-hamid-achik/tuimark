@@ -1,0 +1,55 @@
+=== grid 40x24 ===
+┌──────────────────────────────────────┐
+│search                                │
+│t-12login loop on staging             │
+│t-18cannot deploy europe-west         │
+│t-21stale feature flag cache          │
+└──────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│login loop on staging                 │
+│Users hitting /login are redirected   │
+│back to /login after a 302. Started   │
+│after the session cookie flag change. │
+│Repro: incognito, POST credentials,   │
+│watch Location.                       │
+│                                      │
+│                                      │
+│                                      │
+│                                      │
+│                                      │
+│                                      │
+│                                      │
+│                                      │
+│                                      │
+└──────────────────────────────────────┘
+connected                      3 tickets
+=== nodes ===
+main     screen  40x24 @(0,0)
+app      col     40x24 @(0,0)
+body     row     40x23 @(0,0)
+sidebar  col     40x6 @(0,0)
+query    input   38x1 @(1,1) focus
+inbox    list    38x3 @(1,2)
+-        item    38x1 @(1,2) selected
+-        row     38x1 @(1,2)
+-        text    4x1 @(1,2)
+-        text    21x1 @(5,2)
+-        item    38x1 @(1,3)
+-        row     38x1 @(1,3)
+-        text    4x1 @(1,3)
+-        text    25x1 @(5,3)
+-        item    38x1 @(1,4)
+-        row     38x1 @(1,4)
+-        text    4x1 @(1,4)
+-        text    24x1 @(5,4)
+detail   col     40x17 @(0,6)
+-        box     38x6 @(1,7)
+-        text    38x1 @(1,7)
+-        scroll  38x5 @(1,8)
+-        text    38x5 @(1,8)
+status   row     40x1 @(0,23)
+-        text    9x1 @(0,23)
+-        spacer  22x1 @(9,23)
+-        text    9x1 @(31,23)
+=== errors ===
+ok

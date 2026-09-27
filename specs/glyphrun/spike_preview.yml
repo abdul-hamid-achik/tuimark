@@ -1,0 +1,47 @@
+version: 1
+name: spike_preview
+intent: |
+    a coding agent runs `tuimark preview` on the frozen phase-0 spike fixture at
+    80x24 and sees both boxes (inbox, detail) and the status line, then the
+    process exits cleanly on its own.
+target:
+    cmd: ["${vars.tuimark}", "preview", "examples/spike/inbox.tui"]
+    cwd: "."
+terminal:
+    # tuimark renders its own 80x24 grid (the default --cols/--rows); the PTY
+    # viewport is taller so the grid plus the nodes/errors summary below it
+    # never scrolls the box tops out of view before the wait/snapshot steps.
+    cols: 80
+    rows: 40
+steps:
+    - wait:
+        screen:
+            contains: "ready"
+        timeoutMs: 3000
+    - snapshot: rendered
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: shows_both_boxes
+      description: the preview renders the inbox and detail boxes side by side
+      verify:
+        screen:
+            contains: "Inbox"
+    - id: shows_detail_box
+      description: the detail box is rendered next to the inbox box
+      verify:
+        screen:
+            contains: "Detail"
+    - id: shows_status_line
+      description: the status line reads "ready"
+      verify:
+        screen:
+            contains: "ready"
+    - id: exits_clean
+      description: preview (no --watch) renders one frame and exits 0
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:60fac45492511eb36542bdbcbbe7a32d06504042c352274957e43440c532deb5

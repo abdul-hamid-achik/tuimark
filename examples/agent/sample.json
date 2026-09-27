@@ -1,0 +1,26 @@
+{
+  "app_name": "tuimark-agent",
+  "provider": "scripted",
+  "model": "scripted-1",
+  "mode": "build",
+  "workspace": "workspace",
+  "status": "ready",
+  "draft": "",
+  "context_pct": 24,
+  "selected_message": "m-4",
+  "help_open": false,
+  "approval": { "open": false, "tool": "", "preview": "" },
+  "messages": [
+    { "id": "m-1", "role": "user", "text": "list the files here" },
+    { "id": "m-2", "role": "assistant", "text": "notes.txt\nmain.go" },
+    { "id": "m-3", "role": "user", "text": "read main.go" },
+    { "id": "m-4", "role": "assistant", "text": "package main\n\nfunc main() {}\n" }
+  ],
+  "tool_activity": [
+    { "id": "a-1", "label": "list_files ." },
+    { "id": "a-2", "label": "read_file main.go" }
+  ],
+  "files_touched": [
+    { "id": "f-1", "path": "main.go" }
+  ]
+}

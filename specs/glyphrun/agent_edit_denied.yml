@@ -1,0 +1,47 @@
+version: 1
+name: agent_edit_denied
+intent: |
+    the agent proposes an edit, the operator denies it with n, and the
+    workspace file is left untouched.
+target:
+    cmd: ["./bin/agent", "--demo-workspace", ".glyphrun/ws/edit-denied-ws"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 30
+steps:
+    - wait:
+        screen:
+            contains: "message the agent"
+        timeoutMs: 5000
+    - type: "edit notes.txt: before -> after"
+    - press: enter
+    - wait:
+        screen:
+            contains: "edit_file"
+        timeoutMs: 5000
+    - snapshot: approval_open
+    - press: n
+    - wait:
+        screen:
+            contains: "denied: edit_file"
+        timeoutMs: 5000
+    - snapshot: denied
+    - press: ctrl+c
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: deny_leaves_file_untouched
+      description: pressing n leaves the workspace file exactly as it was
+      verify:
+        file:
+            glob: ../../.glyphrun/ws/edit-denied-ws/notes.txt
+            contains: "before"
+    - id: clean_exit
+      description: ctrl+c quits cleanly after denial
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:80d95f61ff3a58074168bedb87777027f07fb686d7c50eeac9a9a924e6a9ab63

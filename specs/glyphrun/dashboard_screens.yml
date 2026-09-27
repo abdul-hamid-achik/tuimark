@@ -1,0 +1,82 @@
+version: 1
+name: dashboard_screens
+intent: |
+    the "g" keymap shortcut focuses the full logs screen's scroll (switching
+    screens via action="focus" to="#logScroll2"); the "m" shortcut focuses
+    Deploy back on the main screen the same way; the logs screen's Back
+    button switches back to main from the host side, via ui.Set("@screen",
+    "main").
+target:
+    cmd: ["${vars.dashboard}"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "deploy dashboard"
+        timeoutMs: 3000
+    - snapshot: main_screen
+    - press: g
+    - wait:
+        screen:
+            contains: "full logs"
+        timeoutMs: 2000
+    - snapshot: logs_screen_via_keymap
+    - press: m
+    - wait:
+        screen:
+            contains: "deploy dashboard"
+        timeoutMs: 2000
+    - snapshot: main_screen_again
+    - press: g
+    - wait:
+        screen:
+            contains: "full logs"
+        timeoutMs: 2000
+    - press: tab
+    - press: enter
+    - wait:
+        screen:
+            contains: "deploy dashboard"
+        timeoutMs: 2000
+    - snapshot: main_screen_via_back_button
+outcomes:
+    - id: keymap_focus_switches_to_logs_screen
+      description: the "g" keymap shortcut (action="focus" to="#logScroll2") switches from main to the logs screen
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/logs_screen_via_keymap.txt"
+                if grep -q "full logs" "$f" && ! grep -q "deploy dashboard" "$f"; then
+                  echo '{"ok": true, "evidence": "the logs screen replaced the main screen"}'
+                else
+                  echo '{"ok": false, "evidence": "the logs screen did not fully replace the main screen"}'
+                fi
+    - id: keymap_focus_switches_back_to_main_screen
+      description: the "m" keymap shortcut (action="focus" to="#deployBtn") switches back from logs to main
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/main_screen_again.txt"
+                if grep -q "deploy dashboard" "$f" && ! grep -q "full logs" "$f"; then
+                  echo '{"ok": true, "evidence": "the main screen replaced the logs screen"}'
+                else
+                  echo '{"ok": false, "evidence": "the main screen did not fully replace the logs screen"}'
+                fi
+    - id: host_set_screen_switches_back_to_main
+      description: clicking Back on the logs screen calls the host action goto_main, which does ui.Set("@screen", "main")
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/main_screen_via_back_button.txt"
+                if grep -q "deploy dashboard" "$f" && ! grep -q "full logs" "$f"; then
+                  echo '{"ok": true, "evidence": "Back returned to the main screen via a host-driven @screen switch"}'
+                else
+                  echo '{"ok": false, "evidence": "Back did not return to the main screen"}'
+                fi
+contractHash: sha256:c7d155c8b946e0aab722c3e3c362a44fc2edfe6d67a7872599579caf45cb324f

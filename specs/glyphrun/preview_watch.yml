@@ -1,0 +1,54 @@
+version: 1
+name: preview_watch
+intent: |
+    `tuimark preview --watch` re-renders when the watched document changes on
+    disk: a fixture script copies a phase-0 fixture into a temp dir, starts
+    preview --watch on it in the background, edits the file after a moment,
+    and the new content shows up without restarting the process.
+target:
+    cmd: ["sh", "specs/fixtures/preview_watch.sh", "${vars.tuimark}"]
+    cwd: "."
+terminal:
+    # Tall enough that the 24-row grid plus the nodes/errors summary printed
+    # after each reload never scrolls the status line out of view.
+    cols: 80
+    rows: 40
+steps:
+    - wait:
+        screen:
+            contains: "ready"
+        timeoutMs: 3000
+    - snapshot: before_edit
+    - wait:
+        screen:
+            contains: "updated"
+        timeoutMs: 3000
+    - snapshot: after_edit
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: initial_render_shows_original_content
+      description: preview --watch renders the fixture's original status text before the edit
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/before_edit.txt"
+                if grep -q "ready" "$f"; then
+                  echo '{"ok": true, "evidence": "before_edit snapshot shows the original status text"}'
+                else
+                  echo '{"ok": false, "evidence": "before_edit snapshot is missing the original status text"}'
+                fi
+    - id: watch_rerenders_after_file_edit
+      description: editing the watched file makes --watch re-render the new content
+      verify:
+        screen:
+            contains: "updated"
+    - id: helper_script_exits_clean
+      description: the fixture script stops the watcher and exits 0 once the edit was observed
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:2efc293b161ca06c1b43177e5fa33ef2da81d8bbc106c84ff02f751f79b12604

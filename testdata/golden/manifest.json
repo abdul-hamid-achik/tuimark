@@ -1,0 +1,24 @@
+[
+  {
+    "name": "spike",
+    "file": "examples/spike/inbox.tui",
+    "sizes": ["40x24", "80x24", "120x24"],
+    "json": ["80x24"],
+    "frozen": true
+  },
+  {
+    "name": "inbox",
+    "file": "examples/inbox/app.tui",
+    "data": "examples/inbox/sample.json",
+    "sizes": ["40x24", "80x24", "120x24"],
+    "json": ["80x24", "120x24"],
+    "frozen": false
+  },
+  {
+    "name": "stacked",
+    "file": "examples/stacked/app.tui",
+    "sizes": ["40x24", "80x24", "120x24"],
+    "json": [],
+    "frozen": false
+  }
+]

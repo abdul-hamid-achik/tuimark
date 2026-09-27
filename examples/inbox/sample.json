@@ -1,0 +1,17 @@
+{
+  "folder": "deploy",
+  "query": "",
+  "status": "connected",
+  "count": 3,
+  "selected": "t-12",
+  "selected_ticket": {
+    "id": "t-12",
+    "title": "login loop on staging",
+    "body": "Users hitting /login are redirected back to /login after a 302. Started after the session cookie flag change. Repro: incognito, POST credentials, watch Location."
+  },
+  "tickets": [
+    { "id": "t-12", "title": "login loop on staging", "prio": "P1" },
+    { "id": "t-18", "title": "cannot deploy europe-west", "prio": "P1" },
+    { "id": "t-21", "title": "stale feature flag cache", "prio": "P2" }
+  ]
+}

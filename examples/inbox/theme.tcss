@@ -1,0 +1,36 @@
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --accent: cyan;
+  --ok: green;
+  --warn: yellow;
+  --danger: red;
+  --border: #30363d;
+  --focus: cyan;
+  --panel: #161b22;
+}
+
+screen { layout: column; color: $fg; background: $bg; }
+#app { layout: column; width: 100%; height: 100%; }
+#header, #status { height: 1; background: $panel; }
+#body { flex: 1; layout: row; gap: 0; }
+#sidebar { width: 32; border: single; border-color: $border; }
+#detail { flex: 1; border: single; border-color: $border; }
+#inbox { flex: 1; }
+#query { height: 1; }
+.title { bold: true; }
+.muted { color: $muted; }
+list:focus { border-color: $focus; }
+input:focus { border-color: $focus; }
+
+@media (max-cols: 80) {
+  #body { layout: column; }
+  #sidebar { width: 100%; height: 8; }
+  #detail { width: 100%; flex: 1; }
+}
+
+@media (max-cols: 40) {
+  #header { display: none; }
+  #sidebar { height: 6; }
+}

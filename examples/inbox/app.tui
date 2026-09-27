@@ -1,0 +1,44 @@
+<tui version="1" theme="dark">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="q" action="quit"/>
+    <bind keys="enter" action="open" when="#inbox:focus"/>
+    <bind keys="/" action="focus" to="#query"/>
+  </keymap>
+  <screen id="main" focus="#query">
+    <col id="app">
+      <row id="header" class="chrome">
+        <text>mail  {folder}</text>
+      </row>
+      <row id="body">
+        <col id="sidebar">
+          <input id="query" bind="query" placeholder="search" on:submit="search"/>
+          <list id="inbox" each="tickets as item" key="item.id" bind="selected" on:select="open">
+            <item>
+              <row>
+                <text class="muted">{item.id}</text>
+                <text>{item.title}</text>
+              </row>
+            </item>
+          </list>
+        </col>
+        <col id="detail">
+          <box if="selected_ticket">
+            <text class="title">{selected_ticket.title}</text>
+            <scroll>
+              <text wrap="wrap">{selected_ticket.body}</text>
+            </scroll>
+          </box>
+          <box if="!selected_ticket">
+            <text class="muted">no selection</text>
+          </box>
+        </col>
+      </row>
+      <row id="status" class="chrome">
+        <text>{status}</text>
+        <spacer/>
+        <text>{count} tickets</text>
+      </row>
+    </col>
+  </screen>
+</tui>

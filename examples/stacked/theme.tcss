@@ -1,0 +1,17 @@
+/* Phase 1 fixture (SPEC §4, §21 test 10): wide terminals put the sidebar
+   beside the detail; at 80 columns and below #body stacks them. */
+
+screen { color: $fg; background: $bg; }
+#app { layout: column; width: 100%; height: 100%; }
+#header, #status { height: 1; background: $panel; }
+#body { flex: 1; layout: row; }
+#sidebar { width: 32; border: single; border-color: $border; }
+#detail { flex: 1; border: rounded; border-color: $border; }
+.muted { color: $muted; }
+.title { bold: true; }
+
+@media (max-cols: 80) {
+  #body { layout: column; }
+  #sidebar { width: 100%; height: 5; }
+  #detail { width: 100%; flex: 1; }
+}

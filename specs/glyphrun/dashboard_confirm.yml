@@ -1,0 +1,100 @@
+version: 1
+name: dashboard_confirm
+intent: |
+    pressing enter on the focused Deploy button opens the confirm modal; esc
+    closes it and returns focus to Deploy (proven by reopening it with enter
+    again); confirming starts the deploy pipeline and the progress bar
+    advances until the pipeline reports "deployed". Each stage is transient
+    (later stages overwrite the screen), so outcomes check the named snapshot
+    taken at the moment each stage was true rather than the live end-of-run
+    screen.
+target:
+    cmd: ["${vars.dashboard}"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "[ Deploy ]"
+        timeoutMs: 3000
+    - snapshot: home
+    - press: enter
+    - wait:
+        screen:
+            contains: "Confirm deploy"
+        timeoutMs: 2000
+    - snapshot: modal_open
+    - press: esc
+    - wait:
+        screen:
+            notContains: "Confirm deploy"
+        timeoutMs: 2000
+    - press: enter
+    - wait:
+        screen:
+            contains: "Confirm deploy"
+        timeoutMs: 2000
+    - snapshot: modal_reopened
+    - press: enter
+    - wait:
+        screen:
+            contains: "deploying"
+        timeoutMs: 2000
+    - snapshot: deploying
+    - wait:
+        screen:
+            contains: "deployed"
+        timeoutMs: 3000
+    - snapshot: deployed
+outcomes:
+    - id: enter_opens_confirm_modal
+      description: pressing enter on the focused Deploy button opens the confirm modal
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/modal_open.txt"
+                if grep -q "Deploy to production?" "$f"; then
+                  echo '{"ok": true, "evidence": "modal_open snapshot shows the confirm prompt"}'
+                else
+                  echo '{"ok": false, "evidence": "modal_open snapshot is missing the confirm prompt"}'
+                fi
+    - id: escape_closes_and_restores_focus
+      description: esc closes the modal and returns focus to Deploy, so enter reopens it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/modal_reopened.txt"
+                if grep -q "Confirm deploy" "$f"; then
+                  echo '{"ok": true, "evidence": "modal_reopened snapshot shows the confirm modal again after esc"}'
+                else
+                  echo '{"ok": false, "evidence": "modal did not reopen: focus was not restored to Deploy"}'
+                fi
+    - id: confirm_starts_pipeline
+      description: confirming the modal starts the deploy pipeline
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/deploying.txt"
+                if grep -q "deploying" "$f"; then
+                  echo '{"ok": true, "evidence": "deploying snapshot shows the pipeline running"}'
+                else
+                  echo '{"ok": false, "evidence": "deploying snapshot never showed a running pipeline"}'
+                fi
+    - id: progress_advances_to_deployed
+      description: the progress bar advances until the pipeline reports "deployed"
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/deployed.txt"
+                if grep -q "deployed" "$f"; then
+                  echo '{"ok": true, "evidence": "deployed snapshot shows the finished pipeline"}'
+                else
+                  echo '{"ok": false, "evidence": "deployed snapshot never showed the finished pipeline"}'
+                fi
+contractHash: sha256:5123d2b98fc904ffd9f51a4810489bf4e33d94de4d993c69ed6ce7c45024f4d5

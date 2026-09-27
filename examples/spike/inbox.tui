@@ -1,0 +1,15 @@
+<app width="100%" height="100%">
+  <col id="root" width="1fr" height="1fr">
+    <row id="body" width="1fr" height="1fr">
+      <box id="inbox" width="30%" height="1fr" border="1">
+        <text>Inbox</text>
+      </box>
+      <box id="detail" width="1fr" height="1fr" border="1">
+        <text>Detail</text>
+      </box>
+    </row>
+    <box id="status" width="1fr" height="1">
+      <text>ready</text>
+    </box>
+  </col>
+</app>

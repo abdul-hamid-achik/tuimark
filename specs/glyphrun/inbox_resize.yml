@@ -1,0 +1,69 @@
+version: 1
+name: inbox_resize
+intent: |
+    the inbox app starts at 120 columns with the sidebar and detail panel side
+    by side; resizing to 80 columns stacks them (the @media (max-cols: 80)
+    rule); resizing further to 40 columns hides the header (the @media
+    (max-cols: 40) rule).
+target:
+    cmd: ["${vars.inbox}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "mail  deploy"
+        timeoutMs: 5000
+    - snapshot: wide_120
+    - resize:
+        cols: 80
+        rows: 24
+    - wait:
+        screen:
+            contains: "mail  deploy"
+        timeoutMs: 3000
+    - snapshot: stacked_80
+    - resize:
+        cols: 40
+        rows: 24
+    - wait:
+        screen:
+            notContains: "mail  deploy"
+        timeoutMs: 3000
+    - snapshot: narrow_40
+outcomes:
+    - id: wide_is_side_by_side
+      description: at 120 columns the sidebar and detail boxes open on the same row (row layout)
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/wide_120.txt"
+                max=$(awk '{n=gsub(/┌/,"┌"); if (n>m) m=n} END{print m+0}' "$f")
+                if [ "$max" -ge 2 ]; then
+                  echo '{"ok": true, "evidence": "a row has '"$max"' box top-left corners: boxes are side by side"}'
+                else
+                  echo '{"ok": false, "evidence": "no row has more than one box top-left corner"}'
+                fi
+    - id: narrow_stacks_sidebar_over_detail
+      description: at 80 columns the sidebar and detail boxes open on different rows (column layout)
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/stacked_80.txt"
+                max=$(awk '{n=gsub(/┌/,"┌"); if (n>m) m=n} END{print m+0}' "$f")
+                rows=$(grep -c "┌" "$f")
+                if [ "$max" -le 1 ] && [ "$rows" -ge 2 ]; then
+                  echo '{"ok": true, "evidence": "box top-left corners are on '"$rows"' separate rows: boxes are stacked"}'
+                else
+                  echo '{"ok": false, "evidence": "boxes still share a row at 80 cols"}'
+                fi
+    - id: header_hidden_at_40_cols
+      description: the "mail  deploy" header is not shown once the terminal is 40 columns wide
+      verify:
+        screen:
+            notContains: "mail  deploy"
+contractHash: sha256:9792348fc870bce4fd520d86eb4af8bdc087399f6690fe739a608f38f0b6eac0

@@ -1,0 +1,263 @@
+{
+  "cols": 120,
+  "rows": 24,
+  "ok": true,
+  "focus": "query",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 120,
+      "h": 24
+    },
+    {
+      "id": "app",
+      "tag": "col",
+      "x": 0,
+      "y": 0,
+      "w": 120,
+      "h": 24
+    },
+    {
+      "id": "header",
+      "tag": "row",
+      "x": 0,
+      "y": 0,
+      "w": 120,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 12,
+      "h": 1,
+      "text": "mail  deploy"
+    },
+    {
+      "id": "body",
+      "tag": "row",
+      "x": 0,
+      "y": 1,
+      "w": 120,
+      "h": 22
+    },
+    {
+      "id": "sidebar",
+      "tag": "col",
+      "x": 0,
+      "y": 1,
+      "w": 32,
+      "h": 22
+    },
+    {
+      "id": "query",
+      "tag": "input",
+      "x": 1,
+      "y": 2,
+      "w": 30,
+      "h": 1,
+      "focused": true
+    },
+    {
+      "id": "inbox",
+      "tag": "list",
+      "x": 1,
+      "y": 3,
+      "w": 30,
+      "h": 19
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 3,
+      "w": 30,
+      "h": 1,
+      "key": "t-12",
+      "selected": true
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 3,
+      "w": 30,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 3,
+      "w": 4,
+      "h": 1,
+      "text": "t-12"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 3,
+      "w": 21,
+      "h": 1,
+      "text": "login loop on staging"
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 4,
+      "w": 30,
+      "h": 1,
+      "key": "t-18"
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 4,
+      "w": 30,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 4,
+      "w": 4,
+      "h": 1,
+      "text": "t-18"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 4,
+      "w": 25,
+      "h": 1,
+      "text": "cannot deploy europe-west"
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 5,
+      "w": 30,
+      "h": 1,
+      "key": "t-21"
+    },
+    {
+      "tag": "row",
+      "x": 1,
+      "y": 5,
+      "w": 30,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 5,
+      "w": 4,
+      "h": 1,
+      "text": "t-21"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 5,
+      "w": 24,
+      "h": 1,
+      "text": "stale feature flag cache"
+    },
+    {
+      "id": "detail",
+      "tag": "col",
+      "x": 32,
+      "y": 1,
+      "w": 88,
+      "h": 22
+    },
+    {
+      "tag": "box",
+      "x": 33,
+      "y": 2,
+      "w": 86,
+      "h": 3
+    },
+    {
+      "tag": "text",
+      "x": 33,
+      "y": 2,
+      "w": 86,
+      "h": 1,
+      "text": "login loop on staging"
+    },
+    {
+      "tag": "scroll",
+      "x": 33,
+      "y": 3,
+      "w": 86,
+      "h": 2
+    },
+    {
+      "tag": "text",
+      "x": 33,
+      "y": 3,
+      "w": 86,
+      "h": 2,
+      "text": "Users hitting /login are redirected back to /login after a 302. Started after the session cookie flag change. Repro: incognito, POST credentials, watch Location."
+    },
+    {
+      "id": "status",
+      "tag": "row",
+      "x": 0,
+      "y": 23,
+      "w": 120,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 23,
+      "w": 9,
+      "h": 1,
+      "text": "connected"
+    },
+    {
+      "tag": "spacer",
+      "x": 9,
+      "y": 23,
+      "w": 102,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 111,
+      "y": 23,
+      "w": 9,
+      "h": 1,
+      "text": "3 tickets"
+    }
+  ],
+  "grid": [
+    "mail  deploy                                                                                                            ",
+    "┌──────────────────────────────┐┌──────────────────────────────────────────────────────────────────────────────────────┐",
+    "│search                        ││login loop on staging                                                                 │",
+    "│t-12login loop on staging     ││Users hitting /login are redirected back to /login after a 302. Started after the     │",
+    "│t-18cannot deploy europe-west ││session cookie flag change. Repro: incognito, POST credentials, watch Location.       │",
+    "│t-21stale feature flag cache  ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "│                              ││                                                                                      │",
+    "└──────────────────────────────┘└──────────────────────────────────────────────────────────────────────────────────────┘",
+    "connected                                                                                                      3 tickets"
+  ]
+}

@@ -1,0 +1,35 @@
+version: 1
+
+defaultEnvironment: local
+
+artifactRoot: .glyphrun/runs
+snapshotRoot: .glyphrun/snapshots
+
+retention:
+  keepRuns: 20
+
+environments:
+  local:
+    vars:
+      tuimark: ./bin/tuimark
+      inbox: ./bin/inbox
+      dashboard: ./bin/dashboard
+    env:
+      TERM: xterm-256color
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+
+terminal:
+  cols: 120
+  rows: 24
+  profile: xterm-256color
+  normalize:
+    trimRight: true
+    normalizeLineEndings: true
+
+artifacts:
+  rawLog: true
+  frames: true
+  finalScreen: true
+  snapshots: true
+  agentContext: true
