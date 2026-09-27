@@ -122,24 +122,37 @@ func (a *App) Inspect(f *Frame, t InspectTarget) (*Inspection, error) {
 // cell (an id inside a list item template repeats), or, for a cell with no
 // owner, at the root of the layer that contains it (the top modal, else
 // the screen); then descend through the last laid-out child without an id
-// whose clipped outer rect contains the cell, while there is one.
+// whose clipped outer rect contains the cell, while there is one. Inside
+// the top modal's outer rect (clipped to the grid) only the top modal and
+// the nodes inside it own cells, as focus is trapped there: an owner under
+// it, which shows through when the modal does not paint its rect
+// (visibility: hidden), counts as none, so the start is the top modal.
 func HitNode(f *Frame, x, y int) *layout.Box {
+	var top *layout.Box
+	if n := len(f.Modals); n > 0 {
+		m := f.Modals[n-1]
+		grid := layout.Rect{W: f.Cols, H: f.Rows}
+		if m.Laid && m.Outer().Intersect(grid).Contains(x, y) {
+			top = m
+		}
+	}
 	var s *layout.Box
 	if owner := dump.CellAt(f.Grid, x, y).ID; owner != "" {
-		eachLaid(f, func(b *layout.Box) {
-			if b.ID == owner && b.Clip.Contains(x, y) {
+		find := func(b *layout.Box) {
+			if b.Laid && b.ID == owner && b.Clip.Contains(x, y) {
 				s = b
 			}
-		})
+		}
+		if top != nil {
+			top.Walk(find)
+		} else {
+			eachLaid(f, find)
+		}
 	}
 	if s == nil {
 		s = f.Root
-		if n := len(f.Modals); n > 0 {
-			top := f.Modals[n-1]
-			grid := layout.Rect{W: f.Cols, H: f.Rows}
-			if top.Laid && top.Outer().Intersect(grid).Contains(x, y) {
-				s = top
-			}
+		if top != nil {
+			s = top
 		}
 	}
 	for s != nil {

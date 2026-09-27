@@ -631,9 +631,11 @@ func (a *App) runBuiltin(kb *parse.KeyBind, t *layout.Box) []Event {
 // table on its scroll axis (y, or x when it scrolls only on x): by one
 // for move-next/move-prev, to 0 or its maximum for move-first/move-last,
 // by its content-box size for move-page-*, clamped to [0, maximum] of the
-// live frame. The caller holds a.mu.
+// live frame. The offset is kept under its id, or, for a viewport only the
+// wheel can move, under its other key (offsetKey). The caller holds a.mu.
 func (a *App) moveViewport(b *layout.Box, action string) {
-	off := a.scrolls[b.ID]
+	key, _ := offsetKey(b)
+	off := a.scrolls[key]
 	sx, sy := b.ScrollAxes()
 	axis, size, extent := 1, b.Content.H, b.ContentH
 	if sx && !sy {
@@ -658,7 +660,7 @@ func (a *App) moveViewport(b *layout.Box, action string) {
 	cur = min(max(cur, 0), most)
 	if cur != off[axis] {
 		off[axis] = cur
-		a.scrolls[b.ID] = off
+		a.scrolls[key] = off
 		a.markStale()
 	}
 }

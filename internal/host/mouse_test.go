@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 )
 
@@ -417,7 +418,20 @@ func TestMouseHitMatchesInspect(t *testing.T) {
 				}
 				b := root
 				for _, k := range id.path {
-					b = b.Children[k]
+					if !k.row {
+						b = b.Children[k.index]
+						continue
+					}
+					var next *layout.Box
+					for _, c := range b.Children {
+						if rowWidget(c) != nil && c.Index == k.index && c.Key == k.key {
+							next = c
+						}
+					}
+					if next == nil {
+						t.Fatalf("identity at %d,%d names row %d (%q), which %s does not lay out", x, y, k.index, k.key, LayoutPath(f, b))
+					}
+					b = next
 				}
 				if b != h || id.layer != root.Src {
 					t.Fatalf("identity at %d,%d does not lead to the hit node", x, y)
@@ -543,5 +557,152 @@ func TestLeaveTurnsMouseOff(t *testing.T) {
 	}
 	if s.mouseChange(false) != mouseModesOff || s.leave() != graphemeOff+leaveScreen {
 		t.Error("mouseChange off")
+	}
+}
+
+// gridLine is row y of a fresh dump of a at the mouse fixture size, with
+// its trailing spaces trimmed.
+func gridLine(a *App, y int) string {
+	return strings.TrimRight(a.Dump(mouseW, mouseH, false).Grid[y], " ")
+}
+
+// 46 (regression, review of 0.2b, SPEC v0.2b §8.5 wheel rule 3): the
+// wheel moves a viewport without an id as it moves one with an id. Its
+// offset is kept under its element: it survives frames, is clamped, is
+// not shared with another viewport without an id, stays with the element
+// when a sibling before it comes and goes, and, inside an each template,
+// stays with the element's key when the array is reordered.
+func TestMouseWheelViewportWithoutID(t *testing.T) {
+	a := doc(t, `<tui version="2" mouse="true"><screen id="s"><col>
+<text if="extra">extra</text>
+<scroll style="height: 2"><col><text>s0</text><text>s1</text><text>s2</text><text>s3</text></col></scroll>
+<scroll style="height: 2"><col><text>u0</text><text>u1</text><text>u2</text></col></scroll>
+<col each="grp as g" key="g"><scroll style="height: 1"><col><text>{g}0</text><text>{g}1</text></col></scroll></col>
+</col></screen></tui>`)
+	bindJSON(t, a, `{"extra": false, "grp": ["a", "b"]}`)
+	if ds := a.Validate(); len(ds) > 0 {
+		t.Fatalf("fixture diagnostics: %v", ds)
+	}
+	settleFrame(a)
+	for i := 0; i < 3; i++ {
+		if evs := wheelAt(a, 0, 0, 1); len(evs) != 0 {
+			t.Errorf("wheel over a scroll fired %v", evs)
+		}
+	}
+	wheelAt(a, 0, 5, 1)
+	want := func(when string, lines map[int]string) {
+		t.Helper()
+		for y, w := range lines {
+			if got := gridLine(a, y); got != w {
+				t.Errorf("%s: row %d is %q, want %q", when, y, got, w)
+			}
+		}
+	}
+	want("three wheels down (clamped at 2) and one over b", map[int]string{0: "s2", 1: "s3", 2: "u0", 4: "a0", 5: "b1"})
+	_ = a.Set("extra", true)
+	settleFrame(a)
+	want("a sibling before it appears", map[int]string{0: "extra", 1: "s2", 3: "u0", 5: "a0", 6: "b1"})
+	wheelAt(a, 0, 1, -1)
+	want("one wheel up", map[int]string{1: "s1", 2: "s2", 3: "u0"})
+	_ = a.Set("grp", []any{"b", "a"})
+	settleFrame(a)
+	want("the each array reordered", map[int]string{5: "b1", 6: "a0"})
+}
+
+// 45 (regression, review of 0.2b, SPEC v0.2b §8.5 hit test): an open
+// modal that does not paint its rect (visibility: hidden) still traps the
+// mouse. A click or a wheel report inside its rect, over a screen node
+// that shows through, does nothing, and inspect --at names the modal
+// there; a visible child of the modal still takes clicks.
+func TestMouseHiddenModalTrapsEvents(t *testing.T) {
+	a := doc(t, `<tui version="2" mouse="true"><screen id="s"><col>
+<box style="height: 8"/>
+<button id="under" label="under-button-wide-enough-to-cross" on:click="under" on:focus="ufocus"/>
+<list id="l" each="rows as r" key="r" on:select="pick" style="height: 3"><item><text>{r}-row-wide-enough-to-cross-the-modal</text></item></list>
+</col>
+<modal id="m" open="true" style="width: 20; height: 6; visibility: hidden"><button id="mb" label="ok" style="width: 6; visibility: visible" on:click="ok"/></modal>
+</screen></tui>`)
+	bindJSON(t, a, `{"rows": ["x", "y", "z"]}`)
+	if ds := a.Validate(); len(ds) > 0 {
+		t.Fatalf("fixture diagnostics: %v", ds)
+	}
+	settleFrame(a)
+	f := live(a)
+	m := f.Modals[0]
+	var onUnder, onList [][2]int
+	for y := m.Y; y < m.Y+m.H; y++ {
+		for x := m.X; x < m.X+m.W; x++ {
+			switch dumpOwner(f, x, y) {
+			case "under":
+				onUnder = append(onUnder, [2]int{x, y})
+			case "l":
+				onList = append(onList, [2]int{x, y})
+			}
+			if h := HitNode(f, x, y); dumpOwner(f, x, y) != "mb" && h != m {
+				t.Errorf("hit node at %d,%d is %s, want the modal", x, y, LayoutPath(f, h))
+			}
+		}
+	}
+	if len(onUnder) == 0 || len(onList) == 0 {
+		t.Fatalf("the fixture has no screen cell inside the modal (button %d, list %d)", len(onUnder), len(onList))
+	}
+	for _, c := range onUnder {
+		if got := actions(clickAt(a, c[0], c[1])); got != "" || a.Focus() == "under" {
+			t.Fatalf("click at %v under the hidden modal fired %q (focus %q)", c, got, a.Focus())
+		}
+	}
+	for _, c := range onList {
+		if got := actions(wheelAt(a, c[0], c[1], 1)); got != "" || listIndex(a, "l") != 0 {
+			t.Fatalf("wheel at %v under the hidden modal fired %q (cursor %d)", c, got, listIndex(a, "l"))
+		}
+	}
+	mb := live(a).ByID["mb"]
+	if got := actions(clickAt(a, mb.X+1, mb.Y)); !strings.HasSuffix(got, "ok") {
+		t.Errorf("click on the modal's visible button fired %q", got)
+	}
+}
+
+// dumpOwner is the cell-owner id of cell (x, y) of f.
+func dumpOwner(f *Frame, x, y int) string {
+	return dump.CellAt(f.Grid, x, y).ID
+}
+
+// 45 (regression, review of 0.2b, SPEC v0.2b §8.5 step 4): a row's hit
+// identity is its row, not its place in the laid-out tree. A press on a
+// table row, wheel reports that move the table's offset so that another
+// row takes that cell, and a release there do nothing; a list row that the
+// host reorders under the pointer between press and release does nothing
+// either; a press and a release on the same row still click it.
+func TestMouseRowIdentityIsTheRow(t *testing.T) {
+	a := doc(t, `<tui version="2" mouse="true"><screen id="s" focus="#tb"><col>
+<table id="tb" each="rows as r" key="r.id" on:select="tpick" style="height: 4"><column title="N" width="6">{r.name}</column></table>
+<list id="l" each="items as i" key="i" on:select="lpick" style="height: 3"><item><text>{i}</text></item></list>
+</col></screen></tui>`)
+	bindJSON(t, a, `{"rows": [{"id": 1, "name": "r1"}, {"id": 2, "name": "r2"}, {"id": 3, "name": "r3"}, {"id": 4, "name": "r4"}, {"id": 5, "name": "r5"}, {"id": 6, "name": "r6"}], "items": ["x", "y", "z"]}`)
+	if ds := a.Validate(); len(ds) > 0 {
+		t.Fatalf("fixture diagnostics: %v", ds)
+	}
+	settleFrame(a)
+	r0 := row(live(a), "tb", 0)
+	x, y := r0.X, r0.Y
+	a.HandleMouse(Mouse{Kind: MousePress, X: x, Y: y})
+	for i := 0; i < 3; i++ {
+		wheelAt(a, x, y, 1)
+	}
+	if got := row(live(a), "tb", 0); got.Index != 1 || got.Y != y {
+		t.Fatalf("after three wheels the first slot holds row %d at y %d, want row 1 at %d", got.Index, got.Y, y)
+	}
+	if evs, _ := a.HandleMouse(Mouse{Kind: MouseRelease, X: x, Y: y}); len(evs) != 0 || listIndex(a, "tb") != 3 {
+		t.Errorf("press on r1 and release on r2 fired %v (cursor %d, want 3)", evs, listIndex(a, "tb"))
+	}
+	if evs := clickAt(a, x, y); actions(evs) != "tpick" || listIndex(a, "tb") != 1 {
+		t.Errorf("a click on r2 fired %q (cursor %d, want 1)", actions(evs), listIndex(a, "tb"))
+	}
+	l0 := row(live(a), "l", 0)
+	a.HandleMouse(Mouse{Kind: MousePress, X: l0.X, Y: l0.Y})
+	_ = a.Set("items", []any{"y", "x", "z"})
+	settleFrame(a)
+	if evs, _ := a.HandleMouse(Mouse{Kind: MouseRelease, X: l0.X, Y: l0.Y}); len(evs) != 0 {
+		t.Errorf("press on x and release on y (reordered under it) fired %v", evs)
 	}
 }

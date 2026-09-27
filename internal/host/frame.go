@@ -223,6 +223,13 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	if rootBox == nil {
 		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: css.Initial()}
 	}
+	keyed := a.hasKeyedOffsets()
+	if keyed {
+		a.restoreKeyedOffsets(rootBox)
+		for _, m := range fb.modals {
+			a.restoreKeyedOffsets(m)
+		}
+	}
 	eng.Layout(rootBox, fb.modals, cols, rows) // step 6
 	fb.placeTableRows(casc, rootBox)           // step 7
 	f.Root, f.Modals = rootBox, fb.modals
@@ -230,9 +237,9 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	f.ByID = fb.byID
 	f.Focus = a.focus
 	// Remember scroll offsets clamped by layout.
-	rootBox.Walk(func(b *layout.Box) { a.rememberScroll(b) })
+	rootBox.Walk(func(b *layout.Box) { a.rememberScroll(b, keyed) })
 	for _, m := range fb.modals {
-		m.Walk(func(b *layout.Box) { a.rememberScroll(b) })
+		m.Walk(func(b *layout.Box) { a.rememberScroll(b, keyed) })
 	}
 	// The static token check and the cascade can report the same V003.
 	var diags ir.Diags
@@ -308,11 +315,83 @@ func rootBoxStyle(b, root *layout.Box) *css.Style {
 	return &root.Style
 }
 
-func (a *App) rememberScroll(b *layout.Box) {
-	// Every viewport keeps its clamped offset. For lists this means moving
-	// the selection only scrolls when the item would leave the viewport.
+// offsetKey is the key the offset of viewport b is kept under in
+// a.scrolls. A viewport with an id outside list rows and each templates
+// keeps it under its id, as widgets keep their state (SPEC §6.10.2), and
+// inflate restores it (byID). Any other viewport (one without an id, or
+// one inside a row, where an id repeats) can be moved only by the wheel
+// (SPEC v0.2b §8.5, wheel rule 3). It keeps its offset under its source
+// element and the key of each generated row it lies in, innermost first,
+// behind a NUL byte, which no id holds (XML has no NUL): the offset stays
+// with its element while siblings come and go, and with its row when rows
+// move. restoreKeyedOffsets restores it.
+func offsetKey(b *layout.Box) (key string, byID bool) {
+	var rows []string
+	for p := b; p != nil; p = p.Parent {
+		if p.Index >= 0 {
+			rows = append(rows, p.Key)
+		}
+	}
+	if b.ID != "" && rows == nil {
+		return b.ID, true
+	}
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "\x00%p", b.Src)
+	for _, k := range rows {
+		sb.WriteByte(0)
+		sb.WriteString(strconv.Quote(k))
+	}
+	return sb.String(), false
+}
+
+// hasKeyedOffsets reports whether a.scrolls holds an offset under a key
+// other than an id (offsetKey): only the wheel creates one.
+func (a *App) hasKeyedOffsets() bool {
+	for k := range a.scrolls {
+		if strings.HasPrefix(k, "\x00") {
+			return true
+		}
+	}
+	return false
+}
+
+// restoreKeyedOffsets gives each viewport of the tree at root that keeps
+// its offset under a key other than its id the offset remembered for it,
+// before layout clamps it (a viewport with an id got its own in inflate).
+func (a *App) restoreKeyedOffsets(root *layout.Box) {
+	if root == nil {
+		return
+	}
+	root.Walk(func(b *layout.Box) {
+		if !b.Scrolls() || b.Kind == "list" || b.Kind == "table" {
+			return
+		}
+		if k, byID := offsetKey(b); !byID {
+			if off, ok := a.scrolls[k]; ok {
+				b.ScrollX, b.ScrollY = off[0], off[1]
+			}
+		}
+	})
+}
+
+// rememberScroll keeps the offset of viewport b, as layout clamped it:
+// under its id, or, when the wheel moved it, under its other key
+// (offsetKey). keyed reports whether any viewport has such a key.
+func (a *App) rememberScroll(b *layout.Box, keyed bool) {
+	// Every viewport with an id keeps its clamped offset. For lists this
+	// means moving the selection only scrolls when the item would leave
+	// the viewport.
 	if b.Scrolls() && b.ID != "" {
-		a.scrolls[b.ID] = [2]int{b.ScrollX, b.ScrollY}
+		if k, byID := offsetKey(b); byID {
+			a.scrolls[k] = [2]int{b.ScrollX, b.ScrollY}
+		}
+	}
+	if keyed && b.Scrolls() && b.Kind != "list" && b.Kind != "table" {
+		if k, byID := offsetKey(b); !byID {
+			if _, ok := a.scrolls[k]; ok {
+				a.scrolls[k] = [2]int{b.ScrollX, b.ScrollY}
+			}
+		}
 	}
 	if b.Kind == "list" && b.ID != "" {
 		if ls := a.lists[b.ID]; ls != nil {
@@ -558,7 +637,9 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		}
 	}
 	// Viewports (scroll, list, overflow: scroll) keep their offset; styles are
-	// not computed yet, so restore whatever was remembered for this id.
+	// not computed yet, so restore whatever was remembered for this id. A
+	// viewport without one gets its offset before layout
+	// (restoreKeyedOffsets).
 	if off, ok := a.scrolls[n.ID]; ok && n.ID != "" && !inItem {
 		b.ScrollX, b.ScrollY = off[0], off[1]
 	}

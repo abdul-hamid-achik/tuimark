@@ -254,6 +254,29 @@ func TestDecoderStringBounds(t *testing.T) {
 	if got := inputNames(d.flush()); got != "" {
 		t.Errorf("X10: the esc timeout decoded %q", got)
 	}
+	// Review of 0.2b (SPEC §26.8): the esc timeout decides a report cut
+	// longer than it, so the bytes that arrive after it decode as usual,
+	// a coordinate q included. A report whose bytes arrive within the
+	// timeout, cut or not, never gives a key (whole).
+	for _, c := range []struct{ head, rest, want, whole string }{
+		{"\x1b[M ", "q!", "q !", ""},
+		{"\x1b[<0;50", ";3M", "; 3 M", "mouse(press@49,2)"},
+	} {
+		var d decoder
+		d.feed([]byte(c.head), false)
+		if got := inputNames(d.flush()); got != "" {
+			t.Errorf("%q: the esc timeout decoded %q", c.head, got)
+		}
+		if ins, _ := d.feed([]byte(c.rest), true); inputNames(ins) != c.want {
+			t.Errorf("%q, the timeout, %q: %q, want %q", c.head, c.rest, inputNames(ins), c.want)
+		}
+		d = decoder{}
+		a, _ := d.feed([]byte(c.head), false)
+		b, _ := d.feed([]byte(c.rest), true)
+		if got := inputNames(append(a, b...)); got != c.whole {
+			t.Errorf("%q then %q within the timeout: %q", c.head, c.rest, got)
+		}
+	}
 	// A lone ESC is still the esc key.
 	d.feed([]byte("\x1b"), false)
 	if got := inputNames(d.flush()); got != "esc" {

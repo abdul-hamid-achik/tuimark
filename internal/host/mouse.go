@@ -46,12 +46,23 @@ type Mouse struct {
 
 // hitIdentity is the hit identity of a mouse event (SPEC v0.2b §8.5 step
 // 4): its layer (the source node of the screen, or of the modal) and the
-// child indices, in the laid-out tree, from that layer's root down to the
-// hit node. Boxes are rebuilt every frame, so the identity is this path,
-// never a box.
+// steps from that layer's root down to the hit node. Boxes are rebuilt
+// every frame, so the identity is this path, never a box.
 type hitIdentity struct {
 	layer *ir.Node
-	path  []int
+	path  []hitStep
+}
+
+// hitStep is one step of a hit identity's path: a node's child index in
+// the laid-out tree, except that a row of a list or a table is its row,
+// its index in the bound array and its key. A table lays out only its
+// visible rows, so a child index there names a viewport slot, which
+// another row takes when the offset moves; the key tells rows apart when
+// the host reorders the array between a press and a release.
+type hitStep struct {
+	index int
+	key   string
+	row   bool
 }
 
 func (h *hitIdentity) equal(o *hitIdentity) bool {
@@ -189,12 +200,16 @@ func (a *App) hit(f *Frame, x, y int) (h, root *layout.Box, id *hitIdentity) {
 	if h == nil {
 		return nil, nil, nil
 	}
-	var path []int
+	var path []hitStep
 	root = h
 	for b := h; ; b = b.Parent {
 		root = b
 		if b.Modal || b.Parent == nil {
 			break
+		}
+		if rowWidget(b) != nil {
+			path = append(path, hitStep{index: b.Index, key: b.Key, row: true})
+			continue
 		}
 		k := -1
 		for i, c := range b.Parent.Children {
@@ -203,7 +218,7 @@ func (a *App) hit(f *Frame, x, y int) (h, root *layout.Box, id *hitIdentity) {
 				break
 			}
 		}
-		path = append(path, k)
+		path = append(path, hitStep{index: k})
 	}
 	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
 		path[i], path[j] = path[j], path[i]
@@ -306,8 +321,9 @@ func (a *App) click(f *Frame, h, root *layout.Box) []Event {
 //  2. a list or a table with at least one row, or a row of one: the
 //     cursor moves by dir as a user move, clamped, with on:select when it
 //     changed; focus does not move;
-//  3. a viewport other than a list or a table: its offset moves by one row
-//     on y, or on x when it scrolls only on x, clamped.
+//  3. a viewport other than a list or a table, with an id or without one:
+//     its offset moves by one row on y, or on x when it scrolls only on x,
+//     clamped.
 //
 // The caller holds a.mu.
 func (a *App) wheel(h, root *layout.Box, x, y, dir int) []Event {
@@ -329,9 +345,9 @@ func (a *App) wheel(h, root *layout.Box, x, y, dir int) []Event {
 		case (b.Kind == "list" || b.Kind == "table") && a.rows(b) > 0:
 			return a.moveList(b, func(i, _, _ int) int { return i + dir })
 		case b.Scrolls() && b.Kind != "list" && b.Kind != "table":
-			if b.ID != "" {
-				a.moveViewport(b, move)
-			}
+			// With an id or without one: a viewport without one keeps the
+			// offset the wheel gives it under its element (offsetKey).
+			a.moveViewport(b, move)
 			return nil
 		}
 		if b == root {

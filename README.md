@@ -464,9 +464,15 @@ vocabulary (SPEC §5.1); this build implements all of it:
   way out. A missing path is `B002` and counts as null, so
   `mouse="path"` is off and `mouse="!path"` is on. Only the left
   button and the wheel act, on the frame on the screen; while a modal is
-  open only events inside the top modal count. A click acts on the
-  release, when press and release land on the same node (the same layer
-  and child-index path, so two rows sharing a template `id` differ).
+  open only events inside the top modal count, and there only the modal
+  and its nodes receive them, even when it paints nothing
+  (`visibility: hidden`), so the screen nodes that show through never
+  do. A click acts on the release, when press and release land on the
+  same node: the same layer and path of child indices, where a list or
+  table row counts as its row (its index in the array and its key). So
+  two rows sharing a template `id` differ, and when a table scrolls or
+  the host reorders the array between press and release, so that another
+  row lies under the pointer, nothing happens.
   Walking up from the node under the pointer, the first rule that applies
   decides: a disabled or `visibility: hidden` node stops the walk; a tab
   label activates its tab; a list or table row focuses its widget
@@ -474,8 +480,9 @@ vocabulary (SPEC §5.1); this build implements all of it:
   `on:click` fires it without moving focus; a node with `on:click` takes
   focus if it can and fires it; any other focusable node takes focus. The
   wheel moves a list or table cursor by one (`on:select`, focus stays), a
-  tab strip by one tab (wrapping), or another viewport by one row. The
-  hit test is the one `tuimark inspect --at X,Y` uses.
+  tab strip by one tab (wrapping), or another viewport by one row, with
+  or without an `id`. The hit test is the one `tuimark inspect --at X,Y`
+  uses.
 
 ## CLI reference
 
@@ -1180,9 +1187,15 @@ kept with the maintainer's project notes, outside this repository.
   ignores (outside the top modal, outside the grid, or while `mouse` is
   false) acts on nothing and leaves no press pending, so a later release
   never completes a click that started under a closed mouse or behind a
-  modal. The wheel over a tab strip with no enabled tab, or over a viewport
-  without an `id` (its offset is kept by id), stops there and changes
-  nothing.
+  modal. The wheel over a tab strip with no enabled tab stops there and
+  changes nothing.
+- **A viewport without an `id` keeps the offset the wheel gives it**
+  (SPEC v0.2b §8.5, wheel rule 3). Only the wheel can move one: it cannot
+  take focus, and `move-*` needs an id. The same holds for a viewport
+  inside a list row or an `each` template, where an id repeats. Its
+  offset is kept under its element and the key of the row it is in, so
+  it stays with that element when siblings before it come and go, and
+  with that row when the rows are reordered. It starts at 0.
 
 ## Status per phase (SPEC §4)
 
