@@ -100,8 +100,8 @@ func readRunConfig(getenv func(string) string) (runConfig, error) {
 		return cfg, fmt.Errorf("tuimark: %s=%q: want 0 or 1", envSync, v)
 	}
 	// COLORFGBG has no invalid value: anything else gives no theme.
-	// TUIMARK_LOG is any path; only a path that cannot be opened fails
-	// (openRunLog).
+	// TUIMARK_LOG is any path; only a path that cannot be opened, or that
+	// names a terminal, fails (openRunLog).
 	cfg.fgbg = ThemeFromCOLORFGBG(getenv(envColorFGBG))
 	cfg.log = getenv(envLog)
 	return cfg, nil

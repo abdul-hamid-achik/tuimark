@@ -140,3 +140,46 @@ func TestVersionTwoBuiltinsNeverDispatchAsHostActions(t *testing.T) {
 		t.Errorf("B004 for a built-in: %v", d)
 	}
 }
+
+// Regression (review of 0.2b, SPEC §7, §6.13, §8.5): a path that does not
+// resolve is B002 and its value counts as null before ! applies, the same
+// for if, hidden, class:NAME (on an element and on a table body cell),
+// and mouse: path is false and !path is true.
+func TestNegatedMissingPathIsTrueEverywhere(t *testing.T) {
+	a := doc(t, `<tui version="2" mouse="!nope"><screen id="s">
+<text id="shown" if="!nope">a</text>
+<text id="gone" if="nope">b</text>
+<text id="hid" hidden="!nope">c</text>
+<text id="neg" class:x="!nope" class:y="nope">d</text>
+<table id="t" each="rows as r" key="r.k"><column id="c" class:hot="!r.hot">{r.k}</column></table>
+</screen></tui>`)
+	_ = a.Bind("rows", []any{map[string]any{"k": "1"}})
+	d := a.Dump(20, 6, false)
+	if got := ids(d); strings.Contains(got, "gone") || strings.Contains(got, "hid") || !strings.Contains(got, "shown") {
+		t.Errorf("nodes %q: if=\"!nope\" shows, if=\"nope\" and hidden=\"!nope\" hide", got)
+	}
+	if n, _ := nodeByID(d, "neg"); strings.Join(n.Classes, " ") != "x" {
+		t.Errorf(`class:x="!nope" class:y="nope" gives classes %v, want [x]`, n.Classes)
+	}
+	var cell []string
+	for _, n := range d.Nodes {
+		if n.Text == "1" {
+			cell = n.Classes
+		}
+	}
+	if strings.Join(cell, " ") != "hot" {
+		t.Errorf(`column class:hot="!r.hot" on a row without hot gives %v, want [hot]`, cell)
+	}
+	if !a.Frame(20, 6).Mouse {
+		t.Error(`mouse="!nope" is off, want on`)
+	}
+	b002 := 0
+	for _, e := range d.Errors {
+		if e.Code == "B002" {
+			b002++
+		}
+	}
+	if b002 < 6 || !d.OK {
+		t.Errorf("want a B002 warning per missing path (6), got %v", d.Errors)
+	}
+}

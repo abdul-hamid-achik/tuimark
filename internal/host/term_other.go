@@ -24,3 +24,6 @@ func reraise(os.Signal) { os.Exit(1) }
 // inputReady has no polling here: every input is read with plain blocking
 // reads.
 func inputReady(io.Reader) func() bool { return nil }
+
+// openNoCTTY has no meaning here (see term_unix.go).
+const openNoCTTY = 0

@@ -78,9 +78,12 @@ func (m *Media) String() string {
 // Rule is one selector block, possibly inside @media.
 type Rule struct {
 	Selectors []Selector
-	Decls     []Decl
-	Media     *Media
-	Line      int
+	// Text is the selector list as written: its selectors, each trimmed,
+	// joined by ", " (`tuimark inspect` reports it, SPEC §15.7).
+	Text  string
+	Decls []Decl
+	Media *Media
+	Line  int
 }
 
 // Sheet is a parsed stylesheet.
@@ -279,7 +282,11 @@ func (p *sheetParser) rules(sheet *Sheet, media *Media) {
 			}
 			kept = append(kept, d)
 		}
-		sheet.Rules = append(sheet.Rules, Rule{Selectors: sels, Decls: kept, Media: media, Line: line})
+		texts := make([]string, len(sels))
+		for i, s := range sels {
+			texts[i] = s.Text
+		}
+		sheet.Rules = append(sheet.Rules, Rule{Selectors: sels, Text: strings.Join(texts, ", "), Decls: kept, Media: media, Line: line})
 	}
 }
 

@@ -203,8 +203,10 @@ vocabulary (SPEC §5.1); this build implements all of it:
   `version="1"`.
 - **`class:NAME="path"`** (or `!path`) on any rendered element adds the
   class `NAME` while the guard is truthy, evaluated every frame in the
-  element's scope (a missing path is `B002`). `NAME` is lowercase,
-  `[a-z_][a-z0-9_-]*` (`V015` otherwise; an uppercase letter is `V002`).
+  element's scope (a missing path is `B002` and counts as null, as for
+  `if`: `class:x="path"` adds nothing, `class:x="!path"` adds `x`).
+  `NAME` is lowercase, `[a-z_][a-z0-9_-]*` (`V015` otherwise; an
+  uppercase letter is `V002`).
   The JSON dump of a `version="2"` document lists each node's `classes`:
   its `class` names, then its truthy guards, without repeats.
 - **`theme="auto"`.** `Run()` asks the terminal for its background color
@@ -434,7 +436,8 @@ vocabulary (SPEC §5.1); this build implements all of it:
   is evaluated on every frame: a host or a Settings screen switches it
   with `Set`, and `Run()` writes `CSI ?1000h CSI ?1006h` (SGR reports) or
   `CSI ?1000l CSI ?1006l` before the next frame, and turns it off on the
-  way out. A missing path is `B002` and counts as false. Only the left
+  way out. A missing path is `B002` and counts as null, so
+  `mouse="path"` is off and `mouse="!path"` is on. Only the left
   button and the wheel act, on the frame on the screen; while a modal is
   open only events inside the top modal count. A click acts on the
   release, when press and release land on the same node (the same layer
@@ -545,12 +548,17 @@ counts as unset.
 | `TUIMARK_COLOR` | `truecolor`, `256`, `16`, `none` | forces the color profile (SPEC §26.3), instead of detecting it from `TERM`/`COLORTERM`/`NO_COLOR`/`WT_SESSION` |
 | `TUIMARK_THEME` | `dark`, `light` | overrides the document's `theme`, same as `--theme` (SPEC §26.4) |
 | `TUIMARK_SYNC` | `0`, `1` | forces synchronized-output framing off or on, instead of probing the terminal (SPEC §26.6) |
-| `TUIMARK_LOG` | a file path | writes an NDJSON log of the session (below); a path that cannot be opened makes `Run` return an error before touching the terminal |
+| `TUIMARK_LOG` | a file path | writes an NDJSON log of the session (below); a path that cannot be opened, or that names a terminal, makes `Run` return an error before touching the terminal |
 | `COLORFGBG` | set by some terminals | the fallback for `theme="auto"` when the terminal does not answer the background query: its last `;` field, 0–6 and 8 dark, 7 and 9–15 light |
 
 **`TUIMARK_LOG=FILE`** (SPEC §26.12) makes `Run()` write one JSON object
-per line to `FILE` — created with mode `0600`, or truncated and narrowed
-to `0600` — so diagnostics never land on the terminal `Run()` owns. Each
+per line to `FILE` — created with mode `0600`, or, when it is an existing
+regular file (or a symlink to one), truncated and narrowed to `0600` — so
+diagnostics never land on the terminal `Run()` owns. Anything else that
+is not a terminal (`/dev/null`, a FIFO, a shell's `>(jq …)` pipe) is
+written as it is, never truncated and never chmod-ed; a terminal is
+refused with an error. A `Run()` that fails before its session starts
+(stdin is not a terminal) leaves the file with no records. Each
 record starts with `ev` and `t` (milliseconds since `Run()` started):
 `start` (version and size), `caps` (whether the probe ran, the color
 profile, synchronized output, grapheme mode, and the effective theme with
@@ -698,9 +706,11 @@ could have (`{"name", "from", "guard", "active", "used"}`: `from` is
 stylesheets or of the built-in sheet names it), and one `style` entry per
 TCSS property, in a fixed order: its computed `value`, its `origin`
 (`ua`, `attribute`, `author`, `inline`, `inherited`, or `initial`), the
-winning `rule` (file, line, column, selector as written — or the attribute
-as written, or `style=""` — specificity, and `@media` condition), and the
-declarations it `overridden`, highest priority first. The text form (the
+winning `rule` (file, line, column, selector as written — the whole list
+for `a, b`, with the specificity of its highest matching selector — or the
+attribute as written, or `style=""` — specificity, and `@media`
+condition), and the declarations it `overridden`, highest priority first
+(a declaration of a selector list counts once, never against itself). The text form (the
 default) shows the same, one line per property that is not `initial`.
 
 A cell outside the grid, an id no laid-out node has, or a malformed value

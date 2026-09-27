@@ -360,6 +360,42 @@ func mustJSON(t *testing.T, v any) []byte {
 	return b
 }
 
+// Regression (review of 0.2b, SPEC §15.7): a declaration of a selector
+// list that matches through two of its selectors is reported once, with
+// the list as written, and never overrides itself.
+func TestInspectSelectorList(t *testing.T) {
+	doc := filepath.Join(t.TempDir(), "sl.tui")
+	writeFile(t, doc, `<tui version="2"><style>text, .a { bold: true; }</style><screen id="main"><text id="t" class="a">x</text></screen></tui>`)
+	code, out, errw := runCLI("inspect", doc, "--id", "t", "--json")
+	if code != 0 {
+		t.Fatalf("exit %d: %s", code, errw)
+	}
+	var in struct {
+		Style []struct {
+			Prop string
+			Rule *struct {
+				Selector    string
+				Specificity int
+				Line, Col   int
+			}
+			Overridden []any
+		}
+	}
+	mustUnmarshal(t, out, &in)
+	for _, s := range in.Style {
+		if s.Prop != "bold" {
+			continue
+		}
+		if s.Rule == nil || s.Rule.Selector != "text, .a" || s.Rule.Specificity != 10 || s.Rule.Line != 1 || s.Rule.Col != 36 || len(s.Overridden) != 0 {
+			t.Errorf("bold rule %+v, overridden %v", s.Rule, s.Overridden)
+		}
+	}
+	_, text, _ := runCLI("inspect", doc, "--id", "t")
+	if strings.Contains(text, "overrides") || !strings.Contains(text, "sl.tui:1:36 text, .a (specificity 10)") {
+		t.Errorf("text output:\n%s", text)
+	}
+}
+
 // 66. inspect: attributes and style="" name themselves; --id finds the
 // node; --at outside the grid, an unknown --id, both or neither flag, and
 // a bad --at exit 1 with nothing on stdout; a frame with an error exits 2

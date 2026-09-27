@@ -265,7 +265,8 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope) *tableData 
 }
 
 // guardsOn evaluates the class:NAME guards of n in scope sc, in attribute
-// order (SPEC §6.13; a missing path is B002 and counts as false).
+// order (SPEC §6.13; a missing path is B002 and counts as null, as for
+// if).
 func (fb *builder) guardsOn(n *ir.Node, sc *scope) []bool {
 	on := make([]bool, len(n.ClassGuards))
 	for i, cg := range n.ClassGuards {

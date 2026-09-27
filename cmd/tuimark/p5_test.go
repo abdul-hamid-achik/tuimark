@@ -113,6 +113,59 @@ func TestPlayMouseOff(t *testing.T) {
 	}
 }
 
+// Regression (review of 0.2b, SPEC v0.2b §8.5 "Mouse off", §15.4 text:):
+// while the mouse is off, an SGR report inside a text: step is dropped
+// without splitting the typing, so the printable keys of the step stay
+// one edit with one on:change, as in 0.2a, for a version="1" document and
+// a version="2" document without mouse. With the mouse on, the report is
+// handled in arrival order and does split the run.
+func TestPlayTextMouseReportsDoNotSplitTypingWhileMouseOff(t *testing.T) {
+	dir := t.TempDir()
+	data := filepath.Join(dir, "d.json")
+	writeFile(t, data, `{"q":""}`)
+	docs := map[string]string{
+		"v1":       `version="1"`,
+		"v2":       `version="2"`,
+		"v2-mouse": `version="2" mouse="true"`,
+	}
+	for _, c := range []struct {
+		doc, text, want string
+	}{
+		{"v1", `ab\u001b[<0;1;1Mcd\u001b[<0;1;1mef`, `abcdef`},
+		{"v1", `ab\u001b[<64;1;1Mcd`, `abcd`},
+		{"v2", `ab\u001b[<0;1;1Mcd\u001b[<0;1;1mef`, `abcdef`},
+		{"v2", `ab\u001b[<65;1;1Mcd`, `abcd`},
+		{"v2", `\u001b[<0;1;1Mab`, `ab`},
+		{"v2-mouse", `ab\u001b[<0;1;1Mcd\u001b[<0;1;1mef`, `ab|abcd|abcdef`},
+	} {
+		tui := filepath.Join(dir, c.doc+".tui")
+		writeFile(t, tui, `<tui `+docs[c.doc]+`><screen id="main" focus="#q"><input id="q" bind="q" on:change="chg"/></screen></tui>`)
+		script := filepath.Join(dir, "s.ndjson")
+		writeFile(t, script, `{"text":"`+c.text+`"}`+"\n")
+		code, out, errw := runCLI("play", tui, "--data", data, "--script", script, "--cols", "20", "--rows", "2", "--format", "json")
+		if code != 0 {
+			t.Fatalf("%s %s: exit %d: %s", c.doc, c.text, code, errw)
+		}
+		var p struct {
+			Events []struct {
+				Action string `json:"action"`
+				Value  any    `json:"value"`
+			} `json:"events"`
+		}
+		mustUnmarshal(t, out, &p)
+		var got []string
+		for _, e := range p.Events {
+			if e.Action != "chg" {
+				t.Errorf("%s %s: unexpected event %+v", c.doc, c.text, e)
+			}
+			got = append(got, e.Value.(string))
+		}
+		if strings.Join(got, "|") != c.want {
+			t.Errorf("%s %s: on:change values %q, want %q", c.doc, c.text, got, c.want)
+		}
+	}
+}
+
 // 40. `tuimark ir` of examples/monitor/studio.tui is IR "0.2", valid
 // against schema/ir.v0.2.json, with mouse in app, label/keycap in keymap
 // rows, class:NAME in attrs, and the new kinds.

@@ -136,15 +136,8 @@ func (r *replay) inputs(step int, ins []Input) {
 			r.dispatch(step, evs, focus)
 			ins = ins[1:]
 		default:
-			n := 1
-			for n < len(ins) && !ins[n].IsPaste && !ins[n].IsMouse {
-				n++
-			}
-			keys := make([]Key, n)
-			for i := range keys {
-				keys[i] = ins[i].Key
-			}
-			ins = ins[n:]
+			var keys []Key
+			keys, ins = r.a.KeyRun(ins)
 			for len(keys) > 0 {
 				focus := r.a.Focus()
 				evs, used := r.a.HandleKeyRun(keys)

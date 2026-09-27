@@ -689,8 +689,9 @@ func hasKey(keys []any, k any) bool {
 // order, then the names of its truthy class:NAME guards in attribute
 // order, without repeats. A guard's path is resolved in the element's
 // scope (aliases of enclosing each included); a missing path is B002 and
-// the class is not added. Without guards (every version="1" element) it
-// is the class list itself. on is the truthiness of each guard.
+// counts as null, as for if (class:x="path" adds nothing, class:x="!path"
+// adds x). Without guards (every version="1" element) it is the class
+// list itself. on is the truthiness of each guard.
 func (fb *builder) classes(n *ir.Node, sc *scope) (out []string, on []bool) {
 	if len(n.ClassGuards) == 0 {
 		return n.Classes, nil
@@ -717,7 +718,9 @@ func (fb *builder) classes(n *ir.Node, sc *scope) (out []string, on []bool) {
 }
 
 // guard evaluates a path or !path guard written in attribute attr; a
-// missing path is B002 (warning) and counts as false.
+// missing path is B002 (warning) and its value counts as null before the
+// ! applies, as for if, hidden, disabled, open, and mouse (SPEC §7): path
+// is false and !path is true.
 func (fb *builder) guard(n *ir.Node, attr, v string, sc *scope) bool {
 	g, err := ir.ParseGuard(v)
 	if err != nil {
@@ -726,7 +729,6 @@ func (fb *builder) guard(n *ir.Node, attr, v string, sc *scope) bool {
 	val, found := sc.resolve(fb.a.store, g.Path)
 	if !found {
 		fb.report(n, ir.Warning, "B002", "%s=%q: path %q is missing", attr, v, g.Path)
-		return false
 	}
 	return ir.Truthy(val) != g.Neg
 }

@@ -550,8 +550,9 @@ func (s *playSession) handleKeys(step int, keys []host.Key) {
 // (SPEC v0.2 §15.4 `text:STR`, §28.21: "text: goes through it in one
 // read"; events must be exactly what Run would dispatch). A run of
 // consecutive keys is coalesced through handleKeys (the v0.1 one-edit
-// behavior for printable characters into a focused input); each paste is
-// its own handlePaste call.
+// behavior for printable characters into a focused input); while the
+// mouse is off, an SGR report among them is dropped without splitting the
+// run (SPEC v0.2b §8.5). Each paste is its own handlePaste call.
 func (s *playSession) handleText(step int, str string) {
 	ins := host.DecodeInput([]byte(str))
 	for len(ins) > 0 && !s.quit {
@@ -568,15 +569,10 @@ func (s *playSession) handleText(step int, str string) {
 			ins = ins[1:]
 			continue
 		}
-		n := 1
-		for n < len(ins) && !ins[n].IsPaste && !ins[n].IsMouse {
-			n++
-		}
-		keys := make([]host.Key, n)
-		for i := range keys {
-			keys[i] = ins[i].Key
-		}
-		ins = ins[n:]
+		// While the mouse is off, a mouse report inside the keys is
+		// dropped without ending the run, as in Run (host.App.KeyRun).
+		var keys []host.Key
+		keys, ins = s.app.KeyRun(ins)
 		s.handleKeys(step, keys)
 	}
 }

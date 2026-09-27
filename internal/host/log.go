@@ -7,6 +7,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"golang.org/x/term"
 )
 
 // runLog is the NDJSON session log of TUIMARK_LOG (SPEC v0.2b §26.12):
@@ -15,28 +17,66 @@ import (
 // from any goroutine. A write error stops the logging and never stops
 // Run.
 type runLog struct {
-	mu    sync.Mutex
-	f     *os.File
-	start time.Time
-	dead  bool // a write failed, or the log was closed
+	mu      sync.Mutex
+	f       *os.File
+	start   time.Time
+	started bool // the start record was written: a session began
+	dead    bool // a write failed, or the log was closed
 }
 
-// openRunLog opens path for the log (SPEC v0.2b §26.12): created with mode
-// 0600 or truncated, then narrowed to 0600 whatever mode it had. An empty
-// path is no log. An error is returned before Run touches the terminal.
+// openRunLog opens path for the log (SPEC v0.2b §26.12), creating it with
+// mode 0600 when it does not exist. What it opened decides the rest: a
+// regular file (a symlink to one included) is truncated and narrowed to
+// 0600 whatever mode it had; a terminal is refused, since the log exists
+// to keep diagnostics off terminals; anything else (/dev/null, a FIFO, a
+// pipe such as a shell's /dev/fd/N) is written as it is, never truncated
+// and never chmod-ed. An empty path is no log. An error is returned before
+// Run touches the terminal.
 func openRunLog(path string, start time.Time) (*runLog, error) {
 	if path == "" {
 		return nil, nil
 	}
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
-	if err != nil {
+	fail := func(f *os.File, err error) (*runLog, error) {
+		if f != nil {
+			f.Close()
+		}
 		return nil, fmt.Errorf("tuimark: %s: %v", envLog, err)
 	}
-	if err := f.Chmod(0o600); err != nil {
-		f.Close()
-		return nil, fmt.Errorf("tuimark: %s: %v", envLog, err)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|openNoCTTY, 0o600)
+	if err != nil {
+		return fail(nil, err)
+	}
+	st, err := f.Stat()
+	if err != nil {
+		return fail(f, err)
+	}
+	if st.Mode().IsRegular() {
+		if err := f.Truncate(0); err != nil {
+			return fail(f, err)
+		}
+		if err := f.Chmod(0o600); err != nil {
+			return fail(f, err)
+		}
+		return &runLog{f: f, start: start}, nil
+	}
+	if isTerminalFile(f) {
+		return fail(f, fmt.Errorf("%s is a terminal; the log never goes to a terminal (use a file or a pipe)", path))
 	}
 	return &runLog{f: f, start: start}, nil
+}
+
+// isTerminalFile reports whether f is a terminal, without changing its
+// blocking mode (f.Fd would).
+func isTerminalFile(f *os.File) bool {
+	rc, err := f.SyscallConn()
+	if err != nil {
+		return false
+	}
+	tty := false
+	if err := rc.Control(func(fd uintptr) { tty = term.IsTerminal(int(fd)) }); err != nil {
+		return false
+	}
+	return tty
 }
 
 // member is one "name": value pair of a log record, in record order.
@@ -84,13 +124,33 @@ func writeJSON(b *bytes.Buffer, v any) {
 	b.Write(out)
 }
 
+// begin writes the start record, the first of a session: from here on,
+// end writes the end record.
+func (l *runLog) begin(cols, rows int) {
+	if l == nil {
+		return
+	}
+	l.write("start", member{"version", Version}, member{"cols", cols}, member{"rows", rows})
+	l.mu.Lock()
+	l.started = true
+	l.mu.Unlock()
+}
+
 // end writes the end record with its reason (quit, eof, signal, or error)
-// and closes the file. It is called once, on every exit path of Run.
+// and closes the file. It is called once, on every exit path of Run. When
+// Run returns before its session began (stdin is not a terminal, or raw
+// mode failed), there is no start record, so no end record is written
+// either: the file is closed with no records (SPEC v0.2b §26.12).
 func (l *runLog) end(reason string) {
 	if l == nil {
 		return
 	}
-	l.write("end", member{"reason", reason})
+	l.mu.Lock()
+	started := l.started
+	l.mu.Unlock()
+	if started {
+		l.write("end", member{"reason", reason})
+	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.dead = true

@@ -1,6 +1,7 @@
 package css
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -240,6 +241,59 @@ func TestExplain(t *testing.T) {
 	// Compute and Explain agree.
 	if got := c.Compute(e, &parent, hints, inline); got != st {
 		t.Errorf("Compute %+v != Explain %+v", got, st)
+	}
+}
+
+// Regression (review of 0.2b, SPEC §15.7): a declaration of a selector
+// list is one declaration in the trace, however many selectors of the list
+// match: it never overrides itself, its selector is the list as written,
+// and its specificity is that of the highest-specificity matching
+// selector. Computed values are what they were.
+func TestExplainSelectorList(t *testing.T) {
+	sh, diags := ParseSheetIn("text, .a { bold: true; }\n.b,   .a { dim: true; }\ntext , .a { color: red; }\n.z, text { color: blue; }\n", "l.tcss", true)
+	if len(diags) > 0 {
+		t.Fatal(diags)
+	}
+	c := NewCascade([]*Sheet{sh}, Env{Cols: 80, Rows: 24})
+	e := &el{tag: "text", id: "t", classes: []string{"a", "b"}}
+	st, tr := c.Explain(e, nil, nil, nil)
+	if !st.Bold || !st.Dim || st.Color.String() != "red" {
+		t.Errorf("style %+v", st)
+	}
+	for _, want := range []struct {
+		prop, sel string
+		spec      int
+		losers    string
+	}{
+		{"bold", "text, .a", 10, ""},
+		{"dim", ".b, .a", 10, ""},
+		// .z does not match: `.z, text` counts with text (1) and loses to
+		// `text , .a` (10); each declaration appears once.
+		{"color", "text, .a", 10, ".z, text/1=blue"},
+	} {
+		pt := tr[want.prop]
+		if pt == nil || pt.Winner == nil {
+			t.Fatalf("%s: no trace", want.prop)
+		}
+		if pt.Winner.Selector != want.sel || pt.Winner.Specificity != want.spec {
+			t.Errorf("%s winner %q (%d), want %q (%d)", want.prop, pt.Winner.Selector, pt.Winner.Specificity, want.sel, want.spec)
+		}
+		var lost []string
+		for _, l := range pt.Losers {
+			lost = append(lost, fmt.Sprintf("%s/%d=%s", l.Selector, l.Specificity, l.Value))
+		}
+		if strings.Join(lost, " ") != want.losers {
+			t.Errorf("%s losers %v, want %q", want.prop, lost, want.losers)
+		}
+	}
+	if got := c.Compute(e, nil, nil, nil); got != st {
+		t.Errorf("Compute %+v != Explain %+v", got, st)
+	}
+	// The built-in sheet's list rule is reported whole.
+	ua := NewCascade(nil, Env{Cols: 80, Rows: 24})
+	_, tr = ua.Explain(&el{tag: "input"}, nil, nil, nil)
+	if w := tr["width"]; w == nil || w.Winner.Selector != "input, button, progress, rule" || w.Winner.File != UAFile || len(w.Losers) != 0 {
+		t.Errorf("ua width %+v", w)
 	}
 }
 

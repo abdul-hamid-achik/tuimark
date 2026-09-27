@@ -20,7 +20,7 @@ import (
 
 // Version is the runtime version: `tuimark version` prints it and the
 // start record of TUIMARK_LOG carries it (SPEC v0.2b §26.12).
-const Version = "0.2.0-a"
+const Version = "0.2.0-b"
 
 // Event is the payload a handler receives (SPEC §8.2).
 type Event struct {

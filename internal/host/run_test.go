@@ -3,8 +3,12 @@ package host
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -295,6 +299,43 @@ func TestRunNeedsATerminal(t *testing.T) {
 	}
 }
 
+// runLogChildEnv makes TestRunLogWithoutSessionHasNoRecords run Run in a
+// child process whose stdin is the null device.
+const runLogChildEnv = "TUIMARK_RUNLOG_CHILD"
+
+// Regression (review of 0.2b, SPEC v0.2b §26.12): a Run that fails before
+// its session starts (here stdin is not a terminal) opens and truncates
+// the TUIMARK_LOG file (§26.1 step 1 comes first) but writes no record,
+// so the log never holds an end record without a start record before it.
+func TestRunLogWithoutSessionHasNoRecords(t *testing.T) {
+	if os.Getenv(runLogChildEnv) != "" {
+		err := doc(t, loopDoc).Run(io.Discard)
+		fmt.Fprintf(os.Stderr, "RUN-RETURNED %v\n", err)
+		os.Exit(0)
+	}
+	p := filepath.Join(t.TempDir(), "run.log")
+	if err := os.WriteFile(p, []byte("stale\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=^TestRunLogWithoutSessionHasNoRecords$", "-test.count=1")
+	cmd.Env = append(os.Environ(), envLog+"="+p, runLogChildEnv+"=1")
+	// cmd.Stdin is nil: the child's stdin is the null device.
+	out, err := cmd.CombinedOutput()
+	if err != nil || !strings.Contains(string(out), "RUN-RETURNED tuimark: Run needs an interactive terminal") {
+		t.Fatalf("child: %v\n%s", err, out)
+	}
+	b, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(b) != 0 {
+		t.Errorf("the log of a Run that never started a session holds %q, want no records", b)
+	}
+	if st, _ := os.Stat(p); runtime.GOOS != "windows" && st.Mode().Perm() != 0o600 {
+		t.Errorf("log mode %v, want 0600", st.Mode().Perm())
+	}
+}
+
 // Keys delivered in one read see each other's effects: after tab moves
 // focus, a keymap row with when="#l:focus" matches the next key.
 func TestLoopKeysInOneReadSeeFocusChanges(t *testing.T) {
@@ -325,6 +366,50 @@ func TestLoopKeysInOneReadSeeFocusChanges(t *testing.T) {
 	}
 	pw.Close()
 	<-done
+}
+
+// Regression (review of 0.2b, SPEC v0.2b §8.5 "Mouse off", §26.11, §8.6):
+// SGR reports that arrive in one read with typed keys while the mouse is
+// off are dropped without splitting the typing, so the read stays one
+// edit with one on:change, as in 0.2a (a version="1" document, and a
+// version="2" one whose mouse is false). With the mouse on they are
+// handled in arrival order and split it.
+func TestLoopMouseReportsDoNotSplitTypingWhileMouseOff(t *testing.T) {
+	for _, c := range []struct {
+		name, tui, in string
+		mouse         bool
+		want          string
+	}{
+		{"v1 click", `version="1"`, "ab\x1b[<0;1;1Mcd\x1b[<0;1;1mef", false, "abcdef"},
+		{"v1 wheel", `version="1"`, "ab\x1b[<64;1;1Mcd", false, "abcd"},
+		{"v2 mouse off", `version="2" mouse="m"`, "ab\x1b[<0;1;1Mcd\x1b[<0;1;1mef", false, "abcdef"},
+		{"v2 mouse on", `version="2" mouse="m"`, "ab\x1b[<0;1;1Mcd\x1b[<0;1;1mef", true, "ab|abcd|abcdef"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			a := doc(t, `<tui `+c.tui+`><screen id="s" focus="#q"><input id="q" bind="text" on:change="chg"/></screen></tui>`)
+			_ = a.Bind("", map[string]any{"text": "", "m": c.mouse})
+			var vals []string
+			a.On("chg", func(ev Event) error { vals = append(vals, ev.Value.(string)); return nil })
+			pr, pw := io.Pipe()
+			done := make(chan error, 1)
+			go func() { done <- a.Loop(pr, io.Discard, func() (int, int) { return 20, 2 }, nil) }()
+			if _, err := io.WriteString(pw, c.in); err != nil {
+				t.Fatal(err)
+			}
+			pw.Close()
+			select {
+			case err := <-done:
+				if err != nil {
+					t.Fatalf("Loop = %v", err)
+				}
+			case <-time.After(3 * time.Second):
+				t.Fatal("Loop did not return")
+			}
+			if got := strings.Join(vals, "|"); got != c.want {
+				t.Errorf("on:change values %q, want %q", got, c.want)
+			}
+		})
+	}
 }
 
 // chunkReader returns data at most n bytes per Read, then EOF: a paste

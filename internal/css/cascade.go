@@ -85,7 +85,12 @@ type ruleDecl struct {
 	order  int
 	file   string
 	sel    Selector
+	text   string // the rule's selector list as written
 	media  *Media
+	// list is non-zero for a declaration of a rule with a selector list
+	// (`a, b`): the same number on each copy of that declaration (one copy
+	// per selector), so compute keeps one copy per declaration.
+	list int
 }
 
 // Cascade computes styles for one frame: media-filtered rules plus tokens.
@@ -102,7 +107,7 @@ func NewCascade(sheets []*Sheet, env Env) *Cascade {
 	for k, v := range Themes[EffectiveTheme(env.Theme)] {
 		c.Tokens[k] = v
 	}
-	order := 0
+	order, lists := 0, 0
 	// Token order (SPEC §10.4): the base set of the effective theme, then
 	// every :root declaration of every rule whose @media matches, in
 	// document order, a later declaration of a token replacing an earlier
@@ -112,6 +117,13 @@ func NewCascade(sheets []*Sheet, env Env) *Cascade {
 			if !r.Media.MatchesEnv(env) {
 				continue
 			}
+			// The list number of the rule's first declaration; 0 for a
+			// single selector (:root is always alone in its rule).
+			first := 0
+			if len(r.Selectors) > 1 {
+				first = lists + 1
+				lists += len(r.Decls)
+			}
 			for _, sel := range r.Selectors {
 				if sel.Root {
 					for _, d := range r.Decls {
@@ -119,9 +131,13 @@ func NewCascade(sheets []*Sheet, env Env) *Cascade {
 					}
 					continue
 				}
-				for _, d := range r.Decls {
+				for i, d := range r.Decls {
 					order++
-					c.rules = append(c.rules, ruleDecl{decl: d, origin: origin, spec: sel.Specificity(), order: order, file: sh.File, sel: sel, media: r.Media})
+					rd := ruleDecl{decl: d, origin: origin, spec: sel.Specificity(), order: order, file: sh.File, sel: sel, text: r.Text, media: r.Media}
+					if first > 0 {
+						rd.list = first + i
+					}
+					c.rules = append(c.rules, rd)
 				}
 			}
 		}
@@ -187,7 +203,12 @@ func (rd ruleDecl) source() DeclSource {
 	case OriginInline:
 		ds.Selector = `style=""`
 	default:
-		ds.Selector = rd.sel.Text
+		// The whole selector list (`text, .a`), with the specificity of
+		// the selector of the list that matched and counted (compute).
+		ds.Selector = rd.text
+		if ds.Selector == "" {
+			ds.Selector = rd.sel.Text
+		}
 		if rd.media != nil {
 			ds.Media = rd.media.Text
 		}
@@ -197,10 +218,29 @@ func (rd ruleDecl) source() DeclSource {
 
 func (c *Cascade) compute(el Element, parent *Style, hints, inline []Decl, trace map[string]*PropTrace) Style {
 	var matched []ruleDecl
+next:
 	for _, rd := range c.rules {
-		if rd.sel.Matches(el) {
-			matched = append(matched, rd)
+		if !rd.sel.Matches(el) {
+			continue
 		}
+		if rd.list > 0 {
+			// A declaration of a selector list is one candidate, however
+			// many selectors of the list match: the copy of the
+			// highest-specificity matching selector (a later one on a
+			// tie). The dropped copies always lose to the kept one, and
+			// no other rule's declaration sits between the copies in
+			// order, so no computed value changes; inspect then never
+			// lists a declaration as overriding itself (SPEC §15.7).
+			for i := range matched {
+				if matched[i].list == rd.list {
+					if rd.spec >= matched[i].spec {
+						matched[i] = rd
+					}
+					continue next
+				}
+			}
+		}
+		matched = append(matched, rd)
 	}
 	for i, d := range hints {
 		matched = append(matched, ruleDecl{decl: d, origin: OriginHint, order: i, file: d.File})

@@ -96,3 +96,7 @@ func inputReady(in io.Reader) func() bool {
 		return ready
 	}
 }
+
+// openNoCTTY keeps a terminal that TUIMARK_LOG names from becoming the
+// controlling terminal when openRunLog opens it (to refuse it).
+const openNoCTTY = syscall.O_NOCTTY

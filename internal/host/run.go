@@ -38,8 +38,9 @@ var escTimeout = 25 * time.Millisecond
 // and TUIMARK_SYNC (SPEC v0.2 §26.10); an invalid value is returned as an
 // error with nothing written and no raw mode. It also opens the
 // TUIMARK_LOG file when that variable is set (SPEC v0.2b §26.12), and a
-// file it cannot open is such an error too. The session (§26.1): enter
-// the alternate screen with bracketed paste on; probe the terminal's
+// file it cannot open, or a terminal, is such an error too. The session
+// (§26.1): enter the alternate screen with bracketed paste on; probe the
+// terminal's
 // capabilities once when w is a terminal (§26.2: DECRQM 2026 and 2027
 // with a DA1 sentinel, at most probeWait; OSC 11 first when the theme is
 // auto, and, under the Apple Terminal/SSH skip rule, only OSC 11 and DA1),
@@ -76,8 +77,11 @@ func (a *App) Run(w io.Writer) (err error) {
 		return err
 	}
 	// TUIMARK_LOG (SPEC v0.2b §26.12) is opened with the environment,
-	// before the terminal is touched; its end record is written last, on
-	// every way out, with the error Run finally returns.
+	// before the terminal is touched, and closed on every way out. Once
+	// the session has written its start record, the end record is written
+	// last, with the error Run finally returns; a Run that fails before
+	// the session (stdin is not a terminal, raw mode fails) leaves the
+	// file with no records.
 	lg, err := openRunLog(cfg.log, start)
 	if err != nil {
 		return err
@@ -359,8 +363,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	defer a.endRun()
 	lg := sess.log
 	if lg != nil {
-		c, r := size()
-		lg.write("start", member{"version", Version}, member{"cols", c}, member{"rows", r})
+		lg.begin(size())
 	}
 
 	reads := make(chan chunk, 16)
@@ -542,8 +545,10 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// arrives while they run (handlers may be slow) is honored before the
 	// next one. Printable keys in a row that go to the focused input are
 	// one edit with one on:change (HandleKeyRun), so a paste on a terminal
-	// without bracketed paste costs one frame, not one per character. A
-	// bracketed paste is one edit too, or nothing (HandlePaste).
+	// without bracketed paste costs one frame, not one per character; a
+	// mouse report among them splits the run only while the mouse is on
+	// (KeyRun). A bracketed paste is one edit too, or nothing
+	// (HandlePaste).
 	handleInputs := func(ins []Input) (stop bool, err error) {
 		signaled := func() error {
 			select {
@@ -587,15 +592,11 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				}
 				continue
 			}
-			n := 1
-			for n < len(ins) && !ins[n].IsPaste && !ins[n].IsMouse {
-				n++
-			}
-			keys := make([]Key, n)
-			for i := range keys {
-				keys[i] = ins[i].Key
-			}
-			ins = ins[n:]
+			// A mouse event ends the run only while the mouse is on;
+			// while it is off the event is dropped inside the run
+			// (KeyRun), so the keys of one read stay one edit.
+			var keys []Key
+			keys, ins = a.KeyRun(ins)
 			for len(keys) > 0 {
 				if err := signaled(); err != nil {
 					return true, err

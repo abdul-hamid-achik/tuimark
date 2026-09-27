@@ -67,8 +67,9 @@ func (h *hitIdentity) equal(o *hitIdentity) bool {
 }
 
 // mouseOn evaluates the document's mouse attribute for this frame (SPEC
-// v0.2b §8.5): a flag, false by default; a missing path is B002 and
-// counts as false. Only a version="2" document can have it.
+// v0.2b §8.5): a flag, false by default; a missing path is B002 and its
+// value counts as null, so mouse="path" is off and mouse="!path" is on.
+// Only a version="2" document can have it.
 func (fb *builder) mouseOn() bool {
 	d := fb.a.doc
 	if !d.V2 || d.Mouse == "" || d.Root == nil {
@@ -91,6 +92,37 @@ func (a *App) DropPress() {
 	a.mu.Lock()
 	a.press = nil
 	a.mu.Unlock()
+}
+
+// KeyRun splits the key run off the front of ins, whose first input is a
+// key: the keys up to the next paste, or up to the next mouse event while
+// the live frame has the mouse on, and the inputs after the run. While the
+// mouse is off, a mouse event is dropped (SPEC v0.2b §8.5, §26.11), so it
+// does not end the run either: the printable keys of one read stay one
+// edit with one on:change (§8.6, §15.4, the v0.1 coalescing), as they
+// were in 0.2a. A dropped event forgets a pending press, as HandleMouse
+// does. The mouse is read once, when the run starts. Run's loop and
+// play's text: step (and so every caller that walks decoded input) use
+// it.
+func (a *App) KeyRun(ins []Input) (keys []Key, rest []Input) {
+	on := a.MouseOn()
+	dropped := false
+	n := 0
+	for ; n < len(ins); n++ {
+		in := ins[n]
+		if in.IsPaste || (in.IsMouse && on) {
+			break
+		}
+		if in.IsMouse {
+			dropped = true
+			continue
+		}
+		keys = append(keys, in.Key)
+	}
+	if dropped {
+		a.DropPress()
+	}
+	return keys, ins[n:]
 }
 
 // HandleMouse applies one mouse event to the live frame (SPEC v0.2b §8.5)
