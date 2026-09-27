@@ -1,0 +1,105 @@
+# GoReleaser configuration for the `tuimark` CLI.
+# Validate locally with:  goreleaser check
+# Dry-run a build with:    goreleaser release --snapshot --clean
+# A real release runs from CI on a pushed `v*` tag (see .github/workflows/release.yml).
+version: 2
+
+project_name: tuimark
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: tuimark
+    main: ./cmd/tuimark
+    binary: tuimark
+    env:
+      - CGO_ENABLED=0
+    # Keep absolute checkout paths out of the shipped binary.
+    flags:
+      - -trimpath
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    # `tuimark version` prints these (cmd/tuimark/main.go): the tag without
+    # its leading "v", the short commit, and the commit date.
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .ShortCommit }}
+      - -X main.date={{ .CommitDate }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    # Ship Windows builds as .zip, the platform convention.
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "arm64" }}arm64
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - README.md
+      - CHANGELOG.md
+      - LICENSE
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+
+homebrew_casks:
+  - name: tuimark
+    binaries:
+      - tuimark
+    # The tap repo must exist and CI must provide HOMEBREW_TAP_TOKEN (a PAT
+    # with write access to it); without the token the cask upload is skipped
+    # and the GitHub release still publishes.
+    repository:
+      owner: abdul-hamid-achik
+      name: homebrew-tap
+      token: '{{ envOrDefault "HOMEBREW_TAP_TOKEN" "" }}'
+    directory: Casks
+    homepage: "https://github.com/abdul-hamid-achik/tuimark"
+    description: "Declarative view language for terminal UIs (.tui markup, .tcss styles)"
+    # Strip the quarantine attribute so the unsigned binary runs without the
+    # macOS Gatekeeper prompt after `brew install`.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/tuimark"]
+          end
+    skip_upload: '{{ if envOrDefault "HOMEBREW_TAP_TOKEN" "" }}false{{ else }}true{{ end }}'
+
+release:
+  github:
+    owner: abdul-hamid-achik
+    name: tuimark
+  draft: false
+  prerelease: auto
+  name_template: "v{{ .Version }}"

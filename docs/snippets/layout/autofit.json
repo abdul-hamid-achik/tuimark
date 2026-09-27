@@ -1,0 +1,54 @@
+{
+  "count": 12,
+  "cursor": 12,
+  "lines": [
+    {
+      "n": 1,
+      "text": "pull image"
+    },
+    {
+      "n": 2,
+      "text": "verify digest"
+    },
+    {
+      "n": 3,
+      "text": "start canary"
+    },
+    {
+      "n": 4,
+      "text": "probe /healthz"
+    },
+    {
+      "n": 5,
+      "text": "shift 10%"
+    },
+    {
+      "n": 6,
+      "text": "shift 50%"
+    },
+    {
+      "n": 7,
+      "text": "shift 100%"
+    },
+    {
+      "n": 8,
+      "text": "drain old pods"
+    },
+    {
+      "n": 9,
+      "text": "rotate secrets"
+    },
+    {
+      "n": 10,
+      "text": "warm caches"
+    },
+    {
+      "n": 11,
+      "text": "notify #deploys"
+    },
+    {
+      "n": 12,
+      "text": "done"
+    }
+  ]
+}

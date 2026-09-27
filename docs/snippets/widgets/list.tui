@@ -1,0 +1,17 @@
+<tui version="2">
+  <style>
+    #files { border: rounded; }
+    #files > item:checked { color: $accent; }
+  </style>
+  <keymap>
+    <bind keys="space" action="check-toggle" when="#files:focus"/>
+  </keymap>
+  <screen id="main" focus="#files">
+    <list id="files" each="files as f" key="f.path" bind="cursor"
+          checked="marked" mark="✓" on:select="preview" on:change="marks_changed">
+      <item>
+        <text>{f.path}</text>
+      </item>
+    </list>
+  </screen>
+</tui>

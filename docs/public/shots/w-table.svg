@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="450.4" height="168" viewBox="0 0 450.4 168" role="img" aria-label="a table with a header row, right-aligned numbers, hot cells and the cursor row reversed">
+<title>a table with a header row, right-aligned numbers, hot cells and the cursor row reversed</title>
+<rect width="450.4" height="168" rx="6" fill="#0d1117"/>
+<path fill="#e6edf3" d="M23.6 94h403.2v20h-403.2z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#e6edf3" stroke-width="1.3" d="M23.6 24H23.6Q18.8 24 18.8 28.8V34M23.6 24H33.2M33.2 24H42.8M42.8 24H52.4M52.4 24H62M62 24H71.6M71.6 24H81.2M81.2 24H90.8M90.8 24H100.4M100.4 24H110M110 24H119.6M119.6 24H129.2M129.2 24H138.8M138.8 24H148.4M148.4 24H158M158 24H167.6M167.6 24H177.2M177.2 24H186.8M186.8 24H196.4M196.4 24H206M206 24H215.6M215.6 24H225.2M225.2 24H234.8M234.8 24H244.4M244.4 24H254M254 24H263.6M263.6 24H273.2M273.2 24H282.8M282.8 24H292.4M292.4 24H302M302 24H311.6M311.6 24H321.2M321.2 24H330.8M330.8 24H340.4M340.4 24H350M350 24H359.6M359.6 24H369.2M369.2 24H378.8M378.8 24H388.4M388.4 24H398M398 24H407.6M407.6 24H417.2M417.2 24H426.8M426.8 24H426.8Q431.6 24 431.6 28.8V34M18.8 34V54M431.6 34V54M18.8 54V74M431.6 54V74M18.8 74V94M431.6 74V94M18.8 94V114M431.6 94V114M18.8 114V134M431.6 114V134M23.6 144H23.6Q18.8 144 18.8 139.2V134M23.6 144H33.2M33.2 144H42.8M42.8 144H52.4M52.4 144H62M62 144H71.6M71.6 144H81.2M81.2 144H90.8M90.8 144H100.4M100.4 144H110M110 144H119.6M119.6 144H129.2M129.2 144H138.8M138.8 144H148.4M148.4 144H158M158 144H167.6M167.6 144H177.2M177.2 144H186.8M186.8 144H196.4M196.4 144H206M206 144H215.6M215.6 144H225.2M225.2 144H234.8M234.8 144H244.4M244.4 144H254M254 144H263.6M263.6 144H273.2M273.2 144H282.8M282.8 144H292.4M292.4 144H302M302 144H311.6M311.6 144H321.2M321.2 144H330.8M330.8 144H340.4M340.4 144H350M350 144H359.6M359.6 144H369.2M369.2 144H378.8M378.8 144H388.4M388.4 144H398M398 144H407.6M407.6 144H417.2M417.2 144H426.8M426.8 144H426.8Q431.6 144 431.6 139.2V134"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="52.4" y="49" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">PID</text>
+<text x="90.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">NAME</text>
+<text x="330.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">CPU%</text>
+<text x="398" y="49" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">MEM</text>
+<text x="52.4" y="69" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">412</text>
+<text x="90.8" y="69" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">WindowServer</text>
+<text x="330.8" y="69" textLength="38.4" lengthAdjust="spacing" fill="#d29922">87.3</text>
+<text x="388.4" y="69" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">1.4G</text>
+<text x="42.8" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">8810</text>
+<text x="90.8" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">Code</text>
+<text x="138.8" y="89" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">Helper</text>
+<text x="330.8" y="89" textLength="38.4" lengthAdjust="spacing" fill="#d29922">41.8</text>
+<text x="388.4" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">904M</text>
+<text x="42.8" y="109" textLength="38.4" lengthAdjust="spacing" fill="#0d1117">9921</text>
+<text x="90.8" y="109" textLength="38.4" lengthAdjust="spacing" fill="#0d1117">node</text>
+<text x="330.8" y="109" textLength="38.4" lengthAdjust="spacing" fill="#0d1117">18.2</text>
+<text x="388.4" y="109" textLength="38.4" lengthAdjust="spacing" fill="#0d1117">388M</text>
+<text x="33.2" y="129" textLength="48" lengthAdjust="spacing" fill="#e6edf3">15023</text>
+<text x="90.8" y="129" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">go</text>
+<text x="340.4" y="129" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">9.7</text>
+<text x="388.4" y="129" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">221M</text>
+</g>
+</svg>

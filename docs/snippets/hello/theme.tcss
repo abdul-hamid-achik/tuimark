@@ -1,0 +1,5 @@
+#title { bold: true; color: $accent; }
+#tasks { border: rounded; border-color: $border; }
+#tasks:focus { border-color: $focus; }
+#keys { dock: bottom; height: 1; }
+.hint-key { color: $accent; }

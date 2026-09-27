@@ -1,0 +1,23 @@
+<tui version="2">
+  <style>
+    .tab-label { color: $muted; }
+    .tab-label:selected { color: $accent; bold: true; }
+  </style>
+  <keymap>
+    <bind keys="right" action="move-next" to="#views"/>
+    <bind keys="left" action="move-prev" to="#views"/>
+  </keymap>
+  <screen id="main">
+    <tabs id="views" bind="view" mark="▸" gap="2" on:select="view_changed">
+      <tab id="overview" label="1 overview" short="1 ovr">
+        <text>panels</text>
+      </tab>
+      <tab id="processes" label="2 processes" short="2 proc">
+        <text>the process table</text>
+      </tab>
+      <tab id="settings" label="3 settings" short="3 cfg">
+        <text>settings</text>
+      </tab>
+    </tabs>
+  </screen>
+</tui>

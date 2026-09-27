@@ -1,0 +1,2 @@
+$ tuimark validate app.tui --data sample.json
+ok

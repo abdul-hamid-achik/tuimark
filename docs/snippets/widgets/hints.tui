@@ -1,0 +1,24 @@
+<tui version="2">
+  <style>
+    #files { border: rounded; }
+    #keys { dock: bottom; height: 1; }
+    .hint-key { color: $accent; bold: true; }
+    .hint-label { color: $muted; }
+  </style>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="/" action="focus" to="#filter" label="filter"/>
+    <bind keys="space" action="check-toggle" when="#files:focus" label="mark"/>
+    <bind keys="ctrl+a" action="check-all" when="#files:focus" keycap="^A" label="all"/>
+    <bind keys="esc" action="focus" to="#files" when="#filter:focus" label="done"/>
+  </keymap>
+  <screen id="main" focus="#files">
+    <input id="filter" bind="query" placeholder="/ to filter"/>
+    <list id="files" each="files as f" key="f.path" bind="cursor" checked="marked">
+      <item>
+        <text>{f.path}</text>
+      </item>
+    </list>
+    <hints id="keys"/>
+  </screen>
+</tui>

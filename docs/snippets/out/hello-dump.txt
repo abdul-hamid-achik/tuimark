@@ -1,0 +1,31 @@
+$ tuimark dump app.tui --data sample.json --cols 48 --rows 10
+=== grid 48x10 ===
+launch checklist
+╭──────────────────────────────────────────────╮
+│write the release notes                       │
+│tag v0.2.0                                    │
+│publish the docs                              │
+╰──────────────────────────────────────────────╯
+
+
+
+q quit  enter open
+=== nodes ===
+main   screen  48x10 @(0,0)
+title  text    48x1 @(0,0)
+tasks  list    48x5 @(0,1) focus
+-      item    46x1 @(1,2) selected
+-      text    46x1 @(1,2)
+-      item    46x1 @(1,3)
+-      text    46x1 @(1,3)
+-      item    46x1 @(1,4)
+-      text    46x1 @(1,4)
+keys   hints   48x1 @(0,9)
+-      row     6x1 @(0,9)
+-      text    1x1 @(0,9)
+-      text    4x1 @(2,9)
+-      row     10x1 @(8,9)
+-      text    5x1 @(8,9)
+-      text    4x1 @(14,9)
+=== errors ===
+ok

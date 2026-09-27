@@ -1,0 +1,25 @@
+// $ tuimark play app.tui --data sample.json --cols 48 --rows 10 --input "down enter" --format json
+// excerpt: "focus", "events"
+{
+  "focus": "tasks",
+  "events": [
+    {
+      "step": 1,
+      "action": "moved",
+      "source": "tasks",
+      "keys": {
+        "t": "t2"
+      },
+      "value": null
+    },
+    {
+      "step": 2,
+      "action": "open",
+      "source": "tasks",
+      "keys": {
+        "t": "t2"
+      },
+      "value": null
+    }
+  ]
+}

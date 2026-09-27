@@ -1,0 +1,16 @@
+╭─ tickets ────────────────────────────────────────────╮
+│t-1 login loop on staging                             │
+│t-2 cannot deploy europe-west                         │
+│t-3 stale feature flag cache                          │
+╰──────────────────────────────────────────────────────╯
+╭─ t-2 ────────────────────────────────────────────────╮
+│Deploys to europe-west fail at the health check: the  │
+│new probe path returns 404.                           │
+│                                                      │
+│                                                      │
+│                                                      │
+│                                                      │
+│                                                      │
+│                                                      │
+╰──────────────────────────────────────────────────────╯
+q quit  enter open

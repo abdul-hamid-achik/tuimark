@@ -1,0 +1,16 @@
+<tui version="2">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="enter" action="open" when="#tasks:focus" label="open"/>
+  </keymap>
+  <screen id="main" focus="#tasks">
+    <text id="title">{project}</text>
+    <list id="tasks" each="tasks as t" key="t.id" bind="selected" on:select="moved">
+      <item>
+        <text>{t.title}</text>
+      </item>
+    </list>
+    <hints id="keys"/>
+  </screen>
+</tui>

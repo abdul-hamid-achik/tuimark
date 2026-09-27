@@ -11,6 +11,15 @@
 # Go
 /vendor/
 
+# GoReleaser output (goreleaser release --snapshot / build)
+/dist/
+
+# Docs site (VitePress under docs/, deployed by Vercel)
+node_modules/
+/docs/.vitepress/cache/
+/docs/.vitepress/dist/
+.vercel
+
 # Editor/OS cruft
 .DS_Store
 *.swp
@@ -18,5 +27,6 @@
 # agent demo workspaces recreated by specs (bin/agent --demo-workspace)
 /.glyphrun/ws/
 
-# Claude Code scheduler lock
+# Claude Code local state (scheduler lock, per-machine settings)
 /.claude/scheduled_tasks.lock
+/.claude/settings.local.json

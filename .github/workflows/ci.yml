@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, go ${{ matrix.go }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # go.mod's minimum, so the declared floor stays continuously
+          # tested. Linux only: binaries from the Go 1.22 linker that link
+          # net abort at start-up on current macOS (dyld: missing LC_UUID),
+          # which is a toolchain/OS mismatch rather than a tuimark bug.
+          - os: ubuntu-latest
+            go: "1.22"
+          # The current release, on both platforms.
+          - os: ubuntu-latest
+            go: "1.26"
+          - os: macos-latest
+            go: "1.26"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: gofmt
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "$out"
+            echo "::error::gofmt: the files above are not formatted (run: gofmt -w .)"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test -race
+        run: go test -race -count=1 ./...
+
+      - name: build
+        run: |
+          go build -o bin/tuimark ./cmd/tuimark
+          go build -o bin/inbox ./examples/inbox
+          go build -o bin/dashboard ./examples/dashboard
+          go build -o bin/monitor ./examples/monitor
+          go build -o bin/agent ./examples/agent
+
+      - name: golden dumps
+        run: ./bin/tuimark test
+
+  specs:
+    name: glyphrun specs (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          # Glyphrun requires Go 1.26. The test matrix above also runs
+          # go.mod's Go 1.22 so tuimark's declared minimum stays tested.
+          go-version: "1.26"
+          cache: true
+
+      - name: Install go-task and glyph (glyphrun)
+        run: |
+          go install github.com/go-task/task/v3/cmd/task@v3.51.1
+          go install github.com/abdul-hamid-achik/glyphrun/cmd/glyph@v0.20.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build binaries
+        run: task build
+
+      # Every spec runs offline: the agent specs use the scripted provider
+      # or the in-process loopback fixture, never a real model server.
+      - name: Run specs
+        run: .github/scripts/glyph-specs.sh
+
+      - name: Upload glyphrun run artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: glyphrun-runs-${{ matrix.os }}
+          path: .glyphrun/runs/
+          retention-days: 7
+          if-no-files-found: ignore

@@ -1,0 +1,21 @@
+<tui version="2" theme="dark">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="enter" action="open" when="#tickets:focus" label="open"/>
+  </keymap>
+  <screen id="main" focus="#tickets">
+    <row id="body">
+      <list id="tickets" title="tickets" each="tickets as t" key="t.id"
+            bind="selected" on:select="preview">
+        <item>
+          <text>{t.id} {t.title}</text>
+        </item>
+      </list>
+      <box id="detail" title="{current.id}">
+        <text wrap="wrap">{current.body}</text>
+      </box>
+    </row>
+    <hints id="keys"/>
+  </screen>
+</tui>

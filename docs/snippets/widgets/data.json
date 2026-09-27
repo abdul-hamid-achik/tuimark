@@ -1,0 +1,23 @@
+{
+  "query": "",
+  "cursor": "internal/app.go",
+  "marked": ["go.mod"],
+  "files": [
+    { "path": "cmd/app/main.go" },
+    { "path": "internal/app.go" },
+    { "path": "go.mod" },
+    { "path": "README.md" }
+  ],
+  "build": {
+    "pct": 62,
+    "hist": [12, 18, 25, 22, 40, 52, 47, 63, 71, 66, 80, 92, 88, 70, 64, 75, 90, 97, 85, 78, 60, 55, 49, 62, 68, 74, 81, 77, 72, 69]
+  },
+  "cpu_cursor": 9921,
+  "procs": [
+    { "pid": 412, "name": "WindowServer", "cpu": "87.3", "mem": "1.4G", "hot": true },
+    { "pid": 8810, "name": "Code Helper", "cpu": "41.8", "mem": "904M", "hot": true },
+    { "pid": 9921, "name": "node", "cpu": "18.2", "mem": "388M", "hot": false },
+    { "pid": 15023, "name": "go", "cpu": "9.7", "mem": "221M", "hot": false }
+  ],
+  "view": "processes"
+}

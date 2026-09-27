@@ -1,0 +1,17 @@
+<tui version="2">
+  <style>
+    box { border: single; }
+    #a { width: 12; }
+    #b { width: 30%; }
+    #c { width: 1fr; }
+    #d { width: 2fr; }
+  </style>
+  <screen id="main">
+    <row>
+      <box id="a"><text>12</text></box>
+      <box id="b"><text>30%</text></box>
+      <box id="c"><text>1fr</text></box>
+      <box id="d"><text>2fr</text></box>
+    </row>
+  </screen>
+</tui>

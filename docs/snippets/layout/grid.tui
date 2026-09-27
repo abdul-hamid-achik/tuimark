@@ -1,0 +1,16 @@
+<tui version="2">
+  <style>
+    #cards { layout: grid; grid-columns: 3; grid-min-width: 16; gap: 1; }
+    .card { border: rounded; }
+  </style>
+  <screen id="main">
+    <box id="cards">
+      <box class="card" title="cpu"><text>23%</text></box>
+      <box class="card" title="memory"><text>61%</text></box>
+      <box class="card" title="disk"><text>73%</text></box>
+      <box class="card" title="load"><text>1.20</text></box>
+      <box class="card" title="net"><text>2.1 MB/s</text></box>
+      <box class="card" title="temp"><text>52 C</text></box>
+    </box>
+  </screen>
+</tui>

@@ -1,0 +1,5 @@
+<tui version="2">
+  <screen id="main">
+    <text id="name">東京 ok</text>
+  </screen>
+</tui>

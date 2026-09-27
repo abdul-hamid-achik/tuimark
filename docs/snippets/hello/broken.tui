@@ -1,0 +1,9 @@
+<tui version="2">
+  <style>
+    #tasks { width: 30px; }
+  </style>
+  <screen id="main">
+    <lsit id="tasks"/>
+    <input bind="query"/>
+  </screen>
+</tui>

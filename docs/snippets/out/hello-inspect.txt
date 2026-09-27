@@ -1,0 +1,16 @@
+$ tuimark inspect app.tui --data sample.json --cols 48 --rows 10 --id tasks
+tasks  list  48x5 @(0,1) focus
+path: /screen#main/list#tasks
+pseudo: :focus :focus-within
+layout: column  ua  <ua>:8:10 list (specificity 1)
+color: (none)  inherited
+border-color: cyan  author  theme.tcss:3:16 #tasks:focus (specificity 110)
+    overrides $border  author  theme.tcss:2:27 #tasks (specificity 100)
+border: rounded  author  theme.tcss:2:10 #tasks (specificity 100)
+bold: false  inherited
+dim: false  inherited
+italic: false  inherited
+underline: false  inherited
+reverse: false  inherited
+wrap: (none)  inherited
+visibility: visible  inherited

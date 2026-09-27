@@ -1,0 +1,13 @@
+<tui version="2">
+  <style>
+    #log { border: single; }
+    #status { background: $panel; }
+  </style>
+  <screen id="main" focus="#log">
+    <text>deploy log</text>
+    <list id="log" each="lines as l" key="l.n" bind="cursor">
+      <item><text>{l.n} {l.text}</text></item>
+    </list>
+    <text id="status">{count} lines</text>
+  </screen>
+</tui>

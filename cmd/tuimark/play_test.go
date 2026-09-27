@@ -549,19 +549,6 @@ func TestPlayNoStepsIsJustStepZero(t *testing.T) {
 	}
 }
 
-// The runtime version is the cut's (SPEC v0.2b status line, §24): 0.2.0-b,
-// which `tuimark version` prints and the TUIMARK_LOG start record carries.
-// (Amended from the 0.2a check, which expected 0.2.0-a.)
-func TestPlayVersionBumpedTo02b(t *testing.T) {
-	code, out, errw := runCLI("version")
-	if code != 0 {
-		t.Fatalf("exit %d, want 0; stderr=%s", code, errw)
-	}
-	if !strings.Contains(out, "0.2.0-b") {
-		t.Errorf("want the version string to mention 0.2.0-b, got %q", out)
-	}
-}
-
 // TestParseInputStepsSplitsOnSpaceRuns is a sanity check on
 // parseInputSteps's ASCII-space splitting (runs of spaces are one
 // separator; leading/trailing ignored).

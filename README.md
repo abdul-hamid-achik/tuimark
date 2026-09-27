@@ -1,5 +1,9 @@
 # Tuimark
 
+[![CI](https://github.com/abdul-hamid-achik/tuimark/actions/workflows/ci.yml/badge.svg)](https://github.com/abdul-hamid-achik/tuimark/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/abdul-hamid-achik/tuimark.svg)](https://pkg.go.dev/github.com/abdul-hamid-achik/tuimark)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Tuimark is a *view language for terminals*. UI is authored as text —
 structure in `.tui` (XML), style in `.tcss` (a reduced CSS), data as JSON,
 behavior as named actions (`on:select="open"`) — and a Go runtime
@@ -15,6 +19,10 @@ grid + node geometry
         ↓
 agent edits again
 ```
+
+**Documentation:** [tuimark.vercel.app](https://tuimark.vercel.app) — guides
+and reference for the language, the CLI, and the Go API. Release history is
+in the [Changelog](CHANGELOG.md).
 
 The Tuimark specification (the SPEC, currently v0.2) is the source of truth
 for the language and the runtime. It is maintained by the author outside
@@ -34,43 +42,84 @@ Rules the runtime holds to (SPEC §1):
 - Not a place for logic. No expressions, filters, function calls, or Go in
   markup — only literal values, `{path}` interpolation, `each`, and `if`.
 
-## Requirements
+## Installation
+
+### Homebrew (macOS and Linux)
+
+```sh
+brew install --cask abdul-hamid-achik/tap/tuimark
+tuimark version
+```
+
+The tap is added automatically; you do not need to run `brew tap` first.
+
+### Go
+
+```sh
+go install github.com/abdul-hamid-achik/tuimark/cmd/tuimark@latest
+```
+
+This puts `tuimark` in `$(go env GOPATH)/bin` (make sure that directory is
+on your `PATH`). It needs Go 1.22 or newer.
+
+### Release archives
+
+Each [GitHub release](https://github.com/abdul-hamid-achik/tuimark/releases)
+has prebuilt binaries for macOS, Linux, and Windows on amd64 and arm64:
+`tuimark_<version>_<Os>_<arch>.tar.gz` (`.zip` on Windows), each holding the
+`tuimark` binary, this README, the changelog, and the license. Check the
+download against `checksums.txt`, unpack it, and put `tuimark` on your
+`PATH`:
+
+```sh
+shasum -a 256 -c checksums.txt --ignore-missing   # or: sha256sum -c --ignore-missing checksums.txt
+tar -xzf tuimark_*_Linux_x86_64.tar.gz tuimark
+sudo install tuimark /usr/local/bin/
+```
+
+### Go library
+
+The runtime is also a Go package (see [Public Go API](#public-go-api)):
+
+```sh
+go get github.com/abdul-hamid-achik/tuimark@latest
+```
+
+```go
+import "github.com/abdul-hamid-achik/tuimark"
+```
+
+It has no CGO and needs Go 1.22 or newer. On current macOS, a program
+built with Go 1.22 that links the `net` package (such as `examples/agent`)
+fails to start with `dyld: missing LC_UUID load command`; build it with Go
+1.23 or newer there.
+
+### From source
+
+```sh
+git clone https://github.com/abdul-hamid-achik/tuimark.git
+cd tuimark
+go build -o bin/tuimark ./cmd/tuimark
+```
+
+`task build` (below) builds the CLI and every example host into `bin/`.
+
+## Requirements (development)
 
 - Go 1.22+, no CGO (`internal/layout` and `internal/paint` are the only
   layout/paint engines involved; there is no C dependency to build).
 - [go-task](https://taskfile.dev) — optional, for the `task verify` /
   `task build` / `task glyph` shortcuts in `Taskfile.yml`. Each task is a
   short shell command; without `task`, use the equivalent commands shown
-  under Testing (for example the four `go build` lines), since a couple of
+  under Testing (for example the five `go build` lines), since a couple of
   tasks use Taskfile template variables (like `{{.AGENT_DIR}}`) that a
   plain shell won't expand.
 - [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun) (the `glyph`
   CLI) — optional, only needed to run the terminal end-to-end specs under
   `specs/glyphrun/`. `go install
-  github.com/abdul-hamid-achik/glyphrun/cmd/glyph@latest`, then run
-  `glyph docs` for its own documentation.
-
-## Build / install
-
-From a checkout (this module is not published yet — there is no
-`go get github.com/abdul-hamid-achik/tuimark` to run against a released
-version):
-
-```sh
-git clone <this-repo>
-cd tuimark
-go build -o bin/tuimark ./cmd/tuimark
-```
-
-`go install` also works against a local checkout:
-
-```sh
-go install ./cmd/tuimark
-```
-
-The module is not published yet. To use it from another module, add
-`replace github.com/abdul-hamid-achik/tuimark => /path/to/your/checkout`
-(or a `go.work`) and import `github.com/abdul-hamid-achik/tuimark`.
+  github.com/abdul-hamid-achik/glyphrun/cmd/glyph@latest` (it needs Go
+  1.26; CI pins `@v0.20.0`), then run `glyph docs` for its own
+  documentation.
 
 ## Quickstart
 
@@ -549,6 +598,9 @@ tuimark version
   with `go run ./cmd/tuimark agents > AGENTS.md`).
 - `test` runs the golden dump comparisons driven by
   `testdata/golden/manifest.json` (below).
+- `version` (also `--version` or `-v`) prints `tuimark 0.2.0`; release
+  builds add the commit and build date, as in `tuimark 0.2.0 (commit
+  abc1234, built 2026-09-27T12:00:00Z)`.
 
 ### `--theme` and `dump --styles`
 
@@ -804,8 +856,7 @@ changes POINTER` (an RFC 6901 JSON Pointer to the first offending location)
 and exits 2. This catches an accidental regression at update time instead of
 only at the next `git diff`. `--allow-breaking` skips the check for one run,
 for a reviewed, deliberate change (a moved node from an auto-fit change, for
-example) — record why in the project's decision log alongside the updated
-goldens.
+example) — say why in the commit that updates the goldens.
 
 ## Public Go API
 
@@ -998,6 +1049,14 @@ module; the only supported entry points are the functions above.
   step; `task glyph` builds and then runs every spec; `task verify` runs
   fmt, vet, test, build, golden, and glyph in order — the full local gate.
   See `glyphrun.config.yml` and `glyph docs` for the spec format.
+
+CI (`.github/workflows/ci.yml`) runs the same gate on every push and pull
+request to `main`: gofmt, `go vet`, `go test -race`, the builds, and the
+goldens on Linux (Go 1.22, the module's minimum, and Go 1.26) and macOS
+(Go 1.26), then every Glyphrun spec on Linux and macOS through
+`.github/scripts/glyph-specs.sh`, which runs all the specs and reports every
+failure instead of stopping at the first. Every spec runs offline: the agent
+specs use the scripted provider or the in-process loopback fixture.
 
 ## Architecture
 
@@ -1210,16 +1269,15 @@ kept with the maintainer's project notes, outside this repository.
 - **Phase 4 (agent polish)** — done: `fmt`, `ir`, `test`, `agents`, `dump
   --cells`, the `examples/agent` harness, this README.
 - **Phase 5 (v0.2a: runtime, terminal, and tools)** — grapheme-cluster width
-  (ADR 0002, `github.com/rivo/uniseg`) and the `wide`/`--cells` dump fields;
-  auto-fit `scroll`/`list` sizing with the `L006` diagnostic (ADR 0007);
+  (segmentation by `github.com/rivo/uniseg`) and the `wide`/`--cells` dump
+  fields; auto-fit `scroll`/`list` sizing with the `L006` diagnostic;
   `Run()`'s capability probe, color profiles, theme selection, bracketed
   paste, and input decoder (SPEC §26); and the headless tools this delivery
-  adds — `tuimark play`, `dump --styles`, `--theme` on
+  added — `tuimark play`, `dump --styles`, `--theme` on
   `dump`/`validate`/`preview`/`play`, the `tuimark test --update` superset
   check, and `schema/ir.v0.2.json`/`schema/dump.v0.2.json`. No 0.2a document
   changes version (`tuimark ir` still emits `"version": "0.1"`); `<tui
-  version="2">` and the rest of the proposal's new vocabulary are 0.2b
-  (ADR 0009).
+  version="2">` and the rest of the new vocabulary are 0.2b.
 - **Phase 6 (v0.2b)** — implemented; the SPEC §24 trial with a fresh
   agent (§21 test 74) is still to be run and recorded. Done: the
   `version="2"` gate for the whole 0.2b vocabulary (with the `(requires version="2")` hint in

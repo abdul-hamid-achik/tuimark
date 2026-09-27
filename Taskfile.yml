@@ -55,6 +55,32 @@ tasks:
     cmds:
       - for f in specs/glyphrun/*.yml; do glyph run "$f" --format md || exit 1; done
 
+  docs:
+    desc: Serve the VitePress documentation site in docs/ locally.
+    dir: docs
+    cmds:
+      - npm install
+      - npm run dev
+
+  docs-build:
+    desc: Build the documentation site into docs/.vitepress/dist, as Vercel does (fails on dead links).
+    dir: docs
+    cmds:
+      - npm ci
+      - npm run build
+
+  docs-gen:
+    desc: Regenerate the docs' reference pages, command output, and screenshots from the tuimark CLI.
+    cmds:
+      - go build -o bin/tuimark ./cmd/tuimark
+      - node docs/scripts/generate.mjs
+
+  docs-check:
+    desc: Fail when the docs' generated files are stale (fix with task docs-gen).
+    cmds:
+      - go build -o bin/tuimark ./cmd/tuimark
+      - node docs/scripts/generate.mjs --check
+
   verify:
     desc: fmt + vet + test + build + golden + glyph, in that order.
     cmds:

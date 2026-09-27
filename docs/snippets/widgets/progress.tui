@@ -1,0 +1,24 @@
+<tui version="2">
+  <style>
+    .meter { height: 1; gap: 1; }
+    .label { width: 8; }
+    progress { width: 1fr; }
+    #fine { bar: eighths; color: $accent; }
+    #spark { height: 2; color: $ok; }
+  </style>
+  <screen id="main">
+    <row class="meter">
+      <text class="label">block</text>
+      <progress bind="build.pct"/>
+    </row>
+    <row class="meter">
+      <text class="label">eighths</text>
+      <progress id="fine" bind="build.pct"/>
+    </row>
+    <row class="meter">
+      <text class="label">value</text>
+      <progress value="25"/>
+    </row>
+    <sparkline id="spark" bind="build.hist" min="0" max="100"/>
+  </screen>
+</tui>

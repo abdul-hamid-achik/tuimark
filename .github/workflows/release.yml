@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  specs:
+    name: release behavioral specs
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Go for Glyphrun
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          # Glyphrun requires Go 1.26; the release build below uses the same
+          # exact version.
+          go-version: "1.26.6"
+          cache: true
+
+      - name: Install go-task and Glyphrun
+        run: |
+          go install github.com/go-task/task/v3/cmd/task@v3.51.1
+          go install github.com/abdul-hamid-achik/glyphrun/cmd/glyph@v0.20.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build binaries
+        run: task build
+
+      - name: Check golden dumps
+        run: ./bin/tuimark test
+
+      # Every spec runs offline: the agent specs use the scripted provider
+      # or the in-process loopback fixture, never a real model server.
+      - name: Run behavioral specs
+        run: .github/scripts/glyph-specs.sh
+
+  release:
+    needs: specs
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0 # GoReleaser needs full history and tags for the changelog
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: "1.26.6"
+          cache: true
+
+      - name: Validate release configuration
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          distribution: goreleaser
+          version: "v2.17.0"
+          args: check
+
+      - name: Run static analysis
+        run: go vet ./...
+
+      - name: Run race-enabled tests
+        run: go test -race -count=1 ./...
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          distribution: goreleaser
+          version: "v2.17.0"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PAT with write access to abdul-hamid-achik/homebrew-tap. When it
+          # is not set the release still publishes; only the cask update is
+          # skipped (see skip_upload in .goreleaser.yaml).
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

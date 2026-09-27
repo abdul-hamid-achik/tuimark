@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "*": false,
+      "main": true
+    }
+  },
+  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]; then exit 0; fi; BASE=\"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\"; git cat-file -e \"$BASE\" 2>/dev/null || exit 1; git diff --quiet \"$BASE\" HEAD -- docs/ vercel.json",
+  "framework": "vitepress",
+  "buildCommand": "cd docs && npm ci && npm run build",
+  "outputDirectory": "docs/.vitepress/dist",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)?",
+      "destination": "/$1.html"
+    }
+  ]
+}

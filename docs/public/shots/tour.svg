@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="796" height="228" viewBox="0 0 796 228" role="img" aria-label="the tour document at 80 columns: a ticket list beside the selected ticket, key hints below">
+<title>the tour document at 80 columns: a ticket list beside the selected ticket, key hints below</title>
+<rect width="796" height="228" rx="6" fill="#0d1117"/>
+<path fill="#e6edf3" d="M23.6 54h326.4v20h-326.4z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#39c5cf" stroke-width="1.3" d="M23.6 24H23.6Q18.8 24 18.8 28.8V34M23.6 24H33.2M119.6 24H129.2M129.2 24H138.8M138.8 24H148.4M148.4 24H158M158 24H167.6M167.6 24H177.2M177.2 24H186.8M186.8 24H196.4M196.4 24H206M206 24H215.6M215.6 24H225.2M225.2 24H234.8M234.8 24H244.4M244.4 24H254M254 24H263.6M263.6 24H273.2M273.2 24H282.8M282.8 24H292.4M292.4 24H302M302 24H311.6M311.6 24H321.2M321.2 24H330.8M330.8 24H340.4M340.4 24H350M350 24H350Q354.8 24 354.8 28.8V34M18.8 34V54M354.8 34V54M18.8 54V74M354.8 54V74M18.8 74V94M354.8 74V94M18.8 94V114M354.8 94V114M18.8 114V134M354.8 114V134M18.8 134V154M354.8 134V154M18.8 154V174M354.8 154V174M23.6 184H23.6Q18.8 184 18.8 179.2V174M23.6 184H33.2M33.2 184H42.8M42.8 184H52.4M52.4 184H62M62 184H71.6M71.6 184H81.2M81.2 184H90.8M90.8 184H100.4M100.4 184H110M110 184H119.6M119.6 184H129.2M129.2 184H138.8M138.8 184H148.4M148.4 184H158M158 184H167.6M167.6 184H177.2M177.2 184H186.8M186.8 184H196.4M196.4 184H206M206 184H215.6M215.6 184H225.2M225.2 184H234.8M234.8 184H244.4M244.4 184H254M254 184H263.6M263.6 184H273.2M273.2 184H282.8M282.8 184H292.4M292.4 184H302M302 184H311.6M311.6 184H321.2M321.2 184H330.8M330.8 184H340.4M340.4 184H350M350 184H350Q354.8 184 354.8 179.2V174"/>
+<path stroke="#30363d" stroke-width="1.3" d="M378.8 24H378.8Q374 24 374 28.8V34M378.8 24H388.4M436.4 24H446M446 24H455.6M455.6 24H465.2M465.2 24H474.8M474.8 24H484.4M484.4 24H494M494 24H503.6M503.6 24H513.2M513.2 24H522.8M522.8 24H532.4M532.4 24H542M542 24H551.6M551.6 24H561.2M561.2 24H570.8M570.8 24H580.4M580.4 24H590M590 24H599.6M599.6 24H609.2M609.2 24H618.8M618.8 24H628.4M628.4 24H638M638 24H647.6M647.6 24H657.2M657.2 24H666.8M666.8 24H676.4M676.4 24H686M686 24H695.6M695.6 24H705.2M705.2 24H714.8M714.8 24H724.4M724.4 24H734M734 24H743.6M743.6 24H753.2M753.2 24H762.8M762.8 24H772.4M772.4 24H772.4Q777.2 24 777.2 28.8V34M374 34V54M777.2 34V54M374 54V74M777.2 54V74M374 74V94M777.2 74V94M374 94V114M777.2 94V114M374 114V134M777.2 114V134M374 134V154M777.2 134V154M374 154V174M777.2 154V174M378.8 184H378.8Q374 184 374 179.2V174M378.8 184H388.4M388.4 184H398M398 184H407.6M407.6 184H417.2M417.2 184H426.8M426.8 184H436.4M436.4 184H446M446 184H455.6M455.6 184H465.2M465.2 184H474.8M474.8 184H484.4M484.4 184H494M494 184H503.6M503.6 184H513.2M513.2 184H522.8M522.8 184H532.4M532.4 184H542M542 184H551.6M551.6 184H561.2M561.2 184H570.8M570.8 184H580.4M580.4 184H590M590 184H599.6M599.6 184H609.2M609.2 184H618.8M618.8 184H628.4M628.4 184H638M638 184H647.6M647.6 184H657.2M657.2 184H666.8M666.8 184H676.4M676.4 184H686M686 184H695.6M695.6 184H705.2M705.2 184H714.8M714.8 184H724.4M724.4 184H734M734 184H743.6M743.6 184H753.2M753.2 184H762.8M762.8 184H772.4M772.4 184H772.4Q777.2 184 777.2 179.2V174"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="42.8" y="29" textLength="67.2" lengthAdjust="spacing" fill="#39c5cf">tickets</text>
+<text x="398" y="29" textLength="28.8" lengthAdjust="spacing" fill="#30363d">t-2</text>
+<text x="23.6" y="49" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">t-1</text>
+<text x="62" y="49" textLength="48" lengthAdjust="spacing" fill="#e6edf3">login</text>
+<text x="119.6" y="49" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">loop</text>
+<text x="167.6" y="49" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">on</text>
+<text x="196.4" y="49" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">staging</text>
+<text x="378.8" y="49" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">Deploys</text>
+<text x="455.6" y="49" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">to</text>
+<text x="484.4" y="49" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">europe-west</text>
+<text x="599.6" y="49" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">fail</text>
+<text x="647.6" y="49" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">at</text>
+<text x="676.4" y="49" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
+<text x="714.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">health</text>
+<text x="23.6" y="69" textLength="28.8" lengthAdjust="spacing" fill="#0d1117">t-2</text>
+<text x="62" y="69" textLength="57.6" lengthAdjust="spacing" fill="#0d1117">cannot</text>
+<text x="129.2" y="69" textLength="57.6" lengthAdjust="spacing" fill="#0d1117">deploy</text>
+<text x="196.4" y="69" textLength="105.6" lengthAdjust="spacing" fill="#0d1117">europe-west</text>
+<text x="378.8" y="69" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">check:</text>
+<text x="446" y="69" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
+<text x="484.4" y="69" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">new</text>
+<text x="522.8" y="69" textLength="48" lengthAdjust="spacing" fill="#e6edf3">probe</text>
+<text x="580.4" y="69" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">path</text>
+<text x="628.4" y="69" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">returns</text>
+<text x="705.2" y="69" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">404.</text>
+<text x="23.6" y="89" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">t-3</text>
+<text x="62" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3">stale</text>
+<text x="119.6" y="89" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">feature</text>
+<text x="196.4" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">flag</text>
+<text x="244.4" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3">cache</text>
+<text x="14" y="209" textLength="9.6" lengthAdjust="spacing" fill="#39c5cf" font-weight="700">q</text>
+<text x="33.2" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">quit</text>
+<text x="90.8" y="209" textLength="48" lengthAdjust="spacing" fill="#39c5cf" font-weight="700">enter</text>
+<text x="148.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">open</text>
+</g>
+</svg>

@@ -1,0 +1,54 @@
+// $ tuimark dump app.tui --cols 24 --rows 4 --format json --styles
+// excerpt: "theme", "styles"
+{
+  "theme": "dark",
+  "styles": [
+    [
+      {
+        "x": 0,
+        "w": 24,
+        "fg": "default",
+        "bg": "default"
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "w": 1,
+        "fg": "default",
+        "bg": "default"
+      },
+      {
+        "x": 1,
+        "w": 7,
+        "fg": "green",
+        "bg": "default",
+        "a": [
+          "bold"
+        ]
+      },
+      {
+        "x": 8,
+        "w": 16,
+        "fg": "default",
+        "bg": "default"
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "w": 24,
+        "fg": "default",
+        "bg": "default"
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "w": 24,
+        "fg": "default",
+        "bg": "default"
+      }
+    ]
+  ]
+}

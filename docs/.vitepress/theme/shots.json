@@ -1,0 +1,154 @@
+[
+  {
+    "name": "tour",
+    "light": false,
+    "cols": 80,
+    "rows": 10,
+    "alt": "the tour document at 80 columns: a ticket list beside the selected ticket, key hints below",
+    "cmd": "tuimark play app.tui --data sample.json --cols 80 --rows 10"
+  },
+  {
+    "name": "w-list",
+    "light": false,
+    "cols": 40,
+    "rows": 6,
+    "alt": "a focused list with a ✓ on the checked row and the cursor row reversed",
+    "cmd": "tuimark play list.tui --data data.json --cols 40 --rows 6"
+  },
+  {
+    "name": "w-table",
+    "light": false,
+    "cols": 44,
+    "rows": 7,
+    "alt": "a table with a header row, right-aligned numbers, hot cells and the cursor row reversed",
+    "cmd": "tuimark play table.tui --data data.json --cols 44 --rows 7"
+  },
+  {
+    "name": "w-progress",
+    "light": false,
+    "cols": 40,
+    "rows": 5,
+    "alt": "progress bars in whole cells and in eighths, and a two-row sparkline",
+    "cmd": "tuimark play progress.tui --data data.json --cols 40 --rows 5"
+  },
+  {
+    "name": "w-tabs",
+    "light": false,
+    "cols": 44,
+    "rows": 2,
+    "alt": "a tab strip with the active tab marked and highlighted",
+    "cmd": "tuimark play tabs.tui --data data.json --cols 44 --rows 2"
+  },
+  {
+    "name": "w-hints",
+    "light": false,
+    "cols": 44,
+    "rows": 8,
+    "alt": "key hints generated from the keymap along the bottom row",
+    "cmd": "tuimark play hints.tui --data data.json --cols 44 --rows 8"
+  },
+  {
+    "name": "w-modal",
+    "light": false,
+    "cols": 44,
+    "rows": 7,
+    "alt": "a modal with a title and two buttons, the focused one reversed",
+    "cmd": "tuimark play modal.tui --cols 44 --rows 7"
+  },
+  {
+    "name": "w-input",
+    "light": false,
+    "cols": 40,
+    "rows": 3,
+    "alt": "an empty input showing its placeholder",
+    "cmd": "tuimark play input.tui --data data.json --cols 40 --rows 3"
+  },
+  {
+    "name": "tour-narrow",
+    "light": false,
+    "cols": 56,
+    "rows": 14,
+    "alt": "the tour document at 56 columns: an @media rule stacks the list above the detail pane",
+    "cmd": "tuimark play app.tui --data sample.json --cols 56 --rows 14"
+  },
+  {
+    "name": "monitor-processes",
+    "light": true,
+    "cols": 120,
+    "rows": 26,
+    "alt": "monitor studio: the processes tab, a table with two marked rows, the tab strip and the key hints",
+    "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 120 --rows 26 --input \"space down space down\""
+  },
+  {
+    "name": "monitor-overview",
+    "light": true,
+    "cols": 120,
+    "rows": 16,
+    "alt": "monitor studio: the overview tab, a grid of panels with gauges and sparklines",
+    "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 120 --rows 16 --input 1"
+  },
+  {
+    "name": "monitor-cpu",
+    "light": true,
+    "cols": 100,
+    "rows": 16,
+    "alt": "monitor studio: the cpu tab, a scrolling grid of per-core gauges with a scrollbar",
+    "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 100 --rows 16 --input 2"
+  },
+  {
+    "name": "monitor-narrow",
+    "light": true,
+    "cols": 56,
+    "rows": 16,
+    "alt": "monitor studio at 56 columns: only the active tab label, and a table that dropped four columns",
+    "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 56 --rows 16 --input down"
+  },
+  {
+    "name": "inbox",
+    "light": false,
+    "cols": 100,
+    "rows": 20,
+    "alt": "inbox: a search box and a ticket list on the left, the selected ticket on the right",
+    "cmd": "tuimark play examples/inbox/app.tui --data examples/inbox/sample.json --cols 100 --rows 20 --input tab"
+  },
+  {
+    "name": "inbox-narrow",
+    "light": false,
+    "cols": 60,
+    "rows": 20,
+    "alt": "inbox at 60 columns: the list stacked above the detail pane by an @media rule",
+    "cmd": "tuimark play examples/inbox/app.tui --data examples/inbox/sample.json --cols 60 --rows 20 --input tab"
+  },
+  {
+    "name": "dashboard",
+    "light": false,
+    "cols": 100,
+    "rows": 20,
+    "alt": "deploy dashboard: pipeline steps, a progress bar and buttons beside a log panel",
+    "cmd": "tuimark play examples/dashboard/app.tui --data examples/dashboard/sample.json --cols 100 --rows 20"
+  },
+  {
+    "name": "agent",
+    "light": false,
+    "cols": 120,
+    "rows": 26,
+    "alt": "coding-agent chat: transcript, composer, tool activity and files panels",
+    "cmd": "tuimark play examples/agent/agent.tui --data examples/agent/sample.json --cols 120 --rows 26"
+  },
+  {
+    "name": "unicode",
+    "light": false,
+    "cols": 64,
+    "rows": 14,
+    "alt": "CJK, emoji and combining accents laid out in cells, borders intact",
+    "cmd": "tuimark play examples/unicode/app.tui --data examples/unicode/sample.json --cols 64 --rows 14"
+  },
+  {
+    "name": "spike",
+    "light": false,
+    "cols": 80,
+    "rows": 12,
+    "alt": "the original spike: two bordered boxes and a status line, no stylesheet",
+    "cmd": "tuimark play examples/spike/inbox.tui --cols 80 --rows 12"
+  }
+]

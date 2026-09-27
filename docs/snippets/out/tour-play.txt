@@ -1,0 +1,36 @@
+$ tuimark play app.tui --data sample.json --cols 80 --rows 10 --input "down enter"
+=== grid 80x10 ===
+╭─ tickets ────────────────────────╮ ╭─ t-2 ───────────────────────────────────╮
+│t-1 login loop on staging         │ │Deploys to europe-west fail at the health│
+│t-2 cannot deploy europe-west     │ │check: the new probe path returns 404.   │
+│t-3 stale feature flag cache      │ │                                         │
+│                                  │ │                                         │
+│                                  │ │                                         │
+│                                  │ │                                         │
+│                                  │ │                                         │
+╰──────────────────────────────────╯ ╰─────────────────────────────────────────╯
+q quit  enter open
+=== nodes ===
+main     screen  80x10 @(0,0)
+body     row     80x9 @(0,0)
+tickets  list    36x9 @(0,0) focus
+-        item    34x1 @(1,1)
+-        text    34x1 @(1,1)
+-        item    34x1 @(1,2)
+-        text    34x1 @(1,2)
+-        item    34x1 @(1,3) selected
+-        text    34x1 @(1,3)
+detail   box     43x9 @(37,0)
+-        text    41x2 @(38,1)
+keys     hints   80x1 @(0,9)
+-        row     6x1 @(0,9)
+-        text    1x1 @(0,9)
+-        text    4x1 @(2,9)
+-        row     10x1 @(8,9)
+-        text    5x1 @(8,9)
+-        text    4x1 @(14,9)
+=== errors ===
+ok
+=== events ===
+1 preview tickets {"t":"t-3"} null
+2 open tickets {"t":"t-3"} null

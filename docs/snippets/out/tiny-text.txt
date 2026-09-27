@@ -1,0 +1,12 @@
+$ tuimark dump app.tui --cols 24 --rows 4
+=== grid 24x4 ===
+╭─ build ──────────────╮
+│passing               │
+╰──────────────────────╯
+
+=== nodes ===
+main  screen  24x4 @(0,0)
+card  box     24x3 @(0,0)
+-     text    22x1 @(1,1)
+=== errors ===
+ok

@@ -1,0 +1,9 @@
+<tui version="2">
+  <style>
+    #q { border: rounded; }
+    #q:focus { border-color: $focus; }
+  </style>
+  <screen id="main" focus="#q">
+    <input id="q" bind="query" placeholder="filter files" on:change="filter" on:submit="apply"/>
+  </screen>
+</tui>

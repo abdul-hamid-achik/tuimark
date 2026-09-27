@@ -1,0 +1,18 @@
+<tui version="2">
+  <style>
+    #procs { border: rounded; gap: 1; }
+    #procs > column { bold: true; }
+    .num { content-align: end; }
+    #c-name { width: 1fr; }
+    #procs > item > text.hot { color: $warn; }
+    @media (max-cols: 40) { #c-mem { display: none; } }
+  </style>
+  <screen id="main" focus="#procs">
+    <table id="procs" each="procs as p" key="p.pid" bind="cpu_cursor" on:select="moved">
+      <column id="c-pid" class="num" title="PID" width="6">{p.pid}</column>
+      <column id="c-name" title="NAME">{p.name}</column>
+      <column id="c-cpu" class="num" title="CPU%" width="5" class:hot="p.hot">{p.cpu}</column>
+      <column id="c-mem" class="num" title="MEM" width="5">{p.mem}</column>
+    </table>
+  </screen>
+</tui>

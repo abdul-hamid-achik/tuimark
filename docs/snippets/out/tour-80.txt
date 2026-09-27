@@ -1,0 +1,10 @@
+╭─ tickets ────────────────────────╮ ╭─ t-2 ───────────────────────────────────╮
+│t-1 login loop on staging         │ │Deploys to europe-west fail at the health│
+│t-2 cannot deploy europe-west     │ │check: the new probe path returns 404.   │
+│t-3 stale feature flag cache      │ │                                         │
+│                                  │ │                                         │
+│                                  │ │                                         │
+│                                  │ │                                         │
+│                                  │ │                                         │
+╰──────────────────────────────────╯ ╰─────────────────────────────────────────╯
+q quit  enter open

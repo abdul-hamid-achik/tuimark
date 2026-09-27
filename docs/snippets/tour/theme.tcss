@@ -1,0 +1,12 @@
+#body { gap: 1; }
+#tickets { width: 45%; border: rounded; border-color: $border; }
+#tickets:focus { border-color: $focus; }
+#detail { width: 1fr; border: rounded; border-color: $border; }
+#keys { height: 1; }
+.hint-key { color: $accent; bold: true; }
+
+@media (max-cols: 60) {
+  #body { layout: column; gap: 0; }
+  #tickets { width: 100%; height: 5; }
+  #detail { width: 100%; height: 1fr; }
+}

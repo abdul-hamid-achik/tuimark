@@ -1,0 +1,14 @@
+<tui version="2">
+  <style>
+    #top { dock: top; height: 1; background: $panel; }
+    #bottom { dock: bottom; height: 1; background: $panel; }
+    #side { dock: left; width: 14; border: single; }
+    #main { height: 1fr; border: single; }
+  </style>
+  <screen id="app">
+    <row id="top"><text>header · dock: top</text></row>
+    <row id="bottom"><text>status · dock: bottom</text></row>
+    <box id="side"><text>dock: left</text></box>
+    <box id="main"><text>everything else</text></box>
+  </screen>
+</tui>

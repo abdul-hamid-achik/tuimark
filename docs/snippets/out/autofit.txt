@@ -1,0 +1,8 @@
+deploy log
+┌──────────────────────────────┐
+│9 rotate secrets              │
+│10 warm caches                │
+│11 notify #deploys            │
+│12 done                       │
+└──────────────────────────────┘
+12 lines

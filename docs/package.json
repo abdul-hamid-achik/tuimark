@@ -1,0 +1,23 @@
+{
+  "name": "tuimark-docs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Documentation site for Tuimark, a view language for terminals",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "gen": "node scripts/generate.mjs",
+    "gen:check": "node scripts/generate.mjs --check"
+  },
+  "devDependencies": {
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/jetbrains-mono": "5.3.0",
+    "vitepress": "1.6.4"
+  },
+  "overrides": {
+    "postcss": "8.5.23",
+    "vite": "6.4.3"
+  }
+}

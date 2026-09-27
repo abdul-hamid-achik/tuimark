@@ -1,0 +1,9 @@
+{
+  "project": "launch checklist",
+  "selected": "t1",
+  "tasks": [
+    { "id": "t1", "title": "write the release notes" },
+    { "id": "t2", "title": "tag v0.2.0" },
+    { "id": "t3", "title": "publish the docs" }
+  ]
+}

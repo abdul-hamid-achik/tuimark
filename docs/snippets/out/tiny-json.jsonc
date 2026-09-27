@@ -1,0 +1,43 @@
+// $ tuimark dump app.tui --cols 24 --rows 4 --format json
+{
+  "cols": 24,
+  "rows": 4,
+  "ok": true,
+  "focus": null,
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "id": "card",
+      "tag": "box",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 3
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 1,
+      "w": 22,
+      "h": 1,
+      "text": "passing",
+      "classes": [
+        "ok"
+      ]
+    }
+  ],
+  "grid": [
+    "╭─ build ──────────────╮",
+    "│passing               │",
+    "╰──────────────────────╯",
+    "                        "
+  ]
+}

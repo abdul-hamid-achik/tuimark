@@ -1,0 +1,11 @@
+<tui version="2">
+  <style>
+    #card { border: rounded; }
+    .ok { color: $ok; bold: true; }
+  </style>
+  <screen id="main">
+    <box id="card" title="build">
+      <text class="ok">passing</text>
+    </box>
+  </screen>
+</tui>

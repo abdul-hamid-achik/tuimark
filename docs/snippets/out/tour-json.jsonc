@@ -1,0 +1,182 @@
+// $ tuimark dump app.tui --data sample.json --cols 80 --rows 10 --format json
+{
+  "cols": 80,
+  "rows": 10,
+  "ok": true,
+  "focus": "tickets",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 80,
+      "h": 10
+    },
+    {
+      "id": "body",
+      "tag": "row",
+      "x": 0,
+      "y": 0,
+      "w": 80,
+      "h": 9
+    },
+    {
+      "id": "tickets",
+      "tag": "list",
+      "x": 0,
+      "y": 0,
+      "w": 36,
+      "h": 9,
+      "focused": true,
+      "scroll": {
+        "y": 0,
+        "h": 7
+      }
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 1,
+      "w": 34,
+      "h": 1,
+      "key": "t-1"
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 1,
+      "w": 34,
+      "h": 1,
+      "text": "t-1 login loop on staging"
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 2,
+      "w": 34,
+      "h": 1,
+      "key": "t-2",
+      "selected": true
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 2,
+      "w": 34,
+      "h": 1,
+      "text": "t-2 cannot deploy europe-west"
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 3,
+      "w": 34,
+      "h": 1,
+      "key": "t-3"
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 3,
+      "w": 34,
+      "h": 1,
+      "text": "t-3 stale feature flag cache"
+    },
+    {
+      "id": "detail",
+      "tag": "box",
+      "x": 37,
+      "y": 0,
+      "w": 43,
+      "h": 9
+    },
+    {
+      "tag": "text",
+      "x": 38,
+      "y": 1,
+      "w": 41,
+      "h": 2,
+      "text": "Deploys to europe-west fail at the health check: the new probe path returns 404."
+    },
+    {
+      "id": "keys",
+      "tag": "hints",
+      "x": 0,
+      "y": 9,
+      "w": 80,
+      "h": 1
+    },
+    {
+      "tag": "row",
+      "x": 0,
+      "y": 9,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "text": "q",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 2,
+      "y": 9,
+      "w": 4,
+      "h": 1,
+      "text": "quit",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 8,
+      "y": 9,
+      "w": 10,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 8,
+      "y": 9,
+      "w": 5,
+      "h": 1,
+      "text": "enter",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 14,
+      "y": 9,
+      "w": 4,
+      "h": 1,
+      "text": "open",
+      "classes": [
+        "hint-label"
+      ]
+    }
+  ],
+  "grid": [
+    "╭─ tickets ────────────────────────╮ ╭─ t-2 ───────────────────────────────────╮",
+    "│t-1 login loop on staging         │ │Deploys to europe-west fail at the health│",
+    "│t-2 cannot deploy europe-west     │ │check: the new probe path returns 404.   │",
+    "│t-3 stale feature flag cache      │ │                                         │",
+    "│                                  │ │                                         │",
+    "│                                  │ │                                         │",
+    "│                                  │ │                                         │",
+    "│                                  │ │                                         │",
+    "╰──────────────────────────────────╯ ╰─────────────────────────────────────────╯",
+    "q quit  enter open                                                              "
+  ]
+}

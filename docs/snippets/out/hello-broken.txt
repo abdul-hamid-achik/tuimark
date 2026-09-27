@@ -1,0 +1,4 @@
+$ tuimark validate broken.tui
+error V003 broken.tui:3:14 width: bad size "30px" (want N, N%, Nfr, or auto)
+error V001 broken.tui:6:5 /screen/lsit unknown tag <lsit>
+error V012 broken.tui:7:5 /screen/input <input> is focusable and needs an id

@@ -1,0 +1,32 @@
+{
+  "tags": [
+    "bind",
+    "box",
+    "button",
+    "col",
+    "input",
+    "item",
+    "keymap",
+    "list",
+    "modal",
+    "progress",
+    "row",
+    "rule",
+    "screen",
+    "scroll",
+    "spacer",
+    "style",
+    "text",
+    "tui"
+  ],
+  "tagsV2": [
+    "column",
+    "hints",
+    "sparkline",
+    "tab",
+    "table",
+    "tabs"
+  ],
+  "properties": 33,
+  "diagnostics": 34
+}

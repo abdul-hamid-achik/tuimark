@@ -1,0 +1,858 @@
+/*
+ * Tuimark — the site wears Tuimark's own built-in themes.
+ *
+ * Dark is the runtime's default theme ($bg #0d1117, $fg #e6edf3, $muted
+ * #8b949e, $border #30363d, $panel #161b22, cyan accent); light is its
+ * built-in light theme. The recurring motif is a rounded, titled frame --
+ * `╭─ title ───╮`, what `border: rounded` plus a `title` paints -- drawn here
+ * as `.tf` / `.tf-title` and reused by code blocks, callouts, tables and
+ * the landing page's panels. Sidebar and tabs use the `▸` mark of <tabs>.
+ */
+
+:root {
+  --vp-c-brand-1: #0a7c86;
+  --vp-c-brand-2: #086a73;
+  --vp-c-brand-3: #06565e;
+  --vp-c-brand-soft: rgba(10, 124, 134, 0.1);
+
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #ffffff;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f6f8fa;
+
+  --vp-c-text-1: #1f2328;
+  --vp-c-text-2: #454d56;
+  --vp-c-text-3: #656d76;
+  --vp-c-divider: #e4e8ec;
+  --vp-c-gutter: #e4e8ec;
+
+  /* Tuimark theme roles */
+  --t-border: #d0d7de;
+  --t-panel: #f6f8fa;
+  --t-ok: #1a7f37;
+  --t-warn: #9a6700;
+  --t-danger: #cf222e;
+  --t-select-fg: #ffffff;
+  --t-cell-line: rgba(31, 35, 40, 0.045);
+
+  --vp-font-family-base: 'Geist Variable', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco,
+    Consolas, monospace;
+
+  --vp-code-block-bg: var(--vp-c-bg);
+  --vp-code-copy-code-bg: var(--vp-c-bg-soft);
+  --vp-code-copy-code-hover-bg: var(--vp-c-bg-soft);
+
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-text: #ffffff;
+  --vp-button-brand-bg: var(--vp-c-brand-1);
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-hover-text: #ffffff;
+  --vp-button-brand-hover-bg: var(--vp-c-brand-2);
+  --vp-button-brand-active-border: transparent;
+  --vp-button-brand-active-text: #ffffff;
+  --vp-button-brand-active-bg: var(--vp-c-brand-3);
+
+  --vp-layout-max-width: 1320px;
+
+  --vp-local-search-bg: var(--vp-c-bg);
+  --vp-local-search-result-bg: var(--vp-c-bg);
+  --vp-local-search-result-border: var(--vp-c-divider);
+  --vp-local-search-result-selected-bg: var(--vp-c-brand-soft);
+  --vp-local-search-result-selected-border: var(--vp-c-brand-1);
+  --vp-local-search-highlight-bg: var(--vp-c-brand-1);
+  --vp-local-search-highlight-text: var(--t-select-fg);
+}
+
+.dark {
+  --vp-c-brand-1: #39c5cf;
+  --vp-c-brand-2: #56d4dd;
+  --vp-c-brand-3: #7ee0e6;
+  --vp-c-brand-soft: rgba(57, 197, 207, 0.12);
+
+  --vp-c-bg: #0d1117;
+  --vp-c-bg-alt: #0d1117;
+  --vp-c-bg-elv: #11161d;
+  --vp-c-bg-soft: #161b22;
+
+  --vp-c-text-1: #e6edf3;
+  --vp-c-text-2: #b1bac4;
+  --vp-c-text-3: #8b949e;
+  --vp-c-divider: #21262d;
+  --vp-c-gutter: #21262d;
+
+  --t-border: #30363d;
+  --t-panel: #161b22;
+  --t-ok: #3fb950;
+  --t-warn: #d29922;
+  --t-danger: #ff7b72;
+  --t-select-fg: #0d1117;
+  --t-cell-line: rgba(230, 237, 243, 0.035);
+
+  --vp-button-brand-text: #0d1117;
+  --vp-button-brand-hover-text: #0d1117;
+  --vp-button-brand-active-text: #0d1117;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--vp-c-bg);
+  text-rendering: optimizeLegibility;
+}
+
+/* Code shows the characters as typed: no programming ligatures (!= stays !=). */
+code,
+pre,
+kbd,
+samp {
+  font-feature-settings: 'calt' 0, 'liga' 0;
+  font-variant-ligatures: none;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--vp-c-brand-1) 28%, transparent);
+  color: var(--vp-c-text-1);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+/* ── Shared terminal vocabulary ─────────────────────────────────────────── */
+
+/* A titled frame: `border: rounded` with a `title`. */
+.tf {
+  --tf-bg: var(--vp-c-bg);
+  position: relative;
+  border: 1px solid var(--t-border);
+  border-radius: 9px;
+  padding: 20px 18px 16px;
+  background: var(--tf-bg);
+}
+
+.tf-title {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  padding: 0 6px;
+  background: var(--tf-bg);
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.tf-title b {
+  color: var(--vp-c-brand-1);
+}
+
+/* Key hints: the key in the accent, the label muted (what <hints> paints). */
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12.5px;
+}
+
+.keys b {
+  margin-right: 7px;
+  color: var(--vp-c-brand-1);
+  font-weight: 700;
+}
+
+/* ── Navigation ─────────────────────────────────────────────────────────── */
+
+.VPNav {
+  border-bottom: 0;
+}
+
+.VPNavBar {
+  border-bottom: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg) !important;
+}
+
+.VPNavBar.has-sidebar .content,
+.VPNavBar.has-sidebar .title,
+.VPNavBar .content-body {
+  background: transparent !important;
+}
+
+.VPNavBar .divider {
+  display: none;
+}
+
+.VPNavBarTitle .title {
+  gap: 9px;
+  border-bottom: 0 !important;
+  color: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.VPNavBarTitle .logo {
+  display: none;
+}
+
+/* The wordmark: a block cursor sitting in a cell. */
+.VPNavBarTitle .title::before {
+  display: inline-block;
+  width: 0.62em;
+  height: 1.15em;
+  border-radius: 1.5px;
+  background: var(--vp-c-brand-1);
+  content: '';
+}
+
+.VPNavBarMenuLink,
+.VPNavBarMenuGroup .text {
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.VPNavBarMenuLink:hover,
+.VPNavBarMenuLink.active,
+.VPNavBarMenuGroup:hover .text {
+  color: var(--vp-c-brand-1);
+}
+
+.VPNavBarSearch .DocSearch-Button {
+  border: 1px solid var(--t-border);
+  border-radius: 6px;
+  background: transparent;
+  font-family: var(--vp-font-family-mono);
+}
+
+@media (max-width: 767px) {
+  .VPNavBarSearch .DocSearch-Button {
+    border: 0;
+  }
+}
+
+.DocSearch-Button .DocSearch-Button-Key {
+  border-color: var(--vp-c-divider);
+  background: transparent;
+}
+
+.VPMenu {
+  border: 1px solid var(--t-border);
+  border-radius: 8px;
+  background: var(--vp-c-bg);
+  box-shadow: none;
+}
+
+.VPMenu .VPMenuLink .link {
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+}
+
+/* ── Home shell ─────────────────────────────────────────────────────────── */
+
+.VPHome {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.VPContent.is-home {
+  padding-bottom: 0;
+}
+
+.VPFooter {
+  border-top: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+}
+
+.VPFooter .message,
+.VPFooter .copyright {
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+}
+
+/* ── Local search ───────────────────────────────────────────────────────── */
+
+.VPLocalSearchBox .shell {
+  border: 1px solid var(--t-border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.VPLocalSearchBox .search-bar {
+  border-color: var(--t-border);
+  border-radius: 6px;
+}
+
+.VPLocalSearchBox .search-bar:focus-within {
+  border-color: var(--vp-c-brand-1);
+}
+
+.VPLocalSearchBox .search-input {
+  font-family: var(--vp-font-family-mono);
+}
+
+.VPLocalSearchBox .search-input:focus-visible {
+  outline: none;
+}
+
+.VPLocalSearchBox .result {
+  border-radius: 6px;
+}
+
+.VPLocalSearchBox .search-keyboard-shortcuts kbd {
+  border-color: var(--t-border);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ── 404 ────────────────────────────────────────────────────────────────── */
+
+.NotFound .code {
+  color: var(--vp-c-brand-1);
+  font-family: var(--vp-font-family-mono);
+  font-size: 56px;
+  font-weight: 650;
+}
+
+.NotFound .title {
+  font-family: var(--vp-font-family-mono);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.NotFound .divider {
+  border-color: var(--t-border);
+}
+
+.NotFound .quote {
+  color: var(--vp-c-text-2);
+}
+
+.NotFound .link {
+  border: 1px solid var(--t-border);
+  border-radius: 6px;
+  color: var(--vp-c-brand-1);
+  font-family: var(--vp-font-family-mono);
+}
+
+.NotFound .link:hover {
+  border-color: var(--vp-c-brand-1);
+}
+
+/* ── Docs layout ────────────────────────────────────────────────────────── */
+
+.VPSidebar {
+  border-right: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg) !important;
+}
+
+.VPSidebarItem.level-0 {
+  padding-bottom: 14px;
+}
+
+.VPSidebarItem.level-0 > .item > .text {
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.VPSidebarItem.level-0 > .item > .text::before {
+  color: var(--t-border);
+  content: '╭─ ';
+}
+
+.VPSidebarItem.level-1 .item {
+  position: relative;
+  padding-left: 16px;
+}
+
+.VPSidebarItem.level-1 .text {
+  color: var(--vp-c-text-2);
+  font-size: 14px;
+  font-weight: 450;
+}
+
+.VPSidebarItem.level-1 .item:hover .text {
+  color: var(--vp-c-text-1);
+}
+
+/* The active page carries the `▸` mark, like the active <tabs> label. */
+.VPSidebarItem.level-1.is-active > .item::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  color: var(--vp-c-brand-1);
+  content: '▸';
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  transform: translateY(-50%);
+}
+
+.VPSidebarItem.level-1.is-active > .item .text {
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
+}
+
+.VPDoc.has-aside .content-container {
+  max-width: 800px;
+}
+
+.VPDocAsideOutline .outline-title {
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.VPDocAsideOutline .outline-marker {
+  background-color: var(--vp-c-brand-1);
+}
+
+.VPDocAsideOutline .outline-link {
+  color: var(--vp-c-text-3);
+  font-size: 13px;
+}
+
+.VPDocAsideOutline .outline-link:hover,
+.VPDocAsideOutline .outline-link.active {
+  color: var(--vp-c-brand-1);
+}
+
+.VPDocFooter .edit-link-button,
+.VPDocFooter .last-updated {
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+}
+
+.pager-link {
+  border: 1px solid var(--t-border) !important;
+  border-radius: 9px !important;
+  background: var(--vp-c-bg);
+  transition: border-color 140ms ease;
+}
+
+.pager-link:hover {
+  border-color: var(--vp-c-brand-1) !important;
+}
+
+.pager-link .desc {
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  text-transform: lowercase;
+}
+
+.pager-link .title {
+  font-family: var(--vp-font-family-mono);
+  font-size: 14px;
+}
+
+/* ── Docs typography ────────────────────────────────────────────────────── */
+
+.vp-doc {
+  color: var(--vp-c-text-2);
+  font-size: 16px;
+  line-height: 1.72;
+}
+
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4 {
+  color: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-mono);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.vp-doc h1 {
+  margin-bottom: 20px;
+  font-size: clamp(30px, 4vw, 38px);
+  line-height: 1.12;
+}
+
+.vp-doc h1 + p {
+  color: var(--vp-c-text-2);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.vp-doc h2 {
+  margin-top: 56px;
+  border-top: 1px solid var(--vp-c-divider);
+  padding-top: 28px;
+  font-size: 23px;
+  line-height: 1.25;
+}
+
+.vp-doc h3 {
+  margin-top: 36px;
+  font-size: 18px;
+}
+
+.vp-doc h4 {
+  font-size: 15px;
+}
+
+.vp-doc p,
+.vp-doc li {
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc strong {
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+}
+
+.vp-doc a {
+  color: var(--vp-c-brand-1);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--vp-c-brand-1) 35%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.vp-doc a:hover {
+  text-decoration-color: var(--vp-c-brand-1);
+}
+
+.vp-doc li::marker {
+  color: var(--vp-c-text-3);
+}
+
+.vp-doc :not(pre) > code {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  padding: 1px 5px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+  font-size: 0.85em;
+}
+
+.vp-doc a > code {
+  color: var(--vp-c-brand-1) !important;
+}
+
+/* Code blocks are titled frames: the language sits on the top border. */
+.vp-doc div[class*='language-'] {
+  margin: 28px 0;
+  overflow: visible;
+  border: 1px solid var(--t-border);
+  border-radius: 9px;
+  background: var(--vp-c-bg);
+}
+
+.vp-doc div[class*='language-'] > span.lang {
+  top: 0;
+  right: auto;
+  left: 12px;
+  padding: 0 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  transform: translateY(-50%);
+  opacity: 1 !important;
+}
+
+.vp-doc div[class*='language-'] pre {
+  padding: 18px 0 16px;
+}
+
+.vp-doc div[class*='language-'] code {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* A frame the runtime painted (```grid, generated output): cells touch, so
+   box-drawing borders join into unbroken lines. */
+.vp-doc div.language-grid code,
+.vp-doc div.language-term code {
+  font-size: 13px;
+  line-height: 1.32;
+  font-variant-ligatures: none;
+}
+
+.vp-doc div.language-grid {
+  width: fit-content;
+  max-width: 100%;
+  background-image: linear-gradient(var(--t-cell-line) 1px, transparent 1px);
+  background-size: 100% calc(13px * 1.32);
+  background-position: 0 18px;
+}
+
+.vp-doc div.language-grid > span.lang {
+  color: var(--vp-c-brand-1);
+}
+
+.vp-doc div.language-grid > button.copy {
+  display: none;
+}
+
+.vp-doc div.language-grid pre {
+  padding-right: 20px;
+}
+
+.vp-doc div.language-term > span.lang {
+  color: var(--vp-c-brand-1);
+}
+
+.vp-doc div[class*='language-'] > button.copy {
+  top: 10px;
+  border-color: var(--vp-c-divider);
+  border-radius: 6px;
+}
+
+@media (max-width: 639px) {
+  .vp-doc div[class*='language-'] {
+    margin: 24px -8px;
+  }
+
+  .vp-doc div.language-grid {
+    margin: 24px 0;
+  }
+}
+
+.vp-doc .vp-code-group {
+  margin: 28px 0;
+}
+
+.vp-doc .vp-code-group .tabs {
+  border: 1px solid var(--t-border);
+  border-bottom: 0;
+  border-radius: 9px 9px 0 0;
+  background: var(--vp-c-bg);
+}
+
+.vp-doc .vp-code-group .tabs label {
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+}
+
+.vp-doc .vp-code-group .tabs input:checked + label::before {
+  content: '▸';
+  margin-right: 4px;
+  color: var(--vp-c-brand-1);
+}
+
+.vp-doc .vp-code-group div[class*='language-'] {
+  margin: 0;
+  border-radius: 0 0 9px 9px;
+}
+
+.vp-doc .vp-code-group div[class*='language-'] > span.lang {
+  display: none;
+}
+
+.vp-doc blockquote {
+  margin: 24px 0;
+  border-left: 2px solid var(--t-border);
+  padding: 2px 18px;
+}
+
+/* Callouts: titled frames coloured by their role. */
+.vp-doc .custom-block {
+  position: relative;
+  margin: 30px 0;
+  border: 1px solid var(--t-border);
+  border-radius: 9px;
+  padding: 18px 20px 14px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc .custom-block p,
+.vp-doc .custom-block li {
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc .custom-block .custom-block-title {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  margin: 0;
+  padding: 0 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.vp-doc .custom-block.tip .custom-block-title {
+  color: var(--t-ok);
+}
+
+.vp-doc .custom-block.info .custom-block-title {
+  color: var(--vp-c-brand-1);
+}
+
+.vp-doc .custom-block.warning {
+  border-color: color-mix(in srgb, var(--t-warn) 55%, var(--t-border));
+}
+
+.vp-doc .custom-block.warning .custom-block-title {
+  color: var(--t-warn);
+}
+
+.vp-doc .custom-block.danger {
+  border-color: color-mix(in srgb, var(--t-danger) 55%, var(--t-border));
+}
+
+.vp-doc .custom-block.danger .custom-block-title {
+  color: var(--t-danger);
+}
+
+.vp-doc .custom-block div[class*='language-'] {
+  margin: 20px 0 8px;
+}
+
+.vp-doc .custom-block :not(pre) > code {
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+}
+
+.vp-doc .custom-block.details {
+  padding-top: 14px;
+}
+
+.vp-doc .custom-block.details summary {
+  color: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+}
+
+/* Components that draw their own terminal text opt out of inline-code chips. */
+.vp-doc .command-copy code,
+.vp-doc .install-panel code,
+.vp-doc .term-shot code {
+  border: 0;
+  padding: 0;
+  background: none;
+}
+
+/* Tables read like a <table> widget: bold muted headers, thin rules. */
+.vp-doc table {
+  display: table;
+  width: 100%;
+  margin: 28px 0;
+  border-collapse: collapse;
+}
+
+.vp-doc tr,
+.vp-doc tr:nth-child(2n) {
+  border-top: 1px solid var(--vp-c-divider);
+  background: transparent;
+}
+
+.vp-doc th {
+  border: 0;
+  border-bottom: 1px solid var(--t-border);
+  background: transparent;
+  color: var(--vp-c-text-3);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.vp-doc td {
+  border: 0;
+  vertical-align: top;
+  color: var(--vp-c-text-2);
+  font-size: 14px;
+}
+
+.vp-doc th,
+.vp-doc td {
+  padding: 10px 14px 10px 0;
+}
+
+.vp-doc td:first-child code {
+  white-space: nowrap;
+}
+
+.vp-doc hr {
+  margin: 48px 0;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc > .install-panel {
+  margin: 36px 0 48px;
+}
+
+/* Two frames side by side: a document and what it renders. */
+.vp-doc .side-by-side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0 20px;
+  align-items: start;
+}
+
+.vp-doc .side-by-side > div[class*='language-'] {
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .VPSidebar {
+    padding-left: max(32px, calc((100vw - 1440px) / 2));
+  }
+}
+
+@media (max-width: 768px) {
+  .vp-doc {
+    font-size: 15px;
+  }
+
+  .vp-doc h1 + p {
+    font-size: 16px;
+  }
+
+  .vp-doc h2 {
+    margin-top: 48px;
+    font-size: 21px;
+  }
+
+  .vp-doc table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -1,0 +1,17 @@
+<tui version="2">
+  <style>
+    #confirm { width: 34; height: auto; }
+    #actions { height: 1; gap: 2; justify: center; }
+    button:focus { reverse: true; }
+  </style>
+  <screen id="main" focus="#yes">
+    <text>the files you marked</text>
+    <modal id="confirm" title="delete 2 files?" open="true" on:escape="cancel">
+      <text>This cannot be undone.</text>
+      <row id="actions">
+        <button id="yes" label="delete" on:click="delete"/>
+        <button id="no" label="cancel" on:click="cancel"/>
+      </row>
+    </modal>
+  </screen>
+</tui>

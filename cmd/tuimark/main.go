@@ -23,12 +23,39 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/abdul-hamid-achik/tuimark/internal/host"
+	"strings"
 )
 
-// version is the runtime's (SPEC §24: tuimark 0.2.0-a, 0.2.0-b).
-const version = host.Version
+// Build metadata that `tuimark version` prints. version defaults to the
+// release this source tree is; release builds set all three at link time
+// (see .goreleaser.yaml):
+//
+//	go build -ldflags "-X main.version=0.2.0 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
+//
+// A plain `go build` or `go install` leaves commit and date empty, and
+// `tuimark version` then prints the version alone.
+var (
+	version = "0.2.0"
+	commit  = ""
+	date    = ""
+)
+
+// versionLine is the `tuimark version` output: "tuimark VERSION", followed
+// by "(commit C, built D)" with whichever of commit and date are set.
+func versionLine() string {
+	line := "tuimark " + version
+	var meta []string
+	if commit != "" {
+		meta = append(meta, "commit "+commit)
+	}
+	if date != "" {
+		meta = append(meta, "built "+date)
+	}
+	if len(meta) > 0 {
+		line += " (" + strings.Join(meta, ", ") + ")"
+	}
+	return line
+}
 
 const usage = `tuimark — a view language for terminals
 
@@ -92,7 +119,7 @@ func (c *cli) run(args []string) int {
 	case "inspect":
 		return c.cmdInspect(rest)
 	case "version", "--version", "-v":
-		fmt.Fprintln(c.stdout, "tuimark", version)
+		fmt.Fprintln(c.stdout, versionLine())
 		return 0
 	case "help", "--help", "-h":
 		fmt.Fprint(c.stdout, usage)

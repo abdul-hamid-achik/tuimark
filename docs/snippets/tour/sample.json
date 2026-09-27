@@ -1,0 +1,12 @@
+{
+  "selected": "t-2",
+  "current": {
+    "id": "t-2",
+    "body": "Deploys to europe-west fail at the health check: the new probe path returns 404."
+  },
+  "tickets": [
+    { "id": "t-1", "title": "login loop on staging" },
+    { "id": "t-2", "title": "cannot deploy europe-west" },
+    { "id": "t-3", "title": "stale feature flag cache" }
+  ]
+}

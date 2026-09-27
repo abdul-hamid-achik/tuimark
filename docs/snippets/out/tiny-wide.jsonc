@@ -1,0 +1,60 @@
+// $ tuimark dump wide.tui --cols 8 --rows 1 --format json --cells
+// excerpt: "grid", "wide", "cells"
+{
+  "grid": [
+    "東京 ok "
+  ],
+  "wide": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "ch": "東",
+      "id": "name",
+      "w": 2
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "ch": "",
+      "id": "name"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "ch": "京",
+      "id": "name",
+      "w": 2
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "ch": "",
+      "id": "name"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "ch": " ",
+      "id": "name"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "ch": "o",
+      "id": "name"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "ch": "k",
+      "id": "name"
+    },
+    {
+      "x": 7,
+      "y": 0,
+      "ch": " ",
+      "id": "name"
+    }
+  ]
+}
