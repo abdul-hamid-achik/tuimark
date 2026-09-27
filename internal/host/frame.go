@@ -84,12 +84,14 @@ type builder struct {
 
 // renderCtx is what one render keeps across its passes (SPEC §18 step 4
 // repeats steps 1-4): the focus when it started and whether it is the
-// screen's first frame, and the tabs whose activation focus rule
-// (§6.10.3) it has already applied.
+// screen's first frame, the tabs whose activation focus rule (§6.10.3) it
+// has already considered, and whether that rule has already applied to
+// one of them (it then applies to no other tabs in this render).
 type renderCtx struct {
 	focusStart string
 	initial    bool
 	tabDone    map[string]bool
+	tabMoved   bool
 }
 
 func (fb *builder) report(n *ir.Node, sev, code, format string, args ...any) {
@@ -1068,11 +1070,17 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 	if req != nil {
 		if focusable(req.target) {
 			req.landed = true
+			// A nested tabs that was not on screen and whose tab was
+			// already active by a fallback was not activated: its write
+			// is undone and its on:select does not fire (SPEC §6.10.2);
+			// the frame is built again without the write.
+			acts, settled := a.settleTabActs(fb, req.acts)
+			req.acts = acts
 			// A request that activated tabs (action="focus" only) gives
 			// their on:select events, outermost first, before its
 			// target's on:focus (SPEC §6.10.3).
 			if req.fire {
-				a.pending = append(a.pending, tabSelects(req.acts)...)
+				a.pending = append(a.pending, tabSelects(acts)...)
 			}
 			if req.fire && req.target != req.prev {
 				if b := fb.byID[req.target]; b != nil && b.Src != nil {
@@ -1081,7 +1089,7 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 					}
 				}
 			}
-			return a.focus != before
+			return a.focus != before || settled
 		}
 		a.focus = fallback
 		// The activations of a request that cannot land are undone with

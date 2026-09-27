@@ -80,14 +80,14 @@ func TestGridPlacementAndIntrinsic(t *testing.T) {
 			t.Errorf("align %s: g %s, c %s", c.align, geo(g), geo(cc))
 		}
 	}
-	// Intrinsic width: n' = min(K, children) columns of M, or of the
-	// widest child without M.
+	// Intrinsic width: n' = min(K, children) columns of M; without M,
+	// n' = K columns (item 1 lays out K) of the widest child.
 	for _, c := range []struct {
 		decls string
 		want  int
 	}{
 		{"layout: grid; grid-columns: 4; grid-min-width: 6; gap: 1", 6*2 + 1},
-		{"layout: grid; grid-columns: 4; gap: 2", 5*2 + 2},
+		{"layout: grid; grid-columns: 4; gap: 2", 5*4 + 2*3},
 		{"layout: grid; grid-columns: 1; gap: 2", 5},
 	} {
 		g := n2("box#g", c.decls, txt("abc", ""), txt("abcde", ""))
@@ -116,6 +116,129 @@ func TestGridWithDock(t *testing.T) {
 	run(t, n("col", "", g), 10, 5)
 	if geo(top) != "10x1@(0,0)" || geo(a) != "5x1@(0,1)" || geo(b) != "5x1@(5,1)" || g.H != 2 {
 		t.Errorf("top %s a %s b %s g h %d", geo(top), geo(a), geo(b), g.H)
+	}
+}
+
+// 58. Without grid-min-width, an auto-width grid is as wide as the K
+// columns item 1 lays out, also with fewer children than K, so no child
+// is cut: K = 3 columns of the widest child (5) and two gaps of 1.
+func TestGridIntrinsicWidthWithoutMinWidth(t *testing.T) {
+	a, b := txt("alpha", ""), txt("beta", "")
+	g := n2("box#g", "layout: grid; grid-columns: 3; gap: 1", a, b)
+	rest := txt("|rest", "")
+	e := run(t, n("row", "height: 1", g, rest), 30, 1)
+	if len(e.Diags) != 0 {
+		t.Fatal(e.Diags)
+	}
+	if geo(g) != "17x1@(0,0)" || geo(a) != "5x1@(0,0)" || geo(b) != "5x1@(6,0)" || rest.X != 17 {
+		t.Errorf("g %s alpha %s beta %s rest x %d", geo(g), geo(a), geo(b), rest.X)
+	}
+}
+
+// 58. The grid lays out its in-flow children in what the docks leave, and
+// measures its intrinsic height at that same width: with a 20-cell left
+// dock in 42 columns, Wc = 22 gives 2 columns (M = 10, g = 1), so six
+// children take 3 rows, the box is 5 rows tall, and nothing is cut.
+func TestGridLeftDockMeasuredAtWhatIsLeft(t *testing.T) {
+	side := txt("SIDE", "dock: left; width: 20")
+	var cs []*Box
+	for i := 0; i < 6; i++ {
+		cs = append(cs, txt(fmt.Sprintf("c%d", i), ""))
+	}
+	g := n2("box#g", "layout: grid; grid-columns: 4; grid-min-width: 10; gap: 1", append([]*Box{side}, cs...)...)
+	status := txt("status", "")
+	e := run(t, n("col", "", g, status), 42, 8)
+	if len(e.Diags) != 0 {
+		t.Fatal(e.Diags)
+	}
+	if geo(g) != "42x5@(0,0)" || geo(side) != "20x5@(0,0)" || geo(cs[4]) != "10x1@(20,4)" || geo(cs[5]) != "11x1@(31,4)" || status.Y != 5 {
+		t.Errorf("g %s side %s c4 %s c5 %s status y %d", geo(g), geo(side), geo(cs[4]), geo(cs[5]), status.Y)
+	}
+}
+
+// 58 (and v1 §11.3). A container's height is measured with its in-flow
+// children at the width the left and right docks leave, so wrapped text
+// next to a dock gets all its lines.
+func TestWrappedTextNextToADock(t *testing.T) {
+	side := txt("SIDE", "dock: left; width: 20")
+	w := txt("aaaa bbbb cccc dddd eeee ffff gggg", "wrap: wrap")
+	b := n("box#b", "", side, w)
+	status := txt("status", "")
+	run(t, n("col", "", b, status), 42, 6)
+	if geo(b) != "42x2@(0,0)" || geo(w) != "22x2@(20,0)" || status.Y != 2 {
+		t.Errorf("box %s text %s status y %d", geo(b), geo(w), status.Y)
+	}
+}
+
+// 58 (and v1 §11.3). In a viewport, docked children are pulled out of
+// the content extent, as its measure counts them, and scroll with it: they
+// are never laid out in flow (no L007 in a grid), and the extent reaches
+// the last row. In a grid scroll with a 20-cell left dock, the grid gets
+// 22 columns (2 grid columns, 3 rows, extent 5); in a plain scroll the
+// extent is the number of in-flow rows. Follow counts the in-flow
+// children only, below a top dock.
+func TestViewportDocksAreCarved(t *testing.T) {
+	mk := func() (*Box, *Box, []*Box) {
+		side := txt("SIDE", "dock: left; width: 20")
+		var cs []*Box
+		for i := 0; i < 6; i++ {
+			cs = append(cs, txt(fmt.Sprintf("c%d", i), ""))
+		}
+		sv := n2("scroll#sv", "layout: grid; grid-columns: 4; grid-min-width: 10; gap: 1", append([]*Box{side}, cs...)...)
+		return sv, side, cs
+	}
+	sv, side, cs := mk()
+	e := run(t, n("col", "", sv, txt("status", "")), 42, 8)
+	if len(e.Diags) != 0 {
+		t.Fatal(e.Diags)
+	}
+	if sv.ContentH != 5 || geo(side) != "20x5@(0,0)" || geo(cs[0]) != "10x1@(20,0)" || geo(cs[5]) != "11x1@(31,4)" {
+		t.Errorf("grid scroll: extent %d side %s c0 %s c5 %s", sv.ContentH, geo(side), geo(cs[0]), geo(cs[5]))
+	}
+	// 3 rows of viewport: the last row can be scrolled to.
+	sv, side, cs = mk()
+	sv.ScrollY = 99
+	run(t, n("col", "", sv, txt("status", "")), 42, 4)
+	if sv.H != 3 || sv.ScrollY != 2 || cs[5].Y != 2 || side.Y != -2 {
+		t.Errorf("scrolled: h %d offset %d c5 y %d side y %d", sv.H, sv.ScrollY, cs[5].Y, side.Y)
+	}
+
+	// A grid that scrolls on x: Wc is the content-box width (42) minus the
+	// dock (20), so 2 columns of 10 and 11 at x 20 and 31.
+	sv, _, cs = mk()
+	sv.Axis = "x"
+	run(t, n("col", "", sv), 42, 8)
+	if geo(cs[1]) != "11x1@(31,0)" || geo(cs[2]) != "10x1@(20,2)" {
+		t.Errorf("x scroll: c1 %s c2 %s", geo(cs[1]), geo(cs[2]))
+	}
+
+	// A plain scroll: 8 rows beside a 6-cell dock.
+	side = txt("SIDE", "dock: left; width: 6")
+	var rows []*Box
+	for i := 0; i < 8; i++ {
+		rows = append(rows, txt(fmt.Sprintf("r%d", i), ""))
+	}
+	plain := n("scroll#p", "height: 4", append([]*Box{side}, rows...)...)
+	e = run(t, n("col", "", plain), 20, 6)
+	if len(e.Diags) != 0 {
+		t.Fatal(e.Diags)
+	}
+	if plain.ContentH != 8 || geo(side) != "6x8@(0,0)" || geo(rows[0]) != "14x1@(6,0)" || geo(rows[7]) != "14x1@(6,7)" {
+		t.Errorf("plain scroll: extent %d side %s r0 %s r7 %s", plain.ContentH, geo(side), geo(rows[0]), geo(rows[7]))
+	}
+
+	// Follow: in-flow child 5 (children index 6, after the top dock) is
+	// at content y 1 + 5 = 6; a 3-row viewport scrolls to 4.
+	top := txt("TOP", "dock: top")
+	var its []*Box
+	for i := 0; i < 6; i++ {
+		its = append(its, txt(fmt.Sprintf("i%d", i), ""))
+	}
+	fl := n("scroll#f", "height: 3", append([]*Box{top}, its...)...)
+	fl.Follow = 6
+	run(t, n("col", "", fl), 20, 6)
+	if fl.ContentH != 7 || fl.ScrollY != 4 || its[5].Y != 2 || top.Y != -4 {
+		t.Errorf("follow: extent %d offset %d i5 y %d top y %d", fl.ContentH, fl.ScrollY, its[5].Y, top.Y)
 	}
 }
 

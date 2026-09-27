@@ -311,3 +311,54 @@ func TestGridAlignL007AndScroll(t *testing.T) {
 		t.Errorf("plain grid box: h %d, after at %d (not shrinkable)", h, after)
 	}
 }
+
+// 57 / 54. An empty keycap= counts as absent, as an empty tab short=
+// does: the item shows its key (scope active and all), and the strip's
+// tier 2 shows the tab's label.
+func TestEmptyKeycapAndShortCountAsAbsent(t *testing.T) {
+	a := doc(t, `<tui version="2"><keymap>
+<bind keys="q" action="quit" label="quit"/>
+<bind keys="enter" action="go" keycap="" label="go"/>
+</keymap><screen id="main">
+<tabs id="t"><tab id="a" label="alpha" short=""><text>x</text></tab><tab id="b" label="beta" short="b"><text>y</text></tab></tabs>
+<hints id="h"/>
+<hints id="all" scope="all" style="layout: column"/>
+</screen></tui>`)
+	f := a.Frame(20, 5)
+	if got, laid := hintText(f, "h"); got != "q quit | enter go" || laid != 2 {
+		t.Errorf("active: %q, %d laid out", got, laid)
+	}
+	if got, _ := hintText(f, "all"); got != "q quit | enter go" {
+		t.Errorf("all: %q", got)
+	}
+	if g := f.Grid.Lines(); g[2] != "q quit  enter go    " {
+		t.Errorf("hints row %q", g[2])
+	}
+	// W1 = 9 > 8 and W2 = width("alpha") + width("b") = 6: tier 2.
+	if g := a.Frame(8, 5).Grid.Lines(); g[0] != "alphab  " {
+		t.Errorf("tier 2 strip %q", g[0])
+	}
+}
+
+// 58 (and v1 §11.3). A left dock in a <scroll> grid is pulled out of the
+// content extent, not laid out as a grid cell (no L007), and the extent
+// reaches the last row, so move-last scrolls to it.
+func TestScrollGridWithDock(t *testing.T) {
+	a := doc(t, `<tui version="2"><style>
+#sv { layout: grid; grid-columns: 4; grid-min-width: 10; gap: 1; }
+#side { dock: left; width: 20; }
+</style><keymap><bind keys="G" action="move-last" to="#sv"/></keymap>
+<screen id="main"><scroll id="sv"><text id="side">SIDE</text><text>c0</text><text>c1</text><text>c2</text><text>c3</text><text>c4</text><text id="c5">c5</text></scroll><text id="status">status line</text></screen></tui>`)
+	f := a.Frame(42, 8)
+	if len(f.Diags) != 0 {
+		t.Fatalf("diags %v", f.Diags)
+	}
+	if s, sv := f.ByID["side"], f.ByID["sv"]; s.X != 0 || s.W != 20 || sv.ContentH != 5 || f.ByID["status"].Y != 5 {
+		t.Errorf("side %dx%d @(%d,%d), extent %d, status y %d", s.W, s.H, s.X, s.Y, sv.ContentH, f.ByID["status"].Y)
+	}
+	run(a, 42, 4, r('G'))
+	f = a.Frame(42, 4)
+	if sv, c5 := f.ByID["sv"], f.ByID["c5"]; sv.ScrollY != 2 || c5.Y != 2 || !strings.Contains(f.Grid.Lines()[2], "c5") {
+		t.Errorf("move-last: offset %d, c5 y %d, grid %q", sv.ScrollY, c5.Y, f.Grid.Lines())
+	}
+}

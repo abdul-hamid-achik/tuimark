@@ -468,3 +468,96 @@ tab:focus-within { underline: true; }
 		t.Errorf("focus %q: input bold %v, tabs italic %v, tab chain %v underline %v", a.Focus(), q.Style.Bold, nav.Style.Italic, tab.FocusWithin, tab.Style.Underline)
 	}
 }
+
+// 54. When one frame changes the active tab of several tabs while focus
+// is nowhere, the activation rule of §6.10.3 applies to the first of them
+// in document order only: focus lands on its new tab's focus= target, and
+// only that node's on:focus fires. The second tabs does not move focus in
+// a later pass of the same render. One tabs changing alone still moves
+// focus into its new tab.
+func TestTabsSeveralChangeInOneFrame(t *testing.T) {
+	const src = `<tui version="2"><screen id="main">
+<tabs id="t1" bind="a"><tab id="a1" label="A1"><text>x</text></tab><tab id="a2" label="A2" focus="#in1"><input id="in1" on:focus="f1"/></tab></tabs>
+<tabs id="t2" bind="b"><tab id="b1" label="B1"><text>y</text></tab><tab id="b2" label="B2" focus="#in2"><input id="in2" on:focus="f2"/></tab></tabs>
+</screen></tui>`
+	a := doc(t, src)
+	bindJSON(t, a, `{"a": "a1", "b": "b1"}`)
+	if got := evShort(run(a, 20, 6)); got != "" || a.Focus() != "" {
+		t.Fatalf("first frame: events %q focus %q", got, a.Focus())
+	}
+	if err := a.Set("", map[string]any{"a": "a2", "b": "b2"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := evShort(run(a, 20, 6)); got != "f1:in1" || a.Focus() != "in1" {
+		t.Errorf("both change: events %q focus %q, want f1:in1 and in1", got, a.Focus())
+	}
+	f := a.Frame(20, 6)
+	if activeOf(f, "t1") != "a2" || activeOf(f, "t2") != "b2" {
+		t.Errorf("active %q %q", activeOf(f, "t1"), activeOf(f, "t2"))
+	}
+
+	a = doc(t, src)
+	bindJSON(t, a, `{"a": "a1", "b": "b1"}`)
+	run(a, 20, 6)
+	if err := a.Set("b", "b2"); err != nil {
+		t.Fatal(err)
+	}
+	if got := evShort(run(a, 20, 6)); got != "f2:in2" || a.Focus() != "in2" {
+		t.Errorf("t2 alone: events %q focus %q", got, a.Focus())
+	}
+}
+
+// 54. A focus request into a nested tabs that is not in the frame, and
+// whose tab is already its active tab by a §6.10.2 fallback (a null,
+// missing, or unknown bound value; nothing remembered), activates only
+// the tabs whose tab was inactive: only that on:select fires, and the
+// nested tabs' bound value and remembered tab stay as they were (the
+// runtime never writes the store for a fallback), as when a user
+// activation reaches the same frame. A bound value or remembered tab
+// naming another tab still activates the target's tab.
+func TestTabsFocusRequestIntoFallbackTab(t *testing.T) {
+	const src = `<tui version="2"><keymap><bind keys="f" action="focus" to="#x1"/></keymap><screen id="main">
+<tabs id="outer" bind="o" on:select="osel" focusable="true"><tab id="o1" label="o1"><text>one</text></tab><tab id="o2" label="o2">
+<tabs id="inner" bind="i" on:select="isel"><tab id="i1" label="i1"><input id="x1" on:focus="xf"/></tab><tab id="i2" label="i2"><text>two</text></tab></tabs>
+</tab></tabs><text id="show">i=[{i}]</text></screen></tui>`
+	for _, c := range []struct {
+		data, events, i, shown string
+	}{
+		{`{"o": "o1", "i": null}`, "osel:outer:o2 xf:x1", "null", "i=[]"},
+		{`{"o": "o1"}`, "osel:outer:o2 xf:x1", "<missing>", "i=[]"},
+		{`{"o": "o1", "i": "zzz"}`, "osel:outer:o2 xf:x1", `"zzz"`, "i=[zzz]"},
+		{`{"o": "o1", "i": "i2"}`, "osel:outer:o2 isel:inner:i1 xf:x1", `"i1"`, "i=[i1]"},
+	} {
+		a := doc(t, src)
+		bindJSON(t, a, c.data)
+		run(a, 20, 4)
+		got := evShort(run(a, 20, 4, r('f')))
+		f := a.Frame(20, 4)
+		if got != c.events || a.Focus() != "x1" || storeJSON(t, a, "i") != c.i || storeJSON(t, a, "o") != `"o2"` {
+			t.Errorf("%s: events %q focus %q i %s o %s", c.data, got, a.Focus(), storeJSON(t, a, "i"), storeJSON(t, a, "o"))
+		}
+		if activeOf(f, "inner") != "i1" || !strings.HasPrefix(f.Grid.Lines()[3], c.shown+" ") {
+			t.Errorf("%s: inner active %q, grid %q", c.data, activeOf(f, "inner"), f.Grid.Lines())
+		}
+	}
+
+	// Without bind on the nested tabs: nothing remembered, then i2
+	// remembered.
+	nb := strings.Replace(src, ` bind="i"`, "", 1)
+	a := doc(t, nb)
+	bindJSON(t, a, `{"o": "o1"}`)
+	run(a, 20, 4)
+	if got := evShort(run(a, 20, 4, r('f'))); got != "osel:outer:o2 xf:x1" || a.Focus() != "x1" {
+		t.Errorf("no bind: events %q focus %q", got, a.Focus())
+	}
+	if m, ok := a.tabMem["inner"]; ok {
+		t.Errorf("no bind: inner remembers %q", m)
+	}
+	a = doc(t, nb)
+	bindJSON(t, a, `{"o": "o1"}`)
+	run(a, 20, 4)
+	a.tabMem["inner"] = "i2"
+	if got := evShort(run(a, 20, 4, r('f'))); got != "osel:outer:o2 isel:inner:i1 xf:x1" || a.tabMem["inner"] != "i1" {
+		t.Errorf("no bind, i2 remembered: events %q, remembered %q", got, a.tabMem["inner"])
+	}
+}

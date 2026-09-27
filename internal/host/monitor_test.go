@@ -264,7 +264,7 @@ func TestMonitorHintsMatchDispatch(t *testing.T) {
 					}
 					if p := a.planKey(v, keyOf(tok)); p.step == stepKeymap && p.row == i {
 						keycap := tok
-						if kb.HasKeycap {
+						if kb.Keycap != "" {
 							keycap = kb.Keycap
 						}
 						firing = append(firing, keycap+" "+kb.Label)

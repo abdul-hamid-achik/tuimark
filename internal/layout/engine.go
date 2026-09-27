@@ -256,8 +256,40 @@ func hasMin(b *Box, horizontal bool) bool {
 }
 
 // dock carves docked children out of area: top/bottom first, then
-// left/right (SPEC §11.3 pass 1). It returns the remaining area.
+// left/right (SPEC §11.3 pass 1), and places them. It returns the
+// remaining area.
 func (e *Engine) dock(b *Box, area Rect, clip Rect) Rect {
+	return e.carve(b, area, clip, true)
+}
+
+// dockSize is the size of docked child d of a container (parentRow when
+// it lays out as a row) on the axis it takes from the container
+// (horizontal for left/right), margins excluded, and whether its content
+// gave it: a cell count, a percent of base (the container's content box
+// on that axis), else its intrinsic size with cross as its size on the
+// other axis (a size that conflicts with the dock, V010, is auto); then
+// clamped by its min and max.
+func (e *Engine) dockSize(d *Box, horizontal, parentRow bool, base, cross int) (int, bool) {
+	s := sizeSpec(d, horizontal)
+	if DockConflict(d.Style, parentRow) {
+		s = ir.Scalar{Kind: ir.Auto}
+	}
+	auto := false
+	var size int
+	switch s.Kind {
+	case ir.Cell:
+		size = cells(s.N)
+	case ir.Pct:
+		size = percent(base, s)
+	default:
+		size, auto = e.intrinsic(d, horizontal, cross), true
+	}
+	return clampAxis(d, horizontal, size, base), auto
+}
+
+// carve is dock; with place false it only computes the remaining area,
+// without placing the docked children or reporting anything.
+func (e *Engine) carve(b *Box, area Rect, clip Rect, place bool) Rect {
 	bottoms := 0
 	row := b.Direction() == "row"
 	// Percent sizes and percent min/max resolve against the container's
@@ -274,10 +306,8 @@ func (e *Engine) dock(b *Box, area Rect, clip Rect) Rect {
 				bottoms++
 			}
 			horizontal := !vertical
-			s := sizeSpec(d, horizontal)
-			if DockConflict(d.Style, row) {
+			if place && DockConflict(d.Style, row) {
 				e.report(d, ir.Error, "V010", "%s", DockConflictMsg(side))
-				s = ir.Scalar{Kind: ir.Auto}
 			}
 			ms, me := margins(d, horizontal)
 			cs, ce := margins(d, !horizontal)
@@ -285,14 +315,8 @@ func (e *Engine) dock(b *Box, area Rect, clip Rect) Rect {
 			if horizontal {
 				full, cross, base = area.W, area.H, baseW
 			}
-			var size int
-			switch s.Kind {
-			case ir.Cell:
-				size = cells(s.N)
-			case ir.Pct:
-				size = percent(base, s)
-			default:
-				size = e.intrinsic(d, horizontal, max(0, cross-cs-ce))
+			size, auto := e.dockSize(d, horizontal, row, base, max(0, cross-cs-ce))
+			if auto && place {
 				// Sized by its content: a % child on this axis is L002.
 				if horizontal {
 					d.autoW = true
@@ -300,7 +324,6 @@ func (e *Engine) dock(b *Box, area Rect, clip Rect) Rect {
 					d.autoH = true
 				}
 			}
-			size = clampAxis(d, horizontal, size, base)
 			slot := min(size+ms+me, full)
 			inner := max(0, slot-ms-me)
 			crossSize := max(0, cross-cs-ce)
@@ -321,10 +344,12 @@ func (e *Engine) dock(b *Box, area Rect, clip Rect) Rect {
 				r = Rect{area.X + area.W - slot + ms, area.Y + cs, inner, crossSize}
 				area.W -= slot
 			}
-			e.place(d, r, clip)
+			if place {
+				e.place(d, r, clip)
+			}
 		}
 	}
-	if bottoms > 1 {
+	if place && bottoms > 1 {
 		e.report(b, ir.Warning, "L005", "%d children are docked to the bottom; only one status strip is expected", bottoms)
 	}
 	return area
@@ -638,11 +663,24 @@ func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect) {
 }
 
 // scrollLayout lays out a scroll or list: content keeps its natural size on
-// the scroll axis and is shifted by the (clamped) offset.
+// the scroll axis and is shifted by the (clamped) offset. Docked children
+// are part of that content: they are carved out of the content extent,
+// as contentIntrinsic counts them, and scroll with it (SPEC §11.3 pass 1);
+// the in-flow children are laid out in what is left.
 func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	area := b.Content
 	scrollX, scrollY := b.ScrollAxes()
-	kids := b.Children
+	var kids []*Box
+	follow := -1 // b.Follow as an index into kids
+	for i, c := range b.Children {
+		if c.Style.Dock != "" {
+			continue
+		}
+		if i == b.Follow {
+			follow = len(kids)
+		}
+		kids = append(kids, c)
+	}
 	contentW, contentH := area.W, area.H
 	if scrollY {
 		contentH = max(area.H, e.contentIntrinsic(b, false, area.W))
@@ -653,14 +691,16 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	b.ContentW, b.ContentH = contentW, contentH
 	offX, offY := b.ScrollX, b.ScrollY
 	row := b.Direction() == "row"
-	if b.Follow >= 0 && b.Follow < len(kids) && !row {
-		// The same allocation flex makes below, without diagnostics.
-		sizes, _, _ := e.allocate(b, kids, contentH, contentW, false)
-		top := 0
-		for i := 0; i < b.Follow; i++ {
+	if follow >= 0 && !row {
+		// The same allocation flex makes below, without diagnostics, in
+		// the part of the content extent the docks leave.
+		flowArea := e.carve(b, Rect{0, 0, contentW, contentH}, Rect{}, false)
+		sizes, _, _ := e.allocate(b, kids, flowArea.H, flowArea.W, false)
+		top := flowArea.Y
+		for i := 0; i < follow; i++ {
 			top += sizes[i] + b.Style.Gap
 		}
-		bottom := top + sizes[b.Follow]
+		bottom := top + sizes[follow]
 		if top < offY {
 			offY = top
 		}
@@ -672,7 +712,7 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	offX = max(0, min(offX, contentW-area.W))
 	b.ScrollX, b.ScrollY = offX, offY
 	virtual := Rect{area.X - offX, area.Y - offY, contentW, contentH}
-	e.flex(b, kids, virtual, clip)
+	e.flex(b, kids, e.dock(b, virtual, clip), clip)
 }
 
 // ScrollAxes reports the axes b scrolls on (SPEC §11.4): for a scroll, its
@@ -884,9 +924,18 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 
 // contentIntrinsic measures a container's children (without its own
 // border/padding). avail is the content size on the other axis.
+//
+// Measured down (horizontal false), avail is the content width, and the
+// in-flow children, a grid's included, are measured at the width the
+// left and right docks leave, carved as dock carves them (SPEC §11.3
+// pass 1, §11.7): wrapped text and a grid's columns get the width they
+// are laid out at. A left or right dock's own height is measured at its
+// own width.
 func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 	var flow []*Box
 	dockMain, dockCross := 0, 0
+	row := b.Direction() == "row"
+	flowAvail := avail
 	for _, c := range b.Children {
 		side := c.Style.Dock
 		if side == "" {
@@ -896,11 +945,19 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 		stacks := (side == "top" || side == "bottom") != horizontal
 		s := sizeSpec(c, horizontal)
 		ms, me := margins(c, horizontal)
+		other := avail
+		if !horizontal && (side == "left" || side == "right") {
+			w, _ := e.dockSize(c, true, row, avail, 0)
+			ws, we := margins(c, true)
+			slot := min(w+ws+we, flowAvail)
+			flowAvail -= slot
+			other = max(0, slot-ws-we)
+		}
 		sz := 0
 		if s.Kind == ir.Cell {
 			sz = cells(s.N)
 		} else if s.Kind != ir.Pct {
-			sz = e.intrinsic(c, horizontal, avail)
+			sz = e.intrinsic(c, horizontal, other)
 		}
 		sz += ms + me
 		if stacks {
@@ -909,14 +966,13 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 			dockCross = max(dockCross, sz)
 		}
 	}
-	row := b.Direction() == "row"
 	alongMain := row == horizontal
 	n := len(flow)
 	total := 0
 	if b.IsGrid() {
 		// SPEC §11.7 item 6: the grid's own measure of its in-flow
 		// children; docked children stack around it as in any container.
-		total = e.gridIntrinsic(b, flow, horizontal, avail)
+		total = e.gridIntrinsic(b, flow, horizontal, flowAvail)
 		n = 0
 	}
 	if n > 0 {
@@ -924,17 +980,17 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 		others := make([]int, n)
 		if horizontal {
 			for i := range flow {
-				others[i] = avail
+				others[i] = flowAvail
 			}
 		} else if row {
-			sizes, _ := e.mainSizes(b, flow, true, avail, nil, false, false, false)
+			sizes, _ := e.mainSizes(b, flow, true, flowAvail, nil, false, false, false)
 			for i, k := range flow {
 				ms, me := margins(k, true)
 				others[i] = max(0, sizes[i]-ms-me)
 			}
 		} else {
 			for i, k := range flow {
-				others[i] = e.crossSize(b, k, false, avail, -1, false, false)
+				others[i] = e.crossSize(b, k, false, flowAvail, -1, false, false)
 			}
 		}
 		for i, k := range flow {

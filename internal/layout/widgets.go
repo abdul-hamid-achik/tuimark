@@ -272,25 +272,32 @@ func (e *Engine) gridRows(kids []*Box, n int, widths []int) []int {
 	return rows
 }
 
-// gridWc is the content width a grid lays out in: area's width, or the
-// content-box width when b scrolls on x (SPEC §11.7 item 7).
+// gridWc is the content width a grid lays out in: area's width, what the
+// left and right docks leave of its content box; when b scrolls on x, its
+// content-box width minus what those docks took from its content extent
+// (SPEC §11.7 item 7).
 func gridWc(b *Box, area Rect) int {
 	if b.scrollsOn(true) {
-		return b.Content.W
+		return max(0, b.Content.W-(b.ContentW-area.W))
 	}
 	return area.W
 }
 
 // gridIntrinsic is the content-driven size of grid container b's in-flow
 // children kids (SPEC §11.7 item 6): down, the row heights plus the gaps
-// between rows at the columns avail (its content width) gives; across,
-// n'·w + g·(n' − 1), with n' = min(K, the number of children), at least
-// 1, and w the grid-min-width, else the widest child.
+// between rows at the columns avail (the content width the left and right
+// docks leave) gives; across, n'·w + g·(n' − 1), with n' = K without
+// grid-min-width (item 1 then lays out K columns, whatever the number of
+// children), else min(K, the number of children), at least 1, and w the
+// grid-min-width, else the widest child.
 func (e *Engine) gridIntrinsic(b *Box, kids []*Box, horizontal bool, avail int) int {
 	g := b.Style.Gap
 	if horizontal {
 		k := min(max(b.Style.GridColumns, 1), 12)
-		n := max(1, min(k, len(kids)))
+		n := k
+		if b.Style.GridMinWidth > 0 {
+			n = max(1, min(k, len(kids)))
+		}
 		w := b.Style.GridMinWidth
 		if w <= 0 {
 			w = 0

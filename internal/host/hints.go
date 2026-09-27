@@ -55,7 +55,8 @@ func neverArrives(tok string) bool {
 // in keymap order; with all, every one, its keycap being its keycap= else
 // its first key token as written; otherwise the rows that one of their
 // keys would fire now, its keycap being its keycap= else the first of its
-// keys, in keys= order, that would fire it. The caller holds a.mu.
+// keys, in keys= order, that would fire it. An empty keycap= counts as
+// absent, as an empty tab short= does (§6.10.4). The caller holds a.mu.
 func (a *App) hintItems(v keyView, all bool) []hintItem {
 	var out []hintItem
 	for i := range a.doc.Keymap {
@@ -65,7 +66,7 @@ func (a *App) hintItems(v keyView, all bool) []hintItem {
 		}
 		if all {
 			keycap := kb.Keys[0]
-			if kb.HasKeycap {
+			if kb.Keycap != "" {
 				keycap = kb.Keycap
 			}
 			out = append(out, hintItem{keycap, kb.Label})
@@ -77,7 +78,7 @@ func (a *App) hintItems(v keyView, all bool) []hintItem {
 			}
 			if p := a.planKey(v, keyOf(tok)); p.step == stepKeymap && p.row == i {
 				keycap := tok
-				if kb.HasKeycap {
+				if kb.Keycap != "" {
 					keycap = kb.Keycap
 				}
 				out = append(out, hintItem{keycap, kb.Label})

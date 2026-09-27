@@ -316,20 +316,25 @@ vocabulary (SPEC §5.1); this build implements all of it:
   `move-last` on the `tabs`, `left`/`right` on a focused
   `focusable="true"` `tabs`, `action="focus"` into an inactive tab) writes
   the tab's id to `bind` (or remembers it) and fires `on:select` with
-  `value` = the id; a host `Set` activates without `on:select`. Disabled
-  tabs are skipped by those keys and actions. Labels come in three tiers
-  so the strip always fits: every `label` when they fit (with `gap`
-  between them and a mark slot of `width(mark)` in front of each), else
-  every `short`, else the active tab's alone as `‹ label ›` (then
-  `‹ short ›`, then truncated). Labels are generated `text` nodes (class
+  `value` = the id; a host `Set` activates without `on:select`. A focus
+  request into a nested tab that is already its `tabs`' active tab by a
+  fallback does not activate it: nothing is written and its `on:select`
+  does not fire. Disabled tabs are skipped by those keys and actions.
+  Labels come in three tiers so the strip always fits: every `label` when
+  they fit (with `gap` between them and a mark slot of `width(mark)` in
+  front of each), else every `short` (an empty `short` counts as absent),
+  else the active tab's alone as `‹ label ›` (then `‹ short ›`, then
+  truncated). Labels are generated `text` nodes (class
   `tab-label`, `key` = the tab id, `:selected` on the active one,
   `:disabled` on a disabled tab), styled with `.tab-label` or
   `tabs > text`; they ignore their own sizes, spacing, borders, and
   `display`. When the active tab changes and focus was on the strip,
   inside the old tab, or nowhere, focus moves to the new tab's `focus=`
   target, else its first focusable node, else the screen's rule; the
-  `on:select` comes first, then that node's `on:focus`. Focus elsewhere
-  stays. On a screen's first frame, `screen@focus` wins, then the first
+  `on:select` comes first, then that node's `on:focus`. When one frame
+  changes several `tabs` while focus is nowhere, only the first in
+  document order moves it. Focus elsewhere stays. On a screen's first
+  frame, `screen@focus` wins, then the first
   `tabs` whose active tab has a `focus=` that can take focus. A `tabs`
   and every `tab` need an id (`V012`), a `tabs` needs a `tab` (`V017`)
   and holds only tabs (`V016`), a `tab` needs a non-empty `label`
@@ -342,7 +347,8 @@ vocabulary (SPEC §5.1); this build implements all of it:
   (give it a `height` for more levels). A value that is not an array, or
   an element that is neither a number nor `null`, is `B009`.
 - **`<hints>`** shows key hints generated from the keymap: a `<bind>` with
-  a `label` is a hint row, and `keycap` replaces the key text shown.
+  a `label` is a hint row, and `keycap` replaces the key text shown (an
+  empty `keycap` counts as absent).
   `scope="active"` (the default) shows the rows that one of their keys
   would fire right now, through the same key dispatch `Run()` and `play`
   use: a key the focused input takes, a row shadowed by an earlier row
@@ -366,8 +372,11 @@ vocabulary (SPEC §5.1); this build implements all of it:
   row. `grid-columns: K` is the column count (1–12); with
   `grid-min-width: M` the count adapts to the width,
   `clamp(floor((W + gap) / (M + gap)), 1, K)`, so a responsive grid needs
-  no `@media`. `gap` separates columns and rows; a row is as tall as its
-  tallest child, and `align` places a shorter one. A child's `width`,
+  no `@media`. Docked children are pulled out first (in a `scroll` too,
+  where they scroll with its content), and `W` is the width they leave.
+  Without `grid-min-width`, an auto-width grid is as wide as `K` columns
+  of its widest child. `gap` separates columns and rows; a row is as tall
+  as its tallest child, and `align` places a shorter one. A child's `width`,
   `min-width`, `max-width`, `flex`, and an `fr`/`%` `height` are ignored
   (`L007`, a warning, when the document wrote them). A grid box is never
   shrinkable; put it in a `<scroll>` (or make it a `scroll`/`overflow:

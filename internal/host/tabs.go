@@ -66,6 +66,7 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 	kids := make([]*layout.Box, 0, len(visible)+1)
 	for _, v := range visible {
 		full, _ := v.Src.Attr("label")
+		// S(t) is short when it is not empty, else the label (§6.10.4).
 		short, ok := v.Src.Attr("short")
 		if !ok || short == "" {
 			short = full
@@ -180,16 +181,23 @@ func (fb *builder) activeTabs(root *layout.Box) map[string]string {
 
 // tabFocus applies the activation rule of SPEC §6.10.3 to this frame and
 // returns the node focus moves to and whether a rule applied. For the
-// first tabs, in document order, whose active tab changed from A to B
-// since the last frame (a tabs that was not in it has no previous active
-// tab), while focus, when this render started, was on the tabs node
-// itself, on A or inside it, or nowhere: B's focus= target when it can
-// take focus; else the first node of the focus cycle inside B; else the
-// §8.3 rule (the screen's focus= target, else the first focusable node).
-// list is the frame's focus cycle. Each tabs gets the rule once per
-// render. The caller holds a.mu.
+// first tabs, in document order (the screen, then the open modals; an
+// enclosing tabs before the ones inside it), whose active tab changed
+// from A to B since the last frame (a tabs that was not in it has no
+// previous active tab), while focus, when this render started, was on
+// the tabs node itself, on A or inside it, or nowhere: B's focus= target
+// when it can take focus; else the first node of the focus cycle inside
+// B; else the §8.3 rule (the screen's focus= target, else the first
+// focusable node). list is the frame's focus cycle. Each tabs is
+// considered once per render, across its passes, and once the rule has
+// applied to one tabs it applies to no other in this render: when
+// several tabs change in the same frame, only the first moves focus, so
+// only the node focus rests on fires on:focus. The caller holds a.mu.
 func (fb *builder) tabFocus(root *layout.Box, list []*layout.Box) (string, bool) {
 	a, rc := fb.a, fb.rc
+	if rc.tabMoved {
+		return "", false
+	}
 	var hit *layout.Box
 	visit := func(r *layout.Box) {
 		if r == nil || hit != nil {
@@ -216,6 +224,7 @@ func (fb *builder) tabFocus(root *layout.Box, list []*layout.Box) (string, bool)
 	if hit == nil {
 		return "", false
 	}
+	rc.tabMoved = true
 	in := func(id string) bool {
 		for _, c := range list {
 			if c.ID == id {
@@ -395,13 +404,23 @@ type tabAct struct {
 	oldMem    string // the remembered tab before, when hadMem
 	hadMem    bool
 	fire      string // the tabs' on:select action, "" without one
+	// outside is set when the tabs was not in the live frame when the
+	// request was made: whether its tab was already active by a §6.10.2
+	// fallback is decided by the frame the request lands in
+	// (settleTabActs).
+	outside bool
 }
 
 // openTabsFor activates, outermost first, the inactive tabs that hold the
 // node id, for a focus request (SPEC §6.10.3): a tab counts as active when
 // its tabs is in the live frame with that tab active, or, for a tabs not
 // in the live frame, when its bound value or remembered tab is that tab.
-// It returns what it changed. The caller holds a.mu.
+// A tabs not in the live frame whose bound value or remembered tab does
+// not name the tab (null, missing, another value, nothing remembered) may
+// still have it active by a §6.10.2 fallback, which only a frame with that
+// tabs in it can tell (its visible tabs): its activation is marked outside
+// and settled when the request lands (settleTabActs). It returns what it
+// changed. The caller holds a.mu.
 func (a *App) openTabsFor(id string) []tabAct {
 	n := a.doc.IDs[id]
 	var tabs []*ir.Node
@@ -414,10 +433,11 @@ func (a *App) openTabsFor(id string) []tabAct {
 	for i := len(tabs) - 1; i >= 0; i-- {
 		tab := tabs[i]
 		tn := tab.Parent
-		if a.tabActiveNow(tn, tab) {
+		active, inFrame := a.tabActiveNow(tn, tab)
+		if active {
 			continue
 		}
-		act := tabAct{tabs: tn.ID, tab: tab.ID, path: tn.Bind, fire: tn.On["select"]}
+		act := tabAct{tabs: tn.ID, tab: tab.ID, path: tn.Bind, fire: tn.On["select"], outside: !inFrame}
 		if tn.Bind != "" {
 			act.old, act.hadOld = lookup(a.store, tn.Bind)
 			root, err := assign(a.store, tn.Bind, tab.ID)
@@ -435,19 +455,71 @@ func (a *App) openTabsFor(id string) []tabAct {
 	return out
 }
 
-// tabActiveNow reports whether tab is the active tab of tabs tn now: in
-// the live frame when tn is in it, else by its bound value or remembered
-// tab. The caller holds a.mu.
-func (a *App) tabActiveNow(tn, tab *ir.Node) bool {
+// tabActiveNow reports whether tab is the active tab of tabs tn now, and
+// whether tn is in the live frame: in the live frame when tn is in it,
+// else when its bound value or remembered tab names tab (a fallback to
+// the first visible tab is settled by the frame the request lands in,
+// settleTabActs). The caller holds a.mu.
+func (a *App) tabActiveNow(tn, tab *ir.Node) (active, inFrame bool) {
 	v := a.liveView()
 	if b := v.byID[tn.ID]; b != nil && b.Kind == "tabs" && v.inFrame(b) {
-		return b.TabActive != nil && b.TabActive.ID == tab.ID
+		return b.TabActive != nil && b.TabActive.ID == tab.ID, true
 	}
 	if tn.Bind != "" {
 		cur, ok := lookup(a.store, tn.Bind)
-		return ok && isString(cur, tab.ID)
+		return ok && isString(cur, tab.ID), false
 	}
-	return a.tabMem[tn.ID] == tab.ID
+	return a.tabMem[tn.ID] == tab.ID, false
+}
+
+// settleTabActs is called when a focus request lands, in the frame it
+// lands in (SPEC §6.10.2, §6.10.3). An activation of a tabs that was not
+// in the live frame when the request was made, whose tab its bound value
+// or remembered tab from before the request already made active through a
+// fallback (a null, missing, or other value, or nothing remembered, gives
+// the first visible tab), activated nothing: that tab was not inactive.
+// Its write is undone, so the runtime never writes the store (or
+// remembers a tab) for a fallback, and it is dropped, so its on:select
+// does not fire. It returns the activations that remain and whether the
+// store or a remembered tab changed. The caller holds a.mu.
+func (a *App) settleTabActs(fb *builder, acts []tabAct) ([]tabAct, bool) {
+	var out []tabAct
+	changed := false
+	for _, act := range acts {
+		if t := fb.byID[act.tabs]; act.outside && t != nil && t.Kind == "tabs" {
+			if was := activeBefore(t.TabList, act); was != nil && was.ID == act.tab {
+				if a.undoTabActs([]tabAct{act}) {
+					changed = true
+				}
+				continue
+			}
+		}
+		out = append(out, act)
+	}
+	return out, changed
+}
+
+// activeBefore is the tab of visible (a tabs' visible tabs in document
+// order) that the bound value or remembered tab act recorded from before
+// its activation made active (SPEC §6.10.2): the visible tab it names,
+// else the first visible tab; nil without a visible tab.
+func activeBefore(visible []*layout.Box, act tabAct) *layout.Box {
+	if len(visible) == 0 {
+		return nil
+	}
+	id, ok := act.oldMem, act.hadMem
+	if act.path != "" {
+		id, ok = act.old.(string)
+		ok = ok && act.hadOld
+	}
+	if ok {
+		for _, v := range visible {
+			if v.ID == id {
+				return v
+			}
+		}
+	}
+	return visible[0]
 }
 
 // undoTabActs undoes the activations of a focus request that did not
