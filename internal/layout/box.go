@@ -66,8 +66,16 @@ type Box struct {
 	Value       float64 // progress 0-100
 	Axis        string  // rule/scroll axis
 	Title       string
-	Key         string // list item key (for event payloads)
-	Index       int    // list item index
+	Key         string // list item key, or the element key of a container each template child (dump; event payloads)
+	Index       int    // list item index, or element index of a container each template child
+
+	// Chan is the mark channel of a row of a list with checked and mark
+	// (SPEC §6.14): the columns just inside the row's left border and
+	// padding, before its content box, reserved whether or not the row is
+	// checked. Mark is painted in the first width(Mark) of them, on the
+	// first content row, when the row is Checked.
+	Chan int
+	Mark string
 
 	// Scroll state: offset in, clamped offset and content size out.
 	ScrollX, ScrollY int
@@ -152,7 +160,7 @@ func (b *Box) border() int {
 }
 
 // frame returns border+padding on the horizontal and vertical axes.
-func (b *Box) frameH() int { return 2*b.border() + b.pad(1) + b.pad(3) }
+func (b *Box) frameH() int { return 2*b.border() + b.pad(1) + b.pad(3) + b.Chan }
 func (b *Box) frameV() int { return 2*b.border() + b.pad(0) + b.pad(2) }
 
 // pad returns one padding side (top, right, bottom, left), bounded.

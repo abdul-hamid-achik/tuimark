@@ -141,16 +141,16 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 
 | Code | Pass | When |
 |---|---|---|
-| V001 | parse | unknown tag; a version="2" tag in a version="1" document (message ends with `(requires version="2")`) |
-| V002 | parse | unknown attribute; a version="2" attribute in a version="1" document (with the same hint) |
-| V003 | parse | bad unit / color / token / CSS property; a `version` other than 1 or 2; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint) |
-| V004 | parse | duplicate id |
+| V001 | parse | unknown tag; a version="2" tag in a version="1" document (message ends with `(requires version="2")`); `input`, `button`, `list`, `modal`, `table`, `tabs`, or `tab` inside a container `each` template |
+| V002 | parse | unknown attribute; a version="2" attribute in a version="1" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template |
+| V003 | parse | bad unit / color / token / CSS property; a `version` other than 1 or 2; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute |
+| V004 | parse | duplicate id; any `id` inside a container `each` template (version="2") |
 | V005 | parse | not well-formed XML |
 | V006 | parse | `style src` include cycle |
 | V007 | parse | control character or ANSI in text (strip + error) |
 | V008 | parse | native widget name not registered (v1.1+) |
 | V010 | parse | `dock` and `fr` on the same axis |
-| V011 | parse | `each` / `if` missing path |
+| V011 | parse | `each` / `if` missing path; an `each` alias equal to an enclosing one (version="2") |
 | V012 | parse | list/input/button/modal without `id` |
 | V013 | parse | `<text>` has element children |
 | V014 | parse | missing `version` on `<tui>` (phase 1+) |
@@ -160,13 +160,16 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 | L004 | layout | modal is not last child of screen |
 | L005 | layout | more than one bottom-docked status (warning) |
 | L006 | layout | a scroll/list/overflow: scroll viewport can never show part of its content (warning) |
-| B001 | bind | `each` path is not an array |
+| B001 | bind | `each` path is missing or not an array (a `list`, or a `col`/`row`/`box` in version="2") |
 | B002 | bind | `if` path missing; also a `class:NAME` guard path |
 | B003 | bind | bind path missing (`--strict` upgrades to error) |
 | B004 | bind | action not in catalog |
 | B005 | bind | keymap `to`/`when` id missing |
 | B006 | bind | `list` + `each` without `key` (warning) |
 | V015 | parse | a `class:NAME` whose NAME is not `[a-z_][a-z0-9_-]*` or whose value is not `path` / `!path` (version="2") |
+| V018 | parse | `checked` on a `list`/`table` without both `each` and `key` (or on a list of static items); a `mark` that is not 1 or 2 columns wide; `mark` without `checked`; `on:change` on a `list` without `checked` (version="2") |
+| B007 | bind | a built-in action whose target is known without data to be incompatible (from `to=`, or a `when` that is exactly `#id:focus`); static, error (version="2") |
+| B008 | bind | the value at a `checked` path is present and not an array (error; version="2") |
 
 ### v0.2a: interaction, styles, and theme
 
@@ -187,8 +190,12 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 - `theme="auto"`: `Run()` asks the terminal for its background (OSC 11, waiting at most 250 ms before the first frame), falls back to `COLORFGBG`, then to `dark`. Every command and `Dump()`/`Validate()` treat `auto` as `dark`; `validate` checks an `auto` document under both themes, dark first, and reports each diagnostic once.
 - `@media (theme: dark)` and `@media (theme: light)` (version="2" stylesheets) hold per-theme rules and `:root` palettes. Tokens apply in document order, so put a `@media (theme: light) { :root { … } }` block after the base `:root` it refines. `@media (theme: auto)` is V003.
 - `Set("@theme", "dark"|"light"|"auto")` (a reserved path, both versions) is the host's theme: it beats the document's theme and `--theme`, and `TUIMARK_THEME` beats it in `Run()`. `play` sets it with `set:@theme="light"` or the script step `{"theme":"light"}`.
-- Properties only version="2" stylesheets accept: `grid-columns`, `grid-min-width`, `scrollbar`, `bar`, and the value `layout: grid`. This build computes them (`inspect` shows them) but layout and paint do not apply them yet. Pseudo-classes: `:focus-within` matches the focused node and each ancestor up to the screen, through a modal, and nothing while nothing is focused; `:checked` is accepted but matches nothing until multi-select lands.
-- Keymap rows of a version="2" document take `label` and `keycap` (literal text, carried in `tuimark ir`) and the hyphenated built-in actions (move-next, move-prev, move-first, move-last, move-page-down, move-page-up, check-toggle, check-all, check-none, switch-to), which this build accepts (built in: never B004) but does not run yet: a row naming one never matches, so its key goes on to the next row. `when` still matches the focused node only.
+- Properties only version="2" stylesheets accept: `grid-columns`, `grid-min-width`, `scrollbar`, `bar`, and the value `layout: grid`. This build computes them (`inspect` shows them) but layout and paint do not apply them yet. Pseudo-classes (+10 each, like the others): `:focus-within` matches the focused node and each ancestor up to the screen, through a modal, and nothing while nothing is focused; `:checked` matches a list row whose key is in the list's `checked` array.
+- `each="path as alias"` (and an optional `key="path"`) also goes on `col`, `row`, and `box`: every child element is the template, inflated once per array element, in order, with the alias in scope (`{path}`, `if`, `hidden`, `disabled`, `class:NAME`, and a `progress` `bind` resolve per element). The container's own `if`, `hidden`, `disabled`, `title`, and guards use the enclosing scope, and it is not repeated. Each generated top-level node dumps the element's `key` (the index without `key=`). A missing or non-array path is B001; an empty array leaves the container empty (`:empty`). The template holds nothing that takes focus or keeps state: `input`, `button`, `list`, `modal`, `table`, `tabs`, `tab` are V001, `focusable`/`on:click`/`on:focus` V002, and any `id` V004. An alias equal to an enclosing one is V011.
+- Multi-select: `checked="path"` on a `list` (with `each` and `key`, else V018) holds the keys of the checked rows, an array the runtime reads and writes (a missing path counts as `[]`, B003; a non-array is B008, shown as nothing checked and never overwritten). `mark="✓"` (1 or 2 columns, needs `checked`: V018) reserves `width(mark) + 1` columns at the left of every row and paints the mark on checked rows. `on:change` on a `list` (needs `checked`: V018) fires with `value` = the new array when `check-toggle`, `check-all`, or `check-none` changed it. Checked rows dump `"checked": true` and end their text node line with ` checked`. Bind the keys yourself (`space`, `ctrl+a`, … are not implicit).
+- Keymap rows of a version="2" document take `label` and `keycap` (literal text, carried in `tuimark ir`) and the hyphenated built-in actions (move-next, move-prev, move-first, move-last, move-page-down, move-page-up, check-toggle, check-all, check-none, switch-to), which are built in (never B004; `Catalog()` lists them with `builtin: true`) and allowed only in keymap rows (in `on:*` they are V003). A built-in acts on the node named by `to=`, else on the focused node: `move-next`/`move-prev`/`move-first`/`move-last`/`move-page-down`/`move-page-up` move a list's cursor (writing `bind`, firing `on:select` when it moved) or a viewport's offset; `check-toggle`/`check-all`/`check-none` change a list's `checked` array; `switch-to` (needs `to=`, V003 otherwise) switches to a screen. A row whose target is missing from the frame, disabled, or incompatible (an empty list, a list without `checked`, a button, …) does not match, and the key goes on to the next rows; a matching row takes its key even when nothing changes (`move-next` on the last row). B007 (an error, reported without data) names a target known to be incompatible from `to=` or from a `when` that is exactly `#id:focus`. `play` records the events they fire, not the actions.
+- `when` in a version="2" keymap matches over the focus chain: the focused node and each ancestor up to the screen (a modal's parent is its screen), or, with nothing focused, the top open modal and then the screen. So `when="#pane"` holds while focus is anywhere inside `#pane`, and `when="#kill"` while it is inside the modal `kill`. A host action fired by such a row still names the focused node as its `source`. In a version="1" document `when` matches the focused node only, and nothing while nothing is focused.
+- One key dispatch serves `Run()` and `play` (and the key hints to come): (1) `esc` fires the top modal's `on:escape`; (2) a focused, enabled widget consumes its keys (an input: printable keys, `space`, `backspace`, `ctrl+h`, `ctrl+u`, `left`, `right`, `home`, `end`, `ctrl+a`, `ctrl+e`, and `enter` with `on:submit`; a list with rows: `up`, `down`, `home`, `end`, `pgup`, `pgdn`; another viewport: the arrows, `pgup`, `pgdn`, `home`, `end`; any other node with `on:click`: `enter` and `space`); (3) the first keymap row, in document order, whose keys, `when`, and built-in target match; (4) `tab`/`shift+tab` cycle focus and `ctrl+c` quits.
 - `tuimark inspect FILE --at X,Y --json` (or `--id ID`) answers "why does this cell look like this?": the node that cell belongs to, its layout path, its pseudo-classes, every class it could have (with guards, and whether any rule names it), and every property with the rule that won and the rules that lost. It renders exactly as `dump` does with the same flags.
 - `tuimark ir` prints `"version": "0.2"` for a version="2" document (validated by `schema/ir.v0.2.json`): the new kinds, `app.mouse`, the keymap's `label`/`keycap`, and `class:NAME` attributes under their full names in `attrs`.
 - `TUIMARK_LOG=FILE` makes `Run()` write an NDJSON log of the session (mode 0600): start, capabilities and the resolved theme, keys, pastes, actions, frames, resizes, end. While a `secret` input has focus, key and paste records are redacted, and that input's events never carry their value. Only `Run()` reads it.
@@ -238,7 +245,7 @@ go test -race ./internal/host/
 
 ### Package boundaries
 
-- `cmd/tuimark` — the CLI: flag parsing, output formatting, the golden-manifest runner behind `tuimark test` (including its v0.2a superset check), the `tuimark play` step parser and headless session engine (built only from `internal/host`'s exported `App` methods — `Frame`, `HandleKeyRun`, `HandlePaste`, `Dispatch`, `TakePending`, `Focus`, `SetTheme`), `tuimark inspect` (`Frame` plus `Inspect`), and the theme/`:root` token table for `tuimark ir`. Parsing, cascade, layout, and paint rules live in `internal/**`.
+- `cmd/tuimark` — the CLI: flag parsing, output formatting, the golden-manifest runner behind `tuimark test` (including its v0.2a superset check), the `tuimark play` step parser and headless session engine (built only from `internal/host`'s exported `App` methods — `Frame`, `HandleKeyRun`, `HandlePaste`, `Dispatch`, `TakePending`, `Focus`, `TakeDirty`, `SetTheme`), `tuimark inspect` (`Frame` plus `Inspect`), and the theme/`:root` token table for `tuimark ir`. Parsing, cascade, layout, and paint rules live in `internal/**`.
 - `tuimark.go` (package `tuimark`, repo root) — the only public surface: the package functions `Load` and `Parse`, `App`'s methods `Bind, Set, On, Catalog, Dump, Validate, Run` (SPEC §18), the `App` type itself, the aliases `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, and `ErrQuit`. Nothing else is exported from it.
 - `internal/ir` — node/scalar/diagnostic/binding-grammar/key-token types, the tag-kind catalog (`Kinds`, `SpikeKinds`), the spike attribute whitelist (`SpikeAttrs`), and the key-token catalog (`NamedKeys`/`ValidKey`).
 - `internal/parse` — the XML tokenizer, the IR builder (including the per-tag attribute catalog, `TagAttrs`), the formatter (`fmt`), and IR-as-JSON (`ir`).
@@ -246,7 +253,7 @@ go test -race ./internal/host/
 - `internal/layout` — the integer flex engine.
 - `internal/paint` — the cell grid, borders, widget painters, and the ANSI frame diff.
 - `internal/dump` — the text and JSON frame dump.
-- `internal/host` — the JSON store, inflation, cascade application, focus, events, and the `Run` loop (with the capability/theme probe and `TUIMARK_LOG`). A frame is built in the SPEC §18 order: inflate, cascade, tab activation, focus, hints, layout, table rows, paint; the stages for the widgets not built yet are in place and do nothing.
+- `internal/host` — the JSON store, inflation (`each` on lists and containers, multi-select), cascade application, focus, the SPEC §8.6 key dispatch with the built-in actions (`dispatch.go`, one procedure for `Run`, `play`, and later the key hints), events, and the `Run` loop (with the capability/theme probe and `TUIMARK_LOG`). A frame is built in the SPEC §18 order: inflate, cascade, tab activation, focus, hints, layout, table rows, paint; the stages for the widgets not built yet are in place and do nothing.
 - `internal/agentsdoc` — generates this file from the catalogs above.
 - Application code — `examples/**`, or any external module — uses only the root `tuimark` package. Inside the repo, `internal/layout` is imported by `internal/paint`, `internal/dump`, and `internal/host`; `internal/paint` is imported by `internal/dump`, `internal/host`, and `cmd/tuimark` (for `preview`'s ANSI frame). SPEC §3 forbids importing `internal/layout`/`internal/paint` from application code outside this repo, not from other packages inside it.
 

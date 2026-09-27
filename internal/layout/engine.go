@@ -115,7 +115,7 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 	b.Clip = clip.Intersect(b.Outer())
 	bw := b.border()
 	b.Content = Rect{
-		X: b.X + bw + b.pad(3),
+		X: b.X + bw + b.pad(3) + b.Chan,
 		Y: b.Y + bw + b.pad(0),
 		W: max(0, b.W-b.frameH()),
 		H: max(0, b.H-b.frameV()),

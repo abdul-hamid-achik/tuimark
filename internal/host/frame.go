@@ -56,6 +56,7 @@ func (a *App) Dump(cols, rows int, cells bool) *dump.Dump {
 func (a *App) Frame(cols, rows int) *Frame {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	a.dirty = false // the live frame is fresh again (TakeDirty)
 	return a.render(cols, rows, a.frameTheme())
 }
 
@@ -533,6 +534,11 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		// Step 1 creates the tab nodes of a tabs but not their content:
 		// only the active tab's content is inflated, in step 3.
 		return b
+	case "col", "row", "box":
+		if n.Each != "" && a.doc.V2 {
+			fb.inflateEach(n, b, sc)
+			return b
+		}
 	}
 	for _, c := range n.Children {
 		cb := fb.inflate(c, b, sc, inItem)
@@ -548,6 +554,91 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		b.Children = append(b.Children, cb)
 	}
 	return b
+}
+
+// inflateEach inflates the template of a col, row, or box with each=
+// (SPEC §6.8): for each element of the array, in array order, every
+// template child is inflated once, in document order, with the alias bound
+// to the element. The container itself was inflated in the enclosing
+// scope (its if, hidden, disabled, title, and class guards); it is not
+// repeated. A missing path or a value that is not an array is B001 and
+// leaves the container without children; an empty array too, so it then
+// matches :empty. Each generated top-level node carries the element's key
+// (key= resolved on the element, else its index; a key path missing on
+// the element gives the index and B003); their descendants do not.
+func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
+	a := fb.a
+	e, err := ir.ParseEach(n.Each)
+	if err != nil {
+		return
+	}
+	v, found := sc.resolve(a.store, e.Path)
+	arr, isArr := v.([]any)
+	if !found {
+		fb.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, e.Path)
+		return
+	}
+	if !isArr {
+		fb.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, e.Path, typeName(v))
+		return
+	}
+	keyPath := n.Attrs["key"]
+	for i, el := range arr {
+		isc := &scope{alias: e.Alias, value: el, parent: sc}
+		var key any = float64(i)
+		if keyPath != "" {
+			if kv, ok := isc.resolve(a.store, keyPath); ok {
+				key = kv
+			} else {
+				sev := ir.Warning
+				if a.strict {
+					sev = ir.Error
+				}
+				fb.report(n, sev, "B003", "key=%q is missing on element %d (its key is the index)", keyPath, i)
+			}
+		}
+		isc.key = key
+		for _, c := range n.Children {
+			// The template holds nothing focusable or addressed by id
+			// (SPEC §6.8 item 8): it is inflated like a list row.
+			cb := fb.inflate(c, b, isc, true)
+			if cb == nil || c.Kind == "modal" {
+				continue
+			}
+			cb.Key = Format(key)
+			cb.Index = i
+			b.Children = append(b.Children, cb)
+		}
+	}
+}
+
+// checkedKeys reads the checked= array of a list or table (SPEC §6.14): a
+// missing path counts as [] and reports B003; a value that is not an array
+// is B008 (an error), counts as [] for display, and ok is false, so the
+// check-* actions never overwrite it.
+func (fb *builder) checkedKeys(n *ir.Node, path string, sc *scope) (keys []any, ok bool) {
+	v, found := sc.resolve(fb.a.store, path)
+	if !found {
+		fb.missingBind(n, path)
+		return nil, true
+	}
+	arr, isArr := v.([]any)
+	if !isArr {
+		fb.report(n, ir.Error, "B008", "checked=%q: %q is %s, not an array of row keys (shown as none checked; check-toggle, check-all, and check-none leave it alone)", path, path, typeName(v))
+		return nil, false
+	}
+	return arr, true
+}
+
+// hasKey reports whether some element of keys equals k (SPEC §6.14: the
+// same JSON type and the same value formatted as text).
+func hasKey(keys []any, k any) bool {
+	for _, x := range keys {
+		if keyEqual(x, k) {
+			return true
+		}
+	}
+	return false
 }
 
 // classes returns an element's classes (SPEC §6.13): its class names in
@@ -719,12 +810,28 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 		sel = min(max(sel, 0), len(entries)-1)
 	}
 	ls.index = sel
+	// SPEC §6.14 (version="2"): the checked row keys, and the mark channel
+	// every row reserves when the list has checked and mark.
+	var checked []any
+	chanW, mark := 0, ""
+	if a.doc.V2 {
+		if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
+			checked, _ = fb.checkedKeys(n, path, sc)
+			if m, ok := n.Attr("mark"); ok {
+				if w := layout.Width(m); w >= 1 && w <= 2 {
+					chanW, mark = w+1, m
+				}
+			}
+		}
+	}
 	for i, e := range entries {
 		ib := fb.inflate(e.src, b, e.sc, true)
 		if ib == nil {
 			continue
 		}
 		ib.Selected = i == sel
+		ib.Checked = hasKey(checked, e.key)
+		ib.Chan, ib.Mark = chanW, mark
 		ib.Key = Format(e.key)
 		ib.Index = i
 		b.Children = append(b.Children, ib)
@@ -749,8 +856,10 @@ func collectFocusables(b *layout.Box, out *[]*layout.Box) {
 	if b == nil {
 		return
 	}
-	if b.Index >= 0 && b.Kind == "item" {
-		return // list items are navigated by their list
+	if b.Index >= 0 {
+		// List items are navigated by their list; nothing in a container
+		// each template takes focus (SPEC §6.8 item 8).
+		return
 	}
 	if isFocusable(b) {
 		*out = append(*out, b)

@@ -85,8 +85,11 @@ type App struct {
 	modalStack []modalEntry // modals that took the focus trap, bottom first
 	pending    []Event
 	focusReq   *focusRequest
-	wake       chan struct{}
-	last       *Frame
+	// dirty is set by a built-in action of SPEC §8.4 that changed what the
+	// live frame shows (TakeDirty).
+	dirty bool
+	wake  chan struct{}
+	last  *Frame
 
 	// Theme selection (SPEC §26.4). hostTheme is the reserved Set path
 	// @theme (dark, light, or auto; "" until the host sets it); flagTheme

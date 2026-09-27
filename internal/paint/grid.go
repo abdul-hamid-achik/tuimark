@@ -408,6 +408,7 @@ func (p *painter) box(b *layout.Box, owner string) {
 		}
 		p.border(b, owner)
 		p.content(b, base)
+		p.mark(b, base)
 	}
 	for _, c := range b.Children {
 		p.box(c, owner)
@@ -451,6 +452,18 @@ func (p *painter) border(b *layout.Box, owner string) {
 		}
 		p.text(clip, x0+2, y0, t, tst)
 	}
+}
+
+// mark paints the mark of a checked row in its mark channel (SPEC §6.14):
+// the first width(mark) columns of the channel, on the first content row,
+// in the row's style (so a reverse selection covers it). The channel's
+// last column stays blank.
+func (p *painter) mark(b *layout.Box, st cellStyle) {
+	if !b.Checked || b.Chan <= 0 || b.Mark == "" || b.Content.H <= 0 {
+		return
+	}
+	ch := layout.Rect{X: b.Content.X - b.Chan, Y: b.Content.Y, W: b.Chan, H: 1}
+	p.text(b.Clip.Intersect(ch), ch.X, ch.Y, b.Mark, st)
 }
 
 func alignOffset(mode string, room, w int) int {

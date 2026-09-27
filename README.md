@@ -223,17 +223,72 @@ vocabulary (SPEC §5.1); this build implements its foundations:
   ```
 
 - **`:focus-within`** matches the focused node and each ancestor up to the
-  screen (through a modal); nothing while nothing is focused.
+  screen (through a modal); nothing while nothing is focused. **`:checked`**
+  matches a list row whose key is in the list's `checked` array. Both count
+  +10, like the other pseudo-classes.
+- **`each` on `col`, `row`, and `box`.** Every child element is the
+  template, inflated once per array element, in array order, with the alias
+  in scope; the container itself is not repeated, and its own `if`,
+  `hidden`, `disabled`, `title`, and guards use the enclosing scope. Each
+  generated top-level node dumps the element's `key` (from `key="path"`,
+  else the index). A missing or non-array path is `B001`; an empty array
+  leaves the container empty, so it matches `:empty`. The template holds
+  nothing that takes focus or keeps state: `input`, `button`, `list`,
+  `modal`, `table`, `tabs`, and `tab` are `V001`, `focusable`, `on:click`,
+  and `on:focus` `V002`, any `id` `V004`; an alias equal to an enclosing
+  one is `V011`.
+
+  ```xml
+  <row id="tags" each="tags as t" key="t"><text class="tag">{t}</text></row>
+  ```
+
+- **Multi-select.** `checked="path"` on a `list` (which needs `each` and
+  `key`, `V018` otherwise) holds the keys of the checked rows: an array in
+  the store that the runtime reads and writes. A missing path counts as
+  `[]` (`B003`); any other value is `B008`, shows nothing checked, and is
+  never overwritten. `mark="✓"` (1 or 2 columns, and only with `checked`)
+  reserves `width(mark) + 1` columns at the left of every row, checked or
+  not, and paints the mark on the checked ones. `on:change` on a list
+  (only with `checked`) fires with the new array as its `value` when
+  `check-toggle`, `check-all`, or `check-none` changed it. Checked rows dump
+  `"checked": true`, and their text node line ends with ` checked`. No key
+  is implicit: bind `space`, `ctrl+a`, … yourself.
+- **Built-in actions** (keymap rows only; `V003` in `on:*`): `move-next`,
+  `move-prev`, `move-first`, `move-last`, `move-page-down`, and
+  `move-page-up` move a list's cursor (writing its `bind`, firing
+  `on:select` when it moved) or a viewport's offset; `check-toggle`,
+  `check-all`, and `check-none` change a list's `checked` array;
+  `switch-to` (which needs `to=`) switches screens. The target is the node
+  `to=` names, else the focused node. A row whose target is missing from
+  the frame, disabled, or incompatible (an empty list, a list without
+  `checked`, a button) does not match, and the key goes on to the next
+  rows, so `<bind keys="ctrl+a" action="check-all"/>` never steals
+  `ctrl+a` from a widget without `checked`; a matching row takes its key
+  even when nothing changes. `B007` (an error, reported without data)
+  flags a target known to be incompatible from `to=` or from a `when` that
+  is exactly `#id:focus`. The built-ins are never `B004`, and `Catalog()`
+  lists them with `Builtin: true`; `play` records the events they fire,
+  not the actions.
+- **`when` over the focus chain.** In a `version="2"` keymap, `when`
+  matches when its selector matches the focused node or any ancestor up to
+  the screen (a modal's parent is its screen), or, with nothing focused,
+  the top open modal or the screen. `when="#pane"` holds while focus is
+  anywhere inside `#pane`. The event of a host action still names the
+  focused node as its `source`. `version="1"` keeps matching the focused
+  node only.
+- **One key dispatch** serves `Run()` and `play`: `esc` fires the top
+  modal's `on:escape`; then the focused, enabled widget consumes its own
+  keys (an input its typing and editing keys, a list with rows `up`,
+  `down`, `home`, `end`, `pgup`, `pgdn`, another viewport the arrows and
+  paging keys, any other node with `on:click` `enter` and `space`); then the first
+  keymap row whose keys, `when`, and built-in target match; then `tab`,
+  `shift+tab`, and `ctrl+c`.
 - The tags `table column tabs tab sparkline hints`, the properties
-  `grid-columns grid-min-width scrollbar bar` and `layout: grid`, the
-  `:checked` pseudo-class, `each`/`key` on `col`/`row`/`box`,
-  `checked`/`mark` on `list`, `mouse` on `<tui>`, `label`/`keycap` on
-  `<bind>`, and the hyphenated built-in actions (`move-next`, …,
-  `switch-to`) are accepted by the gate in a `version="2"` document but
-  are not laid out, painted, or run by this build yet: the new tags dump
-  as one empty node each, a keymap row naming a built-in never matches
-  (its key goes on to the next row; the built-ins are never `B004`), and
-  `when` still matches the focused node only.
+  `grid-columns grid-min-width scrollbar bar` and `layout: grid`, `mouse` on
+  `<tui>`, and `label`/`keycap` on `<bind>` are accepted by the gate in a
+  `version="2"` document but are not laid out, painted, or run by this
+  build yet: the new tags dump as one empty node each, and a built-in
+  aimed at a `table`, a `tabs`, or a `tab` does not match yet.
 
 ## CLI reference
 
@@ -581,7 +636,7 @@ module; the only supported entry points are the functions above.
   item's `each` aliases, e.g. `{"item": "t-12"}`), and `Value` (the input's
   text for events from a focused input, such as `on:change`/`on:submit` or
   a keymap row; the selected item's id or index for a static, non-`each`
-  list; nil otherwise).
+  list; the new `checked` array for a list's `on:change`; nil otherwise).
 - **`ErrQuit`**, returned by a handler, stops `Run` cleanly.
 - **`Dump`** is a side-effect-free snapshot: it never moves focus, queues
   events, or mutates scroll/list/input state, so dumping the same app at
@@ -732,7 +787,7 @@ Package map:
 | `internal/layout` | the integer flex engine (SPEC §11): box model, measure, allocate |
 | `internal/paint` | the cell grid, borders, titles, widgets, and the ANSI frame diff |
 | `internal/dump` | the text and JSON frame dump (SPEC §13) |
-| `internal/host` | the JSON store, bind/each/if inflation, cascade application, focus, event dispatch, and the `Run` loop |
+| `internal/host` | the JSON store, bind/each/if inflation, cascade application, focus, the key dispatch of SPEC §8.6 with the built-in actions (`dispatch.go`, shared by `Run` and `play`), event dispatch, and the `Run` loop |
 | `internal/agentsdoc` | generates `AGENTS.md` from the catalogs the packages above expose |
 
 `cmd/tuimark` is the CLI built on top of these packages; the root package
@@ -889,11 +944,12 @@ kept with the maintainer's project notes, outside this repository.
   whole 0.2b vocabulary (with the `(requires version="2")` hint in
   `version="1"` documents), IR `0.2` and the 0.2b schemas, `class:NAME` and
   the dump's `classes`, the SPEC §18 frame order, `theme="auto"` (OSC 11,
-  `COLORFGBG`), `@media (theme)`, `Set("@theme")`, `tuimark inspect`, and
-  `TUIMARK_LOG`. Still to come: the key dispatch and built-in actions,
-  `each` on containers, multi-select, `sparkline`, `layout: grid`,
-  `hints`, `tabs`, `table`, `bar: eighths`, `scrollbar`, the mouse, and
-  `examples/monitor`.
+  `COLORFGBG`), `@media (theme)`, `Set("@theme")`, `tuimark inspect`,
+  `TUIMARK_LOG`, the written-out key dispatch with the built-in actions and
+  `when` over the focus chain, `each` on containers, multi-select on
+  `list`, and `:checked`/`:focus-within`. Still to come: `sparkline`,
+  `layout: grid`, `hints`, `tabs`, `table`, `bar: eighths`, `scrollbar`,
+  the mouse, and `examples/monitor`.
 
 ## License
 

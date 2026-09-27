@@ -10,6 +10,7 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
+	"github.com/abdul-hamid-achik/tuimark/internal/uniwidth"
 )
 
 // StyleRef is one <style> element: an external src or an inline body.
@@ -445,8 +446,54 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 	if needsID[tag] || statefulV2[tag] {
 		if it := listItem(parent); it != nil {
 			b.errN(n, "V001", "<%s> inside a list <item> can never take focus: %s", tag, listHint(it))
+		} else if c := b.eachContainer(n); c != nil {
+			// SPEC §6.8 item 8: the template is repeated per element, so
+			// nothing in it may take focus or keep per-node state.
+			b.errN(n, "V001", "<%s> inside an each template (%s) would repeat for every element and can never take focus or keep its state: %s", tag, describeNode(c), templateHint)
 		}
 	}
+}
+
+// templateHint is the advice given for a focus target or an id inside a
+// container each template (SPEC §6.8 item 8).
+const templateHint = `an each template on <col>, <row>, or <box> holds only what is shown per element; put a widget that takes focus outside it, or use a <list> (its rows are navigated by the list)`
+
+// eachContainer returns the col, row, or box with an each= attribute
+// whose template n is part of, at any depth (n itself excluded), or nil.
+// Only a version="2" document has container templates (SPEC §6.8); in a
+// version="1" document each= on a container is V002 and nothing is a
+// template.
+func (b *builder) eachContainer(n *ir.Node) *ir.Node {
+	if !b.v2 || n == nil {
+		return nil
+	}
+	for p := n.Parent; p != nil; p = p.Parent {
+		if isEachContainer(p) {
+			return p
+		}
+	}
+	return nil
+}
+
+// isEachContainer reports whether n is a col, row, or box with an each=
+// attribute (valid or not: a malformed each still makes its children a
+// template for the checks).
+func isEachContainer(n *ir.Node) bool {
+	switch n.Tag {
+	case "col", "row", "box":
+		_, ok := n.Attrs["each"]
+		return ok
+	}
+	return false
+}
+
+// describeNode names a node in a diagnostic: <tag id="..."> or <tag> at
+// line:col.
+func describeNode(n *ir.Node) string {
+	if n.ID != "" {
+		return fmt.Sprintf("<%s id=%q>", n.Tag, n.ID)
+	}
+	return fmt.Sprintf("<%s> at %d:%d", n.Tag, n.Line, n.Col)
 }
 
 // statefulV2 are the version="2" tags that keep per-node state by id and
@@ -565,6 +612,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 				// (An input/button/list/modal there is already V001 as a
 				// whole in checkTag; its own attributes add nothing.)
 				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item> (on <%s>): %s", name, tag, listHint(it))
+				return
+			} else if c := b.eachContainer(n); it == nil && c != nil && !needsID[tag] && !statefulV2[tag] {
+				// SPEC §6.8 item 8, at any depth of a container template.
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (on <%s>, in %s): %s", name, tag, describeNode(c), templateHint)
 				return
 			}
 		}
@@ -1034,11 +1085,17 @@ func (b *builder) checkNode(n *ir.Node) {
 	if v, ok := n.Attrs["focusable"]; ok && v == "true" {
 		focusable = true
 	}
-	if listItem(n) != nil {
+	if listItem(n) != nil || b.eachContainer(n) != nil {
+		// (A focus target inside a container each template is already
+		// V001/V002, and any id there V004: SPEC §6.8 item 8.)
 		focusable = false
 	}
 	if focusable && n.ID == "" {
 		b.errN(n, "V012", "<%s> is focusable and needs an id", n.Tag)
+	}
+	if b.v2 {
+		b.checkAliases(n)
+		b.checkMultiSelect(n)
 	}
 	if n.Tag == "list" {
 		items := 0
@@ -1063,6 +1120,67 @@ func (b *builder) checkNode(n *ir.Node) {
 	}
 }
 
+// checkAliases reports V011 for an each alias equal to the alias of an
+// enclosing each, on a container, a list, or a table (SPEC §6.8 item 7,
+// §7). Only version="2" documents can nest an each inside another.
+func (b *builder) checkAliases(n *ir.Node) {
+	if n.Each == "" {
+		return
+	}
+	e, err := ir.ParseEach(n.Each)
+	if err != nil {
+		return
+	}
+	for p := n.Parent; p != nil; p = p.Parent {
+		if p.Each == "" {
+			continue
+		}
+		if pe, err := ir.ParseEach(p.Each); err == nil && pe.Alias == e.Alias {
+			b.errN(n, "V011", "each=%q: the alias %q repeats the alias of the enclosing each=%q of %s; pick another name", n.Each, e.Alias, p.Each, describeNode(p))
+			return
+		}
+	}
+}
+
+// checkMultiSelect applies the V018 rules of SPEC §6.14 and §6.10.1:
+// checked needs each= and key= on the same list or table (a list of
+// static items cannot have it); mark is 1 or 2 columns wide and, on a list
+// or table, needs checked; on:change on a list needs checked.
+func (b *builder) checkMultiSelect(n *ir.Node) {
+	switch n.Tag {
+	case "list", "table", "tabs":
+	default:
+		return
+	}
+	_, hasChecked := n.Attr("checked")
+	if hasChecked && n.Tag != "tabs" {
+		_, hasEach := n.Attr("each")
+		_, hasKey := n.Attr("key")
+		if !hasEach || !hasKey {
+			what := "each= and key="
+			switch {
+			case hasEach:
+				what = "key="
+			case hasKey:
+				what = "each="
+			}
+			b.errN(n, "V018", "checked on <%s> needs %s on the same element: the checked array holds row keys (a list of static items cannot have it)", n.Tag, what)
+		}
+	}
+	if mark, ok := n.Attr("mark"); ok {
+		// (A mark holding {path} is already V003: it is literal text.)
+		if w := uniwidth.Width(mark); (w < 1 || w > 2) && !ir.HasInterp(mark) {
+			b.errN(n, "V018", "mark=%q is %d columns wide; a mark is 1 or 2 columns wide", mark, w)
+		}
+		if !hasChecked && n.Tag != "tabs" {
+			b.errN(n, "V018", "mark on <%s> needs checked=: the mark shows the checked rows", n.Tag)
+		}
+	}
+	if _, ok := n.On["change"]; ok && n.Tag == "list" && !hasChecked {
+		b.errN(n, "V018", "on:change on <list> needs checked=: it fires when the checked array changes")
+	}
+}
+
 // checkIDs reports duplicate ids (V004) over the whole source, in document
 // order, the subtrees of unknown tags included. Only ids in the tree enter
 // doc.IDs (the first of each), so a dropped subtree can collide with the
@@ -1073,10 +1191,16 @@ func (b *builder) checkIDs(root *ir.Node) {
 		if n.ID == "" {
 			return
 		}
+		inTemplate := b.eachContainer(n) != nil
 		if prev, ok := seen[n.ID]; ok {
 			b.errN(n, "V004", "duplicate id %q (first defined at %d:%d)", n.ID, prev.Line, prev.Col)
 		} else {
 			seen[n.ID] = n
+			if inTemplate {
+				// SPEC §6.8 item 8: the template is inflated once per
+				// element, so its id would repeat.
+				b.errN(n, "V004", "id %q inside an each template (%s) would repeat for every element: %s", n.ID, describeNode(b.eachContainer(n)), templateHint)
+			}
 		}
 		if dropped {
 			return
@@ -1084,7 +1208,7 @@ func (b *builder) checkIDs(root *ir.Node) {
 		if _, ok := b.doc.IDs[n.ID]; !ok {
 			b.doc.IDs[n.ID] = n
 		}
-		if listItem(n) == nil {
+		if listItem(n) == nil && !inTemplate {
 			if b.addressable == nil {
 				b.addressable = map[string]bool{}
 			}
@@ -1105,7 +1229,77 @@ func (b *builder) idTarget(id string) string {
 		return idMissing
 	}
 	if !b.addressable[id] {
-		return "is inside a list <item>, where nothing takes focus or is addressed by id: " + listHint(listItem(n))
+		if it := listItem(n); it != nil {
+			return "is inside a list <item>, where nothing takes focus or is addressed by id: " + listHint(it)
+		}
+		return "is inside an each template, where nothing takes focus or is addressed by id: " + templateHint
+	}
+	return ""
+}
+
+// checkBuiltinRow applies the static checks of SPEC §8.4 to a keymap row
+// naming a hyphenated built-in: switch-to needs to= (V003), and B007 (an
+// error) reports a target known without data to be incompatible. The
+// target is known when to= names a node, or, without to=, when when= is
+// exactly one compound of an #id and :focus (such as #procs:focus), which
+// fixes the focused node. toOK reports that to= names an addressable node.
+func (b *builder) checkBuiltinRow(k *KeyBind, path string, toOK bool) {
+	if k.Action == "switch-to" && k.To == "" {
+		b.diag(ir.Error, "V003", k.Line, k.Col, path, "", `action="switch-to" needs to="#tab" or to="#screen"`)
+		return
+	}
+	target, how := "", ""
+	switch {
+	case toOK:
+		target, how = k.To, fmt.Sprintf("to=\"#%s\"", k.To)
+	case k.To == "" && k.WhenSel != nil && len(k.WhenSel.Parts) == 1:
+		c := k.WhenSel.Parts[0]
+		if c.ID != "" && c.Tag == "" && len(c.Classes) == 0 && len(c.Pseudos) == 1 && c.Pseudos[0] == "focus" {
+			if b.idTarget(c.ID) == "" {
+				target, how = c.ID, fmt.Sprintf("when=%q", k.When)
+			}
+		}
+	}
+	if target == "" {
+		return
+	}
+	n := b.doc.IDs[target]
+	if n == nil {
+		return
+	}
+	if why := BuiltinIncompatible(k.Action, n.Kind, hasAttr(n, "checked")); why != "" {
+		b.diag(ir.Error, "B007", k.Line, k.Col, path, "", "action=%q: its target #%s (from %s) is a <%s>, %s", k.Action, target, how, n.Tag, why)
+	}
+}
+
+func hasAttr(n *ir.Node, name string) bool {
+	_, ok := n.Attr(name)
+	return ok
+}
+
+// BuiltinIncompatible returns why a node of the given kind can never be
+// the target of the hyphenated built-in action (SPEC §8.4 "Static
+// checks"), or "" when data or state may make it compatible. checked
+// tells whether the node has a checked= attribute.
+func BuiltinIncompatible(action, kind string, checked bool) string {
+	switch action {
+	case "move-next", "move-prev", "move-first", "move-last", "move-page-down", "move-page-up":
+		switch kind {
+		case "text", "rule", "spacer", "input", "button", "progress", "sparkline", "hints", "column", "tab", "item":
+			return "which has no cursor, no tabs, and no scroll offset to move (want a list, a table, a tabs, or a viewport)"
+		case "tabs":
+			if action == "move-page-down" || action == "move-page-up" {
+				return "whose strip does not page (use move-next or move-prev)"
+			}
+		}
+	case "check-toggle", "check-all", "check-none":
+		if (kind != "list" && kind != "table") || !checked {
+			return "not a list or table with checked= (the array of checked row keys)"
+		}
+	case "switch-to":
+		if kind != "tab" && kind != "screen" {
+			return "not a tab or a screen"
+		}
 	}
 	return ""
 }
@@ -1154,6 +1348,7 @@ func (b *builder) checkKeymap() {
 				}
 			}
 		}
+		toOK := false
 		if k.To != "" {
 			if !strings.HasPrefix(k.To, "#") || !isIDName(k.To[1:]) {
 				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "to=%q: want #id", k.To)
@@ -1163,11 +1358,16 @@ func (b *builder) checkKeymap() {
 					b.diag(ir.Error, "B005", k.Line, k.Col, path, "", "to=\"#%s\" refers to an id that does not exist", k.To)
 				} else if why != "" {
 					b.diag(ir.Error, "B005", k.Line, k.Col, path, "", "to=\"#%s\" %s", k.To, why)
+				} else {
+					toOK = true
 				}
 			}
 		}
 		if k.Action == "focus" && k.To == "" {
 			b.diag(ir.Error, "V003", k.Line, k.Col, path, "", `action="focus" needs to="#id"`)
+		}
+		if b.v2 && ir.IsBuiltinActionV2(k.Action) {
+			b.checkBuiltinRow(k, path, toOK)
 		}
 	}
 	for _, s := range b.doc.Screens {

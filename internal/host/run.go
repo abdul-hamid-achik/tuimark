@@ -513,7 +513,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		if quit {
 			return true, nil
 		}
-		if len(evs) > 0 || a.Focus() != focus {
+		// A built-in action may have changed the frame without an event
+		// or a focus move (TakeDirty).
+		if changed := a.TakeDirty(); len(evs) > 0 || a.Focus() != focus || changed {
 			if err := draw(); err != nil {
 				return true, err
 			}

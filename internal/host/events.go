@@ -58,6 +58,11 @@ func (a *App) focusTarget(id string) *ir.Node {
 		if p.Kind == "item" {
 			return nil
 		}
+		// Nothing inside a container each template is a focus target
+		// either (SPEC §6.8 item 8; its ids are V004).
+		if p != n && a.doc.V2 && p.Each != "" && (p.Kind == "col" || p.Kind == "row" || p.Kind == "box") {
+			return nil
+		}
 	}
 	return n
 }
@@ -265,66 +270,6 @@ func (a *App) insertText(b *layout.Box, text []rune) []Event {
 	return nil
 }
 
-func (a *App) handleKey(k Key) []Event {
-	fb := a.focusedBox()
-	// 1. Escape closes the top modal through its on:escape action.
-	if k.Name == "esc" {
-		if m := a.topModal(); m != nil && m.Src != nil {
-			if act, ok := m.Src.On["escape"]; ok {
-				return []Event{{Action: act, Source: m.ID, Keys: map[string]any{}}}
-			}
-		}
-	}
-	// 2. The focused widget consumes its own keys.
-	if fb != nil && !fb.Disabled {
-		if evs, consumed := a.widgetKey(fb, k); consumed {
-			return evs
-		}
-	}
-	// 3. Keymap rows, in document order.
-	for _, kb := range a.doc.Keymap {
-		if !containsKey(kb.Keys, k.Name) {
-			continue
-		}
-		// The hyphenated built-ins of SPEC §8.4 (version="2") match only
-		// when their target does; this build does not run them yet, so
-		// such a row never matches and the key goes on to later rows, as
-		// for a row whose target is missing. It is never dispatched as a
-		// host action.
-		if ir.IsBuiltinActionV2(kb.Action) {
-			continue
-		}
-		if kb.WhenSel != nil && (fb == nil || !kb.WhenSel.Matches(fb)) {
-			continue
-		}
-		switch kb.Action {
-		case "focus":
-			return a.focusTo(kb.To)
-		default:
-			return []Event{a.eventFor(kb.Action, fb)}
-		}
-	}
-	// 4. Built-ins.
-	switch k.Name {
-	case "tab":
-		return a.cycleFocus(1)
-	case "shift+tab":
-		return a.cycleFocus(-1)
-	case "ctrl+c":
-		return []Event{{Action: "quit", Source: a.focus, Keys: map[string]any{}}}
-	}
-	return nil
-}
-
-func containsKey(keys []string, name string) bool {
-	for _, k := range keys {
-		if k == name {
-			return true
-		}
-	}
-	return false
-}
-
 // focusTo handles action="focus" and tab cycling. A target the last frame
 // shows as focusable takes focus now and its on:focus is returned. Any
 // other target (disabled, hidden, not focusable, outside an open modal, on
@@ -375,139 +320,6 @@ func (a *App) cycleFocus(dir int) []Event {
 
 func isPrintable(k Key) bool {
 	return k.Rune != 0 && !strings.HasPrefix(k.Name, "ctrl+")
-}
-
-func (a *App) widgetKey(b *layout.Box, k Key) ([]Event, bool) {
-	switch b.Kind {
-	case "input":
-		if isPrintable(k) {
-			return a.insertText(b, []rune{k.Rune}), true
-		}
-		// The cursor stands between grapheme clusters: left, right, and
-		// backspace move over or delete a whole cluster (SPEC v0.2 §12.1).
-		st, runes, bounds := a.inputCursor(b)
-		changed := false
-		switch {
-		case k.Name == "backspace" || k.Name == "ctrl+h":
-			if st.cursor > 0 {
-				p := boundBefore(bounds, st.cursor)
-				runes = append(runes[:p], runes[st.cursor:]...)
-				st.cursor = p
-				changed = true
-			}
-		case k.Name == "ctrl+u":
-			if len(runes) > 0 {
-				runes, st.cursor, changed = nil, 0, true
-			}
-		case k.Name == "left":
-			st.cursor = boundBefore(bounds, st.cursor)
-			return nil, true
-		case k.Name == "right":
-			st.cursor = boundAfter(bounds, st.cursor)
-			return nil, true
-		case k.Name == "home" || k.Name == "ctrl+a":
-			st.cursor = 0
-			return nil, true
-		case k.Name == "end" || k.Name == "ctrl+e":
-			st.cursor = len(runes)
-			return nil, true
-		case k.Name == "enter":
-			if act, ok := b.Src.On["submit"]; ok {
-				ev := a.eventFor(act, b)
-				return []Event{ev}, true
-			}
-			return nil, false
-		default:
-			return nil, false
-		}
-		if changed {
-			a.setInputValue(b, string(runes))
-			if act, ok := b.Src.On["change"]; ok {
-				return []Event{a.eventFor(act, b)}, true
-			}
-		}
-		return nil, true
-	case "list":
-		ls := a.lists[b.ID]
-		if ls == nil || len(ls.keys) == 0 {
-			return nil, false
-		}
-		n := len(ls.keys)
-		idx := ls.index
-		page := max(1, ls.page)
-		switch k.Name {
-		case "up":
-			idx--
-		case "down":
-			idx++
-		case "home":
-			idx = 0
-		case "end":
-			idx = n - 1
-		case "pgup":
-			idx -= page
-		case "pgdn":
-			idx += page
-		default:
-			return nil, false
-		}
-		idx = min(max(idx, 0), n-1)
-		if idx == ls.index {
-			return nil, true
-		}
-		ls.index = idx
-		if b.Src.Bind != "" {
-			if root, err := assign(a.store, b.Src.Bind, ls.keys[idx]); err == nil {
-				a.store = root
-			}
-		}
-		if act, ok := b.Src.On["select"]; ok {
-			return []Event{a.eventFor(act, b)}, true
-		}
-		return nil, true
-	}
-	if b.Scrolls() {
-		off := a.scrolls[b.ID]
-		page := max(1, b.Content.H)
-		switch k.Name {
-		case "up":
-			off[1]--
-		case "down":
-			off[1]++
-		case "left":
-			off[0]--
-		case "right":
-			off[0]++
-		case "pgup":
-			off[1] -= page
-		case "pgdn":
-			off[1] += page
-		case "home":
-			off[1] = 0
-		case "end":
-			off[1] = b.ContentH
-		default:
-			return a.clickKey(b, k)
-		}
-		off[0], off[1] = max(0, off[0]), max(0, off[1])
-		a.scrolls[b.ID] = off
-		return nil, true
-	}
-	return a.clickKey(b, k)
-}
-
-// clickKey fires on:click for enter/space on buttons and focusable nodes.
-func (a *App) clickKey(b *layout.Box, k Key) ([]Event, bool) {
-	if k.Name != "enter" && k.Name != "space" {
-		return nil, false
-	}
-	if b.Src == nil {
-		return nil, false
-	}
-	if act, ok := b.Src.On["click"]; ok {
-		return []Event{{Action: act, Source: b.ID, Keys: map[string]any{}}}, true
-	}
-	return nil, false
 }
 
 // Dispatch runs the handler for ev. It returns quit=true when the app

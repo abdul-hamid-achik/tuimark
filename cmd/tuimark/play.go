@@ -446,7 +446,9 @@ func (s *playSession) handleKeys(step int, keys []host.Key) {
 		if s.quit {
 			return
 		}
-		if len(evs) > 0 || s.app.Focus() != focus {
+		// A built-in action may have changed the frame without an event
+		// or a focus move (TakeDirty), as in Run.
+		if changed := s.app.TakeDirty(); len(evs) > 0 || s.app.Focus() != focus || changed {
 			s.draw()
 		}
 	}

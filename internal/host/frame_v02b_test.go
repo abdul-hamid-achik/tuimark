@@ -113,10 +113,10 @@ func TestSetThemeWhileRendering(t *testing.T) {
 }
 
 // SPEC v0.2b §8.4: a hyphenated built-in is built in (Catalog lists it
-// with Builtin: true and it is never B004); this build does not run the
-// built-ins yet, so a row naming one never matches and the key goes on to
-// the next row, as for a row whose target is missing — it is never
-// dispatched as a host action.
+// with Builtin: true and it is never B004), and it is never dispatched as
+// a host action. Here nothing is focused and the rows have no to=, so the
+// built-ins have no target: the rows do not match and the key goes on to
+// the next row (p2_test.go covers the built-ins with their targets).
 func TestVersionTwoBuiltinsNeverDispatchAsHostActions(t *testing.T) {
 	a := doc(t, `<tui version="2"><keymap><bind keys="j" action="move-next"/><bind keys="j" action="later"/><bind keys="k" action="check-all"/></keymap>
 <screen id="s"><text>x</text></screen></tui>`)
