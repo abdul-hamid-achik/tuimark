@@ -334,7 +334,7 @@ func (c *cli) cmdTest(args []string) int {
 					continue
 				}
 				if hasPlay {
-					sess := play.NewSession(app, cols, rows, e.Cells, e.Styles, false, false)
+					sess := play.NewSession(app, cols, rows, e.Cells, e.Styles, false, true)
 					sess.Run(steps)
 					if sess.UsageErr != nil {
 						fmt.Fprintf(c.stdout, "FAIL %s %s: play step %d (%s): %v\n", e.Name, size, sess.UsageStep, sess.UsageRaw, sess.UsageErr)

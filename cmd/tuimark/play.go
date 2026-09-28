@@ -348,7 +348,7 @@ func (c *cli) cmdPlay(args []string) int {
 	}
 	app.SetStrict(*strict)
 
-	sess := play.NewSession(app, *cols, *rows, *cells, *styles, *frames, false)
+	sess := play.NewSession(app, *cols, *rows, *cells, *styles, *frames, true)
 	sess.Run(steps)
 	if sess.UsageErr != nil {
 		return c.fail(fmt.Errorf("play: step %d (%s): %v", sess.UsageStep, sess.UsageRaw, sess.UsageErr))

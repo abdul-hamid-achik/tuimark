@@ -51,8 +51,8 @@ type Session struct {
 
 // NewSession builds a Session over app at cols×rows. cells/styles/frames
 // mirror the --cells/--styles/--frames flags (frames has no tuimark.Play
-// equivalent); noHandlers is PlayOptions.NoHandlers (always false for the
-// CLI, which registers no handlers anyway).
+// equivalent); noHandlers is PlayOptions.NoHandlers, always true for
+// tuimark play and tuimark test, which record host actions (SPEC §15.4).
 func NewSession(app *host.App, cols, rows int, cells, styles, frames, noHandlers bool) *Session {
 	return &Session{
 		App: app, Cols: cols, Rows: rows,

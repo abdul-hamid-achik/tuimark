@@ -169,8 +169,8 @@ func TestPlayTextMouseReportsDoNotSplitTypingWhileMouseOff(t *testing.T) {
 // 40 (amended, SPEC v0.3 §21 test 84). `tuimark ir` of
 // specs/fixtures/table.tui is IR "0.2", valid against schema/ir.v0.2.json.
 // The "0.2" IR/schema check moved here from examples/monitor/studio.tui,
-// which the integrator will move to version="3" separately (its own IR
-// check then becomes "0.3" against schema/ir.v0.3.json).
+// which is version="3" since 0.3a (TestMonitorIR checks its IR "0.3"
+// against schema/ir.v0.3.json).
 func TestTableFixtureIR(t *testing.T) {
 	code, out, errw := runCLI("ir", "../../specs/fixtures/table.tui")
 	if code != 0 {
@@ -185,9 +185,10 @@ func TestTableFixtureIR(t *testing.T) {
 	}
 }
 
-// 40. `tuimark ir` of examples/monitor/studio.tui (still version="2" on
-// this branch, SPEC v0.3) has mouse in app, label/keycap in keymap rows,
-// class:NAME in attrs, and the new kinds.
+// 40. `tuimark ir` of examples/monitor/studio.tui, a version="3" document
+// since 0.3a (SPEC v0.3 §21 tests 40 and 89), is IR "0.3", validates
+// against schema/ir.v0.3.json, and has mouse in app, label/keycap in
+// keymap rows, class:NAME in attrs, and the new kinds.
 func TestMonitorIR(t *testing.T) {
 	code, out, errw := runCLI("ir", "../../examples/monitor/studio.tui")
 	if code != 0 {
@@ -198,5 +199,8 @@ func TestMonitorIR(t *testing.T) {
 		if !strings.Contains(out, want) {
 			t.Errorf("monitor IR lacks %s", want)
 		}
+	}
+	if errs := validateSchema(t, irV03Schema, decodeJSON(t, []byte(out))); len(errs) > 0 {
+		t.Errorf("monitor IR vs ir.v0.3.json: %v", errs)
 	}
 }

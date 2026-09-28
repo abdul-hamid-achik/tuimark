@@ -67,10 +67,11 @@ func requireNoParseErrors(t *testing.T, app *tuimark.App) {
 	}
 }
 
-// 84. version="3" is accepted, version="4" is V003 with a message listing
-// "1", "2", or "3" (also covered in conformance_v02b_test.go alongside
-// the rest of the version gate).
-func TestVersionThreeIR(t *testing.T) {
+// 84. version="3" is accepted with no diagnostic. version="4" being V003
+// with a message listing "1", "2", or "3" is covered in
+// conformance_v02b_test.go with the rest of the version gate, and IR
+// "0.3" by cmd/tuimark TestVersionThreeFixturesIR.
+func TestVersionThreeIsAccepted(t *testing.T) {
 	app := parseV3(t, `<tui version="3"><screen id="main"><text>x</text></screen></tui>`)
 	requireNoParseErrors(t, app)
 }
@@ -479,5 +480,43 @@ d
 	// count even though it sticks out.
 	if l009 := byID("outerHidden"); len(l009) != 0 {
 		t.Errorf("#outerHidden: unexpected L009: %v", l009)
+	}
+}
+
+// Review fix (SPEC v0.3 §14, §30.4 item 13c): the rows of one template
+// that cut by different amounts still give one L008 and one L009, while
+// every row that is cut gets clipped. The dedup once keyed on the
+// message, which differs from row to row.
+func TestClipOneDiagnosticPerTemplate(t *testing.T) {
+	const src = `<tui version="3">
+<screen id="main">
+<list id="rows" width="10" height="4" each="items as item" key="item.k"><item><text width="10">{item.v}</text></item></list>
+<col each="items as it" key="it.k"><box width="10" height="1"><text style="wrap: wrap">{it.v}</text></box></col>
+</screen>
+</tui>`
+	app := parseV3(t, src)
+	bindJSON(t, app, "items", `[{"k":0,"v":"ABCDEFGHIJKLMN"},{"k":1,"v":"ABCDEFGHIJKLMNOPQRSTUVWXYZ"},{"k":2,"v":"ABCDEFGHIJ"}]`)
+	requireNoParseErrors(t, app)
+	d, err := app.Dump(40, 24)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := diagsWithCode(d, "L008"); len(got) != 1 {
+		t.Errorf("L008: %d diagnostics for one template, want 1: %v", len(got), got)
+	}
+	if got := diagsWithCode(d, "L009"); len(got) != 1 {
+		t.Errorf("L009: %d diagnostics for one template, want 1: %v", len(got), got)
+	}
+	texts, boxes := 0, 0
+	for _, n := range d.Nodes {
+		switch {
+		case n.Tag == "text" && n.Clipped == "text":
+			texts++
+		case n.Tag == "box" && n.Clipped == "children":
+			boxes++
+		}
+	}
+	if texts != 2 || boxes != 2 {
+		t.Errorf("clipped rows: %d texts and %d boxes, want 2 and 2 (the third row fits)", texts, boxes)
 	}
 }

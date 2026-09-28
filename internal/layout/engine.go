@@ -928,14 +928,18 @@ func (e *Engine) checkTextClip(n *Box) {
 	nowrap := mode != "wrap" && mode != "truncate"
 	if nowrap && !n.Style.WrapWritten {
 		if w, c := MaxWidth(n.Text), n.Content.W; w > c {
-			e.report(n, ir.Warning, "L008", "text is %d columns wide but its content box has %d; set wrap: truncate, or write wrap: nowrap to keep the cut", w, c)
+			if e.clipFirst(n, "L008a") {
+				e.report(n, ir.Warning, "L008", "text is %d columns wide but its content box has %d; set wrap: truncate, or write wrap: nowrap to keep the cut", w, c)
+			}
 			n.Clipped = "text"
 		}
 	}
 	if !n.Style.OverflowWritten {
 		lines := Lines(n.Text, n.Content.W, mode)
 		if r := n.Content.H; len(lines) > r {
-			e.report(n, ir.Warning, "L008", "text has %d lines but its content box has %d rows; give it room, or write overflow: hidden to keep the cut", len(lines), r)
+			if e.clipFirst(n, "L008b") {
+				e.report(n, ir.Warning, "L008", "text has %d lines but its content box has %d rows; give it room, or write overflow: hidden to keep the cut", len(lines), r)
+			}
 			n.Clipped = "text"
 		}
 	}
@@ -989,8 +993,29 @@ func (e *Engine) checkChildrenClip(n *Box) {
 // reportClip reports L009 on n for its child c cut on axis ("x" or "y"),
 // shown of total cells, and marks n Clipped "children".
 func (e *Engine) reportClip(n, c *Box, axis string, shown, total int) {
-	e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; give it room, or write overflow: hidden to keep the cut", clipRef(c), axis, shown, total)
+	if e.clipFirst(n, "L009") {
+		e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; give it room, or write overflow: hidden to keep the cut", clipRef(c), axis, shown, total)
+	}
 	n.Clipped = "children"
+}
+
+// clipFirst reports whether n is the first node of its source element to
+// meet this clipping condition in the frame (kind is "L008a", "L008b", or
+// "L009"). The rows of one template share a source element and give one
+// diagnostic whatever their numbers (SPEC v0.3 §14), while each of them
+// still gets Clipped. report's own dedup keys on the message, which
+// differs from row to row, so it cannot do this.
+func (e *Engine) clipFirst(n *Box, kind string) bool {
+	path, line, col := "", 0, 0
+	if n.Src != nil {
+		path, line, col = n.Src.Path, n.Src.Line, n.Src.Col
+	}
+	key := fmt.Sprintf("clip|%s|%s|%d|%d|%s", kind, path, line, col, n.ID)
+	if e.seen[key] {
+		return false
+	}
+	e.seen[key] = true
+	return true
 }
 
 // intrinsic returns b's content-driven border-box size on one axis.
