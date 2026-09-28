@@ -2,6 +2,7 @@ package tuimark_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -103,9 +104,17 @@ func countTag(lines []string, tag string) int {
 
 func TestMonitorAcceptance(t *testing.T) {
 	t.Run("processes columns and name bounds", func(t *testing.T) {
-		for size, want := range map[string]int{"57x24": 3, "58x24": 4, "78x24": 5, "100x30": 7} {
+		// 0.3b (SPEC v0.3b §17.4, test 107): the columns hide by
+		// priority, no longer by @media: 6, 6, 7, and 7 at 57, 58, 78, and
+		// 100 columns, and 7 and 4 in monitor-tabs' 80 and 40.
+		for size, want := range map[string]int{"57x24": 6, "58x24": 6, "78x24": 7, "100x30": 7} {
 			if got := countTag(nodeLines(t, "monitor-processes", size), "column"); got != want {
 				t.Errorf("%s: %d columns, want %d", size, got, want)
+			}
+		}
+		for size, want := range map[string]int{"80x24": 7, "40x24": 4} {
+			if got := countTag(nodeLines(t, "monitor-tabs", size), "column"); got != want {
+				t.Errorf("monitor-tabs %s: %d columns, want %d", size, got, want)
 			}
 		}
 		d := readGoldenJSON(t, "monitor-processes", "100x30")
@@ -196,10 +205,19 @@ func TestMonitorAcceptance(t *testing.T) {
 		}
 	})
 	t.Run("cpu grid and scrollbar", func(t *testing.T) {
+		// 0.3b (test 107): with row-gap: 0 on #cores, 12 cores in one
+		// column are 12 rows tall: #cores-view scrolls at 40x12 (9 rows,
+		// scroll {0, 12}, the thumb on rows 1-4) and fits at 40x24 (14
+		// rows, the same scroll, no thumb).
 		d := readGoldenJSON(t, "monitor-cpu", "40x12")
 		for _, n := range d.Nodes {
-			if n.ID == "cores-view" && (n.H != 9 || n.Scroll == nil || n.Scroll.Y != 0 || n.Scroll.H != 23) {
+			if n.ID == "cores-view" && (n.H != 9 || n.Scroll == nil || n.Scroll.Y != 0 || n.Scroll.H != 12) {
 				t.Errorf("cores-view %+v scroll %+v", n, n.Scroll)
+			}
+		}
+		for y, l := range gridOf(t, "monitor-cpu", "40x12")[3:10] {
+			if want := fmt.Sprintf("│cpu%d ", y); !strings.HasPrefix(l, want) {
+				t.Errorf("40x12 content row %d is %q, want core %d", y, l, y)
 			}
 		}
 		thumb := func(size string) []int {
@@ -211,14 +229,20 @@ func TestMonitorAcceptance(t *testing.T) {
 			}
 			return rows
 		}
-		if got := thumb("40x12"); len(got) != 2 || got[0] != 1 || got[1] != 2 {
-			t.Errorf("40x12 thumb rows %v, want [1 2]", got)
+		if got := thumb("40x12"); fmt.Sprint(got) != "[1 2 3 4]" {
+			t.Errorf("40x12 thumb rows %v, want [1 2 3 4]", got)
 		}
-		if got := thumb("40x24"); len(got) != 15 || got[0] != 1 || got[14] != 15 {
-			t.Errorf("40x24 thumb rows %v, want 1-15", got)
+		fits := false
+		for _, l := range nodeLines(t, "monitor-cpu", "40x24") {
+			if f := strings.Fields(l); len(f) > 3 && f[0] == "cores-view" {
+				fits = f[2] == "40x14"
+			}
+		}
+		if !fits {
+			t.Error("40x24: #cores-view is not 40x14")
 		}
 		for size, cols := range map[string]int{"40x24": 1, "80x24": 3, "120x30": 4} {
-			if len(thumb(size)) > 0 && size != "40x24" {
+			if len(thumb(size)) > 0 {
 				t.Errorf("%s has a thumb", size)
 			}
 			if got := strings.Count(gridOf(t, "monitor-cpu", size)[3], "cpu"); got != cols {

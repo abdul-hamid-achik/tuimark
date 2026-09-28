@@ -180,3 +180,87 @@ func TestPriorityPlayResize(t *testing.T) {
 		t.Errorf("play after resize:120x3: columns %q, want \"a b c d e\"", got)
 	}
 }
+
+// 107. examples/monitor on 0.3b (SPEC v0.3b §17.4 "In 0.3b"): its one
+// <keymap> became seven <keymap when> groups whose rows drop the when
+// their group gives them, and `tuimark ir`'s top-level keymap array (each
+// row's effective when, SPEC v0.3b §8.1) is byte-identical to the 0.3a
+// file's, frozen in examples/monitor/testdata/v0.3.0. The #filter
+// tab,shift+tab row still comes before the #app tab,right,l and
+// shift+tab,left,h rows, so tab in the filter fires filter_apply
+// (monitor-play-filter). The root tree keeps each <keymap> node with its
+// when as written, the ctrl+c row's when="" included.
+func TestMonitorKeymapGroupsKeepTheIRKeymap(t *testing.T) {
+	type irDoc struct {
+		Keymap json.RawMessage `json:"keymap"`
+		Root   struct {
+			Children []struct {
+				Kind     string            `json:"kind"`
+				Attrs    map[string]string `json:"attrs"`
+				Children []struct {
+					Attrs map[string]string `json:"attrs"`
+				} `json:"children"`
+			} `json:"children"`
+		} `json:"root"`
+	}
+	ir := func(path string) irDoc {
+		t.Helper()
+		code, out, errw := runCLI("ir", path)
+		if code != 0 {
+			t.Fatalf("ir %s: exit %d: %s", path, code, errw)
+		}
+		var d irDoc
+		mustUnmarshal(t, out, &d)
+		return d
+	}
+	live := ir("../../examples/monitor/studio.tui")
+	frozen := ir("../../examples/monitor/testdata/v0.3.0/studio.tui")
+	if len(live.Keymap) == 0 || string(live.Keymap) != string(frozen.Keymap) {
+		t.Errorf("IR keymap differs from 0.3a's:\n0.3b %s\n0.3a %s", live.Keymap, frozen.Keymap)
+	}
+
+	var rows []struct {
+		Keys, Action, When string
+	}
+	if err := json.Unmarshal(live.Keymap, &rows); err != nil {
+		t.Fatal(err)
+	}
+	index := func(keys, when string) int {
+		t.Helper()
+		for i, r := range rows {
+			if r.Keys == keys && r.When == when {
+				return i
+			}
+		}
+		t.Fatalf("no keymap row %s with when=%q", keys, when)
+		return -1
+	}
+	filter := index("tab,shift+tab", "#filter")
+	if next, prev := index("tab,right,l", "#app"), index("shift+tab,left,h", "#app"); filter > next || filter > prev {
+		t.Errorf("the #filter tab row is row %d, after the #app rows %d and %d", filter, next, prev)
+	}
+	if i := index("ctrl+c", ""); rows[i].Action != "quit" {
+		t.Errorf("ctrl+c row %+v", rows[i])
+	}
+
+	var groups []string
+	ctrlC, hasCtrlC := "", false
+	for _, c := range live.Root.Children {
+		if c.Kind != "keymap" {
+			continue
+		}
+		groups = append(groups, c.Attrs["when"])
+		for _, b := range c.Children {
+			if b.Attrs["keys"] == "ctrl+c" {
+				ctrlC, hasCtrlC = b.Attrs["when"]
+			}
+		}
+	}
+	want := "#app #filter #app #procs:focus #kill #detail #settings-list:focus"
+	if got := strings.Join(groups, " "); got != want {
+		t.Errorf("keymap groups %q, want %q", got, want)
+	}
+	if !hasCtrlC || ctrlC != "" {
+		t.Errorf("the ctrl+c bind node's when is %q (present: %v), want \"\" as written", ctrlC, hasCtrlC)
+	}
+}

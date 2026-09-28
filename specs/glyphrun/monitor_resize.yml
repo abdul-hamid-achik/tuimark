@@ -1,13 +1,15 @@
 version: 1
 name: monitor_resize
 intent: |
-    examples/monitor (SPEC v0.2b §17.4) follows the terminal size with no
-    host code: resizing 120 → 99 → 77 → 57 → 40 columns drops the process
-    table's columns by @media (USER and I/O below 100 columns, THR below
-    78, MEM below 58), the tab strip goes from full labels (tier 1) to
-    short labels (tier 2) and then to the active label alone, ‹ 7 processes
-    › (tier 3); on the CPU tab the core grid goes from four columns at 120
-    to one at 40.
+    examples/monitor (SPEC v0.2b §17.4, in 0.3b) follows the terminal size
+    with no host code: resizing 120 → 99 → 77 → 57 → 40 columns hides the
+    process table's columns by priority only when they would not fit
+    (all seven at 120, 99, and 77; USER goes at 57; I/O and THR too at 40,
+    where PID, NAME, CPU%, and MEM stay), the tab strip goes from full
+    labels (tier 1) to short labels (tier 2) and then to the active label
+    alone, ‹ 7 processes › (tier 3); on the CPU tab the core grid goes from
+    four columns at 120 to one at 40, where the twelve cores, one per row
+    with no row gap, all fit.
 target:
     cmd: ["${vars.monitor}"]
     cwd: "."
@@ -19,17 +21,21 @@ steps:
         screen:
             contains: "USER"
         timeoutMs: 5000
+    - wait:
+        screen:
+            contains: "1 overview   2 cpu"
+        timeoutMs: 3000
     - snapshot: w120
     - resize:
         cols: 99
         rows: 24
     - wait:
         screen:
-            notContains: "USER"
+            contains: "1 ovr   2 cpu"
         timeoutMs: 3000
     - wait:
         screen:
-            contains: "7 proc"
+            matches: "I/O USER +[┃│]"
         timeoutMs: 3000
     - snapshot: w99
     - resize:
@@ -37,7 +43,7 @@ steps:
         rows: 24
     - wait:
         screen:
-            matches: "MEM +[┃│]"
+            matches: "NAME {21}CPU%▼"
         timeoutMs: 3000
     - snapshot: w77
     - resize:
@@ -45,7 +51,7 @@ steps:
         rows: 24
     - wait:
         screen:
-            matches: "CPU%▼[┃│]"
+            matches: "I/O[┃│]"
         timeoutMs: 3000
     - wait:
         screen:
@@ -61,7 +67,7 @@ steps:
         timeoutMs: 3000
     - wait:
         screen:
-            matches: "CPU%▼[┃│]"
+            matches: "MEM[┃│]"
         timeoutMs: 3000
     - snapshot: w40
     - press: "2"
@@ -71,7 +77,7 @@ steps:
         timeoutMs: 3000
     - wait:
         screen:
-            contains: "cpu1 "
+            contains: "cpu11 "
         timeoutMs: 3000
     - snapshot: cores40
     - resize:
@@ -88,18 +94,18 @@ steps:
     - snapshot: cores120
 outcomes:
     - id: columns_follow_the_width
-      description: the table shows PID, NAME, CPU%, MEM, THR, I/O, USER at 120; drops I/O and USER at 99, THR at 77, MEM at 57; three columns stay at 40
+      description: the table shows PID, NAME, CPU%, MEM, THR, I/O, USER at 120, 99, and 77, where they fit; by priority it drops USER at 57, and I/O and THR at 40, where four columns stay
       verify:
         script:
             runtime: shell
             run: |
                 d="$GLYPHRUN_RUN_DIR/snapshots"
-                if grep -q "THR .*I/O USER" "$d/w120.txt" \
-                  && grep -q "MEM  THR" "$d/w99.txt" && ! grep -q "I/O" "$d/w99.txt" \
-                  && grep -q "MEM" "$d/w77.txt" && ! grep -q "THR" "$d/w77.txt" \
-                  && grep -q "PID NAME .*CPU%" "$d/w57.txt" && ! grep -q "MEM" "$d/w57.txt" \
-                  && grep -q "PID NAME .*CPU%" "$d/w40.txt"; then
-                  echo '{"ok": true, "evidence": "7, 5, 4, 3, 3 columns at 120, 99, 77, 57, 40"}'
+                if grep -q "MEM  THR .*I/O USER" "$d/w120.txt" \
+                  && grep -q "MEM  THR .*I/O USER" "$d/w99.txt" \
+                  && grep -q "MEM  THR .*I/O USER" "$d/w77.txt" \
+                  && grep -q "PID NAME .*CPU%.* MEM  THR .*I/O" "$d/w57.txt" && ! grep -q "USER" "$d/w57.txt" \
+                  && grep -q "PID NAME .*CPU%.* MEM" "$d/w40.txt" && ! grep -q "THR" "$d/w40.txt" && ! grep -q "I/O" "$d/w40.txt" && ! grep -q "USER" "$d/w40.txt"; then
+                  echo '{"ok": true, "evidence": "7, 7, 7, 6, 4 columns at 120, 99, 77, 57, 40"}'
                 else
                   echo '{"ok": false, "evidence": "the column set did not follow the width"}'
                 fi
@@ -117,15 +123,16 @@ outcomes:
                   echo '{"ok": false, "evidence": "the tab strip did not follow the width"}'
                 fi
     - id: cores_follow_the_width
-      description: the CPU tab lays the cores out one per row at 40 columns and four per row at 120
+      description: the CPU tab lays the cores out one per row at 40 columns, all twelve on screen, and four per row at 120
       verify:
         script:
             runtime: shell
             run: |
                 d="$GLYPHRUN_RUN_DIR/snapshots"
-                if grep -q "cpu0 " "$d/cores40.txt" && ! grep -q "cpu0 .*cpu1 " "$d/cores40.txt" && grep -q "cpu0 .*cpu1 .*cpu2 .*cpu3 " "$d/cores120.txt"; then
-                  echo '{"ok": true, "evidence": "one core per row at 40, cpu0-cpu3 on one row at 120"}'
+                if grep -q "cpu0 " "$d/cores40.txt" && grep -q "cpu11 " "$d/cores40.txt" && ! grep -q "cpu0 .*cpu1 " "$d/cores40.txt" \
+                  && grep -q "cpu0 .*cpu1 .*cpu2 .*cpu3 " "$d/cores120.txt"; then
+                  echo '{"ok": true, "evidence": "one core per row at 40 with cpu0-cpu11 on screen, cpu0-cpu3 on one row at 120"}'
                 else
                   echo '{"ok": false, "evidence": "the core grid did not follow the width"}'
                 fi
-contractHash: sha256:ab5906a0d230973a7e9154421fa5f4192420ff4d6d0b7893bc9b3dd96cca2ef3
+contractHash: sha256:6ebffef5072960f4b44b384234490543102e932a5923255bb514f78de79b205e
