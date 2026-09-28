@@ -25,10 +25,25 @@ type StyleRef struct {
 
 // KeyBind is one <bind> row of the keymap.
 type KeyBind struct {
-	Keys      []string
-	KeysRaw   string
-	Action    string
-	When      string
+	Keys    []string
+	KeysRaw string
+	Action  string
+	// When is this row's own when=, as written ("" when absent).
+	When string
+	// HasOwnWhen is whether the row itself wrote a when= attribute, even
+	// ""="" (SPEC v0.3b §8.1): it then overrides the enclosing <keymap>'s
+	// own when instead of inheriting it.
+	HasOwnWhen bool
+	// KeymapNode is the enclosing <keymap> element, whose own when= this
+	// row inherits when it wrote none itself (SPEC v0.3b §8.1).
+	KeymapNode *ir.Node
+	// EffectiveWhen is When when HasOwnWhen, else the enclosing <keymap>'s
+	// own when= ("" when it has none either): what `tuimark ir`'s
+	// top-level keymap array carries as this row's when (SPEC v0.3b §8.1,
+	// §13.1).
+	EffectiveWhen string
+	// WhenSel is EffectiveWhen parsed, nil when it is empty or invalid
+	// (checkKeymap): the selector dispatch, <hints>, and B007 use.
 	WhenSel   *css.Selector
 	To        string // id without '#'
 	Label     string // version="2": the hint label (SPEC §6.12); "" when absent
@@ -184,6 +199,18 @@ var TagAttrsV2 = map[string]map[string]bool{
 	"hints":     with("scope"),
 }
 
+// TagAttrsV3 is what a version="3" document additionally accepts on top of
+// TagAttrs and TagAttrsV2: the attributes marked ‡ in SPEC §6.15 (v0.3b).
+// scroll's stick and modal's focus sit on version="1" tags; keymap's when
+// does too. (column's priority and sparkline's scale, the other ‡
+// attributes, sit on version="2" tags and are added where that vocabulary
+// is implemented.)
+var TagAttrsV3 = map[string]map[string]bool{
+	"scroll": only("stick"),
+	"modal":  only("focus"),
+	"keymap": only("when"),
+}
+
 // tableItemAttrs are the attributes of a table's row template <item>
 // (SPEC §6.9.1, §6.15), besides class:NAME.
 var tableItemAttrs = only("class")
@@ -194,23 +221,30 @@ var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "
 // ClassGuardPrefix starts every class:NAME attribute (SPEC §6.13).
 const ClassGuardPrefix = "class:"
 
-// attrAllowed reports whether a tag takes an attribute, and whether only
-// a version="2" document accepts it there (SPEC §6.15). parent is the
+// attrAllowed reports whether a tag takes an attribute, and the lowest
+// document version that accepts it there: 1 (or 0, equivalently, for a
+// version="1" tag's own attributes), 2, or 3 (SPEC §6.15). parent is the
 // element's parent tag.
-func attrAllowed(tag, parent, name string) (ok, v2Only bool) {
+func attrAllowed(tag, parent, name string) (ok bool, need int) {
 	if strings.HasPrefix(name, ClassGuardPrefix) {
-		return !noClassGuard[tag], true
+		return !noClassGuard[tag], 2
 	}
 	if tag == "item" && parent == "table" {
-		return tableItemAttrs[name], true
+		return tableItemAttrs[name], 2
 	}
 	if ir.IsKindV2(tag) {
-		return TagAttrsV2[tag][name], true
+		if TagAttrsV2[tag][name] {
+			return true, 2
+		}
+		return TagAttrsV3[tag][name], 3
 	}
 	if TagAttrs[tag][name] {
-		return true, false
+		return true, 1
 	}
-	return TagAttrsV2[tag][name], true
+	if TagAttrsV2[tag][name] {
+		return true, 2
+	}
+	return TagAttrsV3[tag][name], 3
 }
 
 // Focusable-by-default kinds that therefore need an id (V012).
@@ -255,6 +289,13 @@ func listItem(n *ir.Node) *ir.Node {
 // message ends with ` (requires version="2")` (SPEC §5.1).
 func (b *builder) v2Hint(line, col int, n *ir.Node, code, format string, args ...any) {
 	b.diag(ir.Error, code, line, col, n.Path, n.ID, format+"%s", append(args, ir.VersionHint)...)
+}
+
+// v3Hint reports a version="3" item in a version="1" or version="2"
+// document: the message ends with ` (requires version="3")` (SPEC v0.3b
+// §5.1).
+func (b *builder) v3Hint(line, col int, n *ir.Node, code, format string, args ...any) {
+	b.diag(ir.Error, code, line, col, n.Path, n.ID, format+"%s", append(args, ir.VersionHintV3)...)
 }
 
 // listHint is the advice given for a focus target inside a list row.
@@ -639,7 +680,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if n.Parent != nil && (b.v2 || n.Parent.Tag != "table") {
 			ptag = n.Parent.Tag
 		}
-		allowed, v2Only := attrAllowed(tag, ptag, name)
+		allowed, need := attrAllowed(tag, ptag, name)
 		if itemFocusAttrs[name] {
 			if it := listItem(n); it == n {
 				b.attrErr(n, a, "V002", "attribute %q is not allowed on a list <item>: %s", name, listHint(it))
@@ -655,6 +696,17 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 				return
 			}
 		}
+		if name == "stick" {
+			// SPEC v0.3b §6.15: stick needs an identity across frames that a
+			// repeated row does not have.
+			if it := listItem(n); it != nil {
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
+				return
+			} else if c := b.eachContainer(n); c != nil {
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNode(c))
+				return
+			}
+		}
 		if !allowed {
 			if strings.HasPrefix(name, "on:") && !eventNames[strings.TrimPrefix(name, "on:")] {
 				b.attrErr(n, a, "V002", "unknown event %q on <%s>", name, tag)
@@ -663,7 +715,15 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			}
 			return
 		}
-		if v2Only && !b.v2 {
+		// A version="3" item is checked against version="3" first, whether
+		// the document is version="1" or version="2" (both get the same
+		// hint); only an attribute that needs exactly version="2" falls to
+		// the version="2" hint (SPEC v0.3b §5.1).
+		if need >= 3 && !b.v3 {
+			b.v3Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
+			return
+		}
+		if need >= 2 && !b.v2 {
 			b.v2Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
 			return
 		}
@@ -803,13 +863,26 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			return r
 		}, val))
 		n.Attrs[name] = clean
-		if (name == "title" || name == "placeholder") && !b.doc.Spike {
+		// A tab's label and short are templates in version="3" (SPEC v0.3b
+		// §6.10.1, §7): {path} is checked like <text>'s body there. In
+		// every other case (title, placeholder always; label, keycap,
+		// short, and mark everywhere else, SPEC §6.10.1, §6.12) they are
+		// literal text.
+		tabTemplate := tag == "tab" && (name == "label" || name == "short")
+		switch {
+		case name == "title" || name == "placeholder":
+			if !b.doc.Spike {
+				if _, err := ir.ParseInterp(clean); err != nil {
+					b.attrErr(n, a, "V003", "%s: %v", name, err)
+				}
+			}
+		case tabTemplate && b.v3:
 			if _, err := ir.ParseInterp(clean); err != nil {
 				b.attrErr(n, a, "V003", "%s: %v", name, err)
 			}
-		} else if name != "title" && name != "placeholder" && ir.HasInterp(clean) {
-			// label, keycap, short, and mark are literal text (SPEC §6.10.1,
-			// §6.12).
+		case tabTemplate && ir.HasInterp(clean):
+			b.v3Hint(a.Line, a.Col, n, "V003", "%s: {path} is only allowed in <text>, title, and placeholder", name)
+		case ir.HasInterp(clean):
 			b.attrErr(n, a, "V003", "%s: {path} is only allowed in <text>, title, and placeholder", name)
 		}
 	case "axis":
@@ -872,6 +945,12 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 	case "focus":
 		if !strings.HasPrefix(val, "#") || !isIDName(val[1:]) {
 			b.attrErr(n, a, "V003", "focus=%q: want #id", val)
+		}
+	case "stick":
+		// SPEC v0.3b §6.2, §11.4: the only value is "bottom"; the axis and
+		// id requirements are structural (checkNode).
+		if val != "bottom" {
+			b.attrErr(n, a, "V003", "stick=%q: want bottom", val)
 		}
 	case "keys", "action", "when", "to", "src":
 		// validated with the keymap / stylesheet loader
@@ -1080,11 +1159,23 @@ func (b *builder) checkStructure() {
 			b.doc.Screens = append(b.doc.Screens, c)
 		}
 		if c.Tag == "keymap" {
+			// <keymap when="SEL"> (version="3", SPEC v0.3b §8.1) gives each
+			// of its rows that default when, unless the row writes its own
+			// (which replaces it, even when="").
+			kmWhen := ""
+			if b.v3 {
+				kmWhen, _ = c.Attr("when")
+			}
 			for _, k := range c.Children {
 				if k.Tag == "bind" {
+					rowWhen, hasOwnWhen := k.Attr("when")
 					kb := KeyBind{
-						KeysRaw: k.Attrs["keys"], Action: k.Attrs["action"], When: k.Attrs["when"],
+						KeysRaw: k.Attrs["keys"], Action: k.Attrs["action"], When: rowWhen,
+						HasOwnWhen: hasOwnWhen, KeymapNode: c, EffectiveWhen: rowWhen,
 						To: k.Attrs["to"], Line: k.Line, Col: k.Col,
+					}
+					if !hasOwnWhen {
+						kb.EffectiveWhen = kmWhen
 					}
 					if b.v2 {
 						kb.Label, kb.HasLabel = k.Attr("label")
@@ -1187,6 +1278,9 @@ func (b *builder) checkNode(n *ir.Node) {
 				b.errN(n, "V003", "<sparkline> needs bind=\"path\": the numeric array it draws")
 			}
 		}
+	}
+	if b.v3 && n.Tag == "scroll" {
+		b.checkStick(n)
 	}
 	if n.Tag == "list" {
 		items := 0
@@ -1296,6 +1390,47 @@ func (b *builder) checkTabFocus(n *ir.Node) {
 	}
 	for _, c := range n.Children {
 		b.checkTabFocus(c)
+	}
+}
+
+// checkStick applies the structural rules of SPEC v0.3b §11.4 to a
+// scroll's stick="bottom": it needs an id (V012: the offset and the
+// previous maximum are kept across frames by it) and a y scroll axis
+// (V003 on axis="x"). Inside a list <item> or a container each template
+// stick is already V002 (attr), reported nothing further here.
+func (b *builder) checkStick(n *ir.Node) {
+	if _, ok := n.Attr("stick"); !ok {
+		return
+	}
+	if listItem(n) != nil || b.eachContainer(n) != nil {
+		return
+	}
+	if n.ID == "" {
+		b.errN(n, "V012", `<scroll stick="bottom"> needs an id: its offset and the previous maximum are kept across frames by it`)
+	}
+	if ax, _ := n.Attr("axis"); ax == "x" {
+		b.errN(n, "V003", `stick="bottom" needs a y scroll axis; axis="x" cannot stick`)
+	}
+}
+
+// checkModalFocus reports B005 for a modal focus="#id" that names no
+// node, a node inside a list <item> or an each template, or a node
+// outside the modal (SPEC v0.3b §8.3, mirroring a tab's focus=, §6.10.1).
+func (b *builder) checkModalFocus(n *ir.Node) {
+	if n.Tag == "modal" {
+		if f, ok := n.Attr("focus"); ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
+			id := f[1:]
+			if why := b.idTarget(id); why == idMissing {
+				b.errN(n, "B005", "focus=%q refers to an id that does not exist", f)
+			} else if why != "" {
+				b.errN(n, "B005", "focus=%q %s", f, why)
+			} else if !inside(b.doc.IDs[id], n) {
+				b.errN(n, "B005", "focus=%q names a node outside this modal; a modal's focus= names a node inside it", f)
+			}
+		}
+	}
+	for _, c := range n.Children {
+		b.checkModalFocus(c)
 	}
 }
 
@@ -1445,7 +1580,7 @@ func (b *builder) checkBuiltinRow(k *KeyBind, path string, toOK bool) {
 		c := k.WhenSel.Parts[0]
 		if c.ID != "" && c.Tag == "" && len(c.Classes) == 0 && len(c.Pseudos) == 1 && c.Pseudos[0] == "focus" {
 			if b.idTarget(c.ID) == "" {
-				target, how = c.ID, fmt.Sprintf("when=%q", k.When)
+				target, how = c.ID, fmt.Sprintf("when=%q", k.EffectiveWhen)
 			}
 		}
 	}
@@ -1493,8 +1628,13 @@ func BuiltinIncompatible(action, kind string, checked bool) string {
 	return ""
 }
 
-// checkKeymap validates key tokens, actions, and selectors (V003/B005).
+// checkKeymap validates key tokens, actions, and selectors (V003/B005). A
+// <keymap when="SEL"> (version="3", SPEC v0.3b §8.1) is checked once, at
+// the <keymap> element itself (keymapWhens); a row without its own when=
+// inherits that already-validated selector instead of being checked
+// again.
 func (b *builder) checkKeymap() {
+	kmSel := b.keymapWhens()
 	for i := range b.doc.Keymap {
 		k := &b.doc.Keymap[i]
 		path := "/keymap/bind"
@@ -1519,23 +1659,28 @@ func (b *builder) checkKeymap() {
 		case !ir.IsIdent(k.Action):
 			b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "action=%q: an action is a plain name", k.Action)
 		}
-		if k.When != "" {
-			sel, err := css.ParseSelectorIn(k.When, b.v2)
-			if err == nil && sel.Root {
-				err = fmt.Errorf(":root is not a node selector")
-			}
-			if err != nil {
-				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "when=%q: %v", k.When, err)
-			} else {
-				k.WhenSel = &sel
-				for _, part := range sel.Parts {
-					if part.ID != "" {
-						if why := b.idTarget(part.ID); why != "" {
-							b.diag(ir.Error, "B005", k.Line, k.Col, path, "", "when=%q refers to #%s, which %s", k.When, part.ID, why)
+		switch {
+		case k.HasOwnWhen:
+			if k.When != "" {
+				sel, err := css.ParseSelectorIn(k.When, b.v2)
+				if err == nil && sel.Root {
+					err = fmt.Errorf(":root is not a node selector")
+				}
+				if err != nil {
+					b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "when=%q: %v", k.When, err)
+				} else {
+					k.WhenSel = &sel
+					for _, part := range sel.Parts {
+						if part.ID != "" {
+							if why := b.idTarget(part.ID); why != "" {
+								b.diag(ir.Error, "B005", k.Line, k.Col, path, "", "when=%q refers to #%s, which %s", k.When, part.ID, why)
+							}
 						}
 					}
 				}
 			}
+		case k.KeymapNode != nil:
+			k.WhenSel = kmSel[k.KeymapNode]
 		}
 		toOK := false
 		if k.To != "" {
@@ -1570,5 +1715,52 @@ func (b *builder) checkKeymap() {
 		if b.v2 {
 			b.checkTabFocus(s)
 		}
+		if b.v3 {
+			b.checkModalFocus(s)
+		}
 	}
+}
+
+// keymapWhens validates the own when= of every <keymap> element once
+// (version="3", SPEC v0.3b §8.1): a bad selector is one V003, and an id
+// that names no node, or a node inside a list item or an each template,
+// is one B005, both at the <keymap>'s own position. It returns the
+// parsed selector of the keymaps whose when validated clean (nil, so a
+// map lookup for any other keymap, or one with no when=, correctly gives
+// nil: no selector).
+func (b *builder) keymapWhens() map[*ir.Node]*css.Selector {
+	out := map[*ir.Node]*css.Selector{}
+	if !b.v3 || b.doc.Root == nil {
+		return out
+	}
+	for _, c := range b.doc.Root.Children {
+		if c.Tag != "keymap" {
+			continue
+		}
+		w, ok := c.Attr("when")
+		if !ok || w == "" {
+			continue
+		}
+		sel, err := css.ParseSelectorIn(w, b.v2)
+		if err == nil && sel.Root {
+			err = fmt.Errorf(":root is not a node selector")
+		}
+		if err != nil {
+			b.errN(c, "V003", "when=%q: %v", w, err)
+			continue
+		}
+		clean := true
+		for _, part := range sel.Parts {
+			if part.ID != "" {
+				if why := b.idTarget(part.ID); why != "" {
+					b.errN(c, "B005", "when=%q refers to #%s, which %s", w, part.ID, why)
+					clean = false
+				}
+			}
+		}
+		if clean {
+			out[c] = &sel
+		}
+	}
+	return out
 }

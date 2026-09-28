@@ -87,12 +87,17 @@ type App struct {
 	// (checkedSet).
 	checkedSets map[*ir.Node]*checkedCache
 
-	screen     int
-	focus      string
-	focusInit  bool
-	lists      map[string]*listState
-	inputs     map[string]*inputState
-	scrolls    map[string][2]int
+	screen    int
+	focus     string
+	focusInit bool
+	lists     map[string]*listState
+	inputs    map[string]*inputState
+	scrolls   map[string][2]int
+	// stickMax is, per id of a scroll with stick="bottom" (version="3",
+	// SPEC v0.3b §11.4), the maximum y offset its last live layout
+	// computed (EXTENT - viewport): "that frame's maximum" the stick rule
+	// compares the offset a frame brings in against.
+	stickMax   map[string]int
 	openModals []*ir.Node   // modals open in the last frame, document order (top last)
 	modalStack []modalEntry // modals that took the focus trap, bottom first
 	pending    []Event
@@ -162,7 +167,7 @@ func blankApp() *App {
 	return &App{
 		store: map[string]any{}, handlers: map[string]Handler{},
 		lists: map[string]*listState{}, inputs: map[string]*inputState{},
-		scrolls: map[string][2]int{}, wake: make(chan struct{}, 1),
+		scrolls: map[string][2]int{}, stickMax: map[string]int{}, wake: make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
 		segGen:     map[string]uint64{}, tables: map[*ir.Node]*tableCache{},
 		checkedSets: map[*ir.Node]*checkedCache{},
@@ -609,6 +614,7 @@ type savedState struct {
 	pending    []Event
 	last       *Frame
 	scrolls    map[string][2]int
+	stickMax   map[string]int
 	lists      map[string]*listState
 	inputs     map[string]*inputState
 	tabMem     map[string]string
@@ -622,6 +628,10 @@ func (a *App) saveState() savedState {
 	sc := map[string][2]int{}
 	for k, v := range a.scrolls {
 		sc[k] = v
+	}
+	sm := map[string]int{}
+	for k, v := range a.stickMax {
+		sm[k] = v
 	}
 	// Rendering creates list/input state, clamps selections, fills keys,
 	// initializes cursors, and sets list pages for its size: keep copies.
@@ -641,13 +651,13 @@ func (a *App) saveState() savedState {
 		r := *a.focusReq
 		req = &r
 	}
-	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, ls, in, copyStrings(a.tabMem), copyStrings(a.tabPrev)}
+	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, sm, ls, in, copyStrings(a.tabMem), copyStrings(a.tabPrev)}
 }
 
 func (a *App) restoreState(s savedState) {
 	a.screen, a.focus, a.focusInit, a.focusReq = s.screen, s.focus, s.focusInit, s.focusReq
 	a.openModals, a.modalStack, a.pending, a.last = s.openModals, s.modalStack, s.pending, s.last
-	a.scrolls, a.lists, a.inputs = s.scrolls, s.lists, s.inputs
+	a.scrolls, a.stickMax, a.lists, a.inputs = s.scrolls, s.stickMax, s.lists, s.inputs
 	a.tabMem, a.tabPrev = s.tabMem, s.tabPrev
 }
 

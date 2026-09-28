@@ -30,6 +30,11 @@ const VersionV3 = "0.3"
 // version="2" item gets in a version="1" document (SPEC §5.1).
 const VersionHint = ` (requires version="2")`
 
+// VersionHintV3 ends the message of every V002 and V003 that a
+// version="3" item gets in a version="1" or version="2" document (SPEC
+// v0.3b §5.1).
+const VersionHintV3 = ` (requires version="3")`
+
 // Kinds is the closed tag vocabulary (SPEC §6). Anything else is V001.
 var Kinds = []string{
 	"tui", "style", "keymap", "bind", "screen",
