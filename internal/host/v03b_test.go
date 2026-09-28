@@ -327,3 +327,23 @@ func TestModalFocusDisabledFallsBack(t *testing.T) {
 		t.Fatalf("a disabled focus= target falls back to the first entry, got %q", a.Focus())
 	}
 }
+
+// A modal's focus= is version="3" only: in a version="1"/"2" document it
+// is V002 and the runtime ignores it, so the modal opens on the first
+// entry of its cycle, as in 0.3.0.
+func TestModalFocusIgnoredBeforeV3(t *testing.T) {
+	for _, v := range []string{"1", "2"} {
+		a := doc(t, `<tui version="`+v+`">
+<screen id="s">
+  <modal id="m" open="true" focus="#no">
+    <button id="yes" label="yes"/>
+    <button id="no" label="no"/>
+  </modal>
+</screen>
+</tui>`)
+		a.Frame(40, 10)
+		if a.Focus() != "yes" {
+			t.Errorf("version=%q: focus %q, want yes (focus= ignored)", v, a.Focus())
+		}
+	}
+}

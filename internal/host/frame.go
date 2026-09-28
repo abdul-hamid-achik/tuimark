@@ -1255,8 +1255,9 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 		// prior focus inside it, and when the focused node inside an
 		// already-open modal is lost. Without focus=, or when its target
 		// cannot take focus now, the first entry of the cycle below is
-		// used, as before.
-		if a.focus == "" && len(fb.modals) > 0 {
+		// used, as before. In a version="1"/"2" document focus= on a
+		// modal is V002 and ignored here, like stick.
+		if a.focus == "" && len(fb.modals) > 0 && a.doc.V3 {
 			a.focus = modalFocusTarget(fb.modals[len(fb.modals)-1], list)
 		}
 		if a.focus == "" {
