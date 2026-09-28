@@ -145,12 +145,24 @@ type Batch = host.Batch
 // reserved paths' values); when fn returns nil and every b.Set succeeded,
 // the queued writes are applied in order, atomically — no frame, dump,
 // Get, handler, or Play step ever observes some of them applied and
-// others not — with at most one redraw request. When fn returns an
-// error, or any b.Set failed (even if fn ignored it and returned nil),
-// nothing is applied and Batch returns the first such error. A b.Set
-// called on a *Batch kept after fn has returned also returns an error
-// and changes nothing. Batch is safe to call from any goroutine,
-// including a handler.
+// others not — with at most one redraw request.
+//
+// When fn returns an error, or any b.Set failed (even if fn ignored it
+// and returned nil), nothing is applied and Batch returns every such
+// error, joined with errors.Join (SPEC v0.3b §18.1): first each failed
+// b.Set's own error, in the order the calls were made, then fn's own
+// error unless it is == to one of those (so returning a failed b.Set's
+// own error reports it once, not twice). When fn and every b.Set
+// succeeded but applying the queued writes failed (a path running
+// through a value the batch itself left not an object), that one error
+// is the joined value's only part. The returned error is always an
+// errors.Join value, even for a single failure, so err == sentinel, a
+// switch err, and a type assertion on it no longer match that failure;
+// use errors.Is and errors.As instead, and Unwrap() []error to walk every
+// part in order. A b.Set called on a *Batch kept after fn has returned
+// also returns an error (and is one such part when checked) and changes
+// nothing. Batch is safe to call from any goroutine, including a
+// handler.
 func (a *App) Batch(fn func(b *Batch) error) error { return a.h.Batch(fn) }
 
 // Catalog lists the actions the document references, with where they are
