@@ -223,7 +223,7 @@ func TestParseDiagnostics(t *testing.T) {
 		{"progress negative", coreV1(`<progress value="-1"/>`), "V003", 3, 11, "0-100"},
 		{"progress exponent", coreV1(`<progress value="1e2"/>`), "V003", 3, 11, "0-100"},
 		{"progress nan", coreV1(`<progress value="NaN"/>`), "V003", 3, 11, "0-100"},
-		{"version 3", "<tui version=\"3\">\n<screen/>\n</tui>", "V003", 1, 6, `version="3"`},
+		{"version 4", "<tui version=\"4\">\n<screen/>\n</tui>", "V003", 1, 6, `version="4"`},
 		{"unknown theme", "<tui version=\"1\" theme=\"neon\">\n<screen/>\n</tui>", "V003", 1, 18, `unknown theme "neon"`},
 		{"screen focus without #", "<tui version=\"1\">\n<screen focus=\"query\"/>\n</tui>", "V003", 2, 9, "want #id"},
 		{"empty keys", "<tui version=\"1\">\n<keymap>\n<bind keys=\"\" action=\"quit\"/>\n</keymap>\n<screen/>\n</tui>", "V003", 3, 1, "needs keys="},

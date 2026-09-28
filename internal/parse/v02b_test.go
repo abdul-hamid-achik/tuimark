@@ -22,11 +22,17 @@ func TestVersionTwoDocument(t *testing.T) {
 	if len(doc.Diags) != 0 || !doc.V2 || doc.Theme != "auto" || doc.Mouse != "!quiet" {
 		t.Fatalf("v2 %v theme %q mouse %q diags %v", doc.V2, doc.Theme, doc.Mouse, doc.Diags)
 	}
-	for _, v := range []string{"1", "3", ""} {
+	for _, v := range []string{"1", ""} {
 		d := parse.Parse([]byte(`<tui version="`+v+`"><screen/></tui>`), "")
-		if d.V2 {
-			t.Errorf("version=%q read as version=2", v)
+		if d.V2 || d.V3 {
+			t.Errorf("version=%q read as version=2 or 3", v)
 		}
+	}
+	// version="3" accepts everything version="2" does (SPEC v0.3 §5.1): it
+	// sets both V2 and V3.
+	d3 := parse.Parse([]byte(`<tui version="3"><screen/></tui>`), "")
+	if !d3.V2 || !d3.V3 {
+		t.Errorf("version=\"3\": V2=%v V3=%v, want both true", d3.V2, d3.V3)
 	}
 	for _, c := range []struct{ src, code string }{
 		{`<tui version="2" mouse="yes please"><screen/></tui>`, "V003"},

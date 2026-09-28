@@ -181,7 +181,7 @@ func (v *schemaValidator) validate(schema map[string]any, data any, path string)
 // version="2" document such as examples/monitor) against ir.v0.2.json.
 func TestIRValidatesAgainstSchema(t *testing.T) {
 	schemas := map[string]map[string]any{}
-	for version, path := range map[string]string{"0.1": "../../schema/ir.v0.1.json", "0.2": "../../schema/ir.v0.2.json"} {
+	for version, path := range map[string]string{"0.1": "../../schema/ir.v0.1.json", "0.2": "../../schema/ir.v0.2.json", "0.3": "../../schema/ir.v0.3.json"} {
 		schemaRaw, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)

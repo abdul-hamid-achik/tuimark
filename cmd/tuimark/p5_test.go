@@ -166,19 +166,34 @@ func TestPlayTextMouseReportsDoNotSplitTypingWhileMouseOff(t *testing.T) {
 	}
 }
 
-// 40. `tuimark ir` of examples/monitor/studio.tui is IR "0.2", valid
-// against schema/ir.v0.2.json, with mouse in app, label/keycap in keymap
-// rows, class:NAME in attrs, and the new kinds.
-func TestMonitorIR(t *testing.T) {
-	code, out, errw := runCLI("ir", "../../examples/monitor/studio.tui")
+// 40 (amended, SPEC v0.3 §21 test 84). `tuimark ir` of
+// specs/fixtures/table.tui is IR "0.2", valid against schema/ir.v0.2.json.
+// The "0.2" IR/schema check moved here from examples/monitor/studio.tui,
+// which the integrator will move to version="3" separately (its own IR
+// check then becomes "0.3" against schema/ir.v0.3.json).
+func TestTableFixtureIR(t *testing.T) {
+	code, out, errw := runCLI("ir", "../../specs/fixtures/table.tui")
 	if code != 0 {
 		t.Fatalf("exit %d: %s", code, errw)
 	}
 	v := decodeJSON(t, []byte(out))
 	if errs := validateSchema(t, irV02Schema, v); len(errs) > 0 {
-		t.Errorf("monitor IR vs ir.v0.2.json: %v", errs)
+		t.Errorf("table fixture IR vs ir.v0.2.json: %v", errs)
 	}
-	for _, want := range []string{`"version": "0.2"`, `"mouse": "mouse_enabled"`, `"keycap": "1-9"`, `"label": "tabs"`, `"class:live": "live"`, `"class:hot": "p.cpu_hot"`,
+	if !strings.Contains(out, `"version": "0.2"`) {
+		t.Errorf("table fixture IR lacks version 0.2:\n%s", out)
+	}
+}
+
+// 40. `tuimark ir` of examples/monitor/studio.tui (still version="2" on
+// this branch, SPEC v0.3) has mouse in app, label/keycap in keymap rows,
+// class:NAME in attrs, and the new kinds.
+func TestMonitorIR(t *testing.T) {
+	code, out, errw := runCLI("ir", "../../examples/monitor/studio.tui")
+	if code != 0 {
+		t.Fatalf("exit %d: %s", code, errw)
+	}
+	for _, want := range []string{`"mouse": "mouse_enabled"`, `"keycap": "1-9"`, `"label": "tabs"`, `"class:live": "live"`, `"class:hot": "p.cpu_hot"`,
 		`"kind": "table"`, `"kind": "column"`, `"kind": "tabs"`, `"kind": "tab"`, `"kind": "sparkline"`, `"kind": "hints"`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("monitor IR lacks %s", want)

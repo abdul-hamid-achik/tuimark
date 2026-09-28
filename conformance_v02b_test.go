@@ -126,15 +126,31 @@ func TestVersionGate(t *testing.T) {
 	}
 }
 
-// 39. version="3" is V003, and the document is checked as version="1":
+// 39/84 (amended, SPEC v0.3 §21 test 84): version="3" is accepted (SPEC
+// v0.3 §5.1), as a version="2" document with no vocabulary of its own in
+// 0.3a, so <hints/> is valid there. version="4" is V003, with a message
+// listing "1", "2", and "3", and the document is checked as version="1":
 // a version="2" tag in it is V001 with the version hint.
-func TestVersionThreeIsReadAsVersionOne(t *testing.T) {
-	diags := validateSrc(t, `<tui version="3"><screen id="main"><hints/></screen></tui>`)
+func TestVersionThreeIsAcceptedAsVersionTwo(t *testing.T) {
+	for _, d := range validateSrc(t, `<tui version="3"><screen id="main"><hints/></screen></tui>`) {
+		t.Errorf("version=\"3\" <hints/>: unexpected %s", d)
+	}
+}
+
+func TestVersionFourIsReadAsVersionOne(t *testing.T) {
+	diags := validateSrc(t, `<tui version="4"><screen id="main"><hints/></screen></tui>`)
 	var codes []string
 	for _, d := range diags {
 		codes = append(codes, d.Code)
-		if d.Code == "V003" && !strings.Contains(d.Msg, `version="3"`) {
-			t.Errorf("V003 message %q", d.Msg)
+		if d.Code == "V003" {
+			if !strings.Contains(d.Msg, `version="4"`) {
+				t.Errorf("V003 message %q", d.Msg)
+			}
+			for _, want := range []string{`"1"`, `"2"`, `"3"`} {
+				if !strings.Contains(d.Msg, want) {
+					t.Errorf("V003 message %q: missing %s", d.Msg, want)
+				}
+			}
 		}
 	}
 	if strings.Join(codes, " ") != "V003 V001" {
@@ -145,14 +161,15 @@ func TestVersionThreeIsReadAsVersionOne(t *testing.T) {
 	}
 }
 
-// 39. A stylesheet has no version of its own: one .tcss loaded by a
-// version="1" and a version="2" document reports the §5.1 V003s only in
-// the version="1" one.
+// 39/84. A stylesheet has no version of its own: one .tcss loaded by a
+// version="1", a version="2", and a version="3" document reports the
+// §5.1 V003s only in the version="1" one; a version="3" document checks
+// it as version="2" does (SPEC v0.3 §5.1).
 func TestSharedStylesheetFollowsTheDocument(t *testing.T) {
 	dir := t.TempDir()
 	mustWrite(t, filepath.Join(dir, "shared.tcss"), "box { layout: grid; grid-columns: 2; }\ncol:focus-within { bold: true; }\n@media (theme: light) { :root { --accent: #c8102e; } }\n")
 	doc := `<tui version="%s"><style src="shared.tcss"/><screen id="main"><box><text>x</text></box></screen></tui>`
-	for _, v := range []string{"1", "2"} {
+	for _, v := range []string{"1", "2", "3"} {
 		p := filepath.Join(dir, "v"+v+".tui")
 		mustWrite(t, p, strings.Replace(doc, "%s", v, 1))
 		app, err := tuimark.Load(p)
@@ -167,7 +184,7 @@ func TestSharedStylesheetFollowsTheDocument(t *testing.T) {
 				t.Errorf("version=%s: unexpected %s", v, d)
 			}
 		}
-		want := map[string]int{"1": 4, "2": 0}[v]
+		want := map[string]int{"1": 4, "2": 0, "3": 0}[v]
 		if n != want {
 			t.Errorf("version=%s: %d hinted V003s in shared.tcss, want %d", v, n, want)
 		}
