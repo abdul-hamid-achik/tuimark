@@ -69,7 +69,7 @@ const libraryCommand = 'go get github.com/abdul-hamid-achik/tuimark@latest'
           <component :is="headingLevel">Download a prebuilt binary</component>
           <p>
             Every release ships archives for macOS, Linux, and Windows on x86_64 and arm64, named like
-            <code>tuimark_0.2.0_Darwin_arm64.tar.gz</code> (<code>.zip</code> on Windows), with a
+            <code>tuimark_0.3.1_Darwin_arm64.tar.gz</code> (<code>.zip</code> on Windows), with a
             <code>checksums.txt</code>. Check the download, unpack it, and put the binary on your
             <code>PATH</code>.
           </p>

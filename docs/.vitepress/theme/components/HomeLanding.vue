@@ -106,7 +106,7 @@ const loop = [
     <!-- ── Hero ─────────────────────────────────────────────────────────── -->
     <section class="shell hero">
       <div class="hero-copy">
-        <p class="eyebrow"><span class="dot">▌</span> v0.2.0 · Go runtime · MIT</p>
+        <p class="eyebrow"><span class="dot">▌</span> v0.3.1 · Go runtime · MIT</p>
         <h1>Terminal UIs,<br />written as text.</h1>
         <p class="lede">
           Tuimark is a view language for terminals. Structure lives in <code>.tui</code> markup, style in
