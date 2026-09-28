@@ -54,6 +54,8 @@ Every document says which vocabulary it uses:
 
   The dump marks the node with `clipped`. When a cut is intended, write `wrap: nowrap` or `overflow: hidden` and the warning goes away. A document that clips nothing dumps exactly as it would as `version="2"`.
 
+  0.3b adds a further `version="3"`-only vocabulary, all additive: `row-gap` and `column-gap` split `gap` into its two axes; `wrap: truncate-start` and `truncate-middle` join `truncate`; `<column priority="N">` hides a table column by priority instead of `@media`; `<sparkline scale="NAME">` shares a value range across the sparklines of one frame; a `<tab>`'s `label` and `short` become `{path}` templates; `<scroll stick="bottom">` keeps a growing viewport pinned to its end; and `<modal focus="#id">` names the node a modal focuses on open. Several `<keymap>` elements, and `<keymap when="SEL">` to give every row inside it that `when`, work in every version. See [layout](/guide/layout), [widgets](/guide/widgets), [keymap, actions and focus](/guide/interaction), and the [Go API](/guide/go-api) for each in its usual place, and the [tags](/reference/tags), [CSS properties](/reference/css), and [diagnostics](/reference/diagnostics) reference for the exact rules.
+
 Use `version="3"` for new documents. In a `version="1"` document each 0.2 addition is still recognized, and reported with a message that ends in `(requires version="2")`, so an agent knows exactly what to change. A `.tcss` file has no version of its own: it is checked against the document that loads it.
 
 ## The tags
@@ -114,7 +116,7 @@ An attribute a tag does not take is `V002`.
 
 - A `<text>` has no element children (`V013`).
 - Each line of the body is trimmed, and blank lines at the start and end are dropped, so indentation in the source never reaches the screen. Interior spaces are kept: `mail  {folder}` keeps its two spaces. For spacing around text, use `gap`, `padding`, or `margin` on a container.
-- `wrap` is `nowrap` (the default: the line is cut at the edge), `wrap` (word-wrap to the width), or `truncate` (cut with `…`).
+- `wrap` is `nowrap` (the default: the line is cut at the edge), `wrap` (word-wrap to the width), or `truncate` (cut with `…` at the end); in `version="3"`, also `truncate-start` (`…` at the start, keeping the end of the line — useful for a path) and `truncate-middle` (`…` in the middle, keeping both ends).
 - Width is measured in terminal columns by grapheme cluster: CJK and emoji take two columns, combining accents take none, and a cluster is never split.
 
 `<button>` takes its label from `label` or from its body; `title` and `placeholder` are templates too. See [bindings](/guide/bindings) for how paths resolve.

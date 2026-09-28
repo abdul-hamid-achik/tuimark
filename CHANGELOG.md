@@ -7,6 +7,93 @@ line.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-28
+
+0.3b rounds out `version="3"`'s layout vocabulary and adds two ways to
+drive a document from outside Go: `tuimark host`, a wire protocol for a
+parent process in any language, and `tuimark mcp`, a Model Context
+Protocol server for coding agents. Everything is additive: `version="1"`
+and `version="2"` documents keep their meaning and their dumps.
+
+### Added
+
+- **Layout and CSS (`version="3"`).** `row-gap` and `column-gap` (0-4)
+  split `gap` into its two axes — column siblings, grid rows/columns, and
+  tab/hint strips on one, stacked siblings on the other — while `gap`
+  stays their shorthand in the cascade, so a document that sets only `gap`
+  lays out as before. `wrap: truncate-start` and `wrap: truncate-middle`
+  join `truncate`, keeping the end (`…efgh`) or both ends
+  (`/Syste…/Data`) of a cut line instead of the start. `<column
+  priority="N">` hides a table column, lowest priority first, once the
+  visible columns no longer fit, and brings it back once they do, in
+  place of `@media` rules for column hiding. `<sparkline scale="NAME">`
+  shares one value range across every sparkline of a frame with the same
+  name, so a group of gauges reads on the same scale.
+- **Several `<keymap>` elements** are now allowed, in every version: their
+  rows form one keymap in document order. `<keymap when="SEL">`
+  (`version="3"`) gives every row inside it that `when`, unless a row
+  writes its own, which replaces it outright.
+- **`<scroll id="log" stick="bottom">`** (`version="3"`) keeps a growing
+  viewport — a log, a chat — showing its end as content arrives, and stops
+  sticking while you scroll up to read back, resuming once you scroll (or
+  `move-last`) back to the end.
+- **`<modal focus="#id">`** (`version="3"`) names the node that takes
+  focus when the modal becomes the top one, and the fallback when the
+  node focused inside it is lost (it leaves the frame or can no longer
+  take focus).
+- **Tab label templates.** In `version="3"`, a `<tab>`'s `label` and
+  `short` are templates, resolved every frame like a `<text>` body
+  (`{path}`, no expressions); in `version="1"`/`version="2"` a `{path}` in
+  either stays `V003`.
+- **`tuimark host FILE [--data FILE.json] [--theme dark|light]
+  [--reply-timeout 5s]`** runs a document in the terminal for a parent
+  process written in any language: the terminal stays on fd 0/1/2 exactly
+  as with `Run()`, the parent writes JSON lines to fd 3 (`set`, `bind`,
+  `batch`, `get`, `reply`) and reads JSON lines from fd 4 (`ready` first,
+  then `event`/`ack`/`error`, `exit` last). Each host action waits for the
+  parent's reply up to `--reply-timeout` (default `5s`), and the fd 4
+  queue is bounded, so a parent that stops reading ends the session
+  instead of freezing the terminal. POSIX only; a usage error on Windows.
+  `examples/host-ts` is a Bun parent that drives it, forwarding
+  `SIGTERM`/`SIGHUP` to the child and never reading the terminal itself.
+- **`tuimark mcp`** is a Model Context Protocol server on stdin/stdout
+  (JSON-RPC 2.0, one message per line, standard library only) with five
+  read-only tools that run the authoring loop: `tuimark_validate`,
+  `tuimark_dump`, `tuimark_play`, `tuimark_inspect`, and `tuimark_agents`.
+  Each returns exactly what the matching CLI command prints to stdout,
+  byte for byte; a result is an error only when the command itself would
+  exit 1 (a validation failure, exit 2, is a normal result). Register it
+  with `{"command": "tuimark", "args": ["mcp"]}`.
+- **`PlayOptions.Frames`** makes `Play` also return one `PlayFrame` per
+  applied step, in `PlayResult.Frames` — the same frames
+  `tuimark play --frames` prints.
+
+### Changed
+
+- **`Batch`'s returned error is now every failed part joined with
+  `errors.Join`**, first each failed `Set`'s own error in call order,
+  then `fn`'s own error when it differs. This is a **behavior change**:
+  `errors.Is` still finds a sentinel error inside it, but comparing the
+  result with `==` against a sentinel, or a type switch on it, no longer
+  matches, since the returned value is always a joined `error`, even for
+  one failure. Callers that compared `Batch`'s error directly need
+  `errors.Is`/`errors.As`, or `Unwrap() []error` to walk every part.
+- **`examples/monitor`** moves to the 0.3b vocabulary: its one `<keymap>`
+  splits into several `<keymap when="…">` groups, each row keeping its
+  place in dispatch order, `<hints>`, and the IR `keymap` array; `#cores`
+  gains `row-gap: 0` so its rows touch while `gap: 1` still separates the
+  columns; and the Processes table's columns hide by `priority` — `c-io`
+  and `c-user` first, then `c-thr`, then `c-mem` — in place of the
+  `@media` rules that hid them before. Its goldens and
+  `monitor_resize.yml` are updated to match, and `scale` and modal
+  `focus=` are deliberately left unused there.
+- The `V002`/`V003` diagnostics for a 0.3b tag, attribute, or value
+  (`stick`, `focus` on `modal`, `when` on `keymap`, `priority`, `scale`,
+  the two new `wrap` values, `row-gap`/`column-gap`, a tab's `{path}`
+  `label`/`short`) used in a `version="1"` or `version="2"` document now
+  end in `(requires version="3")`, matching the existing hint for
+  `version="2"` items used in `version="1"`.
+
 ## [0.3.0] - 2026-09-28
 
 The host API grows for real embedding and testing, and a new document
@@ -157,6 +244,7 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.1
 [0.3.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.0
 [0.2.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.2.0

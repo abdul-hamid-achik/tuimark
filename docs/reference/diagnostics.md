@@ -17,8 +17,8 @@ Reported while reading the `.tui` document and its stylesheets. Most are errors:
 | Code | When |
 |---|---|
 | <span id="v001"></span>`V001` | unknown tag; a version="2" tag in a version="1" document (message ends with `(requires version="2")`); `input`, `button`, `list`, `modal`, `table`, `tabs`, or `tab` inside a container `each` template |
-| <span id="v002"></span>`V002` | unknown attribute; a version="2" attribute in a version="1" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template; `priority` on `column` or `scale` on `sparkline` in a version="1" or version="2" document (with `(requires version="3")`; on a 0.2b tag in a version="1" document only that tag's V001 is reported) |
-| <span id="v003"></span>`V003` | bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`; `row-gap`/`column-gap`, or the `wrap` values `truncate-start`/`truncate-middle`, in a version="1" or version="2" document (with `(requires version="3")`; an invalid `wrap` value lists the two only in a version="3" document); a `priority` that is not a non-negative integer; a `scale` that is not a plain identifier |
+| <span id="v002"></span>`V002` | unknown attribute; a version="2" attribute in a version="1" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template; a version="3" attribute (`stick` on `scroll`, `focus` on `modal`, `when` on `keymap`, `priority` on `column`, `scale` on `sparkline`) in a version="1" or version="2" document, with `(requires version="3")` (on a 0.2b tag in a version="1" document only that tag's V001 is reported); `stick` inside a list `<item>` or a container `each` template (version="3") |
+| <span id="v003"></span>`V003` | bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`; in a version="1" or version="2" document, with `(requires version="3")`: `{path}` in a tab's `label` or `short`, `row-gap`/`column-gap`, or the `wrap` values `truncate-start`/`truncate-middle` (an invalid `wrap` value lists the two only in a version="3" document); `stick` other than `bottom`, or `stick` on a `scroll` with `axis="x"`; a bad selector in a `<keymap>`'s `when`, once, at the `<keymap>`; a `priority` that is not a non-negative integer; a `scale` that is not a plain identifier (version="3") |
 | <span id="v004"></span>`V004` | duplicate id; any `id` inside a container `each` template (version="2") |
 | <span id="v005"></span>`V005` | not well-formed XML |
 | <span id="v006"></span>`V006` | `style src` include cycle |
@@ -26,7 +26,7 @@ Reported while reading the `.tui` document and its stylesheets. Most are errors:
 | <span id="v008"></span>`V008` | native widget name not registered (v1.1+) |
 | <span id="v010"></span>`V010` | `dock` and `fr` on the same axis |
 | <span id="v011"></span>`V011` | `each` / `if` missing path; an `each` alias equal to an enclosing one (version="2") |
-| <span id="v012"></span>`V012` | list/input/button/modal without `id`; a `table`, `tabs`, or `tab` without `id` (version="2") |
+| <span id="v012"></span>`V012` | list/input/button/modal without `id`; a `table`, `tabs`, or `tab` without `id` (version="2"); a `scroll` with `stick` and no `id` (version="3") |
 | <span id="v013"></span>`V013` | `<text>` has element children |
 | <span id="v014"></span>`V014` | missing `version` on `<tui>` (phase 1+) |
 | <span id="v015"></span>`V015` | a `class:NAME` whose NAME is not `[a-z_][a-z0-9_-]*` or whose value is not `path` / `!path` (version="2") |
@@ -58,11 +58,11 @@ Reported while resolving paths against the JSON data. `validate` checks them onl
 |---|---|
 | <span id="b001"></span>`B001` | `each` path is missing or not an array (a `list`, or a `col`/`row`/`box`/`table` in version="2") |
 | <span id="b002"></span>`B002` | `if` path missing; also a `class:NAME` guard path |
-| <span id="b003"></span>`B003` | bind path missing (`--strict` upgrades to error); also a table's `bind`, `placeholder`, row `key`, and column cell templates, reported once per template and path whatever rows are visible; a `tabs` or `sparkline` `bind` |
+| <span id="b003"></span>`B003` | bind path missing (`--strict` upgrades to error); also a table's `bind`, `placeholder`, row `key`, and column cell templates, reported once per template and path whatever rows are visible; a `tabs` or `sparkline` `bind`; a missing path in a tab's `label` or `short` (version="3") |
 | <span id="b004"></span>`B004` | action not in catalog |
-| <span id="b005"></span>`B005` | keymap `to`/`when` id missing; a `tab focus=` that names no node, a node inside a list item, or a node outside that tab (version="2") |
+| <span id="b005"></span>`B005` | keymap `to`/`when` id missing; a `tab focus=` that names no node, a node inside a list item, or a node outside that tab (version="2"); a `modal focus=` that names no node, a node outside the modal, or a node inside a list item or an each template (version="3"); a `<keymap>`'s `when` whose id names no node, or a node inside a list item or an each template, once, at the `<keymap>` (version="3") |
 | <span id="b006"></span>`B006` | `list` + `each` without `key` (warning); also `table` + `each` without `key` |
-| <span id="b007"></span>`B007` | a built-in action whose target is known without data to be incompatible (from `to=`, or a `when` that is exactly `#id:focus`); static, error (version="2") |
+| <span id="b007"></span>`B007` | a built-in action whose target is known without data to be incompatible (from `to=`, or a `when` that is exactly `#id:focus`); static, error (version="2"); evaluated against each row's effective `when` (version="3", `<keymap when>`) |
 | <span id="b008"></span>`B008` | the value at a `checked` path is present and not an array (error; version="2") |
 | <span id="b009"></span>`B009` | the value at a `sparkline` `bind` is present and not an array, or holds an element that is neither a number nor `null` (warning; version="2") |
 | <span id="b010"></span>`B010` | the value at a `tabs` `bind` is present, not `null`, and not the id of a visible tab; the first visible tab is active and the store is not written (warning; version="2") |

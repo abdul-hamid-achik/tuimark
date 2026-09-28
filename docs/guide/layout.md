@@ -39,6 +39,8 @@ content  what is left for children or text
 
 `padding` and `margin` take one to four cell values, in the CSS order (top, right, bottom, left). `gap` (0–4) puts empty cells between a container's children. A size that would leave a negative content box is clamped to zero, and anything that does not fit is clipped, never wrapped onto the next line.
 
+In `version="3"`, `row-gap` and `column-gap` (0–4) split `gap` into its two axes: `column-gap` between siblings side by side (a `layout: row` container, grid and table columns, a tab strip, a `hints` laid out along a row), `row-gap` between siblings stacked (a `layout: column` container, grid rows, a `hints` with `layout: column`). `gap` stays their shorthand in the cascade — it sets both, with its own specificity and order — so a document that writes only `gap` lays out exactly as before.
+
 ## Direction and alignment
 
 `col` stacks its children vertically, `row` horizontally, and `box` is a column unless you set `layout: row`. Any container takes `layout: column | row` (and, in version 2, `grid`).
@@ -95,6 +97,7 @@ A **viewport** clips its content and scrolls it: a `scroll`, a `list`, a `table`
 - `<scroll axis="y">` (the default) scrolls vertically, `axis="x"` horizontally, `axis="both"` both ways. `list`, `table`, and `overflow: scroll` scroll on `y`.
 - A `scroll` takes the arrow and paging keys when it has focus; give it `focusable="true"` and an `id`. A list or table follows its cursor instead.
 - In version 2, `scrollbar: auto` paints a thumb over the right border of a bordered viewport at least 3 rows tall whose content does not fit. It never takes layout space.
+- In `version="3"`, `<scroll id="log" stick="bottom">` keeps a growing viewport showing its end, like a log or a chat: while the offset is already at the bottom it keeps sticking as content arrives, but scrolling up to read back stops it from jumping, until you scroll (or `move-last`) back to the end. It needs an `id` and a `y` axis, and cannot go inside a list `<item>` or a container `each` template.
 
 The dump reports each viewport's `scroll` state (offset and extent), and a list reports every item, including the ones scrolled out of view.
 

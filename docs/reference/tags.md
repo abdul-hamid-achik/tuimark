@@ -61,9 +61,12 @@ Only in a `<tui version="2">` document (V002 with `(requires version="2")` in a 
 
 ## Added by `version="3"`
 
-Only in a `<tui version="3">` document (V002 with `(requires version="3")` in a version="1" or version="2" one; on a 0.2b tag in a version="1" document only that tag's V001 is reported): further additions to the tags above:
+Only in a `<tui version="3">` document (V002 with `(requires version="3")` in a version="1" or version="2" one): these attributes on top of the tags above (a tag itself unknown in an older version still gets only its own V001, with the version="2" hint, so an attribute on it — `scale` on `sparkline`, `priority` on `column` — reports nothing further there):
 
 | Tag | Attributes |
 |---|---|
 | `<column>` | `priority` |
+| `<keymap>` | `when` |
+| `<modal>` | `focus` |
+| `<scroll>` | `stick` |
 | `<sparkline>` | `scale` |

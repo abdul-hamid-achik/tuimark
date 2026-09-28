@@ -37,6 +37,8 @@ tuimark play app.tui --data sample.json --input "tab down enter" --styles --form
 
 Stop when the dumps match the intent at every width and nothing is reported. Then a person, or a host program, can run it for real.
 
+An agent without a shell runs the same loop as MCP tool calls instead: `tuimark mcp` (0.3b) serves `validate`, `dump`, `play`, `inspect`, and the briefing itself as five tools over stdin/stdout, each returning exactly what the CLI command above prints. See [MCP server](/guide/mcp) for how to register it.
+
 ### Reading a dump
 
 | Question | Where to look |

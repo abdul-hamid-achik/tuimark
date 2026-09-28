@@ -47,6 +47,20 @@ Global keys live in one `<keymap>`. Each `<bind>` row maps one or more keys to a
 - Rows are tried in document order, and the first match wins, so put specific rows before general ones.
 - `label` (and `keycap`, the text shown instead of the key) make the row a key hint that [`<hints>`](/guide/widgets#hints) displays (version 2).
 
+A document may hold **several `<keymap>` elements**, in every version: their rows form one keymap, in document order (the first keymap's rows, then the second's). It is a way to group rows without repeating a `when` on each one: in `version="3"`, `<keymap when="SEL">` gives every row inside it that `when`, unless a row writes its own, which replaces it outright rather than combining with it (`when=""` on a row, or on the `<keymap>` itself, means no `when`).
+
+```tui
+<keymap when="#procs:focus">
+  <bind keys="j" action="move-next" label="down"/>
+  <bind keys="k" action="move-prev" label="up"/>
+  <bind keys="space" action="check-toggle" label="mark"/>
+</keymap>
+<keymap when="#kill">
+  <bind keys="y" action="confirm_kill" label="yes"/>
+  <bind keys="n,esc" action="cancel_kill" label="no"/>
+</keymap>
+```
+
 ### when and the focus chain
 
 In a `version="2"` document, `when` matches if its selector matches the focused node **or any ancestor** up to the screen; with nothing focused, it matches against the top open modal and then the screen. So:

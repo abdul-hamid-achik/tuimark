@@ -60,6 +60,7 @@ A `progress` is a bar from 0 to 100, from `bind` or a literal `value`. A `sparkl
 - `bar: eighths` (version 2) fills eighths of a cell for a smoother bar; `bar: block`, the default, fills whole cells.
 - A sparkline is naturally one column per value and one row tall; give it a `height` for more levels. Values are right-aligned in the width it gets, `null` is a gap, and `min` and `max` fix the range (otherwise the shown values set it).
 - The bar color is the widget's `color`.
+- **`scale="NAME"`** (`version="3"`) shares a range across every sparkline of one frame that carries the same name: they all take `lo`/`hi` from the smallest and largest of their shown values together, so a group of related gauges reads on one scale. A sparkline's own `min`/`max` still wins for that one; an inactive tab's sparkline is not in the group.
 
 ## table
 
@@ -79,6 +80,8 @@ Rows of an array, in columns, with a cursor (version 2). Each `<column>` has a h
 <<< @/snippets/out/w-table-narrow.txt{grid}
 
 A `column` with `on:click` fires when its header is clicked, the natural place for sorting.
+
+- **`priority="N"`** (`version="3"`) hides a column automatically when the visible columns no longer fit: the column with the smallest `N` hides first (a non-negative integer; the last one in document order breaks a tie), and it comes back once the table is wide enough again. A hidden column is exactly a `display: none` one — no header cell, no body cells — but it still counts toward the table's intrinsic width. Prefer `priority` to `@media` rules for column hiding; a column without `priority` never hides this way.
 
 ## tabs
 
@@ -103,6 +106,8 @@ A strip of tab labels over the content of the active tab (version 2).
 </div>
 
 Labels are generated `text` nodes with the class `tab-label`, `:selected` on the active one; style them with `.tab-label`.
+
+In `version="3"`, `label` and `short` are templates, resolved every frame exactly like a `<text>` body (`{path}`, no expressions), so a tab can show a live count: `<tab id="alerts" label="alerts ({count})" short="⚠ {count}">`. A missing path resolves to empty, and any line break in the resolved value becomes a space, since a label is one row. In `version="1"`/`version="2"`, `{path}` in either attribute stays `V003`.
 
 ## hints
 
@@ -130,6 +135,7 @@ A layer over the screen, open while `open` is truthy.
 - It traps focus while open, gives it back when it closes, and fires `on:open`, `on:close`, and, on `esc`, `on:escape`.
 - A modal must be the last child of its screen (`L004`). Several can be open; the last one in the document is on top.
 - Give the button row `height: 1`. Rows stretch across the modal by default, and a focused `reverse` button would paint the whole stretched rect.
+- **`focus="#id"`** (`version="3"`) names the node that takes focus when the modal becomes the top one, instead of the first entry of its focus cycle; the target must be inside the modal. It also doubles as the fallback when the node focused inside the modal is lost (it leaves the frame or can no longer take focus): focus goes to it when it still can take focus, else to the first entry of the cycle as usual.
 
 ## scroll, rule, spacer
 
