@@ -94,6 +94,14 @@ and `version="2"` documents keep their meaning and their dumps.
   end in `(requires version="3")`, matching the existing hint for
   `version="2"` items used in `version="1"`.
 
+### Fixed
+
+- **A focused viewport's keys clamp at its end.** `down` or `end` at the
+  end of a focused `<scroll>` stored an offset past it, so an `up` in the
+  same terminal read was lost and the scroll ended one row off. Its keys
+  now clamp to the viewport's maximum, as `move-*` and the wheel already
+  did.
+
 ## [0.3.0] - 2026-09-28
 
 The host API grows for real embedding and testing, and a new document
