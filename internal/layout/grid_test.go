@@ -16,7 +16,7 @@ import (
 func n2(kind, decls string, kids ...*Box) *Box {
 	b := n(kind, "", kids...)
 	if decls != "" {
-		ds, errs := css.ParseDeclsAllIn(decls, true)
+		ds, errs := css.ParseDeclsAllIn(decls, true, false)
 		if len(errs) > 0 {
 			panic(errs[0])
 		}
@@ -44,7 +44,7 @@ func TestGridColumnsArithmetic(t *testing.T) {
 	} {
 		b := &Box{Style: css.Initial()}
 		b.Style.GridColumns, b.Style.GridMinWidth, b.Style.Gap = c.k, c.m, c.g
-		_, w := gridColumns(b, c.wc)
+		_, w := gridColumns(b, c.wc, false)
 		if got := fmt.Sprint(w); got != c.want {
 			t.Errorf("K %d M %d g %d Wc %d: %s, want %s", c.k, c.m, c.g, c.wc, got, c.want)
 		}

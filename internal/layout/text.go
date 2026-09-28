@@ -51,8 +51,67 @@ func Truncate(s string, n int) string {
 	return Cut(s, n-1) + "…"
 }
 
+// CutEnd returns the longest suffix of whole clusters of s that is at most
+// n columns wide (empty when n <= 0). A width-2 cluster that would
+// straddle the cut is left out, so the result may be n-1 columns wide.
+// Used by TruncateStart and TruncateMiddle (§11.5.2, version="3", v0.3b).
+func CutEnd(s string, n int) string {
+	if n <= 0 {
+		return ""
+	}
+	clusters := uniwidth.Split(s)
+	w, i := 0, len(clusters)
+	for i > 0 {
+		cw := uniwidth.ClusterWidth(clusters[i-1])
+		if w+cw > n {
+			break
+		}
+		w += cw
+		i--
+	}
+	return strings.Join(clusters[i:], "")
+}
+
+// TruncateStart returns s when it fits in n columns, else marks the cut
+// with a leading ellipsis and keeps the trailing n-1 columns (§11.5.2,
+// wrap: truncate-start, version="3", v0.3b). The kept suffix may be one
+// column narrower than n-1 when a wide cluster straddles the cut.
+func TruncateStart(s string, n int) string {
+	if Width(s) <= n {
+		return s
+	}
+	if n <= 0 {
+		return ""
+	}
+	if n == 1 {
+		return "…"
+	}
+	return "…" + CutEnd(s, n-1)
+}
+
+// TruncateMiddle returns s when it fits in n columns, else cuts a piece
+// out of the middle and marks it with an ellipsis (§11.5.2, wrap:
+// truncate-middle, version="3", v0.3b): Cut(s, ⌈(n-1)/2⌉) + "…" +
+// CutEnd(s, ⌊(n-1)/2⌋), so the head gets the extra column when n-1 is
+// odd. The head, the tail, or both may lose up to one column each when a
+// wide cluster straddles their cut.
+func TruncateMiddle(s string, n int) string {
+	if Width(s) <= n {
+		return s
+	}
+	if n <= 0 {
+		return ""
+	}
+	if n == 1 {
+		return "…"
+	}
+	head, tail := n/2, (n-1)/2
+	return Cut(s, head) + "…" + CutEnd(s, tail)
+}
+
 // Lines splits text into display lines for a content width and wrap mode
-// ("wrap", "truncate", or "nowrap"/""). Lines are not padded.
+// ("wrap", "truncate", "truncate-start", "truncate-middle" (version="3",
+// v0.3b), or "nowrap"/""). Lines are not padded.
 func Lines(text string, width int, mode string) []string {
 	if text == "" {
 		return nil
@@ -68,11 +127,18 @@ func Lines(text string, width int, mode string) []string {
 			out = append(out, Wrap(p, width)...)
 		}
 		return out
-	case "truncate":
+	case "truncate", "truncate-start", "truncate-middle":
+		cut := Truncate
+		switch mode {
+		case "truncate-start":
+			cut = TruncateStart
+		case "truncate-middle":
+			cut = TruncateMiddle
+		}
 		out := make([]string, len(paras))
 		for i, p := range paras {
 			if width > 0 {
-				out[i] = Truncate(p, width)
+				out[i] = cut(p, width)
 			} else {
 				out[i] = p
 			}

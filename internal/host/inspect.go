@@ -298,6 +298,12 @@ func (a *App) styleInfo(f *Frame, b *layout.Box) []StyleInfo {
 	_, trace := casc.Explain(subjectOf(b), parent, b.Hints, b.Inline)
 	out := make([]StyleInfo, 0, len(css.PropertyOrder))
 	for _, prop := range css.PropertyOrder {
+		if (prop == "row-gap" || prop == "column-gap") && !f.V3 {
+			// SPEC v0.3 §10.2 (v0.3b): row-gap and column-gap are listed
+			// only for a version="3" document, as :focus-within is listed
+			// only where a selector can name it.
+			continue
+		}
 		si := StyleInfo{Prop: prop, Origin: "initial", Overridden: []LostDecl{}}
 		if v, ok := css.FormatProp(b.Style, prop); ok {
 			si.Value = &v

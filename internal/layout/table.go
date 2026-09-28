@@ -1,6 +1,12 @@
 package layout
 
-import "github.com/abdul-hamid-achik/tuimark/internal/ir"
+import (
+	"errors"
+	"math"
+	"strconv"
+
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
+)
 
 // The geometry of a version="2" <table> (SPEC §6.9.3). A table is a
 // viewport scrolling on y whose children are its visible column boxes
@@ -18,6 +24,16 @@ func TableColumns(t *Box) []*Box {
 		}
 	}
 	return out
+}
+
+// visibleColumns returns the visible columns of table t before priority
+// hiding (SPEC v0.3b §6.9.3 "What comes before it"): the set its first
+// layout recorded in AllColumns, else its column children.
+func visibleColumns(t *Box) []*Box {
+	if t.AllColumns != nil {
+		return t.AllColumns
+	}
+	return TableColumns(t)
 }
 
 // tableHeader is 1 when the header row is shown: some visible column has
@@ -53,16 +69,20 @@ func tablePlaceholderRow(t *Box) int {
 // measure clamped by its min-width and max-width), and the gaps between
 // them, and at least the placeholder's width when the placeholder row is
 // shown; down, the header row and max(n, p) body rows, where p is the
-// placeholder row (tablePlaceholderRow).
-func tableIntrinsic(t *Box, horizontal bool) int {
-	cols := TableColumns(t)
+// placeholder row (tablePlaceholderRow). The intrinsic width is measured
+// over every visible column, priority-hidden ones included (SPEC v0.3b
+// §6.9.3 "What comes before it"): visibleColumns is the set before any
+// hiding, whether or not the table has been laid out yet. gaps are the
+// table's column-gap in a version="3" document (v3).
+func tableIntrinsic(t *Box, horizontal, v3 bool) int {
+	cols := visibleColumns(t)
 	p := tablePlaceholderRow(t)
 	if !horizontal {
 		return tableHeader(cols) + max(clampCells(t.Rows), p)
 	}
 	v := clampCells(t.MarkChan)
 	if k := len(cols); k > 0 {
-		v += t.Style.Gap * (k - 1)
+		v += columnGap(t.Style, v3) * (k - 1)
 	}
 	for _, c := range cols {
 		if s := c.Style.Width; s.Kind == ir.Cell {
@@ -84,20 +104,35 @@ func tableIntrinsic(t *Box, horizontal bool) int {
 // header cells (the visible column boxes) are laid out only while the
 // header is shown; their x and width are set either way, for the rows.
 // clip is t's clip inside its content box.
+//
+// In a version="3" document, once A (the content width less the mark
+// channel) is known, columns hide by priority (SPEC v0.3b §6.9.3): t's
+// intrinsic width and t.Header (above) use the full column set, recorded
+// in t.AllColumns, so a hidden column still counts in both, and
+// t.Children is narrowed to the kept columns, which is what host.placeRows
+// reads afterward (layout.TableColumns), so a hidden column gets no header
+// cell, no body cells, and no dump node.
 func (e *Engine) tableLayout(t *Box, clip Rect) {
-	cols := TableColumns(t)
+	cols := visibleColumns(t)
 	c := t.Content
 	t.Header = tableHeader(cols)
-	t.View = max(0, c.H-t.Header)
 	ch := min(clampCells(t.MarkChan), c.W)
-	widths := e.tableColumns(t, cols, max(0, c.W-ch))
+	a := max(0, c.W-ch)
+	gap := columnGap(t.Style, e.V3)
+	if e.V3 {
+		t.AllColumns = cols
+		cols = hidePriority(cols, a, gap)
+		t.Children = cols
+	}
+	t.View = max(0, c.H-t.Header)
+	widths := e.tableColumns(t, cols, a)
 	x := c.X + ch
 	for j, col := range cols {
 		col.X, col.Y, col.W, col.H = x, c.Y, widths[j], 1
 		col.Content = col.Outer()
 		col.Clip = clip.Intersect(col.Outer())
 		col.Laid = t.Header == 1
-		x += widths[j] + t.Style.Gap
+		x += widths[j] + gap
 	}
 	n, v := clampCells(t.Rows), t.View
 	o := t.ScrollY
@@ -124,14 +159,16 @@ func (e *Engine) tableLayout(t *Box, clip Rect) {
 // last taking the remainder, and are then clamped. L003 (a warning on the
 // table) reports the cell sizes, the percentages, and the min-widths of
 // the auto and fr columns that, with the gaps, exceed a: the widths the
-// author asked for, never the data-dependent measures.
+// author asked for, never the data-dependent measures. In a version="3"
+// document cols is already the columns left after priority hiding
+// (tableLayout), so L003 is evaluated on them (SPEC v0.3b §6.9.3, §14).
 func (e *Engine) tableColumns(t *Box, cols []*Box, a int) []int {
 	k := len(cols)
 	sizes := make([]int, k)
 	if k == 0 {
 		return sizes
 	}
-	gap := t.Style.Gap
+	gap := columnGap(t.Style, e.V3)
 	remain := max(0, a-gap*(k-1))
 	need := gap * (k - 1)
 	var frs []int
@@ -179,6 +216,79 @@ func minWidth(col *Box, a int) int {
 		return percent(a, s)
 	}
 	return 0
+}
+
+// columnPriority returns a column's priority="N" (SPEC v0.3b §6.9.3) and
+// whether it has one. priority is a table column attribute, not a CSS
+// property (SPEC §6.15 ‡), validated as a non-negative integer at parse
+// time (internal/parse); a column without it never hides by priority.
+func columnPriority(col *Box) (n int, ok bool) {
+	if col.Src == nil {
+		return 0, false
+	}
+	v, has := col.Src.Attr("priority")
+	if !has {
+		return 0, false
+	}
+	n, err := strconv.Atoi(v)
+	if errors.Is(err, strconv.ErrRange) {
+		// Digits only (the parser checked), just too many of them: the
+		// largest priority there is, so it hides last.
+		return math.MaxInt, true
+	}
+	return n, err == nil
+}
+
+// naturalWidth is a visible column's natural width for priority hiding
+// (SPEC v0.3b §6.9.3): a Cell column's cell size; floor(A·p/100) for a
+// p% column; an auto column's measure, clamped by its min-width and
+// max-width; an fr column's min-width (0 when unset).
+func naturalWidth(col *Box, a int) int {
+	switch s := col.Style.Width; s.Kind {
+	case ir.Cell:
+		return cells(s.N)
+	case ir.Pct:
+		return percent(a, s)
+	case ir.Fr:
+		return minWidth(col, a)
+	default: // auto, or unset
+		return clampAxis(col, true, clampCells(col.Measure), a)
+	}
+}
+
+// hidePriority applies SPEC v0.3b §6.9.3 "Columns that hide by priority":
+// while the natural widths of the visible columns, plus gap·(k − 1),
+// exceed a, and at least one visible column has a priority, the visible
+// column with the smallest priority (the last in document order among
+// equal priorities) is hidden; the sum is then recomputed. Columns
+// without a priority never hide this way, so the rule is opt-in per
+// column. Only called for a version="3" document (tableLayout); gap is
+// the table's column-gap there.
+func hidePriority(cols []*Box, a, gap int) []*Box {
+	kept := append([]*Box(nil), cols...)
+	for {
+		sum := gap * max(0, len(kept)-1)
+		for _, c := range kept {
+			sum += naturalWidth(c, a)
+		}
+		if sum <= a {
+			return kept
+		}
+		idx, lowest := -1, 0
+		for i, c := range kept {
+			n, ok := columnPriority(c)
+			if !ok {
+				continue
+			}
+			if idx == -1 || n <= lowest {
+				idx, lowest = i, n
+			}
+		}
+		if idx == -1 {
+			return kept
+		}
+		kept = append(kept[:idx], kept[idx+1:]...)
+	}
 }
 
 // PlaceTableRow places row i of table t after layout (SPEC §6.9.3, §18

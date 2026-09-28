@@ -1,6 +1,6 @@
 ---
 title: Tags and attributes
-description: Every Tuimark tag and the exact attributes it accepts, in version="1" and version="2" documents.
+description: Every Tuimark tag and the exact attributes it accepts, in version="1", version="2", and version="3" documents.
 editLink: false
 ---
 
@@ -58,3 +58,12 @@ Only in a `<tui version="2">` document (V002 with `(requires version="2")` in a 
 
 - `item` inside a `table`: class only (plus `class:NAME`)
 - every tag except `tui`, `style`, `keymap`, and `bind`: `class:NAME` (the name is open and lowercase, `[a-z_][a-z0-9_-]*`; the value is `path` or `!path`)
+
+## Added by `version="3"`
+
+Only in a `<tui version="3">` document (V002 with `(requires version="3")` in a version="1" or version="2" one; on a 0.2b tag in a version="1" document only that tag's V001 is reported): further additions to the tags above:
+
+| Tag | Attributes |
+|---|---|
+| `<column>` | `priority` |
+| `<sparkline>` | `scale` |

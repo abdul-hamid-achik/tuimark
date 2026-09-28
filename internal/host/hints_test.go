@@ -239,6 +239,40 @@ func TestSparklineDiagnostics(t *testing.T) {
 	}
 }
 
+// 92. scale="NAME" groups are formed after layout, over the laid-out
+// sparklines of the frame (SPEC v0.3b §6.11): a visibility: hidden member
+// is laid out, so it belongs to its group and its values count; an
+// inactive tab's sparkline is never inflated at all, so it cannot join
+// one; a group of one gets the group fields too (with its own shown
+// min/max, so painting it is unaffected either way).
+func TestSparklineScaleGrouping(t *testing.T) {
+	src := `<tui version="3"><screen id="s">
+    <sparkline id="a" bind="a" scale="t" width="1" height="1"/>
+    <sparkline id="hidden" bind="hd" scale="t" width="1" height="1" style="visibility: hidden"/>
+    <tabs id="nav">
+      <tab id="x" label="x"><spacer/></tab>
+      <tab id="y" label="y"><sparkline id="inactive" bind="ia" scale="t" width="1" height="1"/></tab>
+    </tabs>
+    <sparkline id="solo" bind="so" scale="solo" width="5" height="1"/>
+  </screen></tui>`
+	a := doc(t, src)
+	bindJSON(t, a, `{"a": [0], "hd": [100], "ia": [9999], "so": [3, 7, 1, 9, 4]}`)
+	f := a.Frame(10, 4)
+	for _, id := range []string{"a", "hidden"} {
+		b := f.ByID[id]
+		if b == nil || !b.HasGroupLo || !b.HasGroupHi || b.GroupLo != 0 || b.GroupHi != 100 {
+			t.Errorf("%s: group %+v", id, b)
+		}
+	}
+	if f.ByID["inactive"] != nil {
+		t.Errorf("inactive tab's sparkline was inflated: %+v", f.ByID["inactive"])
+	}
+	solo := f.ByID["solo"]
+	if solo == nil || !solo.HasGroupLo || !solo.HasGroupHi || solo.GroupLo != 1 || solo.GroupHi != 9 {
+		t.Errorf("solo: group %+v", solo)
+	}
+}
+
 // 58. The cores example: inside a panel with a 1-cell border, with
 // grid-columns 4, grid-min-width 22, gap 1, the grid has 1, 3, and 4
 // columns at 40, 80, and 120.

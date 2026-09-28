@@ -243,7 +243,13 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		}
 	}
 	eng.Layout(rootBox, fb.modals, cols, rows) // step 6
-	fb.placeTableRows(casc, rootBox)           // step 7
+	if a.doc.V3 {
+		// SPEC v0.3b §6.11: scale groups are formed after layout, over the
+		// laid-out sparklines of the frame; scale is never valid outside a
+		// version="3" document, so this is a no-op elsewhere.
+		groupSparklines(rootBox, fb.modals)
+	}
+	fb.placeTableRows(casc, rootBox) // step 7
 	f.Root, f.Modals = rootBox, fb.modals
 	f.Grid = paint.Paint(rootBox, fb.modals, cols, rows) // step 8
 	f.ByID = fb.byID

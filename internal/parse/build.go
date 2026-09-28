@@ -201,14 +201,15 @@ var TagAttrsV2 = map[string]map[string]bool{
 
 // TagAttrsV3 is what a version="3" document additionally accepts on top of
 // TagAttrs and TagAttrsV2: the attributes marked ‡ in SPEC §6.15 (v0.3b).
-// scroll's stick and modal's focus sit on version="1" tags; keymap's when
-// does too. (column's priority and sparkline's scale, the other ‡
-// attributes, sit on version="2" tags and are added where that vocabulary
-// is implemented.)
+// scroll's stick, modal's focus, and keymap's when sit on version="1"
+// tags; column's priority (§6.9.3) and sparkline's scale (§6.11) on
+// version="2" tags.
 var TagAttrsV3 = map[string]map[string]bool{
-	"scroll": only("stick"),
-	"modal":  only("focus"),
-	"keymap": only("when"),
+	"scroll":    only("stick"),
+	"modal":     only("focus"),
+	"keymap":    only("when"),
+	"column":    only("priority"),
+	"sparkline": only("scale"),
 }
 
 // tableItemAttrs are the attributes of a table's row template <item>
@@ -799,7 +800,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		}
 		n.Hints = append(n.Hints, ir.Prop{Name: "border", Value: v, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "wrap":
-		if err := css.CheckDecl("wrap", val); err != nil {
+		if err := css.CheckDeclIn("wrap", val, b.v2, b.v3); err != nil {
 			b.attrErr(n, a, "V003", "%v", err)
 			return
 		}
@@ -808,7 +809,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		// Recover per declaration (like a <style> rule's block), so one
 		// typo does not also drop every other, valid declaration in the
 		// same style="" attribute.
-		decls, errs := css.ParseDeclsAllIn(val, b.v2)
+		decls, errs := css.ParseDeclsAllIn(val, b.v2, b.v3)
 		for _, err := range errs {
 			b.attrErr(n, a, "V003", "%v", err)
 		}
@@ -942,6 +943,18 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if !isNumber(val) {
 			b.attrErr(n, a, "V003", "%s=%q: want a number such as 0, -5, or 0.25", name, val)
 		}
+	case "priority":
+		// SPEC v0.3b §6.9.3: a non-negative integer; the smallest hides
+		// first when the table's columns do not fit.
+		if !isNonNegInt(val) {
+			b.attrErr(n, a, "V003", "priority=%q: want a non-negative integer", val)
+		}
+	case "scale":
+		// SPEC v0.3b §6.11: the sparklines of a frame sharing this name
+		// share their range; NAME follows the ident grammar of §7.
+		if !ir.IsIdent(val) {
+			b.attrErr(n, a, "V003", "scale=%q: a scale name is a plain identifier ([A-Za-z_][A-Za-z0-9_]*)", val)
+		}
 	case "focus":
 		if !strings.HasPrefix(val, "#") || !isIDName(val[1:]) {
 			b.attrErr(n, a, "V003", "focus=%q: want #id", val)
@@ -992,6 +1005,21 @@ func isNumber(s string) bool {
 func isPercent(s string) bool {
 	lit, _, ok := ir.ParseDecimalLit(s)
 	return ok && ir.DecimalCmp(lit, 100) <= 0
+}
+
+// isNonNegInt reports whether s is a plain non-negative integer literal:
+// one or more digits, no sign, no fraction (SPEC v0.3b §6.9.3, `priority`
+// on a column).
+func isNonNegInt(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func isIDName(s string) bool {

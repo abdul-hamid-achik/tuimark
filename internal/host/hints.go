@@ -148,6 +148,9 @@ func (fb *builder) buildHints(casc *css.Cascade, root *layout.Box) {
 // min= and max=. A missing path is B003 and a value that is not an array
 // B009 (a warning); both paint nothing.
 func (fb *builder) inflateSparkline(n *ir.Node, b *layout.Box, sc *scope) {
+	// SPEC v0.3b §6.11: scale="NAME" groups sparklines that share it; the
+	// group's range is resolved after layout (groupSparklines).
+	b.Scale = n.Attrs["scale"]
 	if s, ok := n.Attr("min"); ok {
 		if f, err := strconv.ParseFloat(s, 64); err == nil && isFinite(f) {
 			b.Lo, b.HasLo = f, true
@@ -192,3 +195,61 @@ func (fb *builder) inflateSparkline(n *ir.Node, b *layout.Box, sc *scope) {
 }
 
 func isFinite(f float64) bool { return !math.IsNaN(f) && !math.IsInf(f, 0) }
+
+// scaleGroup accumulates the shared range of one scale="NAME" group of
+// sparklines (SPEC v0.3b §6.11): the smallest and largest number among
+// the shown values of every member.
+type scaleGroup struct {
+	lo, hi  float64
+	has     bool
+	members []*layout.Box
+}
+
+// groupSparklines resolves every scale="NAME" group of the frame after
+// layout (SPEC v0.3b §6.11): the group is formed over the laid-out
+// sparklines of root (the active screen) and modals — an inactive tab's
+// content is never in the tree, so it is excluded automatically; a
+// visibility: hidden sparkline is laid out, so it belongs to its group
+// and its values count, though it paints nothing. For each member with no
+// number in the group, nothing is set (HasGroupLo/HasGroupHi stay false,
+// as for a sparkline with no shown number), and paint falls back to its
+// own rule (SPEC §6.11). Only called for a version="3" document
+// (renderOnce): scale is otherwise never a valid attribute, so no
+// sparkline ever carries one there.
+func groupSparklines(root *layout.Box, modals []*layout.Box) {
+	groups := map[string]*scaleGroup{}
+	collect := func(b *layout.Box) {
+		if b == nil {
+			return
+		}
+		b.Walk(func(n *layout.Box) {
+			if n.Kind != "sparkline" || !n.Laid || n.Scale == "" {
+				return
+			}
+			g := groups[n.Scale]
+			if g == nil {
+				g = &scaleGroup{lo: math.Inf(1), hi: math.Inf(-1)}
+				groups[n.Scale] = g
+			}
+			g.members = append(g.members, n)
+			for _, v := range layout.SparkShown(n) {
+				if math.IsNaN(v) {
+					continue
+				}
+				g.lo, g.hi, g.has = math.Min(g.lo, v), math.Max(g.hi, v), true
+			}
+		})
+	}
+	collect(root)
+	for _, m := range modals {
+		collect(m)
+	}
+	for _, g := range groups {
+		if !g.has {
+			continue
+		}
+		for _, n := range g.members {
+			n.GroupLo, n.GroupHi, n.HasGroupLo, n.HasGroupHi = g.lo, g.hi, true, true
+		}
+	}
+}

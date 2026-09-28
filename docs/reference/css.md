@@ -19,6 +19,7 @@ Every property TCSS accepts. An unknown property, or a value outside its list, i
 | `border` | `none` · `single` · `double` · `rounded` · `thick` |  |
 | `border-color` | `$token` · `var(--token)` · `ansi-name` · `#rgb` · `#rrggbb` · `default` |  |
 | `color` | `$token` · `var(--token)` · `ansi-name` · `#rgb` · `#rrggbb` · `default` |  |
+| `column-gap` | 0-4 | `version="3"` only |
 | `content-align` | `start` · `center` · `end` |  |
 | `dim` | `true` · `false` |  |
 | `display` | `flex` · `none` |  |
@@ -39,9 +40,10 @@ Every property TCSS accepts. An unknown property, or a value outside its list, i
 | `overflow` | `hidden` · `scroll` |  |
 | `padding` | 1-4 cell values | T R B L |
 | `reverse` | `true` · `false` |  |
+| `row-gap` | 0-4 | `version="3"` only |
 | `scrollbar` | `none` · `auto` | `version="2"` only |
 | `title-color` | `$token` · `var(--token)` · `ansi-name` · `#rgb` · `#rrggbb` · `default` |  |
 | `underline` | `true` · `false` |  |
 | `visibility` | `visible` · `hidden` |  |
 | `width` | `N` · `N%` · `Nfr` · `auto` |  |
-| `wrap` | `wrap` · `nowrap` · `truncate` |  |
+| `wrap` | `wrap` · `nowrap` · `truncate` · `truncate-start` · `truncate-middle` | `truncate-start` and `truncate-middle` need `version="3"` |

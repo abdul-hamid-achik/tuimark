@@ -16,7 +16,7 @@ import (
 func bx2(kind, decls string, kids ...*layout.Box) *layout.Box {
 	b := bx(kind, "", kids...)
 	if decls != "" {
-		ds, errs := css.ParseDeclsAllIn(decls, true)
+		ds, errs := css.ParseDeclsAllIn(decls, true, false)
 		if len(errs) > 0 {
 			panic(errs[0])
 		}

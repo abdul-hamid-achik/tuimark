@@ -94,11 +94,16 @@ function tagsPage() {
   const body = []
   let tables = 0
   let v2Heading = false
+  let v3Heading = false
   for (const b of parts) {
     if (b.kind === 'para') {
       if (b.text.startsWith('Only in a `<tui version="2">` document')) {
         body.push('## Added by `version="2"`', '')
         v2Heading = true
+      }
+      if (b.text.startsWith('Only in a `<tui version="3">` document')) {
+        body.push('## Added by `version="3"`', '')
+        v3Heading = true
       }
       body.push(b.text, '')
       continue
@@ -113,24 +118,25 @@ function tagsPage() {
       }
       const attrs = m[2] === '(no attributes)' ? '—' : codeList(m[2].split(', '))
       if (tables === 0) catalog.tags.push(m[1])
-      else if (!catalog.tags.includes(m[1])) catalog.tagsV2.push(m[1])
+      else if (tables === 1 && !catalog.tags.includes(m[1])) catalog.tagsV2.push(m[1])
       rows.push(`| \`<${m[1]}>\` | ${cell(attrs)} |`)
     }
     if (rows.length) {
       tables++
       if (tables === 1) body.push('## Every document', '')
-      else if (!v2Heading) throw new Error('generate: the version="2" attribute table has no introduction')
+      else if (tables === 2 && !v2Heading) throw new Error('generate: the version="2" attribute table has no introduction')
+      else if (tables === 3 && !v3Heading) throw new Error('generate: the version="3" attribute table has no introduction')
       body.push('| Tag | Attributes |', '|---|---|', ...rows, '')
     }
     if (rest.length) body.push(...rest, '')
   }
-  if (tables !== 2) throw new Error(`generate: expected 2 attribute tables in "Attributes per tag", found ${tables}`)
+  if (tables !== 3) throw new Error(`generate: expected 3 attribute tables in "Attributes per tag", found ${tables}`)
   emit(
     'reference/tags.md',
     [
       '---',
       'title: Tags and attributes',
-      'description: Every Tuimark tag and the exact attributes it accepts, in version="1" and version="2" documents.',
+      'description: Every Tuimark tag and the exact attributes it accepts, in version="1", version="2", and version="3" documents.',
       'editLink: false',
       '---',
       '',
@@ -156,9 +162,12 @@ function cssPage() {
     if (paren) {
       values = values.slice(0, paren.index)
       if (paren[1] === 'version="2" stylesheets only') note = '`version="2"` only'
+      else if (paren[1] === 'version="3" stylesheets only') note = '`version="3"` only'
       else if (paren[1] === 'version="2"') {
         const alts = values.split(' | ')
         note = `\`${alts[alts.length - 1]}\` needs \`version="2"\``
+      } else if (paren[1] === 'version="3"' && prop === 'wrap') {
+        note = '`truncate-start` and `truncate-middle` need `version="3"`'
       } else note = paren[1]
     }
     const alts = values.split(' | ')

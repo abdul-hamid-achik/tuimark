@@ -26,8 +26,8 @@ type diagCode struct {
 
 var diagCodes = []diagCode{
 	{"V001", "parse", "unknown tag; a version=\"2\" tag in a version=\"1\" document (message ends with `(requires version=\"2\")`); `input`, `button`, `list`, `modal`, `table`, `tabs`, or `tab` inside a container `each` template"},
-	{"V002", "parse", "unknown attribute; a version=\"2\" attribute in a version=\"1\" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template; `stick` on `scroll`, `focus` on `modal`, or `when` on `keymap` in a version=\"1\" or version=\"2\" document, with `(requires version=\"3\")` (version=\"3\"); `stick` inside a list `<item>` or a container `each` template (version=\"3\")"},
-	{"V003", "parse", "bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version=\"2\" value, property, pseudo-class, media feature, or built-in action in a version=\"1\" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`; `{path}` in a tab's `label` or `short` in a version=\"1\" or version=\"2\" document, with `(requires version=\"3\")` (version=\"3\"); `stick` other than `bottom`, or `stick` on a `scroll` with `axis=\"x\"` (version=\"3\"); a bad selector in a `<keymap>`'s `when`, once, at the `<keymap>` (version=\"3\")"},
+	{"V002", "parse", "unknown attribute; a version=\"2\" attribute in a version=\"1\" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template; a version=\"3\" attribute (`stick` on `scroll`, `focus` on `modal`, `when` on `keymap`, `priority` on `column`, `scale` on `sparkline`) in a version=\"1\" or version=\"2\" document, with `(requires version=\"3\")` (on a 0.2b tag in a version=\"1\" document only that tag's V001 is reported); `stick` inside a list `<item>` or a container `each` template (version=\"3\")"},
+	{"V003", "parse", "bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version=\"2\" value, property, pseudo-class, media feature, or built-in action in a version=\"1\" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`; in a version=\"1\" or version=\"2\" document, with `(requires version=\"3\")`: `{path}` in a tab's `label` or `short`, `row-gap`/`column-gap`, or the `wrap` values `truncate-start`/`truncate-middle` (an invalid `wrap` value lists the two only in a version=\"3\" document); `stick` other than `bottom`, or `stick` on a `scroll` with `axis=\"x\"`; a bad selector in a `<keymap>`'s `when`, once, at the `<keymap>`; a `priority` that is not a non-negative integer; a `scale` that is not a plain identifier (version=\"3\")"},
 	{"V004", "parse", "duplicate id; any `id` inside a container `each` template (version=\"2\")"},
 	{"V005", "parse", "not well-formed XML"},
 	{"V006", "parse", "`style src` include cycle"},
@@ -40,7 +40,7 @@ var diagCodes = []diagCode{
 	{"V014", "parse", "missing `version` on `<tui>` (phase 1+)"},
 	{"L001", "layout", "`fr` child of non-flex parent"},
 	{"L002", "layout", "`%` child of `auto` parent on that axis"},
-	{"L003", "layout", "fixed + min exceeds parent (warning; clip); also a table whose visible columns' cell and `%` widths and `auto`/`fr` min-widths, plus the gaps, exceed its width"},
+	{"L003", "layout", "fixed + min exceeds parent (warning; clip); also a table whose visible columns' cell and `%` widths and `auto`/`fr` min-widths, plus the gaps, exceed its width; in a version=\"3\" document, evaluated on the columns left once `priority` has hidden some"},
 	{"L004", "layout", "modal is not last child of screen"},
 	{"L005", "layout", "more than one bottom-docked status (warning)"},
 	{"L006", "layout", "a scroll/list/table/overflow: scroll viewport can never show part of its content (warning); for a table, a body viewport of 0 rows while it has rows"},
@@ -345,11 +345,14 @@ func writeCSSProperties(b *strings.Builder) {
 	names := css.PropertyNames()
 	sort.Strings(names)
 	for _, name := range names {
-		v2 := ""
-		if css.PropertyV2(name) {
-			v2 = " (version=\"2\" stylesheets only)"
+		gate := ""
+		switch {
+		case css.PropertyV2(name):
+			gate = " (version=\"2\" stylesheets only)"
+		case css.PropertyV3(name):
+			gate = " (version=\"3\" stylesheets only)"
 		}
-		fmt.Fprintf(b, "- `%s`: %s%s\n", name, css.PropertyValues(name), v2)
+		fmt.Fprintf(b, "- `%s`: %s%s\n", name, css.PropertyValues(name), gate)
 	}
 	b.WriteString("\n")
 }
