@@ -697,17 +697,6 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 				return
 			}
 		}
-		if name == "stick" {
-			// SPEC v0.3b §6.15: stick needs an identity across frames that a
-			// repeated row does not have.
-			if it := listItem(n); it != nil {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
-				return
-			} else if c := b.eachContainer(n); c != nil {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNode(c))
-				return
-			}
-		}
 		if !allowed {
 			if strings.HasPrefix(name, "on:") && !eventNames[strings.TrimPrefix(name, "on:")] {
 				b.attrErr(n, a, "V002", "unknown event %q on <%s>", name, tag)
@@ -727,6 +716,19 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if need >= 2 && !b.v2 {
 			b.v2Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
 			return
+		}
+		if name == "stick" {
+			// SPEC v0.3b §6.15: stick needs an identity across frames that a
+			// repeated row does not have. Only a version="3" document gets
+			// here (the version gate above comes first, §5.1), and only on
+			// a tag that takes stick.
+			if it := listItem(n); it != nil {
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
+				return
+			} else if c := b.eachContainer(n); c != nil {
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNode(c))
+				return
+			}
 		}
 	} else {
 		return // unknown tag already reported
