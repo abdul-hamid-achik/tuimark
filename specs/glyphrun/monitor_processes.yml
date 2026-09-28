@@ -102,6 +102,17 @@ steps:
             contains: "/ filter"
         timeoutMs: 2000
     - type: "fire"
+    # Wait for the final filtered state, not just for WindowServer to be
+    # gone: the ascending sort above already scrolls it out of view, so
+    # that alone held before the typing landed (a macOS CI flake).
+    - wait:
+        screen:
+            contains: "/ fire"
+        timeoutMs: 2000
+    - wait:
+        screen:
+            contains: "firefox"
+        timeoutMs: 2000
     - wait:
         screen:
             notContains: "WindowServer"
