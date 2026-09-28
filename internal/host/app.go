@@ -22,7 +22,7 @@ import (
 // Version is the runtime version the start record of TUIMARK_LOG carries
 // (SPEC v0.2b §26.12). Release builds set it with -ldflags "-X", like the
 // CLI's own version.
-var Version = "0.3.0-a"
+var Version = "0.3.0"
 
 // Event is the payload a handler receives (SPEC §8.2).
 type Event struct {

@@ -7,6 +7,13 @@ line.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-28
+
+The host API grows for real embedding and testing, and a new document
+version, `version="3"`, reports content that a view cuts without saying
+so. Everything is additive: `version="1"` and `version="2"` documents
+keep their meaning and their dumps.
+
 ### Added
 
 - **`LoadFS(fsys, name)`** loads a document and its stylesheets from an
@@ -150,5 +157,6 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.0
 [0.2.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.2.0
