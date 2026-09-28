@@ -1,0 +1,71 @@
+{
+  "$id": "https://tui.local/schema/ir.v0.3.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TUI View Language source IR",
+  "type": "object",
+  "required": ["version", "root"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": "0.3" },
+    "app": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string" },
+        "theme": { "type": "string" },
+        "focus": { "type": "string" },
+        "mouse": { "type": "string" },
+        "actions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "stylesheets": { "type": "array", "items": { "type": "string" } },
+    "tokens": { "type": "object", "additionalProperties": { "type": "string" } },
+    "keymap": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["keys", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "keys": { "type": "string" },
+          "action": { "type": "string" },
+          "when": { "type": "string" },
+          "to": { "type": "string" },
+          "label": { "type": "string" },
+          "keycap": { "type": "string" }
+        }
+      }
+    },
+    "root": { "$ref": "#/$defs/node" }
+  },
+  "$defs": {
+    "kind": {
+      "enum": [
+        "tui", "style", "keymap", "bind", "screen",
+        "col", "row", "box", "scroll", "spacer",
+        "text", "rule",
+        "list", "item", "input", "button", "progress",
+        "modal",
+        "table", "column", "tabs", "tab", "sparkline", "hints"
+      ]
+    },
+    "node": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "$ref": "#/$defs/kind" },
+        "classes": { "type": "array", "items": { "type": "string" } },
+        "attrs": { "type": "object", "additionalProperties": { "type": "string" } },
+        "bind": { "type": "string" },
+        "each": { "type": "string" },
+        "if": { "type": "string" },
+        "on": { "type": "object", "additionalProperties": { "type": "string" } },
+        "style": { "type": "object" },
+        "text": { "type": "string" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    }
+  }
+}

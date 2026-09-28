@@ -20,6 +20,12 @@ const Version = "0.1"
 // documents (SPEC §13.1, §23.2).
 const VersionV2 = "0.2"
 
+// VersionV3 is the source IR version `tuimark ir` emits for version="3"
+// documents (SPEC v0.3 §5.1, §13.1, §23.4). A version="3" document adds no
+// tag, attribute, or keymap member over version="2" in 0.3a, so IR 0.3 has
+// exactly the shape of IR 0.2 (schema/ir.v0.3.json).
+const VersionV3 = "0.3"
+
 // VersionHint ends the message of every V001, V002, and V003 that a
 // version="2" item gets in a version="1" document (SPEC §5.1).
 const VersionHint = ` (requires version="2")`

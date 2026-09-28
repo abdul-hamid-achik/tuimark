@@ -43,9 +43,14 @@ type Document struct {
 	File    string
 	Spike   bool
 	Version string
-	// V2 is true for a <tui version="2"> document: it accepts the 0.2b
-	// vocabulary (SPEC §5.1). Any other version is checked as "1".
-	V2    bool
+	// V2 is true for a <tui version="2"> or <tui version="3"> document: it
+	// accepts the 0.2b vocabulary (SPEC §5.1). Any other version is checked
+	// as "1".
+	V2 bool
+	// V3 is true for a <tui version="3"> document (SPEC v0.3 §5.1): the
+	// clipping warnings L008 and L009 fire, and the dump carries clipped.
+	// Every version="2" rule also holds for it (V2 is true too).
+	V3    bool
 	Theme string // the theme attribute: dark, light, auto (version="2"), or "" when absent
 	// Mouse is the mouse attribute as written (version="2", SPEC §8.5).
 	Mouse   string
@@ -217,10 +222,14 @@ var leafKinds = map[string]bool{"text": true, "input": true, "button": true, "pr
 type builder struct {
 	doc  *Document
 	file string
-	// v2 is the document's version="2" (SPEC §5.1), known before any
-	// element is built: the root's version decides how every tag,
-	// attribute, value, selector, and action is checked.
+	// v2 is the document's version="2" or version="3" (SPEC §5.1), known
+	// before any element is built: the root's version decides how every
+	// tag, attribute, value, selector, and action is checked.
 	v2 bool
+	// v3 is the document's version="3" (SPEC v0.3 §5.1): the clipping
+	// warnings L008 and L009 fire (internal/layout), and the dump carries
+	// clipped. v2 is always true when v3 is.
+	v3 bool
 	// droppedIn maps a node to the unknown-tag children content() kept
 	// out of its Children, in document order.
 	droppedIn map[*ir.Node][]*ir.Node
@@ -291,13 +300,21 @@ func Parse(src []byte, file string) *Document {
 		doc.Spike = true
 	case "tui":
 		// The version decides every check below (SPEC §5.1), whatever the
-		// attribute order: <tui theme="auto" version="2"> is valid.
+		// attribute order: <tui theme="auto" version="2"> is valid. A
+		// version="3" document accepts everything version="2" does (v0.3):
+		// it sets v2 too, plus its own v3 flag.
 		for _, a := range raw.Attrs {
-			if a.Name == "version" && a.Value == "2" {
+			if a.Name != "version" {
+				continue
+			}
+			switch a.Value {
+			case "2":
 				b.v2 = true
+			case "3":
+				b.v2, b.v3 = true, true
 			}
 		}
-		doc.V2 = b.v2
+		doc.V2, doc.V3 = b.v2, b.v3
 	default:
 		b.diag(ir.Error, "V005", raw.Line, raw.Col, "/", "", "document root must be <tui> (or the phase-0 alias <app>), got <%s>", raw.Name)
 		return doc
@@ -809,10 +826,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			b.attrErr(n, a, "V003", "value=%q: want a number 0-100", val)
 		}
 	case "version":
-		// SPEC §5.1: exactly "1" or "2"; any other value is V003 and the
-		// document is checked and rendered as version="1".
-		if val != "1" && val != "2" {
-			b.attrErr(n, a, "V003", "version=%q: want \"1\" or \"2\" (the document is read as version=\"1\")", val)
+		// SPEC v0.3 §5.1: exactly "1", "2", or "3"; any other value is
+		// V003 and the document is checked and rendered as version="1".
+		if val != "1" && val != "2" && val != "3" {
+			b.attrErr(n, a, "V003", "version=%q: want \"1\", \"2\", or \"3\" (the document is read as version=\"1\")", val)
 		}
 		b.doc.Version = val
 	case "theme":
