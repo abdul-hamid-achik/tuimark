@@ -1,0 +1,10 @@
+<tui version="3">
+  <keymap>
+    <bind keys="q" action="quit"/>
+  </keymap>
+  <screen id="main" focus="#rows">
+    <list id="rows" each="items as it" key="it.id" bind="cur" on:select="picked">
+      <item><text>{it.id}</text></item>
+    </list>
+  </screen>
+</tui>

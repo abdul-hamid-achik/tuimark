@@ -206,27 +206,43 @@ func (a *App) Run(w io.Writer) error { return a.h.Run(w) }
 // tuimark play's events do: {"step","action","source","keys","value"}.
 type PlayEvent = dump.Event
 
+// PlayFrame is one applied step's settled frame, present in
+// PlayResult.Frames only when PlayOptions.Frames was set (v0.3b, SPEC
+// §18.1): it marshals exactly as tuimark play --frames's frames entries
+// do, {"step","input","events","dump"}. Step is the step's number (0 for
+// the live frame Play renders before any step); Input is the step's text
+// as given ("" for step 0); Events holds only the events that step fired
+// (never nil); Dump is that step's settled frame, built with
+// PlayOptions.Styles/Cells exactly as PlayResult.Dump is.
+type PlayFrame = dump.PlayFrame
+
 // PlayOptions configures Play. Cols and Rows each default on their own
 // (0 is 80 for Cols, 24 for Rows, as for tuimark play); after defaulting
 // each must be 1-1000. NoHandlers records host actions without calling
 // their registered handlers, as tuimark play always does (a CLI-loaded
 // app never has any). Styles and Cells add the dump's theme/styles and
-// cells fields, as the --styles and --cells flags do.
+// cells fields, as the --styles and --cells flags do. Frames (v0.3b)
+// makes Play also return one PlayFrame per applied step in
+// PlayResult.Frames, as play --frames does.
 type PlayOptions struct {
 	Cols, Rows int
 	NoHandlers bool
 	Styles     bool
 	Cells      bool
+	Frames     bool
 }
 
 // PlayResult is what one Play call did: Events holds every event
 // dispatched during the call, in order, step 0 included; Dump is the
 // last frame built, at the size in effect then; Quit reports whether the
-// call ended with a quit.
+// call ended with a quit. Frames (v0.3b) holds one PlayFrame per step
+// applied in this call, step 0 included, in the same order, only when
+// PlayOptions.Frames was set; otherwise it is nil.
 type PlayResult struct {
 	Events []PlayEvent
 	Dump   *Dump
 	Quit   bool
+	Frames []PlayFrame
 }
 
 // Play drives the app itself, headless, exactly as Run would from the
@@ -261,13 +277,24 @@ type PlayResult struct {
 // while Run or another Play is active on the app returns an error, a nil
 // result, and does nothing; Run called while Play is active returns an
 // error before it looks at the terminal.
+//
+// With opts.Frames set (v0.3b), the result's Frames holds one PlayFrame
+// per step applied in this call, step 0 included, in order: a step's
+// frame is the frame settled after it, or, for a step that ended the
+// call (a quit or a handler error), the frame in effect at that moment —
+// that step still gets an entry, and its Events hold the event that
+// ended the call. A step that could not be applied has no entry. Without
+// opts.Frames, Frames is nil and nothing extra is built. tuimark play
+// --frames and Play(opts.Frames: true, ...) give the same frames, member
+// for member, for the same steps and flags (SPEC v0.3b §18.1 rule 9).
 func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) {
 	res, err := play.Play(a.h, play.Options{
 		Cols: opts.Cols, Rows: opts.Rows,
 		NoHandlers: opts.NoHandlers, Styles: opts.Styles, Cells: opts.Cells,
+		Frames: opts.Frames,
 	}, steps)
 	if res == nil {
 		return nil, err
 	}
-	return &PlayResult{Events: res.Events, Dump: res.Dump, Quit: res.Quit}, err
+	return &PlayResult{Events: res.Events, Dump: res.Dump, Quit: res.Quit, Frames: res.Frames}, err
 }

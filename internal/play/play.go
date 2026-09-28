@@ -8,19 +8,23 @@ import (
 )
 
 // Options configures Play; it mirrors tuimark.PlayOptions (0 for Cols/
-// Rows defaults to 80/24, as for tuimark play).
+// Rows defaults to 80/24, as for tuimark play). Frames is v0.3b: one
+// settled frame per applied step, as play --frames (SPEC v0.3b §18.1).
 type Options struct {
 	Cols, Rows int
 	NoHandlers bool
 	Styles     bool
 	Cells      bool
+	Frames     bool
 }
 
-// Result is what one Play call did; it mirrors tuimark.PlayResult.
+// Result is what one Play call did; it mirrors tuimark.PlayResult. Frames
+// is set only when Options.Frames was (v0.3b, SPEC §18.1).
 type Result struct {
 	Events []dump.Event
 	Dump   *dump.Dump
 	Quit   bool
+	Frames []dump.PlayFrame
 }
 
 // Play parses every step of the §15.4 --input grammar, then drives app
@@ -58,9 +62,9 @@ func Play(app *host.App, opts Options, steps []string) (*Result, error) {
 		parsed[i] = st
 	}
 
-	sess := NewSession(app, cols, rows, opts.Cells, opts.Styles, false, opts.NoHandlers)
+	sess := NewSession(app, cols, rows, opts.Cells, opts.Styles, opts.Frames, opts.NoHandlers)
 	sess.Run(parsed)
-	res := &Result{Events: sess.Events, Dump: sess.BuildDump(), Quit: sess.Quit}
+	res := &Result{Events: sess.Events, Dump: sess.BuildDump(), Quit: sess.Quit, Frames: sess.StepFrames}
 	switch {
 	case sess.UsageErr != nil:
 		return res, fmt.Errorf("step %d (%s): %v", sess.UsageStep, sess.UsageRaw, sess.UsageErr)
