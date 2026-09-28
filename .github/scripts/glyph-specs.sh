@@ -45,6 +45,19 @@ if [ "$#" -eq 0 ]; then
   set -- specs/glyphrun/*.yml
 fi
 
+# The examples/host-ts specs run a Bun parent. Unlike `task glyph`, which
+# skips them where bun is missing, CI and release must run them.
+for spec in "$@"; do
+  case "$(basename "$spec")" in
+    host_ts*.yml)
+      if ! command -v bun >/dev/null 2>&1; then
+        echo "glyph-specs: bun not found on PATH; $spec needs it (oven-sh/setup-bun)" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done
+
 total=0
 failed=0
 failures=""

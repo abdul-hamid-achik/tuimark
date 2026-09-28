@@ -1,0 +1,79 @@
+version: 1
+name: host_ts
+intent: |
+    examples/host-ts's Bun/TypeScript parent, with no Go code of its own,
+    drives a Tuimark view over the host protocol (`tuimark host`, fd 3 and
+    fd 4) end to end: it launches the child, the document renders, a key
+    fires the host action "inc", the parent answers the event by writing to
+    the store before it replies, the next frame shows both writes, and q
+    quits: the child's exit message says "quit", the parent reports it only
+    after the child has exited, with no protocol error, and exits with the
+    child's code 0.
+target:
+    cmd: ["bun", "run", "examples/host-ts/parent.ts", "${vars.tuimark}"]
+    cwd: "."
+terminal:
+    cols: 100
+    rows: 10
+steps:
+    - wait:
+        screen:
+            contains: "host-ts demo"
+        timeoutMs: 5000
+    - snapshot: before_increment
+    - press: i
+    - wait:
+        screen:
+            contains: "count: 1"
+        timeoutMs: 3000
+    - snapshot: after_increment
+    - press: q
+    - wait:
+        screen:
+            contains: "the view ended (quit)"
+        timeoutMs: 5000
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 5000
+outcomes:
+    - id: view_renders_through_the_bun_parent
+      description: the document renders with its initial count through the parent
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/before_increment.txt"
+                if grep -q "count: 0" "$f"; then
+                  echo '{"ok": true, "evidence": "before_increment shows count: 0"}'
+                else
+                  echo '{"ok": false, "evidence": "before_increment is missing count: 0"}'
+                fi
+    - id: event_answered_by_the_parent
+      description: the parent answers the "inc" event with store writes sent before its reply, and the frame after the reply shows both
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/after_increment.txt"
+                if grep -q "count: 1" "$f" && grep -q "last increment came from the TypeScript parent" "$f"; then
+                  echo '{"ok": true, "evidence": "after_increment shows count: 1 and the text the second write turned on"}'
+                else
+                  echo '{"ok": false, "evidence": "after_increment is missing count: 1 or the conditional text"}'
+                fi
+    - id: quit_reported_after_exit
+      description: q quits the child; the parent got its exit message with reason quit and reported it once the terminal was its own again
+      verify:
+        screen:
+            contains: "host-ts: the view ended (quit); count=1"
+    - id: no_protocol_error
+      description: the child sent the parent no error message
+      verify:
+        screen:
+            notContains: "protocol error"
+    - id: clean_exit
+      description: the parent exits with the child's code, 0 for quit
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:ac41b8627cfe2460337750c51c58651ae47d81f3090e4b9bc940dc878a6ab77d

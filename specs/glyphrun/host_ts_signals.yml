@@ -1,0 +1,66 @@
+version: 1
+name: host_ts_signals
+intent: |
+    examples/host-ts's Bun/TypeScript parent follows the host protocol's
+    rules for parents when it is signaled: a SIGTERM or a SIGHUP sent to the
+    parent's pid only (as a harness does) is forwarded to the `tuimark host`
+    child, which restores the terminal, reports reason "signal" with the
+    signal's name in its exit message, and exits with 128 + the signal
+    number; the parent waits for it and exits with the child's code (143
+    for SIGTERM, 129 for SIGHUP). The shell target waits for the child's
+    first frame in its TUIMARK_LOG before it signals, and prints what the
+    parent reported (on its stderr, after the child's exit) and the
+    parent's exit code once both runs are over.
+target:
+    cmd:
+        - sh
+        - -c
+        - |
+          ws=.glyphrun/ws/host_ts_signals
+          rm -rf "$ws" && mkdir -p "$ws" || exit 1
+          exec 9<&0
+          for sig in TERM HUP; do
+            log="$ws/$sig.ndjson"
+            TUIMARK_LOG="$log" bun run examples/host-ts/parent.ts ${vars.tuimark} <&9 2>"$ws/$sig.err" &
+            parent=$!
+            until grep -q '"ev":"frame"' "$log" 2>/dev/null; do sleep 0.05; done
+            kill -"$sig" "$parent"
+            wait "$parent"
+            echo "SIG$sig: parent exited $?" >>"$ws/summary"
+          done
+          cat "$ws/TERM.err" "$ws/HUP.err" "$ws/summary"
+    cwd: "."
+terminal:
+    cols: 100
+    rows: 12
+steps:
+    - wait:
+        screen:
+            contains: "SIGHUP: parent exited"
+        timeoutMs: 15000
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 5000
+outcomes:
+    - id: sigterm_forwarded
+      description: SIGTERM to the parent reaches the child, which exits with reason signal SIGTERM and code 143, and the parent exits with that code
+      verify:
+        screen:
+            contains: "SIGTERM: parent exited 143"
+    - id: sigterm_exit_message
+      description: the parent received the child's exit message naming SIGTERM
+      verify:
+        screen:
+            contains: "the view ended (signal SIGTERM)"
+    - id: sighup_forwarded
+      description: SIGHUP to the parent reaches the child, which exits with code 129, and the parent exits with that code
+      verify:
+        screen:
+            contains: "SIGHUP: parent exited 129"
+    - id: sighup_exit_message
+      description: the parent received the child's exit message naming SIGHUP
+      verify:
+        screen:
+            contains: "the view ended (signal SIGHUP)"
+contractHash: sha256:7657a852e3c9d5e2d6e6198d4138cca8c6d0425a6002a72152bc620ebd96a353

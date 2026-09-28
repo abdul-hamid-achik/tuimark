@@ -50,10 +50,24 @@ tasks:
       - ./bin/tuimark test
 
   glyph:
-    desc: Build, then run every glyph spec under specs/glyphrun/.
+    desc: Build, then run every glyph spec under specs/glyphrun/. The examples/host-ts
+      specs (host_ts*.yml) run a Bun parent, so without `bun` on PATH they are skipped
+      with a message instead of failing; CI and the release workflow install Bun, so
+      they always run there.
     deps: [build]
     cmds:
-      - for f in specs/glyphrun/*.yml; do glyph run "$f" --format md || exit 1; done
+      - |
+        for f in specs/glyphrun/*.yml; do
+          case "$(basename "$f")" in
+            host_ts*.yml)
+              if ! command -v bun >/dev/null 2>&1; then
+                echo "skipping examples/host-ts spec: bun not found"
+                continue
+              fi
+              ;;
+          esac
+          glyph run "$f" --format md || exit 1
+        done
 
   docs:
     desc: Serve the VitePress documentation site in docs/ locally.

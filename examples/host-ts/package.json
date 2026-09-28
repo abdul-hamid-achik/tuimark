@@ -1,0 +1,9 @@
+{
+  "name": "tuimark-host-ts-example",
+  "private": true,
+  "type": "module",
+  "description": "A Bun/TypeScript parent that drives a Tuimark view over `tuimark host`.",
+  "scripts": {
+    "start": "bun run parent.ts"
+  }
+}
