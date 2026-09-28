@@ -13,11 +13,11 @@ func withBuildMetadata(t *testing.T, v, c, d string) {
 }
 
 // A build without -ldflags (go build, go install, go test) reports the
-// source tree's release, 0.2.0, with no pre-release suffix and no build
-// metadata. All three spellings of the command print the same line.
+// source tree's release, 0.3.0-a, with no build metadata. All three
+// spellings of the command print the same line.
 func TestVersionDefault(t *testing.T) {
-	if version != "0.2.0" {
-		t.Fatalf("default version = %q, want 0.2.0", version)
+	if version != "0.3.0-a" {
+		t.Fatalf("default version = %q, want 0.3.0-a", version)
 	}
 	withBuildMetadata(t, version, "", "")
 	for _, arg := range []string{"version", "--version", "-v"} {
@@ -25,8 +25,8 @@ func TestVersionDefault(t *testing.T) {
 		if code != 0 {
 			t.Fatalf("%s: exit %d, want 0; stderr=%s", arg, code, errw)
 		}
-		if out != "tuimark 0.2.0\n" {
-			t.Errorf("%s: got %q, want %q", arg, out, "tuimark 0.2.0\n")
+		if out != "tuimark 0.3.0-a\n" {
+			t.Errorf("%s: got %q, want %q", arg, out, "tuimark 0.3.0-a\n")
 		}
 		if errw != "" {
 			t.Errorf("%s: unexpected stderr %q", arg, errw)
