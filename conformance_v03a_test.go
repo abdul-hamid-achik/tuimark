@@ -75,12 +75,12 @@ func TestVersionThreeIR(t *testing.T) {
 	requireNoParseErrors(t, app)
 }
 
-// loadV3Copy copies path's directory's .tui and .tcss files into a fresh
-// t.TempDir() (so a relative <style src> keeps resolving, and nothing
-// leaks into the repo tree, which other packages' tests glob), with
-// path's own copy's <tui version="2" changed to version="3", and returns
-// that copy's path.
-func loadV3Copy(t *testing.T, path string) string {
+// loadVersionCopy copies path's directory's .tui and .tcss files into a
+// fresh t.TempDir() (so a relative <style src> keeps resolving, and
+// nothing leaks into the repo tree, which other packages' tests glob),
+// with path's own copy's <tui version="from" changed to version="to",
+// and returns that copy's path.
+func loadVersionCopy(t *testing.T, path, from, to string) string {
 	t.Helper()
 	dir := filepath.Dir(path)
 	entries, err := os.ReadDir(dir)
@@ -102,11 +102,11 @@ func loadV3Copy(t *testing.T, path string) string {
 			t.Fatal(err)
 		}
 		if e.Name() == filepath.Base(path) {
-			v3 := bytes.Replace(raw, []byte(`<tui version="2"`), []byte(`<tui version="3"`), 1)
-			if bytes.Equal(v3, raw) {
-				t.Fatalf(`%s: no <tui version="2" to replace`, path)
+			swapped := bytes.Replace(raw, []byte(`<tui version="`+from+`"`), []byte(`<tui version="`+to+`"`), 1)
+			if bytes.Equal(swapped, raw) {
+				t.Fatalf(`%s: no <tui version="%s" to replace`, path, from)
 			}
-			raw, replaced = v3, true
+			raw, replaced = swapped, true
 		}
 		if err := os.WriteFile(filepath.Join(tmp, e.Name()), raw, 0o644); err != nil {
 			t.Fatal(err)
@@ -143,10 +143,11 @@ func loadWithData(t *testing.T, tuiPath, dataPath string) *tuimark.App {
 }
 
 // 84. specs/fixtures/{grid,hints,table,tabs}.tui and
-// examples/monitor/studio.tui (still version="2" on this branch), with
-// only their version changed to "3", give byte-identical dumps and
-// diagnostics to their version="2" form at every size where neither
-// L008 nor L009 fires.
+// examples/monitor/studio.tui, with only their version changed between
+// "2" and "3", give byte-identical dumps and diagnostics in both forms at
+// every size where neither L008 nor L009 fires. The fixtures are
+// version="2" and get a version="3" copy; examples/monitor is
+// version="3" since 0.3a (test 89) and gets a version="2" copy.
 func TestVersionThreeMatchesVersionTwoWithoutClipping(t *testing.T) {
 	fixtures := []struct{ tui, data string }{
 		{"specs/fixtures/grid.tui", "specs/fixtures/grid.json"},
@@ -157,8 +158,17 @@ func TestVersionThreeMatchesVersionTwoWithoutClipping(t *testing.T) {
 	}
 	for _, fx := range fixtures {
 		t.Run(fx.tui, func(t *testing.T) {
-			v3path := loadV3Copy(t, fx.tui)
-			v2app := loadWithData(t, fx.tui, fx.data)
+			raw, err := os.ReadFile(fx.tui)
+			if err != nil {
+				t.Fatal(err)
+			}
+			v2path, v3path := fx.tui, ""
+			if bytes.Contains(raw, []byte(`<tui version="3"`)) {
+				v2path, v3path = loadVersionCopy(t, fx.tui, "3", "2"), fx.tui
+			} else {
+				v3path = loadVersionCopy(t, fx.tui, "2", "3")
+			}
+			v2app := loadWithData(t, v2path, fx.data)
 			v3app := loadWithData(t, v3path, fx.data)
 			for _, cols := range []int{40, 80, 120} {
 				d2, err := v2app.Dump(cols, 24)

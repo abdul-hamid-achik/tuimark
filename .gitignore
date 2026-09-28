@@ -31,3 +31,4 @@ node_modules/
 /.claude/scheduled_tasks.lock
 /.claude/settings.local.json
 .env*
+/.claude/worktrees/

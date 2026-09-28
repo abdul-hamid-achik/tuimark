@@ -35,7 +35,7 @@ identity  row        58x1 @(0,0)
 nav       tabs       58x22 @(0,1) focus
 -         text       15x1 @(0,1) selected
 overview  tab        58x21 @(0,2)
-panels    box        58x23 @(0,2)
+panels    box        58x21 @(0,2)
 -         box        58x5 @(0,2)
 -         row        56x1 @(1,3)
 -         text       12x1 @(1,3)

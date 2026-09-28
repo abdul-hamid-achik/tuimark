@@ -206,3 +206,26 @@ func TestPauseAndSample(t *testing.T) {
 		t.Errorf("live after a refresh:\n%s", s)
 	}
 }
+
+// §21 test 89: the fixture is version="3" and no tab cuts anything at the
+// sizes Validate checks. Validate lays out only the active tab, so each
+// tab is made active through the tabs' bind, under both themes.
+func TestNoClippingInAnyTab(t *testing.T) {
+	m, _ := loadMonitor(t)
+	tabs := []string{"overview", "cpu", "memory", "thermal", "disk", "network", "processes", "settings", "trends"}
+	for _, theme := range []string{"dark", "light"} {
+		if err := m.ui.Set("@theme", theme); err != nil {
+			t.Fatal(err)
+		}
+		for _, tab := range tabs {
+			if err := m.ui.Set("view", tab); err != nil {
+				t.Fatal(err)
+			}
+			for _, d := range m.ui.Validate() {
+				if d.Code == "L008" || d.Code == "L009" {
+					t.Errorf("%s, tab %s: %s", theme, tab, d)
+				}
+			}
+		}
+	}
+}

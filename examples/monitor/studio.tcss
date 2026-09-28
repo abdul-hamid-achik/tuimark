@@ -46,7 +46,7 @@ screen { color: $fg; background: $bg; }
 .hint-label { color: $muted; }
 
 .panel { border: rounded; border-color: $border; title-color: $muted; }
-#panels { layout: grid; grid-columns: 2; grid-min-width: 36; gap: 1; }
+#panels { layout: grid; grid-columns: 2; grid-min-width: 36; gap: 1; overflow: scroll; }
 .meter { height: 1; gap: 1; }
 .meter-label { width: 12; }
 .gauge { width: 1fr; bar: eighths; color: $accent; }

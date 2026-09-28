@@ -1,7 +1,8 @@
 // Command monitor runs examples/monitor/studio.tui, the Tuimark 0.2b
 // acceptance fixture: three tabs of monitor studio (Overview, Processes
 // with the kill confirmation and the process detail, Settings), plus CPU
-// for the core grid.
+// for the core grid. Since 0.3a it is a version="3" document, so it also
+// shows that no tab cuts content at the sizes Validate checks.
 //
 //	go run ./examples/monitor                  # from the repo root
 //	go run ./examples/monitor --dump 120x30    # print Dump() as JSON and exit

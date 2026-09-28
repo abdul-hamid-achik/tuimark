@@ -193,7 +193,7 @@ func TestMonitorIR(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit %d: %s", code, errw)
 	}
-	for _, want := range []string{`"mouse": "mouse_enabled"`, `"keycap": "1-9"`, `"label": "tabs"`, `"class:live": "live"`, `"class:hot": "p.cpu_hot"`,
+	for _, want := range []string{`"version": "0.3"`, `"mouse": "mouse_enabled"`, `"keycap": "1-9"`, `"label": "tabs"`, `"class:live": "live"`, `"class:hot": "p.cpu_hot"`,
 		`"kind": "table"`, `"kind": "column"`, `"kind": "tabs"`, `"kind": "tab"`, `"kind": "sparkline"`, `"kind": "hints"`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("monitor IR lacks %s", want)
