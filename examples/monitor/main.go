@@ -2,7 +2,9 @@
 // acceptance fixture: three tabs of monitor studio (Overview, Processes
 // with the kill confirmation and the process detail, Settings), plus CPU
 // for the core grid. Since 0.3a it is a version="3" document, so it also
-// shows that no tab cuts content at the sizes Validate checks.
+// shows that no tab cuts content at the sizes Validate checks. Since 0.3b
+// it groups its keymap rows by context (<keymap when>), stacks the cores
+// with no row gap, and hides Processes columns by priority, not @media.
 //
 //	go run ./examples/monitor                  # from the repo root
 //	go run ./examples/monitor --dump 120x30    # print Dump() as JSON and exit

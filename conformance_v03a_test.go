@@ -148,14 +148,17 @@ func loadWithData(t *testing.T, tuiPath, dataPath string) *tuimark.App {
 // "2" and "3", give byte-identical dumps and diagnostics in both forms at
 // every size where neither L008 nor L009 fires. The fixtures are
 // version="2" and get a version="3" copy; examples/monitor is
-// version="3" since 0.3a (test 89) and gets a version="2" copy.
+// version="3" since 0.3a (test 89) and gets a version="2" copy. Since 0.3b
+// (test 107) the live monitor uses version="3"-only vocabulary (<keymap
+// when>, row-gap, priority), so this compares its 0.3a form, frozen in
+// examples/monitor/testdata/v0.3.0.
 func TestVersionThreeMatchesVersionTwoWithoutClipping(t *testing.T) {
 	fixtures := []struct{ tui, data string }{
 		{"specs/fixtures/grid.tui", "specs/fixtures/grid.json"},
 		{"specs/fixtures/hints.tui", "specs/fixtures/hints.json"},
 		{"specs/fixtures/table.tui", "specs/fixtures/table.json"},
 		{"specs/fixtures/tabs.tui", "specs/fixtures/tabs.json"},
-		{"examples/monitor/studio.tui", "examples/monitor/sample.json"},
+		{"examples/monitor/testdata/v0.3.0/studio.tui", "examples/monitor/sample.json"},
 	}
 	for _, fx := range fixtures {
 		t.Run(fx.tui, func(t *testing.T) {
