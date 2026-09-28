@@ -7,6 +7,38 @@ line.
 
 ## [Unreleased]
 
+### Added
+
+- **`LoadFS(fsys, name)`** loads a document and its stylesheets from an
+  `fs.FS`, so a view embedded with `go:embed` loads without being copied to
+  disk. A `<style src>` that climbs out of the file system is a `V006`
+  diagnostic.
+- **`Get(path)`** returns a copy of a store value. `@focus`, `@screen`, and
+  `@theme` return the app's current focus, screen, and theme.
+- **`Batch(fn)`** applies several `Set`s as one change, all or nothing, with
+  one redraw. No frame, dump, or handler sees half of it.
+- **`Play(opts, steps...)`** drives the app without a terminal, for tests.
+  It uses the step grammar of `tuimark play`, calls the registered
+  handlers, keeps the state for the next call, and returns the events and
+  the final dump. One engine now serves `tuimark play`, `tuimark test`, and
+  `Play`, and the CLI output is unchanged.
+- **`<tui version="3">`** is a `version="2"` document plus two layout
+  warnings:
+  - `L008`: a text loses columns or lines without an ellipsis.
+  - `L009`: a node cuts a child on an axis it does not scroll.
+
+  Dumps mark the node with `clipped`. A cut the author intends is silenced
+  by writing `wrap: nowrap` or `overflow: hidden`. `tuimark ir` prints IR
+  `"0.3"` for these documents (`schema/ir.v0.3.json`), and
+  `schema/dump.v0.2.json` gains `clipped`.
+
+### Changed
+
+- **`examples/monitor`** is a `version="3"` document. Its overview grid
+  now scrolls instead of being cut at 40–58 columns.
+- The `V003` message for an invalid `version` now lists `"1"`, `"2"`, or
+  `"3"`.
+
 ### Fixed
 
 - **Release.** The release workflow now publishes the Homebrew cask. For

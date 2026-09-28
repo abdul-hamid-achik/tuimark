@@ -1,6 +1,6 @@
 ---
 title: Testing
-description: Testing Tuimark views with golden dumps and tuimark test, Go tests on Dump and Validate, and end-to-end terminal specs with Glyphrun.
+description: Testing Tuimark views with golden dumps and tuimark test, Go tests on Dump, Validate and Play, fixtures for live data, and end-to-end terminal specs with Glyphrun.
 ---
 
 # Testing
@@ -10,7 +10,7 @@ Because every frame is deterministic data, a Tuimark view is easy to test at thr
 | Level | Tool | Catches |
 |---|---|---|
 | The document | `tuimark test` with golden dumps | any change to the geometry, text, or styles of a frame, at the sizes you care about |
-| The host | `go test` on `Dump`, `Validate`, and `Catalog` | a view that no longer loads, a missing handler, data that renders wrong |
+| The host | `go test` on `Dump`, `Validate`, `Catalog`, and `Play` | a view that no longer loads, a missing handler, data that renders wrong, a key that does the wrong thing |
 | The whole app | [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun) specs | the real binary in a real terminal: keys, timing, quitting cleanly |
 
 ## Golden dumps
@@ -82,6 +82,38 @@ for _, a := range ui.Catalog() {
 }
 ```
 
+### Driving keys with Play (0.3)
+
+[`Play`](/guide/go-api#play) runs the same steps as `tuimark play` against your app, with your handlers, and without a terminal. So the host's reactions are tested with the real keymap, not by calling handlers by hand:
+
+```go
+func TestKillAsksFirst(t *testing.T) {
+	ui := newTestApp(t) // Load or LoadFS, Bind the fixture data, On(...) every handler
+	res, err := ui.Play(tuimark.PlayOptions{Cols: 100, Rows: 30}, "7", "K")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if open, _ := ui.Get("kill_open"); open != true {
+		t.Fatalf("K did not open the confirmation; events: %v", res.Events)
+	}
+	res, _ = ui.Play(tuimark.PlayOptions{Cols: 100, Rows: 30}, "enter")
+	if len(res.Events) != 0 {
+		t.Fatalf("enter inside the confirmation fired %v", res.Events)
+	}
+}
+```
+
+The state carries over between calls, so a test reads like a session: play some keys, check the store with `Get` or the frame in `res.Dump`, play more.
+
+### Fixtures for live data
+
+A host that shows live data (metrics, processes, a network) needs a fixture mode for its tests and demos. The pattern that works:
+
+- **Replace every source, not just the data.** The clock or sampler, the thing that acts (a process killer, a file writer), the settings store, and the history all get fake versions. Then a test never starts a goroutine or touches the machine, and a demo never kills a real process.
+- **Keep the real units.** If the collector reports bytes per second, the fixture reports bytes per second too. A fixture that feeds already-scaled numbers hides every scaling bug in the view.
+- **Seed it.** A seeded generator gives the same frames every run, so goldens and [Glyphrun](#end-to-end-with-glyphrun) specs stay stable.
+- **Give the binary the switch**, as in `monitor studio --tuimark --fixture`, so end-to-end specs run against the same data the Go tests use.
+
 ## End-to-end with Glyphrun
 
 [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun) runs a program in a real pseudo-terminal, types into it, waits for text on the screen, and checks outcomes, writing an artifact pack (screens, frames, an SVG of the final screen) that a person or an agent can read after a failure. Tuimark's own repository tests every example this way.
@@ -146,5 +178,5 @@ Pin `TUIMARK_THEME` and `TUIMARK_COLOR` in the spec (or in `glyphrun.config.yml`
 
 - For a view you are designing, let the [agent loop](/guide/agents) (`validate`, `dump`, `play`) find problems as you go, then pin the result with goldens at 40, 80, and 120 columns.
 - For interactions, add goldens with `input`: they check the keymap, focus, and events, and run in milliseconds.
-- For the host, a Go test on `Catalog` and `Dump` with real data.
+- For the host, a Go test on `Catalog` and `Dump` with real data, and `Play` for what its handlers do when keys are pressed.
 - For the finished app, one Glyphrun spec per user journey: launching, the main task, quitting.

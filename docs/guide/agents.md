@@ -62,7 +62,7 @@ The briefing states them, and they are worth repeating in your own instructions:
 
 ## A prompt that works
 
-> Build the view for a deploy dashboard in `ui/app.tui` and `ui/theme.tcss`, with realistic data in `ui/sample.json`: a pipeline list on the left, a log panel on the right, a status bar, and a confirm modal for deploying. Use `<tui version="2">`. Read `AGENTS.md` first. Loop with `tuimark validate` and `tuimark dump --format json` at 80 and 120 columns until there are no diagnostics, and check the keymap with `tuimark play`. Do not write any Go. When you are done, list the action names the view fires.
+> Build the view for a deploy dashboard in `ui/app.tui` and `ui/theme.tcss`, with realistic data in `ui/sample.json`: a pipeline list on the left, a log panel on the right, a status bar, and a confirm modal for deploying. Use `<tui version="3">`. Read `AGENTS.md` first. Loop with `tuimark validate` and `tuimark dump --format json` at 80 and 120 columns until there are no diagnostics, and check the keymap with `tuimark play`. Do not write any Go. When you are done, list the action names the view fires.
 
 ## Handing off to the host
 
@@ -78,4 +78,4 @@ reports any action the view fires that the host does not know (`B004`), which ca
 
 - Commit goldens for the sizes you checked ([testing](/guide/testing#golden-dumps)): the next agent that edits the view gets a failing test and a diff, not a surprise.
 - Keep `sample.json` realistic, with the long names, empty lists, and wide characters real data will have.
-- Prefer `version="2"`: `when` over the focus chain, the built-in `move-*` and `check-*` actions, and `<hints>` mean far less host code, and less for an agent to get wrong.
+- Prefer `version="3"`: it has everything `version="2"` has (`when` over the focus chain, the built-in `move-*` and `check-*` actions, and `<hints>`, which mean far less host code and less for an agent to get wrong), plus the `L008`/`L009` warnings, which name any text or panel a dump shows cut.

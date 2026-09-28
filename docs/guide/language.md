@@ -48,8 +48,13 @@ Every document says which vocabulary it uses:
 
 - **`version="1"`** is the original vocabulary. Its meaning, and its dumps, never change.
 - **`version="2"`** accepts everything `version="1"` does, with the same meaning, plus the 0.2 additions: the tags `table`, `column`, `tabs`, `tab`, `sparkline`, and `hints`; `each` on containers; multi-select; `class:NAME`; `theme="auto"`; `@media (theme: …)`; `layout: grid`; scrollbars; `bar: eighths`; the built-in `move-*`, `check-*`, and `switch-to` actions; the mouse; and `when` matching over the focus chain.
+- **`version="3"`** (0.3) is `version="2"` plus two layout warnings about content a dump shows as gone:
+  - `L008`: a text cut without an ellipsis;
+  - `L009`: a node that cuts a child on an axis it does not scroll.
 
-Use `version="2"` for new documents. In a `version="1"` document each 0.2 addition is still recognized, and reported with a message that ends in `(requires version="2")`, so an agent knows exactly what to change. A `.tcss` file has no version of its own: it is checked against the document that loads it.
+  The dump marks the node with `clipped`. When a cut is intended, write `wrap: nowrap` or `overflow: hidden` and the warning goes away. A document that clips nothing dumps exactly as it would as `version="2"`.
+
+Use `version="3"` for new documents. In a `version="1"` document each 0.2 addition is still recognized, and reported with a message that ends in `(requires version="2")`, so an agent knows exactly what to change. A `.tcss` file has no version of its own: it is checked against the document that loads it.
 
 ## The tags
 

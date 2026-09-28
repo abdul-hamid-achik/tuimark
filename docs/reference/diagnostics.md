@@ -18,7 +18,7 @@ Reported while reading the `.tui` document and its stylesheets. Most are errors:
 |---|---|
 | <span id="v001"></span>`V001` | unknown tag; a version="2" tag in a version="1" document (message ends with `(requires version="2")`); `input`, `button`, `list`, `modal`, `table`, `tabs`, or `tab` inside a container `each` template |
 | <span id="v002"></span>`V002` | unknown attribute; a version="2" attribute in a version="1" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template |
-| <span id="v003"></span>`V003` | bad unit / color / token / CSS property; a `version` other than 1 or 2; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max` |
+| <span id="v003"></span>`V003` | bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max` |
 | <span id="v004"></span>`V004` | duplicate id; any `id` inside a container `each` template (version="2") |
 | <span id="v005"></span>`V005` | not well-formed XML |
 | <span id="v006"></span>`V006` | `style src` include cycle |
@@ -47,6 +47,8 @@ Reported while laying out a frame, so they depend on the size you render at.
 | <span id="l005"></span>`L005` | more than one bottom-docked status (warning) |
 | <span id="l006"></span>`L006` | a scroll/list/table/overflow: scroll viewport can never show part of its content (warning); for a table, a body viewport of 0 rows while it has rows |
 | <span id="l007"></span>`L007` | in a `layout: grid` container, a child with a document-written `width`, `min-width`, `max-width`, or `flex` (ignored), or an `fr` or `%` `height` (treated as `auto`) (warning; version="2") |
+| <span id="l008"></span>`L008` | in a `version="3"` document, a painted `text` (not `visibility: hidden`, not a table cell/tab label/hint item) that loses columns (a document-unwritten `nowrap` line wider than its content box) or lines (more lines than its content box has rows, with `overflow: hidden` not document-written) without saying so (warning; version="3") |
+| <span id="l009"></span>`L009` | in a `version="3"` document, a container that cuts a child, in flow or docked, on an axis it does not itself scroll, when `overflow: hidden` is not document-written on it; not for a `list`, a `table`, or a `hints`, for a node `L003` already reports, or for a child `L006` already reports (warning; version="3") |
 
 ## Bind (`B…`) {#bind}
 

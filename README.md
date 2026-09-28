@@ -236,9 +236,10 @@ takes over), proving the loop end to end. This one example touches:
 - **Keymap and actions** (SPEC §8): a global `<bind>` for `quit`, and
   `on:select="open"` as a named action the host would register with `On`.
 
-## Document versions: `version="1"` and `version="2"`
+## Document versions: `version="1"`, `version="2"`, and `version="3"`
 
-Every `<tui>` document declares `version="1"` or `version="2"`. A
+Every `<tui>` document declares `version="1"`, `version="2"`, or (0.3)
+`version="3"`. A
 `version="1"` document keeps the vocabulary and meaning it has always had,
 and its dumps stay byte-identical. `version="2"` opts into the 0.2b
 vocabulary (SPEC §5.1); this build implements all of it:
@@ -532,6 +533,29 @@ vocabulary (SPEC §5.1); this build implements all of it:
   tab strip by one tab (wrapping), or another viewport by one row, with
   or without an `id`. The hit test is the one `tuimark inspect --at X,Y`
   uses.
+
+### `version="3"`: clipping warnings (0.3)
+
+A `version="3"` document is a `version="2"` document with two extra layout
+warnings. They name content that a dump shows as gone but that no error
+mentioned:
+
+- **`L008`**: a `text` loses content without saying so. Either a `nowrap`
+  line is wider than its box, with no ellipsis, or its lines outnumber its
+  box's rows.
+- **`L009`**: a node cuts a child on an axis it does not scroll, for
+  example a fixed-height grid whose second row does not fit.
+
+Both show up in `validate` (at 40, 80, and 120 columns) and in a dump's
+`errors`. The dump also marks the node with `"clipped": "text"` or
+`"children"`, and the text dump ends its line with ` clipped`. When a cut
+is what you want, say so in the stylesheet and the warning goes away:
+`wrap: nowrap` on the text or an ancestor for a wide line, and
+`overflow: hidden` on the node that cuts. Nothing else changes: for a
+document that clips nothing, `version="3"` dumps are byte-identical to
+`version="2"` ones. Opting in costs one attribute. The warnings stay out of
+`version="1"` and `version="2"` documents, so existing hosts whose tests
+expect an empty `Validate()` keep passing.
 
 ## CLI reference
 
@@ -864,14 +888,18 @@ The public surface is deliberately small (package `tuimark`, SPEC §18):
 
 ```go
 func Load(path string) (*App, error)
+func LoadFS(fsys fs.FS, name string) (*App, error)            // 0.3
 func Parse(r io.Reader) (*App, error)
 
 func (a *App) Bind(path string, v any) error
 func (a *App) Set(path string, v any) error
+func (a *App) Get(path string) (any, bool)                     // 0.3
+func (a *App) Batch(fn func(b *Batch) error) error              // 0.3
 func (a *App) On(action string, h Handler)
 func (a *App) Catalog() []ActionSpec
 func (a *App) Dump(cols, rows int) (*Dump, error)
 func (a *App) Validate() []Diagnostic
+func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) // 0.3
 func (a *App) Run(w io.Writer) error
 ```
 
@@ -911,6 +939,23 @@ module; the only supported entry points are the functions above.
   signal, so the process can exit with a failure status instead of exiting
   clean — even when a handler had already returned `ErrQuit` as the signal
   arrived.
+- **`LoadFS`** (0.3) loads a document from an `fs.FS`, so a view embedded
+  with `go:embed` loads without being copied to disk. A relative
+  `<style src>` resolves inside the file system, next to the document. A
+  `src` that climbs out of it is a `V006` diagnostic, not an error.
+- **`Get`** (0.3) returns a copy of a store value, with the same path
+  grammar as `Set`. `@focus`, `@screen`, and `@theme` return the app's
+  current focus, screen, and theme.
+- **`Batch`** (0.3) applies several `Set`s as one change. No frame, dump,
+  or handler sees some of them without the others, and the batch asks for
+  one redraw. If any write fails, none is applied. It is the way to publish
+  a sample of live data.
+- **`Play`** (0.3) is `Run` without a terminal, for tests. It replays the
+  steps of `tuimark play` (`"7"`, `"text:hello world"`, `"click:12,3"`, …)
+  against the app itself, calls the registered handlers, and returns the
+  events and the final dump. The state carries over to the next call. With
+  `NoHandlers` on a freshly loaded app, it gives exactly what `tuimark play`
+  prints.
 
 ## Examples
 

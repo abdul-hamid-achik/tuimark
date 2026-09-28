@@ -1,6 +1,6 @@
 ---
 title: Go API
-description: The Tuimark Go package - nine functions to load a document, bind data, handle actions, dump frames and run in the terminal - with Event, ErrQuit and the reserved Set paths.
+description: The Tuimark Go package - load a document (from disk or an embedded file system), bind and read data, handle actions, dump frames, test with Play and run in the terminal - with Event, ErrQuit and the reserved Set paths.
 ---
 
 # Go API
@@ -11,28 +11,43 @@ The runtime is one Go package, `github.com/abdul-hamid-achik/tuimark`, with no C
 go get github.com/abdul-hamid-achik/tuimark@latest
 ```
 
-## The nine functions
+## The functions
 
 ```go
 func Load(path string) (*App, error)
+func LoadFS(fsys fs.FS, name string) (*App, error)            // 0.3
 func Parse(r io.Reader) (*App, error)
 
 func (a *App) Bind(path string, v any) error
 func (a *App) Set(path string, v any) error
+func (a *App) Get(path string) (any, bool)                     // 0.3
+func (a *App) Batch(fn func(b *Batch) error) error              // 0.3
 func (a *App) On(action string, h Handler)
 func (a *App) Catalog() []ActionSpec
 func (a *App) Dump(cols, rows int) (*Dump, error)
 func (a *App) Validate() []Diagnostic
+func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) // 0.3
 func (a *App) Run(w io.Writer) error
 ```
 
-That is the whole surface, plus the types they use: `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, and `ErrQuit`.
+That is the whole surface, plus the types they use: `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, `ErrQuit`, and, since 0.3, `Batch`, `PlayOptions`, `PlayEvent`, and `PlayResult`.
 
 ## Loading
 
 `Load` reads a `.tui` file; `<style src>` paths resolve relative to it. `Parse` reads a document from an `io.Reader`, with `src` paths relative to the working directory.
 
-Neither fails because of what is in the document: a document with errors still loads. The error is only for I/O. Read the problems with `Validate()`, or from a dump's `Errors`.
+`LoadFS` (0.3) reads a document from an `fs.FS`. Its main use is shipping the view inside the binary with `go:embed`:
+
+```go
+//go:embed ui/app.tui ui/theme.tcss
+var views embed.FS
+
+ui, err := tuimark.LoadFS(views, "ui/app.tui") // <style src="theme.tcss"/> is ui/theme.tcss
+```
+
+A relative `<style src>` resolves inside the file system, next to the document. A `src` that climbs out of it is a `V006` diagnostic.
+
+None of them fails because of what is in the document: a document with errors still loads. The error is only for I/O. Read the problems with `Validate()`, or from a dump's `Errors`.
 
 ## Data
 
@@ -49,6 +64,20 @@ _ = ui.Set("steps.2.status", "done")          // host paths may index arrays
 ```
 
 A host path may use a number to reach into an array, as above; markup paths cannot, and reach arrays through `each`.
+
+`Get(path)` (0.3) reads a value back as a copy: changing what it returns never changes the store. It uses the same paths, and `@focus`, `@screen`, and `@theme` return the app's current focus (`"#id"`), screen, and theme.
+
+`Batch` (0.3) applies several writes as one change. Use it to publish one sample of live data, so no frame shows half of it:
+
+```go
+err := ui.Batch(func(b *tuimark.Batch) error {
+	_ = b.Set("cpu", cpu)
+	_ = b.Set("memory", mem)
+	return b.Set("processes", procs)
+})
+```
+
+The writes are applied together and in order, and they cause a single redraw. If any of them fails, or `fn` returns an error, none is applied. `fn` runs without holding the app's lock, so it can call `Get` to compute what to write.
 
 ### Reserved paths
 
@@ -134,6 +163,26 @@ func TestTasksFit(t *testing.T) {
 	}
 }
 ```
+
+## Play
+
+`Play` (0.3) is `Run` without a terminal, for Go tests. Each step is one step of [`tuimark play`](/guide/tools): a key, `text:…`, `paste:…`, `set:…`, `focus:…`, `resize:…`, `click:X,Y`, or `wheel-up:X,Y`/`wheel-down:X,Y`. A step may contain spaces (`"text:hello world"`).
+
+```go
+res, err := ui.Play(tuimark.PlayOptions{Cols: 120, Rows: 30}, "7", "/", "text:fire", "enter", "K")
+if err != nil {
+	t.Fatal(err)
+}
+// res.Events: the actions that fired, in order, with their step, keys, and value
+// res.Dump:   the final frame, as Dump returns it
+// res.Quit:   whether a quit ended the call
+```
+
+- `Play` drives the app itself and calls the handlers you registered with `On`, exactly as `Run` would. The state carries over to the next `Play` or `Run`, so a test can play a few keys, check the store with `Get`, and play more.
+- Every step is checked before any runs: a bad step returns an error and changes nothing. A handler that returns `ErrQuit` ends the call with `Quit: true`. Any other handler error ends the call and is returned together with the events so far.
+- Every call starts by rendering and settling what changed since the last one, so `ui.Play(opts)` with no steps picks up writes a handler made from another goroutine.
+- With `NoHandlers: true` on a freshly loaded app, `Play` gives exactly what `tuimark play` prints. The CLI and `Play` share one engine.
+- `Play` and `Run` exclude each other: calling one while the other is active returns an error.
 
 ## Run
 
