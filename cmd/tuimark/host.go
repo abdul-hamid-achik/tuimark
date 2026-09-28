@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -150,10 +151,12 @@ type getAckMsg struct {
 	Value json.RawMessage `json:"value,omitempty"`
 }
 
+// errorMsg's Seq is raw JSON, so a reply's seq is echoed exactly as the
+// parent wrote it (1.0 stays 1.0, and no digit of a large one is lost).
 type errorMsg struct {
 	Type  string          `json:"type"`
 	ID    json.RawMessage `json:"id,omitempty"`
-	Seq   *int64          `json:"seq,omitempty"`
+	Seq   json.RawMessage `json:"seq,omitempty"`
 	Error string          `json:"error"`
 }
 
@@ -354,8 +357,7 @@ func (b *hostBridge) forward(ev host.Event) error {
 		return r.result()
 	default:
 	}
-	seq := w.seq
-	b.send(errorMsg{Type: "error", Seq: &seq, Error: "reply timeout"})
+	b.send(errorMsg{Type: "error", Seq: json.RawMessage(strconv.FormatInt(w.seq, 10)), Error: "reply timeout"})
 	return nil
 }
 
@@ -489,7 +491,7 @@ func (b *hostBridge) handleLine(line []byte) {
 }
 
 // sendError writes {"type":"error",…}, echoing a valid id or seq.
-func (b *hostBridge) sendError(id json.RawMessage, seq *int64, text string) {
+func (b *hostBridge) sendError(id, seq json.RawMessage, text string) {
 	b.send(errorMsg{Type: "error", ID: id, Seq: seq, Error: text})
 }
 
@@ -590,18 +592,30 @@ func (b *hostBridge) handleBatch(id json.RawMessage, msg wireMsg) {
 	b.ack(id, err)
 }
 
+// handleReply answers the waiting event (§19.1 "The reply"). seq is an
+// integer judged exactly on its digits (jsonIntText, no float64): any
+// integral form counts (1, 1.0, 1e0), and a fraction or a value outside
+// int64 is the malformed-reply error. Every error about a reply echoes
+// its id when it has one and its seq exactly as the parent wrote it, and
+// a reply with an id that answers the waiting event is acked (§19.1
+// "Acks": every message that carries an id is answered).
 func (b *hostBridge) handleReply(id json.RawMessage, msg wireMsg) {
 	raw, ok := msg["seq"]
-	var f float64
-	if !ok || jsonKind(raw) != 'n' || json.Unmarshal(raw, &f) != nil || f != float64(int64(f)) {
+	var seq int64
+	if ok {
+		text, isInt := jsonIntText(raw) // false for anything but a number
+		n, err := strconv.ParseInt(text, 10, 64)
+		ok, seq = isInt && err == nil, n
+	}
+	if !ok {
 		b.sendError(id, nil, `"reply" needs an integer "seq"`)
 		return
 	}
-	seq := int64(f)
+	seqRaw := json.RawMessage(bytes.TrimSpace(raw))
 	var rep hostReply
 	if q, ok := msg["quit"]; ok {
 		if jsonKind(q) != 'b' {
-			b.sendError(id, &seq, `"quit" must be true or false`)
+			b.sendError(id, seqRaw, `"quit" must be true or false`)
 			return
 		}
 		_ = json.Unmarshal(q, &rep.quit)
@@ -609,7 +623,7 @@ func (b *hostBridge) handleReply(id json.RawMessage, msg wireMsg) {
 	if _, ok := msg["error"]; ok {
 		s, ok := msg.str("error")
 		if !ok {
-			b.sendError(id, &seq, `"error" must be a string`)
+			b.sendError(id, seqRaw, `"error" must be a string`)
 			return
 		}
 		rep.err, rep.errMsg = true, s
@@ -621,6 +635,12 @@ func (b *hostBridge) handleReply(id json.RawMessage, msg wireMsg) {
 	matched := w != nil && w.seq == seq
 	if matched {
 		b.pending = nil
+		if id != nil {
+			// Queued before the handler can resume, so the ack precedes
+			// whatever the reply leads to (a quit reply's exit included).
+			// send never blocks and never takes b.mu.
+			b.send(ackMsg{Type: "ack", ID: id, OK: true})
+		}
 		w.reply <- rep // buffered: never blocks
 	}
 	late := b.timedOut[seq]
@@ -634,7 +654,7 @@ func (b *hostBridge) handleReply(id json.RawMessage, msg wireMsg) {
 		case answered:
 			why = "event already answered"
 		}
-		b.sendError(nil, &seq, why)
+		b.sendError(id, seqRaw, why)
 	}
 }
 

@@ -697,17 +697,6 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 				return
 			}
 		}
-		if name == "stick" {
-			// SPEC v0.3b §6.15: stick needs an identity across frames that a
-			// repeated row does not have.
-			if it := listItem(n); it != nil {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
-				return
-			} else if c := b.eachContainer(n); c != nil {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNode(c))
-				return
-			}
-		}
 		if !allowed {
 			if strings.HasPrefix(name, "on:") && !eventNames[strings.TrimPrefix(name, "on:")] {
 				b.attrErr(n, a, "V002", "unknown event %q on <%s>", name, tag)
@@ -727,6 +716,19 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if need >= 2 && !b.v2 {
 			b.v2Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
 			return
+		}
+		if name == "stick" {
+			// SPEC v0.3b §6.15: stick needs an identity across frames that a
+			// repeated row does not have. Only a version="3" document gets
+			// here (the version gate above comes first, §5.1), and only on
+			// a tag that takes stick.
+			if it := listItem(n); it != nil {
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
+				return
+			} else if c := b.eachContainer(n); c != nil {
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNode(c))
+				return
+			}
 		}
 	} else {
 		return // unknown tag already reported
@@ -1753,9 +1755,12 @@ func (b *builder) checkKeymap() {
 // (version="3", SPEC v0.3b §8.1): a bad selector is one V003, and an id
 // that names no node, or a node inside a list item or an each template,
 // is one B005, both at the <keymap>'s own position. It returns the
-// parsed selector of the keymaps whose when validated clean (nil, so a
-// map lookup for any other keymap, or one with no when=, correctly gives
-// nil: no selector).
+// parsed selector of every keymap whose when parsed, B005 or not, as the
+// row-level check keeps a row's own when: an id that names no node is a
+// selector that matches nothing, never "no when", so dispatch, <hints>,
+// and B007 see the effective when alike wherever it was written. A
+// keymap whose when is V003, or that has no when=, is absent, so a map
+// lookup gives nil (no selector), again as for a row's own V003 when.
 func (b *builder) keymapWhens() map[*ir.Node]*css.Selector {
 	out := map[*ir.Node]*css.Selector{}
 	if !b.v3 || b.doc.Root == nil {
@@ -1777,18 +1782,14 @@ func (b *builder) keymapWhens() map[*ir.Node]*css.Selector {
 			b.errN(c, "V003", "when=%q: %v", w, err)
 			continue
 		}
-		clean := true
 		for _, part := range sel.Parts {
 			if part.ID != "" {
 				if why := b.idTarget(part.ID); why != "" {
 					b.errN(c, "B005", "when=%q refers to #%s, which %s", w, part.ID, why)
-					clean = false
 				}
 			}
 		}
-		if clean {
-			out[c] = &sel
-		}
+		out[c] = &sel
 	}
 	return out
 }

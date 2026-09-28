@@ -471,3 +471,136 @@ func tail(s string, n int) string {
 	}
 	return s[len(s)-n:]
 }
+
+// mcpCall runs one tools/call with params given as raw JSON (so a test
+// controls each number's literal text) and returns its one text item and
+// whether it is an isError result.
+func mcpCall(t *testing.T, params string) (string, bool) {
+	t.Helper()
+	res, rpcErr := mcpToolsCall(json.RawMessage(params))
+	if rpcErr != nil {
+		t.Fatalf("tools/call %s: JSON-RPC error %+v", params, rpcErr)
+	}
+	m := res.(map[string]any)
+	content := m["content"].([]map[string]any)
+	if len(content) != 1 {
+		t.Fatalf("want one content item, got %v", content)
+	}
+	return content[0]["text"].(string), m["isError"] == true
+}
+
+// cliResult is what an MCP tool result must hold for one CLI run (SPEC
+// §15.8 "Results"): stdout for exit 0 or 2, the stderr text (isError)
+// for exit 1.
+func cliResult(args ...string) (string, bool) {
+	code, out, errw := runCLI(args...)
+	if code == 1 {
+		return errw, true
+	}
+	return out, false
+}
+
+// tuimark_play builds its command line exactly as the other tools do and
+// runs it through the CLI's own flag parsing (SPEC §15.8 "Arguments to
+// flags"), so a file that looks like a flag (-x.tui, --, -h) gives what
+// `tuimark play FILE … --format json` gives, byte for byte.
+func TestMCPPlayFileGoesThroughFlagParsing(t *testing.T) {
+	for _, c := range []struct {
+		params string
+		argv   []string
+	}{
+		{`{"name":"tuimark_play","arguments":{"file":"-x.tui"}}`, []string{"play", "-x.tui", "--format", "json"}},
+		{`{"name":"tuimark_play","arguments":{"file":"--"}}`, []string{"play", "--", "--format", "json"}},
+		{`{"name":"tuimark_play","arguments":{"file":"-h"}}`, []string{"play", "-h", "--format", "json"}},
+		{`{"name":"tuimark_play","arguments":{"file":"-x.tui","cols":100,"steps":["tab"]}}`, []string{"play", "-x.tui", "--cols", "100", "--input", "tab", "--format", "json"}},
+		{`{"name":"tuimark_play","arguments":{"file":"nope.tui","cols":0}}`, []string{"play", "nope.tui", "--cols", "0", "--format", "json"}},
+		{`{"name":"tuimark_play","arguments":{"file":"` + mcpFixtureFile + `","data":"` + mcpDataFile + `","rows":30,"theme":"light","styles":true,"strict":true,"steps":["tab","down"]}}`,
+			[]string{"play", mcpFixtureFile, "--data", mcpDataFile, "--rows", "30", "--theme", "light", "--strict", "--styles", "--input", "tab down", "--format", "json"}},
+	} {
+		t.Run(c.params, func(t *testing.T) {
+			got, gotErr := mcpCall(t, c.params)
+			want, wantErr := cliResult(c.argv...)
+			if got != want || gotErr != wantErr {
+				t.Errorf("tuimark_play: isError %v %q\nCLI %v: isError %v %q", gotErr, tail(got, 200), c.argv, wantErr, tail(want, 200))
+			}
+		})
+	}
+}
+
+// An integer argument reaches the flag parser as the integer's exact
+// decimal text, so an out-of-range value gives the CLI's own message for
+// the same digits (never a float64 rounding or a platform-dependent
+// conversion). A JSON number without a fraction is an integer however it
+// is written (1e3, 1.0), and one with a fraction is a type error (SPEC
+// §15.8 "Argument errors").
+func TestMCPIntegerArgumentsKeepTheirDigits(t *testing.T) {
+	f := mcpFixtureFile
+	for _, c := range []struct {
+		tool, lit string
+		argv      []string // the CLI run the result must equal
+	}{
+		{"tuimark_dump", `99999999999999999999`, []string{"dump", f, "--cols", "99999999999999999999", "--format", "json"}},
+		{"tuimark_dump", `9007199254740993`, []string{"dump", f, "--cols", "9007199254740993", "--format", "json"}},
+		{"tuimark_dump", `-9223372036854775809`, []string{"dump", f, "--cols", "-9223372036854775809", "--format", "json"}},
+		{"tuimark_inspect", `9007199254740993`, []string{"inspect", f, "--cols", "9007199254740993", "--at", "0,0", "--json"}},
+		{"tuimark_play", `9007199254740993`, []string{"play", f, "--cols", "9007199254740993", "--format", "json"}},
+		{"tuimark_play", `99999999999999999999`, []string{"play", f, "--cols", "99999999999999999999", "--format", "json"}},
+		{"tuimark_dump", `1e3`, []string{"dump", f, "--cols", "1000", "--format", "json"}},
+		{"tuimark_dump", `1.0`, []string{"dump", f, "--cols", "1", "--format", "json"}},
+		{"tuimark_dump", `12.50e1`, []string{"dump", f, "--cols", "125", "--format", "json"}},
+		{"tuimark_dump", `1e20`, []string{"dump", f, "--cols", "100000000000000000000", "--format", "json"}},
+	} {
+		t.Run(c.tool+" "+c.lit, func(t *testing.T) {
+			extra := ""
+			if c.tool == "tuimark_inspect" {
+				extra = `,"at":"0,0"`
+			}
+			got, gotErr := mcpCall(t, `{"name":"`+c.tool+`","arguments":{"file":"`+f+`","cols":`+c.lit+extra+`}}`)
+			want, wantErr := cliResult(c.argv...)
+			if got != want || gotErr != wantErr {
+				t.Errorf("cols %s: isError %v %q\nCLI %v: isError %v %q", c.lit, gotErr, tail(got, 300), c.argv, wantErr, tail(want, 300))
+			}
+		})
+	}
+	for _, lit := range []string{`1.5`, `1.0000000000000001`, `1e-1`, `"80"`} {
+		got, isErr := mcpCall(t, `{"name":"tuimark_dump","arguments":{"file":"`+f+`","rows":`+lit+`}}`)
+		if !isErr || got != "tuimark: rows: want integer\n" {
+			t.Errorf("rows %s: isError %v %q, want the want-integer error", lit, isErr, got)
+		}
+	}
+}
+
+// jsonIntText's exact rule, including the forms no float64 gets right and
+// the bounds that keep a huge exponent from being written out.
+func TestJSONIntText(t *testing.T) {
+	for _, c := range []struct {
+		lit, want string
+		ok        bool
+	}{
+		{"0", "0", true},
+		{"-0", "-0", true},
+		{"42", "42", true},
+		{"9007199254740993", "9007199254740993", true},
+		{"-99999999999999999999", "-99999999999999999999", true},
+		{"1.0", "1", true},
+		{"-0.0", "0", true},
+		{"1e3", "1000", true},
+		{"1E+3", "1000", true},
+		{"12.50e1", "125", true},
+		{"0.00001e5", "1", true},
+		{"2500e-2", "25", true},
+		{"1.5", "", false},
+		{"1e-1", "", false},
+		{"1.0000000000000001", "", false},
+		{"1e-99999999999999999999", "", false},
+		{"1e99999999999999999999", "1e99999999999999999999", true},
+		{"1e5000", "1e5000", true},
+		{`"1"`, "", false},
+		{"true", "", false},
+	} {
+		got, ok := jsonIntText(json.RawMessage(c.lit))
+		if got != c.want || ok != c.ok {
+			t.Errorf("jsonIntText(%s) = %q, %v; want %q, %v", c.lit, got, ok, c.want, c.ok)
+		}
+	}
+}

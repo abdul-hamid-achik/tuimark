@@ -6,10 +6,11 @@ package main
 // --theme), plus inspect and the agent briefing. It is modeled on the
 // owner's stdlib MCP server in glyphrun (internal/mcp/protocol.go,
 // server.go), not imported from it. Every tool call runs the same code
-// path as the matching CLI command (cmdValidate, cmdDump, cmdInspect,
-// cmdAgents; tuimark_play drives internal/play's Session directly, the
-// same engine cmdPlay uses, so a step string with an embedded space needs
-// no --script workaround: play.ParseStep never splits its token on spaces,
+// path as the matching CLI command, on the command line the SPEC's fixed
+// mapping builds (cmdValidate, cmdDump, cmdInspect, cmdAgents, and
+// runPlay, cmdPlay's body; tuimark_play hands runPlay its steps as a list
+// instead of --input, so a step string with an embedded space needs no
+// --script workaround: play.ParseStep never splits its token on spaces,
 // so each `steps` element, verbatim, becomes one Step whose Raw a
 // PlayFrame reports as `input` — see the SPEC's "steps with spaces" rule),
 // so results are byte for byte what the CLI itself would print (MUST 13,
@@ -22,11 +23,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"os"
-	"strconv"
+	"os/signal"
+	"syscall"
 
-	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/play"
 )
 
@@ -42,6 +42,11 @@ func (c *cli) cmdMCP(args []string) int {
 	if len(pos) != 0 {
 		return c.fail(fmt.Errorf("tuimark mcp: takes no arguments"))
 	}
+	// A client that closes its end of stdout must end the server with exit
+	// 1 and a "tuimark: " line (§15.8 "End"), not with the SIGPIPE death
+	// the Go runtime gives a broken pipe on fd 1 by default: with SIGPIPE
+	// ignored, the write returns EPIPE instead.
+	signal.Ignore(syscall.SIGPIPE)
 	return runMCPServer(os.Stdin, c.stdout, c.stderr)
 }
 
@@ -438,7 +443,9 @@ func checkMCPArgs(tool *mcpTool, order []string, args map[string]json.RawMessage
 // mcpTypeMatches reports whether raw's JSON type matches kind ("string",
 // "integer", "boolean", or "array" of strings): a JSON null never
 // matches, since none of the schema's types accept it, and a JSON number
-// with a fraction is not an "integer" (SPEC §15.8).
+// with a fraction is not an "integer" (SPEC §15.8), judged exactly on its
+// digits (jsonIntText), so 1e3 and 1.0 are integers and
+// 1.0000000000000001 is not.
 func mcpTypeMatches(raw json.RawMessage, kind string) bool {
 	if string(bytes.TrimSpace(raw)) == "null" {
 		return false
@@ -451,11 +458,8 @@ func mcpTypeMatches(raw json.RawMessage, kind string) bool {
 		var b bool
 		return json.Unmarshal(raw, &b) == nil
 	case "integer":
-		var f float64
-		if err := json.Unmarshal(raw, &f); err != nil {
-			return false
-		}
-		return f == math.Trunc(f)
+		_, ok := jsonIntText(raw)
+		return ok
 	case "array":
 		var arr []any
 		if err := json.Unmarshal(raw, &arr); err != nil {
@@ -498,14 +502,19 @@ func mcpBoolArg(args map[string]json.RawMessage, name string) (bool, bool) {
 	return b, true
 }
 
-func mcpIntArg(args map[string]json.RawMessage, name string) (int, bool) {
+// mcpIntArg returns an integer argument as the flag value the command
+// line gets: the integer's exact decimal text (jsonIntText), never a
+// float64 conversion, so the flag parser sees the same digits a shell
+// would pass and an out-of-range value gets the CLI's own message
+// (`invalid value "99999999999999999999" for flag -cols: value out of
+// range`). checkMCPArgs has already rejected a value with a fraction.
+func mcpIntArg(args map[string]json.RawMessage, name string) (string, bool) {
 	raw, ok := args[name]
 	if !ok {
-		return 0, false
+		return "", false
 	}
-	var f float64
-	_ = json.Unmarshal(raw, &f)
-	return int(f), true
+	text, _ := jsonIntText(raw)
+	return text, true
 }
 
 func mcpStepsArg(args map[string]json.RawMessage, name string) ([]string, bool) {
@@ -582,10 +591,10 @@ func invokeDumpTool(file string, args map[string]json.RawMessage) map[string]any
 		argv = append(argv, "--data", v)
 	}
 	if v, ok := mcpIntArg(args, "cols"); ok {
-		argv = append(argv, "--cols", strconv.Itoa(v))
+		argv = append(argv, "--cols", v)
 	}
 	if v, ok := mcpIntArg(args, "rows"); ok {
-		argv = append(argv, "--rows", strconv.Itoa(v))
+		argv = append(argv, "--rows", v)
 	}
 	if v, ok := mcpStrArg(args, "theme"); ok {
 		argv = append(argv, "--theme", v)
@@ -610,10 +619,10 @@ func invokeInspectTool(file string, args map[string]json.RawMessage) map[string]
 		argv = append(argv, "--data", v)
 	}
 	if v, ok := mcpIntArg(args, "cols"); ok {
-		argv = append(argv, "--cols", strconv.Itoa(v))
+		argv = append(argv, "--cols", v)
 	}
 	if v, ok := mcpIntArg(args, "rows"); ok {
-		argv = append(argv, "--rows", strconv.Itoa(v))
+		argv = append(argv, "--rows", v)
 	}
 	if v, ok := mcpStrArg(args, "theme"); ok {
 		argv = append(argv, "--theme", v)
@@ -637,63 +646,38 @@ func invokeAgentsTool() map[string]any {
 	return mcpResultFromRun(out, errw, code)
 }
 
-// invokePlayTool drives internal/play directly (the engine cmdPlay itself
-// uses) instead of going through --input, because a `steps` element may
-// contain a space (SPEC §15.8 "Steps with spaces"): play.ParseStep parses
-// one token without ever splitting it, so each element becomes exactly
-// one Step whose Raw is that element verbatim, which is what a
-// PlayFrame's "input" then reports — the same result --script gives,
-// except the frames' input is the step string as given, not the script
-// line, matching the SPEC without writing a temporary script file.
+// invokePlayTool runs tuimark play's own code (runPlay) on the command
+// line the other tools build too (SPEC §15.8 "Arguments to flags"), so
+// the file and every flag go through the CLI's flag parsing and checks,
+// in the CLI's order, and a file that looks like a flag (-x.tui, --, -h)
+// gives exactly what the command line gives. Only steps bypass argv:
+// --input cannot carry a step that holds a space or is empty ("Steps with
+// spaces"), so runPlay gets them as a list, one Step per element, parsed
+// whole by play.ParseStep. Each Step's Raw is then the element verbatim,
+// which is what a PlayFrame's "input" reports.
 func invokePlayTool(file string, args map[string]json.RawMessage) map[string]any {
-	cols, hasCols := mcpIntArg(args, "cols")
-	if !hasCols {
-		cols = 80
+	argv := []string{file}
+	if v, ok := mcpStrArg(args, "data"); ok {
+		argv = append(argv, "--data", v)
 	}
-	rows, hasRows := mcpIntArg(args, "rows")
-	if !hasRows {
-		rows = 24
+	if v, ok := mcpIntArg(args, "cols"); ok {
+		argv = append(argv, "--cols", v)
 	}
-	if err := checkSize(cols, rows); err != nil {
-		return mcpToolText(failText(err.Error()), true)
+	if v, ok := mcpIntArg(args, "rows"); ok {
+		argv = append(argv, "--rows", v)
 	}
-	data, _ := mcpStrArg(args, "data")
-	theme, themeSet := mcpStrArg(args, "theme")
-	strict, _ := mcpBoolArg(args, "strict")
-	styles, _ := mcpBoolArg(args, "styles")
-	cells, _ := mcpBoolArg(args, "cells")
-	frames, _ := mcpBoolArg(args, "frames")
-	stepStrs, _ := mcpStepsArg(args, "steps")
-
-	steps, err := parsePlaySteps(stepStrs)
-	if err != nil {
-		return mcpToolText(failText(fmt.Sprintf("play: %v", err)), true)
+	if v, ok := mcpStrArg(args, "theme"); ok {
+		argv = append(argv, "--theme", v)
 	}
-
-	app, err := load(file, data)
-	if err != nil {
-		return mcpToolText(failText(err.Error()), true)
+	for _, name := range []string{"strict", "styles", "cells", "frames"} {
+		if v, ok := mcpBoolArg(args, name); ok && v {
+			argv = append(argv, "--"+name)
+		}
 	}
-	if err := applyTheme(app, theme, themeSet, "--theme"); err != nil {
-		return mcpToolText(failText(err.Error()), true)
-	}
-	app.SetStrict(strict)
-
-	sess := play.NewSession(app, cols, rows, cells, styles, frames, true)
-	sess.Run(steps)
-	if sess.UsageErr != nil {
-		return mcpToolText(failText(fmt.Sprintf("play: step %d (%s): %v", sess.UsageStep, sess.UsageRaw, sess.UsageErr)), true)
-	}
-
-	out := &dump.Play{Dump: sess.BuildDump(), Events: sess.Events}
-	if frames {
-		out.Frames = sess.StepFrames
-	}
-	b, err := json.MarshalIndent(out, "", "  ")
-	if err != nil {
-		return mcpToolText(failText(err.Error()), true)
-	}
-	return mcpToolText(string(b)+"\n", false)
+	argv = append(argv, "--format", "json")
+	steps, _ := mcpStepsArg(args, "steps")
+	out, errw, code := runCapture(func(s *cli) int { return s.runPlay(argv, steps) })
+	return mcpResultFromRun(out, errw, code)
 }
 
 // parsePlaySteps parses each of raw with play.ParseStep — never splitting

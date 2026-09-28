@@ -376,8 +376,14 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 		}
 	}
 	if b.Scrolls() {
-		off := a.scrolls[b.ID]
-		prev := off
+		// Move from the offset the live frame shows, and clamp the result
+		// to its maximum, as moveViewport does: an offset stored past the
+		// end would swallow the next key of the same read (down at the
+		// end, then up), since nothing renders between them when the
+		// shown offset did not move (§8.6), and it would keep a stick
+		// scroll stuck to the end (§11.4).
+		prev := clampOffset(b, a.scrolls[b.ID])
+		off := prev
 		page := max(1, b.Content.H)
 		switch k.Name {
 		case "up":
@@ -399,11 +405,10 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 		default:
 			return a.clickKey(b)
 		}
-		off[0], off[1] = max(0, off[0]), max(0, off[1])
+		off = clampOffset(b, off)
 		a.scrolls[b.ID] = off
-		// The next frame clamps the offset to the viewport's maximum; the
-		// frame is stale only when the clamped offset moved (§8.6).
-		if clampOffset(b, off) != clampOffset(b, prev) {
+		// The frame is stale only when the offset moved (§8.6).
+		if off != prev {
 			a.markStale()
 		}
 		return nil

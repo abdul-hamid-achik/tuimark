@@ -233,6 +233,54 @@ func TestStickStructure(t *testing.T) {
 	}
 }
 
+// 91 and 98. The inside-a-row rule for stick is version="3" (SPEC v0.3b
+// §6.15): in a version="1"/"2" document a stick inside a list <item> or
+// a container each template is still the plain version gate, V002 with
+// the version="3" hint (§5.1), not the inside-a-row V002; and on a tag
+// that does not take stick at all, the attribute is "not allowed on
+// <tag>" wherever it is.
+func TestStickInRowVersionGateFirst(t *testing.T) {
+	const item = `<list id="l" each="xs as x" key="x"><item><scroll id="s" stick="bottom"><text>{x}</text></scroll></item></list>`
+	const tmpl = `<col each="xs as x"><scroll id="s" stick="bottom"><text>{x}</text></scroll></col>`
+	for _, c := range []struct {
+		name, src string
+	}{
+		{"v1 list item", coreV1(item)},
+		{"v2 list item", coreV2(item)},
+		{"v2 each template", coreV2(tmpl)},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			doc := parse.Parse([]byte(c.src), "")
+			want := `attribute "stick" on <scroll>` + ir.VersionHintV3
+			var found bool
+			for _, d := range doc.Diags {
+				if d.Code == "V002" && strings.Contains(d.Msg, "stick") {
+					if d.Msg != want {
+						t.Errorf("V002 %q, want %q", d.Msg, want)
+					}
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("no V002 for stick: %v", doc.Diags)
+			}
+		})
+	}
+	doc := parse.Parse([]byte(coreV3(`<list id="l" each="xs as x" key="x"><item><box stick="bottom"><text>{x}</text></box></item></list>`)), "")
+	var found bool
+	for _, d := range doc.Diags {
+		if d.Code == "V002" && strings.Contains(d.Msg, "stick") {
+			found = true
+			if d.Msg != `attribute "stick" is not allowed on <box>` {
+				t.Errorf("stick on a box in a row: %q", d.Msg)
+			}
+		}
+	}
+	if !found {
+		t.Errorf("stick on a box in a row: no V002: %v", doc.Diags)
+	}
+}
+
 // 99. Label counters: {path} is accepted in a tab's label and short in
 // version="3" (checked above, TestVersionGateV3Items); this covers the
 // remaining static rule, that mark stays literal text in every version,

@@ -298,6 +298,15 @@ func parseScriptLine(line string) (play.Step, error) {
 }
 
 func (c *cli) cmdPlay(args []string) int {
+	return c.runPlay(args, nil)
+}
+
+// runPlay is tuimark play. toolSteps, when not empty, are tuimark_play's
+// steps (SPEC §15.8), standing for --input: one step per element, parsed
+// whole (parsePlaySteps), never split on spaces, since --input cannot
+// carry a step that holds a space or is empty. The command line passes
+// nil, and then --input or --script gives the steps.
+func (c *cli) runPlay(args, toolSteps []string) int {
 	fs := c.newFlags("play")
 	cols := fs.Int("cols", 80, "terminal columns")
 	rows := fs.Int("rows", 24, "terminal rows")
@@ -324,12 +333,15 @@ func (c *cli) cmdPlay(args []string) int {
 	if *format != "text" && *format != "json" {
 		return c.fail(fmt.Errorf("--format must be text or json"))
 	}
-	if *input != "" && *script != "" {
+	fromTool := len(toolSteps) > 0
+	if (*input != "" || fromTool) && *script != "" {
 		return c.fail(fmt.Errorf("play: --input and --script are mutually exclusive"))
 	}
 
 	var steps []play.Step
 	switch {
+	case fromTool:
+		steps, err = parsePlaySteps(toolSteps)
 	case *input != "":
 		steps, err = parseInputSteps(*input)
 	case *script != "":

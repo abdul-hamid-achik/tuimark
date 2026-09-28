@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -78,6 +80,65 @@ func checkSize(cols, rows int) error {
 		return fmt.Errorf("--cols and --rows must be between 1 and 1000 (got %dx%d)", cols, rows)
 	}
 	return nil
+}
+
+// maxJSONIntDigits bounds the expansion jsonIntText writes for an integer
+// written with a fraction or an exponent part: a longer one (1e5000) is
+// left as written. Every such value is far outside any range a flag or a
+// seq accepts.
+const maxJSONIntDigits = 4096
+
+// jsonIntText reports whether raw, one JSON value, is a number without a
+// fraction, an integer however it is written (1000, 1e3, 1.0, 12.50e1;
+// SPEC §15.8: "a number with a fraction is not an integer"), and returns
+// its exact decimal text: the literal itself when it is plain digits,
+// else its expansion (1e3 gives 1000, 1.0 gives 1). No float64 is
+// involved, so no digit is lost (9007199254740993 stays itself), and a
+// value outside int64 keeps its digits for the parser's own range error.
+func jsonIntText(raw json.RawMessage) (string, bool) {
+	s := string(bytes.TrimSpace(raw))
+	body := strings.TrimPrefix(s, "-")
+	if body == "" || body[0] < '0' || body[0] > '9' {
+		return "", false // not a number
+	}
+	mant, exp, hasExp := strings.Cut(body, "e")
+	if !hasExp {
+		mant, exp, hasExp = strings.Cut(body, "E")
+	}
+	whole, frac, hasFrac := strings.Cut(mant, ".")
+	if !hasExp && !hasFrac {
+		return s, true
+	}
+	// The value is digits × 10^e, digits without leading or trailing zeros.
+	digits := strings.TrimLeft(whole+frac, "0")
+	e := -len(frac)
+	trimmed := strings.TrimRight(digits, "0")
+	e += len(digits) - len(trimmed)
+	digits = trimmed
+	if digits == "" {
+		return "0", true
+	}
+	if hasExp {
+		n, err := strconv.Atoi(exp)
+		switch {
+		case err != nil && strings.HasPrefix(exp, "-"), err == nil && n < -len(s):
+			return "", false // e+n < 0 whatever the mantissa: a fraction
+		case err != nil, n > len(s)+maxJSONIntDigits:
+			return s, true // far too long to write out
+		}
+		e += n
+	}
+	if e < 0 {
+		return "", false
+	}
+	if len(digits)+e > maxJSONIntDigits {
+		return s, true
+	}
+	out := digits + strings.Repeat("0", e)
+	if strings.HasPrefix(s, "-") {
+		out = "-" + out
+	}
+	return out, true
 }
 
 // applyTheme overrides the document's effective theme (SPEC v0.2 §26.4:

@@ -1,6 +1,7 @@
 package host
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -79,6 +80,43 @@ func TestKeymapWhenDispatch(t *testing.T) {
 	}
 }
 
+// 97. A <keymap when> whose id names no node (B005) is still the rows'
+// effective when, exactly as the same when written on a row: dispatch
+// and <hints scope="active"> see a selector that matches nothing, so
+// neither row fires or shows (it must not fall back to "no when", which
+// fires everywhere).
+func TestKeymapWhenMissingIDLikeRowWhen(t *testing.T) {
+	a := doc(t, `<tui version="3">
+<keymap when="#nope"><bind keys="x" action="kmrow" label="km"/></keymap>
+<keymap><bind keys="y" action="ownrow" when="#nope" label="own"/></keymap>
+<screen id="s"><button id="b" label="b"/><hints id="h" scope="active"/></screen>
+</tui>`)
+	if evs := press(a, r('x'), r('y')); len(evs) != 0 {
+		t.Errorf("rows under when=\"#nope\" fired: %+v", evs)
+	}
+	f := a.Frame(80, 24)
+	if h := f.ByID["h"]; len(h.Children) != 0 {
+		var labels []string
+		for _, row := range h.Children {
+			labels = append(labels, row.Children[1].Text)
+		}
+		t.Errorf("hints show %q, want none", labels)
+	}
+	// A when that does not parse (V003) is no selector at all, on a row
+	// as on a <keymap>: both rows then fire and show alike.
+	b := doc(t, `<tui version="3">
+<keymap when="#"><bind keys="x" action="kmrow" label="km"/></keymap>
+<keymap><bind keys="y" action="ownrow" when="#" label="own"/></keymap>
+<screen id="s"><button id="b" label="b"/><hints id="h" scope="active"/></screen>
+</tui>`)
+	if evs := press(b, r('x'), r('y')); len(evs) != 2 || evs[0].Action != "kmrow" || evs[1].Action != "ownrow" {
+		t.Errorf("V003 when: keymap and row differ: %+v", evs)
+	}
+	if h := b.Frame(80, 24).ByID["h"]; len(h.Children) != 2 {
+		t.Errorf("V003 when: %d hints, want 2", len(h.Children))
+	}
+}
+
 // key renders at cols x rows (as the live frame), handles k, then settles
 // (so the offset a viewport shows this frame is what the next assertion
 // reads).
@@ -148,6 +186,70 @@ func TestStickRuntime(t *testing.T) {
 	}
 	if a.scrolls["log"] != beforeOff || a.stickMax["log"] != beforeMax {
 		t.Errorf("Dump changed the live state: scrolls %v (was %v) max %v (was %v)", a.scrolls["log"], beforeOff, a.stickMax["log"], beforeMax)
+	}
+}
+
+// linesJSON is {"lines": ["1", …, "n"]}.
+func linesJSON(n int) string {
+	var b strings.Builder
+	b.WriteString(`{"lines": [`)
+	for i := 1; i <= n; i++ {
+		if i > 1 {
+			b.WriteString(", ")
+		}
+		fmt.Fprintf(&b, "%q", fmt.Sprint(i))
+	}
+	b.WriteString("]}")
+	return b.String()
+}
+
+// A focused viewport's keys move from the offset the live frame shows,
+// clamped to its maximum, so down (or end) at the end followed by up in
+// the same read (no render between them, since down moved nothing) moves
+// one row up: a stick scroll leaves the end and stays there as the
+// content grows (SPEC v0.3b §11.4), and a plain scroll ends at max-1.
+func TestFocusedViewportKeysClampToMax(t *testing.T) {
+	const cols, rows = 20, 6
+	for _, c := range []struct {
+		name, stick string
+		keys        []Key
+		want        int // offset after one frame, then after growing to 12 lines (stick only)
+	}{
+		{"stick down up", ` stick="bottom"`, []Key{named("down"), named("up")}, 5},
+		{"stick end up", ` stick="bottom"`, []Key{named("end"), named("up")}, 5},
+		{"plain down up", "", []Key{named("end"), named("down"), named("up")}, 5},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			a := doc(t, `<tui version="3"><screen id="s" focus="#log"><scroll id="log" focusable="true"`+c.stick+` height="4"><col each="lines as l"><text>{l}</text></col></scroll></screen></tui>`)
+			bindJSON(t, a, linesJSON(10))
+			a.Frame(cols, rows)
+			if c.stick == "" {
+				// Bring the plain scroll to its end first, on its own frame.
+				a.HandleKey(c.keys[0])
+				a.Frame(cols, rows)
+				c.keys = c.keys[1:]
+			}
+			if off := a.scrolls["log"]; off[1] != 6 {
+				t.Fatalf("at the end: offset %v, want 6", off)
+			}
+			// One read: render between keys only when the frame is stale,
+			// as Run and play do.
+			for i, k := range c.keys {
+				if i > 0 && a.TakeDirty() {
+					a.Frame(cols, rows)
+				}
+				a.HandleKey(k)
+			}
+			a.Frame(cols, rows)
+			if off := a.scrolls["log"]; off[1] != c.want {
+				t.Fatalf("after %v: offset %v, want %d", c.keys, off, c.want)
+			}
+			bindJSON(t, a, linesJSON(12))
+			a.Frame(cols, rows)
+			if off := a.scrolls["log"]; off[1] != c.want {
+				t.Errorf("after growing to 12 lines: offset %v, want %d (left the end, so it stays)", off, c.want)
+			}
+		})
 	}
 }
 
@@ -288,5 +390,25 @@ func TestModalFocusDisabledFallsBack(t *testing.T) {
 	a.Frame(40, 10)
 	if a.Focus() != "yes" {
 		t.Fatalf("a disabled focus= target falls back to the first entry, got %q", a.Focus())
+	}
+}
+
+// A modal's focus= is version="3" only: in a version="1"/"2" document it
+// is V002 and the runtime ignores it, so the modal opens on the first
+// entry of its cycle, as in 0.3.0.
+func TestModalFocusIgnoredBeforeV3(t *testing.T) {
+	for _, v := range []string{"1", "2"} {
+		a := doc(t, `<tui version="`+v+`">
+<screen id="s">
+  <modal id="m" open="true" focus="#no">
+    <button id="yes" label="yes"/>
+    <button id="no" label="no"/>
+  </modal>
+</screen>
+</tui>`)
+		a.Frame(40, 10)
+		if a.Focus() != "yes" {
+			t.Errorf("version=%q: focus %q, want yes (focus= ignored)", v, a.Focus())
+		}
 	}
 }
