@@ -184,6 +184,16 @@ var TagAttrsV2 = map[string]map[string]bool{
 	"hints":     with("scope"),
 }
 
+// TagAttrsV3 is what a version="3" document accepts on top of
+// TagAttrs/TagAttrsV2 (SPEC v0.3 §5.1, v0.3b §6.15 ‡): `priority` on
+// `column` (§6.9.3) and `scale` on `sparkline` (§6.11). `stick` on
+// `scroll`, `focus` on `modal`, and `when` on `keymap` are 0.3b items of
+// other areas and are not added here.
+var TagAttrsV3 = map[string]map[string]bool{
+	"column":    only("priority"),
+	"sparkline": only("scale"),
+}
+
 // tableItemAttrs are the attributes of a table's row template <item>
 // (SPEC §6.9.1, §6.15), besides class:NAME.
 var tableItemAttrs = only("class")
@@ -194,23 +204,29 @@ var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "
 // ClassGuardPrefix starts every class:NAME attribute (SPEC §6.13).
 const ClassGuardPrefix = "class:"
 
-// attrAllowed reports whether a tag takes an attribute, and whether only
-// a version="2" document accepts it there (SPEC §6.15). parent is the
-// element's parent tag.
-func attrAllowed(tag, parent, name string) (ok, v2Only bool) {
+// attrAllowed reports whether a tag takes an attribute, and the version
+// gate it needs there (SPEC §6.15): v2Only for a † attribute (needs
+// version="2"), v3Only for a ‡ attribute (needs version="3", v0.3b) on top
+// of that. parent is the element's parent tag. TagAttrsV3 is checked
+// first, since a version="2" tag's other attributes (TagAttrsV2) must not
+// shadow a ‡ attribute of the same tag.
+func attrAllowed(tag, parent, name string) (ok, v2Only, v3Only bool) {
 	if strings.HasPrefix(name, ClassGuardPrefix) {
-		return !noClassGuard[tag], true
+		return !noClassGuard[tag], true, false
 	}
 	if tag == "item" && parent == "table" {
-		return tableItemAttrs[name], true
+		return tableItemAttrs[name], true, false
+	}
+	if TagAttrsV3[tag][name] {
+		return true, true, true
 	}
 	if ir.IsKindV2(tag) {
-		return TagAttrsV2[tag][name], true
+		return TagAttrsV2[tag][name], true, false
 	}
 	if TagAttrs[tag][name] {
-		return true, false
+		return true, false, false
 	}
-	return TagAttrsV2[tag][name], true
+	return TagAttrsV2[tag][name], true, false
 }
 
 // Focusable-by-default kinds that therefore need an id (V012).
@@ -255,6 +271,13 @@ func listItem(n *ir.Node) *ir.Node {
 // message ends with ` (requires version="2")` (SPEC §5.1).
 func (b *builder) v2Hint(line, col int, n *ir.Node, code, format string, args ...any) {
 	b.diag(ir.Error, code, line, col, n.Path, n.ID, format+"%s", append(args, ir.VersionHint)...)
+}
+
+// v3Hint reports a 0.3b (version="3") item in a version="1" or version="2"
+// document: the message ends with ` (requires version="3")` (SPEC v0.3
+// §5.1, v0.3b).
+func (b *builder) v3Hint(line, col int, n *ir.Node, code, format string, args ...any) {
+	b.diag(ir.Error, code, line, col, n.Path, n.ID, format+"%s", append(args, ir.VersionHint3)...)
 }
 
 // listHint is the advice given for a focus target inside a list row.
@@ -639,7 +662,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if n.Parent != nil && (b.v2 || n.Parent.Tag != "table") {
 			ptag = n.Parent.Tag
 		}
-		allowed, v2Only := attrAllowed(tag, ptag, name)
+		allowed, v2Only, v3Only := attrAllowed(tag, ptag, name)
 		if itemFocusAttrs[name] {
 			if it := listItem(n); it == n {
 				b.attrErr(n, a, "V002", "attribute %q is not allowed on a list <item>: %s", name, listHint(it))
@@ -661,6 +684,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			} else {
 				b.attrErr(n, a, "V002", "attribute %q is not allowed on <%s>", name, tag)
 			}
+			return
+		}
+		if v3Only && !b.v3 {
+			b.v3Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
 			return
 		}
 		if v2Only && !b.v2 {
@@ -739,7 +766,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		}
 		n.Hints = append(n.Hints, ir.Prop{Name: "border", Value: v, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "wrap":
-		if err := css.CheckDecl("wrap", val); err != nil {
+		if err := css.CheckDeclIn("wrap", val, b.v2, b.v3); err != nil {
 			b.attrErr(n, a, "V003", "%v", err)
 			return
 		}
@@ -748,7 +775,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		// Recover per declaration (like a <style> rule's block), so one
 		// typo does not also drop every other, valid declaration in the
 		// same style="" attribute.
-		decls, errs := css.ParseDeclsAllIn(val, b.v2)
+		decls, errs := css.ParseDeclsAllIn(val, b.v2, b.v3)
 		for _, err := range errs {
 			b.attrErr(n, a, "V003", "%v", err)
 		}
@@ -869,6 +896,18 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if !isNumber(val) {
 			b.attrErr(n, a, "V003", "%s=%q: want a number such as 0, -5, or 0.25", name, val)
 		}
+	case "priority":
+		// SPEC v0.3b §6.9.3: a non-negative integer; the smallest hides
+		// first when the table's columns do not fit.
+		if !isNonNegInt(val) {
+			b.attrErr(n, a, "V003", "priority=%q: want a non-negative integer", val)
+		}
+	case "scale":
+		// SPEC v0.3b §6.11: the sparklines of a frame sharing this name
+		// share their range; NAME follows the ident grammar of §7.
+		if !ir.IsIdent(val) {
+			b.attrErr(n, a, "V003", "scale=%q: a scale name is a plain identifier ([A-Za-z_][A-Za-z0-9_]*)", val)
+		}
 	case "focus":
 		if !strings.HasPrefix(val, "#") || !isIDName(val[1:]) {
 			b.attrErr(n, a, "V003", "focus=%q: want #id", val)
@@ -913,6 +952,21 @@ func isNumber(s string) bool {
 func isPercent(s string) bool {
 	lit, _, ok := ir.ParseDecimalLit(s)
 	return ok && ir.DecimalCmp(lit, 100) <= 0
+}
+
+// isNonNegInt reports whether s is a plain non-negative integer literal:
+// one or more digits, no sign, no fraction (SPEC v0.3b §6.9.3, `priority`
+// on a column).
+func isNonNegInt(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func isIDName(s string) bool {

@@ -86,3 +86,50 @@ func TestSparklineEdges(t *testing.T) {
 		t.Errorf("sparkline in a row: %dx%d", auto.W, auto.H)
 	}
 }
+
+// 92. scale="NAME" (SPEC v0.3b §6.11): the shared range a member with no
+// min=/max= of its own falls back to (internal/host's groupSparklines
+// sets HasGroupLo/HasGroupHi/GroupLo/GroupHi after layout; this is the
+// paint-side consumption of them). The normative vector: two sparklines
+// of 6 columns and H = 1, bound to [0, 5, 10] and [20, 40], share lo = 0
+// and hi = 40; without the group they fall back to their own shown
+// values. A member's own min=/max= literal still wins over the group.
+func TestSparklineScaleGroup(t *testing.T) {
+	sparkOf := func(vals []float64, lo, hi *float64, glo, ghi *float64) []string {
+		s := bx("sparkline", "width: 6; height: 1")
+		s.Series = vals
+		if lo != nil {
+			s.Lo, s.HasLo = *lo, true
+		}
+		if hi != nil {
+			s.Hi, s.HasHi = *hi, true
+		}
+		if glo != nil {
+			s.GroupLo, s.HasGroupLo = *glo, true
+		}
+		if ghi != nil {
+			s.GroupHi, s.HasGroupHi = *ghi, true
+		}
+		return render(t, bx("col", "", s), 6, 1).Lines()
+	}
+	a, b := []float64{0, 5, 10}, []float64{20, 40}
+	// Shared group range (lo=0, hi=40).
+	if got := sparkOf(a, nil, nil, num(0), num(40)); got[0] != "    ▁▂" {
+		t.Errorf("a with scale: %q", got[0])
+	}
+	if got := sparkOf(b, nil, nil, num(0), num(40)); got[0] != "    ▄█" {
+		t.Errorf("b with scale: %q", got[0])
+	}
+	// Without scale, each falls back to its own shown values.
+	if got := sparkOf(a, nil, nil, nil, nil); got[0] != "    ▄█" {
+		t.Errorf("a without scale: %q", got[0])
+	}
+	if got := sparkOf(b, nil, nil, nil, nil); got[0] != "     █" {
+		t.Errorf("b without scale: %q", got[0])
+	}
+	// A member's own min=/max= literal overrides only that member, even
+	// inside a group.
+	if got := sparkOf(a, num(0), num(10), num(0), num(40)); got[0] != "    ▄█" {
+		t.Errorf("a with its own literal inside the group: %q", got[0])
+	}
+}

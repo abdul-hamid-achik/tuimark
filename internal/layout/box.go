@@ -87,6 +87,13 @@ type Box struct {
 	Rows, MarkChan int
 	Header, View   int
 	Measure        int
+	// AllColumns is, on a version="3" table, its visible column boxes as
+	// they were before priority hid any (SPEC v0.3b §6.9.3), recorded by
+	// the table's first layout, which then narrows Children to the columns
+	// it keeps. The intrinsic width, the header row, and a later layout of
+	// the same box read it, so a hidden column still counts in the first
+	// two and can come back in the third.
+	AllColumns []*Box
 	// Fixed marks a box whose geometry its table sets (a column's header
 	// cell, a row, a body cell; SPEC §6.9.3): it ignores its own border,
 	// padding, margin, sizes, layout, and overflow, and a cell never wraps
@@ -115,6 +122,16 @@ type Box struct {
 	Series       []float64
 	Lo, Hi       float64
 	HasLo, HasHi bool
+	// Scale is the sparkline's scale="NAME" as written, "" when absent
+	// (version="3", SPEC v0.3b §6.11). GroupLo and GroupHi are the shared
+	// range of its scale group (the smallest/largest shown value among
+	// every laid-out sparkline of the frame with the same Scale), set by
+	// internal/host after layout, only when HasGroupLo/HasGroupHi: a
+	// member's own HasLo/HasHi (its own min=/max= literal) still wins over
+	// them at paint time.
+	Scale                  string
+	GroupLo, GroupHi       float64
+	HasGroupLo, HasGroupHi bool
 
 	// Scroll state: offset in, clamped offset and content size out.
 	ScrollX, ScrollY int

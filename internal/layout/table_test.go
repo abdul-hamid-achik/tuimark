@@ -2,9 +2,11 @@ package layout
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 
+	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 )
 
@@ -163,5 +165,147 @@ func TestPlaceTableRow(t *testing.T) {
 	a, b := row.Children[0], row.Children[1]
 	if got := fmt.Sprint(a.Outer(), a.Clip, b.Outer(), b.Clip, a.Laid && b.Laid); got != "{3 3 3 1} {3 3 3 1} {7 3 20 1} {7 3 4 1} true" {
 		t.Errorf("cells %s", got)
+	}
+}
+
+// colP is col with a priority attribute (SPEC v0.3b §6.9.3).
+func colP(decls string, measure int, title bool, priority int) *Box {
+	c := col(decls, measure, title)
+	c.Src.Attrs["priority"] = fmt.Sprint(priority)
+	return c
+}
+
+// 95. Column priority: the table's intrinsic width is a standalone
+// measure over every visible column (tableIntrinsic itself never hides
+// anything; only tableLayout does, once A is known), so it does not
+// depend on whether the table is ever laid out narrow enough to hide one.
+func TestTablePriorityIntrinsicWidth(t *testing.T) {
+	tb := tbl("gap: 1", 1,
+		col("width: 18", 18, true), colP("width: 18", 18, true, 3),
+		colP("width: 18", 18, true, 1), colP("width: 18", 18, true, 2),
+		colP("width: 18", 18, true, 1))
+	c := css.NewCascade(nil, css.Env{Cols: 200, Rows: 5})
+	styleTree(c, tb, nil)
+	e := &Engine{File: "t.tui", V3: true, memo: map[memoKey]int{}, seen: map[string]bool{}}
+	// 5*18 + 4 gaps = 94, measured before tb is ever placed (so before
+	// any hiding could apply).
+	if got := e.intrinsic(tb, true, 0); got != 94 {
+		t.Errorf("intrinsic width = %d, want 94", got)
+	}
+	// After a layout at 40 columns has hidden c, d, and e, a fresh measure
+	// of the same box still counts them ("the intrinsic width does not
+	// shrink when a column hides"), and so does a second layout, which
+	// brings them back when the table is wide enough.
+	runV3(t, n("col", "", tb), 40, 5)
+	if got := widths(tb); got != "18@0 18@19" {
+		t.Fatalf("widths at 40 = %s, want a b", got)
+	}
+	e2 := &Engine{File: "t.tui", V3: true, memo: map[memoKey]int{}, seen: map[string]bool{}}
+	if got := e2.intrinsic(tb, true, 0); got != 94 {
+		t.Errorf("intrinsic width after hiding = %d, want 94", got)
+	}
+	runV3(t, n("col", "", tb), 120, 5)
+	if got := widths(tb); got != "18@0 18@19 18@38 18@57 18@76" {
+		t.Errorf("widths when laid out again at 120 = %s, want all five", got)
+	}
+}
+
+// 95. The header row is decided before priority hides anything: a header
+// shown only because a hidden column has a title stays, blank.
+func TestTablePriorityKeepsHeader(t *testing.T) {
+	tb := tbl("", 1, col("width: 18", 18, false), colP("width: 18", 18, true, 1))
+	runV3(t, n("col", "", tb), 20, 5)
+	if got := widths(tb); got != "18@0" {
+		t.Fatalf("widths at 20 = %s, want the untitled column alone", got)
+	}
+	if tb.Header != 1 || tb.View != 1 {
+		t.Errorf("header %d view %d, want 1 and 1 (the table auto-fits: header plus one row)", tb.Header, tb.View)
+	}
+	if !TableColumns(tb)[0].Laid {
+		t.Errorf("the kept column's header cell is not laid out")
+	}
+}
+
+// A priority too large for an int is still digits only (the parser's
+// check): it is the largest priority, so it hides last.
+func TestColumnPriorityOverflow(t *testing.T) {
+	c := col("width: 18", 18, false)
+	c.Src.Attrs["priority"] = "99999999999999999999999"
+	if n, ok := columnPriority(c); !ok || n != math.MaxInt {
+		t.Errorf("priority = %d, %v; want MaxInt, true", n, ok)
+	}
+	tb := tbl("", 1, c, colP("width: 18", 18, false, 5))
+	runV3(t, n("col", "", tb), 20, 5)
+	if got := widths(tb); got != "18@0" {
+		t.Errorf("widths at 20 = %s, want the huge-priority column kept", got)
+	}
+}
+
+// runV3 is run (layout_test.go) with Engine.V3 set, for the version="3"
+// features of a table (priority, v0.3b).
+func runV3(t *testing.T, root *Box, cols, rows int) *Engine {
+	t.Helper()
+	c := css.NewCascade(nil, css.Env{Cols: cols, Rows: rows})
+	styleTree(c, root, nil)
+	if len(c.Diags) != 0 {
+		t.Fatalf("cascade: %v", c.Diags)
+	}
+	e := &Engine{File: "t.tui", V3: true}
+	e.Layout(root, nil, cols, rows)
+	return e
+}
+
+// 95. Column priority (SPEC v0.3b §6.9.3): while the natural widths of
+// the visible columns plus the gaps exceed A, the visible column with the
+// smallest priority (the last in document order among equal priorities)
+// hides; a column without priority never hides; a hidden column is
+// removed from TableColumns (so it gets no header cell, no body cell, and
+// no dump node); L003 is then evaluated on the columns left, so it does
+// not also fire once enough of them have hidden.
+func TestTablePriorityHiding(t *testing.T) {
+	cA := col("width: 18", 18, true)     // no priority: never hides
+	cB := colP("width: 18", 18, true, 3) // priority 3
+	cC := colP("width: 18", 18, true, 1) // priority 1 (hides 2nd: earlier than e)
+	cD := colP("width: 18", 18, true, 2) // priority 2
+	cE := colP("width: 18", 18, true, 1) // priority 1 (hides 1st: the last of the tie)
+	tb := tbl("gap: 1", 1, cA, cB, cC, cD, cE)
+	e := runV3(t, n("col", "", tb), 80, 5)
+	// 5*18 + 4 = 94 > 80: e hides (the last of the two priority=1
+	// columns), leaving 4*18 + 3 = 75 <= 80.
+	if got := widths(tb); got != "18@0 18@19 18@38 18@57" {
+		t.Errorf("widths at 80 = %s, want a b c d (e hidden)", got)
+	}
+	if len(TableColumns(tb)) != 4 {
+		t.Errorf("TableColumns after hiding = %d, want 4", len(TableColumns(tb)))
+	}
+	for _, d := range e.Diags {
+		if d.Code == "L003" {
+			t.Errorf("unexpected L003 at 80 once e hides: %s", d.Msg)
+		}
+	}
+	// At 40: only a and b are left (75 shrinks as c, then d hide too).
+	tb2 := tbl("gap: 1", 1, col("width: 18", 18, true), colP("width: 18", 18, true, 3),
+		colP("width: 18", 18, true, 1), colP("width: 18", 18, true, 2), colP("width: 18", 18, true, 1))
+	runV3(t, n("col", "", tb2), 40, 5)
+	if got := widths(tb2); got != "18@0 18@19" {
+		t.Errorf("widths at 40 = %s, want a b", got)
+	}
+	// At 10: only a is left, cut, with L003.
+	tb3 := tbl("gap: 1", 1, col("width: 18", 18, true), colP("width: 18", 18, true, 3),
+		colP("width: 18", 18, true, 1), colP("width: 18", 18, true, 2), colP("width: 18", 18, true, 1))
+	e3 := runV3(t, n("col", "", tb3), 10, 5)
+	// a's own cell width (18) is unchanged; it overflows the 10-column
+	// table and is clipped at paint time, which is what L003 warns about.
+	if got := widths(tb3); got != "18@0" {
+		t.Errorf("widths at 10 = %s, want a alone at its own width, clipped", got)
+	}
+	found := false
+	for _, d := range e3.Diags {
+		if d.Code == "L003" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("want L003 at 10, got %v", e3.Diags)
 	}
 }

@@ -64,7 +64,7 @@ func EffectiveTheme(name string) string {
 }
 
 func init() {
-	s, diags := ParseSheetIn(UASheet, UAFile, true)
+	s, diags := ParseSheetIn(UASheet, UAFile, true, true)
 	if len(diags) > 0 {
 		panic(fmt.Sprintf("built-in stylesheet: %v", diags))
 	}
@@ -248,6 +248,24 @@ next:
 	for i, d := range inline {
 		matched = append(matched, ruleDecl{decl: d, origin: OriginInline, spec: 1000, order: i, file: d.File})
 	}
+	// SPEC v0.3 §10.2 (v0.3b): a `gap` declaration counts in the cascade as
+	// the two declarations row-gap and column-gap too, with gap's origin,
+	// specificity, and order; each property is then resolved on its own
+	// by the last-write-wins loop below, so a later or more specific
+	// row-gap/column-gap still beats it. This is harmless in
+	// version="1"/"2" documents: row-gap and column-gap can never appear
+	// there (CheckDeclIn), and internal/layout reads the two longhands
+	// only for a version="3" document (Engine.V3); Style.Gap keeps its
+	// v1/v2 meaning either way.
+	var gapLonghands []ruleDecl
+	for _, rd := range matched {
+		if rd.decl.Prop == "gap" {
+			row, col := rd, rd
+			row.decl.Prop, col.decl.Prop = "row-gap", "column-gap"
+			gapLonghands = append(gapLonghands, row, col)
+		}
+	}
+	matched = append(matched, gapLonghands...)
 	sort.SliceStable(matched, func(i, j int) bool {
 		a, b := matched[i], matched[j]
 		if a.origin != b.origin {

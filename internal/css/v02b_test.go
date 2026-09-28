@@ -25,11 +25,11 @@ func TestCheckDeclVersionGate(t *testing.T) {
 		{"bar", "eighths", true, true},
 		{"layout", "row", false, true},
 	} {
-		err := CheckDeclIn(c.prop, c.val, false)
+		err := CheckDeclIn(c.prop, c.val, false, false)
 		if hinted := err != nil && strings.HasSuffix(err.Error(), ir.VersionHint); hinted != c.v1Hint {
 			t.Errorf("v1 %s: %s: %v", c.prop, c.val, err)
 		}
-		if err := CheckDeclIn(c.prop, c.val, true); (err == nil) != c.v2OK {
+		if err := CheckDeclIn(c.prop, c.val, true, false); (err == nil) != c.v2OK {
 			t.Errorf("v2 %s: %s: %v", c.prop, c.val, err)
 		}
 	}
@@ -42,23 +42,23 @@ func TestCheckDeclVersionGate(t *testing.T) {
 		{"grid-columns", "+3"}, {"grid-columns", ""}, {"grid-min-width", "0"}, {"grid-min-width", "2.5"},
 		{"scrollbar", "always"}, {"bar", "half"}, {"layout", "flex"},
 	} {
-		err := CheckDeclIn(c.prop, c.val, true)
+		err := CheckDeclIn(c.prop, c.val, true, false)
 		if err == nil || strings.HasSuffix(err.Error(), ir.VersionHint) {
 			t.Errorf("v2 %s: %q = %v, want a plain V003", c.prop, c.val, err)
 		}
 	}
 	for _, v := range []string{"1", "12"} {
-		if err := CheckDeclIn("grid-columns", v, true); err != nil {
+		if err := CheckDeclIn("grid-columns", v, true, false); err != nil {
 			t.Errorf("grid-columns: %s = %v", v, err)
 		}
 	}
-	if err := CheckDeclIn("grid-min-width", "99999999999999999999", true); err != nil {
+	if err := CheckDeclIn("grid-min-width", "99999999999999999999", true, false); err != nil {
 		t.Errorf("a huge grid-min-width is still an integer >= 1: %v", err)
 	}
 }
 
 func TestVersionTwoPropertiesCompute(t *testing.T) {
-	sh, diags := ParseSheetIn(`box { layout: grid; grid-columns: 4; grid-min-width: 22; scrollbar: auto; } progress { bar: eighths; }`, "a.tcss", true)
+	sh, diags := ParseSheetIn(`box { layout: grid; grid-columns: 4; grid-min-width: 22; scrollbar: auto; } progress { bar: eighths; }`, "a.tcss", true, false)
 	if len(diags) > 0 {
 		t.Fatal(diags)
 	}
@@ -79,7 +79,7 @@ func TestVersionTwoPropertiesCompute(t *testing.T) {
 			t.Errorf("%s is not marked version=\"2\"", p)
 		}
 	}
-	if PropertyV2("layout") || len(PropertyOrder) != 33 || PropertyOrder[0] != "layout" || PropertyOrder[32] != "bar" {
+	if PropertyV2("layout") || len(PropertyOrder) != 35 || PropertyOrder[0] != "layout" || PropertyOrder[34] != "bar" {
 		t.Errorf("property order %v", PropertyOrder)
 	}
 	for _, p := range PropertyOrder {
@@ -116,7 +116,7 @@ func TestSelectorVersionGate(t *testing.T) {
 
 func TestThemeMedia(t *testing.T) {
 	src := "@media (theme: light) { text { bold: true; } }\n@media (theme: dark) { text { italic: true; } }"
-	sh, diags := ParseSheetIn(src, "a.tcss", true)
+	sh, diags := ParseSheetIn(src, "a.tcss", true, false)
 	if len(diags) > 0 {
 		t.Fatal(diags)
 	}
@@ -129,12 +129,12 @@ func TestThemeMedia(t *testing.T) {
 			t.Errorf("theme %q: bold %v italic %v", theme, st.Bold, st.Italic)
 		}
 	}
-	_, diags = ParseSheetIn(src, "a.tcss", false)
+	_, diags = ParseSheetIn(src, "a.tcss", false, false)
 	if len(diags) != 2 || !strings.HasSuffix(diags[0].Msg, ir.VersionHint) {
 		t.Errorf("v1 theme media: %v", diags)
 	}
 	for _, bad := range []string{"@media (theme: auto) { text { bold: true; } }", "@media (theme: sepia) {}", "@media (colour: dark) {}"} {
-		_, diags := ParseSheetIn(bad, "a.tcss", true)
+		_, diags := ParseSheetIn(bad, "a.tcss", true, false)
 		if len(diags) != 1 || diags[0].Code != "V003" || strings.HasSuffix(diags[0].Msg, ir.VersionHint) {
 			t.Errorf("%q: %v", bad, diags)
 		}
@@ -152,7 +152,7 @@ func TestTokensPerTheme(t *testing.T) {
 	base := ":root { --brand: #e0443e; }\n"
 	light := "@media (theme: light) { :root { --brand: #c8102e; --only: red; } }\n"
 	use := "#t { color: $only; }\n"
-	sh, diags := ParseSheetIn(base+light+use, "a.tcss", true)
+	sh, diags := ParseSheetIn(base+light+use, "a.tcss", true, false)
 	if len(diags) > 0 {
 		t.Fatal(diags)
 	}
@@ -175,7 +175,7 @@ func TestTokensPerTheme(t *testing.T) {
 		t.Errorf("light: %v", d)
 	}
 	// The light block before the base :root loses.
-	sh2, _ := ParseSheetIn(light+base, "a.tcss", true)
+	sh2, _ := ParseSheetIn(light+base, "a.tcss", true, false)
 	if c := NewCascade([]*Sheet{sh2}, Env{Theme: "light"}); c.Tokens["brand"] != "#e0443e" {
 		t.Errorf("a light block before the base: brand %q", c.Tokens["brand"])
 	}
@@ -201,7 +201,7 @@ func TestUASheet02bRules(t *testing.T) {
 // `inspect`'s trace: the winner, the losers highest priority first, the
 // origins, and inherited properties.
 func TestExplain(t *testing.T) {
-	sh, diags := ParseSheetIn("text { color: red; }\n.hot { color: blue; }\n@media (min-cols: 10) { #t { color: green; } }\n", "a.tcss", true)
+	sh, diags := ParseSheetIn("text { color: red; }\n.hot { color: blue; }\n@media (min-cols: 10) { #t { color: green; } }\n", "a.tcss", true, false)
 	if len(diags) > 0 {
 		t.Fatal(diags)
 	}
@@ -250,7 +250,7 @@ func TestExplain(t *testing.T) {
 // and its specificity is that of the highest-specificity matching
 // selector. Computed values are what they were.
 func TestExplainSelectorList(t *testing.T) {
-	sh, diags := ParseSheetIn("text, .a { bold: true; }\n.b,   .a { dim: true; }\ntext , .a { color: red; }\n.z, text { color: blue; }\n", "l.tcss", true)
+	sh, diags := ParseSheetIn("text, .a { bold: true; }\n.b,   .a { dim: true; }\ntext , .a { color: red; }\n.z, text { color: blue; }\n", "l.tcss", true, false)
 	if len(diags) > 0 {
 		t.Fatal(diags)
 	}

@@ -179,6 +179,35 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 	}
 }
 
+// columnGap and rowGap are a container's gap between siblings placed side
+// by side (x) or stacked (y): in a version="3" document (v3), the
+// axis-specific longhand (SPEC v0.3 §10.2, v0.3b); otherwise the plain
+// gap, which is what every v0.2b rule already meant. mainGap picks
+// between them for a container whose main axis is horizontal (a row
+// layout) or vertical (a column layout); table columns, tabs labels, and
+// a hint item's keycap+label are always laid out along x, so their
+// callers use columnGap directly.
+func columnGap(st css.Style, v3 bool) int {
+	if v3 {
+		return st.ColumnGap
+	}
+	return st.Gap
+}
+
+func rowGap(st css.Style, v3 bool) int {
+	if v3 {
+		return st.RowGap
+	}
+	return st.Gap
+}
+
+func mainGap(st css.Style, v3, horizontal bool) int {
+	if horizontal {
+		return columnGap(st, v3)
+	}
+	return rowGap(st, v3)
+}
+
 func margins(b *Box, horizontal bool) (start, end int) {
 	if horizontal {
 		return clampCells(b.Style.Margin[3]), clampCells(b.Style.Margin[1])
@@ -488,7 +517,7 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 			}
 		}
 	}
-	gap := b.Style.Gap
+	gap := mainGap(b.Style, e.V3, horizontal)
 	remain := max(0, main-gap*(n-1))
 	parentAuto := b.autoH
 	if horizontal {
@@ -639,7 +668,7 @@ func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect) {
 		main, cross = area.W, area.H
 	}
 	sizes, crossSizes, anyFr := e.allocate(b, kids, main, cross, true)
-	gap := b.Style.Gap
+	gap := mainGap(b.Style, e.V3, row)
 	total := gap * (n - 1)
 	for _, s := range sizes {
 		total += s
@@ -724,8 +753,9 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 		flowArea := e.carve(b, Rect{0, 0, contentW, contentH}, Rect{}, false)
 		sizes, _, _ := e.allocate(b, kids, flowArea.H, flowArea.W, false)
 		top := flowArea.Y
+		g := mainGap(b.Style, e.V3, false)
 		for i := 0; i < follow; i++ {
-			top += sizes[i] + b.Style.Gap
+			top += sizes[i] + g
 		}
 		bottom := top + sizes[follow]
 		if top < offY {
@@ -925,7 +955,10 @@ func (e *Engine) checkTextClip(n *Box) {
 		return
 	}
 	mode := n.Style.Wrap
-	nowrap := mode != "wrap" && mode != "truncate"
+	// truncate-start and truncate-middle (version="3", v0.3b) mark their
+	// cut with an ellipsis exactly as truncate does, so they never
+	// produce L008a either (SPEC §11.5.2).
+	nowrap := mode != "wrap" && mode != "truncate" && mode != "truncate-start" && mode != "truncate-middle"
 	if nowrap && !n.Style.WrapWritten {
 		if w, c := MaxWidth(n.Text), n.Content.W; w > c {
 			if e.clipFirst(n, "L008a") {
@@ -1065,7 +1098,7 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 	case "spacer":
 		v = 0
 	case "table":
-		v = tableIntrinsic(b, horizontal)
+		v = tableIntrinsic(b, horizontal, e.V3)
 	case "sparkline":
 		// SPEC §6.11: the array's length across (0 when it is not an
 		// array), one row down.
@@ -1081,7 +1114,7 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 		}
 		v = e.tabsIntrinsic(b, horizontal, max(0, inner))
 	case "hints":
-		v = hintsIntrinsic(b, horizontal)
+		v = hintsIntrinsic(b, horizontal, e.V3)
 	default:
 		if b.IsContainer() {
 			inner := avail - fv
@@ -1192,7 +1225,7 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 			}
 		}
 		if alongMain {
-			total += b.Style.Gap * (n - 1)
+			total += mainGap(b.Style, e.V3, row) * (n - 1)
 		}
 	}
 	if horizontal {

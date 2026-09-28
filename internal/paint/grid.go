@@ -653,7 +653,11 @@ var sparkRamp = [8]rune{' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇'}
 // right-aligned in its W × H content box (SPEC §6.11): column j shows
 // element len − W + j when that index is ≥ 0. lo is min= or the smallest
 // shown number, hi max= or the largest; nothing is painted when no shown
-// value is a number. A number's level is 4H when hi ≤ lo, else
+// value is a number. In a version="3" document with scale="NAME" (v0.3b),
+// a member with no min=/max= of its own uses its scale group's shared
+// range instead of falling back to its own shown values (HasGroupLo/
+// HasGroupHi, set by internal/host after layout); its own literal, when
+// given, still wins. A number's level is 4H when hi ≤ lo, else
 // floor((vc − lo)·8H/(hi − lo) + 0.5) in double precision, in this order,
 // with vc the value clamped to [lo, hi], clamped to [0, 8H]. Row r,
 // counted from the bottom, paints █ when the level is at least 8(r + 1),
@@ -666,8 +670,7 @@ func (p *painter) sparkline(b *layout.Box, clip layout.Rect, st cellStyle) {
 		return
 	}
 	lo, hi, shown := math.Inf(1), math.Inf(-1), false
-	for j := max(0, w-n); j < w; j++ {
-		v := b.Series[n-w+j]
+	for _, v := range layout.SparkShown(b) {
 		if math.IsNaN(v) {
 			continue
 		}
@@ -676,6 +679,12 @@ func (p *painter) sparkline(b *layout.Box, clip layout.Rect, st cellStyle) {
 	}
 	if !shown {
 		return
+	}
+	if b.HasGroupLo {
+		lo = b.GroupLo
+	}
+	if b.HasGroupHi {
+		hi = b.GroupHi
 	}
 	if b.HasLo {
 		lo = b.Lo

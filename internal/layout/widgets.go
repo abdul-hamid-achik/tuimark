@@ -12,6 +12,24 @@ import (
 // of them are laid out and where. Everything here is integer cell
 // arithmetic, in one measure pass and one allocation pass.
 
+// SparkShown returns the shown values of a sparkline's content box (SPEC
+// §6.11, §6.15): the last W = b.Content.W elements of b.Series, right
+// aligned (column j shows element len − W + j when that index is ≥ 0). It
+// is used both by paint (which of them is a number decides whether the
+// sparkline paints anything) and by internal/host's scale grouping
+// (v0.3b), so both read exactly the same window.
+func SparkShown(b *Box) []float64 {
+	n, w := len(b.Series), b.Content.W
+	if n == 0 || w <= 0 {
+		return nil
+	}
+	out := make([]float64, 0, w)
+	for j := max(0, w-n); j < w; j++ {
+		out = append(out, b.Series[n-w+j])
+	}
+	return out
+}
+
 // tabParts returns the label boxes of tabs t (its children with
 // RoleTabLabel, in document order) and its active tab (its child of kind
 // tab), or nil when no tab is visible.
@@ -37,13 +55,15 @@ func markWidth(t *Box) int {
 }
 
 // tabWidths returns W1 and W2 of SPEC §6.10.4 for the labels of tabs t:
-// Σ (m + width(L(t))) + g·(n − 1), and the same with S(t).
-func tabWidths(t *Box, labels []*Box) (w1, w2 int) {
+// Σ (m + width(L(t))) + g·(n − 1), and the same with S(t). Labels are
+// always laid out side by side, so g is the tabs' column-gap in a
+// version="3" document (SPEC §10.2, v0.3b).
+func tabWidths(t *Box, labels []*Box, v3 bool) (w1, w2 int) {
 	n := len(labels)
 	if n == 0 {
 		return 0, 0
 	}
-	m, g := markWidth(t), t.Style.Gap
+	m, g := markWidth(t), columnGap(t.Style, v3)
 	w1, w2 = g*(n-1), g*(n-1)
 	for _, l := range labels {
 		w1 += m + Width(l.Full)
@@ -60,7 +80,7 @@ func tabWidths(t *Box, labels []*Box) (w1, w2 int) {
 func (e *Engine) tabsIntrinsic(t *Box, horizontal bool, avail int) int {
 	labels, tab := tabParts(t)
 	if horizontal {
-		w1, _ := tabWidths(t, labels)
+		w1, _ := tabWidths(t, labels, e.V3)
 		if tab != nil {
 			w1 = max(w1, e.intrinsic(tab, true, max(0, avail-1)))
 		}
@@ -85,8 +105,8 @@ func (e *Engine) tabsLayout(t *Box, clip Rect) {
 	c := t.Content
 	labels, tab := tabParts(t)
 	if len(labels) > 0 {
-		m, g := markWidth(t), t.Style.Gap
-		w1, w2 := tabWidths(t, labels)
+		m, g := markWidth(t), columnGap(t.Style, e.V3)
+		w1, w2 := tabWidths(t, labels, e.V3)
 		switch {
 		case w1 <= c.W || w2 <= c.W:
 			x := c.X
@@ -133,12 +153,14 @@ func placeLabel(l *Box, r Rect, m int, clip Rect) {
 }
 
 // hintItemSize is the size of a hint item row across its hints' main
-// axis (SPEC §6.12): width(keycap) + the row's gap + width(label).
-func hintItemSize(it *Box) int {
+// axis (SPEC §6.12): width(keycap) + the row's gap + width(label). The
+// keycap and label are always laid out side by side, so the gap is the
+// item's column-gap in a version="3" document (SPEC §10.2, v0.3b).
+func hintItemSize(it *Box, v3 bool) int {
 	if len(it.Children) < 2 {
 		return 0
 	}
-	return clampCells(Width(it.Children[0].Text) + it.Style.Gap + Width(it.Children[1].Text))
+	return clampCells(Width(it.Children[0].Text) + columnGap(it.Style, v3) + Width(it.Children[1].Text))
 }
 
 // hintsColumn reports whether hints h places its items down (layout:
@@ -149,8 +171,10 @@ func hintsColumn(h *Box) bool { return h.Style.Layout == "column" }
 // and padding (SPEC §6.12): under layout: row, every item's width plus
 // the gaps across and one row down; under layout: column, the widest item
 // across and one row per item plus the gaps down. Every item counts,
-// whether it fits or not.
-func hintsIntrinsic(h *Box, horizontal bool) int {
+// whether it fits or not. The items' own main-axis gap is hints' g of
+// SPEC §11.7's letters: column-gap under layout: row, row-gap under
+// layout: column (v0.3b).
+func hintsIntrinsic(h *Box, horizontal, v3 bool) int {
 	n := len(h.Children)
 	col := hintsColumn(h)
 	if horizontal == col {
@@ -160,19 +184,19 @@ func hintsIntrinsic(h *Box, horizontal bool) int {
 		}
 		w := 0
 		for _, it := range h.Children {
-			w = max(w, hintItemSize(it))
+			w = max(w, hintItemSize(it, v3))
 		}
 		return w
 	}
 	if n == 0 {
 		return 0
 	}
-	v := h.Style.Gap * (n - 1)
+	v := mainGap(h.Style, v3, !col) * (n - 1)
 	for _, it := range h.Children {
 		if col {
 			v++
 		} else {
-			v += hintItemSize(it)
+			v += hintItemSize(it, v3)
 		}
 	}
 	return clampCells(v)
@@ -191,8 +215,9 @@ func (e *Engine) hintsLayout(h *Box, clip Rect) {
 		extent = c.H
 	}
 	pos := 0
+	mg := mainGap(h.Style, e.V3, !col)
 	for _, it := range h.Children {
-		w := hintItemSize(it)
+		w := hintItemSize(it, e.V3)
 		size := w
 		if col {
 			size = 1
@@ -208,9 +233,9 @@ func (e *Engine) hintsLayout(h *Box, clip Rect) {
 		key, label := it.Children[0], it.Children[1]
 		kw := Width(key.Text)
 		placeFixed(key, Rect{r.X, r.Y, kw, 1}, it.Clip)
-		lx := r.X + kw + it.Style.Gap
+		lx := r.X + kw + columnGap(it.Style, e.V3)
 		placeFixed(label, Rect{lx, r.Y, Width(label.Text), 1}, it.Clip)
-		pos += size + h.Style.Gap
+		pos += size + mg
 	}
 }
 
@@ -228,10 +253,11 @@ func placeFixed(b *Box, r Rect, clip Rect) {
 // grid-min-width, else clamp(floor((wc + g) / (M + g)), 1, K); then the
 // §11.4 split of n children of 1fr with gap g: columns 0 to n − 2 get
 // floor(remain / n) and the last gets the rest, remain = max(0, wc −
-// g·(n − 1)).
-func gridColumns(b *Box, wc int) (n int, widths []int) {
+// g·(n − 1)). g is the grid's column-gap in a version="3" document (SPEC
+// §11.7, v0.3b).
+func gridColumns(b *Box, wc int, v3 bool) (n int, widths []int) {
 	k := min(max(b.Style.GridColumns, 1), 12)
-	g := b.Style.Gap
+	g := columnGap(b.Style, v3)
 	n = k
 	if m := b.Style.GridMinWidth; m > 0 {
 		n = min(max((max(wc, 0)+g)/(m+g), 1), k)
@@ -289,10 +315,11 @@ func gridWc(b *Box, area Rect) int {
 // docks leave) gives; across, n'·w + g·(n' − 1), with n' = K without
 // grid-min-width (item 1 then lays out K columns, whatever the number of
 // children), else min(K, the number of children), at least 1, and w the
-// grid-min-width, else the widest child.
+// grid-min-width, else the widest child. g is column-gap across, row-gap
+// down, in a version="3" document (SPEC §11.7, v0.3b).
 func (e *Engine) gridIntrinsic(b *Box, kids []*Box, horizontal bool, avail int) int {
-	g := b.Style.Gap
 	if horizontal {
+		g := columnGap(b.Style, e.V3)
 		k := min(max(b.Style.GridColumns, 1), 12)
 		n := k
 		if b.Style.GridMinWidth > 0 {
@@ -311,9 +338,9 @@ func (e *Engine) gridIntrinsic(b *Box, kids []*Box, horizontal bool, avail int) 
 	if len(kids) == 0 {
 		return 0
 	}
-	n, widths := gridColumns(b, avail)
+	n, widths := gridColumns(b, avail, e.V3)
 	rows := e.gridRows(kids, n, widths)
-	v := g * (len(rows) - 1)
+	v := rowGap(b.Style, e.V3) * (len(rows) - 1)
 	for _, h := range rows {
 		v += h
 	}
@@ -326,15 +353,17 @@ func (e *Engine) gridIntrinsic(b *Box, kids []*Box, horizontal bool, avail int) 
 // flex are ignored: L007 when the document wrote one, and for an fr or %
 // height, which is auto here); rows as tall as their tallest child,
 // separated by the gap; align places a shorter child in its row (stretch
-// by default; justify does not apply).
+// by default; justify does not apply). The columns are g apart (its
+// column-gap in a version="3" document) and the rows g apart too, but
+// with row-gap there (SPEC §11.7, v0.3b).
 func (e *Engine) grid(b *Box, kids []*Box, area Rect, clip Rect) {
-	g := b.Style.Gap
-	n, widths := gridColumns(b, gridWc(b, area))
+	cg, rg := columnGap(b.Style, e.V3), rowGap(b.Style, e.V3)
+	n, widths := gridColumns(b, gridWc(b, area), e.V3)
 	xs := make([]int, n)
 	x := area.X
 	for j := range widths {
 		xs[j] = x
-		x += widths[j] + g
+		x += widths[j] + cg
 	}
 	for _, k := range kids {
 		if what := gridIgnored(k); what != "" {
@@ -366,7 +395,7 @@ func (e *Engine) grid(b *Box, kids []*Box, area Rect, clip Rect) {
 			}
 			e.place(k, Rect{xs[j] + cs, y + off + ms, max(0, widths[j]-cs-ce), boxH}, clip)
 		}
-		y += h + g
+		y += h + rg
 	}
 }
 

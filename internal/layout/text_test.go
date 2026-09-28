@@ -60,6 +60,43 @@ func TestGraphemeCutTruncate(t *testing.T) {
 	}
 }
 
+// SPEC v0.3 §11.5.2 (version="3", v0.3b) and §21 test 94: truncate-start
+// and truncate-middle cut a wide cluster the same way Cut/Truncate do,
+// and never widen the result past n.
+func TestTruncateStartMiddle(t *testing.T) {
+	for _, c := range []struct {
+		s      string
+		n      int
+		start  string
+		middle string
+	}{
+		{"abcdefgh", 5, "…efgh", "ab…gh"},
+		{"abcdefgh", 1, "…", "…"},
+		{"abcdefgh", 0, "", ""},
+		{"abcdefgh", -1, "", ""},
+		{"abc", 5, "abc", "abc"}, // fits: returned as is
+		{"/System/Volumes/Data", 12, "…olumes/Data", "/Syste…/Data"},
+		{"微信微信", 5, "…微信", "微…信"},
+		{"微信微信", 4, "…信", "微…"},    // TruncateMiddle one column narrower
+		{"微信微信", 7, "…信微信", "微…信"}, // TruncateMiddle two columns narrower
+	} {
+		if got := TruncateStart(c.s, c.n); got != c.start {
+			t.Errorf("TruncateStart(%q, %d) = %q, want %q", c.s, c.n, got, c.start)
+		}
+		if got := TruncateMiddle(c.s, c.n); got != c.middle {
+			t.Errorf("TruncateMiddle(%q, %d) = %q, want %q", c.s, c.n, got, c.middle)
+		}
+		if c.n > 0 {
+			if w := Width(TruncateStart(c.s, c.n)); w > c.n {
+				t.Errorf("TruncateStart(%q, %d) is %d columns", c.s, c.n, w)
+			}
+			if w := Width(TruncateMiddle(c.s, c.n)); w > c.n {
+				t.Errorf("TruncateMiddle(%q, %d) is %d columns", c.s, c.n, w)
+			}
+		}
+	}
+}
+
 func TestGraphemeWrap(t *testing.T) {
 	for _, c := range []struct {
 		p     string

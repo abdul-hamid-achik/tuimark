@@ -24,16 +24,22 @@ type Style struct {
 	// reporting V010 for sizes the author never wrote (layout.DockConflict).
 	WidthUA, HeightUA, FlexUA bool
 	Gap                       int
-	Pad, Margin               [4]int // top right bottom left
-	Align, Justify            string
-	Overflow, ContentAlign    string
-	Display                   string
-	Color, Background         Color
-	BorderColor, TitleColor   Color
-	Border                    string
-	Bold, Dim, Italic         bool
-	Underline, Reverse        bool
-	Wrap                      string
+	// RowGap and ColumnGap are the version="3" longhands of Gap (SPEC v0.3
+	// §10.2, v0.3b): a `gap: N` declaration counts in the cascade as both,
+	// each resolved on its own (see Cascade.compute); harmless in
+	// version="1"/"2" documents, where the properties can never appear and
+	// internal/layout reads them only when Engine.V3 is set.
+	RowGap, ColumnGap       int
+	Pad, Margin             [4]int // top right bottom left
+	Align, Justify          string
+	Overflow, ContentAlign  string
+	Display                 string
+	Color, Background       Color
+	BorderColor, TitleColor Color
+	Border                  string
+	Bold, Dim, Italic       bool
+	Underline, Reverse      bool
+	Wrap                    string
 	// WrapWritten and OverflowWritten report that the computed Wrap or
 	// Overflow value is document-written (SPEC v0.3 §14, ADR 0015
 	// Enmienda): from a presentational attribute, author CSS, or
@@ -85,6 +91,13 @@ type propSpec struct {
 	values []string
 	// v2 marks a property only version="2" stylesheets accept (SPEC §5.1).
 	v2 bool
+	// v3 marks a property only version="3" stylesheets accept (SPEC v0.3
+	// §5.1, v0.3b): row-gap and column-gap.
+	v3 bool
+	// v3Values are extra enum values only version="3" stylesheets accept
+	// on top of values (SPEC v0.3b §10.3): wrap's truncate-start and
+	// truncate-middle.
+	v3Values []string
 }
 
 // layoutGrid is the value of layout that only version="2" stylesheets
@@ -102,6 +115,8 @@ var props = map[string]propSpec{
 	"max-height":    {kind: pMinMax},
 	"flex":          {kind: pNumber},
 	"gap":           {kind: pGap},
+	"row-gap":       {kind: pGap, v3: true},
+	"column-gap":    {kind: pGap, v3: true},
 	"padding":       {kind: pBox},
 	"margin":        {kind: pBox},
 	"align":         {kind: pEnum, values: []string{"start", "center", "end", "stretch"}},
@@ -119,7 +134,7 @@ var props = map[string]propSpec{
 	"italic":        {kind: pBool},
 	"underline":     {kind: pBool},
 	"reverse":       {kind: pBool},
-	"wrap":          {kind: pEnum, values: []string{"wrap", "nowrap", "truncate"}},
+	"wrap":          {kind: pEnum, values: []string{"wrap", "nowrap", "truncate"}, v3Values: []string{"truncate-start", "truncate-middle"}},
 	"visibility":    {kind: pEnum, values: []string{"visible", "hidden"}},
 	// version="2" (SPEC §10.2, §10.3).
 	"grid-columns":   {kind: pGridColumns, v2: true},
@@ -133,7 +148,7 @@ var props = map[string]propSpec{
 var PropertyOrder = []string{
 	"layout", "grid-columns", "grid-min-width", "scrollbar", "dock",
 	"width", "height", "min-width", "min-height", "max-width", "max-height",
-	"flex", "gap", "padding", "margin", "align", "justify", "overflow",
+	"flex", "gap", "row-gap", "column-gap", "padding", "margin", "align", "justify", "overflow",
 	"content-align", "display",
 	"color", "background", "border-color", "title-color", "border",
 	"bold", "dim", "italic", "underline", "reverse", "wrap", "visibility", "bar",
@@ -142,6 +157,13 @@ var PropertyOrder = []string{
 // PropertyV2 reports whether name is a property only version="2"
 // stylesheets accept.
 func PropertyV2(name string) bool { return props[name].v2 }
+
+// PropertyV3 reports whether name is a property only version="3"
+// stylesheets accept (SPEC v0.3b §10.2): row-gap and column-gap. wrap is
+// not: it is a version="1" property whose two extra values need
+// version="3" (PropertyValues states that inline, as it already does for
+// layout's grid value).
+func PropertyV3(name string) bool { return props[name].v3 }
 
 // PropertyNames lists the supported properties (for docs and AGENTS.md).
 func PropertyNames() []string {
@@ -162,6 +184,9 @@ func PropertyValues(name string) string {
 	case pEnum:
 		if name == "layout" {
 			return strings.Join(p.values, " | ") + " | grid (version=\"2\")"
+		}
+		if name == "wrap" {
+			return strings.Join(p.values, " | ") + " | " + strings.Join(p.v3Values, " | ") + " (version=\"3\")"
 		}
 		return strings.Join(p.values, " | ")
 	case pGridColumns:
@@ -185,13 +210,18 @@ func PropertyValues(name string) string {
 }
 
 // CheckDecl validates a declaration's syntax (tokens are resolved later)
-// in a version="1" document: CheckDeclIn with v2 false.
-func CheckDecl(prop, val string) error { return CheckDeclIn(prop, val, false) }
+// in a version="1" document: CheckDeclIn with v2 and v3 false.
+func CheckDecl(prop, val string) error { return CheckDeclIn(prop, val, false, false) }
 
 // CheckDeclIn validates a declaration's syntax for a document of the
-// given version (SPEC §5.1): a version="1" document gets V003 with the
-// version hint for a version="2" property or for layout: grid.
-func CheckDeclIn(prop, val string, v2 bool) error {
+// given version (SPEC §5.1, v0.3b): a version="1" document gets V003 with
+// the version="2" hint for a version="2" property or for layout: grid; a
+// version="1" or version="2" document gets V003 with the version="3" hint
+// for a version="3" property (row-gap, column-gap) or wrap value
+// (truncate-start, truncate-middle). v3 implies v2 in a valid document
+// (SPEC §5.1), but callers pass both explicitly rather than have this
+// function assume it.
+func CheckDeclIn(prop, val string, v2, v3 bool) error {
 	val = strings.TrimSpace(val)
 	if strings.HasPrefix(prop, "--") {
 		return fmt.Errorf("custom property %s is only allowed in :root", prop)
@@ -199,6 +229,9 @@ func CheckDeclIn(prop, val string, v2 bool) error {
 	p, ok := props[prop]
 	if !ok {
 		return fmt.Errorf("unknown property %q", prop)
+	}
+	if p.v3 && !v3 {
+		return fmt.Errorf("property %q%s", prop, ir.VersionHint3)
 	}
 	if p.v2 && !v2 {
 		return fmt.Errorf("property %q%s", prop, ir.VersionHint)
@@ -213,15 +246,33 @@ func CheckDeclIn(prop, val string, v2 bool) error {
 				return nil
 			}
 		}
+		if v3 {
+			for _, v := range p.v3Values {
+				if v == val {
+					return nil
+				}
+			}
+		}
 		if prop == "layout" && val == layoutGrid {
 			if v2 {
 				return nil
 			}
 			return fmt.Errorf("%s: value %q (want %s)%s", prop, val, strings.Join(p.values, " | "), ir.VersionHint)
 		}
+		if len(p.v3Values) > 0 {
+			for _, v := range p.v3Values {
+				if v == val {
+					// A version="3" value in a version="1"/"2" document.
+					return fmt.Errorf("%s: value %q (want %s)%s", prop, val, strings.Join(p.values, " | "), ir.VersionHint3)
+				}
+			}
+		}
 		want := strings.Join(p.values, " | ")
-		if prop == "layout" && v2 {
+		switch {
+		case prop == "layout" && v2:
 			want += " | " + layoutGrid
+		case len(p.v3Values) > 0 && v3:
+			want += " | " + strings.Join(p.v3Values, " | ")
 		}
 		return fmt.Errorf("%s: bad value %q (want %s)", prop, val, want)
 	case pGridColumns:
@@ -359,6 +410,10 @@ func apply(st *Style, prop, val string, tokens map[string]string) error {
 		st.Flex, st.FlexLit, st.FlexSet = f, lit, true
 	case "gap":
 		st.Gap, _ = strconv.Atoi(val)
+	case "row-gap":
+		st.RowGap, _ = strconv.Atoi(val)
+	case "column-gap":
+		st.ColumnGap, _ = strconv.Atoi(val)
 	case "padding":
 		st.Pad, _ = parseBox(val)
 	case "margin":
@@ -491,6 +546,10 @@ func FormatProp(st Style, prop string) (string, bool) {
 		return st.FlexLit, true
 	case "gap":
 		return strconv.Itoa(st.Gap), true
+	case "row-gap":
+		return strconv.Itoa(st.RowGap), true
+	case "column-gap":
+		return strconv.Itoa(st.ColumnGap), true
 	case "padding":
 		return box(st.Pad)
 	case "margin":
