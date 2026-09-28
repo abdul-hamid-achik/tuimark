@@ -15,6 +15,7 @@
 //	tuimark test     [DIR] [--update] [--allow-breaking]
 //	tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
 //	                      [--theme dark|light] [--strict] [--json]
+//	tuimark mcp                                — a Model Context Protocol server on stdin/stdout
 //
 // Exit codes: 0 ok, 1 I/O or crash, 2 validation errors.
 package main
@@ -76,6 +77,7 @@ usage:
   tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                         [--theme dark|light] [--strict] [--json]
                                                explain one node: path, classes, pseudo-classes, styles
+  tuimark mcp                                 a Model Context Protocol server on stdin/stdout
   tuimark version
 
 exit codes: 0 ok, 1 I/O or crash, 2 validation errors
@@ -118,6 +120,8 @@ func (c *cli) run(args []string) int {
 		return c.cmdTest(rest)
 	case "inspect":
 		return c.cmdInspect(rest)
+	case "mcp":
+		return c.cmdMCP(rest)
 	case "version", "--version", "-v":
 		fmt.Fprintln(c.stdout, versionLine())
 		return 0
