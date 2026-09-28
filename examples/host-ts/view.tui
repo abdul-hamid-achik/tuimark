@@ -1,0 +1,11 @@
+<tui version="1">
+  <keymap>
+    <bind keys="i" action="inc"/>
+    <bind keys="q" action="quit"/>
+  </keymap>
+  <screen id="main">
+    <text>host-ts demo: i increments, q quits</text>
+    <text>count: {count}</text>
+    <text if="last">last increment came from the TypeScript parent</text>
+  </screen>
+</tui>

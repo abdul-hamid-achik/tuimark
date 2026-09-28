@@ -409,7 +409,7 @@ func TestWatchSignals(t *testing.T) {
 	start := func(grace time.Duration) *rig {
 		r := &rig{make(chan os.Signal, 4), make(chan os.Signal, 1), make(chan struct{}), make(chan struct{}, 4), make(chan os.Signal, 4), make(chan struct{})}
 		go func() {
-			watchSignals(r.caught, r.toLoop, r.loopDone, func() { r.restored <- struct{}{} }, grace, func(s os.Signal) { r.died <- s })
+			watchSignals(r.caught, r.toLoop, r.loopDone, func() { r.restored <- struct{}{} }, grace, func(s os.Signal) { r.died <- s }, nil)
 			close(r.returned)
 		}()
 		return r
