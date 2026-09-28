@@ -27,7 +27,7 @@ type diagCode struct {
 var diagCodes = []diagCode{
 	{"V001", "parse", "unknown tag; a version=\"2\" tag in a version=\"1\" document (message ends with `(requires version=\"2\")`); `input`, `button`, `list`, `modal`, `table`, `tabs`, or `tab` inside a container `each` template"},
 	{"V002", "parse", "unknown attribute; a version=\"2\" attribute in a version=\"1\" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template"},
-	{"V003", "parse", "bad unit / color / token / CSS property; a `version` other than 1 or 2; a version=\"2\" value, property, pseudo-class, media feature, or built-in action in a version=\"1\" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`"},
+	{"V003", "parse", "bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version=\"2\" value, property, pseudo-class, media feature, or built-in action in a version=\"1\" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`"},
 	{"V004", "parse", "duplicate id; any `id` inside a container `each` template (version=\"2\")"},
 	{"V005", "parse", "not well-formed XML"},
 	{"V006", "parse", "`style src` include cycle"},
@@ -59,6 +59,8 @@ var diagCodes = []diagCode{
 	{"B009", "bind", "the value at a `sparkline` `bind` is present and not an array, or holds an element that is neither a number nor `null` (warning; version=\"2\")"},
 	{"B010", "bind", "the value at a `tabs` `bind` is present, not `null`, and not the id of a visible tab; the first visible tab is active and the store is not written (warning; version=\"2\")"},
 	{"L007", "layout", "in a `layout: grid` container, a child with a document-written `width`, `min-width`, `max-width`, or `flex` (ignored), or an `fr` or `%` `height` (treated as `auto`) (warning; version=\"2\")"},
+	{"L008", "layout", "in a `version=\"3\"` document, a painted `text` (not `visibility: hidden`, not a table cell/tab label/hint item) that loses columns (a document-unwritten `nowrap` line wider than its content box) or lines (more lines than its content box has rows, with `overflow: hidden` not document-written) without saying so (warning; version=\"3\")"},
+	{"L009", "layout", "in a `version=\"3\"` document, a container that cuts a child, in flow or docked, on an axis it does not itself scroll, when `overflow: hidden` is not document-written on it; not for a `list`, a `table`, or a `hints`, for a node `L003` already reports, or for a child `L006` already reports (warning; version=\"3\")"},
 }
 
 // kindGroups is the SPEC §22 Catalog block, grouped exactly as it appears
@@ -137,6 +139,7 @@ func Markdown() string {
 	writeDiagnosticCodes(&b)
 	writeV02aSection(&b)
 	writeV02bSection(&b)
+	writeV03aSection(&b)
 	writeNotes(&b)
 
 	return strings.TrimRight(b.String(), "\n") + "\n"
@@ -160,7 +163,7 @@ func RepoMarkdown() string {
 // the version gate accepts that this build does not lay out yet.
 func writeV02bSection(b *strings.Builder) {
 	b.WriteString("### version=\"2\" (0.2b)\n\n")
-	b.WriteString("- `<tui version=\"2\">` opts a document into the 0.2b vocabulary; everything a version=\"1\" document accepts keeps its meaning there. In a version=\"1\" document each 0.2b tag is V001, each 0.2b attribute V002, and each 0.2b value, property, pseudo-class, media feature, or built-in action V003, with a message ending in `(requires version=\"2\")`. A `.tcss` file has no version of its own: it is checked against the version of the document that loads it. Any `version` other than `1` or `2` is V003, and the document is read as version=\"1\".\n")
+	b.WriteString("- `<tui version=\"2\">` opts a document into the 0.2b vocabulary; everything a version=\"1\" document accepts keeps its meaning there. In a version=\"1\" document each 0.2b tag is V001, each 0.2b attribute V002, and each 0.2b value, property, pseudo-class, media feature, or built-in action V003, with a message ending in `(requires version=\"2\")`. A `.tcss` file has no version of its own: it is checked against the version of the document that loads it. Any `version` other than `1`, `2`, or `3` is V003, and the document is read as version=\"1\" (`version=\"3\"` is accepted too, see \"version=\\\"3\\\"\" below).\n")
 	b.WriteString("- Tags only version=\"2\" accepts: " + strings.Join(ir.KindsV2, " ") + ". This build lays out and paints all six (below).\n")
 	b.WriteString("- `class:NAME=\"path\"` (or `!path`) adds the class NAME while the guard is truthy; a missing path is B002 and counts as null, as for `if` (`class:x=\"path\"` adds nothing, `class:x=\"!path\"` adds x). The JSON dump of a version=\"2\" document lists each node's `classes` (its `class` names, then its truthy guards, each name once: `class=\"a b a\"` gives `a b`); a version=\"1\" dump never has `classes`. The names `tab-label`, `hint-key`, and `hint-label` are reserved for classes the runtime gives generated nodes.\n")
 	b.WriteString("- `theme=\"auto\"`: `Run()` asks the terminal for its background (OSC 11, waiting at most 250 ms before the first frame), falls back to `COLORFGBG`, then to `dark`. Every command and `Dump()`/`Validate()` treat `auto` as `dark`; `validate` checks an `auto` document under both themes, dark first, and reports each diagnostic once.\n")
@@ -183,6 +186,18 @@ func writeV02bSection(b *strings.Builder) {
 	b.WriteString("- `tuimark inspect FILE --at X,Y --json` (or `--id ID`) answers \"why does this cell look like this?\": the node that cell belongs to, its layout path, its pseudo-classes, every class it could have (with guards, and whether any rule names it), and every property with the rule that won and the rules that lost. It renders exactly as `dump` does with the same flags.\n")
 	b.WriteString("- `tuimark ir` prints `\"version\": \"0.2\"` for a version=\"2\" document (validated by `schema/ir.v0.2.json`): the new kinds, `app.mouse`, the keymap's `label`/`keycap`, and `class:NAME` attributes under their full names in `attrs`.\n")
 	b.WriteString("- `TUIMARK_LOG=FILE` makes `Run()` write an NDJSON log of the session (a regular file is created or truncated with mode 0600; `/dev/null` or a pipe is written as it is; a terminal is refused): start, capabilities and the resolved theme, keys, pastes, mouse events and mouse mode changes, actions, frames, resizes, end. While a `secret` input has focus, key and paste records are redacted, and that input's events never carry their value. Only `Run()` reads it.\n\n")
+}
+
+// writeV03aSection documents what 0.3a adds: version="3", which carries no
+// vocabulary of its own yet, only the opt-in clipping warnings L008/L009
+// and the dump's clipped member (SPEC v0.3 §5.1, §14, §13.2).
+func writeV03aSection(b *strings.Builder) {
+	b.WriteString("### version=\"3\" (0.3a)\n\n")
+	b.WriteString("- `<tui version=\"3\">` accepts everything a `version=\"2\"` document does, with the same meaning (every version=\"2\" rule above holds for it too, `when` over the focus chain and the dump's `classes`/`checked` included); a `.tcss` it loads is checked as for version=\"2\". 0.3a gives it no vocabulary of its own: only the layout warnings `L008`/`L009` and the dump's `clipped` are new, and only for a version=\"3\" document. A version=\"2\" document is a valid version=\"3\" document, so upgrading is one attribute.\n")
+	b.WriteString("- `L008` (warning) is a painted `text` that loses content without saying so: (a) its computed `wrap` is `nowrap` (the initial value, or the literal `nowrap`), that value is not document-written, and its widest line is wider than its content box, so columns are cut with no ellipsis; (b) its lines after wrapping and truncation outnumber its content box's rows, and `overflow: hidden` is not document-written on it. Silence (a) by writing `wrap: nowrap` (an author's own choice, not the default) or `wrap: truncate`; silence (b) by writing `overflow: hidden` or giving it more room. It never fires on a table cell, a tab label, or a hint item (each has its own cut rule already), or on `visibility: hidden` text.\n")
+	b.WriteString("- `L009` (warning) is a container that cuts a child, in flow or docked, on an axis it does not itself scroll (a `<scroll axis=\"y\">` is still checked on `x`): part or all of the child's outer rect falls outside the container's content box there. It is silenced by writing `overflow: hidden` on the container, and it is never reported for a `list`, a `table`, or a `hints` (they show part of their content by design), for a node `L003` already reported this frame (that message already explains the cut), or for a child `L006` already reported this frame (its own warning explains it); a child with `visibility: hidden` or an empty rect does not count.\n")
+	b.WriteString("- \"Document-written\" (both codes) means a presentational attribute, a stylesheet rule, or `style=\"\"`, on the node itself or — `wrap` is inherited — on an ancestor it inherits it from; the initial value and the built-in sheet's own `table { wrap: truncate; }` never count. Each is reported once per source element and frame (a template's repeated rows collapse into one diagnostic), while the dump's `clipped` (`\"text\"` for `L008`, `\"children\"` for `L009`) marks every node that meets the condition, generated rows included.\n")
+	b.WriteString("- `tuimark ir` prints `\"version\": \"0.3\"` for a version=\"3\" document, validated by `schema/ir.v0.3.json` (the same shape as IR 0.2 in 0.3a).\n\n")
 }
 
 // writeNotes documents runtime behavior that the SPEC leaves implicit or
