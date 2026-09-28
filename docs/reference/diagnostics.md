@@ -17,8 +17,8 @@ Reported while reading the `.tui` document and its stylesheets. Most are errors:
 | Code | When |
 |---|---|
 | <span id="v001"></span>`V001` | unknown tag; a version="2" tag in a version="1" document (message ends with `(requires version="2")`); `input`, `button`, `list`, `modal`, `table`, `tabs`, or `tab` inside a container `each` template |
-| <span id="v002"></span>`V002` | unknown attribute; a version="2" attribute in a version="1" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template |
-| <span id="v003"></span>`V003` | bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max` |
+| <span id="v002"></span>`V002` | unknown attribute; a version="2" attribute in a version="1" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template; `priority` on `column` or `scale` on `sparkline` in a version="1" or version="2" document (with `(requires version="3")`; on a 0.2b tag in a version="1" document only that tag's V001 is reported) |
+| <span id="v003"></span>`V003` | bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`; `row-gap`/`column-gap`, or the `wrap` values `truncate-start`/`truncate-middle`, in a version="1" or version="2" document (with `(requires version="3")`; an invalid `wrap` value lists the two only in a version="3" document); a `priority` that is not a non-negative integer; a `scale` that is not a plain identifier |
 | <span id="v004"></span>`V004` | duplicate id; any `id` inside a container `each` template (version="2") |
 | <span id="v005"></span>`V005` | not well-formed XML |
 | <span id="v006"></span>`V006` | `style src` include cycle |
@@ -42,7 +42,7 @@ Reported while laying out a frame, so they depend on the size you render at.
 |---|---|
 | <span id="l001"></span>`L001` | `fr` child of non-flex parent |
 | <span id="l002"></span>`L002` | `%` child of `auto` parent on that axis |
-| <span id="l003"></span>`L003` | fixed + min exceeds parent (warning; clip); also a table whose visible columns' cell and `%` widths and `auto`/`fr` min-widths, plus the gaps, exceed its width |
+| <span id="l003"></span>`L003` | fixed + min exceeds parent (warning; clip); also a table whose visible columns' cell and `%` widths and `auto`/`fr` min-widths, plus the gaps, exceed its width; in a version="3" document, evaluated on the columns left once `priority` has hidden some |
 | <span id="l004"></span>`L004` | modal is not last child of screen |
 | <span id="l005"></span>`L005` | more than one bottom-docked status (warning) |
 | <span id="l006"></span>`L006` | a scroll/list/table/overflow: scroll viewport can never show part of its content (warning); for a table, a body viewport of 0 rows while it has rows |
