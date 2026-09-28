@@ -95,6 +95,12 @@ Only in a `<tui version="2">` document (V002 with `(requires version="2")` in a 
 - `item` inside a `table`: class only (plus `class:NAME`)
 - every tag except `tui`, `style`, `keymap`, and `bind`: `class:NAME` (the name is open and lowercase, `[a-z_][a-z0-9_-]*`; the value is `path` or `!path`)
 
+Only in a `<tui version="3">` document (V002 with `(requires version="3")` in a version="1" or version="2" one): these attributes on top of the tags above (a tag itself unknown in an older version still gets only its own V001, with the version="2" hint, so an attribute on it — `scale` on `sparkline`, `priority` on `column` — reports nothing further there):
+
+- `keymap`: when
+- `modal`: focus
+- `scroll`: stick
+
 ### CSS properties
 
 - `align`: start | center | end | stretch
@@ -142,8 +148,8 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 | Code | Pass | When |
 |---|---|---|
 | V001 | parse | unknown tag; a version="2" tag in a version="1" document (message ends with `(requires version="2")`); `input`, `button`, `list`, `modal`, `table`, `tabs`, or `tab` inside a container `each` template |
-| V002 | parse | unknown attribute; a version="2" attribute in a version="1" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template |
-| V003 | parse | bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max` |
+| V002 | parse | unknown attribute; a version="2" attribute in a version="1" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template; `stick` on `scroll`, `focus` on `modal`, or `when` on `keymap` in a version="1" or version="2" document, with `(requires version="3")` (version="3"); `stick` inside a list `<item>` or a container `each` template (version="3") |
+| V003 | parse | bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version="2" value, property, pseudo-class, media feature, or built-in action in a version="1" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`; `{path}` in a tab's `label` or `short` in a version="1" or version="2" document, with `(requires version="3")` (version="3"); `stick` other than `bottom`, or `stick` on a `scroll` with `axis="x"` (version="3"); a bad selector in a `<keymap>`'s `when`, once, at the `<keymap>` (version="3") |
 | V004 | parse | duplicate id; any `id` inside a container `each` template (version="2") |
 | V005 | parse | not well-formed XML |
 | V006 | parse | `style src` include cycle |
@@ -151,7 +157,7 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 | V008 | parse | native widget name not registered (v1.1+) |
 | V010 | parse | `dock` and `fr` on the same axis |
 | V011 | parse | `each` / `if` missing path; an `each` alias equal to an enclosing one (version="2") |
-| V012 | parse | list/input/button/modal without `id`; a `table`, `tabs`, or `tab` without `id` (version="2") |
+| V012 | parse | list/input/button/modal without `id`; a `table`, `tabs`, or `tab` without `id` (version="2"); a `scroll` with `stick` and no `id` (version="3") |
 | V013 | parse | `<text>` has element children |
 | V014 | parse | missing `version` on `<tui>` (phase 1+) |
 | L001 | layout | `fr` child of non-flex parent |
@@ -162,15 +168,15 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 | L006 | layout | a scroll/list/table/overflow: scroll viewport can never show part of its content (warning); for a table, a body viewport of 0 rows while it has rows |
 | B001 | bind | `each` path is missing or not an array (a `list`, or a `col`/`row`/`box`/`table` in version="2") |
 | B002 | bind | `if` path missing; also a `class:NAME` guard path |
-| B003 | bind | bind path missing (`--strict` upgrades to error); also a table's `bind`, `placeholder`, row `key`, and column cell templates, reported once per template and path whatever rows are visible; a `tabs` or `sparkline` `bind` |
+| B003 | bind | bind path missing (`--strict` upgrades to error); also a table's `bind`, `placeholder`, row `key`, and column cell templates, reported once per template and path whatever rows are visible; a `tabs` or `sparkline` `bind`; a missing path in a tab's `label` or `short` (version="3") |
 | B004 | bind | action not in catalog |
-| B005 | bind | keymap `to`/`when` id missing; a `tab focus=` that names no node, a node inside a list item, or a node outside that tab (version="2") |
+| B005 | bind | keymap `to`/`when` id missing; a `tab focus=` that names no node, a node inside a list item, or a node outside that tab (version="2"); a `modal focus=` that names no node, a node outside the modal, or a node inside a list item or an each template (version="3"); a `<keymap>`'s `when` whose id names no node, or a node inside a list item or an each template, once, at the `<keymap>` (version="3") |
 | B006 | bind | `list` + `each` without `key` (warning); also `table` + `each` without `key` |
 | V015 | parse | a `class:NAME` whose NAME is not `[a-z_][a-z0-9_-]*` or whose value is not `path` / `!path` (version="2") |
 | V016 | parse | 0.2b structure (version="2"): a `column` whose parent is not a `table`; a `table` child other than `column` and one `item`, or a second `item`; text directly in a `table`; a table `item` with children or text; an element inside a `column`; a `tab` whose parent is not a `tabs`; a `tabs` child other than `tab`, or text directly in a `tabs`; children or text in a `sparkline` or a `hints` |
 | V017 | parse | a `table` without `each` or without a `column` child; a `tabs` without a `tab` child (version="2") |
 | V018 | parse | `checked` on a `list`/`table` without both `each` and `key` (or on a list of static items); a `mark` that is not 1 or 2 columns wide; `mark` without `checked`; `on:change` on a `list` without `checked` (version="2") |
-| B007 | bind | a built-in action whose target is known without data to be incompatible (from `to=`, or a `when` that is exactly `#id:focus`); static, error (version="2") |
+| B007 | bind | a built-in action whose target is known without data to be incompatible (from `to=`, or a `when` that is exactly `#id:focus`); static, error (version="2"); evaluated against each row's effective `when` (version="3", `<keymap when>`) |
 | B008 | bind | the value at a `checked` path is present and not an array (error; version="2") |
 | B009 | bind | the value at a `sparkline` `bind` is present and not an array, or holds an element that is neither a number nor `null` (warning; version="2") |
 | B010 | bind | the value at a `tabs` `bind` is present, not `null`, and not the id of a visible tab; the first visible tab is active and the store is not written (warning; version="2") |
@@ -222,6 +228,14 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 - `L009` (warning) is a container that cuts a child, in flow or docked, on an axis it does not itself scroll (a `<scroll axis="y">` is still checked on `x`): part or all of the child's outer rect falls outside the container's content box there. It is silenced by writing `overflow: hidden` on the container, and it is never reported for a `list`, a `table`, or a `hints` (they show part of their content by design), for a node `L003` already reported this frame (that message already explains the cut), or for a child `L006` already reported this frame (its own warning explains it); a child with `visibility: hidden` or an empty rect does not count.
 - "Document-written" (both codes) means a presentational attribute, a stylesheet rule, or `style=""`, on the node itself or — `wrap` is inherited — on an ancestor it inherits it from; the initial value and the built-in sheet's own `table { wrap: truncate; }` never count. Each is reported once per source element and frame (a template's repeated rows collapse into one diagnostic), while the dump's `clipped` (`"text"` for `L008`, `"children"` for `L009`) marks every node that meets the condition, generated rows included.
 - `tuimark ir` prints `"version": "0.3"` for a version="3" document, validated by `schema/ir.v0.3.json` (the same shape as IR 0.2 in 0.3a).
+
+### version="3" (0.3b)
+
+- Several `<keymap>` elements are allowed, in every version: their rows form one keymap, in document order (the first keymap's rows, then the second's, and so on). `<hints>` and the top-level `keymap` array of `tuimark ir` see that single ordered list.
+- `<keymap when="SEL">` (version="3") gives every row inside it that `when`, unless the row writes its own (which replaces it outright, never combines with it); `when=""` written on a row gives it no `when` even under a `<keymap when>`, and `when=""` on the `<keymap>` itself gives its rows no `when`. The `<keymap>`'s own `when` is checked once, at the `<keymap>` element (one `V003` for a bad selector, one `B005` for an id that names no node or a node inside a list item or an each template), not again for each row that inherits it; `B007` still checks each row against its effective `when`. `tuimark ir`'s top-level `keymap` array carries each row's effective `when`; the root tree keeps the `keymap` node and every `bind` node with their own `when` in `attrs`, as written. `Catalog()` shows no `when` at all.
+- `<scroll id="log" stick="bottom">` keeps showing the end of its content as it grows, like a log or a chat: it needs an `id` (`V012`) and a `y` scroll axis (`V003` on `axis="x"`), and is `V002` inside a list `<item>` or a container `each` template (its state needs an identity across frames a repeated row does not have). The rule compares the offset a frame brings in (`o`, the last live frame's offset, as the wheel, `move-*`, or a focused scroll's keys have moved it since) with the previous live frame's maximum (`M'`, `EXTENT - viewport`, 0 when the content fit, or none yet for the first live frame): when `o >= M'`, this frame's offset becomes its own maximum, so it keeps sticking; otherwise the offset stays at `o`, so scrolling up and reading back while the content grows does not jump. `move-last` (or the wheel/keys down to the end) makes it stick again from the next growth on. `tuimark dump`, `validate`, `Validate()`, the first frame of `play`, and `Dump()` on an app with no live frame yet show the end, as a first live frame does; `Dump()` on a live app applies the rule with the live `o`/`M'` at its own size and changes neither.
+- In a `<tui version="3">` document a `tab`'s `label` and `short` are templates, exactly like a `<text>` body (`{path}`, no expressions): resolved every frame against the store (a `tabs` is never inside an each template or a list item, so no alias is ever in scope), a missing path is `B003` and resolves to the empty string, and each LF a resolved value brings becomes a space, since a label is one row. `short`'s emptiness (whether it falls back to the resolved `label`) is judged after resolving, so a counter that resolves to nothing falls back exactly as an absent `short` does; the label tier (`W1`/`W2`, SPEC §6.10.4) is computed from the resolved widths, so a counter that grows can move the strip from tier 1 to tier 2 in the frame where it grows. `label` is still judged non-empty as *written* for `V003` (an empty resolved string still counts as present, painting `m` columns for the mark alone). In a `version="1"` or `version="2"` document `{path}` in a tab's `label`/`short` stays `V003`, now with the `(requires version="3")` hint; `mark` stays literal text in every version.
+- `<modal id="m" focus="#id">` names the node that takes focus when the modal becomes the top one, instead of the first entry of its focus cycle: the target must be inside the modal (`B005` otherwise, mirroring a `tab`'s `focus=`). It is also the fallback when the node focused inside the top modal is lost (leaves the frame, or can no longer take focus): focus goes to it when it can take focus, else to the first entry of the cycle, and that node fires `on:focus`. When the target cannot take focus this frame (not laid out, hidden, disabled, not focusable), the first entry of the cycle is used, as without the attribute; focus already inside the modal never moves. The screen's `focus=` never applies while a modal is open, `focus=` or not.
 
 ### Notes
 
