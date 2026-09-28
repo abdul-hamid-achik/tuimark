@@ -34,7 +34,16 @@ type Style struct {
 	Bold, Dim, Italic         bool
 	Underline, Reverse        bool
 	Wrap                      string
-	Visibility                string
+	// WrapWritten and OverflowWritten report that the computed Wrap or
+	// Overflow value is document-written (SPEC v0.3 §14, ADR 0015
+	// Enmienda): from a presentational attribute, author CSS, or
+	// style="", on this node or (Wrap only, since it is inherited)
+	// inherited from such a declaration on an ancestor — never from the
+	// initial value or the built-in sheet (the UASheet's
+	// `table { wrap: truncate; }` included). L008 and L009 read them to
+	// decide whether an author asked for a cut.
+	WrapWritten, OverflowWritten bool
+	Visibility                   string
 	// The version="2" properties (SPEC §10.2, §10.3): GridColumns is the
 	// computed grid-columns (1-12, initial 1), GridMinWidth the computed
 	// grid-min-width (0 when unset), Scrollbar none | auto, Bar block |
@@ -426,6 +435,7 @@ func inherit(st *Style, parent *Style, prop string) {
 		st.Visibility = parent.Visibility
 	case "wrap":
 		st.Wrap = parent.Wrap
+		st.WrapWritten = parent.WrapWritten
 	}
 }
 

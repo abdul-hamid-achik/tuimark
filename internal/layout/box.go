@@ -130,6 +130,10 @@ type Box struct {
 	Clip       Rect // visible area for this box's own painting
 	Laid       bool
 	Modal      bool
+	// Clipped is "text" or "children" when the layout engine reports L008
+	// or L009 for this node this frame (SPEC v0.3 §13.2, §14); "" when it
+	// does not. Only set for version="3" documents (Engine.V3).
+	Clipped string
 
 	autoW, autoH bool // size on this axis came from content (for L002)
 }

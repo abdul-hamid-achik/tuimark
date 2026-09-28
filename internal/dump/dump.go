@@ -36,6 +36,11 @@ type Node struct {
 	Classes []string `json:"classes,omitempty"`
 	// Checked marks a checked row of a list or table (SPEC §6.14).
 	Checked bool `json:"checked,omitempty"`
+	// Clipped is "text" or "children" when L008 or L009 reports this node
+	// this frame (SPEC v0.3 §13.2, §14). Emitted only in dumps of
+	// version="3" documents; a version="1" or version="2" dump never has
+	// it.
+	Clipped string `json:"clipped,omitempty"`
 }
 
 // Scroll is a viewport's scroll state (SPEC v0.2 §13.2). Its members come
@@ -227,11 +232,15 @@ type Options struct {
 	// V2 is set for a version="2" document: nodes carry their classes
 	// (SPEC §13.2).
 	V2 bool
+	// V3 is set for a version="3" document: nodes carry clipped (SPEC v0.3
+	// §13.2).
+	V3 bool
 }
 
 // NodeOf is the dump node of a laid-out box (SPEC §13.2). v2 adds the
-// node's classes, which only dumps of version="2" documents carry.
-func NodeOf(n *layout.Box, v2 bool) Node {
+// node's classes, which only dumps of version="2" documents carry; v3
+// adds clipped, only dumps of version="3" documents (SPEC v0.3 §13.2).
+func NodeOf(n *layout.Box, v2, v3 bool) Node {
 	dn := Node{ID: n.ID, Tag: n.Tag, X: n.X, Y: n.Y, W: n.W, H: n.H, Focused: n.Focused, Selected: n.Selected, Key: n.Key, Scroll: scrollOf(n), Checked: n.Checked}
 	switch n.Kind {
 	case "text", "button":
@@ -244,6 +253,9 @@ func NodeOf(n *layout.Box, v2 bool) Node {
 	}
 	if v2 && len(n.Classes) > 0 {
 		dn.Classes = append([]string(nil), n.Classes...)
+	}
+	if v3 {
+		dn.Clipped = n.Clipped
 	}
 	return dn
 }
@@ -270,7 +282,7 @@ func BuildWith(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.
 			if !n.Laid {
 				return
 			}
-			d.Nodes = append(d.Nodes, NodeOf(n, o.V2))
+			d.Nodes = append(d.Nodes, NodeOf(n, o.V2, o.V3))
 		})
 	}
 	if root != nil {
@@ -336,6 +348,9 @@ func NodeLine(n Node, idw, tagw int) string {
 	}
 	if n.Checked {
 		line += " checked"
+	}
+	if n.Clipped != "" {
+		line += " clipped"
 	}
 	return line
 }

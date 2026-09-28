@@ -9,11 +9,17 @@ import (
 
 // Engine lays out one frame and collects L-diagnostics.
 type Engine struct {
-	File   string
-	Diags  ir.Diags
+	File  string
+	Diags ir.Diags
+	// V3 is set for a version="3" document (SPEC v0.3 §5.1): Layout also
+	// reports the clipping warnings L008 and L009 (§14, §30.2).
+	V3     bool
 	memo   map[memoKey]int
 	shrink map[axisKey]bool
 	seen   map[string]bool
+	// l003 and l006 record, for this frame, the boxes L003 and L006 were
+	// reported on (SPEC v0.3 §14): L009 does not repeat either.
+	l003, l006 map[*Box]bool
 }
 
 type memoKey struct {
@@ -55,6 +61,15 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 	e.checkViewports(root)
 	for _, m := range modals {
 		e.checkViewports(m)
+	}
+	if e.V3 {
+		// L008/L009 (SPEC v0.3 §14, §30.2), only for version="3" documents.
+		// Run after checkViewports so L003 and L006 are already recorded
+		// for this frame (L009 does not repeat either).
+		e.checkClipping(root)
+		for _, m := range modals {
+			e.checkClipping(m)
+		}
 	}
 }
 
@@ -99,6 +114,18 @@ func (e *Engine) report(b *Box, sev, code, format string, args ...any) {
 		id = b.ID
 		if b.Src != nil {
 			path, line, col = b.Src.Path, b.Src.Line, b.Src.Col
+		}
+		switch code {
+		case "L003":
+			if e.l003 == nil {
+				e.l003 = map[*Box]bool{}
+			}
+			e.l003[b] = true
+		case "L006":
+			if e.l006 == nil {
+				e.l006 = map[*Box]bool{}
+			}
+			e.l006[b] = true
 		}
 	}
 	key := code + "|" + path + "|" + id + "|" + msg
@@ -842,6 +869,128 @@ func describe(b *Box) string {
 		return b.Tag + "#" + b.ID
 	}
 	return b.Tag
+}
+
+// clipRef names a child for the L009 message (SPEC v0.3 §14): #id, else
+// its tag and a 0-based index among its Laid siblings sharing that tag
+// (omitted when it is the only one), the way `tuimark inspect` names an
+// unidentified node.
+func clipRef(c *Box) string {
+	if c.ID != "" {
+		return "#" + c.ID
+	}
+	if c.Parent == nil {
+		return c.Tag
+	}
+	k, count := 0, 0
+	for _, s := range c.Parent.Children {
+		if !s.Laid || s.Tag != c.Tag {
+			continue
+		}
+		if s == c {
+			k = count
+		}
+		count++
+	}
+	if count > 1 {
+		return fmt.Sprintf("%s[%d]", c.Tag, k)
+	}
+	return c.Tag
+}
+
+// checkClipping reports L008 and L009 under b (SPEC v0.3 §14, §30.2),
+// only called for version="3" documents (Engine.V3).
+func (e *Engine) checkClipping(b *Box) {
+	b.Walk(func(n *Box) {
+		if !n.Laid {
+			return
+		}
+		e.checkTextClip(n)
+		e.checkChildrenClip(n)
+	})
+}
+
+// checkTextClip reports L008: a painted text (not visibility: hidden, not
+// a generated node — a table cell, tab label, or hint item, all Fixed,
+// SPEC §6.9.4, §6.10.4, §6.12) that loses content without saying so.
+// Case (a) loses columns: its computed wrap is nowrap (the initial value,
+// "", or the literal "nowrap"), that is not document-written, and its
+// widest line does not fit its content box. Case (b) loses lines: its
+// lines after wrapping and truncation outnumber its content box's rows,
+// and overflow: hidden is not document-written on it. Either, both, or
+// neither may apply; each has its own message and silencing rule, and
+// both mark Clipped "text" (SPEC §14, ADR 0015 Enmienda).
+func (e *Engine) checkTextClip(n *Box) {
+	if n.Kind != "text" || n.Fixed || n.Style.Visibility == "hidden" {
+		return
+	}
+	mode := n.Style.Wrap
+	nowrap := mode != "wrap" && mode != "truncate"
+	if nowrap && !n.Style.WrapWritten {
+		if w, c := MaxWidth(n.Text), n.Content.W; w > c {
+			e.report(n, ir.Warning, "L008", "text is %d columns wide but its content box has %d; set wrap: truncate, or write wrap: nowrap to keep the cut", w, c)
+			n.Clipped = "text"
+		}
+	}
+	if !n.Style.OverflowWritten {
+		lines := Lines(n.Text, n.Content.W, mode)
+		if r := n.Content.H; len(lines) > r {
+			e.report(n, ir.Warning, "L008", "text has %d lines but its content box has %d rows; give it room, or write overflow: hidden to keep the cut", len(lines), r)
+			n.Clipped = "text"
+		}
+	}
+}
+
+// checkChildrenClip reports L009: a container (n) that cuts a child, in
+// flow or docked, on an axis it does not itself scroll. Not reported for
+// a list, a table, or a hints (they show part of their content by
+// design), for a node L003 already reported this frame (its own message
+// already explains the cut), or when overflow: hidden is document-written
+// on n. A child with visibility: hidden or an empty rect does not count,
+// and a child L006 already reported this frame is skipped (its own
+// warning explains it), leaving the next child in document order a
+// candidate. CHILD in the message is the first child so cut.
+func (e *Engine) checkChildrenClip(n *Box) {
+	if n.Style.OverflowWritten {
+		return
+	}
+	switch n.Kind {
+	case "list", "table", "hints":
+		return
+	}
+	if e.l003 != nil && e.l003[n] {
+		return
+	}
+	sx, sy := n.ScrollAxes()
+	for _, c := range n.Children {
+		if !c.Laid || c.W <= 0 || c.H <= 0 || c.Style.Visibility == "hidden" {
+			continue
+		}
+		if e.l006 != nil && e.l006[c] {
+			continue
+		}
+		if !sx {
+			lo, hi := n.Content.X, n.Content.X+n.Content.W
+			if c.X < lo || c.X+c.W > hi {
+				e.reportClip(n, c, "x", max(0, min(c.X+c.W, hi)-max(c.X, lo)), c.W)
+				return
+			}
+		}
+		if !sy {
+			lo, hi := n.Content.Y, n.Content.Y+n.Content.H
+			if c.Y < lo || c.Y+c.H > hi {
+				e.reportClip(n, c, "y", max(0, min(c.Y+c.H, hi)-max(c.Y, lo)), c.H)
+				return
+			}
+		}
+	}
+}
+
+// reportClip reports L009 on n for its child c cut on axis ("x" or "y"),
+// shown of total cells, and marks n Clipped "children".
+func (e *Engine) reportClip(n, c *Box, axis string, shown, total int) {
+	e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; give it room, or write overflow: hidden to keep the cut", clipRef(c), axis, shown, total)
+	n.Clipped = "children"
 }
 
 // intrinsic returns b's content-driven border-box size on one axis.

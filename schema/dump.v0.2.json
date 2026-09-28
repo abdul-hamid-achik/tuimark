@@ -73,7 +73,8 @@
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 }
         },
-        "checked": { "const": true }
+        "checked": { "const": true },
+        "clipped": { "enum": ["text", "children"] }
       }
     },
     "scroll": {

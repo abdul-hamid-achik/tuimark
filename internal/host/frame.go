@@ -25,9 +25,12 @@ type Frame struct {
 	ByID       map[string]*layout.Box
 	// Theme is the frame's effective theme, dark or light (SPEC §26.4).
 	Theme string
-	// V2 is set when the document is version="2": dumps of the frame
-	// carry the nodes' classes (SPEC §13.2).
+	// V2 is set when the document is version="2" or version="3": dumps of
+	// the frame carry the nodes' classes (SPEC §13.2).
 	V2 bool
+	// V3 is set when the document is version="3": the layout pass reports
+	// L008/L009, and dumps of the frame carry clipped (SPEC v0.3 §13.2).
+	V3 bool
 	// Mouse is the value of the document's mouse attribute on this frame
 	// (SPEC v0.2b §8.5): mouse events act only while it is true.
 	Mouse bool
@@ -36,7 +39,7 @@ type Frame struct {
 // Dump returns the frame's dump (SPEC §13.2), with the --cells map when
 // cells is set.
 func (f *Frame) Dump(cells bool) *dump.Dump {
-	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2})
+	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2, V3: f.V3})
 }
 
 // Dump renders the current state at cols×rows (negative sizes clamp to 0)
@@ -161,7 +164,7 @@ func (a *App) modalOpenOn(req *focusRequest, cols, rows int, theme string) bool 
 func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	cols, rows = max(cols, 0), max(rows, 0)
 	theme = css.EffectiveTheme(theme)
-	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2}
+	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3}
 	static := a.staticFor(theme)
 	if a.doc.Root == nil {
 		f.Diags = append(f.Diags, static...)
@@ -219,7 +222,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	a.trackModals(fb)
 	f.Mouse = fb.mouseOn()
 	fb.buildHints(casc, rootBox) // step 5
-	eng := &layout.Engine{File: a.file}
+	eng := &layout.Engine{File: a.file, V3: a.doc.V3}
 	if rootBox == nil {
 		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: css.Initial()}
 	}

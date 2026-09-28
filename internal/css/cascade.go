@@ -290,6 +290,13 @@ next:
 			st.HeightUA = rd.origin == OriginUA
 		case "flex":
 			st.FlexUA = rd.origin == OriginUA
+		case "wrap":
+			// SPEC v0.3 §14 (ADR 0015 Enmienda): "document-written" excludes
+			// the UASheet's `table { wrap: truncate; }`, the only built-in
+			// rule that sets wrap.
+			st.WrapWritten = rd.origin != OriginUA
+		case "overflow":
+			st.OverflowWritten = rd.origin != OriginUA
 		}
 	}
 	if parent != nil {

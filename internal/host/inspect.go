@@ -108,7 +108,7 @@ func (a *App) Inspect(f *Frame, t InspectTarget) (*Inspection, error) {
 	if b == nil {
 		return nil, &InspectError{"the frame has no node to inspect"}
 	}
-	in := &Inspection{Box: b, Node: dump.NodeOf(b, f.V2), Path: LayoutPath(f, b), Cell: cell}
+	in := &Inspection{Box: b, Node: dump.NodeOf(b, f.V2, f.V3), Path: LayoutPath(f, b), Cell: cell}
 	in.Pseudo = pseudoOf(b, f.V2)
 	in.Classes = a.classInfo(b)
 	in.Style = a.styleInfo(f, b)
