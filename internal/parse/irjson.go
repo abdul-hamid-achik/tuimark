@@ -129,7 +129,11 @@ func copyTokens(tokens map[string]string) map[string]string {
 func buildKeymap(kb []KeyBind) []IRBind {
 	out := []IRBind{}
 	for _, k := range kb {
-		e := IRBind{Keys: k.KeysRaw, Action: k.Action, When: k.When}
+		// The top-level keymap array carries each row's effective when
+		// (its own when= when it wrote one, else its <keymap>'s, SPEC
+		// v0.3b §8.1, §13.1); the root tree keeps the keymap node and its
+		// bind nodes with their own when= in attrs, as written.
+		e := IRBind{Keys: k.KeysRaw, Action: k.Action, When: k.EffectiveWhen}
 		if k.To != "" {
 			e.To = "#" + k.To
 		}
