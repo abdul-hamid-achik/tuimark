@@ -100,7 +100,7 @@
     "light": true,
     "cols": 56,
     "rows": 16,
-    "alt": "monitor studio at 56 columns: only the active tab label, and a table that dropped four columns",
+    "alt": "monitor studio at 56 columns: only the active tab label, and a table that dropped its lowest-priority column",
     "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 56 --rows 16 --input down"
   },
   {
