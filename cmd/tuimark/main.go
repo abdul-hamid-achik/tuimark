@@ -32,12 +32,12 @@ import (
 // release this source tree is; release builds set all three at link time
 // (see .goreleaser.yaml):
 //
-//	go build -ldflags "-X main.version=0.3.0 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
+//	go build -ldflags "-X main.version=0.3.1 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
 //
 // A plain `go build` or `go install` leaves commit and date empty, and
 // `tuimark version` then prints the version alone.
 var (
-	version = "0.3.0"
+	version = "0.3.1"
 	commit  = ""
 	date    = ""
 )

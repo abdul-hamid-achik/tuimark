@@ -9,7 +9,7 @@ const base = process.env.DOCS_BASE ?? '/'
 // project's domain; change it here and in public/robots.txt for a custom one).
 const SITE_URL = 'https://tuimark.vercel.app'
 const REPO_URL = 'https://github.com/abdul-hamid-achik/tuimark'
-const VERSION = 'v0.2.0'
+const VERSION = 'v0.3.1'
 const DESCRIPTION =
   'Tuimark is a view language for terminals: UI as .tui markup, .tcss styles and JSON data, interpreted by a small Go runtime that lays out a cell grid and dumps every frame as JSON for coding agents.'
 

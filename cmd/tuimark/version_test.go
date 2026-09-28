@@ -13,11 +13,11 @@ func withBuildMetadata(t *testing.T, v, c, d string) {
 }
 
 // A build without -ldflags (go build, go install, go test) reports the
-// source tree's release, 0.3.0, with no build metadata. All three
+// source tree's release, 0.3.1, with no build metadata. All three
 // spellings of the command print the same line.
 func TestVersionDefault(t *testing.T) {
-	if version != "0.3.0" {
-		t.Fatalf("default version = %q, want 0.3.0", version)
+	if version != "0.3.1" {
+		t.Fatalf("default version = %q, want 0.3.1", version)
 	}
 	withBuildMetadata(t, version, "", "")
 	for _, arg := range []string{"version", "--version", "-v"} {
@@ -25,8 +25,8 @@ func TestVersionDefault(t *testing.T) {
 		if code != 0 {
 			t.Fatalf("%s: exit %d, want 0; stderr=%s", arg, code, errw)
 		}
-		if out != "tuimark 0.3.0\n" {
-			t.Errorf("%s: got %q, want %q", arg, out, "tuimark 0.3.0\n")
+		if out != "tuimark 0.3.1\n" {
+			t.Errorf("%s: got %q, want %q", arg, out, "tuimark 0.3.1\n")
 		}
 		if errw != "" {
 			t.Errorf("%s: unexpected stderr %q", arg, errw)
@@ -43,7 +43,7 @@ func TestVersionShowsBuildMetadata(t *testing.T) {
 		{"all", "0.2.1", "abc1234", "2026-09-27T12:00:00Z", "tuimark 0.2.1 (commit abc1234, built 2026-09-27T12:00:00Z)\n"},
 		{"commit only", "0.2.1", "abc1234", "", "tuimark 0.2.1 (commit abc1234)\n"},
 		{"date only", "0.2.1", "", "2026-09-27T12:00:00Z", "tuimark 0.2.1 (built 2026-09-27T12:00:00Z)\n"},
-		{"version only", "0.3.0-rc.1", "", "", "tuimark 0.3.0-rc.1\n"},
+		{"version only", "0.3.1-rc.1", "", "", "tuimark 0.3.1-rc.1\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
