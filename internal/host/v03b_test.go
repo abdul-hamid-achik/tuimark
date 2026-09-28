@@ -1,6 +1,7 @@
 package host
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -185,6 +186,70 @@ func TestStickRuntime(t *testing.T) {
 	}
 	if a.scrolls["log"] != beforeOff || a.stickMax["log"] != beforeMax {
 		t.Errorf("Dump changed the live state: scrolls %v (was %v) max %v (was %v)", a.scrolls["log"], beforeOff, a.stickMax["log"], beforeMax)
+	}
+}
+
+// linesJSON is {"lines": ["1", …, "n"]}.
+func linesJSON(n int) string {
+	var b strings.Builder
+	b.WriteString(`{"lines": [`)
+	for i := 1; i <= n; i++ {
+		if i > 1 {
+			b.WriteString(", ")
+		}
+		fmt.Fprintf(&b, "%q", fmt.Sprint(i))
+	}
+	b.WriteString("]}")
+	return b.String()
+}
+
+// A focused viewport's keys move from the offset the live frame shows,
+// clamped to its maximum, so down (or end) at the end followed by up in
+// the same read (no render between them, since down moved nothing) moves
+// one row up: a stick scroll leaves the end and stays there as the
+// content grows (SPEC v0.3b §11.4), and a plain scroll ends at max-1.
+func TestFocusedViewportKeysClampToMax(t *testing.T) {
+	const cols, rows = 20, 6
+	for _, c := range []struct {
+		name, stick string
+		keys        []Key
+		want        int // offset after one frame, then after growing to 12 lines (stick only)
+	}{
+		{"stick down up", ` stick="bottom"`, []Key{named("down"), named("up")}, 5},
+		{"stick end up", ` stick="bottom"`, []Key{named("end"), named("up")}, 5},
+		{"plain down up", "", []Key{named("end"), named("down"), named("up")}, 5},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			a := doc(t, `<tui version="3"><screen id="s" focus="#log"><scroll id="log" focusable="true"`+c.stick+` height="4"><col each="lines as l"><text>{l}</text></col></scroll></screen></tui>`)
+			bindJSON(t, a, linesJSON(10))
+			a.Frame(cols, rows)
+			if c.stick == "" {
+				// Bring the plain scroll to its end first, on its own frame.
+				a.HandleKey(c.keys[0])
+				a.Frame(cols, rows)
+				c.keys = c.keys[1:]
+			}
+			if off := a.scrolls["log"]; off[1] != 6 {
+				t.Fatalf("at the end: offset %v, want 6", off)
+			}
+			// One read: render between keys only when the frame is stale,
+			// as Run and play do.
+			for i, k := range c.keys {
+				if i > 0 && a.TakeDirty() {
+					a.Frame(cols, rows)
+				}
+				a.HandleKey(k)
+			}
+			a.Frame(cols, rows)
+			if off := a.scrolls["log"]; off[1] != c.want {
+				t.Fatalf("after %v: offset %v, want %d", c.keys, off, c.want)
+			}
+			bindJSON(t, a, linesJSON(12))
+			a.Frame(cols, rows)
+			if off := a.scrolls["log"]; off[1] != c.want {
+				t.Errorf("after growing to 12 lines: offset %v, want %d (left the end, so it stays)", off, c.want)
+			}
+		})
 	}
 }
 
