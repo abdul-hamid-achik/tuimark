@@ -71,6 +71,13 @@ var escTimeout = 25 * time.Millisecond
 // the process ends with the signal's default action. When Run returns,
 // nothing is left reading stdin.
 func (a *App) Run(w io.Writer) (err error) {
+	// Play and Run exclude each other (SPEC v0.3 §18.1 rule 8): checked
+	// before anything else, so Run called while Play is active returns an
+	// error before it looks at the terminal.
+	if err := a.enterMode(modeRun); err != nil {
+		return err
+	}
+	defer a.exitMode()
 	start := time.Now()
 	cfg, err := readRunConfig(os.Getenv)
 	if err != nil {
@@ -286,6 +293,13 @@ func (e *SignalError) Error() string {
 // never probes the terminal: frames are truecolor, not synchronized, with
 // CHA re-positioning.
 func (a *App) Loop(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}) error {
+	// Loop is Run's own loop without the terminal work, so it takes part
+	// in the same Play/Run exclusion (SPEC v0.3 §18.1 rule 8; test 71's
+	// harness drives this entry point, not Run, to test it headless).
+	if err := a.enterMode(modeRun); err != nil {
+		return err
+	}
+	defer a.exitMode()
 	return a.loop(in, out, size, resize, nil)
 }
 

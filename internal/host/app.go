@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -21,7 +22,7 @@ import (
 // Version is the runtime version the start record of TUIMARK_LOG carries
 // (SPEC v0.2b §26.12). Release builds set it with -ldflags "-X", like the
 // CLI's own version.
-var Version = "0.2.0"
+var Version = "0.3.0-a"
 
 // Event is the payload a handler receives (SPEC §8.2).
 type Event struct {
@@ -106,6 +107,13 @@ type App struct {
 	dirty bool
 	wake  chan struct{}
 	last  *Frame
+	// wakeCount counts Wake calls (SPEC v0.3 §18.1 Batch: "at most one
+	// redraw"; not part of the public API, an observation hook for tests).
+	wakeCount atomic.Int64
+	// mode guards Run, Loop, and Play against each other (SPEC v0.3 §18.1
+	// Play rule 8): "" is idle, "run" a live loop (Run or Loop), "play" an
+	// active Play call. Guarded by mu.
+	mode string
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity
@@ -148,9 +156,10 @@ func Parse(r io.Reader) (*App, error) {
 	return newApp(src, "", "."), nil
 }
 
-func newApp(src []byte, path, dir string) *App {
-	a := &App{
-		path: path, dir: dir, file: filepath.Base(path),
+// blankApp returns an App with every map/channel field initialized, its
+// document and style resolution left to the caller (newApp, newAppFS).
+func blankApp() *App {
+	return &App{
 		store: map[string]any{}, handlers: map[string]Handler{},
 		lists: map[string]*listState{}, inputs: map[string]*inputState{},
 		scrolls: map[string][2]int{}, wake: make(chan struct{}, 1),
@@ -159,21 +168,25 @@ func newApp(src []byte, path, dir string) *App {
 		checkedSets: map[*ir.Node]*checkedCache{},
 		tabMem:      map[string]string{}, tabPrev: map[string]string{},
 	}
+}
+
+func newApp(src []byte, path, dir string) *App {
+	a := blankApp()
+	a.path, a.dir, a.file = path, dir, filepath.Base(path)
 	if path == "" {
 		a.file = ""
 	}
 	a.doc = parse.Parse(src, path)
 	a.static = append(a.static, a.doc.Diags...)
-	a.loadStyles()
+	a.loadStyles(diskResolver(dir, path))
 	return a
 }
 
-func (a *App) loadStyles() {
+// loadStyles parses every <style>: an inline body, or a src resolved and
+// read through res, shared between Load (an OS directory: diskResolver)
+// and LoadFS (an fs.FS: fsResolver). SPEC v0.3 §18.1.
+func (a *App) loadStyles(res styleResolver) {
 	seen := map[string]bool{}
-	self := ""
-	if a.path != "" {
-		self, _ = filepath.Abs(a.path)
-	}
 	// A stylesheet is checked against the version of the document that
 	// loads it (SPEC §5.1).
 	v2 := a.doc.V2
@@ -184,36 +197,45 @@ func (a *App) loadStyles() {
 			a.sheets = append(a.sheets, sh)
 			continue
 		}
-		p := s.Src
-		if !filepath.IsAbs(p) {
-			p = filepath.Join(a.dir, p)
-		}
-		abs, _ := filepath.Abs(p)
 		d := ir.Diagnostic{Severity: ir.Error, Code: "V006", File: a.file, Line: s.Line, Col: s.Col, Path: "/style"}
+		resolved, outside := res.resolve(s.Src)
+		if outside {
+			d.Msg = fmt.Sprintf("style src=%q is outside the file system", s.Src)
+			a.static = append(a.static, d)
+			continue
+		}
+		canon := res.canon(resolved)
 		switch {
-		case abs == self || strings.HasSuffix(abs, ".tui"):
+		case canon == res.self || strings.HasSuffix(canon, ".tui"):
 			d.Msg = fmt.Sprintf("style src=%q includes a .tui document (include cycle)", s.Src)
-		case seen[abs]:
+		case seen[canon]:
 			d.Msg = fmt.Sprintf("style src=%q is included twice (include cycle)", s.Src)
 		}
 		if d.Msg != "" {
 			a.static = append(a.static, d)
 			continue
 		}
-		seen[abs] = true
-		body, err := os.ReadFile(p)
+		seen[canon] = true
+		body, err := res.read(resolved)
 		if err != nil {
-			d.Msg = fmt.Sprintf("style src=%q cannot be read: %v", s.Src, errors.Unwrap(err))
-			if errors.Unwrap(err) == nil {
-				d.Msg = fmt.Sprintf("style src=%q cannot be read: %v", s.Src, err)
-			}
+			d.Msg = fmt.Sprintf("style src=%q cannot be read: %v", s.Src, unwrapOrSelf(err))
 			a.static = append(a.static, d)
 			continue
 		}
-		sh, diags := css.ParseSheetIn(string(body), filepath.Base(p), v2)
+		sh, diags := css.ParseSheetIn(string(body), res.base(resolved), v2)
 		a.static = append(a.static, diags...)
 		a.sheets = append(a.sheets, sh)
 	}
+}
+
+// unwrapOrSelf is errors.Unwrap(err), falling back to err itself when
+// there is nothing to unwrap (a "cannot be read" message strips the
+// redundant "open <path>:" os.PathError/fs.PathError prefix when it can).
+func unwrapOrSelf(err error) error {
+	if u := errors.Unwrap(err); u != nil {
+		return u
+	}
+	return err
 }
 
 // staticFor returns the static diagnostics of a render under an effective
@@ -292,49 +314,76 @@ func (a *App) set(path string, v any, redraw bool) error {
 		return err
 	}
 	a.mu.Lock()
+	err = a.applyLocked(path, jv)
+	a.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	if redraw {
+		a.Wake()
+	}
+	return nil
+}
+
+// applyLocked applies path=v (v already JSON-coerced) as Set does: the
+// reserved paths' meanings, or a store write (SPEC §18, v0.3 §18.1). It is
+// the primitive Set and Batch's atomic apply share; the caller holds a.mu.
+func (a *App) applyLocked(path string, v any) error {
 	switch path {
 	case "@focus":
-		s, _ := jv.(string)
+		s, _ := v.(string)
 		a.requestFocus(strings.TrimPrefix(s, "#"), false)
 	case "@screen":
-		s, _ := jv.(string)
+		s, _ := v.(string)
 		if !a.switchScreen(s) {
-			a.mu.Unlock()
 			return fmt.Errorf("tuimark: no screen with id %q", s)
 		}
 	case ThemePath:
 		// SPEC §18: reserved in both versions; it does not live in the
 		// store. Any other value is an error and changes nothing.
-		s, ok := jv.(string)
-		if !ok || (s != "dark" && s != "light" && s != "auto") {
-			a.mu.Unlock()
-			return fmt.Errorf("tuimark: %s must be \"dark\", \"light\", or \"auto\" (got %s)", ThemePath, jsonText(jv))
+		s, ok := validThemeValue(v)
+		if !ok {
+			return fmt.Errorf("tuimark: %s must be \"dark\", \"light\", or \"auto\" (got %s)", ThemePath, jsonText(v))
 		}
 		a.hostTheme = s
 	default:
 		if path != "" && !validStorePath(path) {
-			a.mu.Unlock()
 			return fmt.Errorf("tuimark: bad path %q", path)
 		}
 		if path == "" {
-			if _, ok := jv.(map[string]any); !ok {
-				a.mu.Unlock()
-				return fmt.Errorf("tuimark: the root value must be a JSON object, got %T", jv)
+			if _, ok := v.(map[string]any); !ok {
+				return fmt.Errorf("tuimark: the root value must be a JSON object, got %T", v)
 			}
 		}
-		root, err := assign(a.store, path, jv)
+		root, err := assign(a.store, path, v)
 		if err != nil {
-			a.mu.Unlock()
 			return err
 		}
 		a.store = root
 		a.wrote(path)
 	}
-	a.mu.Unlock()
-	if redraw {
-		a.Wake()
-	}
 	return nil
+}
+
+// validThemeValue reports whether v is a legal @theme value (SPEC §18):
+// "dark", "light", or "auto". Shared by Set's applyLocked and Batch.Set's
+// queue-time check, so both give the same error.
+func validThemeValue(v any) (string, bool) {
+	s, ok := v.(string)
+	return s, ok && (s == "dark" || s == "light" || s == "auto")
+}
+
+// screenExists reports whether the document has a screen with this id, so
+// Batch.Set can validate "@screen" without mutating anything (switchScreen
+// applies the change as a side effect of checking it). No lock is needed:
+// a.doc is immutable once Load/Parse/LoadFS returns (Files does the same).
+func (a *App) screenExists(id string) bool {
+	for _, s := range a.doc.Screens {
+		if s.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 // wrote records a write of path into the store ("" is the whole store):
@@ -359,20 +408,63 @@ func validStorePath(p string) bool {
 	return true
 }
 
-// Get returns a copy-free view of the value at path (hosts only).
+// Get returns a deep copy of the value at path, JSON-shaped, or the app's
+// current state for the three reserved paths (SPEC v0.3 §18.1):
+//
+//   - "@focus" is "#id" for the runtime's current focus (moved by every
+//     input and focus request applied since the last frame Run or Play
+//     built; a request the next frame rejects is undone then), nil when
+//     nothing is focused or no frame has been built yet (last is nil:
+//     Dump builds no live frame).
+//   - "@screen" is the active screen's id, nil when it has none (the
+//     spike root, or a screen without id).
+//   - "@theme" is "dark" or "light": frameTheme reduces to toolTheme
+//     (what Dump uses) outside Run, since runEnvTheme/runAuto are then
+//     both "", so this is correct in both cases without a separate
+//     "is Run active" flag.
+//
+// Any other path, "@" ones included, reads the store; a path that does
+// not resolve, or is malformed, returns (nil, false).
 func (a *App) Get(path string) (any, bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return lookup(a.store, path)
+	switch path {
+	case "@focus":
+		if a.last == nil || a.focus == "" {
+			return nil, true
+		}
+		return "#" + a.focus, true
+	case "@screen":
+		if a.doc == nil || a.doc.Spike || a.screen < 0 || a.screen >= len(a.doc.Screens) {
+			return nil, true
+		}
+		if id := a.doc.Screens[a.screen].ID; id != "" {
+			return id, true
+		}
+		return nil, true
+	case ThemePath:
+		return a.frameTheme(), true
+	}
+	v, ok := lookup(a.store, path)
+	if !ok {
+		return nil, false
+	}
+	return deepCopyJSON(v), true
 }
 
 // Wake asks a running loop to redraw.
 func (a *App) Wake() {
+	a.wakeCount.Add(1)
 	select {
 	case a.wake <- struct{}{}:
 	default:
 	}
 }
+
+// WakeCount is how many times Wake has been called so far: an
+// observation hook for tests (SPEC v0.3 §18.1 Batch: "at most one
+// redraw"), not part of the public API.
+func (a *App) WakeCount() int64 { return a.wakeCount.Load() }
 
 // On registers a handler for a named action.
 func (a *App) On(action string, h Handler) {

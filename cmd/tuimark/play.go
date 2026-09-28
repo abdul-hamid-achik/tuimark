@@ -12,178 +12,16 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
+	"github.com/abdul-hamid-achik/tuimark/internal/play"
 )
-
-// stepKind is one parsed `play` step (SPEC v0.2 §15.4).
-type stepKind int
-
-const (
-	stepKey stepKind = iota
-	stepText
-	stepPaste
-	stepSet
-	stepFocus
-	stepResize
-	stepClick // click:X,Y or {"click":[X,Y]} (SPEC v0.2b §15.4)
-	stepWheel // wheel-up:X,Y, wheel-down:X,Y, or {"wheel":…,"at":[X,Y]}
-)
-
-// playStep is one step of a play session, already parsed and validated.
-// raw is "the step as written" (SPEC §15.4): the --input token, or the
-// --script line with surrounding whitespace removed, used verbatim in
-// `events`/`frames` output and in a usage-error message.
-type playStep struct {
-	kind  stepKind
-	raw   string
-	key   host.Key
-	text  string // stepText, stepPaste
-	path  string // stepSet
-	value any    // stepSet, decoded JSON
-	focus string // stepFocus
-	cols  int    // stepResize
-	rows  int    // stepResize
-	x, y  int    // stepClick, stepWheel: the 0-based cell
-	dir   int    // stepWheel: -1 up, +1 down
-}
-
-// parseCoord parses one coordinate of a mouse step: a decimal integer
-// (SPEC v0.2b §15.4). Whether the cell lies inside the grid is decided
-// when the step is applied, against the size in effect then.
-func parseCoord(s string) (int, error) {
-	digits := strings.TrimPrefix(s, "-")
-	if digits == "" || len(digits) > 9 || strings.Trim(digits, "0123456789") != "" {
-		return 0, fmt.Errorf("%q is not a decimal integer", s)
-	}
-	return strconv.Atoi(s)
-}
-
-// parseCell parses the "X,Y" of click:X,Y, wheel-up:X,Y, and
-// wheel-down:X,Y (SPEC v0.2b §15.4).
-func parseCell(s string) (x, y int, err error) {
-	xs, ys, ok := strings.Cut(s, ",")
-	if !ok {
-		return 0, 0, fmt.Errorf("want X,Y")
-	}
-	if x, err = parseCoord(xs); err != nil {
-		return 0, 0, err
-	}
-	if y, err = parseCoord(ys); err != nil {
-		return 0, 0, err
-	}
-	return x, y, nil
-}
 
 // parseInputSteps splits --input on runs of ASCII spaces (leading/trailing
-// ignored) and parses each token (SPEC §15.4).
-func parseInputSteps(s string) ([]playStep, error) {
-	var toks []string
-	for _, f := range strings.Split(s, " ") {
-		if f != "" {
-			toks = append(toks, f)
-		}
-	}
-	steps := make([]playStep, 0, len(toks))
-	for i, tok := range toks {
-		st, err := parseInputToken(tok)
-		if err != nil {
-			return nil, fmt.Errorf("step %d (%s): %v", i+1, tok, err)
-		}
-		steps = append(steps, st)
-	}
-	return steps, nil
-}
-
-func parseInputToken(tok string) (playStep, error) {
-	switch {
-	case strings.HasPrefix(tok, "text:"):
-		return playStep{kind: stepText, raw: tok, text: tok[len("text:"):]}, nil
-	case strings.HasPrefix(tok, "paste:"):
-		return playStep{kind: stepPaste, raw: tok, text: tok[len("paste:"):]}, nil
-	case strings.HasPrefix(tok, "set:"):
-		return parseSetToken(tok)
-	case strings.HasPrefix(tok, "focus:"):
-		return playStep{kind: stepFocus, raw: tok, focus: strings.TrimPrefix(tok[len("focus:"):], "#")}, nil
-	case strings.HasPrefix(tok, "resize:"):
-		return parseResizeToken(tok)
-	case strings.HasPrefix(tok, "click:"), strings.HasPrefix(tok, "wheel-up:"), strings.HasPrefix(tok, "wheel-down:"):
-		// SPEC v0.2b §15.4: a left click (press and release) or one
-		// wheel report at cell (X, Y), 0-based as in the dump.
-		name, cell, _ := strings.Cut(tok, ":")
-		x, y, err := parseCell(cell)
-		if err != nil {
-			return playStep{}, fmt.Errorf("%s: %v", name, err)
-		}
-		st := playStep{kind: stepClick, raw: tok, x: x, y: y}
-		switch name {
-		case "wheel-up":
-			st.kind, st.dir = stepWheel, -1
-		case "wheel-down":
-			st.kind, st.dir = stepWheel, 1
-		}
-		return st, nil
-	}
-	if !ir.ValidKey(tok) {
-		return playStep{}, fmt.Errorf("not a valid key token")
-	}
-	return playStep{kind: stepKey, raw: tok, key: keyFromToken(tok)}, nil
-}
-
-func parseSetToken(tok string) (playStep, error) {
-	rest := tok[len("set:"):]
-	idx := strings.IndexByte(rest, '=')
-	if idx < 0 {
-		return playStep{}, fmt.Errorf("set: wants PATH=JSON")
-	}
-	path, jsonText := rest[:idx], rest[idx+1:]
-	var v any
-	if err := json.Unmarshal([]byte(jsonText), &v); err != nil {
-		return playStep{}, fmt.Errorf("bad JSON value: %v", err)
-	}
-	return playStep{kind: stepSet, raw: tok, path: path, value: v}, nil
-}
-
-func parseResizeToken(tok string) (playStep, error) {
-	rest := tok[len("resize:"):]
-	cols, rows, err := parseSize(rest)
-	if err != nil {
-		return playStep{}, err
-	}
-	if err := checkSize(cols, rows); err != nil {
-		return playStep{}, err
-	}
-	return playStep{kind: stepResize, raw: tok, cols: cols, rows: rows}, nil
-}
-
-// keyFromToken maps a validated (ir.ValidKey) key token to the host.Key the
-// terminal decoder would have produced for it (SPEC §26.8): only "space"
-// among the named tokens is printable. `ctrl+i`, `ctrl+j`, and `ctrl+m`
-// are their own bytes (0x09, 0x0a, 0x0d), which internal/host/keys.go's
-// scanInput decodes as `tab`/`enter`/`enter` before the generic
-// `ctrl+<letter>` case ever runs (finding 31, SPEC §8.1: "ctrl+i, ctrl+j,
-// and ctrl+m arrive as tab/enter and never match"), so a play key step
-// for one of them must deliver that same key, never the bound-but-
-// unreachable `ctrl+i`/`ctrl+j`/`ctrl+m` token, or `play` could dispatch
-// an event Run can never fire for the same input.
-func keyFromToken(tok string) host.Key {
-	if tok == "space" {
-		return host.Key{Name: "space", Rune: ' '}
-	}
-	switch tok {
-	case "ctrl+i":
-		return host.Key{Name: "tab"}
-	case "ctrl+j", "ctrl+m":
-		return host.Key{Name: "enter"}
-	}
-	for _, k := range ir.NamedKeys {
-		if tok == k {
-			return host.Key{Name: tok}
-		}
-	}
-	if strings.HasPrefix(tok, "ctrl+") {
-		return host.Key{Name: tok}
-	}
-	r := []rune(tok)[0]
-	return host.Key{Name: string(r), Rune: r}
+// ignored) and parses each token with play.ParseStep (SPEC §15.4). The
+// replay engine itself (play.Session) lives in internal/play, shared with
+// tuimark test and tuimark.Play; this file keeps only --input/--script
+// parsing, --frames/--strict, and output formatting.
+func parseInputSteps(s string) ([]play.Step, error) {
+	return play.ParseSteps(s)
 }
 
 // decodeObjectMembers decodes data as a JSON object with exact,
@@ -238,68 +76,68 @@ func decodeStringMember(name string, raw json.RawMessage) (string, error) {
 // members `path` (a string) and `value`, both required, no others, so a
 // typo like `"pth"` is a usage error instead of silently defaulting
 // `path` to "" (the store root) or `value` to null (finding 24).
-func parseScriptSet(line string, raw json.RawMessage) (playStep, error) {
+func parseScriptSet(line string, raw json.RawMessage) (play.Step, error) {
 	members, err := decodeObjectMembers(raw)
 	if err != nil {
-		return playStep{}, fmt.Errorf("set: %v", err)
+		return play.Step{}, fmt.Errorf("set: %v", err)
 	}
 	for name := range members {
 		if name != "path" && name != "value" {
-			return playStep{}, fmt.Errorf("set: unknown member %q (want exactly \"path\" and \"value\")", name)
+			return play.Step{}, fmt.Errorf("set: unknown member %q (want exactly \"path\" and \"value\")", name)
 		}
 	}
 	pathRaw, hasPath := members["path"]
 	valueRaw, hasValue := members["value"]
 	if !hasPath || !hasValue {
-		return playStep{}, fmt.Errorf("set: wants {\"path\": ..., \"value\": ...} (both required)")
+		return play.Step{}, fmt.Errorf("set: wants {\"path\": ..., \"value\": ...} (both required)")
 	}
 	path, err := decodeStringMember("set.path", pathRaw)
 	if err != nil {
-		return playStep{}, err
+		return play.Step{}, err
 	}
 	var value any
 	vdec := json.NewDecoder(bytes.NewReader(valueRaw))
 	vdec.UseNumber()
 	if err := vdec.Decode(&value); err != nil {
-		return playStep{}, fmt.Errorf("set: bad JSON value: %v", err)
+		return play.Step{}, fmt.Errorf("set: bad JSON value: %v", err)
 	}
-	return playStep{kind: stepSet, raw: line, path: path, value: value}, nil
+	return play.Step{Kind: play.KindSet, Raw: line, Path: path, Value: value}, nil
 }
 
 // parseScriptResize decodes a script line's `"resize"` member (SPEC §15.4
 // example: `{"resize":[60,24]}`): a JSON array of exactly 2 integers, each
 // checked against §15.1's 1-1000 range, so `[30,8,5]` is a usage error
 // instead of silently dropping the third element (finding 24).
-func parseScriptResize(line string, raw json.RawMessage) (playStep, error) {
+func parseScriptResize(line string, raw json.RawMessage) (play.Step, error) {
 	var elems []json.RawMessage
 	if err := json.Unmarshal(raw, &elems); err != nil {
-		return playStep{}, fmt.Errorf("resize: want [COLS,ROWS]: %v", err)
+		return play.Step{}, fmt.Errorf("resize: want [COLS,ROWS]: %v", err)
 	}
 	if len(elems) != 2 {
-		return playStep{}, fmt.Errorf("resize: want exactly [COLS,ROWS] (2 elements), got %d", len(elems))
+		return play.Step{}, fmt.Errorf("resize: want exactly [COLS,ROWS] (2 elements), got %d", len(elems))
 	}
 	var cols, rows int
 	if err := json.Unmarshal(elems[0], &cols); err != nil {
-		return playStep{}, fmt.Errorf("resize: COLS must be an integer: %v", err)
+		return play.Step{}, fmt.Errorf("resize: COLS must be an integer: %v", err)
 	}
 	if err := json.Unmarshal(elems[1], &rows); err != nil {
-		return playStep{}, fmt.Errorf("resize: ROWS must be an integer: %v", err)
+		return play.Step{}, fmt.Errorf("resize: ROWS must be an integer: %v", err)
 	}
 	if err := checkSize(cols, rows); err != nil {
-		return playStep{}, err
+		return play.Step{}, err
 	}
-	return playStep{kind: stepResize, raw: line, cols: cols, rows: rows}, nil
+	return play.Step{Kind: play.KindResize, Raw: line, Cols: cols, Rows: rows}, nil
 }
 
 // parseScriptSteps reads --script FILE.ndjson: one JSON object per line,
 // blank lines ignored (SPEC §15.4).
-func parseScriptSteps(path string) ([]playStep, error) {
+func parseScriptSteps(path string) ([]play.Step, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	var steps []playStep
+	var steps []play.Step
 	sc := bufio.NewScanner(f)
 	sc.Buffer(make([]byte, 64*1024), 1<<20)
 	n := 0
@@ -347,31 +185,31 @@ func parseScriptCell(name string, raw json.RawMessage) (x, y int, err error) {
 // parseScriptWheel decodes {"wheel": "up" | "down", "at": [X,Y]}, the one
 // step whose object holds two members, exactly these two (SPEC v0.2b
 // §15.4).
-func parseScriptWheel(line string, members map[string]json.RawMessage) (playStep, error) {
+func parseScriptWheel(line string, members map[string]json.RawMessage) (play.Step, error) {
 	for name := range members {
 		if name != "wheel" && name != "at" {
-			return playStep{}, fmt.Errorf("wheel: unknown member %q (want exactly \"wheel\" and \"at\")", name)
+			return play.Step{}, fmt.Errorf("wheel: unknown member %q (want exactly \"wheel\" and \"at\")", name)
 		}
 	}
 	atRaw, ok := members["at"]
 	if !ok {
-		return playStep{}, fmt.Errorf("wheel: wants {\"wheel\": \"up\" or \"down\", \"at\": [X,Y]}")
+		return play.Step{}, fmt.Errorf("wheel: wants {\"wheel\": \"up\" or \"down\", \"at\": [X,Y]}")
 	}
 	dir, err := decodeStringMember("wheel", members["wheel"])
 	if err != nil {
-		return playStep{}, err
+		return play.Step{}, err
 	}
-	st := playStep{kind: stepWheel, raw: line}
+	st := play.Step{Kind: play.KindWheel, Raw: line}
 	switch dir {
 	case "up":
-		st.dir = -1
+		st.Dir = -1
 	case "down":
-		st.dir = 1
+		st.Dir = 1
 	default:
-		return playStep{}, fmt.Errorf("wheel: want \"up\" or \"down\", got %q", dir)
+		return play.Step{}, fmt.Errorf("wheel: want \"up\" or \"down\", got %q", dir)
 	}
-	if st.x, st.y, err = parseScriptCell("at", atRaw); err != nil {
-		return playStep{}, err
+	if st.X, st.Y, err = parseScriptCell("at", atRaw); err != nil {
+		return play.Step{}, err
 	}
 	return st, nil
 }
@@ -384,20 +222,20 @@ func parseScriptWheel(line string, members map[string]json.RawMessage) (playStep
 // member names case-insensitively (accepting "KEY"), silently dropped an
 // unknown member such as "extra", and kept only the last of a duplicate
 // member (finding 24).
-func parseScriptLine(line string) (playStep, error) {
+func parseScriptLine(line string) (play.Step, error) {
 	members, err := decodeObjectMembers([]byte(line))
 	if err != nil {
-		return playStep{}, fmt.Errorf("bad JSON: %v", err)
+		return play.Step{}, fmt.Errorf("bad JSON: %v", err)
 	}
 	if _, ok := members["wheel"]; ok {
 		return parseScriptWheel(line, members)
 	}
 	switch len(members) {
 	case 0:
-		return playStep{}, fmt.Errorf("no known step member (want one of %s)", scriptMembers)
+		return play.Step{}, fmt.Errorf("no known step member (want one of %s)", scriptMembers)
 	default:
 		if len(members) > 1 {
-			return playStep{}, fmt.Errorf("more than one step member on one line")
+			return play.Step{}, fmt.Errorf("more than one step member on one line")
 		}
 	}
 	var name string
@@ -409,30 +247,30 @@ func parseScriptLine(line string) (playStep, error) {
 	case "key":
 		s, err := decodeStringMember("key", raw)
 		if err != nil {
-			return playStep{}, err
+			return play.Step{}, err
 		}
 		if !ir.ValidKey(s) {
-			return playStep{}, fmt.Errorf("%q is not a valid key token", s)
+			return play.Step{}, fmt.Errorf("%q is not a valid key token", s)
 		}
-		return playStep{kind: stepKey, raw: line, key: keyFromToken(s)}, nil
+		return play.Step{Kind: play.KindKey, Raw: line, Key: play.KeyFromToken(s)}, nil
 	case "text":
 		s, err := decodeStringMember("text", raw)
 		if err != nil {
-			return playStep{}, err
+			return play.Step{}, err
 		}
-		return playStep{kind: stepText, raw: line, text: s}, nil
+		return play.Step{Kind: play.KindText, Raw: line, Text: s}, nil
 	case "paste":
 		s, err := decodeStringMember("paste", raw)
 		if err != nil {
-			return playStep{}, err
+			return play.Step{}, err
 		}
-		return playStep{kind: stepPaste, raw: line, text: s}, nil
+		return play.Step{Kind: play.KindPaste, Raw: line, Text: s}, nil
 	case "focus":
 		s, err := decodeStringMember("focus", raw)
 		if err != nil {
-			return playStep{}, err
+			return play.Step{}, err
 		}
-		return playStep{kind: stepFocus, raw: line, focus: strings.TrimPrefix(s, "#")}, nil
+		return play.Step{Kind: play.KindFocus, Raw: line, Focus: strings.TrimPrefix(s, "#")}, nil
 	case "set":
 		return parseScriptSet(line, raw)
 	case "resize":
@@ -441,278 +279,22 @@ func parseScriptLine(line string) (playStep, error) {
 		// SPEC v0.2b §15.4: {"click":[X,Y]} is click:X,Y.
 		x, y, err := parseScriptCell("click", raw)
 		if err != nil {
-			return playStep{}, err
+			return play.Step{}, err
 		}
-		return playStep{kind: stepClick, raw: line, x: x, y: y}, nil
+		return play.Step{Kind: play.KindClick, Raw: line, X: x, Y: y}, nil
 	case "theme":
 		// SPEC v0.2b §15.4: {"theme": "dark" | "light" | "auto"} is
 		// Set("@theme", value); play never probes, so auto is dark.
 		s, err := decodeStringMember("theme", raw)
 		if err != nil {
-			return playStep{}, err
+			return play.Step{}, err
 		}
 		if s != "dark" && s != "light" && s != "auto" {
-			return playStep{}, fmt.Errorf("theme: want \"dark\", \"light\", or \"auto\", got %q", s)
+			return play.Step{}, fmt.Errorf("theme: want \"dark\", \"light\", or \"auto\", got %q", s)
 		}
-		return playStep{kind: stepSet, raw: line, path: host.ThemePath, value: s}, nil
+		return play.Step{Kind: play.KindSet, Raw: line, Path: host.ThemePath, Value: s}, nil
 	}
-	return playStep{}, fmt.Errorf("unknown step member %q (want one of %s)", name, scriptMembers)
-}
-
-// playSession replays steps against app through the same primitives Run's
-// loop uses (Frame, HandleKeyRun, HandlePaste, Dispatch, TakePending,
-// Focus), without a TTY (SPEC v0.2 §15.4).
-type playSession struct {
-	app           *host.App
-	cols, rows    int
-	frame         *host.Frame
-	events        []dump.Event // cumulative, in order, for the top-level "events"
-	curStepEvents []dump.Event // this step's own events, for --frames
-	quit          bool
-	cellsFlag     bool
-	stylesFlag    bool
-	stepFrames    []dump.PlayFrame // only collected with --frames
-	collectFrames bool
-
-	// usageErr, when set, is a step's Set/@focus error (bad path, unknown
-	// screen): the session stops right there, exactly like a quit, but
-	// cmdPlay reports it as a usage error (SPEC §15.4 "Errors") instead of
-	// printing a dump.
-	usageErr  error
-	usageStep int
-	usageRaw  string
-}
-
-func newPlaySession(app *host.App, cols, rows int, cells, styles, frames bool) *playSession {
-	return &playSession{
-		app: app, cols: cols, rows: rows,
-		events: []dump.Event{}, cellsFlag: cells, stylesFlag: styles, collectFrames: frames,
-	}
-}
-
-func (s *playSession) draw() { s.frame = s.app.Frame(s.cols, s.rows) }
-
-// dispatchAll dispatches evs, then TakePending in rounds, redrawing between
-// rounds, for at most 8 rounds (the v0.1 loop; SPEC §15.4 point 3).
-func (s *playSession) dispatchAll(step int, evs []host.Event) {
-	for round := 0; round < 8; round++ {
-		for _, ev := range evs {
-			de := dump.Event{Step: step, Action: ev.Action, Source: ev.Source, Keys: ev.Keys, Value: ev.Value}
-			if de.Keys == nil {
-				de.Keys = map[string]any{}
-			}
-			s.events = append(s.events, de)
-			s.curStepEvents = append(s.curStepEvents, de)
-			quit, _ := s.app.Dispatch(ev) // play registers no handlers: err is always nil
-			if quit {
-				s.quit = true
-				return
-			}
-		}
-		evs = s.app.TakePending()
-		if len(evs) == 0 {
-			return
-		}
-		s.draw()
-	}
-}
-
-// settle draws and runs the events a render queued, exactly as Run's loop
-// settles after applying one step (SPEC §15.4 point 3).
-func (s *playSession) settle(step int) {
-	s.draw()
-	s.dispatchAll(step, nil)
-}
-
-// handleKeys applies keys through HandleKeyRun's coalescing, dispatching
-// each run's events and redrawing when they fired, focus moved, or the
-// key changed state the frame shows (TakeDirty: in a version="2"
-// document, an input's text or cursor, a list or table cursor, an offset,
-// a checked array, a tab, the screen), so a later key in the same step
-// sees the fresh frame (SPEC v0.2b §8.6; mirrors internal/host/run.go's
-// handleKeys).
-func (s *playSession) handleKeys(step int, keys []host.Key) {
-	for len(keys) > 0 && !s.quit {
-		focus := s.app.Focus()
-		evs, n := s.app.HandleKeyRun(keys)
-		keys = keys[n:]
-		s.dispatchAll(step, evs)
-		if s.quit {
-			return
-		}
-		// A key may have changed the frame without an event or a focus
-		// move (TakeDirty), as in Run.
-		if changed := s.app.TakeDirty(); len(evs) > 0 || s.app.Focus() != focus || changed {
-			s.draw()
-		}
-	}
-}
-
-// handleText decodes str with the §26.8 decoder and applies the resulting
-// keys and pastes in order, exactly as Run's handleInputs walks one read
-// (SPEC v0.2 §15.4 `text:STR`, §28.21: "text: goes through it in one
-// read"; events must be exactly what Run would dispatch). A run of
-// consecutive keys is coalesced through handleKeys (the v0.1 one-edit
-// behavior for printable characters into a focused input); while the
-// mouse is off, an SGR report among them is dropped without splitting the
-// run (SPEC v0.2b §8.5). Each paste is its own handlePaste call.
-func (s *playSession) handleText(step int, str string) {
-	ins := host.DecodeInput([]byte(str))
-	for len(ins) > 0 && !s.quit {
-		if ins[0].IsPaste {
-			s.handlePaste(step, ins[0].Paste)
-			ins = ins[1:]
-			continue
-		}
-		if ins[0].IsMouse {
-			// An SGR report in the text is a mouse event, as in Run: one
-			// outside the grid is dropped, not an error (SPEC v0.2b
-			// §26.11).
-			s.handleMouse(step, ins[0].Mouse)
-			ins = ins[1:]
-			continue
-		}
-		// While the mouse is off, a mouse report inside the keys is
-		// dropped without ending the run, as in Run (host.App.KeyRun).
-		var keys []host.Key
-		keys, ins = s.app.KeyRun(ins)
-		s.handleKeys(step, keys)
-	}
-}
-
-// handlePaste applies one bracketed paste and dispatches its events,
-// redrawing when they fired, focus moved, or the paste changed the
-// input's text (TakeDirty), exactly as Run's loop dispatches a paste, so
-// a later input of the same step sees the new text (SPEC v0.2b §8.6).
-func (s *playSession) handlePaste(step int, payload string) {
-	focus := s.app.Focus()
-	evs := s.app.HandlePaste(payload)
-	s.dispatchAll(step, evs)
-	if s.quit {
-		return
-	}
-	if changed := s.app.TakeDirty(); len(evs) > 0 || s.app.Focus() != focus || changed {
-		s.draw()
-	}
-}
-
-// handleMouse applies one mouse event to the live frame (SPEC v0.2b §8.5)
-// and dispatches its events, redrawing when they fired, focus moved, or a
-// cursor, an offset, or a tab changed, exactly as Run's loop dispatches a
-// mouse event (internal/host/run.go). While the frame's mouse is off it
-// changes nothing and fires nothing.
-func (s *playSession) handleMouse(step int, m host.Mouse) {
-	if s.quit {
-		return
-	}
-	focus := s.app.Focus()
-	evs, _ := s.app.HandleMouse(m)
-	s.dispatchAll(step, evs)
-	if s.quit {
-		return
-	}
-	if changed := s.app.TakeDirty(); len(evs) > 0 || s.app.Focus() != focus || changed {
-		s.draw()
-	}
-}
-
-// buildDump builds the dump of the session's current frame with this
-// session's --cells/--styles flags.
-func (s *playSession) buildDump() *dump.Dump {
-	return frameDump(s.frame, s.cellsFlag, s.stylesFlag)
-}
-
-// snapshot records this step's PlayFrame when --frames is set.
-func (s *playSession) snapshot(step int, input string) {
-	if !s.collectFrames {
-		return
-	}
-	evs := s.curStepEvents
-	if evs == nil {
-		evs = []dump.Event{}
-	}
-	s.stepFrames = append(s.stepFrames, dump.PlayFrame{Step: step, Input: input, Events: evs, Dump: s.buildDump()})
-}
-
-// run replays step 0 (the first live frame) and then every step in order,
-// stopping early on quit (SPEC §15.4).
-func (s *playSession) run(steps []playStep) {
-	s.settle(0)
-	s.snapshot(0, "")
-	for i, st := range steps {
-		if s.quit || s.usageErr != nil {
-			break
-		}
-		s.curStepEvents = nil
-		stepNum := i + 1
-		switch st.kind {
-		case stepKey:
-			s.handleKeys(stepNum, []host.Key{st.key})
-		case stepText:
-			s.handleText(stepNum, st.text)
-		case stepPaste:
-			s.handlePaste(stepNum, st.text)
-		case stepSet:
-			if err := s.app.Set(st.path, st.value); err != nil {
-				s.usageErr, s.usageStep, s.usageRaw = err, stepNum, st.raw
-				return
-			}
-		case stepFocus:
-			if err := s.app.Set("@focus", st.focus); err != nil {
-				s.usageErr, s.usageStep, s.usageRaw = err, stepNum, st.raw
-				return
-			}
-		case stepResize:
-			s.cols, s.rows = st.cols, st.rows
-			// A resize drops a pending left press, as in Run (SPEC
-			// v0.2b §26.11).
-			s.app.DropPress()
-		case stepClick, stepWheel:
-			// SPEC v0.2b §15.4: handled by §8.5 on the current settled
-			// frame; a cell outside the current grid is a usage error.
-			if st.x < 0 || st.y < 0 || st.x >= s.cols || st.y >= s.rows {
-				s.usageErr = fmt.Errorf("cell %d,%d is outside the %dx%d grid", st.x, st.y, s.cols, s.rows)
-				s.usageStep, s.usageRaw = stepNum, st.raw
-				return
-			}
-			if st.kind == stepClick {
-				s.handleMouse(stepNum, host.Mouse{Kind: host.MousePress, X: st.x, Y: st.y})
-				s.handleMouse(stepNum, host.Mouse{Kind: host.MouseRelease, X: st.x, Y: st.y})
-				break
-			}
-			kind := host.MouseWheelDown
-			if st.dir < 0 {
-				kind = host.MouseWheelUp
-			}
-			s.handleMouse(stepNum, host.Mouse{Kind: kind, X: st.x, Y: st.y})
-		}
-		if !s.quit {
-			s.settle(stepNum)
-		}
-		s.snapshot(stepNum, st.raw)
-	}
-}
-
-func formatEventLine(e dump.Event) string {
-	src := e.Source
-	if src == "" {
-		src = "-"
-	}
-	keysJSON, _ := json.Marshal(e.Keys)
-	valJSON, _ := json.Marshal(e.Value)
-	return fmt.Sprintf("%d %s %s %s %s", e.Step, e.Action, src, keysJSON, valJSON)
-}
-
-func writeEventsSection(b *strings.Builder, evs []dump.Event) {
-	b.WriteString("=== events ===\n")
-	if len(evs) == 0 {
-		b.WriteString("none\n")
-		return
-	}
-	for _, e := range evs {
-		b.WriteString(formatEventLine(e))
-		b.WriteByte('\n')
-	}
+	return play.Step{}, fmt.Errorf("unknown step member %q (want one of %s)", name, scriptMembers)
 }
 
 func (c *cli) cmdPlay(args []string) int {
@@ -746,7 +328,7 @@ func (c *cli) cmdPlay(args []string) int {
 		return c.fail(fmt.Errorf("play: --input and --script are mutually exclusive"))
 	}
 
-	var steps []playStep
+	var steps []play.Step
 	switch {
 	case *input != "":
 		steps, err = parseInputSteps(*input)
@@ -766,24 +348,24 @@ func (c *cli) cmdPlay(args []string) int {
 	}
 	app.SetStrict(*strict)
 
-	sess := newPlaySession(app, *cols, *rows, *cells, *styles, *frames)
-	sess.run(steps)
-	if sess.usageErr != nil {
-		return c.fail(fmt.Errorf("play: step %d (%s): %v", sess.usageStep, sess.usageRaw, sess.usageErr))
+	sess := play.NewSession(app, *cols, *rows, *cells, *styles, *frames, false)
+	sess.Run(steps)
+	if sess.UsageErr != nil {
+		return c.fail(fmt.Errorf("play: step %d (%s): %v", sess.UsageStep, sess.UsageRaw, sess.UsageErr))
 	}
 
 	if *format == "json" {
-		play := &dump.Play{Dump: sess.buildDump(), Events: sess.events}
+		out := &dump.Play{Dump: sess.BuildDump(), Events: sess.Events}
 		if *frames {
-			play.Frames = sess.stepFrames
+			out.Frames = sess.StepFrames
 		}
-		b, err := json.MarshalIndent(play, "", "  ")
+		b, err := json.MarshalIndent(out, "", "  ")
 		if err != nil {
 			return c.fail(err)
 		}
 		c.stdout.Write(b)
 		fmt.Fprintln(c.stdout)
-		if !play.OK {
+		if !out.OK {
 			return 2
 		}
 		return 0
@@ -791,19 +373,19 @@ func (c *cli) cmdPlay(args []string) int {
 
 	var b strings.Builder
 	if *frames {
-		for _, pf := range sess.stepFrames {
+		for _, pf := range sess.StepFrames {
 			if pf.Step == 0 {
 				b.WriteString("=== step 0 ===\n")
 			} else {
 				fmt.Fprintf(&b, "=== step %d: %s ===\n", pf.Step, pf.Input)
 			}
 			b.WriteString(dump.Text(pf.Dump))
-			writeEventsSection(&b, pf.Events)
+			play.WriteEventsSection(&b, pf.Events)
 		}
 	}
-	d := sess.buildDump()
+	d := sess.BuildDump()
 	b.WriteString(dump.Text(d))
-	writeEventsSection(&b, sess.events)
+	play.WriteEventsSection(&b, sess.Events)
 	fmt.Fprint(c.stdout, b.String())
 	if !d.OK {
 		return 2

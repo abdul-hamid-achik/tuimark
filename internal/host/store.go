@@ -69,6 +69,31 @@ func assign(root any, path string, v any) (any, error) {
 	return assignSegs(root, segs, v, path)
 }
 
+// deepCopyJSON returns a deep copy of a JSON-shaped value (nil, bool,
+// float64, string, []any, or map[string]any). Get hands this out instead
+// of the store's own maps, so a host can never mutate state behind the
+// lock (SPEC v0.3 §18.1, §30.4 decision 3); Batch uses it to run a trial
+// application on a throwaway copy of the store, since assign mutates an
+// existing container in place.
+func deepCopyJSON(v any) any {
+	switch x := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for k, e := range x {
+			out[k] = deepCopyJSON(e)
+		}
+		return out
+	case []any:
+		out := make([]any, len(x))
+		for i, e := range x {
+			out[i] = deepCopyJSON(e)
+		}
+		return out
+	default:
+		return v // nil, bool, float64, string are immutable
+	}
+}
+
 // canAssign reports whether assign(root, path, v) would succeed, without
 // changing anything: every value along the path, before its last segment,
 // is an object, null, or missing (assign creates objects there), or an
