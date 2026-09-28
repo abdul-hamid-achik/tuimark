@@ -79,6 +79,43 @@ func TestKeymapWhenDispatch(t *testing.T) {
 	}
 }
 
+// 97. A <keymap when> whose id names no node (B005) is still the rows'
+// effective when, exactly as the same when written on a row: dispatch
+// and <hints scope="active"> see a selector that matches nothing, so
+// neither row fires or shows (it must not fall back to "no when", which
+// fires everywhere).
+func TestKeymapWhenMissingIDLikeRowWhen(t *testing.T) {
+	a := doc(t, `<tui version="3">
+<keymap when="#nope"><bind keys="x" action="kmrow" label="km"/></keymap>
+<keymap><bind keys="y" action="ownrow" when="#nope" label="own"/></keymap>
+<screen id="s"><button id="b" label="b"/><hints id="h" scope="active"/></screen>
+</tui>`)
+	if evs := press(a, r('x'), r('y')); len(evs) != 0 {
+		t.Errorf("rows under when=\"#nope\" fired: %+v", evs)
+	}
+	f := a.Frame(80, 24)
+	if h := f.ByID["h"]; len(h.Children) != 0 {
+		var labels []string
+		for _, row := range h.Children {
+			labels = append(labels, row.Children[1].Text)
+		}
+		t.Errorf("hints show %q, want none", labels)
+	}
+	// A when that does not parse (V003) is no selector at all, on a row
+	// as on a <keymap>: both rows then fire and show alike.
+	b := doc(t, `<tui version="3">
+<keymap when="#"><bind keys="x" action="kmrow" label="km"/></keymap>
+<keymap><bind keys="y" action="ownrow" when="#" label="own"/></keymap>
+<screen id="s"><button id="b" label="b"/><hints id="h" scope="active"/></screen>
+</tui>`)
+	if evs := press(b, r('x'), r('y')); len(evs) != 2 || evs[0].Action != "kmrow" || evs[1].Action != "ownrow" {
+		t.Errorf("V003 when: keymap and row differ: %+v", evs)
+	}
+	if h := b.Frame(80, 24).ByID["h"]; len(h.Children) != 2 {
+		t.Errorf("V003 when: %d hints, want 2", len(h.Children))
+	}
+}
+
 // key renders at cols x rows (as the live frame), handles k, then settles
 // (so the offset a viewport shows this frame is what the next assertion
 // reads).
