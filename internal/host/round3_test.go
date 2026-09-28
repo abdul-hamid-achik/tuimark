@@ -405,7 +405,7 @@ func TestWatchSignalsReportsFirstSignal(t *testing.T) {
 		caught, toLoop := make(chan os.Signal, 4), make(chan os.Signal, 1)
 		loopDone, res := make(chan struct{}), make(chan os.Signal, 1)
 		go func() {
-			res <- watchSignals(caught, toLoop, loopDone, func() {}, time.Hour, func(os.Signal) {})
+			res <- watchSignals(caught, toLoop, loopDone, func() {}, time.Hour, func(os.Signal) {}, nil)
 		}()
 		for _, s := range send {
 			caught <- s

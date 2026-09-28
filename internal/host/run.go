@@ -71,17 +71,99 @@ var escTimeout = 25 * time.Millisecond
 // the process ends with the signal's default action. When Run returns,
 // nothing is left reading stdin.
 func (a *App) Run(w io.Writer) (err error) {
+	err, _, _ = a.run(w, HostHooks{})
+	return err
+}
+
+// RunHost is Run with the internal, non-public hooks the tuimark host
+// protocol bridge needs (SPEC v0.3b §19.1, §26.1; §30.5 decision 13: "the
+// host bridge needs internal hooks, not public API"). The zero HostHooks
+// (what Run passes) makes it behave exactly like Run.
+//
+//   - hooks.Start fires once, after raw mode and the capability probe end
+//     and before the first frame is drawn, with the frame's size and its
+//     resolved theme: the moment the bridge writes "ready" (§19.1 step 2).
+//   - hooks.Stop, sent to at most once, ends the session between one
+//     input/event and the next, exactly as a stop signal does: EOF true
+//     for fd 3 reaching end of file (the parent gone), EOF false with Err
+//     naming the fd 4 backpressure failure (the bounded queue full, or a
+//     write to fd 4 failing).
+//   - hooks.Signaled, when non-nil, is closed the moment RunHost catches a
+//     stop signal, so a handler blocked forwarding an event over the
+//     protocol (the reply wait) can return at once instead of holding the
+//     loop until the signal grace ends it (§26.1: the terminal is
+//     restored within 50ms and the process ends within about a second
+//     regardless, but a cooperating handler lets the session end cleanly,
+//     with its own "exit" message, inside that window).
+//
+// It is not part of the public tuimark API; only cmd/tuimark's `host`
+// subcommand calls it. Its result names why the session ended (SPEC
+// v0.3b §19.1's "exit" message and exit code), which a plain error
+// cannot: Run's own nil return conflates "quit" and "eof".
+func (a *App) RunHost(w io.Writer, hooks HostHooks) HostResult {
+	err, eof, started := a.run(w, hooks)
+	var sig *SignalError
+	switch {
+	case errors.As(err, &sig):
+		return HostResult{Reason: "signal", Signal: sig.Signal, Started: started}
+	case err != nil:
+		return HostResult{Reason: "error", Err: err, Started: started}
+	case eof:
+		return HostResult{Reason: "eof", Started: started}
+	}
+	return HostResult{Reason: "quit", Started: started}
+}
+
+// HostHooks are RunHost's internal hooks; see RunHost.
+type HostHooks struct {
+	Start    func(cols, rows int, theme string)
+	Stop     <-chan HostStop
+	Signaled chan struct{}
+}
+
+// HostStop is one value sent on HostHooks.Stop; see RunHost.
+type HostStop struct {
+	EOF bool
+	Err error
+}
+
+// HostResult is RunHost's result (SPEC v0.3b §19.1): Reason is "quit",
+// "eof", "signal", or "error" — the four "exit" reasons and exit codes (0
+// for quit/eof, 1 for error, 128+the signal number for signal). Signal is
+// set only for reason "signal", Err only for reason "error". Started
+// reports whether the session started, that is, whether raw mode was
+// entered (§26.1 step 2): a result with Started false is a failure before
+// the terminal was touched (an invalid TUIMARK_* value, a TUIMARK_LOG that
+// cannot be opened, stdin not a terminal: §19.1 step 1), always with
+// reason "error".
+type HostResult struct {
+	Reason  string
+	Signal  os.Signal
+	Err     error
+	Started bool
+}
+
+// run is Run's and RunHost's shared body. eof reports whether the
+// session ended because input (fd 0, or a HostStop{EOF: true}) reached
+// end of file — the one bit RunHost needs beyond err (whose nil case
+// otherwise conflates "quit" and "eof"), captured once, right after
+// session returns, before any deferred cleanup can still change err (a
+// late-arriving signal, say): err always takes priority over eof in
+// RunHost's result (SPEC v0.3b §19.1), so which of them a defer settles
+// last never matters. started reports whether raw mode was entered (see
+// HostResult.Started).
+func (a *App) run(w io.Writer, hooks HostHooks) (err error, eof, started bool) {
 	// Play and Run exclude each other (SPEC v0.3 §18.1 rule 8): checked
 	// before anything else, so Run called while Play is active returns an
 	// error before it looks at the terminal.
 	if err := a.enterMode(modeRun); err != nil {
-		return err
+		return err, false, false
 	}
 	defer a.exitMode()
 	start := time.Now()
 	cfg, err := readRunConfig(os.Getenv)
 	if err != nil {
-		return err
+		return err, false, false
 	}
 	// TUIMARK_LOG (SPEC v0.2b §26.12) is opened with the environment,
 	// before the terminal is touched, and closed on every way out. Once
@@ -91,13 +173,13 @@ func (a *App) Run(w io.Writer) (err error) {
 	// file with no records.
 	lg, err := openRunLog(cfg.log, start)
 	if err != nil {
-		return err
+		return err, false, false
 	}
 	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg}
 	defer func() { lg.end(endReason(err, sess)) }()
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
-		return errors.New("tuimark: Run needs an interactive terminal on stdin (use Dump for headless output)")
+		return errors.New("tuimark: Run needs an interactive terminal on stdin (use Dump for headless output)"), false, false
 	}
 	sizeFd := fd
 	outTTY := false
@@ -128,8 +210,9 @@ func (a *App) Run(w io.Writer) (err error) {
 	defer release()
 	old, err := term.MakeRaw(fd)
 	if err != nil {
-		return err
+		return err, false, false
 	}
+	started = true
 	out := &guardedWriter{w: w}
 	var once sync.Once
 	// restore puts the terminal back once, from whichever of the loop's
@@ -160,16 +243,24 @@ func (a *App) Run(w io.Writer) (err error) {
 	loopDone := make(chan struct{})
 	watched := make(chan os.Signal, 1)
 	go func() {
-		watched <- watchSignals(caught, sigs, loopDone, func() { restoreWithin(func() { restore(true) }, time.Second) }, signalGrace, reraise)
+		watched <- watchSignals(caught, sigs, loopDone, func() { restoreWithin(func() { restore(true) }, time.Second) }, signalGrace, reraise, func(os.Signal) {
+			if hooks.Signaled != nil {
+				close(hooks.Signaled)
+			}
+		})
 	}()
-	err = a.session(os.Stdin, out, size, resizeSignal(stop), sigs, sess)
+	err = a.session(os.Stdin, out, size, resizeSignal(stop), sigs, sess, hooks)
+	// Captured now, right after session returns (see run's doc comment):
+	// sess.eof no longer changes after this point, whatever a deferred
+	// cleanup still does to err.
+	eof = sess.eof
 	close(loopDone)
 	// A signal the loop did not take (it returned for a quit or EOF while
 	// the signal was on its way) still makes Run report it.
 	if first := <-watched; err == nil && first != nil {
 		err = &SignalError{Signal: first}
 	}
-	return err
+	return err, eof, started
 }
 
 // guardedWriter serializes writes to the terminal so the signal watcher
@@ -225,7 +316,7 @@ func restoreWithin(restore func(), d time.Duration) {
 // signal arrives, die ends the process with the signal's default action.
 // watchSignals returns when loopDone is closed, with the first signal it
 // caught (nil for none), so Run reports a signal the loop never took.
-func watchSignals(caught <-chan os.Signal, toLoop chan<- os.Signal, loopDone <-chan struct{}, restore func(), grace time.Duration, die func(os.Signal)) (first os.Signal) {
+func watchSignals(caught <-chan os.Signal, toLoop chan<- os.Signal, loopDone <-chan struct{}, restore func(), grace time.Duration, die func(os.Signal), signaled func(os.Signal)) (first os.Signal) {
 	var restoreAt, deadline <-chan time.Time
 	for {
 		select {
@@ -238,6 +329,9 @@ func watchSignals(caught <-chan os.Signal, toLoop chan<- os.Signal, loopDone <-c
 				return first
 			}
 			first = s
+			if signaled != nil {
+				signaled(s)
+			}
 			select {
 			case toLoop <- s:
 			default:
@@ -364,12 +458,14 @@ func startReader(in io.Reader, reads chan<- chunk, done <-chan struct{}) <-chan 
 // loop is Loop plus sigs: a signal stops the loop (terminal restored by the
 // deferred writes and Run's defers) and is returned as a *SignalError.
 func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, sigs <-chan os.Signal) error {
-	return a.session(in, out, size, resize, sigs, &termSession{})
+	return a.session(in, out, size, resize, sigs, &termSession{}, HostHooks{})
 }
 
 // session is loop in a terminal session sess: Run's probe, color profile,
-// synchronized output, and grapheme mode (SPEC v0.2 §26).
-func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, sigs <-chan os.Signal, sess *termSession) error {
+// synchronized output, and grapheme mode (SPEC v0.2 §26). hooks is the
+// zero HostHooks for Loop and Run (every field nil, so hostStop and the
+// Start hook never fire); RunHost passes its own (SPEC v0.3b §19.1).
+func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, sigs <-chan os.Signal, sess *termSession, hooks HostHooks) error {
 	io.WriteString(out, enterScreen)
 	defer func() { io.WriteString(out, sess.leave()) }()
 	// What the session resolved theme="auto" to is forgotten when it ends
@@ -405,6 +501,19 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// long it takes.
 	var dec decoder
 
+	// hostStop translates one HostHooks.Stop value into what the caller
+	// should return from session (SPEC v0.3b §19.1): eof records sess.eof,
+	// as the stdin-EOF paths already do, and reports it with a nil error
+	// (the session ends the same way stdin ending does); a backpressure
+	// failure is returned as an ordinary error.
+	hostStop := func(s HostStop) error {
+		if s.EOF {
+			sess.eof = true
+			return nil
+		}
+		return s.Err
+	}
+
 	// The capability probe (§26.2), once, before the first frame. Keys and
 	// pastes that arrive before it ends are queued and handled after the
 	// first frame, and so is the end of the input. The esc timeout is not
@@ -438,6 +547,8 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				break probe
 			case s := <-sigs:
 				return &SignalError{Signal: s}
+			case s := <-hooks.Stop:
+				return hostStop(s)
 			}
 		}
 	}
@@ -566,17 +677,23 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// (KeyRun). A bracketed paste is one edit too, or nothing
 	// (HandlePaste).
 	handleInputs := func(ins []Input) (stop bool, err error) {
-		signaled := func() error {
+		// signaled reports whether the loop must stop right now, and with
+		// what error: a caught stop signal, or (RunHost only, SPEC v0.3b
+		// §19.1) a pending HostHooks.Stop request, honored at the same
+		// granularity as a signal — between one input/event and the next.
+		signaled := func() (bool, error) {
 			select {
 			case s := <-sigs:
-				return &SignalError{Signal: s}
+				return true, &SignalError{Signal: s}
+			case s := <-hooks.Stop:
+				return true, hostStop(s)
 			default:
-				return nil
+				return false, nil
 			}
 		}
 		for len(ins) > 0 {
 			if ins[0].IsPaste {
-				if err := signaled(); err != nil {
+				if stop, err := signaled(); stop {
 					return true, err
 				}
 				focus := a.Focus()
@@ -593,7 +710,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			if ins[0].IsMouse {
 				// A mouse event is resolved against the live frame, in
 				// arrival order with keys and pastes (SPEC v0.2b §26.11).
-				if err := signaled(); err != nil {
+				if stop, err := signaled(); stop {
 					return true, err
 				}
 				focus := a.Focus()
@@ -614,7 +731,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			var keys []Key
 			keys, ins = a.KeyRun(ins)
 			for len(keys) > 0 {
-				if err := signaled(); err != nil {
+				if stop, err := signaled(); stop {
 					return true, err
 				}
 				focus := a.Focus()
@@ -656,6 +773,15 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			escWait = time.After(escTimeout)
 		}
 		return false, nil
+	}
+	// The session-start hook (SPEC v0.3b §19.1 step 2, "ready"): after raw
+	// mode and the probe, before the first frame.
+	if hooks.Start != nil {
+		cols, rows := size()
+		a.mu.Lock()
+		theme := a.frameTheme()
+		a.mu.Unlock()
+		hooks.Start(cols, rows, theme)
 	}
 	if err := draw(); err != nil {
 		return err
@@ -706,6 +832,8 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			}
 		case s := <-sigs:
 			return &SignalError{Signal: s}
+		case s := <-hooks.Stop:
+			return hostStop(s)
 		case <-resize:
 			// A new size can open or hide modals and move focus (@media):
 			// their on:open/on:close/on:focus run now, like after a key.

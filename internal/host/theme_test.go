@@ -315,7 +315,9 @@ func startSessionWith(t *testing.T, src string, sess *termSession, setup func(*A
 	}
 	pr, pw := io.Pipe()
 	r.in = pw
-	go func() { r.done <- a.session(pr, r.out, func() (int, int) { return 20, 6 }, nil, r.sigs, sess) }()
+	go func() {
+		r.done <- a.session(pr, r.out, func() (int, int) { return 20, 6 }, nil, r.sigs, sess, HostHooks{})
+	}()
 	t.Cleanup(func() { pw.Close() })
 	return r
 }
