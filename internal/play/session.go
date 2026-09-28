@@ -28,8 +28,9 @@ type Session struct {
 	NoHandlers bool
 	CellsFlag  bool
 	StylesFlag bool
-	// StepFrames and CollectFrames are tuimark play --frames only;
-	// tuimark.Play has no equivalent option (SPEC v0.3 §18.1 rule 9).
+	// StepFrames and CollectFrames serve both tuimark play --frames and
+	// tuimark.Play's PlayOptions.Frames (SPEC v0.3b §18.1 rule 9: --frames
+	// and Frames give the same frames, member for member).
 	StepFrames    []dump.PlayFrame
 	CollectFrames bool
 
@@ -50,9 +51,10 @@ type Session struct {
 }
 
 // NewSession builds a Session over app at cols×rows. cells/styles/frames
-// mirror the --cells/--styles/--frames flags (frames has no tuimark.Play
-// equivalent); noHandlers is PlayOptions.NoHandlers, always true for
-// tuimark play and tuimark test, which record host actions (SPEC §15.4).
+// mirror the --cells/--styles/--frames flags, and frames also mirrors
+// PlayOptions.Frames (v0.3b); noHandlers is PlayOptions.NoHandlers,
+// always true for tuimark play and tuimark test, which record host
+// actions (SPEC §15.4).
 func NewSession(app *host.App, cols, rows int, cells, styles, frames, noHandlers bool) *Session {
 	return &Session{
 		App: app, Cols: cols, Rows: rows,
