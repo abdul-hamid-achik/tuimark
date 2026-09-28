@@ -89,3 +89,16 @@ func TestGapCascadeShorthand(t *testing.T) {
 		t.Errorf("gap %d row-gap %d column-gap %d, want 2 0 2", st2.Gap, st2.RowGap, st2.ColumnGap)
 	}
 }
+
+// An out-of-range row-gap/column-gap names the property the document
+// wrote, not gap (the V003 message is the author's only pointer to the
+// declaration).
+func TestGapPropertiesBadValueNamesProperty(t *testing.T) {
+	for _, prop := range []string{"gap", "row-gap", "column-gap"} {
+		err := CheckDeclIn(prop, "7", true, true)
+		want := prop + `: bad value "7" (want one integer 0-4)`
+		if err == nil || err.Error() != want {
+			t.Errorf("%s: 7: %v, want %s", prop, err, want)
+		}
+	}
+}

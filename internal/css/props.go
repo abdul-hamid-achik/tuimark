@@ -310,7 +310,7 @@ func CheckDeclIn(prop, val string, v2, v3 bool) error {
 	case pGap:
 		n, err := strconv.Atoi(val)
 		if err != nil || n < 0 || n > 4 {
-			return fmt.Errorf("gap: bad value %q (want one integer 0-4)", val)
+			return fmt.Errorf("%s: bad value %q (want one integer 0-4)", prop, val)
 		}
 	case pBox:
 		if _, err := parseBox(val); err != nil {
