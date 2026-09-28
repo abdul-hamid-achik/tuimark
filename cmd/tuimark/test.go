@@ -13,6 +13,7 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
+	"github.com/abdul-hamid-achik/tuimark/internal/play"
 )
 
 // goldenEntry is one row of testdata/golden/manifest.json (SPEC v0.2 §15.5).
@@ -261,7 +262,7 @@ func (c *cli) cmdTest(args []string) int {
 			continue
 		}
 		hasPlay := e.Input != "" || e.Script != ""
-		var steps []playStep
+		var steps []play.Step
 		if hasPlay {
 			var perr error
 			if e.Input != "" {
@@ -333,15 +334,15 @@ func (c *cli) cmdTest(args []string) int {
 					continue
 				}
 				if hasPlay {
-					sess := newPlaySession(app, cols, rows, e.Cells, e.Styles, false)
-					sess.run(steps)
-					if sess.usageErr != nil {
-						fmt.Fprintf(c.stdout, "FAIL %s %s: play step %d (%s): %v\n", e.Name, size, sess.usageStep, sess.usageRaw, sess.usageErr)
+					sess := play.NewSession(app, cols, rows, e.Cells, e.Styles, false, false)
+					sess.Run(steps)
+					if sess.UsageErr != nil {
+						fmt.Fprintf(c.stdout, "FAIL %s %s: play step %d (%s): %v\n", e.Name, size, sess.UsageStep, sess.UsageRaw, sess.UsageErr)
 						ioErr = true
 						continue
 					}
-					d = sess.buildDump()
-					events = sess.events
+					d = sess.BuildDump()
+					events = sess.Events
 					isPlay = true
 				} else {
 					d = frameDump(app.Frame(cols, rows), e.Cells, e.Styles)
@@ -354,7 +355,7 @@ func (c *cli) cmdTest(args []string) int {
 			if isPlay {
 				var tb strings.Builder
 				tb.WriteString(dump.Text(d))
-				writeEventsSection(&tb, events)
+				play.WriteEventsSection(&tb, events)
 				gotText = tb.String()
 			} else {
 				gotText = dump.Text(d)
