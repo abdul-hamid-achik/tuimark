@@ -52,7 +52,7 @@ In Go, pass the two ends in `exec.Cmd.ExtraFiles`. In Bun (see the excerpt below
 | `get` | `id`, `path` | `Get(path)` |
 | `reply` | `seq`, optional `quit: true`, optional `error: "msg"` | answers the `event` numbered `seq` |
 
-A message that carries an `id` (a number or string you choose) gets an `ack` back; one without `id` gets nothing on success, and an `error` on failure, so no failure is silent. Messages are applied in the order they arrive from one reader, so writes sent before a `reply` are applied before that reply is processed — the frame drawn after the handler returns shows them.
+A message that carries an `id` (a number or string you choose) gets an `ack` back; one without `id` gets nothing on success, and an `error` on failure, so no failure is silent. That includes a `reply`: one with an `id` that answers the waiting event gets `{"type":"ack","id":…,"ok":true}` before the loop resumes (so it comes before the `exit` a `quit` reply leads to), and every `error` about a reply (late, for an unknown `seq`, or malformed) carries the reply's `id` when it had one, next to its `seq`. A `seq` is any JSON integer (`1`, `1.0`, and `1e0` all answer event 1); a `seq` echoed in an `error` is written exactly as you sent it. Messages are applied in the order they arrive from one reader, so writes sent before a `reply` are applied before that reply is processed — the frame drawn after the handler returns shows them.
 
 ### Child → parent (fd 4)
 
@@ -61,7 +61,7 @@ A message that carries an `id` (a number or string you choose) gets an `ack` bac
 | `ready` | `protocol`, `version`, `cols`, `rows`, `theme`, `catalog`, `diagnostics` | once, always first |
 | `event` | `seq`, `action`, `source`, `keys`, `value` | a host action fired |
 | `ack` | `id`, `ok`, optional `error`, `found`, `value` | answers a message that had an `id` |
-| `error` | `error`, optional `id` or `seq` | a malformed message, a failed write without `id`, a reply timeout, or a late/unknown reply |
+| `error` | `error`, optional `id`, optional `seq` | a malformed message, a failed write without `id`, a reply timeout, or a late/unknown reply |
 | `exit` | `reason` (`quit`, `eof`, `signal`, `error`), optional `signal`, optional `error` | once, always last |
 
 `ready` is the handshake: `protocol` is `1` (check it — a parent must stop on a value it does not know), `version` is the bare runtime version, `cols`/`rows`/`theme` are the session's starting size and resolved theme, `catalog` lists every action the document names (the same shape as `Catalog()`), and `diagnostics` holds the document's static problems.

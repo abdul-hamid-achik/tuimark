@@ -716,7 +716,10 @@ func TestHostProtocolEvents(t *testing.T) {
 		if strings.Contains(r.screen.String(), "REPLIED") {
 			t.Fatal("a frame was drawn while the handler waited for its reply")
 		}
-		r.send(t, map[string]any{"type": "reply", "seq": 1})
+		// A reply that carries an id is acked, like every message with an
+		// id (§19.1 "Acks"; test 103).
+		r.send(t, map[string]any{"type": "reply", "id": "rep", "seq": 1})
+		r.waitRaw(t, i, `{"type":"ack","id":"rep","ok":true}`)
 		if !r.waitFor(r.screen, "REPLIED", 5*slowdown*time.Second) {
 			t.Fatalf("the write sent before the reply never showed; %s", r.describe())
 		}
@@ -728,7 +731,6 @@ func TestHostProtocolEvents(t *testing.T) {
 		if n := countType(r.snapshot(), "error"); n != 0 {
 			t.Errorf("%d error messages; %s", n, r.describe())
 		}
-		_ = i
 	})
 
 	for _, c := range []struct {
@@ -740,6 +742,7 @@ func TestHostProtocolEvents(t *testing.T) {
 		{"quit reply", map[string]any{"type": "reply", "seq": 1, "quit": true}, `{"type":"exit","reason":"quit"}`, 0},
 		{"error reply", map[string]any{"type": "reply", "seq": 1, "error": "boom"}, `{"type":"exit","reason":"error","error":"boom"}`, 1},
 		{"error wins over quit", map[string]any{"type": "reply", "seq": 1, "quit": true, "error": "both"}, `{"type":"exit","reason":"error","error":"both"}`, 1},
+		{"quit reply with an id", map[string]any{"type": "reply", "id": 5, "seq": 1, "quit": true}, `{"type":"exit","reason":"quit"}`, 0},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			r := startHostApp(t, hostOpts{}, file, data)
@@ -751,6 +754,16 @@ func TestHostProtocolEvents(t *testing.T) {
 			}
 			r.assertLast(t, c.exit)
 			r.assertRestored(t)
+			// The ack of a reply with an id comes right before the exit it
+			// leads to; a reply without one is not acked.
+			lines := r.snapshot()
+			if _, ok := c.reply["id"]; ok {
+				if len(lines) < 2 || lines[len(lines)-2].raw != `{"type":"ack","id":5,"ok":true}` {
+					t.Errorf("no ack right before the exit; %s", r.describe())
+				}
+			} else if n := countType(lines, "ack"); n != 0 {
+				t.Errorf("%d acks for a reply without an id; %s", n, r.describe())
+			}
 		})
 	}
 
@@ -775,10 +788,13 @@ func TestHostProtocolEvents(t *testing.T) {
 		}
 		r.send(t, map[string]any{"type": "reply", "seq": 99})
 		var unknown hostLine
-		_, unknown = r.waitMsg(t, i, ofType("error"))
+		i, unknown = r.waitMsg(t, i, ofType("error"))
 		if unknown.m["seq"] != float64(99) {
 			t.Errorf("reply for an unknown seq got %s", unknown.raw)
 		}
+		// With an id, the error about a reply echoes it next to the seq.
+		r.send(t, map[string]any{"type": "reply", "id": "late", "seq": 2})
+		r.waitRaw(t, i, `{"type":"error","id":"late","seq":2,"error":"reply after the reply timeout"}`)
 		if !r.alive() {
 			t.Fatalf("a late quit reply ended the session; %s", r.describe())
 		}
