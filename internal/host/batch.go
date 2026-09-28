@@ -91,9 +91,11 @@ func (b *Batch) fail(err error) error {
 
 // batchSnap is the runtime state a queued write can change, besides the
 // store, for Batch's all-or-nothing apply: the reserved-path fields
-// "@focus"/"@screen" (requestFocus/switchScreen) and "@theme" touch.
-// Each is reassigned wholesale, never mutated in place, so a plain save
-// of their values is enough to undo them (unlike the store: see
+// "@focus"/"@screen" (requestFocus/switchScreen) and "@theme" touch, and
+// the remembered tabs of unbound tabs, which a "@focus" into an inactive
+// tab writes in place (openTabsFor), so the map is copied. The other
+// fields are reassigned wholesale, never mutated in place, so a plain
+// save of their values is enough to undo them (unlike the store: see
 // applyBatch). The caller holds a.mu.
 type batchSnap struct {
 	hostTheme string
@@ -101,14 +103,16 @@ type batchSnap struct {
 	focusInit bool
 	screen    int
 	focusReq  *focusRequest
+	tabMem    map[string]string
 }
 
 func (a *App) snapForBatch() batchSnap {
-	return batchSnap{a.hostTheme, a.focus, a.focusInit, a.screen, a.focusReq}
+	return batchSnap{a.hostTheme, a.focus, a.focusInit, a.screen, a.focusReq, copyStrings(a.tabMem)}
 }
 
 func (a *App) restoreBatchSnap(s batchSnap) {
 	a.hostTheme, a.focus, a.focusInit, a.screen, a.focusReq = s.hostTheme, s.focus, s.focusInit, s.screen, s.focusReq
+	a.tabMem = s.tabMem
 }
 
 // applyBatch applies writes in order, atomically, under one lock

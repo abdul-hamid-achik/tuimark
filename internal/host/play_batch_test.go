@@ -1,6 +1,7 @@
 package host
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -73,4 +74,37 @@ func TestEnterPlayWhileRunLoopIsActive(t *testing.T) {
 		t.Fatalf("EnterPlay after the loop ended: %v", err)
 	}
 	rig.app.ExitPlay()
+}
+
+// A failed batch also undoes the tab a "@focus" into an inactive, unbound
+// tab remembered (openTabsFor writes tabMem in place), so the first tab
+// stays active (SPEC v0.3 §18.1 Batch: nothing applied).
+func TestFailedBatchKeepsRememberedTab(t *testing.T) {
+	a, err := Parse(strings.NewReader(`<tui version="2">
+  <screen id="s">
+    <tabs id="t">
+      <tab id="one" label="one"><text>first tab</text></tab>
+      <tab id="two" label="two"><input id="x"/></tab>
+    </tabs>
+  </screen>
+</tui>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Bind("", map[string]any{"a": "text"}); err != nil {
+		t.Fatal(err)
+	}
+	err = a.Batch(func(b *Batch) error {
+		if err := b.Set("@focus", "#x"); err != nil {
+			return err
+		}
+		return b.Set("a.b", 1) // "a" is a string: fails when applied
+	})
+	if err == nil {
+		t.Fatal("the batch applied a write through a string")
+	}
+	grid := strings.Join(a.Dump(40, 5, false).Grid, "\n")
+	if !strings.Contains(grid, "first tab") {
+		t.Fatalf("the failed batch left tab two active:\n%s", grid)
+	}
 }
