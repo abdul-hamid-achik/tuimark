@@ -30,7 +30,7 @@ func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) // 0.
 func (a *App) Run(w io.Writer) error
 ```
 
-That is the whole surface, plus the types they use: `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, `ErrQuit`, and, since 0.3, `Batch`, `PlayOptions`, `PlayEvent`, and `PlayResult`.
+That is the whole surface, plus the types they use: `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, `ErrQuit`, and, since 0.3, `Batch`, `PlayOptions`, `PlayEvent`, `PlayResult`, and, since 0.3b, `PlayFrame`.
 
 ## Loading
 
@@ -78,6 +78,23 @@ err := ui.Batch(func(b *tuimark.Batch) error {
 ```
 
 The writes are applied together and in order, and they cause a single redraw. If any of them fails, or `fn` returns an error, none is applied. `fn` runs without holding the app's lock, so it can call `Get` to compute what to write.
+
+**The returned error (0.3b).** When something fails, `Batch` returns every part joined with [`errors.Join`](https://pkg.go.dev/errors#Join): first each failed `Set`'s own error, in call order, then `fn`'s own error, unless it is the same error as one already listed. The result is always a joined value, even for one failure, so `err == someSentinel` and a type switch on `err` no longer match — this changed in 0.3b and is a behavior break for code written against 0.3 or earlier. Use `errors.Is`/`errors.As` to test for a specific error, and `err.(interface{ Unwrap() []error }).Unwrap()` (or a plain range over `errors.Join`'s result) to walk every part:
+
+```go
+var errBudget = errors.New("over budget")
+
+err := ui.Batch(func(b *tuimark.Batch) error {
+	if cpu > limit {
+		return errBudget
+	}
+	return b.Set("cpu", cpu)
+})
+if errors.Is(err, errBudget) { // still finds it, wrapped inside the join
+	…
+}
+// err == errBudget no longer holds, even when errBudget was fn's only error.
+```
 
 ### Reserved paths
 
@@ -183,6 +200,17 @@ if err != nil {
 - Every call starts by rendering and settling what changed since the last one, so `ui.Play(opts)` with no steps picks up writes a handler made from another goroutine.
 - With `NoHandlers: true` on a freshly loaded app, `Play` gives exactly what `tuimark play` prints. The CLI and `Play` share one engine.
 - `Play` and `Run` exclude each other: calling one while the other is active returns an error.
+
+**Frame-by-frame (0.3b).** `PlayOptions.Frames: true` makes `Play` also fill `PlayResult.Frames` with one `PlayFrame` per applied step, step 0 (the live frame before any step) included:
+
+```go
+res, err := ui.Play(tuimark.PlayOptions{Cols: 100, Rows: 30, Frames: true}, "/", "text:cpu", "enter")
+for _, f := range res.Frames {
+	fmt.Printf("step %d %q: %d events\n", f.Step, f.Input, len(f.Events))
+}
+```
+
+Each `PlayFrame` is `{Step, Input, Events, Dump}`: `Step` is the step's number, `Input` is the step's text as given (`""` for step 0), `Events` holds only the events that step fired, and `Dump` is that step's settled frame — built with `Styles`/`Cells` exactly as `PlayResult.Dump` is. A step that ends the call (a quit, or a handler error) still gets an entry, holding the event that ended it; a step that could not be applied does not. This is the same data `tuimark play --frames` prints, member for member. Without `Frames`, `PlayResult.Frames` is `nil` and nothing extra is built.
 
 ## Run
 

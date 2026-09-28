@@ -574,6 +574,8 @@ tuimark agents
 tuimark test     [DIR] [--update] [--allow-breaking]
 tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                       [--theme dark|light] [--strict] [--json]
+tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
+tuimark mcp
 tuimark version
 ```
 
@@ -622,6 +624,18 @@ tuimark version
   with `go run ./cmd/tuimark agents --repo > AGENTS.md`).
 - `test` runs the golden dump comparisons driven by
   `testdata/golden/manifest.json` (below).
+- `host` (0.3b) runs a document in the terminal for a parent process in any
+  language: the terminal stays on fd 0/1/2 as with `Run()`, the parent
+  writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 and reads
+  `ready`/`event`/`ack`/`error`/`exit` JSON lines from fd 4. POSIX only
+  (a usage error on Windows). See the [host protocol
+  guide](https://tuimark.vercel.app/guide/host-protocol) and
+  `examples/host-ts` for a Bun parent.
+- `mcp` (0.3b) is a Model Context Protocol server on stdin/stdout (JSON-RPC,
+  stdlib only) exposing `validate`, `dump`, `play`, `inspect`, and the
+  `agents` briefing as five read-only tools, for an agent that reaches
+  Tuimark through an MCP gateway instead of a shell. See the [MCP server
+  guide](https://tuimark.vercel.app/guide/mcp).
 - `version` (also `--version` or `-v`) prints `tuimark 0.2.0`; release
   builds add the commit and build date, as in `tuimark 0.2.0 (commit
   abc1234, built 2026-09-27T12:00:00Z)`.

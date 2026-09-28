@@ -146,6 +146,8 @@ export default defineConfig({
             { text: 'Dumps and tools', link: '/guide/tools' },
             { text: 'Go API', link: '/guide/go-api' },
             { text: 'Testing', link: '/guide/testing' },
+            { text: 'Host protocol', link: '/guide/host-protocol' },
+            { text: 'MCP server', link: '/guide/mcp' },
           ],
         },
         {
