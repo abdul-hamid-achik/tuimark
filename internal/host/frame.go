@@ -2,6 +2,7 @@ package host
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -12,6 +13,14 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/paint"
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
+
+// stickBottom reports whether n has stick="bottom" (SPEC v0.3b §6.2,
+// §11.4); any other written value is invalid (V003, parse) and never
+// sticks here.
+func stickBottom(n *ir.Node) bool {
+	v, ok := n.Attr("stick")
+	return ok && v == "bottom"
+}
 
 // Frame is one rendered frame.
 type Frame struct {
@@ -389,6 +398,11 @@ func (a *App) rememberScroll(b *layout.Box, keyed bool) {
 			a.scrolls[k] = [2]int{b.ScrollX, b.ScrollY}
 		}
 	}
+	if a.doc.V3 && b.Kind == "scroll" && b.ID != "" && b.Axis != "x" && b.Src != nil && stickBottom(b.Src) {
+		// This frame's maximum y offset, for the stick rule the next live
+		// frame applies (SPEC v0.3b §11.4).
+		a.stickMax[b.ID] = max(0, b.ContentH-b.Content.H)
+	}
 	if keyed && b.Scrolls() && b.Kind != "list" && b.Kind != "table" {
 		if k, byID := offsetKey(b); !byID {
 			if _, ok := a.scrolls[k]; ok {
@@ -643,8 +657,22 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	// not computed yet, so restore whatever was remembered for this id. A
 	// viewport without one gets its offset before layout
 	// (restoreKeyedOffsets).
-	if off, ok := a.scrolls[n.ID]; ok && n.ID != "" && !inItem {
+	off, hadOff := a.scrolls[n.ID]
+	if hadOff && n.ID != "" && !inItem {
 		b.ScrollX, b.ScrollY = off[0], off[1]
+	}
+	if n.ID != "" && !inItem && a.doc.V3 && n.Kind == "scroll" && b.Axis != "x" && stickBottom(n) {
+		// stick="bottom" (SPEC v0.3b §11.4): let o be the offset this
+		// frame brings in (off, or 0 with no previous frame) and M' the
+		// previous live frame's maximum (a.stickMax). When there is none
+		// yet, or o >= M', this frame pins to the end: setting the
+		// incoming offset past any real maximum makes layout's own clamp
+		// (scrollLayout) land exactly on it, without knowing it in
+		// advance. Otherwise o is left as already set above (or 0),
+		// which is what stays put while the content grows.
+		if m, hadMax := a.stickMax[n.ID]; !hadMax || off[1] >= m {
+			b.ScrollY = math.MaxInt
+		}
 	}
 	if n.Kind == "list" {
 		fb.inflateList(n, b, sc)
@@ -1216,6 +1244,15 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 		if fb.rc != nil && fb.rc.initial && len(fb.modals) == 0 {
 			a.focus = initialTabFocus(root, list)
 		}
+		// A modal's own focus= (version="3", SPEC v0.3b §8.3) is also the
+		// fallback here: it is the target when a new top modal has no
+		// prior focus inside it, and when the focused node inside an
+		// already-open modal is lost. Without focus=, or when its target
+		// cannot take focus now, the first entry of the cycle below is
+		// used, as before.
+		if a.focus == "" && len(fb.modals) > 0 {
+			a.focus = modalFocusTarget(fb.modals[len(fb.modals)-1], list)
+		}
 		if a.focus == "" {
 			a.focus = list[0].ID
 		}
@@ -1229,6 +1266,28 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 		return true
 	}
 	return false
+}
+
+// modalFocusTarget returns the id modal m's own focus="#id" names (SPEC
+// v0.3b §8.3), when it can take focus in this frame: a member of list, the
+// modal's focus cycle. "" without focus=, or when its target cannot take
+// focus now (not laid out, hidden, disabled, or not focusable) — the
+// caller then falls back to the first entry of the cycle, as without the
+// attribute.
+func modalFocusTarget(m *layout.Box, list []*layout.Box) string {
+	if m.Src == nil {
+		return ""
+	}
+	f, ok := m.Src.Attr("focus")
+	if !ok || len(f) < 2 {
+		return ""
+	}
+	for _, b := range list {
+		if b.ID == f[1:] {
+			return b.ID
+		}
+	}
+	return ""
 }
 
 func (a *App) currentScreenFocus() (string, bool) {

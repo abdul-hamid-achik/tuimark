@@ -66,8 +66,21 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 	kids := make([]*layout.Box, 0, len(visible)+1)
 	for _, v := range visible {
 		full, _ := v.Src.Attr("label")
-		// S(t) is short when it is not empty, else the label (§6.10.4).
 		short, ok := v.Src.Attr("short")
+		if fb.a.doc.V3 {
+			// label and short are templates in version="3" (SPEC v0.3b
+			// §6.10.4, §7): resolved every frame against the store (a
+			// tabs is never inside an each template or a list item, so no
+			// alias is in scope), each LF the resolved value brings
+			// becomes a space, since a label is one row.
+			sc := fb.tabsScope(t)
+			full = oneLineLabel(fb.interp(v.Src, full, sc))
+			if ok {
+				short = oneLineLabel(fb.interp(v.Src, short, sc))
+			}
+		}
+		// S(t) is short when it is not empty, else the label (§6.10.4);
+		// in version="3" this is judged after resolving.
 		if !ok || short == "" {
 			short = full
 		}
@@ -98,6 +111,12 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 		kids = append(kids, active)
 	}
 	t.Children = kids
+}
+
+// oneLineLabel turns each LF a resolved tab label or short brings into a
+// space (SPEC v0.3b §6.10.4: "A label is one row").
+func oneLineLabel(s string) string {
+	return strings.ReplaceAll(s, "\n", " ")
 }
 
 // pickTab returns the active tab of tabs t among its visible tabs (SPEC
