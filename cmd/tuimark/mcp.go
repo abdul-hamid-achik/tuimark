@@ -24,7 +24,9 @@ import (
 	"io"
 	"math"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/play"
@@ -42,6 +44,11 @@ func (c *cli) cmdMCP(args []string) int {
 	if len(pos) != 0 {
 		return c.fail(fmt.Errorf("tuimark mcp: takes no arguments"))
 	}
+	// A client that closes its end of stdout must end the server with exit
+	// 1 and a "tuimark: " line (§15.8 "End"), not with the SIGPIPE death
+	// the Go runtime gives a broken pipe on fd 1 by default: with SIGPIPE
+	// ignored, the write returns EPIPE instead.
+	signal.Ignore(syscall.SIGPIPE)
 	return runMCPServer(os.Stdin, c.stdout, c.stderr)
 }
 
