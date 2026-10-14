@@ -11,6 +11,9 @@
     "gen": "node scripts/generate.mjs",
     "gen:check": "node scripts/generate.mjs --check"
   },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  },
   "devDependencies": {
     "@fontsource-variable/geist": "5.3.0",
     "@fontsource-variable/jetbrains-mono": "5.3.0",
