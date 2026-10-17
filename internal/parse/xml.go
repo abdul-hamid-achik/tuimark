@@ -157,10 +157,17 @@ func (s *scanner) name() string {
 // ParseXML tokenizes src into a lossless tree. It returns the single root
 // element plus any comments that surround it (for fmt).
 func ParseXML(src []byte) (root *RawNode, prolog, epilog []*RawNode, err *SyntaxError) {
+	root, _, prolog, epilog, err = parseXMLDecl(src)
+	return root, prolog, epilog, err
+}
+
+// parseXMLDecl is ParseXML that also returns the XML declaration exactly as
+// written ("" when there is none), which Format re-emits as its first line.
+func parseXMLDecl(src []byte) (root *RawNode, decl string, prolog, epilog []*RawNode, err *SyntaxError) {
 	text := string(src)
 	text = strings.TrimPrefix(text, "\ufeff")
 	if !utf8.ValidString(text) {
-		return nil, nil, nil, &SyntaxError{Line: 1, Col: 1, Msg: "document is not valid UTF-8"}
+		return nil, "", nil, nil, &SyntaxError{Line: 1, Col: 1, Msg: "document is not valid UTF-8"}
 	}
 	// XML 1.0 §2.11 end-of-line handling: CRLF and a lone CR (one not
 	// followed by LF) are both a single LF. CRLF goes first so it does not
@@ -171,16 +178,18 @@ func ParseXML(src []byte) (root *RawNode, prolog, epilog []*RawNode, err *Syntax
 
 	// Prolog: optional XML declaration, whitespace, comments.
 	if s.has("<?xml") && (len(s.src) > 5 && (isXMLSpaceByte(s.src[5]) || s.src[5] == '?')) {
+		start := s.pos
 		if err := s.xmlDecl(); err != nil {
-			return nil, nil, nil, err
+			return nil, "", nil, nil, err
 		}
+		decl = s.src[start:s.pos]
 	}
 	for {
 		s.skipSpace()
 		if s.has("<!--") {
 			c, err := s.comment()
 			if err != nil {
-				return nil, nil, nil, err
+				return nil, "", nil, nil, err
 			}
 			prolog = append(prolog, c)
 			continue
@@ -188,14 +197,14 @@ func ParseXML(src []byte) (root *RawNode, prolog, epilog []*RawNode, err *Syntax
 		break
 	}
 	if s.eof() {
-		return nil, nil, nil, s.errf(s.line, s.col, "document has no root element")
+		return nil, "", nil, nil, s.errf(s.line, s.col, "document has no root element")
 	}
 	if s.peek() != '<' {
-		return nil, nil, nil, s.errf(s.line, s.col, "text before the root element")
+		return nil, "", nil, nil, s.errf(s.line, s.col, "text before the root element")
 	}
 	root, err = s.element()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, "", nil, nil, err
 	}
 	for {
 		s.skipSpace()
@@ -205,17 +214,22 @@ func ParseXML(src []byte) (root *RawNode, prolog, epilog []*RawNode, err *Syntax
 		if s.has("<!--") {
 			c, err := s.comment()
 			if err != nil {
-				return nil, nil, nil, err
+				return nil, "", nil, nil, err
 			}
 			epilog = append(epilog, c)
 			continue
 		}
 		if s.peek() == '<' {
-			return nil, nil, nil, s.errf(s.line, s.col, "a document must have a single root element")
+			// A DOCTYPE, processing instruction, or declaration after the
+			// root gets the message it gets anywhere else.
+			if err := s.markupError(); err != nil {
+				return nil, "", nil, nil, err
+			}
+			return nil, "", nil, nil, s.errf(s.line, s.col, "a document must have a single root element")
 		}
-		return nil, nil, nil, s.errf(s.line, s.col, "text after the root element")
+		return nil, "", nil, nil, s.errf(s.line, s.col, "text after the root element")
 	}
-	return root, prolog, epilog, nil
+	return root, decl, prolog, epilog, nil
 }
 
 // xmlDecl parses the optional declaration '<?xml' VersionInfo EncodingDecl?
@@ -519,6 +533,39 @@ func (s *scanner) element() (*RawNode, *SyntaxError) {
 	}
 }
 
+// isEntityName reports whether s is a plain entity name, [A-Za-z][A-Za-z0-9]*.
+func isEntityName(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || (i > 0 && c >= '0' && c <= '9')) {
+			return false
+		}
+	}
+	return s != ""
+}
+
+// isCharRef reports whether s (the text between '&' and ';') is a numeric
+// character reference body: #[0-9]+ or #x[0-9A-Fa-f]+.
+func isCharRef(s string) bool {
+	if len(s) < 2 || s[0] != '#' {
+		return false
+	}
+	digits, hex := s[1:], false
+	if digits[0] == 'x' {
+		digits, hex = digits[1:], true
+	}
+	if digits == "" {
+		return false
+	}
+	for i := 0; i < len(digits); i++ {
+		c := digits[i]
+		if !(c >= '0' && c <= '9' || hex && (c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F')) {
+			return false
+		}
+	}
+	return true
+}
+
 var entities = map[string]string{"lt": "<", "gt": ">", "amp": "&", "quot": `"`, "apos": "'"}
 
 // decodeEntities resolves the five predefined entities and rejects anything
@@ -538,6 +585,11 @@ func decodeEntities(raw string, line, col int) (string, *SyntaxError) {
 			}
 			name := raw[i+1 : i+end]
 			rep, ok := entities[name]
+			if !ok && !isEntityName(name) && !isCharRef(name) {
+				// `a & b; c`: the text up to the next ';' is not an entity
+				// reference at all, so the '&' is a bare one.
+				return "", &SyntaxError{Line: l, Col: c, Msg: "bare '&' (write &amp;)"}
+			}
 			if !ok {
 				return "", &SyntaxError{Line: l, Col: c, Msg: fmt.Sprintf("entity &%s; is not allowed (only &lt; &gt; &amp; &quot; &apos;)", name)}
 			}
