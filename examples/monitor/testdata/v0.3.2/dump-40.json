@@ -1,0 +1,1222 @@
+{
+  "cols": 40,
+  "rows": 24,
+  "ok": true,
+  "focus": "procs",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "studio",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 24
+    },
+    {
+      "id": "app",
+      "tag": "col",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 24
+    },
+    {
+      "id": "identity",
+      "tag": "row",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 9,
+      "h": 1,
+      "text": "◆ monitor",
+      "classes": [
+        "brand"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 10,
+      "y": 0,
+      "w": 9,
+      "h": 1,
+      "text": "studio-01",
+      "classes": [
+        "muted"
+      ]
+    },
+    {
+      "tag": "spacer",
+      "x": 20,
+      "y": 0,
+      "w": 4,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 25,
+      "y": 0,
+      "w": 6,
+      "h": 1,
+      "text": "● LIVE",
+      "classes": [
+        "status",
+        "live"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 32,
+      "y": 0,
+      "w": 8,
+      "h": 1,
+      "text": "12:00:00",
+      "classes": [
+        "muted"
+      ]
+    },
+    {
+      "id": "nav",
+      "tag": "tabs",
+      "x": 0,
+      "y": 1,
+      "w": 40,
+      "h": 22
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 16,
+      "h": 1,
+      "text": "‹ 7 processes ›",
+      "key": "processes",
+      "selected": true,
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "id": "processes",
+      "tag": "tab",
+      "x": 0,
+      "y": 2,
+      "w": 40,
+      "h": 21
+    },
+    {
+      "tag": "col",
+      "x": 0,
+      "y": 2,
+      "w": 40,
+      "h": 21,
+      "classes": [
+        "pane"
+      ]
+    },
+    {
+      "id": "procs",
+      "tag": "table",
+      "x": 0,
+      "y": 2,
+      "w": 40,
+      "h": 21,
+      "focused": true,
+      "scroll": {
+        "y": 0,
+        "h": 40
+      }
+    },
+    {
+      "id": "c-pid",
+      "tag": "column",
+      "x": 3,
+      "y": 3,
+      "w": 7,
+      "h": 1,
+      "text": "PID",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "id": "c-name",
+      "tag": "column",
+      "x": 11,
+      "y": 3,
+      "w": 11,
+      "h": 1,
+      "text": "NAME"
+    },
+    {
+      "id": "c-cpu",
+      "tag": "column",
+      "x": 23,
+      "y": 3,
+      "w": 7,
+      "h": 1,
+      "text": "CPU%▼",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "id": "c-mem",
+      "tag": "column",
+      "x": 31,
+      "y": 3,
+      "w": 8,
+      "h": 1,
+      "text": "MEM",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 4,
+      "w": 38,
+      "h": 1,
+      "key": "412",
+      "selected": true
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 4,
+      "w": 7,
+      "h": 1,
+      "text": "412",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 4,
+      "w": 11,
+      "h": 1,
+      "text": "WindowServer"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 4,
+      "w": 7,
+      "h": 1,
+      "text": "87.3",
+      "classes": [
+        "num",
+        "hot"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 4,
+      "w": 8,
+      "h": 1,
+      "text": "1.4G",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 5,
+      "w": 38,
+      "h": 1,
+      "key": "0"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 5,
+      "w": 7,
+      "h": 1,
+      "text": "0",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 5,
+      "w": 11,
+      "h": 1,
+      "text": "kernel_task"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 5,
+      "w": 7,
+      "h": 1,
+      "text": "64.0",
+      "classes": [
+        "num",
+        "hot"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 5,
+      "w": 8,
+      "h": 1,
+      "text": "2.1G",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 6,
+      "w": 38,
+      "h": 1,
+      "key": "8810"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 6,
+      "w": 7,
+      "h": 1,
+      "text": "8810",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 6,
+      "w": 11,
+      "h": 1,
+      "text": "Code Helper (Renderer)"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 6,
+      "w": 7,
+      "h": 1,
+      "text": "41.8",
+      "classes": [
+        "num",
+        "hot"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 6,
+      "w": 8,
+      "h": 1,
+      "text": "904M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 7,
+      "w": 38,
+      "h": 1,
+      "key": "4242"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 7,
+      "w": 7,
+      "h": 1,
+      "text": "4242",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 7,
+      "w": 11,
+      "h": 1,
+      "text": "微信"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 7,
+      "w": 7,
+      "h": 1,
+      "text": "25.6",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 7,
+      "w": 8,
+      "h": 1,
+      "text": "612M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 8,
+      "w": 38,
+      "h": 1,
+      "key": "9921"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 8,
+      "w": 7,
+      "h": 1,
+      "text": "9921",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 8,
+      "w": 11,
+      "h": 1,
+      "text": "node"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 8,
+      "w": 7,
+      "h": 1,
+      "text": "18.2",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 8,
+      "w": 8,
+      "h": 1,
+      "text": "388M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 9,
+      "w": 38,
+      "h": 1,
+      "key": "3377"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 9,
+      "w": 7,
+      "h": 1,
+      "text": "3377",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 9,
+      "w": 11,
+      "h": 1,
+      "text": "🦊 firefox"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 9,
+      "w": 7,
+      "h": 1,
+      "text": "12.9",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 9,
+      "w": 8,
+      "h": 1,
+      "text": "1.1G",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 10,
+      "w": 38,
+      "h": 1,
+      "key": "15023"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 10,
+      "w": 7,
+      "h": 1,
+      "text": "15023",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 10,
+      "w": 11,
+      "h": 1,
+      "text": "go"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 10,
+      "w": 7,
+      "h": 1,
+      "text": "9.7",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 10,
+      "w": 8,
+      "h": 1,
+      "text": "221M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 11,
+      "w": 38,
+      "h": 1,
+      "key": "1",
+      "classes": [
+        "blocked"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 11,
+      "w": 7,
+      "h": 1,
+      "text": "1",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 11,
+      "w": 11,
+      "h": 1,
+      "text": "launchd"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 11,
+      "w": 7,
+      "h": 1,
+      "text": "8.4",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 11,
+      "w": 8,
+      "h": 1,
+      "text": "44M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 12,
+      "w": 38,
+      "h": 1,
+      "key": "702"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 12,
+      "w": 7,
+      "h": 1,
+      "text": "702",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 12,
+      "w": 11,
+      "h": 1,
+      "text": "mds_stores"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 12,
+      "w": 7,
+      "h": 1,
+      "text": "7.1",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 12,
+      "w": 8,
+      "h": 1,
+      "text": "130M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 13,
+      "w": 38,
+      "h": 1,
+      "key": "1330"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 13,
+      "w": 7,
+      "h": 1,
+      "text": "1330",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 13,
+      "w": 11,
+      "h": 1,
+      "text": "com.apple.WebKit.WebContent.xpc-service (monitorcli.dev)"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 13,
+      "w": 7,
+      "h": 1,
+      "text": "6.6",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 13,
+      "w": 8,
+      "h": 1,
+      "text": "498M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 14,
+      "w": 38,
+      "h": 1,
+      "key": "611"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 14,
+      "w": 7,
+      "h": 1,
+      "text": "611",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 14,
+      "w": 11,
+      "h": 1,
+      "text": "coreaudiod"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 14,
+      "w": 7,
+      "h": 1,
+      "text": "5.2",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 14,
+      "w": 8,
+      "h": 1,
+      "text": "27M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 15,
+      "w": 38,
+      "h": 1,
+      "key": "2210"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 15,
+      "w": 7,
+      "h": 1,
+      "text": "2210",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 15,
+      "w": 11,
+      "h": 1,
+      "text": "Slack Helper (GPU)"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 15,
+      "w": 7,
+      "h": 1,
+      "text": "4.9",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 15,
+      "w": 8,
+      "h": 1,
+      "text": "310M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 16,
+      "w": 38,
+      "h": 1,
+      "key": "18841"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 16,
+      "w": 7,
+      "h": 1,
+      "text": "18841",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 16,
+      "w": 11,
+      "h": 1,
+      "text": "tuimark"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 16,
+      "w": 7,
+      "h": 1,
+      "text": "4.3",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 16,
+      "w": 8,
+      "h": 1,
+      "text": "19M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 17,
+      "w": 38,
+      "h": 1,
+      "key": "530"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 17,
+      "w": 7,
+      "h": 1,
+      "text": "530",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 17,
+      "w": 11,
+      "h": 1,
+      "text": "bluetoothd"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 17,
+      "w": 7,
+      "h": 1,
+      "text": "3.8",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 17,
+      "w": 8,
+      "h": 1,
+      "text": "14M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 18,
+      "w": 38,
+      "h": 1,
+      "key": "7015"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 18,
+      "w": 7,
+      "h": 1,
+      "text": "7015",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 18,
+      "w": 11,
+      "h": 1,
+      "text": "Terminal"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 18,
+      "w": 7,
+      "h": 1,
+      "text": "3.4",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 18,
+      "w": 8,
+      "h": 1,
+      "text": "166M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 19,
+      "w": 38,
+      "h": 1,
+      "key": "988"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 19,
+      "w": 7,
+      "h": 1,
+      "text": "988",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 19,
+      "w": 11,
+      "h": 1,
+      "text": "cloudd"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 19,
+      "w": 7,
+      "h": 1,
+      "text": "2.9",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 19,
+      "w": 8,
+      "h": 1,
+      "text": "58M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 20,
+      "w": 38,
+      "h": 1,
+      "key": "1502"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 20,
+      "w": 7,
+      "h": 1,
+      "text": "1502",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 20,
+      "w": 11,
+      "h": 1,
+      "text": "Spotlight"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 20,
+      "w": 7,
+      "h": 1,
+      "text": "2.5",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 20,
+      "w": 8,
+      "h": 1,
+      "text": "72M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 21,
+      "w": 38,
+      "h": 1,
+      "key": "3190"
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 21,
+      "w": 7,
+      "h": 1,
+      "text": "3190",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 11,
+      "y": 21,
+      "w": 11,
+      "h": 1,
+      "text": "Docker Desktop"
+    },
+    {
+      "tag": "text",
+      "x": 23,
+      "y": 21,
+      "w": 7,
+      "h": 1,
+      "text": "2.2",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 31,
+      "y": 21,
+      "w": 8,
+      "h": 1,
+      "text": "702M",
+      "classes": [
+        "num"
+      ]
+    },
+    {
+      "id": "keys",
+      "tag": "hints",
+      "x": 0,
+      "y": 23,
+      "w": 40,
+      "h": 1
+    },
+    {
+      "tag": "row",
+      "x": 0,
+      "y": 23,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 23,
+      "w": 1,
+      "h": 1,
+      "text": "q",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 2,
+      "y": 23,
+      "w": 4,
+      "h": 1,
+      "text": "quit",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 8,
+      "y": 23,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 8,
+      "y": 23,
+      "w": 1,
+      "h": 1,
+      "text": "?",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 10,
+      "y": 23,
+      "w": 4,
+      "h": 1,
+      "text": "help",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 16,
+      "y": 23,
+      "w": 8,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 16,
+      "y": 23,
+      "w": 3,
+      "h": 1,
+      "text": "1-9",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 20,
+      "y": 23,
+      "w": 4,
+      "h": 1,
+      "text": "tabs",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 26,
+      "y": 23,
+      "w": 7,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 26,
+      "y": 23,
+      "w": 1,
+      "h": 1,
+      "text": "p",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 28,
+      "y": 23,
+      "w": 5,
+      "h": 1,
+      "text": "pause",
+      "classes": [
+        "hint-label"
+      ]
+    }
+  ],
+  "grid": [
+    "◆ monitor studio-01      ● LIVE 12:00:00",
+    "▸‹ 7 processes ›                        ",
+    "╭──────────────────────────────────────╮",
+    "│      PID NAME          CPU%▼      MEM┃",
+    "│      412 WindowServ…    87.3     1.4G┃",
+    "│        0 kernel_task    64.0     2.1G┃",
+    "│     8810 Code Helpe…    41.8     904M┃",
+    "│     4242 微信           25.6     612M┃",
+    "│     9921 node           18.2     388M┃",
+    "│     3377 🦊 firefox     12.9     1.1G┃",
+    "│    15023 go              9.7     221M┃",
+    "│        1 launchd         8.4      44M│",
+    "│      702 mds_stores      7.1     130M│",
+    "│     1330 com.apple.…     6.6     498M│",
+    "│      611 coreaudiod      5.2      27M│",
+    "│     2210 Slack Help…     4.9     310M│",
+    "│    18841 tuimark         4.3      19M│",
+    "│      530 bluetoothd      3.8      14M│",
+    "│     7015 Terminal        3.4     166M│",
+    "│      988 cloudd          2.9      58M│",
+    "│     1502 Spotlight       2.5      72M│",
+    "│     3190 Docker Des…     2.2     702M│",
+    "╰──────────────────────────────────────╯",
+    "q quit  ? help  1-9 tabs  p pause       "
+  ],
+  "wide": true
+}
