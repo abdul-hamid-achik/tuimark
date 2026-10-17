@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 )
@@ -374,6 +375,83 @@ func TestRunReloadData(t *testing.T) {
 	}
 	if _, ok := r.reload(true); ok {
 		t.Error("a reload with bad --data succeeded")
+	}
+}
+
+// writeAtomic replaces path's content in one rename, so the watcher never
+// reads half a file.
+func writeAtomic(t *testing.T, path, content string) {
+	t.Helper()
+	tmp := path + ".new"
+	if err := os.WriteFile(tmp, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A stylesheet that a failed reload names is watched from then on, even
+// when that load failed because the stylesheet does not exist yet: the
+// reload that creating it brings succeeds.
+func TestRunReloadWatchesAMissingStylesheet(t *testing.T) {
+	dir := t.TempDir()
+	r := &runner{file: writeIn(t, dir, "app.tui", runDoc)}
+	if _, _, err := r.load(true, true); err != nil {
+		t.Fatal(err)
+	}
+	r.sheets = nil
+	writeIn(t, dir, "app.tui", strings.Replace(runDoc, "<keymap>", `<style src="new.tcss"/><keymap>`, 1))
+	sw, ok := r.reload(false)
+	if ok {
+		t.Fatal("a reload with a missing stylesheet succeeded")
+	}
+	sw.Applied()
+	sheet := filepath.Join(dir, "new.tcss")
+	if !reflect.DeepEqual(r.sheets, []string{sheet}) || !strings.Contains(strings.Join(r.panel, "\n"), "V006") {
+		t.Fatalf("sheets %q panel %q, want new.tcss watched and V006 shown", r.sheets, r.panel)
+	}
+	if w := r.watched(); !reflect.DeepEqual(w[:2], []string{r.file, sheet}) {
+		t.Errorf("watched %q", w)
+	}
+	writeIn(t, dir, "new.tcss", "text { bold: true; }\n")
+	if _, ok := r.reload(false); !ok {
+		t.Errorf("the reload after creating the stylesheet failed: %q", r.panel)
+	}
+}
+
+// The watcher hands one reload per change it sees, and waits for the
+// loop to take it.
+func TestRunWatchHandsReloads(t *testing.T) {
+	dir := t.TempDir()
+	r := &runner{file: writeIn(t, dir, "app.tui", runDoc)}
+	if _, _, err := r.load(true, true); err != nil {
+		t.Fatal(err)
+	}
+	r.seen = stamps(r.watched())
+	swaps := make(chan host.HostSwap)
+	done := make(chan struct{})
+	defer close(done)
+	go r.watch(swaps, done)
+	next := func() host.HostSwap {
+		t.Helper()
+		select {
+		case sw := <-swaps:
+			return sw
+		case <-time.After(5 * time.Second):
+			t.Fatal("no reload")
+		}
+		return host.HostSwap{}
+	}
+	// An edit that breaks the document is a failed reload; the fix is a
+	// change of its own, and a successful one.
+	writeAtomic(t, r.file, "<tui version=\"1\"><screen id=\"s\"><text>x</screen></tui>")
+	if sw := next(); sw.App != nil {
+		t.Fatal("a V005 document reloaded")
+	}
+	writeAtomic(t, r.file, runDoc)
+	if sw := next(); sw.App == nil {
+		t.Fatal("the fix did not reload")
 	}
 }
 

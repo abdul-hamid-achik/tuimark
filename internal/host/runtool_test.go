@@ -419,6 +419,42 @@ func TestSwapKeepsStateByIDAndTag(t *testing.T) {
 	}
 }
 
+const tableDoc = `<tui version="2">
+<keymap><bind keys="ctrl+r" action="probe"/></keymap>
+<screen id="s" focus="#t">
+  <text>MARK</text>
+  <table id="t" each="rows as r" key="r" height="4"><column>{r}</column></table>
+</screen>
+</tui>`
+
+// A table cursor is kept by id and tag, as a list's is.
+func TestSwapKeepsATableCursor(t *testing.T) {
+	a := doc(t, strings.Replace(tableDoc, "MARK", "ONE", 1))
+	_ = a.Bind("", map[string]any{"rows": []any{"a", "b", "c", "d"}})
+	swaps := make(chan HostSwap)
+	r := startTool(t, a, 30, 8, HostHooks{Swap: swaps}, nil)
+	r.recordAll(a, "probe")
+	r.waitOut(t, "ONE")
+	r.send(t, "\x1b[B\x1b[B\x12")
+	r.waitFor(t, "probe")
+	next := doc(t, strings.Replace(tableDoc, "MARK", "TWO", 1))
+	r.recordAll(next, "probe")
+	swaps <- HostSwap{App: next, KeepStore: true}
+	r.send(t, "\x12")
+	r.waitFor(t, "probe", "probe")
+	next.mu.Lock()
+	cursor := next.lists["t"].index
+	focus := next.focus
+	next.mu.Unlock()
+	if cursor != 2 || focus != "t" {
+		t.Errorf("table cursor %d focus %q, want 2 and t", cursor, focus)
+	}
+	r.in.Close()
+	if err := r.wait(t); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // What is not kept by id and tag starts as on a first frame; without
 // KeepStore the new app keeps its own store.
 func TestSwapDropsWhatChangedTag(t *testing.T) {

@@ -153,19 +153,6 @@ func runDescribe(r *hostRig) string {
 	return r.describe() + "screen: ..." + strings.ReplaceAll(s[max(0, len(s)-1500):], "\x1b", "^[")
 }
 
-// writeAtomic replaces path's content in one rename, so the watcher never
-// reads half a file.
-func writeAtomic(t *testing.T, path, content string) {
-	t.Helper()
-	tmp := path + ".new"
-	if err := os.WriteFile(tmp, []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		t.Fatal(err)
-	}
-}
-
 // Test 121: --events naming a terminal is refused before the session.
 func TestRunEventsTerminalRefused(t *testing.T) {
 	master, name, err := openPTY()

@@ -72,6 +72,9 @@ func (c *cli) cmdRun(args []string) int {
 		r.events = &eventLog{w: f}
 	}
 	r.sheets = sheetsOf(app)
+	// The watcher compares with the files as they were loaded, so an edit
+	// made before the session starts is still a change.
+	r.seen = stamps(r.watched())
 	r.panel = diagLines(app.Static())
 	r.register(app, mk)
 	return r.run(app, c.stdout, c.stderr)
@@ -93,10 +96,12 @@ type runner struct {
 	setTheme                    bool
 
 	// The watcher's own state: the stylesheets of the last load that read
-	// the document far enough to resolve its <style src>, and the
-	// fingerprint of --data when it was last bound.
+	// the document far enough to resolve its <style src>, the fingerprint
+	// of --data when it was last bound, and the watched files' stamps the
+	// watcher starts from.
 	sheets    []string
 	dataStamp string
+	seen      map[string]string
 
 	mu      sync.Mutex
 	entries []string // the strip's entries, newest last, at most stripKeep
@@ -402,12 +407,36 @@ func (r *runner) watched() []string {
 	return append(files, r.data, r.mockPath)
 }
 
+// stamps is each watched file's fingerprint (size and mtime, or missing).
+func stamps(files []string) map[string]string {
+	m := make(map[string]string, len(files))
+	for _, f := range files {
+		if f != "" {
+			m[f] = fingerprint([]string{f})
+		}
+	}
+	return m
+}
+
+// sameStamps reports whether two polls saw the same files unchanged.
+func sameStamps(a, b map[string]string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for f, s := range a {
+		if t, ok := b[f]; !ok || t != s {
+			return false
+		}
+	}
+	return true
+}
+
 // watch polls the watched files every runPoll until done is closed, and
 // hands each change it sees to the loop as one reload (SPEC v0.4a §15.9
 // "Reload"): changes seen within one poll are one reload. It waits for
 // the loop to take one before it looks again.
 func (r *runner) watch(swaps chan<- host.HostSwap, done <-chan struct{}) {
-	stamp := fingerprint(r.watched())
+	seen := r.seen
 	t := time.NewTicker(runPoll)
 	defer t.Stop()
 	for {
@@ -416,11 +445,11 @@ func (r *runner) watch(swaps chan<- host.HostSwap, done <-chan struct{}) {
 			return
 		case <-t.C:
 		}
-		now := fingerprint(r.watched())
-		if now == stamp {
+		now := stamps(r.watched())
+		if sameStamps(now, seen) {
 			continue
 		}
-		dataNow := fingerprint([]string{r.data})
+		dataNow := now[r.data]
 		sw, ok := r.reload(dataNow != r.dataStamp)
 		select {
 		case swaps <- sw:
@@ -432,9 +461,18 @@ func (r *runner) watch(swaps chan<- host.HostSwap, done <-chan struct{}) {
 			// or not, is now the store's source.
 			r.dataStamp = dataNow
 		}
-		// A reload may name other stylesheets: they are watched from now
-		// on, as they are now.
-		stamp = fingerprint(r.watched())
+		// What the reload read is judged by what this poll saw before it,
+		// so a write that lands while it loads (an editor that truncates,
+		// then writes) is a change for the next poll. A stylesheet the
+		// reload named for the first time is watched from now on, as it is
+		// now.
+		next := stamps(r.watched())
+		for f := range next {
+			if s, ok := now[f]; ok {
+				next[f] = s
+			}
+		}
+		seen = next
 	}
 }
 
