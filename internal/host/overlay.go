@@ -1,7 +1,6 @@
 package host
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
@@ -34,7 +33,7 @@ func LoadBuffers(path string, src []byte, open func(abs string) ([]byte, bool)) 
 		text, ok := open(abs)
 		if !ok {
 			var err error
-			if text, err = os.ReadFile(p); err != nil {
+			if text, err = ReadRegular(p, 0); err != nil {
 				return nil, err
 			}
 		}

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/abdul-hamid-achik/tuimark/internal/host"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
@@ -18,12 +19,14 @@ type parsedDoc struct {
 	doc  *parse.Document
 }
 
-// readText is the text of the file at path: its open buffer, else the file.
+// readText is the text of the file at path: its open buffer, else the file
+// when it is a regular file of a bounded size (host.ReadRegular); any other
+// path counts as absent.
 func readText(sn *snapshot, path string) (string, bool) {
 	if t, ok := sn.docText(path); ok {
 		return t, true
 	}
-	raw, err := os.ReadFile(path)
+	raw, err := host.ReadRegular(path, 0)
 	if err != nil {
 		return "", false
 	}
