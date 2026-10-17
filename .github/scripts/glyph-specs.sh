@@ -47,6 +47,7 @@ fi
 
 # The examples/host-ts specs run a Bun parent. Unlike `task glyph`, which
 # skips them where bun is missing, CI and release must run them.
+need_host_ts_deps=0
 for spec in "$@"; do
   case "$(basename "$spec")" in
     host_ts*.yml)
@@ -54,9 +55,20 @@ for spec in "$@"; do
         echo "glyph-specs: bun not found on PATH; $spec needs it (oven-sh/setup-bun)" >&2
         exit 1
       fi
+      need_host_ts_deps=1
       ;;
   esac
 done
+
+# The parent imports @tuimark/host, a file: dependency on sdk/ts. bun copies
+# a file: directory into node_modules, so install fresh: a copy left from an
+# earlier run would hide a change to sdk/ts.
+if [ "$need_host_ts_deps" -eq 1 ]; then
+  if ! (cd examples/host-ts && rm -rf node_modules && bun install --frozen-lockfile); then
+    echo "glyph-specs: bun install failed in examples/host-ts" >&2
+    exit 1
+  fi
+fi
 
 total=0
 failed=0
