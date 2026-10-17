@@ -416,7 +416,7 @@ func TestNewModuleNameAvoidsStd(t *testing.T) {
 			t.Errorf("stdRoots lacks %q (from %q)", root, pkg)
 		}
 	}
-	for _, name := range []string{"log", "time", "std", "cmd", "aux", "aux.x", "nul", "lpt3", "-zz", "foo.", ".foo", "sp ace/ño"} {
+	for _, name := range []string{"log", "time", "uuid", "std", "cmd", "aux", "aux.x", "nul", "lpt3", "-zz", "foo.", ".foo", "sp ace/ño"} {
 		dir := t.TempDir()
 		mod := moduleName(name)
 		if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module "+mod+"\n\ngo 1.22\n"), 0o644); err != nil {

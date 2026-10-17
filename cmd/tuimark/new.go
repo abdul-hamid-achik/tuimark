@@ -72,7 +72,7 @@ func moduleName(dir string) string {
 }
 
 // stdRoots are the first elements of the standard library's import paths
-// (`go list std`, Go 1.22 to 1.26): a module named one of them is an
+// (`go list std`, Go 1.22 to 1.27): a module named one of them is an
 // ambiguous import. TestNewModuleNameAvoidsStd checks the list against
 // the toolchain that runs the tests.
 var stdRoots = map[string]bool{
@@ -86,7 +86,8 @@ var stdRoots = map[string]bool{
 	"reflect": true, "regexp": true, "runtime": true, "slices": true,
 	"sort": true, "strconv": true, "strings": true, "structs": true,
 	"sync": true, "syscall": true, "testing": true, "text": true, "time": true,
-	"unicode": true, "unique": true, "unsafe": true, "vendor": true, "weak": true,
+	"unicode": true, "unique": true, "unsafe": true, "uuid": true, "vendor": true,
+	"weak": true,
 }
 
 // windowsDevice reports whether a path element is a Windows device name,
