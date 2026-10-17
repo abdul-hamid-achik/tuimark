@@ -18,7 +18,7 @@ bun add @tuimark/host
 ```
 
 ::: info Not on npm yet?
-The package is published to npm separately from the `tuimark` binary. If `bun add` cannot find it yet, install the copy in a clone of the repository: `bun add file:/path/to/tuimark/sdk/ts`.
+The package is published to npm separately from the `tuimark` binary. If `bun add` cannot find it yet, install the copy in a clone of the repository: `bun add @tuimark/host@file:/path/to/tuimark/sdk/ts`.
 :::
 
 - The package is ESM, written in TypeScript, and has no runtime dependencies.

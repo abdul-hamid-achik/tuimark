@@ -121,6 +121,10 @@ tuimark new todo
 cd todo && tuimark run app.tui --data sample.json
 ```
 
+::: info `--ts` and npm
+A `--ts` project depends on [`@tuimark/host`](/guide/typescript), which is published to npm separately from the `tuimark` binary. If `bun install` cannot find it yet, install the copy in a clone of the repository instead: `bun add @tuimark/host@file:/path/to/tuimark/sdk/ts`.
+:::
+
 ## preview
 
 `tuimark preview FILE` prints the text dump and, when stdout is a terminal, paints the frame with ANSI colors first. `--watch` repaints whenever the document, its stylesheets, or the data file change. `--color truecolor|256|16|none` picks the color depth; otherwise it follows `TUIMARK_COLOR`, then the terminal's own capabilities.
