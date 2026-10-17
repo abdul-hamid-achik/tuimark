@@ -327,13 +327,58 @@ func TestNewGoProjectBuilds(t *testing.T) {
 	}
 }
 
-// The --ts project type-checks with Bun. @tuimark/host is built in
-// parallel (sdk/ts/, SPEC §19.2) and merged after this branch, so the
-// check cannot run here.
+// The --ts project type-checks against @tuimark/host (sdk/ts). The
+// generated parent.ts is the embedded template byte for byte, which
+// sdk/ts's own type-check (tsconfig.template.json, run by `task sdk-test`
+// and the sdk-ts CI job) also covers; this test checks the generated copy
+// with sdk/ts's TypeScript when `task sdk-test` (or `bun install` in sdk/ts)
+// has installed it, and skips otherwise.
 func TestNewTSProjectTypeChecks(t *testing.T) {
-	t.Skip("TODO(0.4a merge): wire after sdk/ts lands. Install @tuimark/host from sdk/ts " +
-		"(bun add file:../sdk/ts, or bun link) into the generated project, then run " +
-		"`bunx tsc --noEmit --strict --module esnext --moduleResolution bundler --target esnext --types bun parent.ts`; " +
-		"skip when `bun` is not on PATH, as the host-ts Glyphrun spec does. parent.ts is written against " +
-		"SPEC §19.2: spawnHost(file, {data, theme, replyTimeout}), ui.on, ui.set, ui.batch, await ui.exited.")
+	if testing.Short() {
+		t.Skip("runs the TypeScript compiler")
+	}
+	sdk, err := filepath.Abs("../../sdk/ts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, _ := newProject(t, "ts-app", "--ts")
+	tmpl, err := templates.ReadFile("newtemplate/parent.ts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := readFileT(t, filepath.Join(dir, "parent.ts")); got != string(tmpl) {
+		t.Fatalf("the generated parent.ts differs from newtemplate/parent.ts, which sdk/ts type-checks")
+	}
+	tsc := filepath.Join(sdk, "node_modules", ".bin", "tsc")
+	if _, err := os.Stat(tsc); err != nil {
+		t.Skip("sdk/ts/node_modules has no tsc: run `task sdk-test` (needs bun) first")
+	}
+	cfg := map[string]any{
+		"compilerOptions": map[string]any{
+			"target":                     "ES2022",
+			"module":                     "ESNext",
+			"moduleResolution":           "bundler",
+			"lib":                        []string{"ES2023"},
+			"types":                      []string{"bun"},
+			"typeRoots":                  []string{filepath.Join(sdk, "node_modules", "@types")},
+			"allowImportingTsExtensions": true,
+			"strict":                     true,
+			"skipLibCheck":               true,
+			"noEmit":                     true,
+			"paths":                      map[string][]string{"@tuimark/host": {filepath.Join(sdk, "src", "index.ts")}},
+		},
+		"files": []string{"parent.ts"},
+	}
+	b, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "tsconfig.json"), b, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(tsc, "-p", "tsconfig.json")
+	cmd.Dir = dir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("tsc: %v\n%s", err, out)
+	}
 }

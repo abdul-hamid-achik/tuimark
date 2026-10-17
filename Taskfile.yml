@@ -69,6 +69,8 @@ tasks:
       - bun install --frozen-lockfile
       - bun test
       - bunx tsc --noEmit
+      # the template `tuimark new --ts` writes (SPEC test 120)
+      - bunx tsc -p tsconfig.template.json
 
   glyph:
     desc: Build, then run every glyph spec under specs/glyphrun/. The examples/host-ts

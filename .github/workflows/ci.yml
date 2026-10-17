@@ -236,3 +236,6 @@ jobs:
 
       - name: Type-check
         run: bunx tsc --noEmit
+
+      - name: Type-check the tuimark new --ts template
+        run: bunx tsc -p tsconfig.template.json
