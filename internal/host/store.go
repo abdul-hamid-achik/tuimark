@@ -40,7 +40,11 @@ func lookup(root any, path string) (any, bool) {
 		return root, true
 	}
 	cur := root
-	for _, seg := range strings.Split(path, ".") {
+	// The segments of strings.Split(path, "."), in order, without making
+	// the slice: lookup runs for every {path} of every row.
+	for rest, more := path, true; more; {
+		var seg string
+		seg, rest, more = strings.Cut(rest, ".")
 		switch c := cur.(type) {
 		case map[string]any:
 			v, ok := c[seg]
