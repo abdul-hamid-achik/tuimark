@@ -79,7 +79,6 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-          fetch-depth: 0 # TEMPORARY: the A/B step below checks out two commits
 
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
@@ -95,26 +94,6 @@ jobs:
             cat bench.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
-      # TEMPORARY: the same runner measures, interleaved, the row loop that
-      # leaves reused rows' keys (skip), the checks run as each box is
-      # placed (fuse), and the same under a container whose docks come
-      # first (fuse2). Removed before the branch is done.
-      - name: A/B of the frame work
-        run: |
-          git checkout -q 757751928cb8ef1814604b7e6f74742feb0f41f0
-          go test -c -o "$RUNNER_TEMP/skip.test" ./internal/play
-          git checkout -q a07266a2beb3d0e097f232e4829f191366440f84
-          go test -c -o "$RUNNER_TEMP/fuse.test" ./internal/play
-          git checkout -q 36384d058c1d6a5f7496a57fbc6019eb16ea1dd5
-          go test -c -o "$RUNNER_TEMP/fuse2.test" ./internal/play
-          for round in 1 2 3 4 5; do
-            for v in skip fuse fuse2; do
-              echo "== $v"
-              "$RUNNER_TEMP/$v.test" -test.run '^$' -test.bench 'ListDown20k$|BatchTick20k$|DeriveFilterText20k$' -test.benchmem | grep Benchmark
-            done
-          done
-          grep -m1 'model name' /proc/cpuinfo
 
   # GoReleaser ships Windows zips (.goreleaser.yaml), but no job runs on
   # Windows. Cross-compiling and vetting for it on Linux is cheap and
