@@ -103,5 +103,17 @@ jobs:
           name: tuimark-host-package
           path: pack
 
+      # Trusted publishing (OIDC) needs the package to exist on npm, so the
+      # very first publish of 1.0.0 cannot use it: an NPM_TOKEN secret, when
+      # set, is used instead (as in chalupa's npm-publish workflow). Once the
+      # package exists and a trusted publisher with `npm publish` allowed is
+      # configured for this workflow, remove the secret.
       - name: Publish to npm
-        run: npm publish ./pack/*.tgz --provenance --access public
+        run: |
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > "$RUNNER_TEMP/.npmrc"
+            export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/.npmrc"
+          fi
+          npm publish ./pack/*.tgz --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

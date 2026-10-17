@@ -197,7 +197,7 @@ func TestNewModuleName(t *testing.T) {
 		"/tmp/x/Foo_Bar":  "foo_bar",
 		"a/b/c.d-e":       "c.d-e",
 		"UPPER":           "upper",
-		"sp ace/ño":       "-o",
+		"sp ace/ño":       "o",
 		"x y z":           "x-y-z",
 		".":               "app",
 		"..":              "app",
@@ -207,6 +207,18 @@ func TestNewModuleName(t *testing.T) {
 		"my app/":         "my-app",
 		"proj@v1+beta":    "proj-v1-beta",
 		"tuimark/new-app": "new-app",
+		"-zz":             "zz",
+		"foo.":            "foo",
+		".foo":            "foo",
+		"log":             "log-app",
+		"time":            "time-app",
+		"log.v2":          "log.v2",
+		"std":             "std-app",
+		"cmd":             "cmd-app",
+		"aux":             "aux-app",
+		"aux.x":           "aux-app.x",
+		"COM1":            "com1-app",
+		"comx":            "comx",
 	} {
 		if got := moduleName(in); got != want {
 			t.Errorf("moduleName(%q) = %q, want %q", in, got, want)
@@ -380,5 +392,66 @@ func TestNewTSProjectTypeChecks(t *testing.T) {
 	cmd.Dir = dir
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("tsc: %v\n%s", err, out)
+	}
+}
+
+// Every name Go refuses as a module path that moduleName could leave is
+// rewritten: a module of each builds, offline. The standard library's
+// roots come from the toolchain that runs the test, so a root a newer Go
+// adds fails here until stdRoots has it.
+func TestNewModuleNameAvoidsStd(t *testing.T) {
+	if testing.Short() {
+		t.Skip("runs the go tool")
+	}
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skip("no go toolchain on PATH")
+	}
+	out, err := exec.Command("go", "list", "std").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, pkg := range strings.Fields(string(out)) {
+		root, _, _ := strings.Cut(pkg, "/")
+		if !stdRoots[root] {
+			t.Errorf("stdRoots lacks %q (from %q)", root, pkg)
+		}
+	}
+	for _, name := range []string{"log", "time", "std", "cmd", "aux", "aux.x", "nul", "lpt3", "-zz", "foo.", ".foo", "sp ace/ño"} {
+		dir := t.TempDir()
+		mod := moduleName(name)
+		if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module "+mod+"\n\ngo 1.22\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		src := "package main\n\nimport (\n\t\"fmt\"\n\t\"log\"\n)\n\nfunc main() { fmt.Println(); log.Print() }\n"
+		if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte(src), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		cmd := exec.Command("go", "build", "-o", os.DevNull, ".")
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(), "GOFLAGS=-mod=mod", "GOPROXY=off", "GOWORK=off")
+		if b, err := cmd.CombinedOutput(); err != nil {
+			t.Errorf("new %q gives module %q, which does not build: %v\n%s", name, mod, err, b)
+		}
+	}
+}
+
+// The printed cd quotes a directory a shell would not read as a plain
+// word.
+func TestNewNextCommandQuotes(t *testing.T) {
+	for in, want := range map[string]string{
+		"app":      "cd app && ",
+		"~root":    "cd '~root' && ",
+		"=zz":      "cd '=zz' && ",
+		"-zz":      "cd '-zz' && ",
+		"+x":       "cd '+x' && ",
+		"%1":       "cd '%1' && ",
+		"a~b":      "cd a~b && ",
+		"my app":   "cd 'my app' && ",
+		"it's":     `cd 'it'\''s' && `,
+		"/tmp/x-y": "cd /tmp/x-y && ",
+	} {
+		if got := nextCommand(in, false, false); !strings.HasPrefix(got, want) {
+			t.Errorf("nextCommand(%q) = %q, want the prefix %q", in, got, want)
+		}
 	}
 }

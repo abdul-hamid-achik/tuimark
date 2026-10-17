@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os/signal"
+	"syscall"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/catalog"
 )
@@ -20,6 +22,9 @@ func (c *cli) cmdCatalog(args []string) int {
 	if len(pos) != 0 {
 		return c.fail(fmt.Errorf("tuimark catalog: takes no arguments"))
 	}
+	// A reader that goes away (tuimark catalog | head) is a failed write,
+	// exit 1 with a "tuimark: " line, not a SIGPIPE death, as for mcp.
+	signal.Ignore(syscall.SIGPIPE)
 	// The diagnostics' prose holds <tui> and the like: do not escape it.
 	enc := json.NewEncoder(c.stdout)
 	enc.SetEscapeHTML(false)

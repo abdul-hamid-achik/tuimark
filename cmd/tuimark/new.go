@@ -46,17 +46,57 @@ var unsafeNameChar = regexp.MustCompile(`[^a-z0-9._-]`)
 // moduleName is the name of the project's Go module or package: the base
 // name of the directory path, lowercased, with each character outside
 // [a-z0-9._-] replaced by "-" (SPEC v0.4a §15.11); "app" if nothing is
-// left of the name.
+// left of the name. Go refuses some of what that leaves, so a leading "-"
+// or "." and a trailing "." are dropped, and "-app" is added to the first
+// element of a name Go reserves: a standard-library package ("log",
+// "time"), "std" or "cmd", or a Windows device name ("aux", "com1"),
+// which Go refuses before a dot too ("aux.x" gives "aux-app.x").
 func moduleName(dir string) string {
 	base := filepath.Base(filepath.Clean(dir))
 	if base == "." || base == ".." || base == string(filepath.Separator) || base == "" {
 		return "app"
 	}
 	name := unsafeNameChar.ReplaceAllString(strings.ToLower(base), "-")
+	name = strings.TrimRight(strings.TrimLeft(name, "-."), ".")
 	if strings.Trim(name, "-._") == "" {
 		return "app"
 	}
-	return name
+	head, rest, dotted := strings.Cut(name, ".")
+	if windowsDevice(head) || !dotted && (stdRoots[head] || head == "std" || head == "cmd") {
+		head += "-app"
+	}
+	if dotted {
+		return head + "." + rest
+	}
+	return head
+}
+
+// stdRoots are the first elements of the standard library's import paths
+// (`go list std`, Go 1.22 to 1.26): a module named one of them is an
+// ambiguous import. TestNewModuleNameAvoidsStd checks the list against
+// the toolchain that runs the tests.
+var stdRoots = map[string]bool{
+	"archive": true, "bufio": true, "builtin": true, "bytes": true, "cmp": true,
+	"compress": true, "container": true, "context": true, "crypto": true,
+	"database": true, "debug": true, "embed": true, "encoding": true,
+	"errors": true, "expvar": true, "flag": true, "fmt": true, "go": true,
+	"hash": true, "html": true, "image": true, "index": true, "internal": true,
+	"io": true, "iter": true, "log": true, "maps": true, "math": true,
+	"mime": true, "net": true, "os": true, "path": true, "plugin": true,
+	"reflect": true, "regexp": true, "runtime": true, "slices": true,
+	"sort": true, "strconv": true, "strings": true, "structs": true,
+	"sync": true, "syscall": true, "testing": true, "text": true, "time": true,
+	"unicode": true, "unique": true, "unsafe": true, "vendor": true, "weak": true,
+}
+
+// windowsDevice reports whether a path element is a Windows device name,
+// which Go refuses in a module path on every OS.
+func windowsDevice(elem string) bool {
+	switch elem {
+	case "con", "prn", "aux", "nul":
+		return true
+	}
+	return len(elem) == 4 && (strings.HasPrefix(elem, "com") || strings.HasPrefix(elem, "lpt")) && elem[3] >= '0' && elem[3] <= '9'
 }
 
 // nextCommand is the last line `tuimark new` prints: how to run what it
@@ -74,8 +114,12 @@ func nextCommand(dir string, goProject, tsProject bool) string {
 
 var shellSafe = regexp.MustCompile(`^[A-Za-z0-9_./~@%+=:,-]+$`)
 
+// shellQuote quotes s for the printed `cd` when a shell would read it as
+// anything but a plain word: a character outside shellSafe, or a first
+// character that starts a tilde expansion (~), a zsh path lookup (=), a
+// job spec (%), or an option (- or +).
 func shellQuote(s string) string {
-	if shellSafe.MatchString(s) {
+	if shellSafe.MatchString(s) && !strings.ContainsAny(s[:1], "~=%-+") {
 		return s
 	}
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
