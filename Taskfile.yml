@@ -69,6 +69,13 @@ tasks:
           glyph run "$f" --format md || exit 1
         done
 
+  bench:
+    desc: Run the performance benchmarks of SPEC v0.4a §21 test 125 (internal/play, a settled
+      80x24 session, one input per iteration; each must stay under 16 ms/op) and print the
+      numbers. They are benchmarks, not timed assertions in go test.
+    cmds:
+      - go test ./internal/play -run '^$' -bench . -benchmem -count 1
+
   docs:
     desc: Serve the VitePress documentation site in docs/ locally.
     dir: docs
