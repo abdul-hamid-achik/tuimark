@@ -85,6 +85,7 @@ const (
 	codeInvalidRequest = -32600
 	codeMethodNotFound = -32601
 	codeInvalidParams  = -32602
+	codeInternal       = -32603
 	codeNotInitialized = -32002
 )
 

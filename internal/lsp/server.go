@@ -168,7 +168,7 @@ func (s *Server) send(body []byte) {
 func (s *Server) reply(id json.RawMessage, result any, e *rpcError) {
 	body, err := marshalResponse(id, result, e)
 	if err != nil {
-		body, _ = marshalResponse(id, nil, &rpcError{Code: -32603, Message: err.Error()})
+		body, _ = marshalResponse(id, nil, &rpcError{Code: codeInternal, Message: err.Error()})
 	}
 	s.send(body)
 }
@@ -242,7 +242,7 @@ func (s *Server) handle(body []byte) (code int, done bool) {
 		s.shutdown = true
 		s.reply(id, nil, nil)
 	default:
-		result, e := s.request(method, params)
+		result, e := s.safeRequest(method, params)
 		s.reply(id, result, e)
 	}
 	return 0, false
@@ -298,6 +298,17 @@ func (s *Server) notification(method string, params json.RawMessage) (int, bool)
 		s.touchAll()
 	}
 	return 0, false
+}
+
+// safeRequest is request, with a panic in a feature answered as an internal
+// error: a bug in one completion must not end the editor's session.
+func (s *Server) safeRequest(method string, params json.RawMessage) (result any, e *rpcError) {
+	defer func() {
+		if r := recover(); r != nil {
+			result, e = nil, &rpcError{Code: codeInternal, Message: fmt.Sprint("internal error: ", r)}
+		}
+	}()
+	return s.request(method, params)
 }
 
 type textDocumentPosition struct {
@@ -484,6 +495,7 @@ func (s *Server) fire(uri string) {
 	s.mu.Lock()
 	delete(s.pending, uri)
 	s.mu.Unlock()
+	defer func() { _ = recover() }() // a failed check leaves the last diagnostics as they were
 	s.publish(uri)
 }
 
