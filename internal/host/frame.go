@@ -1362,8 +1362,19 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 	for _, d := range r.post {
 		fb.add(d)
 	}
+	// same: the items are the slab's, reused for the same rows
+	// (listRows.reuse), and the loop below last wrote the same Chan and
+	// Mark to them, with every Key and Index it writes again, which are
+	// the rows': it then leaves those four as they are, so a frame does
+	// not touch the cache line they share in each of 20 000 items.
+	same := false
 	if items == nil {
-		items = r.materialize(b, slab)
+		var reused bool
+		items, reused = r.materialize(b, slab)
+		same = reused && slab.chanW == chanW && slab.mark == mark
+	}
+	if slab != nil {
+		slab.chanW, slab.mark = chanW, mark
 	}
 	var ids []string
 	if len(checked) > 0 {
@@ -1391,9 +1402,13 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 		if ids != nil {
 			_, ib.Checked = checked[ids[i]]
 		}
-		ib.Chan, ib.Mark = chanW, mark
-		ib.Key = r.keyStr[i]
-		ib.Index = i
+		if !same {
+			ib.Chan, ib.Mark = chanW, mark
+			ib.Key = r.keyStr[i]
+			ib.Index = i
+		} else if verifyFrames && (ib.Chan != chanW || ib.Mark != mark || ib.Key != r.keyStr[i] || ib.Index != i) {
+			panic(fmt.Sprintf("tuimark_verify: reused list row %d keeps chan %d, mark %q, key %q, index %d; want %d, %q, %q, %d", i, ib.Chan, ib.Mark, ib.Key, ib.Index, chanW, mark, r.keyStr[i], i))
+		}
 		b.Children = append(b.Children, ib)
 		if i == sel {
 			b.Follow = len(b.Children) - 1

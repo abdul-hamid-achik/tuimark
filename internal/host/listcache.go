@@ -67,6 +67,11 @@ type listSlab struct {
 	rows     *listRows
 	kidsN    []int32
 	reused   int
+	// chanW and mark are the Chan and Mark the row loop
+	// (inflateListCached) last wrote to the slab's items, with their Key
+	// and Index.
+	chanW int
+	mark  string
 }
 
 // NoReuseForBench turns listRows.reuse off. TEMPORARY: an A/B switch for
@@ -381,16 +386,17 @@ func (p *listPlan) flatten(dst []protoBox, b *layout.Box, kids *int) []protoBox 
 // written whole (clone), so nothing a box held in an earlier frame stays;
 // or, when s's boxes were materialized from r last time, they are reused
 // (reuse), which leaves them as writing them whole would.
-func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
+//
+// reused reports the second case.
+func (r *listRows) materialize(parent *layout.Box, s *listSlab) (items []*layout.Box, reused bool) {
 	if s != nil && s.rows == r && !NoReuseForBench {
 		if items, ok := r.reuse(parent, s); ok {
 			s.reused++
 			checkReuse(r, parent, items)
-			return items
+			return items, true
 		}
 	}
 	var m materializer
-	var items []*layout.Box
 	if s == nil {
 		m = materializer{protos: r.protos, boxes: make([]layout.Box, len(r.protos)), kids: make([]*layout.Box, r.nkids)}
 		items = make([]*layout.Box, len(r.keys))
@@ -412,7 +418,7 @@ func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
 	if s != nil {
 		s.rows = r
 	}
-	return items
+	return items, false
 }
 
 // reuse makes the boxes of slab s, which a build of this parity

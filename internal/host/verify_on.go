@@ -90,7 +90,7 @@ func (a *App) mustMatch(what string, f, g *Frame, wp, cp []Event, wa, ca string)
 // names (memoGen), and what it measured of its text only for the same
 // text, so neither is compared.
 func checkReuse(r *listRows, parent *layout.Box, items []*layout.Box) {
-	fresh := r.materialize(parent, nil)
+	fresh, _ := r.materialize(parent, nil)
 	if len(fresh) != len(items) {
 		panic(fmt.Sprintf("tuimark_verify: reused list rows: %d items, fresh %d", len(items), len(fresh)))
 	}
