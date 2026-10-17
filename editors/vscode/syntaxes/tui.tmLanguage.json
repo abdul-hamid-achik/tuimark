@@ -42,7 +42,19 @@
       },
       "name": "meta.tag.style.tui",
       "contentName": "meta.embedded.block.tcss",
-      "patterns": [{ "include": "source.tcss" }]
+      "patterns": [
+        {
+          "comment": "<style><![CDATA[ ... ]]></style>: the CDATA body is TCSS too.",
+          "name": "meta.cdata.style.tui",
+          "begin": "(<!\\[CDATA\\[)",
+          "beginCaptures": { "1": { "name": "punctuation.definition.string.begin.tui" } },
+          "end": "(\\]\\]>)",
+          "endCaptures": { "1": { "name": "punctuation.definition.string.end.tui" } },
+          "contentName": "meta.embedded.block.tcss",
+          "patterns": [{ "include": "source.tcss" }]
+        },
+        { "include": "source.tcss" }
+      ]
     },
     "tag": {
       "patterns": [

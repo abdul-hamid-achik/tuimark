@@ -78,6 +78,54 @@ describe("repository documents have no illegal tokens", () => {
   }
 });
 
+// Forms `tuimark validate` accepts and that must not light up as errors: the
+// condition and the brace of an @media on later lines (Allman style), and a
+// <style> whose body is a CDATA section.
+describe("valid forms spread over several lines have no illegal tokens", () => {
+  const allman = "@media (min-cols: 80)\n{\n  .b { width: 50%; }\n}\n";
+  const split = "@media\n  (theme: light) {\n  .b { color: red; }\n}\n";
+  const comment = "@media /* c */ (theme: dark)\n/* d */\n{\n  .b { color: red; }\n}\n.after { gap: 1; }\n";
+  test(".tcss: @media with the brace on the next line", () => {
+    expect(illegal(tcss, allman)).toEqual([]);
+  });
+  test(".tcss: @media with the condition on the next line", () => {
+    expect(illegal(tcss, split)).toEqual([]);
+  });
+  test(".tcss: comments inside the @media head", () => {
+    expect(illegal(tcss, comment)).toEqual([]);
+  });
+  test(".tcss: a rule after a multi-line @media is a rule, not part of it", () => {
+    const r = tcss.tokenizeLine(".after { gap: 1; }", tcss.tokenizeLine("}", tcss.tokenizeLine("  .b { gap: 0; }", tcss.tokenizeLine("{", tcss.tokenizeLine("@media (theme: dark)", INITIAL).ruleStack).ruleStack).ruleStack).ruleStack);
+    expect(r.tokens.some((t) => t.scopes.some((s) => s.includes("meta.at-rule.media")))).toBe(false);
+  });
+  test(".tcss: a bad feature is still marked when the brace is on the next line", () => {
+    expect(illegal(tcss, "@media (min-width: 80)\n{\n  a { gap: 1; }\n}\n").length).toBeGreaterThan(0);
+  });
+  test(".tui: @media over several lines in an inline <style>", () => {
+    expect(illegal(tui, `<style>\n  ${allman.replaceAll("\n", "\n  ")}\n</style>`)).toEqual([]);
+    expect(illegal(tui, `<style>\n  ${split.replaceAll("\n", "\n  ")}\n</style>`)).toEqual([]);
+  });
+  test(".tui: <style><![CDATA[ ... ]]></style>", () => {
+    expect(illegal(tui, "<style><![CDATA[\n  #t { color: red; }\n]]></style>\n<text>{x}</text>")).toEqual([]);
+    expect(illegal(tui, `<style><![CDATA[\n${allman}]]></style>`)).toEqual([]);
+  });
+  test(".tui: an unknown property in a CDATA <style> is still marked", () => {
+    expect(illegal(tui, "<style><![CDATA[\n  #t { colour: red; }\n]]></style>").length).toBeGreaterThan(0);
+  });
+  for (const f of ["test/media-allman.tcss", "test/style-forms.tui"]) {
+    test(f, () => {
+      // Drop the assertion lines, as vscode-tmgrammar-test does before tokenizing.
+      const isAssertion = f.endsWith(".tcss") ? /^\/\*\s*(<|\^|SYNTAX)/ : /^<!--/;
+      const body = readFileSync(join(root, f), "utf8")
+        .split("\n")
+        .filter((l) => !isAssertion.test(l))
+        .join("\n");
+      expect(body).toContain("@media");
+      expect(illegal(f.endsWith(".tcss") ? tcss : tui, body)).toEqual([]);
+    });
+  }
+});
+
 describe(".tui: what the runtime rejects is marked", () => {
   test("an unknown tag", () => {
     expect(scopesAt(tui, "<blink>x</blink>", "blink")).toContain("invalid.illegal.unknown-tag.tui");

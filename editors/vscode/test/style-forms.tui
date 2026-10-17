@@ -1,0 +1,33 @@
+<!-- SYNTAX TEST "text.tui" "a <style> in CDATA, and @media over several lines in an inline <style>"
+<tui version="3">
+  <style><![CDATA[
+<!--     ^^^^^^^^^ punctuation.definition.string.begin.tui
+    #t { color: red; }
+<!-- ^ entity.name.selector.id.tcss
+<!--     ^^^^^ support.type.property-name.tcss
+    @media (min-cols: 80)
+<!-- ^^^^^ keyword.control.at-rule.media.tcss
+<!--        ^^^^^^^^ support.type.property-name.media.tcss
+    {
+<!--^ punctuation.section.media.begin.tcss
+      #t { color: blue; }
+<!--   ^ entity.name.selector.id.tcss
+    }
+<!--^ punctuation.section.media.end.tcss
+      ]]></style>
+<!--  ^^^ punctuation.definition.string.end.tui
+<!--       ^^^^^ entity.name.tag.tui
+  <style>
+    @media (theme: light)
+<!--               ^^^^^ constant.language.theme.tcss
+    {
+<!--^ punctuation.section.media.begin.tcss
+      #t { color: black; }
+    }
+    #t { bold: true; }
+<!-- ^ entity.name.selector.id.tcss
+  </style>
+  <screen id="main">
+    <text id="t">t</text>
+  </screen>
+</tui>
