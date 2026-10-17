@@ -147,7 +147,9 @@ export default defineConfig({
             { text: 'Go API', link: '/guide/go-api' },
             { text: 'Testing', link: '/guide/testing' },
             { text: 'Host protocol', link: '/guide/host-protocol' },
+            { text: 'TypeScript client', link: '/guide/typescript' },
             { text: 'MCP server', link: '/guide/mcp' },
+            { text: 'Editors', link: '/guide/editors' },
           ],
         },
         {

@@ -72,9 +72,26 @@ When the session ends, `exit` is the last message: `reason` is `"quit"`, `"eof"`
 
 **Backpressure.** The child writes fd 4 through a queue of at most 1024 messages. A parent that stops reading, or a write that fails, ends the session with reason `error` — so a parent that stops reading holds the loop for at most the reply timeout, and the terminal is always restored, never held hostage by a stuck pipe.
 
-## A minimal Bun parent
+## From TypeScript
 
-`examples/host-ts/parent.ts` is a complete, runnable example; the [repository's copy](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/host-ts) has the full error handling this excerpt leaves out. It drives `examples/host-ts/view.tui`, a document with one action, `inc`, and answers it by writing the new count back to the store:
+For a Bun program, use [`@tuimark/host`](/guide/typescript) (0.4) instead of speaking the protocol yourself. It follows every rule below, correlates the acks, and turns each `event` into a call to your handler:
+
+```ts
+import { spawnHost } from "@tuimark/host";
+
+const ui = await spawnHost("view.tui", { data: "sample.json" });
+let count = 0; // the parent owns the model; the view only shows it
+ui.on("inc", async () => {
+  await ui.set("count", ++count); // applied before the reply
+});
+process.exit((await ui.exited).code);
+```
+
+`examples/host-ts/parent.ts` in the [repository](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/host-ts) is a fuller version of this program, with its error handling.
+
+## A parent without the client
+
+In another language, you speak the protocol yourself. This Bun excerpt does it by hand, so the transport is visible. It drives `examples/host-ts/view.tui`, a document with one action, `inc`, and answers it by writing the new count back to the store:
 
 ```ts
 import { createWriteStream } from "node:fs";
@@ -134,5 +151,6 @@ You don't need a pty to test how your parent reacts to events: `tuimark play FIL
 
 ## See also
 
+- [TypeScript client](/guide/typescript) — `@tuimark/host`, the protocol from Bun.
 - [Go API](/guide/go-api#run) — `Run()`, for a Go host that doesn't need a second process.
 - [MCP server](/guide/mcp) — for driving the *authoring* loop (`validate`/`dump`/`play`) from an agent, not running a live session.
