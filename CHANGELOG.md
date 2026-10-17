@@ -36,6 +36,18 @@ every document keeps its meaning and its dumps.
     in the store. It is recomputed inside every write, so nothing ever
     sees a stale value, and it is read-only for every writer: a widget
     bound to it does not change.
+- **`tuimark run FILE`** shows a document live in the terminal, with no
+  Go and no parent program, and reloads it in place when you save.
+  - Host actions are answered by `run` itself: `--mock FILE.json` gives
+    each one fixed store writes, so a prototype can react without a
+    backend.
+  - `F12` (or `--strip`) shows a strip of the last events, and
+    `--events FILE.ndjson` writes them as the host protocol's `event`
+    lines. A `secret` input's value is redacted in both.
+  - A panel lists the document's diagnostics, or why a reload failed.
+  - A reload keeps the store, the focus, cursors, scroll offsets, inputs,
+    and the active tab for every node whose `id` and tag are unchanged.
+  - Two `ctrl+c` within one second always end the session.
 - **`tuimark catalog`** prints the whole vocabulary as JSON: tags,
   attributes and their keywords, CSS properties and values,
   pseudo-classes, media features, actions, key tokens, and diagnostic
@@ -45,7 +57,10 @@ every document keeps its meaning and its dumps.
   cleanly at 40, 80, and 120 columns under both themes: `app.tui`,
   `theme.tcss`, `sample.json`, and an `AGENTS.md` briefing for coding
   agents (`tuimark agents --project`). `--go` adds a `main.go` host and
-  `--ts` a `parent.ts` built on `@tuimark/host`.
+  `--ts` a `parent.ts` built on `@tuimark/host`. The Go module is named
+  after the directory, and a name Go refuses is rewritten: `log` or
+  `time` (a standard-library root), `std`, `cmd`, and a Windows device
+  name such as `aux` get `-app`, so `tuimark new log --go` builds.
 - **`tuimark lsp`** is a Language Server Protocol server for `.tui` and
   `.tcss`.
   - Diagnostics are exactly `validate`'s. They are routed to the
@@ -56,7 +71,9 @@ every document keeps its meaning and its dumps.
 - **VS Code extension** (`editors/vscode`): TextMate grammars that mark
   anything outside the closed vocabulary, snippets, and a client for
   `tuimark lsp`. Without the binary, highlighting and snippets still
-  work.
+  work. The server starts only in a trusted workspace, since a workspace
+  can set `tuimark.path`, and only from a binary whose `version` prints a
+  tuimark version.
 - **`@tuimark/host`** (`sdk/ts`), the TypeScript client of the host
   protocol, for Bun. `spawnHost` starts `tuimark host`, and `on`, `set`,
   `batch`, `get`, and `exited` do the rest. It follows every rule for
