@@ -1,0 +1,58 @@
+version: 1
+name: run_reload_data
+intent: |
+    Changing the --data file under `tuimark run` reloads the session with
+    the new data as the store's root (SPEC v0.4a §15.9 "Reload", test 121):
+    a mock write made before the change is gone, replaced by the file's
+    value, and the strip gains a "reload" line. The fixture script rewrites
+    the data when the session records the host action "edit" (ctrl+r).
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "data", "--strip"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "DATA msg=one"
+        timeoutMs: 5000
+    - press: s
+    - wait:
+        screen:
+            contains: "DATA msg=mocked"
+        timeoutMs: 3000
+    - press: ctrl+r
+    - wait:
+        screen:
+            contains: "DATA msg=two"
+        timeoutMs: 5000
+    - wait:
+        screen:
+            contains: "reload"
+        timeoutMs: 3000
+    - snapshot: replaced
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+outcomes:
+    - id: changed_data_replaces_the_store
+      description: after --data changed, the store is the new file's, not the one the mock wrote
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/replaced.txt"
+                if grep -q "DATA msg=two" "$f" && ! grep -q "msg=mocked" "$f" && grep -q "^reload" "$f"; then
+                  echo '{"ok": true, "evidence": "msg is the new data and the strip says reload"}'
+                else
+                  echo '{"ok": false, "evidence": "the store was not replaced by the new data"}'
+                fi
+    - id: exits_zero
+      description: ctrl+c after the reload exits 0
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:e9fb1c349164a7db283fe770992e9cc6faa83f76d85f3781d7aeecc3aca39449

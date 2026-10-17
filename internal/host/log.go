@@ -36,33 +36,48 @@ func openRunLog(path string, start time.Time) (*runLog, error) {
 	if path == "" {
 		return nil, nil
 	}
-	fail := func(f *os.File, err error) (*runLog, error) {
-		if f != nil {
-			f.Close()
-		}
+	f, err := OpenRecordFile(path, "the log")
+	if err != nil {
 		return nil, fmt.Errorf("tuimark: %s: %v", envLog, err)
 	}
+	return &runLog{f: f, start: start}, nil
+}
+
+// OpenRecordFile opens path for writing NDJSON records, as TUIMARK_LOG
+// (SPEC v0.2b §26.12) and `tuimark run --events` (v0.4a §15.9) do: it is
+// created with mode 0600 when it does not exist, and then what was opened
+// (a symlink followed) decides the rest. A regular file is truncated and
+// its mode set to 0600, so a wider mode is narrowed; a terminal is
+// refused, with an error saying that what (as in "the log") never goes to
+// a terminal; anything else (/dev/null, a FIFO, a pipe such as a shell's
+// /dev/fd/N) is written as it is, never truncated or chmod-ed. The error
+// carries no prefix of its own.
+func OpenRecordFile(path, what string) (*os.File, error) {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|openNoCTTY, 0o600)
 	if err != nil {
-		return fail(nil, err)
+		return nil, err
+	}
+	fail := func(err error) (*os.File, error) {
+		f.Close()
+		return nil, err
 	}
 	st, err := f.Stat()
 	if err != nil {
-		return fail(f, err)
+		return fail(err)
 	}
 	if st.Mode().IsRegular() {
 		if err := f.Truncate(0); err != nil {
-			return fail(f, err)
+			return fail(err)
 		}
 		if err := f.Chmod(0o600); err != nil {
-			return fail(f, err)
+			return fail(err)
 		}
-		return &runLog{f: f, start: start}, nil
+		return f, nil
 	}
 	if isTerminalFile(f) {
-		return fail(f, fmt.Errorf("%s is a terminal; the log never goes to a terminal (use a file or a pipe)", path))
+		return fail(fmt.Errorf("%s is a terminal; %s never goes to a terminal (use a file or a pipe)", path, what))
 	}
-	return &runLog{f: f, start: start}, nil
+	return f, nil
 }
 
 // isTerminalFile reports whether f is a terminal, without changing its

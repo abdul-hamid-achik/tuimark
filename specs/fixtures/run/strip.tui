@@ -1,0 +1,16 @@
+<tui version="1">
+  <keymap>
+    <bind keys="1" action="a1"/>
+    <bind keys="2" action="a2"/>
+    <bind keys="3" action="a3"/>
+    <bind keys="4" action="a4"/>
+    <bind keys="5" action="a5"/>
+    <bind keys="6" action="a6"/>
+    <bind keys="7" action="a7"/>
+    <bind keys="8" action="a8"/>
+    <bind keys="9" action="a9"/>
+  </keymap>
+  <screen id="s">
+    <text>STRIP</text>
+  </screen>
+</tui>

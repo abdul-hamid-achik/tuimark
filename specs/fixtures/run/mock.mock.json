@@ -1,0 +1,4 @@
+{
+  "save": [{"path": "status", "value": "saved-ok"}],
+  "fail": [{"path": "status", "value": "never"}, {"path": "@screen", "value": "nowhere"}]
+}

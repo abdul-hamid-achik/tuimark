@@ -1,0 +1,71 @@
+version: 1
+name: run_strip_click
+intent: |
+    The event strip of `tuimark run` is painted over the frame, not into it
+    (SPEC v0.4a §15.9 "Not part of the frame", test 121 "Events"): once an
+    event covers the bottom row, the button laid out there is hidden under
+    the strip, and a click on that cell still acts on the button under it,
+    whose on:click then shows in the strip.
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "click", "--strip"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "BOTTOM"
+        timeoutMs: 5000
+    - press: x
+    - wait:
+        screen:
+            contains: "first b {} null"
+        timeoutMs: 3000
+    - snapshot: covered
+    - mouse:
+        x: 4
+        y: 23
+        button: left
+        action: click
+    - wait:
+        screen:
+            contains: "clicked b {} null"
+        timeoutMs: 3000
+    - snapshot: clicked
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+outcomes:
+    - id: strip_covers_the_button
+      description: the strip's entry is painted over the bottom row, where the button was
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/covered.txt"
+                if tail -n 1 "$f" | grep -q "first b {} null" && ! grep -q "BOTTOM" "$f"; then
+                  echo '{"ok": true, "evidence": "the bottom row shows the strip, not the button"}'
+                else
+                  echo '{"ok": false, "evidence": "the strip did not cover the button row"}'
+                fi
+    - id: click_on_strip_acts_on_the_frame
+      description: a click on the strip's cell fires the on:click of the button under it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/clicked.txt"
+                if tail -n 1 "$f" | grep -q "clicked b {} null"; then
+                  echo '{"ok": true, "evidence": "the click under the strip reached the button"}'
+                else
+                  echo '{"ok": false, "evidence": "no clicked event after the click"}'
+                fi
+    - id: ctrl_c_exits_zero
+      description: an unbound ctrl+c quits and run exits 0
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:619d27cf45db2e4553c3b2c077ced235231ca9fb0990bf629a3f04ac6d749915

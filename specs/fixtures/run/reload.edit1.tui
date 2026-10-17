@@ -1,0 +1,36 @@
+<tui version="2">
+  <keymap>
+    <bind keys="w" action="switch-to" to="#work"/>
+    <bind keys="2" action="switch-to" to="#t2"/>
+    <bind keys="J" action="move-next" to="#sc"/>
+    <bind keys="ctrl+r" action="edit"/>
+  </keymap>
+  <screen id="home" focus="#hb">
+    <text>HOME</text>
+    <button id="hb" on:click="go">go</button>
+  </screen>
+  <screen id="work">
+    <text>VERSION-TWO note={note}</text>
+    <tabs id="tb">
+      <tab id="t1" label="one">
+        <text>FIRST TAB</text>
+      </tab>
+      <tab id="t2" label="two">
+        <row gap="2" height="4">
+          <list id="l" each="rows as r" key="r" on:select="pick" width="10" height="4">
+            <item><text>row-{r}</text></item>
+          </list>
+          <col width="24">
+            <input id="in" width="20"/>
+            <scroll id="sc" height="2">
+              <text>s0</text>
+              <text>s1</text>
+              <text>s2</text>
+              <text>s3</text>
+            </scroll>
+          </col>
+        </row>
+      </tab>
+    </tabs>
+  </screen>
+</tui>

@@ -131,9 +131,28 @@ func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error {
 //     regardless, but a cooperating handler lets the session end cleanly,
 //     with its own "exit" message, inside that window).
 //
+// `tuimark run` (SPEC v0.4a §15.9) adds four more, each off in the zero
+// HostHooks:
+//
+//   - hooks.Overlay, after each frame is built, returns the lines painted
+//     over its top rows (the panel) and its bottom rows (the event strip).
+//     They are painted over a copy of the frame's grid, which the frame
+//     diff writes and the next diff starts from; the frame itself, which
+//     dumps, Get, and the mouse hit test read, never holds them.
+//   - hooks.F12, when non-nil, makes the decoder read CSI 24 ~ as the F12
+//     notice: the hook runs on the loop's goroutine and the frame is drawn
+//     again. The notice is no key: no dispatch, keymap row, or TUIMARK_LOG
+//     record sees it. Without the hook the sequence is dropped as before.
+//   - hooks.CtrlCTwice makes a ctrl+c that comes less than a second after
+//     the previous one end the session as a quit, before it is
+//     dispatched; the first is dispatched as usual.
+//   - hooks.Swap delivers reloads (HostSwap), which the loop applies
+//     between inputs, like a settle: it moves the session into the new app
+//     (takeOver) and settles.
+//
 // It is not part of the public tuimark API; only cmd/tuimark's `host`
-// subcommand calls it. Its result names why the session ended (SPEC
-// v0.3b §19.1's "exit" message and exit code), which a plain error
+// and `run` subcommands call it. Its result names why the session ended
+// (SPEC v0.3b §19.1's "exit" message and exit code), which a plain error
 // cannot: Run's own nil return conflates "quit" and "eof".
 func (a *App) RunHost(w io.Writer, hooks HostHooks) HostResult {
 	err, eof, started := a.run(context.Background(), w, hooks, RunOptions{})
@@ -154,6 +173,12 @@ type HostHooks struct {
 	Start    func(cols, rows int, theme string)
 	Stop     <-chan HostStop
 	Signaled chan struct{}
+
+	// tuimark run (SPEC v0.4a §15.9); see RunHost.
+	Overlay    func(cols, rows int) (top, bottom []string)
+	F12        func()
+	CtrlCTwice bool
+	Swap       <-chan HostSwap
 }
 
 // HostStop is one value sent on HostHooks.Stop; see RunHost.
@@ -533,8 +558,17 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	io.WriteString(out, enterScreen)
 	defer func() { io.WriteString(out, sess.leave()) }()
 	// What the session resolved theme="auto" to is forgotten when it ends
-	// (Dump and Validate never see it, MUST 13).
-	defer a.endRun()
+	// (Dump and Validate never see it, MUST 13). A reload (hooks.Swap)
+	// reassigns a, so every closure below, and these deferred calls, act
+	// on the app the session drives at that moment; an app a reload
+	// brought in also gives back the Run mode it claimed.
+	orig := a
+	defer func() {
+		a.endRun()
+		if a != orig {
+			a.leaveSession()
+		}
+	}()
 	lg := sess.log
 	if lg != nil {
 		lg.begin(size())
@@ -565,8 +599,8 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// decoded as it stands (a lone ESC is the esc key), and when it was a
 	// start of the paste start marker the next read may still complete
 	// the marker (decoder.flush). A paste waits for its end marker however
-	// long it takes.
-	var dec decoder
+	// long it takes. Only `tuimark run` (hooks.F12) decodes F12.
+	dec := decoder{f12: hooks.F12 != nil}
 
 	// hostStop translates one HostHooks.Stop value into what the caller
 	// should return from session (SPEC v0.3b §19.1): eof records sess.eof,
@@ -718,14 +752,23 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			}
 			lg.write("mode", member{"mouse", f.Mouse})
 		}
-		s := paint.DiffWith(prev, f.Grid, opts)
+		// tuimark run's panel and strip are painted over a copy of the
+		// frame's grid, after the frame is built, and diffed with it
+		// (SPEC v0.4a §15.9); the frame itself never holds them.
+		g := f.Grid
+		if hooks.Overlay != nil {
+			if top, bottom := hooks.Overlay(cols, rows); len(top) > 0 || len(bottom) > 0 {
+				g = overlay(f.Grid, top, bottom)
+			}
+		}
+		s := paint.DiffWith(prev, g, opts)
 		if syncFrames {
 			s = syncBegin + s + syncEnd
 		}
 		if _, err := io.WriteString(out, s); err != nil {
 			return err
 		}
-		prev = f.Grid
+		prev = g
 		if lg != nil {
 			lg.write("frame", member{"us", time.Since(t0).Microseconds()}, member{"bytes", len(s)})
 		}
@@ -835,12 +878,27 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// mouse report among them splits the run only while the mouse is on
 	// (KeyRun). A bracketed paste is one edit too, or nothing
 	// (HandlePaste).
+	var lastCtrlC time.Time // when the last ctrl+c was handled (hooks.CtrlCTwice)
 	handleInputs := func(ins []Input) (stop bool, err error) {
 		// signaled is the stop check before each input (stopCheck): a
 		// stop signal, a HostHooks.Stop request, a cancelled context, or
 		// a Quit request is honored between one input and the next.
 		signaled := stopCheck
 		for len(ins) > 0 {
+			if ins[0].IsF12 {
+				// tuimark run's F12 notice (SPEC v0.4a §15.9): no key, no
+				// dispatch, no log record; the overlay it toggles is
+				// drawn at once.
+				if stop, err := signaled(); stop {
+					return true, err
+				}
+				ins = ins[1:]
+				hooks.F12()
+				if err := draw(); err != nil {
+					return true, err
+				}
+				continue
+			}
 			if ins[0].IsPaste {
 				if stop, err := signaled(); stop {
 					return true, err
@@ -882,6 +940,21 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			for len(keys) > 0 {
 				if stop, err := signaled(); stop {
 					return true, err
+				}
+				// tuimark run (SPEC v0.4a §15.9 "Always an exit"): a
+				// ctrl+c less than a second after the previous one ends
+				// the session as a quit, whatever the document binds to
+				// it; it is never dispatched. ctrl+c is not printable, so
+				// it always comes first in a run of its own.
+				if hooks.CtrlCTwice && keys[0].Name == "ctrl+c" {
+					now := time.Now()
+					if !lastCtrlC.IsZero() && now.Sub(lastCtrlC) < ctrlCWindow {
+						if lg != nil {
+							lg.key(keys[0], a.secretFocused())
+						}
+						return true, nil
+					}
+					lastCtrlC = now
 				}
 				focus := a.Focus()
 				secret := lg != nil && a.secretFocused()
@@ -1004,11 +1077,43 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		tickTimer.Reset(max(0, time.Until(due)))
 		return tickTimer.C
 	}
+	// swap applies one reload of `tuimark run` (hooks.Swap, SPEC v0.4a
+	// §15.9) between inputs, like a settle: the session moves into the new
+	// app (takeOver), which takes the Run mode, its quit requests, and its
+	// Every clock from here on, while the old one gives them back; then
+	// Applied runs and the loop settles, so the first frame of the new app
+	// is diffed with the last frame of the old one and fires the lifecycle
+	// events of what changed between them. The app the session started
+	// with is released here too, and once more, harmlessly, by its
+	// caller's deferred exitMode: only the session ever held it.
+	swap := func(s HostSwap) (stop bool, err error) {
+		if next := s.App; next != nil && next != a {
+			if err := next.enterMode(modeRun); err != nil {
+				return true, err
+			}
+			next.takeOver(a, s.KeepStore)
+			old := a
+			a = next
+			a.mu.Lock()
+			quitReq = a.quitReq
+			a.mu.Unlock()
+			a.everyBegin(time.Now())
+			old.leaveSession()
+		}
+		if s.Applied != nil {
+			s.Applied()
+		}
+		return settle()
+	}
 	for {
 		tick := armTick()
 		select {
 		case c := <-reads:
 			if stop, err := onChunk(c); stop {
+				return err
+			}
+		case s := <-hooks.Swap:
+			if stop, err := swap(s); stop {
 				return err
 			}
 		case <-tick:

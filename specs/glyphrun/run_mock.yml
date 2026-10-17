@@ -1,0 +1,73 @@
+version: 1
+name: run_mock
+intent: |
+    --mock gives `tuimark run` fixed store writes per host action (SPEC
+    v0.4a §15.9 "--mock", test 121 "Mock writes"): an action's writes are
+    applied as one Batch before its event is recorded, so the screen
+    changes; a batch that fails (a write to @screen naming no screen)
+    changes nothing, not even its valid write, adds a "! ACTION: ERROR"
+    line to the strip before the event's own line, and the session goes on.
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "mock", "--strip"]
+    cwd: "."
+terminal:
+    cols: 100
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "MOCK idle"
+        timeoutMs: 5000
+    - press: s
+    - wait:
+        screen:
+            contains: "MOCK saved-ok"
+        timeoutMs: 3000
+    - press: f
+    - wait:
+        screen:
+            contains: "! fail:"
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "fail - {} null"
+        timeoutMs: 3000
+    - snapshot: failed
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+outcomes:
+    - id: mock_write_changes_the_screen
+      description: the save action's mock write shows on the screen
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/failed.txt"
+                if grep -q "MOCK saved-ok" "$f"; then
+                  echo '{"ok": true, "evidence": "status became saved-ok"}'
+                else
+                  echo '{"ok": false, "evidence": "the mock write did not reach the screen"}'
+                fi
+    - id: failed_batch_adds_a_line_and_changes_nothing
+      description: the failing batch adds "! fail:" with the error before the event, and its valid write was not applied
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/failed.txt"
+                bang=$(grep -n '! fail: tuimark: no screen with id "nowhere"' "$f" | cut -d: -f1)
+                ev=$(grep -n 'fail - {} null' "$f" | cut -d: -f1)
+                if [ -n "$bang" ] && [ -n "$ev" ] && [ "$bang" -lt "$ev" ] && ! grep -q "never" "$f"; then
+                  echo '{"ok": true, "evidence": "the ! line comes before the event and status is unchanged"}'
+                else
+                  echo '{"ok": false, "evidence": "the failed batch line is missing, misplaced, or the batch wrote"}'
+                fi
+    - id: session_goes_on
+      description: after the failed batch the session still runs and exits 0 on ctrl+c
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:67783e76cfa39c83e2b37832c36ab0bd6b44e5ce733f18e9886985eaf28f58cf

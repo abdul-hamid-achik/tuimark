@@ -91,7 +91,7 @@ func (c *cli) hostFail(err error) int {
 
 func hostErrText(err error) string {
 	s := err.Error()
-	for _, p := range []string{"tuimark: ", "tuimark host: "} {
+	for _, p := range []string{"tuimark: ", "tuimark host: ", "tuimark run: "} {
 		s = strings.TrimPrefix(s, p)
 	}
 	return s
