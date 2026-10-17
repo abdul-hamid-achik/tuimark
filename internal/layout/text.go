@@ -263,6 +263,17 @@ type textInfo struct {
 	set   bool
 }
 
+// CopyFrom makes b a copy of t, every member included (the engine's
+// memo of t too), except what b had measured of its own text: textInfo
+// measures again whenever Text is not the string those measures came
+// from, so they never stand for another text, and a box reused for the
+// same text (a list row in a reused slab) keeps them.
+func (b *Box) CopyFrom(t *Box) {
+	ti := b.ti
+	*b = *t
+	b.ti = ti
+}
+
 // textInfo returns the measures of b.Text, measured again only when Text
 // is not the string they were measured from.
 func (b *Box) textInfo() *textInfo {

@@ -377,9 +377,11 @@ func (m *materializer) clone(parent *layout.Box) *layout.Box {
 	m.pi++
 	b := &m.boxes[m.bi]
 	m.bi++
-	// The whole box, unexported members included (the engine's memo, the
-	// measured text), starts as its node's template.
-	*b = p.node.box
+	// The whole box, unexported members included (the engine's memo),
+	// starts as its node's template; only what it measured of its text
+	// stays, which is measured again unless the text is the same
+	// (layout.Box.CopyFrom).
+	b.CopyFrom(&p.node.box)
 	b.Parent = parent
 	b.Classes, b.GuardOn = p.classes, p.guardOn
 	b.Title, b.Text, b.Key, b.Series, b.Value = p.title, p.text, p.key, p.series, p.value

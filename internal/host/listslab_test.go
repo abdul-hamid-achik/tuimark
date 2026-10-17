@@ -106,6 +106,14 @@ func TestReusedSlabHoldsNothingStale(t *testing.T) {
 		{func(a *App) { _ = a.Set("rows.3.name", "a much longer name than before") }, 40, 12},
 		{next, 25, 8},
 		{next, 80, 24},
+		// As many bytes as the text the slab's box measured two frames
+		// back, but another width: the box measures it again.
+		{func(a *App) { _ = a.Set("rows.3.name", "中中中中中中中中中中") }, 40, 12},
+		{next, 40, 12},
+		{next, 40, 12},
+		{func(a *App) { _ = a.Set("rows.3.name", "a much longer name than before") }, 40, 12},
+		{next, 40, 12},
+		{next, 40, 12},
 		{func(a *App) { _ = a.Set("rows", []any{map[string]any{"id": "x", "name": "only", "n": 1.0}}) }, 40, 12},
 		{next, 25, 8},
 		{func(a *App) { a.HandleKey(Key{Name: "pgdn"}) }, 40, 12},
