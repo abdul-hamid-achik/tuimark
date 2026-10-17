@@ -328,7 +328,7 @@ type cellStyle struct {
 	clearOwner bool
 }
 
-func attrsOf(s css.Style) uint8 {
+func attrsOf(s *css.Style) uint8 {
 	var a uint8
 	if s.Bold {
 		a |= Bold
@@ -390,7 +390,7 @@ func (p *painter) box(b *layout.Box, owner string) {
 	owner = ownerOf(b, owner)
 	st := b.Style
 	visible := st.Visibility != "hidden"
-	base := cellStyle{fg: st.Color, bg: st.Background, attrs: attrsOf(st), owner: owner, clearOwner: true}
+	base := cellStyle{fg: st.Color, bg: st.Background, attrs: attrsOf(&st), owner: owner, clearOwner: true}
 	clip := b.Clip
 	if visible {
 		// Background (modals always clear what is underneath). A reversed

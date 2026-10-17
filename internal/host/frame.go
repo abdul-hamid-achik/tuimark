@@ -222,18 +222,27 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	}
 	var fb *builder
 	var rootBox *layout.Box
+	// Steps that only look for tabs, hints, or scale groups are skipped
+	// in a document without any (docKinds): they would change nothing.
+	kinds := a.kinds()
 	f.settled = false
 	for pass := 0; pass < 3; pass++ {
 		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
 		rootBox = fb.inflate(root, nil, nil, false) // step 1
 		rootBox = fb.cascade(casc, rootBox)         // step 2
-		fb.activateTabs(casc, rootBox)              // step 3
+		if kinds.tabs {
+			fb.activateTabs(casc, rootBox) // step 3
+		}
 		if !a.resolveFocus(f, fb, rootBox) {
 			f.settled = true
 			break // step 4
 		}
 	}
-	a.tabPrev = fb.activeTabs(rootBox)
+	if kinds.tabs {
+		a.tabPrev = fb.activeTabs(rootBox)
+	} else {
+		a.tabPrev = map[string]string{}
+	}
 	// screen@focus gives initial focus like any other focus change: on:focus
 	// fires once (resolveFocus reports the case where it had to pick another
 	// target).
@@ -246,7 +255,9 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	}
 	a.trackModals(fb)
 	f.Mouse = fb.mouseOn()
-	fb.buildHints(casc, rootBox) // step 5
+	if kinds.hints {
+		fb.buildHints(casc, rootBox) // step 5
+	}
 	eng := &layout.Engine{File: a.file, V3: a.doc.V3}
 	if rootBox == nil {
 		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: css.Initial()}
@@ -259,21 +270,23 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		}
 	}
 	eng.Layout(rootBox, fb.modals, cols, rows) // step 6
-	if a.doc.V3 {
+	if a.doc.V3 && kinds.scale {
 		// SPEC v0.3b §6.11: scale groups are formed after layout, over the
 		// laid-out sparklines of the frame; scale is never valid outside a
 		// version="3" document, so this is a no-op elsewhere.
 		groupSparklines(rootBox, fb.modals)
 	}
-	fb.placeTableRows(casc, rootBox) // step 7
+	if len(fb.tables) > 0 || a.noCache {
+		fb.placeTableRows(casc, rootBox) // step 7
+	}
 	f.Root, f.Modals = rootBox, fb.modals
 	f.Grid = paint.Paint(rootBox, fb.modals, cols, rows) // step 8
 	f.ByID = fb.byID
 	f.Focus = a.focus
 	// Remember scroll offsets clamped by layout.
-	rootBox.Walk(func(b *layout.Box) { a.rememberScroll(b, keyed) })
+	a.rememberScrolls(rootBox, keyed)
 	for _, m := range fb.modals {
-		m.Walk(func(b *layout.Box) { a.rememberScroll(b, keyed) })
+		a.rememberScrolls(m, keyed)
 	}
 	// The static token check and the cascade can report the same V003.
 	var diags ir.Diags
@@ -411,6 +424,24 @@ func (a *App) restoreKeyedOffsets(root *layout.Box) {
 // rememberScroll keeps the offset of viewport b, as layout clamped it:
 // under its id, or, when the wheel moved it, under its other key
 // (offsetKey). keyed reports whether any viewport has such a key.
+// rememberScrolls is rememberScroll on b and its descendants. It does not
+// visit the rows of a list whose rows are cached (listcache.go) when no
+// offset is kept under a row's key (keyed is false) and its template holds
+// no scroll: nothing in such a row has an offset or a stick maximum to
+// remember (a viewport in a row is never kept by its id, and its template
+// holds no list or table).
+func (a *App) rememberScrolls(b *layout.Box, keyed bool) {
+	a.rememberScroll(b, keyed)
+	if !keyed && b.Kind == "list" && !a.noCache {
+		if c := a.listRows[b.Src]; c != nil && c.plan.ok && !c.plan.scroll {
+			return
+		}
+	}
+	for _, c := range b.Children {
+		a.rememberScrolls(c, keyed)
+	}
+}
+
 func (a *App) rememberScroll(b *layout.Box, keyed bool) {
 	// Every viewport with an id keeps its clamped offset. For lists this
 	// means moving the selection only scrolls when the item would leave
@@ -1077,6 +1108,12 @@ func keyEqual(a, b any) bool { return Format(a) == Format(b) && typeName(a) == t
 // inflateList expands each= (or static items) and marks the selection.
 func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	a := fb.a
+	if n.Each != "" && sc == nil && !a.noCache {
+		if p := a.listPlan(n); p.ok {
+			fb.inflateListCached(n, b, p)
+			return
+		}
+	}
 	ls := a.list(n.ID)
 	if n.ID == "" {
 		ls = &listState{}
@@ -1159,21 +1196,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 		sel = min(max(sel, 0), len(entries)-1)
 	}
 	ls.index = sel
-	// SPEC §6.14 (version="2"): the checked row keys, and the mark channel
-	// every row reserves when the list has checked and mark.
-	var checked keySet
-	chanW, mark := 0, ""
-	if a.doc.V2 {
-		if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
-			keys, _ := fb.checkedKeys(n, path, sc)
-			checked = fb.checkedSet(n, path, keys, sc)
-			if m, ok := n.Attr("mark"); ok {
-				if w := layout.Width(m); w >= 1 && w <= 2 {
-					chanW, mark = w+1, m
-				}
-			}
-		}
-	}
+	checked, chanW, mark := fb.listMarks(n, sc)
 	for i, e := range entries {
 		ib := fb.inflate(e.src, b, e.sc, true)
 		if ib == nil {
@@ -1197,6 +1220,105 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 			break
 		}
 	}
+}
+
+// listMarks reads, for list node n (SPEC §6.14, version="2"), the
+// checked row keys and the mark channel every row reserves when the list
+// has checked and mark.
+func (fb *builder) listMarks(n *ir.Node, sc *scope) (checked keySet, chanW int, mark string) {
+	if fb.a.doc.V2 {
+		if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
+			keys, _ := fb.checkedKeys(n, path, sc)
+			checked = fb.checkedSet(n, path, keys, sc)
+			if m, ok := n.Attr("mark"); ok {
+				if w := layout.Width(m); w >= 1 && w <= 2 {
+					chanW, mark = w+1, m
+				}
+			}
+		}
+	}
+	return checked, chanW, mark
+}
+
+// inflateListCached is inflateList for a list whose rows are cached
+// (listcache.go): the same rows, keys, cursor, checked marks, and
+// diagnostics, in the same order, with the rows built from the cache's
+// prototypes, or as resolved when the cache was just filled.
+func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
+	a := fb.a
+	ls := a.list(n.ID)
+	if n.ID == "" {
+		ls = &listState{}
+	}
+	r, items := fb.rowsOf(n, p, b)
+	for _, d := range r.pre {
+		fb.add(d)
+	}
+	ls.alias, ls.each = p.each.Alias, true
+	ls.keys = append(ls.keys[:0], r.keys...)
+	sel := ls.index
+	if n.Bind != "" {
+		v, found := (*scope)(nil).resolve(a.store, n.Bind)
+		if !found {
+			fb.missingBind(n, n.Bind)
+		}
+		if found && v != nil {
+			if i := r.rowOf(v); i >= 0 {
+				sel = i
+			}
+		}
+	}
+	if len(r.keys) == 0 {
+		sel = 0
+	} else {
+		sel = min(max(sel, 0), len(r.keys)-1)
+	}
+	ls.index = sel
+	checked, chanW, mark := fb.listMarks(n, nil)
+	for _, d := range r.post {
+		fb.add(d)
+	}
+	if items == nil {
+		items = r.materialize(b)
+	}
+	var ids []string
+	if len(checked) > 0 {
+		ids = r.keyIDs()
+	}
+	kept := 0
+	for _, ib := range items {
+		if ib != nil {
+			kept++
+		}
+	}
+	if kept > 0 {
+		b.Children = make([]*layout.Box, 0, kept)
+	}
+	for i, ib := range items {
+		if ib == nil {
+			continue
+		}
+		ib.Selected = i == sel
+		if ids != nil {
+			_, ib.Checked = checked[ids[i]]
+		}
+		ib.Chan, ib.Mark = chanW, mark
+		ib.Key = r.keyStr[i]
+		ib.Index = i
+		b.Children = append(b.Children, ib)
+		if i == sel {
+			b.Follow = len(b.Children) - 1
+		}
+	}
+}
+
+// tabFocusOf is tabFocus, which finds nothing to apply to in a document
+// without tabs (docKinds).
+func (fb *builder) tabFocusOf(root *layout.Box, list []*layout.Box) (string, bool) {
+	if !fb.a.kinds().tabs {
+		return "", false
+	}
+	return fb.tabFocus(root, list)
 }
 
 // isFocusable reports whether a laid-out box can take focus.
@@ -1329,7 +1451,8 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 	// A tab change moves focus that was on the strip, in the old tab, or
 	// nowhere into the new tab (SPEC §6.10.3); focus that lands this way
 	// fires on:focus, as initial focus does.
-	if id, ok := fb.tabFocus(root, list); ok && id != a.focus {
+	// (Without tabs in the document, the rule has nothing to apply to.)
+	if id, ok := fb.tabFocusOf(root, list); ok && id != a.focus {
 		a.focus = id
 		if b := fb.byID[id]; b != nil && b.Src != nil && id != before {
 			if act, ok := b.Src.On["focus"]; ok {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
+	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
 // The frame caches of 0.4a (SPEC v0.4a §21 test 125): internal, with no
@@ -148,6 +149,51 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 		flag(st.init)
 	}
 	return string(b)
+}
+
+// docKinds records which widgets a document holds anywhere (every screen
+// and modal): a frame of a document without them skips the steps that
+// only look for them (tab activation and the tab focus rule, the hints,
+// the sparkline scale groups), each of which finds nothing there and
+// changes nothing.
+type docKinds struct {
+	doc   *parse.Document
+	tabs  bool
+	hints bool
+	scale bool
+}
+
+// kinds returns the docKinds of the current document, computed once per
+// document. With noCache every step runs. The caller holds a.mu.
+func (a *App) kinds() docKinds {
+	if a.noCache {
+		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true}
+	}
+	if a.docKinds.doc == a.doc {
+		return a.docKinds
+	}
+	k := docKinds{doc: a.doc}
+	var walk func(n *ir.Node)
+	walk = func(n *ir.Node) {
+		switch n.Kind {
+		case "tabs", "tab":
+			k.tabs = true
+		case "hints":
+			k.hints = true
+		case "sparkline":
+			if _, ok := n.Attr("scale"); ok {
+				k.scale = true
+			}
+		}
+		for _, c := range n.Children {
+			walk(c)
+		}
+	}
+	if a.doc != nil && a.doc.Root != nil {
+		walk(a.doc.Root)
+	}
+	a.docKinds = k
+	return k
 }
 
 // sortedKeys returns the keys of m in order.

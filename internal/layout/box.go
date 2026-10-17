@@ -158,17 +158,21 @@ type Box struct {
 	// kept on the box instead of in maps keyed by it, valid only for the
 	// engine run whose generation memoGen holds: memo[axis] holds the
 	// intrinsic size for up to two avail values per axis (horizontal is
-	// axis 1), the engine's map any others; shrink holds the shrinkable
-	// answer per axis (bit 0: known, bit 1: value; axis 1 shifted by 2).
+	// axis 1; bit 2*axis+i of memoSet marks slot i in use) when both fit
+	// in 32 bits, the engine's map any others; shrink holds the
+	// shrinkable answer per axis (bit 0: known, bit 1: value; axis 1
+	// shifted by 2).
 	memoGen uint64
 	memo    [2][2]memoSlot
+	memoSet uint8
 	shrink  uint8
+	// ti holds what textInfo measured of Text.
+	ti textInfo
 }
 
 // memoSlot is one remembered intrinsic size: avail -> v.
 type memoSlot struct {
-	set      bool
-	avail, v int
+	avail, v int32
 }
 
 // Outer returns the outer rectangle.

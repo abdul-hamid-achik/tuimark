@@ -31,6 +31,10 @@ func TestLineCountMatchesLines(t *testing.T) {
 				if got, want := LineCount(s, w, mode), len(Lines(s, w, mode)); got != want {
 					t.Fatalf("LineCount(%q, %d, %q) = %d, want %d", s, w, mode, got, want)
 				}
+				b := &Box{Text: s}
+				if got, want := b.lineCount(w, mode), len(Lines(s, w, mode)); got != want {
+					t.Fatalf("Box.lineCount(%q, %d, %q) = %d, want %d", s, w, mode, got, want)
+				}
 			}
 		}
 		want := 0
@@ -40,5 +44,25 @@ func TestLineCountMatchesLines(t *testing.T) {
 		if got := MaxWidth(s); got != want {
 			t.Fatalf("MaxWidth(%q) = %d, want %d", s, got, want)
 		}
+		if got := (&Box{Text: s}).textInfo().w; got != want {
+			t.Fatalf("textInfo(%q).w = %d, want %d", s, got, want)
+		}
+	}
+}
+
+// TestTextInfoFollowsText checks that a box measures its text again when
+// Text changes, also to a string of the same length.
+func TestTextInfoFollowsText(t *testing.T) {
+	b := &Box{Text: "abc"}
+	if w := b.textInfo().w; w != 3 {
+		t.Fatalf("w = %d, want 3", w)
+	}
+	b.Text = "a\nb"
+	if ti := b.textInfo(); ti.w != 1 || ti.paras != 2 {
+		t.Fatalf("after a change: w = %d, paras = %d, want 1, 2", ti.w, ti.paras)
+	}
+	b.Text = "日本"
+	if ti := b.textInfo(); ti.w != 4 || ti.ascii {
+		t.Fatalf("after a change: w = %d, ascii = %v, want 4, false", ti.w, ti.ascii)
 	}
 }
