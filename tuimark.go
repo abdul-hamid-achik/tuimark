@@ -13,13 +13,16 @@
 //	return ui.Run(os.Stdout)
 //
 // The public surface is deliberately small: Load, LoadFS, Parse, Bind,
-// Set, Get, Batch, On, Catalog, Dump, Validate, Play, Run.
+// Set, Get, Batch, On, Catalog, Dump, Validate, Play, Run, RunContext,
+// RunWith, Quit, Every, Derive.
 package tuimark
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
+	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
@@ -210,7 +213,128 @@ func (a *App) Validate() []Diagnostic { return a.h.Validate() }
 // running when the signal arrives does not hold the terminal: it is
 // restored right away, and if Run has not returned within a second, or a
 // second signal arrives, the process ends with the signal's default action.
+// Run(w) is RunContext(context.Background(), w).
 func (a *App) Run(w io.Writer) error { return a.h.Run(w) }
+
+// RunOptions are RunWith's options.
+type RunOptions struct {
+	// OnError, when set, is called on the loop's goroutine with each error
+	// that a handler, an Every function, or a Derive function returns and
+	// that is not a quit (errors.Is(err, ErrQuit)). ev is the event whose
+	// handler failed, or nil for Every and Derive. Its result decides what
+	// follows: nil continues the session (the failed handler counts as
+	// having returned nil, so the rest of the round, the later lifecycle
+	// rounds, and the rest of the read are dispatched), a quit ends it as
+	// a quit (RunWith returns nil), and any other error ends it with that
+	// error.
+	OnError func(ev *Event, err error) error
+}
+
+// RunContext is RunWith(ctx, w, RunOptions{}).
+func (a *App) RunContext(ctx context.Context, w io.Writer) error {
+	return a.h.RunContext(ctx, w)
+}
+
+// RunWith is Run with a context and options. When ctx is already done as
+// RunWith is called, it returns an error wrapping ctx.Err() without
+// touching the terminal (the Run/Play exclusion is checked first). A
+// cancellation during the session is taken at the loop's stop checks, the
+// points where it takes a stop signal (before each input of a read, and
+// between one event and the next), and acts as a quit: the remaining
+// events of the round and inputs of the read are not dispatched, no
+// further frame is drawn, the terminal is restored, and RunWith returns an
+// error for which errors.Is(err, ctx.Err()) holds. The signal-only rules
+// of Run (the forced restore, the one-second grace) do not apply: a
+// handler that blocks keeps the session, and the terminal, until it
+// returns, so pass the context on to handlers that wait. TUIMARK_LOG's
+// end record gives "error" for a cancellation and "quit" for a quit that
+// opts.OnError returned. Without opts.OnError, an error that is not a
+// quit ends the session, as in Run.
+func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error {
+	return a.h.RunWith(ctx, w, host.RunOptions(opts))
+}
+
+// Quit asks the active Run, RunContext, or RunWith to end. The request is
+// taken at the same stop checks as a cancellation, with the same effect,
+// and Run returns nil. A Quit made from a handler takes effect when that
+// handler returns, so the events after it in the round are not
+// dispatched, exactly as when the handler returns ErrQuit. It is safe from
+// any goroutine. Called while no Run is active it does nothing, and a
+// later Run does not see it; Play ignores it.
+func (a *App) Quit() { a.h.Quit() }
+
+// Every arranges for fn to be called every d while Run is active. Each
+// call gets a fresh *Batch whose writes apply as one Batch, with one
+// redraw request. fn runs on the loop's goroutine, between inputs, as a
+// handler does (a slow fn delays keys as a slow handler does), and each
+// tick is a settle: the frame is drawn and the queued lifecycle events
+// run. A tick that falls due while the loop is busy runs once when it is
+// free (ticks are never queued, as with time.Ticker), and registrations
+// due at the same moment run in the order they were registered. An error
+// fn returns, or a failed write of its batch, is a handler error with no
+// event: a quit (errors.Is(err, ErrQuit)) ends the session,
+// RunOptions.OnError gets any other error with ev == nil, and without
+// OnError it ends Run.
+//
+// Every may be called before Run or during it: a registration made during
+// a session counts its first tick d after the call, and each session
+// counts the first tick of every other live registration d after it
+// starts. Registrations persist across Run calls until stopped. Dump,
+// Validate, and Play never call fn, so a test drives time-based state
+// with set: steps. A d of zero or less panics, as time.NewTicker does.
+//
+// stop cancels the registration: it is idempotent, safe from any
+// goroutine (fn included), and never waits. Once it returns, no new call
+// of fn starts; a call already running finishes and its batch applies.
+func (a *App) Every(d time.Duration, fn func(b *Batch) error) (stop func()) {
+	return a.h.Every(d, fn)
+}
+
+// Derive declares path a derived value: the result of fn over the store,
+// kept in the store at path and recomputed by the runtime, so markup reads
+// a filtered list or a count as any other path while staying free of
+// expressions. path must be a non-empty store path in Set's grammar; a
+// reserved "@" path, a path inside or above a derived path, and a path
+// Set could not write in the current store are errors, and register
+// nothing. There is no way to remove a derived value.
+//
+// fn runs once when registered, then after every change to the store, as
+// part of that change: a Set, Bind, or Batch (once per Batch, after all
+// its writes, so get sees every write of the batch), and every write the
+// runtime makes (an input's bind, a list or table cursor's bind, a
+// checked array, a tab's bind, the tab activations of a focus request and
+// their undo). Nothing observes a store whose derived values are stale:
+// not Get, Dump, a frame, a handler, nor a Play step. Derived values are
+// recomputed in registration order, so a later one reads the earlier
+// ones' new values. get has Get's results (a deep copy; (nil, false) for
+// a missing or malformed path) over the store as the write left it, and
+// (nil, false) for a reserved "@" path. fn's value is coerced to JSON as
+// Bind coerces it. fn runs while the app holds its lock: calling any
+// method of the App from fn never returns, and other goroutines' Get,
+// Set, and Batch wait while it runs. A panic in fn is not recovered.
+//
+// When fn returns an error, or a value that cannot be coerced, null is
+// written at path and the error is reported once: while Run is active, on
+// the loop at its next settle, as a handler error with no event (so
+// without RunOptions.OnError it ends Run); while Play is active, as a
+// handler error of the step being applied; otherwise at the start of the
+// next Run or Play (only the first such error is kept until then). The
+// Set, Bind, or Batch that caused it returns nil. Dump and Validate never
+// report it.
+//
+// A Set, Bind, or b.Set whose path is a derived path, or lies inside one,
+// returns an error and changes nothing (a Batch holding one applies none
+// of its writes). A write to an ancestor, Set("", ...) included, is
+// allowed and followed by the recomputation, but fails as a whole,
+// naming the derived path and changing nothing, when the recomputation
+// could not write it. For the runtime a derived path is unwritable: an
+// input, list, table, checked array, or tabs bound to one does not
+// change, fires no on:change or on:select, and a built-in keymap row that
+// targets it does not match, so the key goes on to the next rows. Derive
+// is safe from any goroutine, during Run too.
+func (a *App) Derive(path string, fn func(get func(path string) (any, bool)) (any, error)) error {
+	return a.h.Derive(path, fn)
+}
 
 // PlayEvent is one action Play dispatched; it marshals exactly as
 // tuimark play's events do: {"step","action","source","keys","value"}.

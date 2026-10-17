@@ -1,8 +1,12 @@
 package tuimark_test
 
 import (
+	"context"
+	"errors"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/abdul-hamid-achik/tuimark"
 )
@@ -106,5 +110,121 @@ func TestRoundsCarryOver(t *testing.T) {
 				t.Errorf("the next call's step 0 dispatched %d events, want %d (%d carried + 7 rounds)", len(res2.Events), want, carry)
 			}
 		})
+	}
+}
+
+// The public 0.4a surface (SPEC v0.4a §18.2), through package tuimark;
+// the behavior itself is covered by internal/host (tests 110-114) and
+// internal/play.
+
+const counterDoc = `<tui version="1"><screen id="s"><text>N={n} C={count}</text></screen></tui>`
+
+func counterApp(t *testing.T) *tuimark.App {
+	t.Helper()
+	app, err := tuimark.Parse(strings.NewReader(counterDoc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := app.Bind("", map[string]any{"n": 0, "items": []any{"a", "b"}}); err != nil {
+		t.Fatal(err)
+	}
+	return app
+}
+
+// 110: a context already done returns its error, wrapped, before the
+// terminal is touched.
+func TestPublicRunWithCancelledContext(t *testing.T) {
+	app := counterApp(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	var out strings.Builder
+	err := app.RunWith(ctx, &out, tuimark.RunOptions{OnError: func(*tuimark.Event, error) error { return nil }})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("RunWith = %v, want context.Canceled", err)
+	}
+	if err := app.RunContext(ctx, &out); !errors.Is(err, context.Canceled) {
+		t.Fatalf("RunContext = %v, want context.Canceled", err)
+	}
+	if out.Len() != 0 {
+		t.Fatalf("wrote %q", out.String())
+	}
+}
+
+// 111, 113: Quit and Every outside Run change nothing, and Play never
+// calls an Every function.
+func TestPublicQuitAndEveryOutsideRun(t *testing.T) {
+	app := counterApp(t)
+	var calls atomic.Int32
+	stop := app.Every(time.Millisecond, func(b *tuimark.Batch) error {
+		calls.Add(1)
+		return b.Set("n", 99)
+	})
+	defer stop()
+	app.Quit()
+	res, err := app.Play(tuimark.PlayOptions{Cols: 20, Rows: 1}, "set:n=1")
+	if err != nil || res.Quit {
+		t.Fatalf("Play = %v, quit %v; an earlier Quit must not reach it", err, res.Quit)
+	}
+	time.Sleep(10 * time.Millisecond)
+	if _, err := app.Dump(20, 1); err != nil {
+		t.Fatal(err)
+	}
+	if n := calls.Load(); n != 0 {
+		t.Fatalf("the Every function ran %d times outside Run", n)
+	}
+	if v, _ := app.Get("n"); v != float64(1) {
+		t.Fatalf("n = %v", v)
+	}
+	defer func() {
+		if recover() == nil {
+			t.Fatal("Every(0, …) did not panic")
+		}
+	}()
+	app.Every(0, func(*tuimark.Batch) error { return nil })
+}
+
+// 114: Derive through the public API.
+func TestPublicDerive(t *testing.T) {
+	app := counterApp(t)
+	if err := app.Derive("count", func(get func(string) (any, bool)) (any, error) {
+		v, _ := get("items")
+		arr, _ := v.([]any)
+		return len(arr), nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.Set("items", []any{"a", "b", "c"}); err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := app.Get("count"); v != float64(3) {
+		t.Fatalf("count = %v", v)
+	}
+	if err := app.Set("count", 1); err == nil {
+		t.Fatal("Set of a derived path: want an error")
+	}
+	if err := app.Derive("@focus", func(func(string) (any, bool)) (any, error) { return nil, nil }); err == nil {
+		t.Fatal("Derive of a reserved path: want an error")
+	}
+	res, err := app.Play(tuimark.PlayOptions{Cols: 20, Rows: 1}, `set:items=["x"]`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.TrimSpace(res.Dump.Grid[0]); got != "N=0 C=1" {
+		t.Fatalf("grid = %q", got)
+	}
+	boom := errors.New("boom")
+	if err := app.Derive("bad", func(get func(string) (any, bool)) (any, error) {
+		if v, _ := get("n"); v == float64(2) {
+			return nil, boom
+		}
+		return nil, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.Play(tuimark.PlayOptions{Cols: 20, Rows: 1}, "set:n=2", "set:n=3"); !errors.Is(err, boom) {
+		t.Fatalf("Play = %v, want the Derive error", err)
+	}
+	if v, _ := app.Get("n"); v != float64(2) {
+		t.Fatalf("n = %v; the step after the error was applied", v)
 	}
 }
