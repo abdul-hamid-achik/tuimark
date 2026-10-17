@@ -172,3 +172,43 @@ func TestRowsShareOneStyleAndTheSelectedRowItsOwn(t *testing.T) {
 		t.Fatalf("a cold build shared a style")
 	}
 }
+
+// A live build whose rows changed inflates them into the slab it takes
+// (as far as the slab has room, fresh memory beyond): every step below
+// changes the rows, longer or shorter, so every frame resolves them
+// again, into the slab the frame two steps back used. Each frame is the
+// one a cold app builds, and building it leaves the frame before it as
+// it was.
+func TestRowsResolvedAgainGoIntoTheSlabAndHoldNothingStale(t *testing.T) {
+	warm, cold := slabApp(t, 30), slabApp(t, 30)
+	cold.noCache = true
+	rowsOf := func(n, salt int) []any {
+		rows := make([]any, n)
+		for i := range rows {
+			rows[i] = map[string]any{"id": fmt.Sprintf("k%d", (i*7+salt)%(n+3)), "name": strings.Repeat("xy ", (i+salt)%4+1), "n": float64(i * salt)}
+		}
+		return rows
+	}
+	sizes := [][2]int{{40, 12}, {25, 8}, {80, 24}, {30, 6}}
+	var prev *Frame
+	var digest string
+	for step, n := range []int{30, 45, 12, 60, 3, 0, 50, 50, 20, 70, 8} {
+		for _, a := range []*App{warm, cold} {
+			if err := a.Set("rows", rowsOf(n, step+1)); err != nil {
+				t.Fatal(err)
+			}
+			a.HandleKey(Key{Name: "down"})
+		}
+		sz := sizes[step%len(sizes)]
+		fw, fc := warm.Frame(sz[0], sz[1]), cold.Frame(sz[0], sz[1])
+		if d := FrameDiff(fw, fc); d != "" {
+			t.Fatalf("step %d: rows resolved into a reused slab differ from a cold build: %s", step, d)
+		}
+		if prev != nil {
+			if d := frameDigest(prev); d != digest {
+				t.Fatalf("step %d: resolving the rows again changed the frame before: %s", step, firstLineDiff(digest, d))
+			}
+		}
+		prev, digest = fw, frameDigest(fw)
+	}
+}

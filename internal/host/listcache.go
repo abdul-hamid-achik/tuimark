@@ -96,6 +96,9 @@ type listPlan struct {
 	nodes    map[*ir.Node]*protoNode
 	// scroll is set when the template holds a scroll.
 	scroll bool
+	// size is the number of nodes of the template: the boxes of a row
+	// that no if= prunes and no each= repeats.
+	size int
 }
 
 // protoNode is what every box of one template node shares, whatever its
@@ -190,6 +193,7 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 	ok := true
 	var walk func(t *ir.Node)
 	walk = func(t *ir.Node) {
+		p.size++
 		if !listCacheKinds[t.Kind] {
 			ok = false
 			return
@@ -228,9 +232,11 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 // the cache while its stamp, the --strict setting, and b's disabled state
 // are unchanged; items is nil then. Otherwise it resolves them again and
 // gives back, in items, the item boxes it inflated (nil for a pruned
-// row), which this frame uses as they are. The diagnostics are not
-// reported here. The caller holds a.mu.
-func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box) (r *listRows, items []*layout.Box) {
+// row), which this frame uses as they are: in a live build, inflated
+// into slab (the slab this build takes, slabFor), as far as it has room,
+// and in fresh memory beyond it. The diagnostics are not reported here.
+// The caller holds a.mu.
+func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box, slab *listSlab) (r *listRows, items []*layout.Box) {
 	a := fb.a
 	c := a.listRows[n]
 	st := a.stamp(p.deps)
@@ -274,8 +280,17 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box) (r *listRows, 
 	}
 	r.pre = sub.diags
 	sub.diags = nil
-	items = make([]*layout.Box, len(arr))
+	if slab != nil {
+		// Every box inflate takes is written whole there (newBox's
+		// caller), so what the slab held before is never read.
+		sub.boxes = slab.boxes[:cap(slab.boxes)]
+		slab.items = grow(slab.items, len(arr))
+		items = slab.items
+	} else {
+		items = make([]*layout.Box, len(arr))
+	}
 	r.start = make([]int32, len(arr)+1)
+	r.protos = make([]protoBox, 0, len(arr)*p.size)
 	for i := range arr {
 		ib := sub.inflate(p.template, b, &scopes[i], true)
 		items[i] = ib
@@ -283,6 +298,11 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box) (r *listRows, 
 			r.protos = p.flatten(r.protos, ib, &r.nkids)
 		}
 		r.start[i+1] = int32(len(r.protos))
+	}
+	if slab != nil && cap(slab.boxes) < len(r.protos) {
+		// Room for this many next time (the boxes beyond the slab's
+		// room came from fresh memory this time).
+		slab.boxes = make([]layout.Box, 0, len(r.protos)+len(r.protos)/8)
 	}
 	r.post = sub.diags
 	r.packTexts()

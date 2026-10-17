@@ -1333,7 +1333,8 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 	if n.ID == "" {
 		ls = &listState{}
 	}
-	r, items := fb.rowsOf(n, p, b)
+	slab := fb.slabFor(a.listRows[n])
+	r, items := fb.rowsOf(n, p, b, slab)
 	for _, d := range r.pre {
 		fb.add(d)
 	}
@@ -1361,9 +1362,7 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 	for _, d := range r.post {
 		fb.add(d)
 	}
-	var slab *listSlab
 	if items == nil {
-		slab = fb.slabFor(a.listRows[n])
 		items = r.materialize(b, slab)
 	}
 	var ids []string
