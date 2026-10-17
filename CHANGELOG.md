@@ -7,6 +7,8 @@ line.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-17
+
 0.4a is the "frontend loop" release. It adds the tools that let you build
 a terminal app the way you build a web front end:
 
@@ -427,7 +429,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.0
 [0.3.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.2
 [0.3.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.1
 [0.3.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.0
