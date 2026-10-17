@@ -741,11 +741,27 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// goes through handlerErr (OnError), and the stop checks run after
 	// each event, so a cancellation or a Quit made while a handler ran
 	// drops the rest of the round and draws nothing more.
+	// deriveErr reports a Derive error waiting in the app (SPEC v0.4a
+	// §18.2) as a handler error with no event: at the start of every
+	// settle and at the end of every round, before the frame is drawn.
+	deriveErr := func() (quit bool, err error) {
+		derr := a.TakeDeriveErr()
+		switch {
+		case derr == nil:
+			return false, nil
+		case errors.Is(derr, ErrQuit):
+			return true, nil
+		}
+		return handlerErr(nil, derr)
+	}
 	runEvents := func(evs []Event) (carried, quit bool, err error) {
 		if c := a.TakeCarry(); len(c) > 0 {
 			evs, carried = append(c, evs...), true
 		}
 		for round := 0; round < MaxRounds; round++ {
+			if quit, err := deriveErr(); quit || err != nil {
+				return carried, quit, err
+			}
 			for i := range evs {
 				ev := evs[i]
 				if lg != nil {
@@ -761,6 +777,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				if stop, err := stopCheck(); stop {
 					return carried, err == nil, err
 				}
+			}
+			if quit, err := deriveErr(); quit || err != nil {
+				return carried, quit, err
 			}
 			evs = a.TakePending()
 			if len(evs) == 0 {

@@ -108,6 +108,13 @@ func (b *Batch) Set(path string, v any) error {
 				return b.fail(fmt.Errorf("tuimark: the root value must be a JSON object, got %T", jv))
 			}
 		}
+		// A derived path, or a path inside one, is refused here, as Set
+		// refuses it (SPEC v0.4a §18.2); a write to an ancestor is
+		// checked when the batch applies, against the store it then
+		// meets.
+		if err := b.a.derivedTarget(path); err != nil {
+			return b.fail(err)
+		}
 	}
 	b.writes = append(b.writes, batchWrite{path: path, v: jv})
 	return nil
@@ -160,17 +167,29 @@ func (a *App) applyBatch(writes []batchWrite) error {
 	a.mu.Lock()
 	origStore := a.store
 	snap := a.snapForBatch()
+	prevErr := a.deriveErr
 	a.store = deepCopyJSON(a.store)
 	var failErr error
+	// The derived values are recomputed once, after every write of the
+	// batch, on the trial copy (SPEC v0.4a §18.2: get sees every write of
+	// the batch); a Derive error counts only when the batch applies.
+	a.deriveHold++
 	for _, w := range writes {
 		if err := a.applyLocked(w.path, w.v); err != nil {
 			failErr = err
 			break
 		}
 	}
+	a.deriveHold--
+	due := a.deriveDue
+	a.deriveDue = false
+	if failErr == nil && due {
+		a.recompute()
+	}
 	if failErr != nil {
 		a.store = origStore
 		a.restoreBatchSnap(snap)
+		a.deriveErr = prevErr
 		a.mu.Unlock()
 		return failErr
 	}

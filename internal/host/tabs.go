@@ -388,15 +388,13 @@ func (a *App) activateTab(t, tab *layout.Box) []Event {
 	n := t.Src
 	if n.Bind != "" {
 		if cur, ok := lookup(a.store, n.Bind); !ok || !isString(cur, tab.ID) {
-			root, err := assign(a.store, n.Bind, tab.ID)
-			if err != nil {
+			if err := a.writeStore(n.Bind, tab.ID); err != nil {
 				// The bound path cannot be written (a value along it is
-				// not an object): the active tab comes from that path, so
-				// it cannot change, and on:select does not fire.
+				// not an object, or it is a derived path, SPEC v0.4a
+				// §18.2): the active tab comes from that path, so it
+				// cannot change, and on:select does not fire.
 				return nil
 			}
-			a.store = root
-			a.wrote(n.Bind)
 			a.markStale()
 		}
 	} else if a.tabMem[t.ID] != tab.ID {
@@ -459,12 +457,11 @@ func (a *App) openTabsFor(id string) []tabAct {
 		act := tabAct{tabs: tn.ID, tab: tab.ID, path: tn.Bind, fire: tn.On["select"], outside: !inFrame}
 		if tn.Bind != "" {
 			act.old, act.hadOld = lookup(a.store, tn.Bind)
-			root, err := assign(a.store, tn.Bind, tab.ID)
-			if err != nil {
+			// A bind path that is derived (SPEC v0.4a §18.2) or cannot
+			// be written leaves the tab inactive, as a write error did.
+			if err := a.writeStore(tn.Bind, tab.ID); err != nil {
 				continue
 			}
-			a.store = root
-			a.wrote(tn.Bind)
 		} else {
 			act.oldMem, act.hadMem = a.tabMem[tn.ID]
 			a.tabMem[tn.ID] = tab.ID
@@ -565,14 +562,12 @@ func (a *App) undoTabActs(acts []tabAct) bool {
 		if !ok || !isString(cur, act.tab) {
 			continue
 		}
+		// Both writes recompute the derived values (SPEC v0.4a §18.2).
 		if act.hadOld {
-			if root, err := assign(a.store, act.path, act.old); err == nil {
-				a.store = root
-			}
+			_ = a.writeStore(act.path, act.old)
 		} else {
-			unassign(a.store, act.path)
+			a.unwriteStore(act.path)
 		}
-		a.wrote(act.path)
 		changed = true
 	}
 	return changed

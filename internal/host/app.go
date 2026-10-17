@@ -86,6 +86,14 @@ type App struct {
 	// checked array while the store member it reads is unchanged
 	// (checkedSet).
 	checkedSets map[*ir.Node]*checkedCache
+	// derived are the Derive registrations, in registration order (SPEC
+	// v0.4a §18.2). deriveHold > 0 while a Batch applies its writes: the
+	// recomputation then runs once, at its end, when deriveDue is set.
+	// deriveErr is the first Derive error not reported yet.
+	derived    []*derivation
+	deriveHold int
+	deriveDue  bool
+	deriveErr  error
 
 	screen    int
 	focus     string
@@ -379,12 +387,10 @@ func (a *App) applyLocked(path string, v any) error {
 				return fmt.Errorf("tuimark: the root value must be a JSON object, got %T", v)
 			}
 		}
-		root, err := assign(a.store, path, v)
-		if err != nil {
-			return err
-		}
-		a.store = root
-		a.wrote(path)
+		// writeStore refuses a write that would break a derived value and
+		// recomputes the derived values after the write (SPEC v0.4a
+		// §18.2).
+		return a.writeStore(path, v)
 	}
 	return nil
 }

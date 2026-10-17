@@ -2,6 +2,7 @@ package play
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -108,6 +109,9 @@ func (s *Session) dispatchAll(step int, evs []host.Event) (carried bool) {
 		evs, carried = append(c, evs...), true
 	}
 	for round := 0; round < host.MaxRounds; round++ {
+		if s.deriveFailed() {
+			return carried
+		}
 		for _, ev := range evs {
 			de := dump.Event{Step: step, Action: ev.Action, Source: ev.Source, Keys: ev.Keys, Value: ev.Value}
 			if de.Keys == nil {
@@ -131,6 +135,9 @@ func (s *Session) dispatchAll(step int, evs []host.Event) (carried bool) {
 				return carried
 			}
 		}
+		if s.deriveFailed() {
+			return carried
+		}
 		evs = s.App.TakePending()
 		if len(evs) == 0 {
 			return carried
@@ -139,6 +146,23 @@ func (s *Session) dispatchAll(step int, evs []host.Event) (carried bool) {
 	}
 	s.App.CarryOver(evs)
 	return carried
+}
+
+// deriveFailed reports a Derive error waiting in the app as a handler
+// error of the step being applied (SPEC v0.4a §18.2), at the points Run's
+// loop reports it: the start of every settle and the end of every round.
+// A quit (errors.Is(err, ErrQuit)) ends the call as a quit.
+func (s *Session) deriveFailed() bool {
+	err := s.App.TakeDeriveErr()
+	switch {
+	case err == nil:
+		return false
+	case errors.Is(err, host.ErrQuit):
+		s.Quit = true
+	default:
+		s.Err = err
+	}
+	return true
 }
 
 // settle draws and runs the events a render queued, exactly as Run's loop
