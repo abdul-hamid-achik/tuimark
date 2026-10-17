@@ -7,6 +7,8 @@ line.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-17
+
 A patch: fixes and friendlier diagnostics from a full review of 0.3.1.
 No vocabulary changes; documents keep their meaning and their dumps,
 except that a few invalid ones now say so.
@@ -313,7 +315,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.2
 [0.3.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.1
 [0.3.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.0
 [0.2.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.2.0
