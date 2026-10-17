@@ -838,7 +838,15 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	}
 	contentW, contentH := area.W, area.H
 	if scrollY {
-		contentH = max(area.H, e.contentIntrinsic(b, false, area.W))
+		ci, ok := e.measuredContentH(b)
+		if !ok {
+			ci = e.contentIntrinsic(b, false, area.W)
+		} else if verifying {
+			if v := e.contentIntrinsic(b, false, area.W); v != ci {
+				panic(fmt.Sprintf("layout: the measured content height of %s %q is %d, measured again %d", b.Kind, b.ID, ci, v))
+			}
+		}
+		contentH = max(area.H, ci)
 	}
 	if scrollX {
 		contentW = max(area.W, e.contentIntrinsic(b, true, area.H))
@@ -1215,6 +1223,37 @@ func (e *Engine) memoGet(b *Box, horizontal bool, avail int) (int, bool) {
 	return v, ok
 }
 
+// pureContentV is a bit of Box.memoSet, above the slot bits:
+// contentIntrinsic sets it when it measures b down (horizontal false)
+// and that measure reads none of b's auto marks (autoW, autoH), which
+// layout sets between two measures of b: b does not lay out as a grid
+// and none of its in-flow children has a percent width (crossSize and
+// mainSizes read the marks for those alone). Everything else such a
+// measure reads is b's and its children's styles, which do not change
+// during a run, and the intrinsic sizes this run already remembered,
+// which it reads again, so measuring b down again at the same width
+// gives the same value.
+const pureContentV = 1 << 4
+
+// measuredContentH returns contentIntrinsic(b, false, b.Content.W) when
+// this engine run has already measured it and measuring it again gives
+// the same value (pureContentV): b's parent measures b's height at b's
+// width (intrinsic(b, false, b.W)), which is measure's
+// contentIntrinsic(b, false, max(0, b.W-frameH)) plus frameV, and
+// max(0, b.W-frameH) is b.Content.W. A list of 20 000 rows is then
+// walked once to measure its content, not twice.
+func (e *Engine) measuredContentH(b *Box) (int, bool) {
+	e.memoOf(b)
+	if b.memoSet&pureContentV == 0 {
+		return 0, false
+	}
+	v, ok := e.memoGet(b, false, b.W)
+	if !ok {
+		return 0, false
+	}
+	return v - b.frameV(), true
+}
+
 // memoPut remembers v for (b, horizontal, avail): in a free slot of b
 // when both fit one, else in the engine's map.
 func (e *Engine) memoPut(b *Box, horizontal bool, avail, v int) {
@@ -1353,7 +1392,9 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 	alongMain := row == horizontal
 	n := len(flow)
 	total := 0
-	if b.IsGrid() {
+	grid := b.IsGrid()
+	pctW := false // an in-flow child has a percent width (pureContentV)
+	if grid {
 		// SPEC §11.7 item 6: the grid's own measure of its in-flow
 		// children; docked children stack around it as in any container.
 		total = e.gridIntrinsic(b, flow, horizontal, flowAvail)
@@ -1379,6 +1420,9 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 			}
 		}
 		for i, k := range flow {
+			if !horizontal && k.Style.Width.Kind == ir.Pct {
+				pctW = true
+			}
 			var s ir.Scalar
 			if alongMain {
 				s = mainSpec(k, horizontal)
@@ -1410,6 +1454,10 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 		// Top/bottom strips span the full width; left/right docks share the
 		// row under them with the in-flow content.
 		return max(dockCross, total+dockMain)
+	}
+	if !grid && !pctW {
+		e.memoOf(b)
+		b.memoSet |= pureContentV
 	}
 	return max(total, dockCross) + dockMain
 }
