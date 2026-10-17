@@ -16,20 +16,29 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
-// diagCode is one row of the SPEC §14 diagnostic taxonomy. The table itself
+// DiagCode is one row of the SPEC §14 diagnostic taxonomy. The table itself
 // has no catalog in code (the pass/when prose isn't data the runtime
 // carries at run time), so it is spelled out here once; the code column
-// order matches SPEC §14 and is otherwise deterministic.
-type diagCode struct {
+// order matches SPEC §14 and is otherwise deterministic. `tuimark catalog`
+// (SPEC v0.4a §15.10) reads it through DiagCodes.
+type DiagCode struct {
 	Code, Pass, When string
 }
 
-var diagCodes = []diagCode{
+// DiagCodes returns the diagnostic table in the order of SPEC §14.
+func DiagCodes() []DiagCode { return append([]DiagCode(nil), diagCodes...) }
+
+// NeverMatchKeys are the ctrl tokens that arrive as tab or enter and so
+// never match a keymap row (SPEC §8.1); the key-token reference writes
+// them and `tuimark catalog` lists them.
+var NeverMatchKeys = []string{"ctrl+i", "ctrl+j", "ctrl+m"}
+
+var diagCodes = []DiagCode{
 	{"V001", "parse", "unknown tag; a version=\"2\" tag in a version=\"1\" document (message ends with `(requires version=\"2\")`); `input`, `button`, `list`, `modal`, `table`, `tabs`, or `tab` inside a container `each` template"},
 	{"V002", "parse", "unknown attribute; a version=\"2\" attribute in a version=\"1\" document (with the same hint); `focusable`, `on:click`, or `on:focus` inside a container `each` template; a version=\"3\" attribute (`stick` on `scroll`, `focus` on `modal`, `when` on `keymap`, `priority` on `column`, `scale` on `sparkline`) in a version=\"1\" or version=\"2\" document, with `(requires version=\"3\")` (on a 0.2b tag in a version=\"1\" document only that tag's V001 is reported); `stick` inside a list `<item>` or a container `each` template (version=\"3\")"},
 	{"V003", "parse", "bad unit / color / token / CSS property; a `version` other than 1, 2, or 3; a version=\"2\" value, property, pseudo-class, media feature, or built-in action in a version=\"1\" document (with the hint); `switch-to` without `to`; a hyphenated built-in in an `on:*` attribute; a `tab` without a non-empty `label`; `{path}` in `label`, `short`, `mark`, or `keycap`; a `sparkline` without `bind`; a bad `scope`, `min`, or `max`; in a version=\"1\" or version=\"2\" document, with `(requires version=\"3\")`: `{path}` in a tab's `label` or `short`, `row-gap`/`column-gap`, or the `wrap` values `truncate-start`/`truncate-middle` (an invalid `wrap` value lists the two only in a version=\"3\" document); `stick` other than `bottom`, or `stick` on a `scroll` with `axis=\"x\"`; a bad selector in a `<keymap>`'s `when`, once, at the `<keymap>`; a `priority` that is not a non-negative integer; a `scale` that is not a plain identifier (version=\"3\")"},
 	{"V004", "parse", "duplicate id; any `id` inside a container `each` template (version=\"2\")"},
-	{"V005", "parse", "not well-formed XML"},
+	{"V005", "parse", "not well-formed XML; or not a Tuimark document: a root element other than `<tui>` (or the phase-0 alias `<app>`), or a `<tui>` with no `<screen>`"},
 	{"V006", "parse", "`style src` include cycle"},
 	{"V007", "parse", "control character or ANSI in text (strip + error)"},
 	{"V008", "parse", "native widget name not registered (v1.1+)"},
@@ -141,6 +150,7 @@ func Markdown() string {
 	writeV02bSection(&b)
 	writeV03aSection(&b)
 	writeV03bSection(&b)
+	writeV04aToolsSection(&b)
 	writeNotes(&b)
 
 	return strings.TrimRight(b.String(), "\n") + "\n"
@@ -282,7 +292,7 @@ func writeRuntimeSection(b *strings.Builder) {
 	b.WriteString("```\n\n")
 
 	b.WriteString("### Package boundaries\n\n")
-	b.WriteString("- `cmd/tuimark` — the CLI: flag parsing, output formatting, the golden-manifest runner behind `tuimark test` (including its v0.2a superset check), `tuimark play`'s `--input`/`--script` step parsing and `--frames`/`--strict` wiring (the replay engine itself is `internal/play`, shared with `tuimark test` and `tuimark.Play`), `tuimark inspect` (`Frame` plus `Inspect`), the theme/`:root` token table for `tuimark ir`, the host protocol bridge of `tuimark host` (`host.go`: the fd 3/fd 4 messages, the event/reply wait, and the bounded fd 4 queue), and the stdlib MCP server of `tuimark mcp` (`mcp.go`, SPEC §15.8), whose tools call the same command code the CLI runs. Parsing, cascade, layout, and paint rules live in `internal/**`.\n")
+	b.WriteString("- `cmd/tuimark` — the CLI: flag parsing, output formatting, the golden-manifest runner behind `tuimark test` (including its v0.2a superset check), `tuimark play`'s `--input`/`--script` step parsing and `--frames`/`--strict` wiring (the replay engine itself is `internal/play`, shared with `tuimark test` and `tuimark.Play`), `tuimark inspect` (`Frame` plus `Inspect`), the theme/`:root` token table for `tuimark ir`, the host protocol bridge of `tuimark host` (`host.go`: the fd 3/fd 4 messages with their 64 MiB line bound, the event/reply wait, and the bounded fd 4 queue), `tuimark catalog` (`catalog.go`) and `tuimark new` (`new.go`, with the files it writes embedded from `newtemplate/`), and the stdlib MCP server of `tuimark mcp` (`mcp.go`, SPEC §15.8), whose tools call the same command code the CLI runs. Parsing, cascade, layout, and paint rules live in `internal/**`.\n")
 	b.WriteString("- `tuimark.go` (package `tuimark`, repo root) — the only public surface: the package functions `Load`, `LoadFS`, and `Parse`, `App`'s methods `Bind, Set, Get, Batch, On, Catalog, Dump, Validate, Play, Run` (SPEC §18, §18.1), the `App` and `Batch` types, and the aliases `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, `PlayEvent`, `PlayFrame`, `PlayOptions`, `PlayResult`, and `ErrQuit`. Nothing else is exported from it.\n")
 	b.WriteString("- `internal/ir` — node/scalar/diagnostic/binding-grammar/key-token types, the tag-kind catalog (`Kinds`, `SpikeKinds`), the spike attribute whitelist (`SpikeAttrs`), and the key-token catalog (`NamedKeys`/`ValidKey`).\n")
 	b.WriteString("- `internal/parse` — the XML tokenizer, the IR builder (including the per-tag attribute catalog, `TagAttrs`), the formatter (`fmt`), and IR-as-JSON (`ir`).\n")
@@ -292,7 +302,8 @@ func writeRuntimeSection(b *strings.Builder) {
 	b.WriteString("- `internal/dump` — the text and JSON frame dump.\n")
 	b.WriteString("- `internal/host` — the JSON store, `Load`/`LoadFS` (a shared `styleResolver` between an OS directory and an `fs.FS`), `Get`'s reserved paths and deep copies, `Batch`'s atomic apply, the `Run`/`Play` mode guard (SPEC v0.3 §18.1 rule 8), inflation (`each` on lists and containers, multi-select, table rows with their measure cache in `table.go`), cascade application, focus, the SPEC §8.6 key dispatch with the built-in actions (`dispatch.go`, one procedure for `Run`, `play`, and the hints), tabs (`tabs.go`), hints and sparklines (`hints.go`), the mouse hit test and click/wheel rules (`mouse.go`), events, and the `Run` loop (with the capability/theme probe and `TUIMARK_LOG`), plus `RunHost`, `Run` with the internal hooks `tuimark host` needs (a session-start hook, a stop request, a stop-signal notice) and the fd 3/fd 4 checks (`hostfd_*.go`). A frame is built in the SPEC §18 order: inflate, cascade, tab activation, focus, hints, layout, table rows, paint.\n")
 	b.WriteString("- `internal/play` (v0.3) — the headless replay engine of SPEC §15.4 (`Session`, step parsing): the one place `tuimark play`, `tuimark test`, and `tuimark.Play` apply steps, so their parity holds by construction.\n")
-	b.WriteString("- `internal/agentsdoc` — generates this file from the catalogs above.\n")
+	b.WriteString("- `internal/agentsdoc` — generates this file from the catalogs above, and the project briefing (`ProjectMarkdown`) that `tuimark new` writes and `tuimark agents --project` prints.\n")
+	b.WriteString("- `internal/catalog` (v0.4a) — builds the output of `tuimark catalog` (SPEC §15.10) from the tables of `internal/parse` (`TagAttrs`, `AttrKeywords`), `internal/css` (`PropertyKeywords`, `PseudoClasses`, `MediaFeatures`), `internal/ir`, `internal/host` (`Builtins`), and `internal/agentsdoc` (the diagnostic table). `schema/catalog.v1.json` validates it, and a test in `cmd/tuimark` compares it with this file both ways.\n")
 	b.WriteString("- Application code — `examples/**`, or any external module — uses only the root `tuimark` package. Inside the repo, `internal/layout` is imported by `internal/paint`, `internal/dump`, and `internal/host`; `internal/paint` is imported by `internal/dump`, `internal/host`, and `cmd/tuimark` (for `preview`'s ANSI frame); `internal/play` is imported by `cmd/tuimark` and by `tuimark.go`. SPEC §3 forbids importing `internal/layout`/`internal/paint` from application code outside this repo, not from other packages inside it.\n\n")
 
 	b.WriteString("### Hard rules\n\n")
@@ -313,8 +324,8 @@ func writeRuntimeSection(b *strings.Builder) {
 	b.WriteString("### Adding things\n\n")
 	b.WriteString("Only when the SPEC itself adds one: SPEC §1 forbids inventing tags, CSS properties, units, or selectors, and SPEC §14 is the single diagnostic taxonomy. These recipes are the mechanics for a change the SPEC has already made, not license to extend the catalog on the runtime side.\n\n")
 	b.WriteString("- **A diagnostic code.** Implement the check where it belongs (`internal/ir`, `internal/parse`, `internal/css`, `internal/layout`, or `internal/host`), add its row to the `diagCodes` table in `internal/agentsdoc/agentsdoc.go`, add a probe/regression test that triggers it, then regenerate this file.\n")
-	b.WriteString("- **A CSS property.** Add it to `internal/css`'s property table (parsing, `PropertyNames`/`PropertyValues`, and the cascade), add a test in `internal/css`, then regenerate this file so \"### CSS properties\" above picks it up.\n")
-	b.WriteString("- **A tag attribute.** Add it to `internal/parse`'s `TagAttrs` catalog and whatever in `internal/ir`/`internal/host` needs to read it, add a parser/build test, then regenerate this file so \"### Attributes per tag\" above picks it up.\n")
+	b.WriteString("- **A CSS property.** Add it to `internal/css`'s property table (parsing, `PropertyNames`/`PropertyValues`, and the cascade), add a test in `internal/css`, then regenerate this file so \"### CSS properties\" above picks it up. `tuimark catalog` reads the same table; if the property is an enumeration, its keywords come from `PropertyKeywords`.\n")
+	b.WriteString("- **A tag attribute.** Add it to `internal/parse`'s `TagAttrs` catalog and whatever in `internal/ir`/`internal/host` needs to read it, add a parser/build test, then regenerate this file so \"### Attributes per tag\" above picks it up. An attribute that takes literal keywords also needs its row in `internal/parse`'s `attrKeywords` (what `tuimark catalog` lists), which a parser test checks.\n")
 	b.WriteString("- **Regenerating this file.** `go run ./cmd/tuimark agents --repo > AGENTS.md`, then `go test ./internal/agentsdoc`: `TestAGENTSDoesNotDrift` and `TestAGENTSStartsWithSpec22Verbatim` must stay green. Never hand-edit `AGENTS.md`.\n\n")
 
 	b.WriteString("### Glyphrun conventions (`specs/glyphrun/`)\n\n")

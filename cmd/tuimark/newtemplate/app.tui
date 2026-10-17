@@ -1,0 +1,32 @@
+<tui version="3" theme="auto">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="enter" action="open" when="#items:focus" label="open"/>
+    <bind keys="/" action="focus" to="#query" label="search"/>
+    <bind keys="r" action="refresh" label="refresh"/>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <screen id="main" focus="#items">
+    <col id="app">
+      <row id="header" class="chrome">
+        <text class="title" wrap="truncate">{title}</text>
+        <spacer/>
+        <text class="muted" wrap="truncate">{count} items</text>
+      </row>
+      <input id="query" bind="query" placeholder="search" on:submit="search"/>
+      <list id="items" each="items as item" key="item.id" bind="selected" on:select="select">
+        <item>
+          <row class="entry">
+            <text class="muted" wrap="truncate">{item.id}</text>
+            <text wrap="truncate">{item.title}</text>
+          </row>
+        </item>
+      </list>
+      <row id="status" class="chrome">
+        <text wrap="truncate">{status}</text>
+        <spacer/>
+        <hints/>
+      </row>
+    </col>
+  </screen>
+</tui>

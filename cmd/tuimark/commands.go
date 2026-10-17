@@ -313,7 +313,14 @@ func (c *cli) cmdValidate(args []string) int {
 	}
 	ok := !diags.HasErrors()
 	if *asJSON {
-		out := map[string]any{"ok": ok, "file": file, "diagnostics": diagsOrEmpty(diags), "actions": app.Catalog()}
+		// "data" is the --data argument as given, or null without it, so a
+		// reader can tell whether bindings were checked and against which
+		// file (SPEC v0.4a §15.1).
+		var dataArg any
+		if *data != "" {
+			dataArg = *data
+		}
+		out := map[string]any{"ok": ok, "file": file, "data": dataArg, "diagnostics": diagsOrEmpty(diags), "actions": app.Catalog()}
 		b, _ := json.MarshalIndent(out, "", "  ")
 		fmt.Fprintln(c.stdout, string(b))
 	} else {
@@ -321,7 +328,13 @@ func (c *cli) cmdValidate(args []string) int {
 			fmt.Fprintln(c.stdout, d.String())
 		}
 		if ok {
-			fmt.Fprintln(c.stdout, "ok")
+			// Without --data, B001-B003 and B008-B010 were not checked
+			// (SPEC v0.4a §15.1).
+			if *data == "" {
+				fmt.Fprintln(c.stdout, "ok (bindings not checked: no --data)")
+			} else {
+				fmt.Fprintln(c.stdout, "ok")
+			}
 		}
 	}
 	if !ok {

@@ -53,8 +53,21 @@ func TestVersionTakesNoArguments(t *testing.T) {
 // The usage text lists every flag a command takes, `agents --repo`
 // included (cmdAgents defines it), and `agents` still rejects arguments.
 func TestUsageMentionsAgentsRepo(t *testing.T) {
-	if !strings.Contains(usage, "tuimark agents   [--repo]") {
-		t.Errorf("usage text is missing agents' --repo flag:\n%s", usage)
+	if !strings.Contains(usage, "tuimark agents   [--repo | --project]") {
+		t.Errorf("usage text is missing agents' --repo and --project flags:\n%s", usage)
+	}
+	for _, cmd := range []string{"tuimark catalog", "tuimark new      NAME [--go | --ts]"} {
+		if !strings.Contains(usage, cmd) {
+			t.Errorf("usage text is missing %q", cmd)
+		}
+	}
+	// --project prints the project briefing; --repo and --project exclude
+	// each other (SPEC v0.4a §15.1).
+	if code, out, errw := runCLI("agents", "--project"); code != 0 || errw != "" || strings.Contains(out, "Working on the Tuimark runtime") || !strings.Contains(out, "- sample.json\n") {
+		t.Errorf("agents --project: exit %d, stderr %q", code, errw)
+	}
+	if code, out, errw := runCLI("agents", "--repo", "--project"); code != 1 || out != "" || !strings.Contains(errw, "exclusive") {
+		t.Errorf("agents --repo --project: exit %d, stdout %q, stderr %q", code, out, errw)
 	}
 	code, out, errw := runCLI("agents", "--repo")
 	if code != 0 || !strings.Contains(out, "Working on the Tuimark runtime") || errw != "" {
