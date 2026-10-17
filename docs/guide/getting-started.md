@@ -1,6 +1,6 @@
 ---
 title: Getting started
-description: Install the tuimark CLI, write a first document, and check it with validate, dump, preview and play.
+description: Install the tuimark CLI, write a first document, check it with validate, dump, preview and play, and try it live with tuimark run.
 ---
 
 # Getting started
@@ -76,6 +76,18 @@ tuimark preview app.tui --data sample.json --cols 80 --rows 12 --watch
 Each event line reads `STEP ACTION SOURCE KEYS VALUE`: at step 3, `open` fired from the list `tasks`, and `keys` names the row the cursor was on (`t` is the `each` alias). The `selected` marker moved to the third item, and `moved` fired on each step that moved the cursor.
 
 `play` never runs host code: host actions are only recorded. That is what makes it safe to run anywhere, and exactly what you need to check a keymap before any Go exists.
+
+## Try it live, without Go
+
+`tuimark run` shows the document in your terminal and lets you use it: keys, focus, and the mouse all behave as they will in your app, and it reloads whenever you save.
+
+```sh
+tuimark run app.tui --data sample.json --strip
+```
+
+With no host program, every action the document fires is listed in a strip at the bottom of the screen (`F12` shows or hides it). A `--mock` file gives each action fixed store writes, enough for a clickable prototype: an `add` that clears the input, a `cancel` that closes a modal. See [Running a document](/guide/run).
+
+To start a new project instead of writing the files by hand, `tuimark new NAME` writes a document, a stylesheet, sample data, and an `AGENTS.md` for coding agents, all of which validate cleanly. See [`new`](/guide/tools#new).
 
 ## Run it
 

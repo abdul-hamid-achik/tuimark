@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
+	"golang.org/x/term"
 )
 
 // runDoc has two host actions from a keymap and an input whose events are
@@ -482,5 +483,20 @@ func TestRunEventsFileMode(t *testing.T) {
 	st, _ := os.Stat(p)
 	if st.Mode().Perm() != 0o600 || st.Size() != 0 {
 		t.Errorf("existing file: mode %v size %d, want 0600 and empty", st.Mode().Perm(), st.Size())
+	}
+}
+
+// Without a terminal on stdin, run points at the CLI's headless commands,
+// not at Run's Go API (Dump): the 0.4a trial (test 127) met Run's own
+// message here.
+func TestRunWithoutATerminalPointsAtTheCLI(t *testing.T) {
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		t.Skip("stdin is a terminal; run would take it over")
+	}
+	file := writeIn(t, t.TempDir(), "app.tui", runDoc)
+	code, stdout, stderr := runCLI("run", file)
+	want := "tuimark: run: stdin is not a terminal; for output without a terminal use tuimark dump or tuimark play, or start run under a pseudo-terminal (glyph, script)\n"
+	if code != 1 || stdout != "" || stderr != want {
+		t.Errorf("run without a terminal: exit %d, stdout %q, stderr %q; want 1, nothing, %q", code, stdout, stderr, want)
 	}
 }
