@@ -17,6 +17,11 @@ func (c *cli) cmdFmt(args []string) int {
 	if err != nil {
 		return 1
 	}
+	// --check writes nothing and --write rewrites: asking for both used to
+	// run only the check without a word, so it is a usage error instead.
+	if *write && *check {
+		return c.fail(fmt.Errorf("fmt: --write and --check are mutually exclusive"))
+	}
 	file, err := oneFile("fmt", pos)
 	if err != nil {
 		return c.fail(err)

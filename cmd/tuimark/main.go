@@ -11,7 +11,7 @@
 //	                      [--format text|json] [--cells] [--styles] [--frames] [--strict]
 //	tuimark fmt      FILE [--write] [--check]
 //	tuimark ir       FILE
-//	tuimark agents
+//	tuimark agents   [--repo]
 //	tuimark test     [DIR] [--update] [--allow-breaking]
 //	tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
 //	                      [--theme dark|light] [--strict] [--json]
@@ -72,7 +72,7 @@ usage:
                         [--format text|json] [--cells] [--styles] [--frames] [--strict]
   tuimark fmt      FILE [--write] [--check]
   tuimark ir       FILE                       print the source IR as JSON
-  tuimark agents                              print AGENTS.md generated from the catalog
+  tuimark agents   [--repo]                   print AGENTS.md generated from the catalog
   tuimark test     [DIR] [--update] [--allow-breaking]
                                                check dump goldens under DIR (default testdata/golden)
   tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
@@ -128,6 +128,9 @@ func (c *cli) run(args []string) int {
 	case "mcp":
 		return c.cmdMCP(rest)
 	case "version", "--version", "-v":
+		if len(rest) != 0 { // like agents and mcp: no arguments, a usage error
+			return c.fail(fmt.Errorf("tuimark version: takes no arguments"))
+		}
 		fmt.Fprintln(c.stdout, versionLine())
 		return 0
 	case "help", "--help", "-h":
