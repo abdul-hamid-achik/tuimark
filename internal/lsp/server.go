@@ -584,24 +584,34 @@ func (s *Server) publish(uri string) {
 	}
 }
 
-// noteLoads records the stylesheets a .tui loads, and publishes at once a
-// stylesheet nothing has published yet (a first publish is not a repeat).
+// noteLoads records the stylesheets a .tui loads. One it did not load before
+// has diagnostics this document now contributes: published at once when
+// nothing has published it yet (a first publish is not a repeat), else
+// scheduled like any change.
 func (s *Server) noteLoads(doc *document, a *analysis) {
 	loads := a.loadPaths
 	s.mu.Lock()
+	var old []string
 	if d := s.docs[doc.uri]; d != nil {
-		d.loads = loads
+		old, d.loads = d.loads, loads
 	}
-	var fresh []string
+	var fresh, changed []string
 	for _, p := range loads {
-		if u := s.uriFor(p); !s.published[u] {
+		u := s.uriFor(p)
+		switch {
+		case !s.published[u]:
 			s.published[u] = true
 			fresh = append(fresh, u)
+		case !contains(old, p):
+			changed = append(changed, u)
 		}
 	}
 	s.mu.Unlock()
 	for _, u := range fresh {
 		s.publish(u)
+	}
+	for _, u := range changed {
+		s.schedule(u)
 	}
 }
 
