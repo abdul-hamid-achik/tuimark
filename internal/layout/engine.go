@@ -27,6 +27,9 @@ type Engine struct {
 	// l003 and l006 record, for this frame, the boxes L003 and L006 were
 	// reported on (SPEC v0.3 §14): L009 does not repeat either.
 	l003, l006 map[*Box]bool
+	// held counts the boxes being placed that hold their subtree's
+	// checks (holdChecks).
+	held int
 }
 
 type memoKey struct {
@@ -37,14 +40,21 @@ type memoKey struct {
 
 // Layout places root to fill (at most) cols×rows, then centers each open
 // modal over the root. Every placed box gets Laid=true. Viewports that can
-// never show part of their content are reported last, as L006 (SPEC §11.3
-// pass 7).
+// never show part of their content are reported as L006 (SPEC §11.3 pass
+// 7), and in a version="3" document cut text and children as L008 and
+// L009 (check), each box once it and its subtree are placed (placed),
+// so the checks read the final layout.
 func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 	if e.memo == nil {
 		e.memo = map[memoKey]int{}
 		e.seen = map[string]bool{}
 	}
 	e.scratch().reset()
+	nDiags := len(e.Diags)
+	var snap checkSnap
+	if verifying {
+		snap = e.snapChecks()
+	}
 	screen := Rect{0, 0, cols, rows}
 	w := min(clampAxis(root, true, resolveRoot(root.Style.Width, cols), cols), cols)
 	h := min(clampAxis(root, false, resolveRoot(root.Style.Height, rows), rows), rows)
@@ -58,9 +68,9 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 		y := root.Y + (root.H-mh)/2
 		e.place(m, Rect{x, y, mw, mh}, screen)
 	}
-	e.check(root)
-	for _, m := range modals {
-		e.check(m)
+	// place checked root's tree and each modal's (placed).
+	if verifying {
+		e.verifyChecks(root, modals, nDiags, snap)
 	}
 }
 
@@ -74,10 +84,20 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 // file, line, column, and code, and two that compare equal there come
 // from the same source element, whose boxes are never nested in each
 // other, so they keep their order.
+//
+// Layout runs these checks as it places each box (placed), in the same
+// order, and runs check itself only for a subtree it could not check
+// that way (holdChecks); a tuimark_verify build checks the result
+// against this walk over the whole frame (verifyChecks).
 func (e *Engine) check(b *Box) {
 	for _, c := range b.Children {
 		e.check(c)
 	}
+	e.checkBox(b)
+}
+
+// checkBox is check for b alone, its children already checked.
+func (e *Engine) checkBox(b *Box) {
 	if !b.Laid {
 		return
 	}
@@ -163,28 +183,72 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 		H: max(0, b.H-b.frameV()),
 	}
 	if !b.IsContainer() {
+		e.placed(b, false)
 		return
 	}
 	childClip := b.Clip.Intersect(b.Content)
+	held := false
 	switch {
 	case b.Kind == "table":
 		// Its own layout (SPEC §6.9.3): layout, gap between rows, align,
 		// and justify do not apply; its rows come after layout.
+		held = e.holdChecks()
 		e.tableLayout(b, childClip)
 	case b.Kind == "tabs":
 		// The label strip and the active tab below it (SPEC §6.10.4).
+		held = e.holdChecks()
 		e.tabsLayout(b, childClip)
 	case b.Kind == "hints":
 		// The items that fit, in order (SPEC §6.12).
+		held = e.holdChecks()
 		e.hintsLayout(b, childClip)
 	case b.Scrolls():
 		// Also with no children: the offset clamps to 0 and the content
 		// extent is the content box (SPEC §13.2, scroll).
-		e.scrollLayout(b, childClip)
+		held = e.scrollLayout(b, childClip)
 	case len(b.Children) == 0:
 	default:
+		flow := inFlow(b.Children)
+		if len(flow) != len(b.Children) || b.IsGrid() {
+			held = e.holdChecks()
+		}
 		area := e.dock(b, b.Content, childClip)
-		e.flex(b, inFlow(b.Children), area, childClip)
+		e.flex(b, flow, area, childClip)
+	}
+	e.placed(b, held)
+}
+
+// holdChecks makes the boxes placed from now on wait for their checks
+// (placed), and reports true: their parent does not place its children
+// in their order (it places its docked children first, lays them out as
+// a grid, or is a table, a tabs, or a hints, which place theirs their own
+// way), so it checks its whole subtree, in order, once it is placed.
+func (e *Engine) holdChecks() bool {
+	e.held++
+	return true
+}
+
+// placed runs the checks of box b (check), which place has just placed
+// with its whole subtree: when no ancestor of b holds the checks
+// (holdChecks), b's own when it did not hold them either (its children
+// were checked as each was placed, in their order), or its whole
+// subtree's when it did. Every box of a tree is then checked in the
+// order check walks it, children first, with what it reads final: a
+// box's checks read its own geometry and scroll state, its children's,
+// its ancestors' (all set before b's children are placed), and which of
+// its children L006 and itself L003 were reported on (both decided by
+// then). A list of 20 000 rows is then checked as it is placed, while
+// its boxes are still in the cache, instead of in one more walk of it.
+func (e *Engine) placed(b *Box, held bool) {
+	if held {
+		e.held--
+		if e.held == 0 {
+			e.check(b)
+		}
+		return
+	}
+	if e.held == 0 {
+		e.checkBox(b)
 	}
 }
 
@@ -820,8 +884,10 @@ func (e *Engine) flexWith(b *Box, kids []*Box, area Rect, clip Rect, pre *alloca
 // the scroll axis and is shifted by the (clamped) offset. Docked children
 // are part of that content: they are carved out of the content extent,
 // as contentIntrinsic counts them, and scroll with it (SPEC §11.3 pass 1);
-// the in-flow children are laid out in what is left.
-func (e *Engine) scrollLayout(b *Box, clip Rect) {
+// the in-flow children are laid out in what is left. It reports whether
+// it held the checks of b's subtree (holdChecks), before placing any
+// child: b has docked children, which it places first, or is a grid.
+func (e *Engine) scrollLayout(b *Box, clip Rect) (held bool) {
 	area := b.Content
 	scrollX, scrollY := b.ScrollAxes()
 	var kidBuf [smallList]*Box
@@ -835,6 +901,9 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 			follow = len(kids)
 		}
 		kids = append(kids, c)
+	}
+	if len(kids) != len(b.Children) || b.IsGrid() {
+		held = e.holdChecks()
 	}
 	contentW, contentH := area.W, area.H
 	if scrollY {
@@ -894,6 +963,7 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	b.ScrollX, b.ScrollY = offX, offY
 	virtual := Rect{area.X - offX, area.Y - offY, contentW, contentH}
 	e.flexWith(b, kids, e.dock(b, virtual, clip), clip, pre)
+	return held
 }
 
 // ScrollAxes reports the axes b scrolls on (SPEC §11.4): for a scroll, its
