@@ -539,6 +539,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	if lg != nil {
 		lg.begin(size())
 	}
+	// Every registration's first tick falls due d after the session
+	// starts (SPEC v0.4a §18.2).
+	a.everyBegin(time.Now())
 
 	reads := make(chan chunk, 16)
 	done := make(chan struct{})
@@ -934,12 +937,67 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	if dec.escPending() {
 		escWait = time.After(escTimeout)
 	}
+	// ticks runs the Every registrations due now, in registration order,
+	// each as one Batch (SPEC v0.4a §18.2), then settles once: a tick is a
+	// settle. An error that is not a quit goes to handlerErr with no event,
+	// and the stop checks run after each function, as after an event.
+	ticks := func() (stop bool, err error) {
+		for _, r := range a.takeDue(time.Now()) {
+			if !a.startTick(r) {
+				continue
+			}
+			if err := a.Batch(r.fn); err != nil {
+				if errors.Is(err, ErrQuit) {
+					return true, nil
+				}
+				if quit, err := handlerErr(nil, err); quit || err != nil {
+					return true, err
+				}
+			}
+			if stop, err := stopCheck(); stop {
+				return true, err
+			}
+		}
+		// The batches asked for a redraw (Wake); the settle below draws
+		// it, so the request is dropped rather than drawing twice.
+		select {
+		case <-a.wake:
+		default:
+		}
+		return settle()
+	}
+	// tickTimer fires when the earliest Every registration falls due; it
+	// is armed again before each wait, so a registration made or stopped
+	// meanwhile (everyKick) and a tick that just ran move it.
+	tickTimer := time.NewTimer(time.Hour)
+	defer tickTimer.Stop()
+	armTick := func() <-chan time.Time {
+		if !tickTimer.Stop() {
+			select {
+			case <-tickTimer.C:
+			default:
+			}
+		}
+		due, ok := a.everyDue()
+		if !ok {
+			return nil
+		}
+		tickTimer.Reset(max(0, time.Until(due)))
+		return tickTimer.C
+	}
 	for {
+		tick := armTick()
 		select {
 		case c := <-reads:
 			if stop, err := onChunk(c); stop {
 				return err
 			}
+		case <-tick:
+			if stop, err := ticks(); stop {
+				return err
+			}
+		case <-a.everyKick:
+			// A registration was made or stopped: arm the timer again.
 		case <-escWait:
 			escWait = nil
 			// A read that arrived meanwhile continues the sequence.

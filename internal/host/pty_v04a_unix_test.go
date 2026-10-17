@@ -62,6 +62,84 @@ func runCtxPtyChild(t *testing.T, mode string) {
 	os.Exit(0)
 }
 
+// everyPtyDoc shows n three times, so every tick changes three adjacent
+// cells and the frame diff writes them as one run ("222").
+const everyPtyDoc = `<tui version="1">
+<keymap><bind keys="q" action="quit"/></keymap>
+<screen id="s"><text>EVERYAPP {n}{n}{n}</text></screen>
+</tui>`
+
+// runEveryPtyChild registers Every(20ms) incrementing n, then runs Run
+// twice: the registration survives into the second Run.
+func runEveryPtyChild(t *testing.T) {
+	a := doc(t, everyPtyDoc)
+	_ = a.Bind("", map[string]any{"n": 0})
+	a.Every(20*time.Millisecond, func(b *Batch) error {
+		v, _ := a.Get("n")
+		return b.Set("n", v.(float64)+1)
+	})
+	for i := 1; i <= 2; i++ {
+		err := a.Run(os.Stdout)
+		v, _ := a.Get("n")
+		fmt.Fprintf(os.Stderr, "RUN%d-RETURNED %v N %v\n", i, err, v)
+	}
+	os.Exit(0)
+}
+
+// 113 under a pty (SPEC v0.4a §18.2): with Every(20ms) incrementing n,
+// the frames Run writes show n increasing, and the registration survives
+// into a second Run.
+func TestEveryPty(t *testing.T) {
+	if os.Getenv(ptyChildEnv) == "every" {
+		runEveryPtyChild(t)
+		return
+	}
+	r := startPtyChildEnv(t, "TestEveryPty", "every", []string{"TERM=xterm-256color", "TUIMARK_COLOR=truecolor"})
+	// after waits until the screen output past pos holds want, and
+	// returns the position after it.
+	after := func(pos int, want, what string) int {
+		t.Helper()
+		deadline := time.Now().Add(5 * time.Second)
+		for {
+			if i := strings.Index(r.screen.String()[pos:], want); i >= 0 {
+				return pos + i + len(want)
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("never saw %s; %s", what, r.describe())
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+	run := func(pos, from int) int {
+		t.Helper()
+		pos = after(pos, "\x1b[?2027$p\x1b[c", "the probe")
+		r.write(t, ptyV04aProbe)
+		// The frames show n increasing, in order.
+		for n := from + 1; n <= from+3; n++ {
+			pos = after(pos, strings.Repeat(fmt.Sprint(n), 3), fmt.Sprintf("n=%d in a frame", n))
+		}
+		return pos
+	}
+	pos := run(0, 0)
+	r.write(t, "q")
+	if !r.waitFor(r.stderr, "RUN1-RETURNED <nil>", 5*time.Second) {
+		t.Fatalf("the first Run did not quit; %s", r.describe())
+	}
+	var n int
+	e := r.stderr.String()
+	if _, err := fmt.Sscanf(e[strings.Index(e, "RUN1-RETURNED"):], "RUN1-RETURNED <nil> N %d", &n); err != nil {
+		t.Fatalf("parse %q: %v", e, err)
+	}
+	run(pos, n)
+	r.write(t, "q")
+	if !r.wait(10 * time.Second) {
+		t.Fatalf("the second Run did not quit; %s", r.describe())
+	}
+	if !strings.Contains(r.stderr.String(), "RUN2-RETURNED <nil>") {
+		t.Errorf("second Run; %s", r.describe())
+	}
+}
+
 // 110 under a pty (SPEC v0.4a §18.2). Cancelling the context during a
 // handler ends the session when the handler returns: the round's later
 // event (opened) does not run, the terminal is restored (the leave

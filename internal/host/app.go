@@ -129,6 +129,14 @@ type App struct {
 	// enterMode(modeRun) and cleared by exitMode; nil while no Run is
 	// active. Guarded by mu.
 	quitReq chan struct{}
+	// every holds the live Every registrations, in registration order
+	// (SPEC v0.4a §18.2), guarded by everyMu, not mu: stop is safe from
+	// anywhere, never waits on a held app lock, and the loop holds everyMu
+	// only briefly, never while fn runs. everyKick asks a running loop to
+	// arm its tick timer again.
+	everyMu   sync.Mutex
+	every     []*everyReg
+	everyKick chan struct{}
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity
@@ -178,6 +186,7 @@ func blankApp() *App {
 		store: map[string]any{}, handlers: map[string]Handler{},
 		lists: map[string]*listState{}, inputs: map[string]*inputState{},
 		scrolls: map[string][2]int{}, stickMax: map[string]int{}, wake: make(chan struct{}, 1),
+		everyKick:  make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
 		segGen:     map[string]uint64{}, tables: map[*ir.Node]*tableCache{},
 		checkedSets: map[*ir.Node]*checkedCache{},
