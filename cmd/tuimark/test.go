@@ -255,7 +255,19 @@ func (c *cli) cmdTest(args []string) int {
 
 	ioErr := false
 	mismatch := false
+	seenNames := map[string]bool{}
 	for _, e := range entries {
+		// SPEC §15.5: `name` is the entry's golden directory under DIR, so
+		// it must name exactly one directory there. Without this check a
+		// non-frozen entry called "../x" or "inbox/" (or a duplicate of a
+		// frozen entry's name) would let --update write over another
+		// entry's files, frozen ones included.
+		if msg := goldenNameProblem(e.Name, seenNames); msg != "" {
+			fmt.Fprintf(c.stdout, "FAIL %s: %s\n", e.Name, msg)
+			ioErr = true
+			continue
+		}
+		seenNames[strings.ToLower(e.Name)] = true
 		if e.Input != "" && e.Script != "" {
 			fmt.Fprintf(c.stdout, "FAIL %s: input and script are mutually exclusive\n", e.Name)
 			ioErr = true
@@ -436,6 +448,24 @@ func (c *cli) cmdTest(args []string) int {
 		return 2
 	}
 	return 0
+}
+
+// goldenNameProblem says why a manifest entry's name cannot be its golden
+// directory ("" when it can): empty, not a single clean path segment
+// ("." and ".." included, or holding a path separator of either kind), or
+// already used by an earlier entry. Names are compared without regard to
+// case, since on a case-insensitive file system "Inbox" and "inbox" are
+// the same directory.
+func goldenNameProblem(name string, seen map[string]bool) string {
+	switch {
+	case name == "":
+		return "manifest entry name is empty"
+	case name == "." || name == ".." || strings.ContainsAny(name, `/\`) || filepath.Clean(name) != name:
+		return "manifest entry name must be a single path segment (no '/', '\\', '.', or '..')"
+	case seen[strings.ToLower(name)]:
+		return "manifest entry name is already used by an earlier entry"
+	}
+	return ""
 }
 
 // reportGolden prints exactly the line grammar SPEC v0.2 §15.5 specifies:
