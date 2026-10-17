@@ -14,6 +14,15 @@ Tuimark files are plain text, so any editor can open them. Since 0.4 there are t
 
 Install **Tuimark** from the Visual Studio Marketplace or from Open VSX: search for "Tuimark" in the Extensions view.
 
+::: info Not listed yet?
+The extension is published separately from the `tuimark` binary. Until it is listed, build it from a clone of the repository and install the `.vsix` with **Extensions: Install from VSIX…**:
+
+```sh
+cd editors/vscode
+bun install --frozen-lockfile && bun run build && bunx @vscode/vsce package
+```
+:::
+
 **Highlighting** works with nothing else installed:
 
 - tags, attributes, and `on:*` actions;

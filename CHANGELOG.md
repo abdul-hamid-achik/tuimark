@@ -83,7 +83,10 @@ every document keeps its meaning and its dumps.
   protocol, for Bun. `spawnHost` starts `tuimark host`, and `on`, `set`,
   `batch`, `get`, and `exited` do the rest. It follows every rule for
   parents: signal forwarding, `SIGTERM` then `SIGKILL`, and never
-  touching the terminal. `examples/host-ts` now uses it.
+  touching the terminal. A `SIGTERM` or `SIGHUP` is forwarded after a
+  1.5 s grace, and only if the child is still running, so a signal sent
+  to the whole process group does not reach the child twice. Messages of
+  any size go through fd 3. `examples/host-ts` now uses it.
 - **`TUIMARK_LOG`** writes a `{"ev":"rounds","queued":N}` record when the
   lifecycle rounds hit their cap.
 
@@ -108,6 +111,13 @@ every document keeps its meaning and its dumps.
 - **`tuimark host` bounds fd 3 lines.** A line of 64 MiB or more ends the
   session with `{"type":"error","error":"fd 3 line of 64 MiB or more"}`,
   instead of growing without limit. `tuimark mcp` already stopped there.
+
+### Fixed
+
+- **A list or table whose `key` is an object or an array** no longer
+  shares that value between the row and the paths the runtime writes it
+  to (`bind`, `checked`) or the events it fires: a `Set` through one of
+  them, or a handler changing its event, changed the row too.
 
 ## [0.3.2] - 2026-10-17
 

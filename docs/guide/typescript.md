@@ -17,6 +17,10 @@ It is a parent library, not a second runtime. Everything you see is still drawn 
 bun add @tuimark/host
 ```
 
+::: info Not on npm yet?
+The package is published to npm separately from the `tuimark` binary. If `bun add` cannot find it yet, install the copy in a clone of the repository: `bun add file:/path/to/tuimark/sdk/ts`.
+:::
+
 - The package is ESM, written in TypeScript, and has no runtime dependencies.
 - It runs on Bun 1.4.2 or later. Node is not supported in 1.x.
 - Version 1.x speaks `protocol: 1`.
