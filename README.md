@@ -578,6 +578,7 @@ tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.
                       [--theme dark|light] [--strict] [--json]
 tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
 tuimark mcp
+tuimark lsp
 tuimark version
 ```
 
@@ -670,6 +671,11 @@ tuimark version
   Tuimark through an MCP gateway instead of a shell. A line of 64 MiB or
   more on stdin (the newline excluded) ends the server with exit 1. See the
   [MCP server guide](https://tuimark.vercel.app/guide/mcp).
+- `lsp` (0.4a) is a Language Server Protocol 3.17 server on stdin/stdout (stdlib
+  only) for `.tui` and `.tcss` files: diagnostics (the checks `validate`
+  runs, against a sibling `sample.json`), completion, hover, definition,
+  and formatting for `.tui`, from the catalog. The VS Code extension
+  starts it. See [Editor support](https://tuimark.vercel.app/guide/tools#editor-support-tuimark-lsp).
 - `version` (also `--version` or `-v`) prints `tuimark 0.2.0`; release
   builds add the commit and build date, as in `tuimark 0.2.0 (commit
   abc1234, built 2026-09-27T12:00:00Z)`.

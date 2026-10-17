@@ -133,6 +133,22 @@ cd todo && tuimark run app.tui --data sample.json
 
 `tuimark ir FILE` prints the parsed document as JSON: every node with its attributes, bindings, actions, and its own inline style, before any stylesheet is applied, plus the keymap and the resolved theme tokens. It is the document's structure as the runtime understands it. A schema for it ships in `schema/`.
 
+## Editor support (tuimark lsp)
+
+`tuimark lsp` is a [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) (3.17) server on stdin/stdout for `.tui` and `.tcss` files, so an editor shows what `validate` says as you type. It takes no arguments, uses only the standard library, and reads no environment variable. The VS Code extension starts it from `PATH`; any editor with an LSP client can run `tuimark lsp` as a stdio server for the two file types.
+
+What it offers:
+
+- **Diagnostics.** The checks `tuimark validate` runs, with the same messages, codes, and severities (error and warning), under both themes for a `theme="auto"` document. A diagnostic in a stylesheet shows on the stylesheet, not on the `.tui` that loads it: the server reads each `<style src>` as `Load` does (`..` included) and sends a diagnostic to the file it is in. It sends them after you open or change a file, at most once every 150 ms per file.
+- **Your unsaved text.** A document is checked as the editor has it, and so is a stylesheet it loads when that stylesheet is open too; one that is not open is read from disk.
+- **Bindings.** A `sample.json` next to the `.tui` is used as if you had passed `--data`, so `B001` to `B003` and `B008` to `B010` appear. Without one they are skipped, as `validate` skips them without `--data`, and the same goes for a `sample.json` that is not valid JSON.
+- **Completion.** In a `.tui`: tag names, the attributes of the tag, the keywords of an enumerated attribute, `#id` targets for `to`, `when`, and `focus`, action names (the built-in ones and the ones the document already uses), key tokens in `keys`, and the paths of `sample.json` in `{path}`, `each`, `bind`, and `if`. In a `.tcss`: property names and their keywords, `$tokens`, pseudo-classes, `@media` features, and the `#id`s and `.class`es of the documents that load it. Everything is filtered by the document's `version`; a stylesheet takes the newest version among the documents that load it.
+- **Hover.** The catalog entry of the tag, attribute, property, keyword, or diagnostic code under the cursor: its value syntax or keywords, and the version that introduced it.
+- **Go to definition.** An `#id` (in a selector, `to`, `when`, or `focus`) goes to its element, a `.class` to every element that has it, `<style src>` to its file, and a `$token` to where `:root` declares it.
+- **Formatting.** For a `.tui`, one edit with what `tuimark fmt` prints; none when the file is already formatted or is not well-formed XML. A `.tcss` has no formatter.
+
+A stylesheet is "loaded by" every open `.tui` that names it, and every `.tui` in its directory that does. Rename, code actions, semantic tokens, and workspace symbols are not offered. Positions are the protocol's: a 0-based line and a UTF-16 offset, converted from the 1-based line and code-point column `validate` prints. The server exits 0 on `exit` after `shutdown` (or when its input ends after one), and 1 otherwise.
+
 ## Environment variables
 
 Only a running app (`Run()`) and `preview` read the environment. The tools above never do.
