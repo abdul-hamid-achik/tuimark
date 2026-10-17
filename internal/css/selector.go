@@ -209,6 +209,11 @@ func parseCompound(s, whole string, v2 bool) (Compound, int, error) {
 			if id == "" {
 				return c, 0, fmt.Errorf("selector %q: '#' needs an id", whole)
 			}
+			// An id is [A-Za-z_][A-Za-z0-9_-]*, as markup ids are
+			// (SPEC §7): `#1` could never match a node.
+			if !isIdentStart(id[0]) {
+				return c, 0, fmt.Errorf("selector %q: bad id %q (must start with a letter or '_')", whole, id)
+			}
 			if c.ID != "" {
 				return c, 0, fmt.Errorf("selector %q: more than one #id in a compound", whole)
 			}
@@ -219,6 +224,11 @@ func parseCompound(s, whole string, v2 bool) (Compound, int, error) {
 			if cl == "" {
 				return c, 0, fmt.Errorf("selector %q: '.' needs a class name", whole)
 			}
+			// classname := [A-Za-z_][A-Za-z0-9_-]* (SPEC §7): `.9x` and
+			// `.-x` could never match a class.
+			if !isIdentStart(cl[0]) {
+				return c, 0, fmt.Errorf("selector %q: bad class name %q (must start with a letter or '_')", whole, cl)
+			}
 			c.Classes = append(c.Classes, cl)
 		case ':':
 			i++
@@ -226,6 +236,9 @@ func parseCompound(s, whole string, v2 bool) (Compound, int, error) {
 				return c, 0, fmt.Errorf("selector %q: pseudo-elements are not supported", whole)
 			}
 			p := readIdent()
+			if p == "" {
+				return c, 0, fmt.Errorf("selector %q: empty pseudo-class after ':'", whole)
+			}
 			if i < len(s) && s[i] == '(' || strings.HasPrefix(p, "nth-") {
 				return c, 0, fmt.Errorf("selector %q: :%s is not supported", whole, p)
 			}

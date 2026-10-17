@@ -7,6 +7,67 @@ line.
 
 ## [Unreleased]
 
+A patch: fixes and friendlier diagnostics from a full review of 0.3.1.
+No vocabulary changes; documents keep their meaning and their dumps,
+except that a few invalid ones now say so.
+
+### Changed
+
+- **Diagnostics suggest a fix.** An unknown tag, attribute, CSS property,
+  or theme within two edits of a known one ends its message with `; did
+  you mean <list>?` (or `"width"`, naming the version a newer name needs).
+  A common HTML name gets the Tuimark way to say it instead: `<div>` → use
+  `<box>`, `<col>`, or `<row>`; `<span>`/`<p>` → `<text>`; `<checkbox>` →
+  a `<list>` with `checked=`; `<include>` → there are no components or
+  includes. The codes are unchanged.
+- **`tuimark play --input`** explains a token that fails right after a
+  `text:` or `paste:` step: `--input` splits steps at spaces, so text with
+  a space needs `--script`.
+- **`App.Dump`** refuses a size above 1000 in either dimension, the limit
+  `Play` and the CLI already had, instead of trying to allocate the grid
+  (a huge size panicked).
+- **The viewport key clamp of 0.3.1 applies to every document version.**
+  It fixed an `up` lost after `end` in the same terminal read, so it is
+  kept for `version="1"` and `version="2"` too.
+
+### Fixed
+
+- **`@media` error recovery.** A selector with no `{` inside an `@media`
+  block no longer swallows the block's closing `}`, which made every rule
+  after the block conditional on the media query.
+- **Selectors that can never match are `V003`.** `#1`, `.9x`, and `.-x`
+  name an id or class no element can have (§7's grammar), in stylesheets
+  and in keymap `when` alike.
+- **A leading `+` is not a cell count.** `gap: +3`, `padding: +1`,
+  `gap="+3"`, and `@media (max-cols: +80)` are `V003`.
+- **`tuimark fmt` keeps the XML declaration** (`<?xml version="1.0"?>`)
+  instead of dropping it.
+- **Clearer messages.** `V014` names `version="3"`; a bare `&` followed
+  later by a `;` says "bare '&'" instead of naming a garbled entity; a
+  DOCTYPE or processing instruction after the root gets its own message;
+  text inside an unknown tag no longer adds a `V013`; `box:` says the
+  pseudo-class is empty.
+- **`tuimark mcp` accepts valid JSON with numbers beyond a double**
+  (`1e400`, a 400-digit literal): such a line was answered `-32700` (parse
+  error), although only a line that is not JSON gets it. An `id` is echoed
+  as written.
+- **`tuimark fmt --write --check`** is a usage error instead of silently
+  running only the check, and `tuimark version` refuses arguments.
+- **`tuimark test`** rejects a manifest entry whose `name` is empty, not a
+  single path segment, or already used (ignoring case), so no entry can
+  write into another's goldens.
+
+### Docs and tests
+
+- The README's language notes say that `wrap: wrap` collapses runs of
+  spaces and breaks at an NBSP, and that store numbers are doubles
+  (integers beyond ±2^53 lose precision; pass them as strings). The Go
+  docs of `Bind`, `Set`, and `Batch` and the host fd comments are
+  corrected.
+- New fuzz targets for the stylesheet parser and `fmt` idempotence, a
+  property test of the ANSI frame diff, and tests of `internal/play`'s
+  step grammar. CI cross-compiles and vets for Windows (amd64, arm64).
+
 ## [0.3.1] - 2026-09-28
 
 0.3b rounds out `version="3"`'s layout vocabulary and adds two ways to

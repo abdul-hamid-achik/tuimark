@@ -246,7 +246,14 @@ func TestDumpSizeContract(t *testing.T) {
 			t.Errorf("Dump(%d, %d) = cols %d rows %d grid %d, want an error", sz[0], sz[1], d.Cols, d.Rows, len(d.Grid))
 		}
 	}
-	for _, sz := range [][2]int{{0, 2}, {3, 0}, {0, 0}, {5, 3}} {
+	// Above 1000 would allocate a cols*rows grid (or panic in it): refused
+	// the way Play and the CLI refuse it, before any work.
+	for _, sz := range [][2]int{{1001, 1}, {1, 1001}, {1 << 30, 1 << 30}, {1000000, 3}} {
+		if d, err := app.Dump(sz[0], sz[1]); err == nil || d != nil {
+			t.Errorf("Dump(%d, %d) = %v, %v, want an error", sz[0], sz[1], d, err)
+		}
+	}
+	for _, sz := range [][2]int{{0, 2}, {3, 0}, {0, 0}, {5, 3}, {1000, 1}, {1, 1000}} {
 		d := dumpOf(t, app, sz[0], sz[1])
 		if d.Cols != sz[0] || d.Rows != sz[1] || len(d.Grid) != d.Rows {
 			t.Errorf("Dump(%d, %d): cols %d rows %d grid %d", sz[0], sz[1], d.Cols, d.Rows, len(d.Grid))

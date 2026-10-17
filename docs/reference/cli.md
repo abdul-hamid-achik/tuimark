@@ -22,7 +22,7 @@ usage:
                         [--format text|json] [--cells] [--styles] [--frames] [--strict]
   tuimark fmt      FILE [--write] [--check]
   tuimark ir       FILE                       print the source IR as JSON
-  tuimark agents                              print AGENTS.md generated from the catalog
+  tuimark agents   [--repo]                   print AGENTS.md generated from the catalog
   tuimark test     [DIR] [--update] [--allow-breaking]
                                                check dump goldens under DIR (default testdata/golden)
   tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]

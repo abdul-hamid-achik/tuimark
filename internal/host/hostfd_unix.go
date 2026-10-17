@@ -12,11 +12,11 @@ import (
 // OpenHostFDs checks fd 3 and fd 4 as the tuimark host protocol requires
 // (SPEC v0.3b §19.1, ValidateHostFDs) and returns them as files: fd 3,
 // which the child reads (parent -> child), and fd 4, which it writes
-// (child -> parent). fd 4 is set non-blocking first, so os.NewFile hands
-// it to the runtime poller: a write to it then parks a goroutine instead
-// of a thread, and the final "exit" write can be bounded with a write
-// deadline (§19.1 step 4: "sets fd 4 non-blocking for that write and gives
-// up after 1 second").
+// (child -> parent). fd 4 is set non-blocking right after the checks, so
+// os.NewFile hands it to the runtime poller: a write to it then parks a
+// goroutine instead of a thread, and the final flush and "exit" can be
+// bounded by one write deadline (§19.1 step 4: fd 4 "is non-blocking from
+// the start", and one write deadline of 1 second covers that flush).
 func OpenHostFDs() (fd3, fd4 *os.File, err error) {
 	if err := ValidateHostFDs(); err != nil {
 		return nil, nil, err
@@ -36,11 +36,15 @@ func OpenHostFDs() (fd3, fd4 *os.File, err error) {
 //
 // The poller check matters because a parent that passes nothing leaves
 // fd 3 and fd 4 to whatever the Go runtime already opened there. On
-// darwin its kqueue is at fd 3 when main starts, and fstat reports it as
-// a FIFO opened read-write like a real pipe would; isPollerFD's kevent
-// probe (darwin only: a kqueue instance) tells them apart. On Linux an
-// epoll or eventfd descriptor has no file type, so the mode check alone
-// already rejects it (isPollerFD is unused there).
+// darwin the runtime's kqueue lands at fd 3 only when something
+// initialized the poller before main (a non-blocking socket on stdin,
+// as many parents pass, does), and fstat reports it as a FIFO opened
+// read-write like a real pipe would; isPollerFD's kevent probe (darwin
+// only: a kqueue instance) tells them apart. When nothing initialized
+// the poller (stdin is /dev/null, say), fd 3 is simply not open and
+// fstat fails, which is rejected too. On Linux an epoll or eventfd
+// descriptor has no file type, so the mode check alone already rejects
+// it (isPollerFD is always false there).
 func ValidateHostFDs() error {
 	if err := validateHostFD(3, true); err != nil {
 		return fmt.Errorf("fd 3: %w", err)
