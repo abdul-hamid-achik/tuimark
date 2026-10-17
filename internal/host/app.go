@@ -101,7 +101,13 @@ type App struct {
 	openModals []*ir.Node   // modals open in the last frame, document order (top last)
 	modalStack []modalEntry // modals that took the focus trap, bottom first
 	pending    []Event
-	focusReq   *focusRequest
+	// carry holds the lifecycle events a settle kept when its 8th round
+	// ended with events still queued (SPEC v0.4a §15.4 point 3): the next
+	// settle dispatches them first, as its first round (TakeCarry,
+	// CarryOver). No render touches it, so Dump and Validate leave it as
+	// it is.
+	carry    []Event
+	focusReq *focusRequest
 	// tabMem is the tab the runtime remembers per tabs id, for a tabs
 	// without bind (SPEC §6.10.2); tabPrev is the active tab per tabs id in
 	// the last frame, for the activation focus rule (§6.10.3).

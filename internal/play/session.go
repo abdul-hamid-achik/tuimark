@@ -93,13 +93,21 @@ func (s *Session) snapshot(step int, input string) {
 
 // dispatchAll dispatches evs, then TakePending in rounds, redrawing
 // between rounds, for at most 8 rounds (the v0.1 loop; SPEC §15.4 point
-// 3). Unless NoHandlers is set, the registered handler for each event's
-// action is called, exactly as Run's loop calls it (SPEC v0.3 §18.1 rule
-// 5); ErrQuit or the built-in quit with no handler ends the call with
-// Quit: true, any other error ends it with Err set, both stopping the
-// round and the steps that follow.
-func (s *Session) dispatchAll(step int, evs []host.Event) {
-	for round := 0; round < 8; round++ {
+// 3). The events the previous settle kept at its cap come first, in the
+// first round, ahead of evs (host.App.TakeCarry); carried reports that
+// there were any, so the caller redraws as after any event. When the 8th
+// round ends with events still queued, they are kept for the next settle,
+// the next step's or the next Play call's step 0 (host.App.CarryOver;
+// SPEC v0.4a §15.4 point 3). Unless NoHandlers is set, the registered
+// handler for each event's action is called, exactly as Run's loop calls
+// it (SPEC v0.3 §18.1 rule 5); ErrQuit or the built-in quit with no
+// handler ends the call with Quit: true, any other error ends it with Err
+// set, both stopping the round and the steps that follow.
+func (s *Session) dispatchAll(step int, evs []host.Event) (carried bool) {
+	if c := s.App.TakeCarry(); len(c) > 0 {
+		evs, carried = append(c, evs...), true
+	}
+	for round := 0; round < host.MaxRounds; round++ {
 		for _, ev := range evs {
 			de := dump.Event{Step: step, Action: ev.Action, Source: ev.Source, Keys: ev.Keys, Value: ev.Value}
 			if de.Keys == nil {
@@ -116,19 +124,21 @@ func (s *Session) dispatchAll(step int, evs []host.Event) {
 			}
 			if err != nil {
 				s.Err = err
-				return
+				return carried
 			}
 			if quit {
 				s.Quit = true
-				return
+				return carried
 			}
 		}
 		evs = s.App.TakePending()
 		if len(evs) == 0 {
-			return
+			return carried
 		}
 		s.draw()
 	}
+	s.App.CarryOver(evs)
+	return carried
 }
 
 // settle draws and runs the events a render queued, exactly as Run's loop
@@ -150,11 +160,11 @@ func (s *Session) handleKeys(step int, keys []host.Key) {
 		focus := s.App.Focus()
 		evs, n := s.App.HandleKeyRun(keys)
 		keys = keys[n:]
-		s.dispatchAll(step, evs)
+		carried := s.dispatchAll(step, evs)
 		if s.stopped() {
 			return
 		}
-		if changed := s.App.TakeDirty(); len(evs) > 0 || s.App.Focus() != focus || changed {
+		if changed := s.App.TakeDirty(); len(evs) > 0 || carried || s.App.Focus() != focus || changed {
 			s.draw()
 		}
 	}
@@ -194,11 +204,11 @@ func (s *Session) handleText(step int, str string) {
 func (s *Session) handlePaste(step int, payload string) {
 	focus := s.App.Focus()
 	evs := s.App.HandlePaste(payload)
-	s.dispatchAll(step, evs)
+	carried := s.dispatchAll(step, evs)
 	if s.stopped() {
 		return
 	}
-	if changed := s.App.TakeDirty(); len(evs) > 0 || s.App.Focus() != focus || changed {
+	if changed := s.App.TakeDirty(); len(evs) > 0 || carried || s.App.Focus() != focus || changed {
 		s.draw()
 	}
 }
@@ -214,11 +224,11 @@ func (s *Session) handleMouse(step int, m host.Mouse) {
 	}
 	focus := s.App.Focus()
 	evs, _ := s.App.HandleMouse(m)
-	s.dispatchAll(step, evs)
+	carried := s.dispatchAll(step, evs)
 	if s.stopped() {
 		return
 	}
-	if changed := s.App.TakeDirty(); len(evs) > 0 || s.App.Focus() != focus || changed {
+	if changed := s.App.TakeDirty(); len(evs) > 0 || carried || s.App.Focus() != focus || changed {
 		s.draw()
 	}
 }

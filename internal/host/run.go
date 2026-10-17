@@ -612,27 +612,38 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		return nil
 	}
-	// runEvents dispatches events and pending lifecycle events until quiet.
-	runEvents := func(evs []Event) (bool, error) {
-		for round := 0; round < 8; round++ {
+	// runEvents dispatches events and pending lifecycle events until quiet,
+	// at most MaxRounds rounds (SPEC §15.4 point 3). The events the
+	// previous settle kept at its cap come first, in the first round,
+	// ahead of evs (TakeCarry); carried reports that there were any, so the
+	// caller redraws as after any event. When the last round ends with
+	// events still queued, they are kept for the next settle (CarryOver)
+	// and TUIMARK_LOG records the cap (SPEC v0.4a §26.12).
+	runEvents := func(evs []Event) (carried, quit bool, err error) {
+		if c := a.TakeCarry(); len(c) > 0 {
+			evs, carried = append(c, evs...), true
+		}
+		for round := 0; round < MaxRounds; round++ {
 			for _, ev := range evs {
 				if lg != nil {
 					lg.action(ev, a.secretInput(ev.Source))
 				}
 				quit, err := a.Dispatch(ev)
 				if err != nil || quit {
-					return quit, err
+					return carried, quit, err
 				}
 			}
 			evs = a.TakePending()
 			if len(evs) == 0 {
-				return false, nil
+				return carried, false, nil
 			}
 			if err := draw(); err != nil {
-				return false, err
+				return carried, false, err
 			}
 		}
-		return false, nil
+		n := a.CarryOver(evs)
+		lg.write("rounds", member{"queued", n})
+		return carried, false, nil
 	}
 	// settle redraws and runs the lifecycle events queued so far. stop
 	// reports that the loop must return err.
@@ -640,7 +651,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		if err := draw(); err != nil {
 			return true, err
 		}
-		if quit, err := runEvents(nil); quit || err != nil {
+		if _, quit, err := runEvents(nil); quit || err != nil {
 			return true, err
 		}
 		return false, nil
@@ -652,7 +663,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// when, class guards, if, and built-in targets see; later input in the
 	// same read must see the new frame (SPEC v0.2b §8.6).
 	dispatch := func(evs []Event, focus string) (stop bool, err error) {
-		quit, err := runEvents(evs)
+		carried, quit, err := runEvents(evs)
 		if err != nil {
 			return true, err
 		}
@@ -661,7 +672,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		// The input may have changed the frame without an event or a
 		// focus move (TakeDirty).
-		if changed := a.TakeDirty(); len(evs) > 0 || a.Focus() != focus || changed {
+		if changed := a.TakeDirty(); len(evs) > 0 || carried || a.Focus() != focus || changed {
 			if err := draw(); err != nil {
 				return true, err
 			}
@@ -786,7 +797,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	if err := draw(); err != nil {
 		return err
 	}
-	if quit, err := runEvents(nil); quit || err != nil {
+	if _, quit, err := runEvents(nil); quit || err != nil {
 		return err
 	}
 	if len(queued) > 0 || endErr != nil {
