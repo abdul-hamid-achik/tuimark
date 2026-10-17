@@ -544,8 +544,8 @@ func computeStyles(c *css.Cascade, b *layout.Box, parent *css.Style) {
 // b is then computed on its own) and chain the chain of b's parent as the
 // selectors see it now. b's own chain is taken once its style is
 // computed, before its children are: nothing the matching reads changes
-// while they are.
-func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, known bool, chain int32) {
+// while they are. It reports whether display: none dropped a box under b.
+func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, known bool, chain int32) (dropped bool) {
 	var id int32
 	if known {
 		hk, hn := css.DeclKey(b.Hints)
@@ -564,7 +564,7 @@ func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, kno
 		c.Register(b.Style, id)
 	}
 	if len(b.Children) == 0 {
-		return
+		return false
 	}
 	follow := followed(b)
 	own := c.Chain(chain, boxFeatures(b, false))
@@ -572,32 +572,41 @@ func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, kno
 	// prev is the last row of a list kept so far: a row whose subtree
 	// looks to the selectors exactly as prev's did (sameStyleInputs) has
 	// the same parent style and chain, so every key in it is the key of
-	// the box in the same place in prev, and it takes prev's styles.
+	// the box in the same place in prev, and it takes prev's styles. A
+	// row that dropped a box under it is never prev: its children and
+	// :empty bits are the ones after the drop, while its styles were
+	// computed with the box there, so a later row that never had that
+	// box would match it and take styles :empty rules missed.
 	var prev *layout.Box
 	for _, ch := range b.Children {
+		lost := false
 		if prev != nil && sameStyleInputs(ch, prev) {
 			copyStyles(ch, prev)
 		} else {
-			shareStyles(c, ch, b.Style, id, true, own)
+			lost = shareStyles(c, ch, b.Style, id, true, own)
 		}
 		if ch.Style.Display != "none" {
 			kept = append(kept, ch)
 			if b.Kind == "list" {
 				prev = ch
+				if lost {
+					prev = nil
+				}
 			}
 		}
+		dropped = dropped || lost || ch.Style.Display == "none"
 	}
 	b.Children = kept
 	refollow(b, follow)
+	return dropped
 }
 
 // sameStyleInputs reports whether x and y, siblings, and every box under
 // them look the same to the cascade: in every place, the same features
 // (kind, id, classes, and pseudo-classes, :empty with the children as
 // they are), the same declaration slices, and as many children. y's
-// styles are computed, and its children are the ones they kept; x's are
-// not yet, so a y that dropped a child for display: none differs from x
-// in the count. Boxes the cascade treats apart (a style other entries
+// styles are computed and dropped no box (shareStyles never takes a row
+// that did as y); x's are not yet. Boxes the cascade treats apart (a style other entries
 // into the cascade read, a list's followed row, a tab's subject) never
 // match.
 func sameStyleInputs(x, y *layout.Box) bool {
