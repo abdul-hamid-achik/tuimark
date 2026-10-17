@@ -144,6 +144,7 @@ export default defineConfig({
           text: 'Tools and hosts',
           items: [
             { text: 'Dumps and tools', link: '/guide/tools' },
+            { text: 'Running a document', link: '/guide/run' },
             { text: 'Go API', link: '/guide/go-api' },
             { text: 'Testing', link: '/guide/testing' },
             { text: 'Host protocol', link: '/guide/host-protocol' },

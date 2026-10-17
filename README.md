@@ -140,6 +140,14 @@ Bind a JSON file as the data store with `--data`:
 ./bin/tuimark dump examples/inbox/app.tui --data examples/inbox/sample.json --cols 80 --rows 24
 ```
 
+To use the document live in the terminal, with no host program, `run` it:
+every action it fires shows in an event strip (`F12`, or `--strip` from
+the start), and saving the file reloads it in place.
+
+```sh
+./bin/tuimark run examples/inbox/app.tui --data examples/inbox/sample.json --strip
+```
+
 Or use it as a library:
 
 ```go
@@ -576,6 +584,8 @@ tuimark new      NAME [--go | --ts]
 tuimark test     [DIR] [--update] [--allow-breaking]
 tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                       [--theme dark|light] [--strict] [--json]
+tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
+                      [--mock FILE.json] [--strip]
 tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
 tuimark mcp
 tuimark version
@@ -655,6 +665,26 @@ tuimark version
   run .`, or `… bun install && bun parent.ts`).
 - `test` runs the golden dump comparisons driven by
   `testdata/golden/manifest.json` (below).
+- `run` (0.4a) runs a document in the terminal for its author, with no Go
+  and no parent program: the session is `Run()`'s (it reads the
+  `TUIMARK_*` variables as `Run()` does, so `TUIMARK_THEME` beats
+  `--theme`), `--data` is bound at the root, and `--theme` is applied as
+  `Set("@theme", …)`. Every non-builtin action gets a handler that applies
+  its `--mock` writes (`{"ACTION": [{"path": P, "value": V}, …]}`, literal
+  values, one `Batch`) and records the event, in an event strip that `F12`
+  (or `--strip`) shows over the bottom rows and in the `--events` NDJSON
+  file (`{"seq","action","source","keys","value"}`, mode `0600`, no
+  `value` and `"redacted": true` for a `secret` input). A panel over the
+  top rows lists the static diagnostics, or a failed reload's error. The
+  document, its stylesheets, `--data`, and `--mock` are polled every 150ms
+  and reloaded in place, keeping the store (unless `--data` changed) and,
+  by id and tag, the focus, the screen, cursors, scroll offsets, input
+  text, and the active tab; a failed reload keeps the old document
+  running. Two `ctrl+c` within a second always exit 0. Exit codes: 0 for
+  quit or the end of input, 1 for an error (a bad `--mock`, an `--events`
+  path that is a terminal, … are one `tuimark: run: …` line before the
+  terminal is touched), 128 + the signal number for a stop signal. See the
+  [run guide](https://tuimark.vercel.app/guide/run).
 - `host` (0.3b) runs a document in the terminal for a parent process in any
   language: the terminal stays on fd 0/1/2 as with `Run()`, the parent
   writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 and reads

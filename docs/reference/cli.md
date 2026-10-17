@@ -31,6 +31,9 @@ usage:
   tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                         [--theme dark|light] [--strict] [--json]
                                                explain one node: path, classes, pseudo-classes, styles
+  tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
+                        [--mock FILE.json] [--strip]
+                                               run in the terminal: F12 shows the events, edits reload
   tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
                                                run in the terminal for a parent program (fd 3 in, fd 4 out)
   tuimark mcp                                 a Model Context Protocol server on stdin/stdout
@@ -54,6 +57,7 @@ exit codes: 0 ok, 1 I/O or crash, 2 validation errors
 | `agents` | Prints the `AGENTS.md` briefing, generated from the runtime's own catalogs. `--project` prints the briefing `new` writes into a project. | [Working with agents](/guide/agents) |
 | `catalog` | Prints the closed vocabulary (tags, attributes, properties, keys, actions, diagnostic codes) as JSON, each item with the document version that accepts it. | [Dumps and tools](/guide/tools#catalog) |
 | `new` | Creates a project: `app.tui`, `theme.tcss`, `sample.json`, and `AGENTS.md`; `--go` or `--ts` adds the program that hosts it. | [Dumps and tools](/guide/tools#new) |
+| `run` | Runs a document in the terminal with no host program: an event strip (`F12`), an `--events` log, `--mock` store writes, and reload on save. | [Running a document](/guide/run) |
 | `version` | Prints the version. | |
 
 ## Exit codes
@@ -63,5 +67,7 @@ exit codes: 0 ok, 1 I/O or crash, 2 validation errors
 | `0` | ok |
 | `1` | usage error, I/O error, or crash; nothing useful on stdout |
 | `2` | the document has an error-severity diagnostic (`dump`, `validate`, `play`, `inspect`, `ir`), a file is not formatted (`fmt --check`), or a golden does not match (`test`) |
+
+`run` exits `0` when the session quits or its input ends, and 128 + the signal number when a stop signal ends it.
 
 `--cols` and `--rows` take 1 to 1000. `dump`, `validate`, `play`, `inspect`, `ir`, `fmt`, and `test` never read `TUIMARK_*` environment variables, so their output never depends on the machine they run on.

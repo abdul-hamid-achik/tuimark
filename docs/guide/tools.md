@@ -114,7 +114,7 @@ tuimark catalog | jq '.tags[] | select(.name == "list") | .attrs[] | select(.sin
 
 ## new
 
-`tuimark new NAME [--go | --ts]` creates a project in the directory `NAME`, which must not exist or must be empty. It writes `app.tui`, `theme.tcss`, `sample.json`, and `AGENTS.md` (the briefing `tuimark agents --project` prints); `--go` adds `main.go` and `go.mod`, and `--ts` adds `parent.ts` and `package.json`. No file is ever overwritten, and a usage error writes nothing. It prints the files and the command that runs the project.
+`tuimark new NAME [--go | --ts]` creates a project in the directory `NAME`, which must not exist or must be empty. It writes `app.tui`, `theme.tcss`, `sample.json`, and `AGENTS.md` (the briefing `tuimark agents --project` prints); `--go` adds `main.go` and `go.mod`, and `--ts` adds `parent.ts` and `package.json`. No file is ever overwritten, and a usage error writes nothing. It prints the files and the command that runs the project, such as [`tuimark run`](/guide/run).
 
 ```sh
 tuimark new todo
@@ -135,7 +135,7 @@ cd todo && tuimark run app.tui --data sample.json
 
 ## Environment variables
 
-Only a running app (`Run()`) and `preview` read the environment. The tools above never do.
+Only a running app (`Run()`, and the [`tuimark run`](/guide/run) and `tuimark host` sessions built on it) and `preview` read the environment. The tools above never do.
 
 | Variable | Values | Effect |
 |---|---|---|

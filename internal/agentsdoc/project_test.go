@@ -31,7 +31,7 @@ func TestProjectMarkdown(t *testing.T) {
 		"## Forbidden\n- Bubble Tea / lipgloss / tea.Cmd / Update()\n- inventing tags not in the catalog\n",
 		"## Catalog\n", "## Loop\ntuimark validate FILE\n", "## Bindings\n", "## Actions\n",
 		"### Attributes per tag", "### CSS properties", "### Key tokens", "### Diagnostic codes", "### Notes",
-		"### v0.4a: catalog, new, and validate",
+		"### v0.4a: catalog, new, run, and validate",
 	} {
 		if !strings.Contains(p, want) {
 			t.Errorf("the project briefing is missing %q", want)
