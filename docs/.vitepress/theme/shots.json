@@ -104,6 +104,62 @@
     "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 56 --rows 16 --input down"
   },
   {
+    "name": "logs-live",
+    "light": true,
+    "cols": 110,
+    "rows": 22,
+    "alt": "logs: a live tail with per-level counts, a lines-per-second sparkline, and color-coded lines including an error with its stack trace",
+    "cmd": "tuimark play examples/logs/app.tui --data examples/logs/sample.json --cols 110 --rows 22"
+  },
+  {
+    "name": "tasks-board",
+    "light": true,
+    "cols": 100,
+    "rows": 22,
+    "alt": "tasks: a kanban board with Todo, Doing and Done lanes of cards with priority marks, colored tags and due dates",
+    "cmd": "tuimark play examples/tasks/app.tui --data examples/tasks/sample.json --cols 100 --rows 22"
+  },
+  {
+    "name": "tasks-marked",
+    "light": true,
+    "cols": 100,
+    "rows": 22,
+    "alt": "tasks: the Doing lane focused, two cards marked with a check to move together",
+    "cmd": "tuimark play examples/tasks/app.tui --data examples/tasks/sample.json --cols 100 --rows 22 --input \"right space down space\""
+  },
+  {
+    "name": "gitui-status",
+    "light": true,
+    "cols": 110,
+    "rows": 24,
+    "alt": "gitui: staged and unstaged files with colored status letters beside a colored diff preview",
+    "cmd": "tuimark play examples/gitui/app.tui --data examples/gitui/sample.json --cols 110 --rows 24"
+  },
+  {
+    "name": "gitui-commit",
+    "light": true,
+    "cols": 100,
+    "rows": 26,
+    "alt": "gitui: a commit opened from the log, with its author, message, stats and a scrolling colored diff",
+    "cmd": "tuimark play examples/gitui/app.tui --data examples/gitui/sample.json --cols 100 --rows 26 --input \"2 set:detail_open=true\""
+  },
+  {
+    "name": "http-client",
+    "light": true,
+    "cols": 110,
+    "rows": 24,
+    "alt": "http: a request collection, a POST request in the editor, and its 201 Created JSON response below",
+    "cmd": "tuimark play examples/http/app.tui --data examples/http/sample.json --cols 110 --rows 24"
+  },
+  {
+    "name": "http-headers",
+    "light": true,
+    "cols": 110,
+    "rows": 22,
+    "alt": "http: the response pane on its Headers tab, the response headers in a table",
+    "cmd": "tuimark play examples/http/app.tui --data examples/http/sample.json --cols 110 --rows 22 --input h"
+  },
+  {
     "name": "inbox",
     "light": false,
     "cols": 100,

@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1084" height="508" viewBox="0 0 1084 508" role="img" aria-label="http: a request collection, a POST request in the editor, and its 201 Created JSON response below">
+<title>http: a request collection, a POST request in the editor, and its 201 Created JSON response below</title>
+<rect width="1084" height="508" rx="6" fill="#fbfbfa"/>
+<path fill="#eef1f4" d="M14 14h1056v20h-1056zM14 474h1056v20h-1056z"/>
+<path fill="#e3e8ee" d="M52.4 54h268.8v20h-268.8zM455.6 54h508.8v20h-508.8zM455.6 134h595.2v20h-595.2zM455.6 154h595.2v20h-595.2z"/>
+<path fill="#1763c7" d="M974 54h76.8v20h-76.8z"/>
+<path fill="#c9ddf6" d="M33.2 134h288v20h-288z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#1763c7" stroke-width="1.3" d="M23.6 44H23.6Q18.8 44 18.8 48.8V54M23.6 44H33.2M33.2 44H42.8M42.8 44H52.4M52.4 44H62M62 44H71.6M71.6 44H81.2M81.2 44H90.8M90.8 44H100.4M100.4 44H110M110 44H119.6M119.6 44H129.2M129.2 44H138.8M138.8 44H148.4M148.4 44H158M158 44H167.6M167.6 44H177.2M177.2 44H186.8M186.8 44H196.4M196.4 44H206M206 44H215.6M215.6 44H225.2M225.2 44H234.8M234.8 44H244.4M244.4 44H254M254 44H263.6M263.6 44H273.2M273.2 44H282.8M282.8 44H292.4M292.4 44H302M302 44H311.6M311.6 44H321.2M321.2 44H330.8M330.8 44H330.8Q335.6 44 335.6 48.8V54M18.8 54V74M335.6 54V74M18.8 74V94M335.6 74V94M18.8 94V114M335.6 94V114M18.8 114V134M335.6 114V134M18.8 134V154M335.6 134V154M18.8 154V174M335.6 154V174M18.8 174V194M335.6 174V194M18.8 194V214M335.6 194V214M18.8 214V234M335.6 214V234M18.8 234V254M335.6 234V254M18.8 254V274M335.6 254V274M18.8 274V294M335.6 274V294M18.8 294V314M335.6 294V314M18.8 314V334M335.6 314V334M18.8 334V354M335.6 334V354M18.8 354V374M335.6 354V374M18.8 374V394M335.6 374V394M18.8 394V414M335.6 394V414M18.8 414V434M335.6 414V434M23.6 444H23.6Q18.8 444 18.8 439.2V434M23.6 444H33.2M33.2 444H42.8M42.8 444H52.4M52.4 444H62M62 444H71.6M71.6 444H81.2M81.2 444H90.8M90.8 444H100.4M100.4 444H110M110 444H119.6M119.6 444H129.2M129.2 444H138.8M138.8 444H148.4M148.4 444H158M158 444H167.6M167.6 444H177.2M177.2 444H186.8M186.8 444H196.4M196.4 444H206M206 444H215.6M215.6 444H225.2M225.2 444H234.8M234.8 444H244.4M244.4 444H254M254 444H263.6M263.6 444H273.2M273.2 444H282.8M282.8 444H292.4M292.4 444H302M302 444H311.6M311.6 444H321.2M321.2 444H330.8M330.8 444H330.8Q335.6 444 335.6 439.2V434"/>
+<path stroke="#c9d0d8" stroke-width="1.3" d="M359.6 44H359.6Q354.8 44 354.8 48.8V54M359.6 44H369.2M590 44H599.6M599.6 44H609.2M609.2 44H618.8M618.8 44H628.4M628.4 44H638M638 44H647.6M647.6 44H657.2M657.2 44H666.8M666.8 44H676.4M676.4 44H686M686 44H695.6M695.6 44H705.2M705.2 44H714.8M714.8 44H724.4M724.4 44H734M734 44H743.6M743.6 44H753.2M753.2 44H762.8M762.8 44H772.4M772.4 44H782M782 44H791.6M791.6 44H801.2M801.2 44H810.8M810.8 44H820.4M820.4 44H830M830 44H839.6M839.6 44H849.2M849.2 44H858.8M858.8 44H868.4M868.4 44H878M878 44H887.6M887.6 44H897.2M897.2 44H906.8M906.8 44H916.4M916.4 44H926M926 44H935.6M935.6 44H945.2M945.2 44H954.8M954.8 44H964.4M964.4 44H974M974 44H983.6M983.6 44H993.2M993.2 44H1002.8M1002.8 44H1012.4M1012.4 44H1022M1022 44H1031.6M1031.6 44H1041.2M1041.2 44H1050.8M1050.8 44H1060.4M1060.4 44H1060.4Q1065.2 44 1065.2 48.8V54M354.8 54V74M1065.2 54V74M354.8 74V94M1065.2 74V94M354.8 94V114M1065.2 94V114M354.8 114V134M1065.2 114V134M354.8 134V154M1065.2 134V154M354.8 154V174M1065.2 154V174M359.6 184H359.6Q354.8 184 354.8 179.2V174M359.6 184H369.2M369.2 184H378.8M378.8 184H388.4M388.4 184H398M398 184H407.6M407.6 184H417.2M417.2 184H426.8M426.8 184H436.4M436.4 184H446M446 184H455.6M455.6 184H465.2M465.2 184H474.8M474.8 184H484.4M484.4 184H494M494 184H503.6M503.6 184H513.2M513.2 184H522.8M522.8 184H532.4M532.4 184H542M542 184H551.6M551.6 184H561.2M561.2 184H570.8M570.8 184H580.4M580.4 184H590M590 184H599.6M599.6 184H609.2M609.2 184H618.8M618.8 184H628.4M628.4 184H638M638 184H647.6M647.6 184H657.2M657.2 184H666.8M666.8 184H676.4M676.4 184H686M686 184H695.6M695.6 184H705.2M705.2 184H714.8M714.8 184H724.4M724.4 184H734M734 184H743.6M743.6 184H753.2M753.2 184H762.8M762.8 184H772.4M772.4 184H782M782 184H791.6M791.6 184H801.2M801.2 184H810.8M810.8 184H820.4M820.4 184H830M830 184H839.6M839.6 184H849.2M849.2 184H858.8M858.8 184H868.4M868.4 184H878M878 184H887.6M887.6 184H897.2M897.2 184H906.8M906.8 184H916.4M916.4 184H926M926 184H935.6M935.6 184H945.2M945.2 184H954.8M954.8 184H964.4M964.4 184H974M974 184H983.6M983.6 184H993.2M993.2 184H1002.8M1002.8 184H1012.4M1012.4 184H1022M1022 184H1031.6M1031.6 184H1041.2M1041.2 184H1050.8M1050.8 184H1060.4M1060.4 184H1060.4Q1065.2 184 1065.2 179.2V174M359.6 204H359.6Q354.8 204 354.8 208.8V214M359.6 204H369.2M465.2 204H474.8M474.8 204H484.4M484.4 204H494M494 204H503.6M503.6 204H513.2M513.2 204H522.8M522.8 204H532.4M532.4 204H542M542 204H551.6M551.6 204H561.2M561.2 204H570.8M570.8 204H580.4M580.4 204H590M590 204H599.6M599.6 204H609.2M609.2 204H618.8M618.8 204H628.4M628.4 204H638M638 204H647.6M647.6 204H657.2M657.2 204H666.8M666.8 204H676.4M676.4 204H686M686 204H695.6M695.6 204H705.2M705.2 204H714.8M714.8 204H724.4M724.4 204H734M734 204H743.6M743.6 204H753.2M753.2 204H762.8M762.8 204H772.4M772.4 204H782M782 204H791.6M791.6 204H801.2M801.2 204H810.8M810.8 204H820.4M820.4 204H830M830 204H839.6M839.6 204H849.2M849.2 204H858.8M858.8 204H868.4M868.4 204H878M878 204H887.6M887.6 204H897.2M897.2 204H906.8M906.8 204H916.4M916.4 204H926M926 204H935.6M935.6 204H945.2M945.2 204H954.8M954.8 204H964.4M964.4 204H974M974 204H983.6M983.6 204H993.2M993.2 204H1002.8M1002.8 204H1012.4M1012.4 204H1022M1022 204H1031.6M1031.6 204H1041.2M1041.2 204H1050.8M1050.8 204H1060.4M1060.4 204H1060.4Q1065.2 204 1065.2 208.8V214M354.8 214V234M1065.2 214V234M354.8 234V254M1065.2 234V254M354.8 254V274M1065.2 254V274M354.8 274V294M1065.2 274V294M354.8 294V314M1065.2 294V314M354.8 314V334M1065.2 314V334M354.8 334V354M1065.2 334V354M354.8 354V374M1065.2 354V374M354.8 374V394M1065.2 374V394M354.8 394V414M1065.2 394V414M354.8 414V434M1065.2 414V434M359.6 444H359.6Q354.8 444 354.8 439.2V434M359.6 444H369.2M369.2 444H378.8M378.8 444H388.4M388.4 444H398M398 444H407.6M407.6 444H417.2M417.2 444H426.8M426.8 444H436.4M436.4 444H446M446 444H455.6M455.6 444H465.2M465.2 444H474.8M474.8 444H484.4M484.4 444H494M494 444H503.6M503.6 444H513.2M513.2 444H522.8M522.8 444H532.4M532.4 444H542M542 444H551.6M551.6 444H561.2M561.2 444H570.8M570.8 444H580.4M580.4 444H590M590 444H599.6M599.6 444H609.2M609.2 444H618.8M618.8 444H628.4M628.4 444H638M638 444H647.6M647.6 444H657.2M657.2 444H666.8M666.8 444H676.4M676.4 444H686M686 444H695.6M695.6 444H705.2M705.2 444H714.8M714.8 444H724.4M724.4 444H734M734 444H743.6M743.6 444H753.2M753.2 444H762.8M762.8 444H772.4M772.4 444H782M782 444H791.6M791.6 444H801.2M801.2 444H810.8M810.8 444H820.4M820.4 444H830M830 444H839.6M839.6 444H849.2M849.2 444H858.8M858.8 444H868.4M868.4 444H878M878 444H887.6M887.6 444H897.2M897.2 444H906.8M906.8 444H916.4M916.4 444H926M926 444H935.6M935.6 444H945.2M945.2 444H954.8M954.8 444H964.4M964.4 444H974M974 444H983.6M983.6 444H993.2M993.2 444H1002.8M1002.8 444H1012.4M1012.4 444H1022M1022 444H1031.6M1031.6 444H1041.2M1041.2 444H1050.8M1050.8 444H1060.4M1060.4 444H1060.4Q1065.2 444 1065.2 439.2V434"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#1763c7" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="38.4" lengthAdjust="spacing" fill="#1763c7" font-weight="700">http</text>
+<text x="100.4" y="29" textLength="38.4" lengthAdjust="spacing" fill="#66707d">POST</text>
+<text x="148.4" y="29" textLength="259.2" lengthAdjust="spacing" fill="#66707d">http://127.0.0.1:8099/users</text>
+<text x="417.2" y="29" textLength="9.6" lengthAdjust="spacing" fill="#66707d">·</text>
+<text x="436.4" y="29" textLength="9.6" lengthAdjust="spacing" fill="#66707d">2</text>
+<text x="455.6" y="29" textLength="67.2" lengthAdjust="spacing" fill="#66707d">headers</text>
+<text x="532.4" y="29" textLength="9.6" lengthAdjust="spacing" fill="#66707d">·</text>
+<text x="551.6" y="29" textLength="38.4" lengthAdjust="spacing" fill="#66707d">body</text>
+<text x="599.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#66707d">37</text>
+<text x="628.4" y="29" textLength="9.6" lengthAdjust="spacing" fill="#66707d">B</text>
+<text x="887.6" y="29" textLength="38.4" lengthAdjust="spacing" fill="#66707d">demo</text>
+<text x="935.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#66707d">·</text>
+<text x="954.8" y="29" textLength="67.2" lengthAdjust="spacing" fill="#66707d">timeout</text>
+<text x="1031.6" y="29" textLength="28.8" lengthAdjust="spacing" fill="#66707d">10s</text>
+<text x="378.8" y="49" textLength="67.2" lengthAdjust="spacing" fill="#66707d">request</text>
+<text x="455.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#66707d">·</text>
+<text x="474.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#66707d">Create</text>
+<text x="542" y="49" textLength="38.4" lengthAdjust="spacing" fill="#66707d">user</text>
+<text x="33.2" y="69" textLength="9.6" lengthAdjust="spacing" fill="#66707d">/</text>
+<text x="52.4" y="69" textLength="57.6" lengthAdjust="spacing" fill="#1d232b" fill-opacity="0.55">filter</text>
+<text x="119.6" y="69" textLength="76.8" lengthAdjust="spacing" fill="#1d232b" fill-opacity="0.55">requests</text>
+<text x="369.2" y="69" textLength="38.4" lengthAdjust="spacing" fill="#9a5b00" font-weight="700">POST</text>
+<text x="455.6" y="69" textLength="134.4" lengthAdjust="spacing" fill="#1d232b">{{base}}/users</text>
+<text x="974" y="69" textLength="9.6" lengthAdjust="spacing" fill="#fbfbfa" font-weight="700">[</text>
+<text x="993.2" y="69" textLength="38.4" lengthAdjust="spacing" fill="#fbfbfa" font-weight="700">Send</text>
+<text x="1041.2" y="69" textLength="9.6" lengthAdjust="spacing" fill="#fbfbfa" font-weight="700">]</text>
+<text x="33.2" y="89" textLength="96" lengthAdjust="spacing" fill="#1763c7" font-weight="700">collection</text>
+<rect x="33.2" y="91" width="96" height="1" fill="#1763c7"/>
+<text x="138.8" y="89" textLength="19.2" lengthAdjust="spacing" fill="#1763c7" font-weight="700">10</text>
+<rect x="138.8" y="91" width="19.2" height="1" fill="#1763c7"/>
+<text x="177.2" y="89" textLength="67.2" lengthAdjust="spacing" fill="#66707d">history</text>
+<text x="254" y="89" textLength="9.6" lengthAdjust="spacing" fill="#66707d">3</text>
+<text x="369.2" y="89" textLength="67.2" lengthAdjust="spacing" fill="#66707d">headers</text>
+<text x="455.6" y="89" textLength="115.2" lengthAdjust="spacing" fill="#3e5670">Content-Type</text>
+<text x="676.4" y="89" textLength="153.6" lengthAdjust="spacing" fill="#1d232b">application/json</text>
+<text x="33.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#1c7f50" font-weight="700">GET</text>
+<text x="100.4" y="109" textLength="38.4" lengthAdjust="spacing" fill="#1d232b">List</text>
+<text x="148.4" y="109" textLength="48" lengthAdjust="spacing" fill="#1d232b">users</text>
+<text x="455.6" y="109" textLength="57.6" lengthAdjust="spacing" fill="#3e5670">Accept</text>
+<text x="676.4" y="109" textLength="153.6" lengthAdjust="spacing" fill="#1d232b">application/json</text>
+<text x="33.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#1c7f50" font-weight="700">GET</text>
+<text x="100.4" y="129" textLength="28.8" lengthAdjust="spacing" fill="#1d232b">Get</text>
+<text x="138.8" y="129" textLength="38.4" lengthAdjust="spacing" fill="#1d232b">user</text>
+<text x="33.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#9a5b00" font-weight="700">POST</text>
+<text x="100.4" y="149" textLength="57.6" lengthAdjust="spacing" fill="#1d232b" font-weight="700">Create</text>
+<text x="167.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#1d232b" font-weight="700">user</text>
+<text x="369.2" y="149" textLength="9.6" lengthAdjust="spacing" fill="#66707d">+</text>
+<text x="388.4" y="149" textLength="57.6" lengthAdjust="spacing" fill="#66707d">header</text>
+<text x="455.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#1d232b" fill-opacity="0.55">Key:</text>
+<text x="503.6" y="149" textLength="57.6" lengthAdjust="spacing" fill="#1d232b" fill-opacity="0.55">Value,</text>
+<text x="570.8" y="149" textLength="38.4" lengthAdjust="spacing" fill="#1d232b" fill-opacity="0.55">then</text>
+<text x="618.8" y="149" textLength="48" lengthAdjust="spacing" fill="#1d232b" fill-opacity="0.55">enter</text>
+<text x="33.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#1763c7" font-weight="700">PUT</text>
+<text x="100.4" y="169" textLength="67.2" lengthAdjust="spacing" fill="#1d232b">Replace</text>
+<text x="177.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#1d232b">user</text>
+<text x="369.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#66707d">body</text>
+<text x="455.6" y="169" textLength="115.2" lengthAdjust="spacing" fill="#1d232b">{&quot;name&quot;:&quot;Ada</text>
+<text x="580.4" y="169" textLength="230.4" lengthAdjust="spacing" fill="#1d232b">Lovelace&quot;,&quot;team&quot;:&quot;math&quot;}</text>
+<text x="33.2" y="189" textLength="48" lengthAdjust="spacing" fill="#7a3fc4" font-weight="700">PATCH</text>
+<text x="100.4" y="189" textLength="57.6" lengthAdjust="spacing" fill="#1d232b">Update</text>
+<text x="167.6" y="189" textLength="48" lengthAdjust="spacing" fill="#1d232b">email</text>
+<text x="33.2" y="209" textLength="57.6" lengthAdjust="spacing" fill="#c22b2b" font-weight="700">DELETE</text>
+<text x="100.4" y="209" textLength="57.6" lengthAdjust="spacing" fill="#1d232b">Remove</text>
+<text x="167.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1d232b">user</text>
+<text x="378.8" y="209" textLength="76.8" lengthAdjust="spacing" fill="#66707d">response</text>
+<text x="33.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#1c7f50" font-weight="700">GET</text>
+<text x="100.4" y="229" textLength="57.6" lengthAdjust="spacing" fill="#1d232b">Health</text>
+<text x="167.6" y="229" textLength="48" lengthAdjust="spacing" fill="#1d232b">check</text>
+<text x="369.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#1c7f50" font-weight="700">201</text>
+<text x="407.6" y="229" textLength="67.2" lengthAdjust="spacing" fill="#1c7f50" font-weight="700">Created</text>
+<text x="494" y="229" textLength="28.8" lengthAdjust="spacing" fill="#66707d">143</text>
+<text x="532.4" y="229" textLength="19.2" lengthAdjust="spacing" fill="#66707d">ms</text>
+<text x="570.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#66707d">169</text>
+<text x="609.2" y="229" textLength="9.6" lengthAdjust="spacing" fill="#66707d">B</text>
+<text x="638" y="229" textLength="153.6" lengthAdjust="spacing" fill="#66707d">application/json</text>
+<text x="33.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#1c7f50" font-weight="700">GET</text>
+<text x="100.4" y="249" textLength="38.4" lengthAdjust="spacing" fill="#1d232b">Slow</text>
+<text x="148.4" y="249" textLength="76.8" lengthAdjust="spacing" fill="#1d232b">endpoint</text>
+<text x="369.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#1763c7" font-weight="700">body</text>
+<rect x="369.2" y="251" width="38.4" height="1" fill="#1763c7"/>
+<text x="426.8" y="249" textLength="67.2" lengthAdjust="spacing" fill="#66707d">headers</text>
+<text x="503.6" y="249" textLength="9.6" lengthAdjust="spacing" fill="#66707d">6</text>
+<text x="33.2" y="269" textLength="28.8" lengthAdjust="spacing" fill="#1c7f50" font-weight="700">GET</text>
+<text x="100.4" y="269" textLength="57.6" lengthAdjust="spacing" fill="#1d232b">Server</text>
+<text x="167.6" y="269" textLength="48" lengthAdjust="spacing" fill="#1d232b">error</text>
+<text x="369.2" y="269" textLength="9.6" lengthAdjust="spacing" fill="#1d232b">{</text>
+<text x="33.2" y="289" textLength="28.8" lengthAdjust="spacing" fill="#1c7f50" font-weight="700">GET</text>
+<text x="100.4" y="289" textLength="67.2" lengthAdjust="spacing" fill="#1d232b">Missing</text>
+<text x="177.2" y="289" textLength="38.4" lengthAdjust="spacing" fill="#1d232b">page</text>
+<text x="388.4" y="289" textLength="86.4" lengthAdjust="spacing" fill="#1d232b">&quot;active&quot;:</text>
+<text x="484.4" y="289" textLength="48" lengthAdjust="spacing" fill="#1d232b">true,</text>
+<text x="388.4" y="309" textLength="124.8" lengthAdjust="spacing" fill="#1d232b">&quot;created_at&quot;:</text>
+<text x="522.8" y="309" textLength="220.8" lengthAdjust="spacing" fill="#1d232b">&quot;2026-10-17T09:30:00Z&quot;,</text>
+<text x="388.4" y="329" textLength="48" lengthAdjust="spacing" fill="#1d232b">&quot;id&quot;:</text>
+<text x="446" y="329" textLength="19.2" lengthAdjust="spacing" fill="#1d232b">4,</text>
+<text x="388.4" y="349" textLength="76.8" lengthAdjust="spacing" fill="#1d232b">&quot;links&quot;:</text>
+<text x="474.8" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1d232b">{</text>
+<text x="407.6" y="369" textLength="86.4" lengthAdjust="spacing" fill="#1d232b">&quot;orders&quot;:</text>
+<text x="503.6" y="369" textLength="172.8" lengthAdjust="spacing" fill="#1d232b">&quot;/users/4/orders&quot;,</text>
+<text x="407.6" y="389" textLength="67.2" lengthAdjust="spacing" fill="#1d232b">&quot;self&quot;:</text>
+<text x="484.4" y="389" textLength="96" lengthAdjust="spacing" fill="#1d232b">&quot;/users/4&quot;</text>
+<text x="388.4" y="409" textLength="19.2" lengthAdjust="spacing" fill="#1d232b">},</text>
+<text x="388.4" y="429" textLength="67.2" lengthAdjust="spacing" fill="#1d232b">&quot;name&quot;:</text>
+<text x="465.2" y="429" textLength="38.4" lengthAdjust="spacing" fill="#1d232b">&quot;Ada</text>
+<text x="513.2" y="429" textLength="96" lengthAdjust="spacing" fill="#1d232b">Lovelace&quot;,</text>
+<text x="23.6" y="469" textLength="38.4" lengthAdjust="spacing" fill="#1d232b">POST</text>
+<text x="71.6" y="469" textLength="57.6" lengthAdjust="spacing" fill="#1d232b">/users</text>
+<text x="138.8" y="469" textLength="9.6" lengthAdjust="spacing" fill="#1d232b">→</text>
+<text x="158" y="469" textLength="28.8" lengthAdjust="spacing" fill="#1d232b">201</text>
+<text x="196.4" y="469" textLength="67.2" lengthAdjust="spacing" fill="#1d232b">Created</text>
+<text x="273.2" y="469" textLength="19.2" lengthAdjust="spacing" fill="#1d232b">in</text>
+<text x="302" y="469" textLength="28.8" lengthAdjust="spacing" fill="#1d232b">143</text>
+<text x="340.4" y="469" textLength="19.2" lengthAdjust="spacing" fill="#1d232b">ms</text>
+<text x="23.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#1763c7" font-weight="700">ctrl+s</text>
+<text x="90.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#66707d">send</text>
+<text x="148.4" y="489" textLength="28.8" lengthAdjust="spacing" fill="#1763c7" font-weight="700">esc</text>
+<text x="186.8" y="489" textLength="57.6" lengthAdjust="spacing" fill="#66707d">cancel</text>
+<text x="263.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#1763c7" font-weight="700">s</text>
+<text x="282.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#66707d">save</text>
+<text x="340.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#1763c7" font-weight="700">m</text>
+<text x="359.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#66707d">method</text>
+<text x="436.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#1763c7" font-weight="700">/</text>
+<text x="455.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#66707d">filter</text>
+<text x="532.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#1763c7" font-weight="700">?</text>
+<text x="551.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#66707d">help</text>
+<text x="609.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#1763c7" font-weight="700">q</text>
+<text x="628.4" y="489" textLength="38.4" lengthAdjust="spacing" fill="#66707d">quit</text>
+<text x="686" y="489" textLength="48" lengthAdjust="spacing" fill="#1763c7" font-weight="700">enter</text>
+<text x="743.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#66707d">edit</text>
+<text x="801.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#1763c7" font-weight="700">D</text>
+<text x="820.4" y="489" textLength="57.6" lengthAdjust="spacing" fill="#66707d">delete</text>
+<text x="897.2" y="489" textLength="28.8" lengthAdjust="spacing" fill="#1763c7" font-weight="700">1-2</text>
+<text x="935.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#66707d">pane</text>
+</g>
+</svg>

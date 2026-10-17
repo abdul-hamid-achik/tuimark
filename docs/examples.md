@@ -1,11 +1,13 @@
 ---
 title: Examples
-description: Complete Tuimark apps from the repository - a system monitor studio, an inbox, a deploy dashboard, a coding-agent chat, Unicode text and the phase-0 spike - with screenshots rendered from tuimark play.
+description: Complete Tuimark apps from the repository - a system monitor studio, a live log viewer, a kanban board, a git client, an HTTP client, an inbox, a deploy dashboard, a coding-agent chat, Unicode text and the phase-0 spike - with screenshots rendered from tuimark play.
 ---
 
 # Examples
 
 Every example lives in the repository's [`examples/`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples) directory as a `.tui`, a `.tcss`, and sample data, most with a small Go host. Each picture is rendered from `tuimark play` on those files (the command is in its title bar), so you can reproduce it exactly. Screens that come in two palettes follow this site's light or dark mode.
+
+`tuimark play` runs no host program, so these pictures show the sample data and what the built-in keys do. The apps' own actions, such as sending a request or moving a card, need the Go host.
 
 To run them, clone the repository and build:
 
@@ -43,6 +45,81 @@ The Go host has no layout, width, padding, truncation, or column code. It runs a
 ./bin/monitor                    # run it
 ./bin/monitor --theme light      # Set("@theme", "light") before Run
 ./bin/monitor --dump 120x30      # print Dump() as JSON instead
+```
+
+## logs
+
+[`examples/logs`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/logs) is a live log viewer, like `tail -f`: lines stream in, colored by level, and the view follows the end until you scroll up to read. A filter input and the `1`-`4` level toggles narrow what is shown, and a sparkline tracks lines per second.
+
+<TermShot name="logs-live">
+The log is a <code>&lt;scroll stick="bottom"&gt;</code>: it keeps showing the newest line as the content grows, and stops following while you read further up. Levels are colored with <code>class:</code> guards on each line.
+</TermShot>
+
+The host streams lines with `Every`, which appends them in one `Batch` per tick, and `Derive` keeps the filtered lines and the counts, so the markup has no expressions. `-follow FILE` tails a real file instead of the built-in generator.
+
+```sh
+go build -o bin/logs ./examples/logs
+./bin/logs                       # a seeded fake API service
+./bin/logs -follow app.log       # tail a real file
+```
+
+## tasks
+
+[`examples/tasks`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/tasks) is a kanban board: three lanes of cards that you move, reorder, mark, create, edit, and delete from the keyboard, with a filter over every lane.
+
+<TermShot name="tasks-board">
+Three focusable lists bound to lanes that <code>Derive</code> computes from one <code>cards</code> array and the filter; the counts in the titles are bound too.
+</TermShot>
+
+<TermShot name="tasks-marked">
+After <code>right space down space</code>: focus moved to Doing and two cards are marked (<code>checked</code> with <code>mark="✓"</code>), ready to move together with <code>H</code>/<code>L</code>.
+</TermShot>
+
+New and edited cards go through a form modal; deleting asks first. `-file board.json` keeps the board in a file, and a failed save shows in the status line through `RunWith`'s `OnError`.
+
+```sh
+go build -o bin/tasks ./examples/tasks
+./bin/tasks -file board.json
+```
+
+## gitui
+
+[`examples/gitui`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/gitui) is a small git client in the spirit of tig and lazygit: staged and unstaged files with a diff preview, the log with each commit's detail, and the branches with a checkout confirmation.
+
+<TermShot name="gitui-status">
+The status tab: two lists of changed files with colored status letters, and the selected file's diff, colored line by line with <code>class:</code> guards.
+</TermShot>
+
+<TermShot name="gitui-commit">
+A commit's detail over the log tab. <code>enter</code> on a commit opens it through the Go host; <code>tuimark play</code> runs no host, so this picture sets the same flag with a <code>set:</code> step.
+</TermShot>
+
+The log is a table whose `<column priority>` values decide which columns go first on a narrow terminal, and each tab has its own keys through `<keymap when>`. By default it shows a sample repository; `-repo PATH` reads a real one with `git`, read-only unless you also pass `-write`.
+
+```sh
+go build -o bin/gitui ./examples/gitui
+./bin/gitui                      # the sample repository
+./bin/gitui -repo .              # this repository, read-only
+```
+
+## http
+
+[`examples/http`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/http) is an HTTP API client, like Postman: a collection of saved requests, an editor for the method, URL, headers, and body, and the response with its status, timing, body, and headers.
+
+<TermShot name="http-client">
+A POST request in the editor and its 201 response: the body is a <code>&lt;scroll&gt;</code> of indented JSON, and the status line is colored by class.
+</TermShot>
+
+<TermShot name="http-headers">
+After <code>h</code>: the response pane's Headers tab, a <code>&lt;table&gt;</code> of the response headers.
+</TermShot>
+
+Requests run in a goroutine and land with one `Batch`; while one is in flight, an `Every` tick animates the spinner and the elapsed time, and `esc` cancels it. Without `-base`, the collection targets a fake API the host serves in process, so it works offline.
+
+```sh
+go build -o bin/http ./examples/http
+./bin/http                       # against the built-in fake API
+./bin/http -base https://api.example.com
 ```
 
 ## inbox
@@ -97,3 +174,9 @@ Widths are measured by grapheme cluster, a cluster is never split when text wrap
 ## Write your own
 
 Start from [getting started](/guide/getting-started), borrow freely from these files, and keep the [widgets](/guide/widgets) page open.
+
+`logs`, `tasks`, `gitui`, and `http` also ship a `mock.json`, so you can try their views in the terminal with no Go at all through [`tuimark run`](/guide/run):
+
+```sh
+tuimark run examples/tasks/app.tui --data examples/tasks/sample.json --mock examples/tasks/mock.json
+```
