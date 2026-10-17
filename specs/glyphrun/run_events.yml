@@ -1,0 +1,85 @@
+version: 1
+name: run_events
+intent: |
+    `tuimark run` answers every host action itself (SPEC v0.4a §15.9, test
+    121 "Events"): a button's on:click and a secret input's on:submit are
+    recorded in the event strip, which starts hidden and which F12 (CSI 24 ~)
+    shows, and in the --events file, one {"seq", "action", "source",
+    "keys", "value"} line each. The secret input's event shows [redacted] in
+    the strip and has no value in the file, only "redacted": true, so the
+    typed password is never shown; the file is mode 0600. An unbound ctrl+c
+    is the built-in quit and exits 0.
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "events"]
+    cwd: "."
+terminal:
+    cols: 100
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "EVENTS"
+        timeoutMs: 5000
+    - press: enter
+    - send:
+        bytes: '\x1b[24~'
+    - wait:
+        screen:
+            contains: "save b {} null"
+        timeoutMs: 3000
+    - press: tab
+    - type: "hunter2"
+    - press: enter
+    - wait:
+        screen:
+            contains: "login pw {} [redacted]"
+        timeoutMs: 3000
+    - snapshot: strip
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: strip_shows_both_events_after_f12
+      description: after F12 the strip lists the button's save and the secret input's login, newest last, with the login's value redacted
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/strip.txt"
+                if grep -q "save b {} null" "$f" && grep -q "login pw {} \[redacted\]" "$f" && ! grep -q "hunter2" "$f"; then
+                  echo '{"ok": true, "evidence": "the strip shows save and login, the login redacted"}'
+                else
+                  echo '{"ok": false, "evidence": "the strip is missing an event, or shows the password"}'
+                fi
+    - id: events_file_records_the_save
+      description: the --events file's first line is the button's save, with its value
+      verify:
+        screen:
+            contains: '{"seq":1,"action":"save","source":"b","keys":{},"value":null}'
+    - id: events_file_redacts_the_secret_submit
+      description: the --events file's second line is the login, with "redacted" true and no value
+      verify:
+        screen:
+            contains: '{"seq":2,"action":"login","source":"pw","keys":{},"redacted":true}'
+    - id: events_file_is_0600
+      description: the --events file was created with mode 0600
+      verify:
+        screen:
+            contains: "events-mode=-rw-------"
+    - id: password_never_shown
+      description: the typed password reaches neither the strip nor the file
+      verify:
+        screen:
+            notContains: "hunter2"
+    - id: ctrl_c_exits_zero
+      description: an unbound ctrl+c quits and run exits 0
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:b0e636520991dcd0272183ecc8c9cbbcac2135215124a37f44581bfccc0a7266

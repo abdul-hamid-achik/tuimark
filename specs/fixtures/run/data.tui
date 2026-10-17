@@ -1,0 +1,9 @@
+<tui version="1">
+  <keymap>
+    <bind keys="s" action="save"/>
+    <bind keys="ctrl+r" action="edit"/>
+  </keymap>
+  <screen id="s">
+    <text>DATA msg={msg}</text>
+  </screen>
+</tui>

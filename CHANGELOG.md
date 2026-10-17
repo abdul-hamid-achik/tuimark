@@ -7,6 +7,124 @@ line.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-17
+
+0.4a is the "frontend loop" release. It adds the tools that let you build
+a terminal app the way you build a web front end:
+
+- see the document live and edit it while it runs (`tuimark run`);
+- start a project from a template (`tuimark new`);
+- get diagnostics and completion in the editor (`tuimark lsp` and a VS
+  Code extension);
+- drive the view from TypeScript (`@tuimark/host`);
+- keep timers and computed values out of the markup (`Every`, `Derive`).
+
+The vocabulary does not change: `version="3"` is still the newest, and
+every document keeps its meaning and its dumps.
+
+### Added
+
+- **Go API.**
+  - `RunContext(ctx, w)` and `RunWith(ctx, w, RunOptions{OnError})` run
+    the app under a context. A cancellation ends the session as a quit
+    and restores the terminal.
+  - `OnError` decides whether an error from a handler, an `Every`, or a
+    `Derive` ends the session or is shown and survived.
+  - `Quit()` ends the active session from any goroutine.
+  - `Every(d, fn)` runs `fn` every `d` on the loop's goroutine, as one
+    `Batch` with one redraw. Late ticks are coalesced, and `stop` is safe
+    from anywhere.
+  - `Derive(path, fn)` keeps a computed value (a filtered list, a count)
+    in the store. It is recomputed inside every write, so nothing ever
+    sees a stale value, and it is read-only for every writer: a widget
+    bound to it does not change.
+- **`tuimark run FILE`** shows a document live in the terminal, with no
+  Go and no parent program, and reloads it in place when you save.
+  - Host actions are answered by `run` itself: `--mock FILE.json` gives
+    each one fixed store writes, so a prototype can react without a
+    backend.
+  - `F12` (or `--strip`) shows a strip of the last events, and
+    `--events FILE.ndjson` writes them as the host protocol's `event`
+    lines. A `secret` input's value is redacted in both.
+  - A panel lists the document's diagnostics, or why a reload failed.
+  - A reload keeps the store, the focus, cursors, scroll offsets, inputs,
+    and the active tab for every node whose `id` and tag are unchanged.
+  - Two `ctrl+c` within one second always end the session.
+- **`tuimark catalog`** prints the whole vocabulary as JSON: tags,
+  attributes and their keywords, CSS properties and values,
+  pseudo-classes, media features, actions, key tokens, and diagnostic
+  codes, each with the `version` that introduced it. The format is
+  described by `schema/catalog.v1.json`.
+- **`tuimark new NAME [--go | --ts]`** writes a project that validates
+  cleanly at 40, 80, and 120 columns under both themes: `app.tui`,
+  `theme.tcss`, `sample.json`, and an `AGENTS.md` briefing for coding
+  agents (`tuimark agents --project`). `--go` adds a `main.go` host and
+  `--ts` a `parent.ts` built on `@tuimark/host`. The Go module is named
+  after the directory, and a name Go refuses is rewritten: `log` or
+  `time` (a standard-library root), `std`, `cmd`, and a Windows device
+  name such as `aux` get `-app`, so `tuimark new log --go` builds.
+- **`tuimark lsp`** is a Language Server Protocol server for `.tui` and
+  `.tcss`.
+  - Diagnostics are exactly `validate`'s. They are routed to the
+    stylesheet they belong to, and a sibling `sample.json` is used as the
+    data.
+  - Completion, hover, go to definition, and formatting with `tuimark
+    fmt`.
+  - It reads only regular files, at most 64 MiB each (a `sample.json`,
+    a `.tui` or a `<style src>` that is a link to `/dev/zero` or
+    `/dev/stdin`, or a FIFO, counts as absent). Its diagnostics for one
+    document never arrive out of order, and a save or a watched file
+    refreshes those of a stylesheet nobody has open.
+- **VS Code extension** (`editors/vscode`): TextMate grammars that mark
+  anything outside the closed vocabulary, snippets, and a client for
+  `tuimark lsp`. Without the binary, highlighting and snippets still
+  work. The server starts only in a trusted workspace, since a workspace
+  can set `tuimark.path`, and only from a binary whose `version` prints a
+  tuimark version.
+- **`@tuimark/host`** (`sdk/ts`), the TypeScript client of the host
+  protocol, for Bun. `spawnHost` starts `tuimark host`, and `on`, `set`,
+  `batch`, `get`, and `exited` do the rest. It follows every rule for
+  parents: signal forwarding, `SIGTERM` then `SIGKILL`, and never
+  touching the terminal. A `SIGTERM` or `SIGHUP` is forwarded after a
+  1.5 s grace, and only if the child is still running, so a signal sent
+  to the whole process group does not reach the child twice. Messages of
+  any size go through fd 3. `examples/host-ts` now uses it.
+- **`TUIMARK_LOG`** writes a `{"ev":"rounds","queued":N}` record when the
+  lifecycle rounds hit their cap.
+
+### Changed
+
+- **Faster frames for big lists.** Moving the cursor in a 20 000-row
+  list now takes about 5.5 ms per key instead of about 120 ms (Apple M5).
+  A one-path `Batch` over a 20 000-row store, with the frame it draws,
+  takes about 5.5 ms instead of 64 ms. Six things do it:
+  - an unchanged frame is not rebuilt;
+  - a list's rows are reused while the data they read is unchanged;
+  - equal rows share one computed style;
+  - a frame's rows are built in memory kept from the frame before last;
+  - a `Batch` copies only the parts of the store it writes;
+  - layout measures a list's height once a frame, and checks each box
+    as it places it instead of in one more pass.
+
+  Dumps are byte for byte the same. `task bench` prints the numbers.
+- **Lifecycle events past the 8th round are kept**, not dropped. They are
+  dispatched first at the next settle, whatever causes it: a key, a
+  resize, a tick, or a `Play` step.
+- **`tuimark validate` says when it did not check bindings.** Without
+  `--data` the text output ends with `ok (bindings not checked: no
+  --data)`, and the JSON output has a `data` member (the path, or
+  `null`).
+- **`tuimark host` bounds fd 3 lines.** A line of 64 MiB or more ends the
+  session with `{"type":"error","error":"fd 3 line of 64 MiB or more"}`,
+  instead of growing without limit. `tuimark mcp` already stopped there.
+
+### Fixed
+
+- **A list or table whose `key` is an object or an array** no longer
+  shares that value between the row and the paths the runtime writes it
+  to (`bind`, `checked`) or the events it fires: a `Set` through one of
+  them, or a handler changing its event, changed the row too.
+
 ## [0.3.2] - 2026-10-17
 
 A patch: fixes and friendlier diagnostics from a full review of 0.3.1.
@@ -315,7 +433,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.0
 [0.3.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.2
 [0.3.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.1
 [0.3.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.0

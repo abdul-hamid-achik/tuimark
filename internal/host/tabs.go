@@ -1,6 +1,7 @@
 package host
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
@@ -90,7 +91,7 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 			Selected: v == active, Disabled: v.Disabled, Fixed: true, Mark: t.Mark,
 			Follow: -1, Index: -1,
 		}
-		l.Style = casc.Compute(l, &t.Style, nil, nil)
+		l.Style = newStyle(casc.Compute(l, t.Style, nil, nil))
 		kids = append(kids, l)
 		if v != active && fb.byID[v.ID] == v {
 			delete(fb.byID, v.ID)
@@ -103,7 +104,7 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 			if cb == nil || c.Kind == "modal" {
 				continue
 			}
-			computeStyles(casc, cb, &active.Style)
+			computeStyles(casc, cb, active.Style)
 			if cb.Style.Display != "none" {
 				active.Children = append(active.Children, cb)
 			}
@@ -388,15 +389,13 @@ func (a *App) activateTab(t, tab *layout.Box) []Event {
 	n := t.Src
 	if n.Bind != "" {
 		if cur, ok := lookup(a.store, n.Bind); !ok || !isString(cur, tab.ID) {
-			root, err := assign(a.store, n.Bind, tab.ID)
-			if err != nil {
+			if err := a.writeStore(n.Bind, tab.ID); err != nil {
 				// The bound path cannot be written (a value along it is
-				// not an object): the active tab comes from that path, so
-				// it cannot change, and on:select does not fire.
+				// not an object, or it is a derived path, SPEC v0.4a
+				// §18.2): the active tab comes from that path, so it
+				// cannot change, and on:select does not fire.
 				return nil
 			}
-			a.store = root
-			a.wrote(n.Bind)
 			a.markStale()
 		}
 	} else if a.tabMem[t.ID] != tab.ID {
@@ -459,12 +458,11 @@ func (a *App) openTabsFor(id string) []tabAct {
 		act := tabAct{tabs: tn.ID, tab: tab.ID, path: tn.Bind, fire: tn.On["select"], outside: !inFrame}
 		if tn.Bind != "" {
 			act.old, act.hadOld = lookup(a.store, tn.Bind)
-			root, err := assign(a.store, tn.Bind, tab.ID)
-			if err != nil {
+			// A bind path that is derived (SPEC v0.4a §18.2) or cannot
+			// be written leaves the tab inactive, as a write error did.
+			if err := a.writeStore(tn.Bind, tab.ID); err != nil {
 				continue
 			}
-			a.store = root
-			a.wrote(tn.Bind)
 		} else {
 			act.oldMem, act.hadMem = a.tabMem[tn.ID]
 			a.tabMem[tn.ID] = tab.ID
@@ -565,33 +563,63 @@ func (a *App) undoTabActs(acts []tabAct) bool {
 		if !ok || !isString(cur, act.tab) {
 			continue
 		}
+		// Both writes recompute the derived values (SPEC v0.4a §18.2).
 		if act.hadOld {
-			if root, err := assign(a.store, act.path, act.old); err == nil {
-				a.store = root
-			}
+			_ = a.writeStore(act.path, act.old)
 		} else {
-			unassign(a.store, act.path)
+			a.unwriteStore(act.path)
 		}
-		a.wrote(act.path)
 		changed = true
 	}
 	return changed
 }
 
-// unassign removes the last member of path from its parent object, when
-// there is one.
-func unassign(root any, path string) {
-	parent, last := root, path
-	if i := strings.LastIndexByte(path, '.'); i >= 0 {
-		p, ok := lookup(root, path[:i])
+// unassignIn removes the last member of path from its parent object, when
+// there is one (the parent found as lookup finds it), and returns root.
+// Through a non-nil cow (a Batch's trial, assignIn) every container along
+// the path is copied first when the trial does not own it, and the copy
+// of root is returned instead.
+func unassignIn(root any, path string, cow cowSet) any {
+	out, _ := unassignSegs(root, strings.Split(path, "."), cow)
+	return out
+}
+
+// unassignSegs is unassignIn below cur; changed reports whether a member
+// was removed.
+func unassignSegs(cur any, segs []string, cow cowSet) (out any, changed bool) {
+	seg := segs[0]
+	switch c := cur.(type) {
+	case map[string]any:
+		e, ok := c[seg]
 		if !ok {
-			return
+			return c, false
 		}
-		parent, last = p, path[i+1:]
+		if len(segs) == 1 {
+			c = cow.ownMap(c)
+			delete(c, seg)
+			return c, true
+		}
+		ne, ch := unassignSegs(e, segs[1:], cow)
+		if !ch {
+			return c, false
+		}
+		c = cow.ownMap(c)
+		c[seg] = ne
+		return c, true
+	case []any:
+		i, err := strconv.Atoi(seg)
+		if err != nil || i < 0 || i >= len(c) || len(segs) == 1 {
+			return c, false
+		}
+		ne, ch := unassignSegs(c[i], segs[1:], cow)
+		if !ch {
+			return c, false
+		}
+		c = cow.ownArray(c)
+		c[i] = ne
+		return c, true
 	}
-	if m, ok := parent.(map[string]any); ok {
-		delete(m, last)
-	}
+	return cur, false
 }
 
 // tabSelects returns the on:select events of the tabs a landed focus

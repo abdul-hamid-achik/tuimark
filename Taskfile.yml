@@ -49,12 +49,35 @@ tasks:
     cmds:
       - ./bin/tuimark test
 
+  host-ts-deps:
+    desc: Install examples/host-ts's dependencies (@tuimark/host, a file dependency on
+      sdk/ts), fresh, because bun copies a file directory. Skipped without `bun`.
+    dir: examples/host-ts
+    cmds:
+      - |
+        if command -v bun >/dev/null 2>&1; then
+          rm -rf node_modules
+          bun install --frozen-lockfile
+        else
+          echo "skipping examples/host-ts install: bun not found"
+        fi
+
+  sdk-test:
+    desc: Install, test, and type-check sdk/ts (@tuimark/host). Needs `bun`.
+    dir: sdk/ts
+    cmds:
+      - bun install --frozen-lockfile
+      - bun test
+      - bunx tsc --noEmit
+      # the template `tuimark new --ts` writes (SPEC test 120)
+      - bunx tsc -p tsconfig.template.json
+
   glyph:
     desc: Build, then run every glyph spec under specs/glyphrun/. The examples/host-ts
       specs (host_ts*.yml) run a Bun parent, so without `bun` on PATH they are skipped
       with a message instead of failing; CI and the release workflow install Bun, so
       they always run there.
-    deps: [build]
+    deps: [build, host-ts-deps]
     cmds:
       - |
         for f in specs/glyphrun/*.yml; do
@@ -68,6 +91,13 @@ tasks:
           esac
           glyph run "$f" --format md || exit 1
         done
+
+  bench:
+    desc: Run the performance benchmarks of SPEC v0.4a §21 test 125 (internal/play, a settled
+      80x24 session, one input per iteration; each must stay under 16 ms/op) and print the
+      numbers. They are benchmarks, not timed assertions in go test.
+    cmds:
+      - go test ./internal/play -run '^$' -bench . -benchmem -count 1
 
   docs:
     desc: Serve the VitePress documentation site in docs/ locally.
@@ -94,6 +124,15 @@ tasks:
     cmds:
       - go build -o bin/tuimark ./cmd/tuimark
       - node docs/scripts/generate.mjs --check
+
+  vscode-test:
+    desc: Build, test (grammars, manifest, client), and package the VS Code extension in editors/vscode (needs bun; not part of verify).
+    dir: editors/vscode
+    cmds:
+      - bun install --frozen-lockfile
+      - bun run build
+      - bun run test
+      - bunx @vscode/vsce package
 
   verify:
     desc: fmt + vet + test + build + golden + glyph, in that order.

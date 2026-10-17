@@ -18,6 +18,11 @@ type Input struct {
 	Paste   string // the paste payload as received (at most maxPaste bytes, not normalized; HandlePaste normalizes it)
 	IsMouse bool   // a mouse event (SPEC v0.2b §26.8)
 	Mouse   Mouse  // the mouse event, when IsMouse is set
+	// IsF12 is the F12 notice (CSI 24 ~) of `tuimark run` (SPEC v0.4a
+	// §15.9, §26.8): only a decoder with f12 set produces it, and it is
+	// never a key, so no keymap row, dispatch, or TUIMARK_LOG record sees
+	// it.
+	IsF12 bool
 }
 
 // Decoder limits (SPEC v0.2 §26.7, §26.8).
@@ -114,6 +119,12 @@ type decoder struct {
 	// starts there; bytes that are only a start of the rest are held in
 	// tail until the next read or the esc timeout.
 	guard []byte
+
+	// f12 makes CSI 24 ~ the F12 notice (Input.IsF12) instead of a
+	// sequence consumed with no effect: set only for `tuimark run`
+	// (HostHooks.F12, SPEC v0.4a §26.8). Run, host, and play's text steps
+	// keep dropping it.
+	f12 bool
 }
 
 // escPending reports whether the esc timeout must decide the decoder's
@@ -208,6 +219,10 @@ func (d *decoder) feed(b []byte, final bool) (ins []Input, reps []reply) {
 			reps = append(reps, u.reply)
 		case unitPaste:
 			d.pasting = true
+		case unitF12:
+			if d.f12 {
+				ins = append(ins, Input{IsF12: true})
+			}
 		}
 		if u.discard != discardNone {
 			// The bound cut the sequence: discard the rest. A string whose
@@ -304,6 +319,7 @@ const (
 	unitReply                 // a reply the probe reads
 	unitPaste                 // CSI 200 ~: a paste starts
 	unitMouse                 // an SGR mouse report that gives an event (v0.2b)
+	unitF12                   // CSI 24 ~: the F12 notice when the decoder has f12, else nothing (v0.4a)
 )
 
 // unit is one decoded item at the start of the input.
@@ -453,6 +469,11 @@ func scanCSI(p []byte) unit {
 		return unit{n: n}
 	case final == '~' && string(params) == "200":
 		return unit{kind: unitPaste, n: n}
+	case final == '~' && string(params) == "24":
+		// F12 (SPEC v0.4a §26.8): not a §8.1 key token. Only the decoder
+		// of `tuimark run` turns it into a notice; with a modifier
+		// parameter (CSI 24 ; 2 ~) it stays a sequence with no effect.
+		return unit{kind: unitF12, n: n}
 	}
 	if name := csiKey(final, string(params)); name != "" {
 		return keyUnit(name, 0, n)

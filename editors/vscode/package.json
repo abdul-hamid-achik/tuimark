@@ -1,0 +1,144 @@
+{
+  "name": "tuimark",
+  "displayName": "Tuimark",
+  "description": "Syntax highlighting, snippets, and language server support for Tuimark .tui and .tcss files.",
+  "version": "0.4.0",
+  "publisher": "abdul-hamid-achik",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abdul-hamid-achik/tuimark.git",
+    "directory": "editors/vscode"
+  },
+  "homepage": "https://github.com/abdul-hamid-achik/tuimark/tree/main/editors/vscode",
+  "bugs": "https://github.com/abdul-hamid-achik/tuimark/issues",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "tuimark",
+    "tui",
+    "tcss",
+    "terminal",
+    "lsp"
+  ],
+  "activationEvents": [
+    "onLanguage:tuimark",
+    "onLanguage:tcss"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In a workspace you have not trusted, highlighting and snippets work, but the language server (tuimark lsp) does not start: a workspace can choose which program tuimark.path runs.",
+      "restrictedConfigurations": [
+        "tuimark.path"
+      ]
+    }
+  },
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "tuimark",
+        "aliases": [
+          "Tuimark",
+          "tuimark"
+        ],
+        "extensions": [
+          ".tui"
+        ],
+        "configuration": "./languages/tuimark/language-configuration.json"
+      },
+      {
+        "id": "tcss",
+        "aliases": [
+          "TCSS",
+          "tcss"
+        ],
+        "extensions": [
+          ".tcss"
+        ],
+        "configuration": "./languages/tcss/language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "tuimark",
+        "scopeName": "text.tui",
+        "path": "./syntaxes/tui.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.tcss": "tcss",
+          "meta.embedded.inline.tcss": "tcss"
+        }
+      },
+      {
+        "language": "tcss",
+        "scopeName": "source.tcss",
+        "path": "./syntaxes/tcss.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "tuimark",
+        "path": "./snippets/tui.code-snippets.json"
+      },
+      {
+        "language": "tcss",
+        "path": "./snippets/tcss.code-snippets.json"
+      }
+    ],
+    "configuration": {
+      "title": "Tuimark",
+      "properties": {
+        "tuimark.path": {
+          "type": "string",
+          "default": "tuimark",
+          "scope": "machine-overridable",
+          "markdownDescription": "Path to the `tuimark` binary. The extension runs `tuimark lsp` from it. The default, `tuimark`, is looked up on `PATH`. A relative path such as `./bin/tuimark` is resolved against the first workspace folder. The server only starts in a trusted workspace, and a workspace value of this setting is ignored until you trust the workspace."
+        },
+        "tuimark.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "scope": "window",
+          "markdownDescription": "Traces the communication between VS Code and `tuimark lsp` in the Tuimark output channel."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "tuimark.restartServer",
+        "title": "Tuimark: Restart Language Server"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc --noEmit -p . && bun build src/extension.ts --outdir out --target node --format cjs --external vscode",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "bun run test:grammar && bun test test",
+    "test:grammar": "vscode-tmgrammar-test -g syntaxes/tui.tmLanguage.json -g syntaxes/tcss.tmLanguage.json \"test/**/*.tui\" \"test/**/*.tcss\"",
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "vscode-languageclient": "9.0.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/node": "20",
+    "@types/vscode": "1.85.0",
+    "@vscode/vsce": "^4.0.0",
+    "ovsx": "^1.3.0",
+    "typescript": "^7.0.2",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2",
+    "vscode-tmgrammar-test": "^0.1.3"
+  }
+}

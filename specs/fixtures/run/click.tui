@@ -1,0 +1,10 @@
+<tui version="2" mouse="true">
+  <keymap>
+    <bind keys="x" action="first"/>
+  </keymap>
+  <screen id="s">
+    <text>CLICK</text>
+    <spacer/>
+    <button id="b" on:click="clicked">BOTTOM</button>
+  </screen>
+</tui>

@@ -138,10 +138,12 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 		// (SPEC §8.2).
 		ls := a.lists[b.ID]
 		if ls != nil && ls.index < len(ls.keys) {
+			// A copy: a handler that changes an object or array key
+			// must not change the store.
 			if ls.each {
-				ev.Keys[ls.alias] = ls.keys[ls.index]
+				ev.Keys[ls.alias] = deepCopyJSON(ls.keys[ls.index])
 			} else {
-				ev.Value = ls.keys[ls.index]
+				ev.Value = deepCopyJSON(ls.keys[ls.index])
 			}
 		}
 	case "input":
@@ -165,13 +167,17 @@ func (a *App) inputValue(b *layout.Box) string {
 func (a *App) setInputValue(b *layout.Box, v string) {
 	a.markStale()
 	if b.Src != nil && b.Src.Bind != "" {
-		if root, err := assign(a.store, b.Src.Bind, v); err == nil {
-			a.store = root
-			a.wrote(b.Src.Bind)
-		}
+		_ = a.writeStore(b.Src.Bind, v)
 		return
 	}
 	a.input(b.ID).value = v
+}
+
+// inputBlocked reports whether input b is bound to a path that a write of
+// its text would break a derived value at (SPEC v0.4a §18.2): its edits
+// then change nothing and fire no on:change. The caller holds a.mu.
+func (a *App) inputBlocked(b *layout.Box) bool {
+	return b.Src != nil && b.Src.Bind != "" && a.derivedBlocked(b.Src.Bind, "")
 }
 
 // HandleKey applies a key to the runtime state and returns the events to
@@ -277,6 +283,9 @@ func (a *App) inputCursor(b *layout.Box) (*inputState, []rune, []int) {
 // text, moved forward to the next cluster boundary when the text merged
 // with the cluster that follows (SPEC v0.2 §12.1). Caller holds a.mu.
 func (a *App) insertText(b *layout.Box, text []rune) []Event {
+	if a.inputBlocked(b) {
+		return nil
+	}
 	st, runes, _ := a.inputCursor(b)
 	out := make([]rune, 0, len(runes)+len(text))
 	out = append(append(append(out, runes[:st.cursor]...), text...), runes[st.cursor:]...)

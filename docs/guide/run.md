@@ -1,0 +1,119 @@
+---
+title: Running a document
+description: tuimark run shows a document live in the terminal with no host program - an event strip, an NDJSON event log, fixed mock writes, and reload on save.
+---
+
+# Running a document
+
+`tuimark run FILE` shows a document live in the terminal and lets you use it, with no Go and no parent program. It is the quickest way to see and try what [`dump` and `play`](/guide/tools) describe: every key, click, focus move, and modal behaves as it will in your app, and every action the document fires is listed on screen instead of going to code you have not written yet.
+
+```sh
+tuimark run app.tui --data sample.json
+```
+
+`run` is a development tool. An application ships with [`Run()` in Go](/guide/go-api) or with a parent program over [`tuimark host`](/guide/host-protocol).
+
+| Flag | Does |
+|---|---|
+| `--data FILE.json` | binds the file as the store's root |
+| `--theme dark\|light` | the host's theme, as `Set("@theme", …)` |
+| `--strip` | shows the event strip from the start (F12 toggles it) |
+| `--events FILE.ndjson` | writes one JSON line per host action |
+| `--mock FILE.json` | fixed store writes for each host action |
+
+## The session
+
+The session is the one `Run()` gives a Go program: the same keys, focus, mouse, terminal probe, and theme detection, and the same [environment variables](/guide/tools#environment-variables), so `TUIMARK_THEME` beats `--theme` here too.
+
+- **Host actions.** Every action the document names that is not built in (an `on:` attribute, a keymap row) is answered by `run` itself: it applies the action's mock writes, if any, and records the event in the strip and in `--events`. Nothing else happens, so a document that expects its host to open a modal or fill a list needs a mock for it, or a real host.
+- **Built-in actions** behave as under `Run()`. `quit`, from a keymap row, an `on:` attribute, or an unbound `ctrl+c`, ends the session.
+- **Errors in the document.** A document with error diagnostics still runs, as under `Run()`, and the [panel](#the-panel) lists them from the first frame.
+- **Always an exit.** Two `ctrl+c` within one second end the session, even when the document binds `ctrl+c` to something else. The first press is handled as usual.
+
+`run` exits `0` when the session quits or its input ends, `1` for an error, and 128 + the signal number when a stop signal (`SIGTERM`, `SIGHUP`, `SIGINT`) ends it.
+
+## The event strip
+
+Press `F12` to show or hide a strip of the most recent events over the bottom rows of the terminal. It starts hidden, or shown with `--strip`. On a keyboard where `F12` is a media key, press `fn`+`F12`, or use `--strip`.
+
+```text
+save list {"row":"t-2"} null
+! add_item: tuimark: bad path "items..x"
+add_item composer {} "buy milk"
+login password {} [redacted]
+reload
+```
+
+- An event is `ACTION SOURCE KEYS VALUE`, the way `play` prints it: `SOURCE` is the id of the node that fired it (`-` for none), `KEYS` the keys of the list or table row it concerns, and `VALUE` its value (an input's text, a tab's id, …), both as JSON. The value of a `secret` input's event is shown as `[redacted]`.
+- A mock batch that failed is `! ACTION: ERROR`, just before the event's own line.
+- `! events: ERROR` says that writing `--events` failed (once).
+- `reload` marks a successful [reload](#reload).
+
+The strip shows the last `min(8, max(1, floor(rows / 3)))` entries, newest last, each cut to the terminal's width: 8 on a 24-row terminal or taller, fewer on a short one.
+
+The strip is painted after the frame is built, and is not part of it: the document is laid out at the full terminal size, and no dump, `Get`, or hit test sees the strip. A click on the strip acts on whatever the frame has under it, as if the strip were hidden.
+
+`F12` is only for `run`. It is not a key token, so a document cannot bind it, `play` has no step for it, and under `Run()` and `tuimark host` the key is ignored.
+
+## The panel
+
+The panel lists the document's static diagnostics (parse and stylesheet problems), or the error of a failed reload, in `validate`'s text form, over the top rows:
+
+```text
+error V002 app.tui:4:11 /screen/text attribute "bogus" is not allowed on <text>
+```
+
+It shows at most `max(1, floor(rows / 3))` lines; when there are more, the last one reads `… N more`. It stays while there is something to list and goes away after a reload that leaves nothing to list. On a short terminal where the panel and the strip overlap, the strip wins.
+
+## --events
+
+`--events FILE.ndjson` appends one line per host action as it fires, with the members of the [host protocol](/guide/host-protocol)'s `event` message, without `type`:
+
+```json
+{"seq":1,"action":"save","source":"list","keys":{"row":"t-2"},"value":null}
+{"seq":2,"action":"login","source":"password","keys":{},"redacted":true}
+```
+
+- `seq` counts from 1 in each session.
+- An event whose source is a `secret` input has no `value`, and ends with `"redacted": true`.
+- A regular file is created with mode `0600`, or truncated and set to `0600`. A pipe or a FIFO is written as it is. A terminal is refused, since `run` itself owns the terminal: the strip is the place to watch events on screen.
+- When a write fails, the log stops and says so once in the strip; the session goes on.
+
+## --mock
+
+A mock lets a prototype react without a backend. The file is one JSON object: each member names an action, and its value is the list of store writes to make when it fires, the `writes` of a host protocol `batch`:
+
+```json
+{
+  "add_item": [{"path": "draft", "value": ""}, {"path": "saved", "value": true}],
+  "toggle_help": [{"path": "help_open", "value": true}]
+}
+```
+
+- When the action fires, its writes are applied as one `Batch`, before the event is recorded, so the frame that follows shows them.
+- Values are written as they are: nothing in them is read from the event or the store. A mock cannot append to a list, count, or filter. When a prototype needs that, give it a host program: `tuimark new NAME --go` or `--ts`.
+- A batch that fails changes nothing, adds a `! ACTION:` line to the strip, and the session goes on.
+- A member that names no action of the document, or a built-in action such as `quit`, is an error, so a typo is caught at once. So is a value that is not a list of writes.
+
+## Reload
+
+`run` watches the document, the stylesheets it loads with `<style src>`, `--data`, and `--mock`, every 150 ms, the way `preview --watch` does. Save a change and the session picks it up in place, with no restart. Changes seen in one look are one reload.
+
+A reload succeeds when the document loads with no error diagnostic and the mock is valid for it. The session then goes on with the new document:
+
+- **The store** carries over, so whatever the session wrote is still there, unless `--data` changed: then the new file is the store.
+- **Kept**, for every node whose `id` is in the new document with the same tag: the focus and the active screen, list and table cursors, scroll offsets (and a `stick="bottom"` scroll's state), an input's text and cursor, and the active tab.
+- **Everything else** starts over. The first frame after a reload compares with the last one before it, so a modal that was open stays open without firing `on:open` again, and focus that had to move because its node is gone fires `on:focus` where it lands.
+- The strip gets a `reload` line, and the panel shows the new document's warnings, or goes away.
+
+When a reload fails, because the document no longer parses, has an error, or the mock or the data is invalid, the old document runs on unchanged and the panel shows why. Fix the file and the next save reloads it.
+
+## Errors before the session
+
+These print one `tuimark: run: …` line on stderr and exit `1` before the terminal is touched:
+
+- no `FILE`, or more than one;
+- a `FILE`, `--data`, or `--mock` that cannot be read, or is not valid JSON;
+- a mock that names an unknown or built-in action, or whose values are not lists of `{"path", "value"}` writes;
+- an `--events` file that cannot be opened, or that is a terminal;
+- a terminal `Run()` cannot use (for example, when stdin is not a terminal).

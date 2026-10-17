@@ -114,14 +114,14 @@ func (a *App) DropPress() {
 // were in 0.2a. A dropped event forgets a pending press, as HandleMouse
 // does. The mouse is read once, when the run starts. Run's loop and
 // play's text: step (and so every caller that walks decoded input) use
-// it.
+// it. The F12 notice of `tuimark run` ends a run too: it is no key.
 func (a *App) KeyRun(ins []Input) (keys []Key, rest []Input) {
 	on := a.MouseOn()
 	dropped := false
 	n := 0
 	for ; n < len(ins); n++ {
 		in := ins[n]
-		if in.IsPaste || (in.IsMouse && on) {
+		if in.IsPaste || in.IsF12 || (in.IsMouse && on) {
 			break
 		}
 		if in.IsMouse {

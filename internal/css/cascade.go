@@ -99,6 +99,9 @@ type Cascade struct {
 	Tokens map[string]string
 	Diags  ir.Diags
 	seen   map[string]bool
+	// share is the style-sharing memo (share.go), nil unless
+	// EnableSharing turned it on.
+	share *shareMemo
 }
 
 // NewCascade prepares the rule set for a terminal size and theme.

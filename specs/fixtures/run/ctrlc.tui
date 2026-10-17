@@ -1,0 +1,8 @@
+<tui version="1">
+  <keymap>
+    <bind keys="ctrl+c" action="cc"/>
+  </keymap>
+  <screen id="s">
+    <text>CTRLC</text>
+  </screen>
+</tui>

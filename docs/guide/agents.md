@@ -19,6 +19,8 @@ tuimark agents > AGENTS.md
 
 Regenerate it when you upgrade Tuimark. The [reference](/reference/) pages on this site are generated from the same output.
 
+For a project of your own, `tuimark agents --project` prints the same briefing without the pointers into the Tuimark repository, and [`tuimark new`](/guide/tools#new) writes it as the project's `AGENTS.md`. Agents and editors that need the vocabulary as data, not prose, read [`tuimark catalog`](/guide/tools#catalog).
+
 ## The loop
 
 The whole method fits in four commands:

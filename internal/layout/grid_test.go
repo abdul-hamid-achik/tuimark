@@ -42,7 +42,8 @@ func TestGridColumnsArithmetic(t *testing.T) {
 		{2, 50, 0, 10, "[10]"},           // at least one column
 		{2, 0, 4, 2, "[0 0]"},            // gaps larger than the width
 	} {
-		b := &Box{Style: css.Initial()}
+		st := css.Initial()
+		b := &Box{Style: &st}
 		b.Style.GridColumns, b.Style.GridMinWidth, b.Style.Gap = c.k, c.m, c.g
 		_, w := gridColumns(b, c.wc, false)
 		if got := fmt.Sprint(w); got != c.want {

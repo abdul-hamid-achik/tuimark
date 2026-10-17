@@ -293,7 +293,7 @@ func (a *App) styleInfo(f *Frame, b *layout.Box) []StyleInfo {
 	casc := css.NewCascade(a.sheets, css.Env{Cols: f.Cols, Rows: f.Rows, Theme: f.Theme})
 	var parent *css.Style
 	if b.Parent != nil {
-		parent = &b.Parent.Style
+		parent = b.Parent.Style
 	}
 	_, trace := casc.Explain(subjectOf(b), parent, b.Hints, b.Inline)
 	out := make([]StyleInfo, 0, len(css.PropertyOrder))
@@ -305,7 +305,7 @@ func (a *App) styleInfo(f *Frame, b *layout.Box) []StyleInfo {
 			continue
 		}
 		si := StyleInfo{Prop: prop, Origin: "initial", Overridden: []LostDecl{}}
-		if v, ok := css.FormatProp(b.Style, prop); ok {
+		if v, ok := css.FormatProp(*b.Style, prop); ok {
 			si.Value = &v
 		}
 		if pt := trace[prop]; pt != nil {

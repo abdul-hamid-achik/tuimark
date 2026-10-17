@@ -108,6 +108,13 @@ func (b *Batch) Set(path string, v any) error {
 				return b.fail(fmt.Errorf("tuimark: the root value must be a JSON object, got %T", jv))
 			}
 		}
+		// A derived path, or a path inside one, is refused here, as Set
+		// refuses it (SPEC v0.4a §18.2); a write to an ancestor is
+		// checked when the batch applies, against the store it then
+		// meets.
+		if err := b.a.derivedTarget(path); err != nil {
+			return b.fail(err)
+		}
 	}
 	b.writes = append(b.writes, batchWrite{path: path, v: jv})
 	return nil
@@ -149,32 +156,73 @@ func (a *App) restoreBatchSnap(s batchSnap) {
 // applyBatch applies writes in order, atomically, under one lock
 // acquisition (SPEC v0.3 §18.1 Batch "Applying the lot"): no frame, dump,
 // Get, handler, or Play step observes a state in which some of the
-// writes are applied and others are not. assign mutates an existing map
-// or array in place, so the trial runs on a deep copy of the store,
-// discarded on failure; the store is only kept once every write has
-// succeeded.
+// writes are applied and others are not. The trial never changes the
+// store it starts from: every write made while it applies (its own, the
+// Derive recomputation at its end, and the runtime's, such as a "@focus"
+// request's tab activations) copies the containers along its path once
+// and changes only the copies (a.cow, cowSet), so the store before the
+// batch is still whole for the rollback, and the trial's store, which
+// shares every container the batch did not write with it, is only kept
+// once every write has succeeded.
 func (a *App) applyBatch(writes []batchWrite) error {
 	if len(writes) == 0 {
 		return nil
 	}
+	if err := a.applyBatchLocked(writes); err != nil {
+		return err
+	}
+	a.Wake() // at most one redraw for the whole batch
+	return nil
+}
+
+// applyBatchLocked is applyBatch's apply under a.mu. The lock is released
+// and the store and state restored by a defer, so a panic in a Derive fn
+// (recompute runs under the lock, and a panic in fn is not recovered:
+// SPEC v0.4a §18.2) leaves neither the lock held nor the trial's store in
+// place. The trial's writes go through a.cow, which the defer clears in
+// every case.
+func (a *App) applyBatchLocked(writes []batchWrite) (failErr error) {
 	a.mu.Lock()
 	origStore := a.store
 	snap := a.snapForBatch()
-	a.store = deepCopyJSON(a.store)
-	var failErr error
+	prevErr := a.deriveErr
+	hold := a.deriveHold
+	prevCow := a.cow
+	a.cow = cowSet{}
+	applied := false
+	defer func() {
+		a.cow = prevCow
+		if !applied {
+			a.store = origStore
+			a.restoreBatchSnap(snap)
+			a.deriveErr = prevErr
+			a.deriveHold, a.deriveDue = hold, false
+		}
+		a.mu.Unlock()
+	}()
+	// The derived values are recomputed once, after every write of the
+	// batch, on the trial's store (SPEC v0.4a §18.2: get sees every write of
+	// the batch); a Derive error counts only when the batch applies. A
+	// write to an ancestor of a derived path is checked then too, against
+	// the store the whole batch leaves: the batch fails when a derived
+	// path cannot be written there.
+	a.deriveHold++
 	for _, w := range writes {
 		if err := a.applyLocked(w.path, w.v); err != nil {
 			failErr = err
 			break
 		}
 	}
-	if failErr != nil {
-		a.store = origStore
-		a.restoreBatchSnap(snap)
-		a.mu.Unlock()
-		return failErr
+	a.deriveHold--
+	due := a.deriveDue
+	a.deriveDue = false
+	if failErr == nil && due {
+		if err := a.derivedUnwritable(); err != nil {
+			failErr = err
+		} else {
+			a.recompute()
+		}
 	}
-	a.mu.Unlock()
-	a.Wake() // at most one redraw for the whole batch
-	return nil
+	applied = failErr == nil
+	return failErr
 }

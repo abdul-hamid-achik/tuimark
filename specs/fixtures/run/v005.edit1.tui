@@ -1,0 +1,9 @@
+<tui version="1">
+  <keymap>
+    <bind keys="ctrl+r" action="edit"/>
+  </keymap>
+  <screen id="s">
+    <text>TOP ROW</text>
+    <text>BROKEN VERSION
+  </screen>
+</tui>

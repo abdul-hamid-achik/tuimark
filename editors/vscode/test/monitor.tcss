@@ -1,0 +1,79 @@
+/* SYNTAX TEST "source.tcss" "an excerpt of the monitor theme (examples/monitor/studio.tcss)"
+:root {
+  --bg: #1a1614;
+  --fg: #f2ede8;
+  --muted: #9a8f86;
+  --accent: #e0443e;
+  --ok: #5fb376;
+  --warn: #e0a23e;
+  --danger: #e0443e;
+  --border: #3a322d;
+  --focus: #e0443e;
+  --panel: #231e1b;
+}
+
+@media (theme: light) {
+/*      ^^^^^ support.type.property-name.media.tcss
+/*             ^^^^^ constant.language.theme.tcss
+  :root {
+    --bg: #fbfaf8;
+/*  ^^^^ variable.other.custom-property.tcss
+/*        ^^^^^^^ constant.other.color.rgb-value.tcss
+    --fg: #1f1a17;
+    --muted: #6f655d;
+    --accent: #c8102e;
+    --ok: #2f7d45;
+    --warn: #9a6400;
+    --danger: #c8102e;
+    --border: #d9d2cb;
+    --focus: #c8102e;
+    --panel: #f3efeb;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+#nav { height: 1fr; gap: 2; }
+.tab-label { color: $muted; }
+.tab-label:selected { color: $accent; bold: true; }
+/* <~--------- entity.other.attribute-name.class.tcss
+/*         ^^^^^^^^ entity.other.attribute-name.pseudo-class.tcss
+.tab-label:disabled { dim: true; }
+.panel { border: rounded; border-color: $border; title-color: $muted; }
+/*               ^^^^^^^ support.constant.property-value.tcss
+/*                                               ^^^^^^^^^^^ support.type.property-name.tcss
+#panels { layout: grid; grid-columns: 2; grid-min-width: 36; gap: 1; overflow: scroll; }
+/*        ^^^^^^ support.type.property-name.tcss
+/*                ^^^^ support.constant.property-value.tcss
+/*                      ^^^^^^^^^^^^ support.type.property-name.tcss
+/*                                       ^^^^^^^^^^^^^^ support.type.property-name.tcss
+/*                                                                             ^^^^^^ support.constant.property-value.tcss
+.meter { height: 1; gap: 1; }
+.meter-label { width: 12; }
+.gauge { width: 1fr; bar: eighths; color: $accent; }
+/*                   ^^^ support.type.property-name.tcss
+/*                        ^^^^^^^ support.constant.property-value.tcss
+/*              ^ constant.numeric.tcss
+/*               ^^ keyword.other.unit.tcss
+#cores-view { scrollbar: auto; }
+#cores { layout: grid; grid-columns: 4; grid-min-width: 22; gap: 1; row-gap: 0; }
+/*                                                                  ^^^^^^^ support.type.property-name.tcss
+#filter-row { height: 1; gap: 1; }
+#filter-row:focus-within > text { color: $accent; }
+/*          ^^^^^^^^^^^^ entity.other.attribute-name.pseudo-class.tcss
+/*                       ^ keyword.operator.combinator.tcss
+/*                         ^^^^ entity.name.tag.tcss
+#procs { border: rounded; border-color: $border; scrollbar: auto; gap: 1; }
+/*                                               ^^^^^^^^^ support.type.property-name.tcss
+/*                                                          ^^^^ support.constant.property-value.tcss
+#procs:focus { border-color: $focus; }
+#procs > column { bold: true; color: $muted; }
+/*       ^^^^^^ entity.name.tag.tcss
+#procs > item:checked { color: $accent; }
+/*       ^^^^ entity.name.tag.tcss
+/*            ^^^^^^^ entity.other.attribute-name.pseudo-class.tcss
+#procs > item.blocked { color: $danger; }
+#procs > item > text.hot { color: $warn; }
+/*                   ^^^ entity.other.attribute-name.class.tcss
+#c-name { width: 1fr; min-width: 10; max-width: 44; }
+/*                    ^^^^^^^^^ support.type.property-name.tcss
+/*                                              ^^ constant.numeric.tcss

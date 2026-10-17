@@ -314,6 +314,14 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 		st, runes, bounds := a.inputCursor(b)
 		changed, cursor := false, st.cursor
 		switch k.Name {
+		case "backspace", "ctrl+h", "ctrl+u":
+			// An edit of an input bound to a derived path changes
+			// nothing (SPEC v0.4a §18.2).
+			if a.inputBlocked(b) {
+				return nil
+			}
+		}
+		switch k.Name {
 		case "backspace", "ctrl+h":
 			if st.cursor > 0 {
 				p := boundBefore(bounds, st.cursor)
@@ -448,13 +456,20 @@ func (a *App) moveList(b *layout.Box, to func(index, rows, page int) int) []Even
 	if idx == ls.index {
 		return nil
 	}
+	// The key is the store's own value at the row's key path: an object
+	// or array key is copied, so that the bind path and the row never
+	// share memory (a later Set through one would change the other
+	// unseen by the caches).
+	key := deepCopyJSON(ls.keys[idx])
+	// A cursor bound to a derived path does not move, and on:select does
+	// not fire (SPEC v0.4a §18.2).
+	if b.Src.Bind != "" && a.derivedBlocked(b.Src.Bind, key) {
+		return nil
+	}
 	ls.index = idx
 	a.markStale()
 	if b.Src.Bind != "" {
-		if root, err := assign(a.store, b.Src.Bind, ls.keys[idx]); err == nil {
-			a.store = root
-			a.wrote(b.Src.Bind)
-		}
+		_ = a.writeStore(b.Src.Bind, key)
 	}
 	if act, ok := b.Src.On["select"]; ok {
 		return []Event{a.eventFor(act, b)}
@@ -502,22 +517,32 @@ func (a *App) compatible(action string, t *layout.Box) bool {
 	case isMove(action):
 		switch t.Kind {
 		case "list", "table":
-			return a.rows(t) > 0
+			return a.rows(t) > 0 && !a.bindBlocked(t)
 		case "tabs":
 			if action == "move-page-down" || action == "move-page-up" {
 				return false
 			}
-			return len(enabledTabs(t)) > 0
+			return len(enabledTabs(t)) > 0 && !a.bindBlocked(t)
 		}
 		return t.Scrolls()
 	case action == "check-toggle" || action == "check-all" || action == "check-none":
 		if (t.Kind != "list" && t.Kind != "table") || a.rows(t) == 0 {
 			return false
 		}
-		_, ok := a.checkedArray(t)
-		return ok
+		arr, ok := a.checkedArray(t)
+		return ok && !a.derivedBlocked(t.Src.Attrs["checked"], append([]any{}, arr...))
 	}
 	return false
+}
+
+// bindBlocked reports whether the bind path of a list, a table, or a tabs
+// is one its writes would break a derived value at (SPEC v0.4a §18.2):
+// the widget's cursor or active tab then cannot change, and a built-in
+// keymap row targeting it does not match. The value written is a row key
+// or a tab id, a scalar, so any derived path at or under the bind path
+// blocks it. The caller holds a.mu.
+func (a *App) bindBlocked(t *layout.Box) bool {
+	return t.Src != nil && t.Src.Bind != "" && a.derivedBlocked(t.Src.Bind, "")
 }
 
 // checkedArray returns the checked= array of a list or a table (SPEC
@@ -560,7 +585,12 @@ func (a *App) switchable(v keyView, id string) (*layout.Box, bool) {
 		return nil, true
 	}
 	t, tab := tabOf(v, n)
-	return t, tab != nil
+	// A tabs whose bind is a derived path cannot change its active tab
+	// (SPEC v0.4a §18.2): switch-to does not match.
+	if tab == nil || a.bindBlocked(t) {
+		return nil, false
+	}
+	return t, true
 }
 
 // tabOf returns, for the tab node n, its tabs box in the frame v and its
@@ -688,7 +718,8 @@ func (a *App) check(b *layout.Box, action string) []Event {
 	next := []any{}
 	switch action {
 	case "check-toggle":
-		k := ls.keys[min(max(ls.index, 0), len(ls.keys)-1)]
+		// Keys are copied as moveList copies them.
+		k := deepCopyJSON(ls.keys[min(max(ls.index, 0), len(ls.keys)-1)])
 		if hasKey(old, k) {
 			for _, x := range old {
 				if !keyEqual(x, k) {
@@ -707,7 +738,7 @@ func (a *App) check(b *layout.Box, action string) []Event {
 			id := keyID(k)
 			if _, ok := seen[id]; !ok {
 				seen[id] = struct{}{}
-				next = append(next, k)
+				next = append(next, deepCopyJSON(k))
 			}
 		}
 		if len(next) == len(old) {
@@ -717,16 +748,15 @@ func (a *App) check(b *layout.Box, action string) []Event {
 	if sameKeys(old, next) {
 		return nil
 	}
-	root, err := assign(a.store, b.Src.Attrs["checked"], next)
-	if err != nil {
+	// writeStore refuses a checked array bound to a derived path: nothing
+	// changes and on:change does not fire (SPEC v0.4a §18.2).
+	if err := a.writeStore(b.Src.Attrs["checked"], next); err != nil {
 		return nil
 	}
-	a.store = root
-	a.wrote(b.Src.Attrs["checked"])
 	a.markStale()
 	if act, ok := b.Src.On["change"]; ok {
 		ev := a.eventFor(act, b)
-		ev.Value = append([]any{}, next...)
+		ev.Value = deepCopyJSON(next)
 		return []Event{ev}
 	}
 	return nil

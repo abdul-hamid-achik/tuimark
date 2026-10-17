@@ -140,6 +140,14 @@ Bind a JSON file as the data store with `--data`:
 ./bin/tuimark dump examples/inbox/app.tui --data examples/inbox/sample.json --cols 80 --rows 24
 ```
 
+To use the document live in the terminal, with no host program, `run` it:
+every action it fires shows in an event strip (`F12`, or `--strip` from
+the start), and saving the file reloads it in place.
+
+```sh
+./bin/tuimark run examples/inbox/app.tui --data examples/inbox/sample.json --strip
+```
+
 Or use it as a library:
 
 ```go
@@ -570,12 +578,17 @@ tuimark play     FILE [--cols 80] [--rows 24] [--data FILE.json] [--theme dark|l
                       [--format text|json] [--cells] [--styles] [--frames] [--strict]
 tuimark fmt      FILE [--write] [--check]
 tuimark ir       FILE
-tuimark agents
+tuimark agents   [--repo | --project]
+tuimark catalog
+tuimark new      NAME [--go | --ts]
 tuimark test     [DIR] [--update] [--allow-breaking]
 tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                       [--theme dark|light] [--strict] [--json]
+tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
+                      [--mock FILE.json] [--strip]
 tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
 tuimark mcp
+tuimark lsp
 tuimark version
 ```
 
@@ -592,7 +605,11 @@ tuimark version
   layout/bind problems (under both themes, dark first, for a `theme="auto"`
   document without `--theme`). Without `--data`, bind-dependent checks
   (`B001`–`B003`, and the 0.2b `B008`–`B010`) are skipped, since every path
-  would otherwise read as "missing". `--catalog FILE` (a JSON list of action names, or
+  would otherwise read as "missing", and the text output ends with
+  `ok (bindings not checked: no --data)` instead of `ok` (0.4a); with
+  `--data` the line stays `ok`. `--json` has the members `actions`, `data`
+  (the `--data` argument as given, or `null`), `diagnostics`, `file`, and
+  `ok`. `--catalog FILE` (a JSON list of action names, or
   `{"actions":[...]}`) turns unresolved actions into `B004` warnings.
 - `preview` writes the text dump to stdout, and also paints an ANSI frame
   first when stdout is a TTY, in the color profile from `--color`, else
@@ -621,21 +638,74 @@ tuimark version
 - `agents` prints `AGENTS.md`, generated from the runtime's own catalogs so
   it cannot drift; `AGENTS.md` at the repo root must equal this output,
   enforced by `internal/agentsdoc`'s `TestAGENTSDoesNotDrift` (regenerate
-  with `go run ./cmd/tuimark agents --repo > AGENTS.md`).
+  with `go run ./cmd/tuimark agents --repo > AGENTS.md`). `agents --project`
+  (0.4a) prints the project briefing instead: the same briefing adapted to
+  a project outside this repository, which `new` writes as the project's
+  `AGENTS.md` (so it can be regenerated after an upgrade). `--repo` and
+  `--project` are exclusive.
+- `catalog` (0.4a) prints the closed vocabulary as one JSON object, so an
+  editor, a language client, or an agent reads the catalog instead of
+  scraping `AGENTS.md`: `tags` (with their `attrs` and an enumerated
+  attribute's `keywords`), `properties`, `pseudo_classes`, `media`, `keys`,
+  `actions`, and `diagnostics`, every item with the lowest document version
+  that accepts it (`since`). It is generated from the runtime's own tables,
+  takes no flags, and reads no environment variable. `schema/catalog.v1.json`
+  validates it; `catalog: 1` is the format version, and adding members,
+  items, or versions keeps it.
+- `new NAME [--go | --ts]` (0.4a) creates a project in the directory `NAME`,
+  which must not exist or must be empty (otherwise it is a usage error that
+  writes nothing, and no file is ever overwritten): `app.tui` (the newest
+  document version, with a bound list, a status line, a keymap with labeled
+  rows, and `<hints/>`), `theme.tcss` (tokens for both themes, `:focus` and
+  `:selected` rules), `sample.json`, and the project briefing as
+  `AGENTS.md`. `--go` adds `main.go` and a `go.mod` that requires this
+  module at the version `tuimark version` reports; `--ts` adds `parent.ts`
+  and `package.json` (a Bun parent through `@tuimark/host`). The two flags
+  are exclusive. It prints the files it wrote, then the next command
+  (`cd NAME && tuimark run app.tui --data sample.json`, `… go mod tidy && go
+  run .`, or `… bun install && bun parent.ts`).
 - `test` runs the golden dump comparisons driven by
   `testdata/golden/manifest.json` (below).
+- `run` (0.4a) runs a document in the terminal for its author, with no Go
+  and no parent program: the session is `Run()`'s (it reads the
+  `TUIMARK_*` variables as `Run()` does, so `TUIMARK_THEME` beats
+  `--theme`), `--data` is bound at the root, and `--theme` is applied as
+  `Set("@theme", …)`. Every non-builtin action gets a handler that applies
+  its `--mock` writes (`{"ACTION": [{"path": P, "value": V}, …]}`, literal
+  values, one `Batch`) and records the event, in an event strip that `F12`
+  (or `--strip`) shows over the bottom rows and in the `--events` NDJSON
+  file (`{"seq","action","source","keys","value"}`, mode `0600`, no
+  `value` and `"redacted": true` for a `secret` input). A panel over the
+  top rows lists the static diagnostics, or a failed reload's error. The
+  document, its stylesheets, `--data`, and `--mock` are polled every 150ms
+  and reloaded in place, keeping the store (unless `--data` changed) and,
+  by id and tag, the focus, the screen, cursors, scroll offsets, input
+  text, and the active tab; a failed reload keeps the old document
+  running. Two `ctrl+c` within a second always exit 0. Exit codes: 0 for
+  quit or the end of input, 1 for an error (a bad `--mock`, an `--events`
+  path that is a terminal, … are one `tuimark: run: …` line before the
+  terminal is touched), 128 + the signal number for a stop signal. See the
+  [run guide](https://tuimark.vercel.app/guide/run).
 - `host` (0.3b) runs a document in the terminal for a parent process in any
   language: the terminal stays on fd 0/1/2 as with `Run()`, the parent
   writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 and reads
   `ready`/`event`/`ack`/`error`/`exit` JSON lines from fd 4. POSIX only
-  (a usage error on Windows). See the [host protocol
+  (a usage error on Windows). A line of 64 MiB or more on fd 3 (the newline
+  excluded) ends the session with exit reason `error` (0.4a), the bound
+  `mcp` uses for stdin. See the [host protocol
   guide](https://tuimark.vercel.app/guide/host-protocol) and
   `examples/host-ts` for a Bun parent.
 - `mcp` (0.3b) is a Model Context Protocol server on stdin/stdout (JSON-RPC,
   stdlib only) exposing `validate`, `dump`, `play`, `inspect`, and the
   `agents` briefing as five read-only tools, for an agent that reaches
-  Tuimark through an MCP gateway instead of a shell. See the [MCP server
-  guide](https://tuimark.vercel.app/guide/mcp).
+  Tuimark through an MCP gateway instead of a shell. A line of 64 MiB or
+  more on stdin (the newline excluded) ends the server with exit 1. See the
+  [MCP server guide](https://tuimark.vercel.app/guide/mcp).
+- `lsp` (0.4a) is a Language Server Protocol 3.17 server on stdin/stdout (stdlib
+  only) for `.tui` and `.tcss` files: diagnostics (the checks `validate`
+  runs, against a sibling `sample.json`), completion, hover, definition,
+  and formatting for `.tui`, from the catalog. The VS Code extension
+  starts it. See [Editor support](https://tuimark.vercel.app/guide/tools#editor-support-tuimark-lsp).
 - `version` (also `--version` or `-v`) prints `tuimark 0.2.0`; release
   builds add the commit and build date, as in `tuimark 0.2.0 (commit
   abc1234, built 2026-09-27T12:00:00Z)`.
@@ -898,7 +968,8 @@ example) — say why in the commit that updates the goldens.
 
 ## Public Go API
 
-The public surface is deliberately small (package `tuimark`, SPEC §18):
+The public surface is deliberately small (package `tuimark`, SPEC §18): eighteen
+entry points.
 
 ```go
 func Load(path string) (*App, error)
@@ -915,6 +986,15 @@ func (a *App) Dump(cols, rows int) (*Dump, error)
 func (a *App) Validate() []Diagnostic
 func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) // 0.3
 func (a *App) Run(w io.Writer) error
+func (a *App) RunContext(ctx context.Context, w io.Writer) error                // 0.4
+func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error  // 0.4
+func (a *App) Quit()                                                            // 0.4
+func (a *App) Every(d time.Duration, fn func(b *Batch) error) (stop func())    // 0.4
+func (a *App) Derive(path string, fn func(get func(path string) (any, bool)) (any, error)) error // 0.4
+
+type RunOptions struct {                                        // 0.4
+    OnError func(ev *Event, err error) error
+}
 ```
 
 `internal/layout` and `internal/paint` are not importable from outside this
@@ -970,6 +1050,21 @@ module; the only supported entry points are the functions above.
   events and the final dump. The state carries over to the next call. With
   `NoHandlers` on a freshly loaded app, it gives exactly what `tuimark play`
   prints.
+- **`RunContext`/`RunWith`** (0.4) are `Run` with a context: a cancelled
+  context ends the session as a quit does (the terminal is restored) and
+  `RunWith` returns an error wrapping `ctx.Err()`. `RunOptions.OnError`
+  receives each handler, `Every`, or `Derive` error that is not a quit
+  (`ev` is nil for the last two); returning nil keeps the session going.
+- **`Quit`** (0.4) asks the active `Run` to end, from any goroutine; `Run`
+  then returns nil. It does nothing while no `Run` is active.
+- **`Every`** (0.4) calls a function every `d` while `Run` is active, on the
+  loop, its writes applied as one `Batch`. Missed ticks are dropped, as with
+  `time.Ticker`; `Play`, `Dump`, and `Validate` never call it.
+- **`Derive`** (0.4) keeps a store path computed from the rest of the store
+  (a filtered list, a count), recomputed inside every write, so markup reads
+  it as any other path and stays free of expressions. Only its function
+  writes it: a `Set` to it is an error, and a widget bound to it does not
+  change.
 
 ## Examples
 
@@ -1104,6 +1199,12 @@ module; the only supported entry points are the functions above.
   go build -o bin/monitor ./examples/monitor
   go build -o bin/agent ./examples/agent
   ```
+  The `host_ts*` specs also need `examples/host-ts`'s dependencies, which
+  include `@tuimark/host` copied from `sdk/ts`. Reinstall them from scratch
+  so a stale copy never hides an SDK change:
+  ```sh
+  (cd examples/host-ts && rm -rf node_modules && bun install --frozen-lockfile)
+  ```
   or run `task build` (see `Taskfile.yml`), which builds all five in one
   step; `task glyph` builds and then runs every spec; `task verify` runs
   fmt, vet, test, build, golden, and glyph in order — the full local gate.
@@ -1235,7 +1336,8 @@ kept with the maintainer's project notes, outside this repository.
   ```
 
   Saved as `modal.tui`, this validates and dumps cleanly
-  (`./bin/tuimark validate modal.tui` reports `ok`; `./bin/tuimark dump
+  (`./bin/tuimark validate modal.tui` reports `ok (bindings not checked: no
+  --data)`; `./bin/tuimark dump
   modal.tui --cols 80 --rows 24` shows `actions` and both buttons at
   height 1, not stretched to the modal's height).
 

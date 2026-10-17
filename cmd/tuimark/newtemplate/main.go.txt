@@ -1,0 +1,97 @@
+// Command @@NAME@@ runs app.tui as an interactive terminal app.
+//
+// The view lives entirely in app.tui and theme.tcss; this file only loads
+// the data and implements the named actions the keymap and the widgets
+// fire: select, open, search, refresh, and quit.
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/abdul-hamid-achik/tuimark"
+)
+
+type item struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, "@@NAME@@:", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	ui, err := tuimark.Load("app.tui")
+	if err != nil {
+		return err
+	}
+	raw, err := os.ReadFile("sample.json")
+	if err != nil {
+		return err
+	}
+	var data struct {
+		Items []item `json:"items"`
+	}
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return err
+	}
+	var store map[string]any
+	if err := json.Unmarshal(raw, &store); err != nil {
+		return err
+	}
+	if err := ui.Bind("", store); err != nil {
+		return err
+	}
+	all := data.Items
+
+	// show writes the list that matches q, and the line and count that go
+	// with it.
+	show := func(q string) {
+		q = strings.ToLower(strings.TrimSpace(q))
+		hits := []item{}
+		for _, it := range all {
+			if q == "" || strings.Contains(strings.ToLower(it.Title), q) {
+				hits = append(hits, it)
+			}
+		}
+		_ = ui.Set("items", hits)
+		_ = ui.Set("count", len(hits))
+		if q == "" {
+			_ = ui.Set("status", "all items")
+		} else {
+			_ = ui.Set("status", fmt.Sprintf("%d match %q", len(hits), q))
+		}
+	}
+
+	ui.On("select", func(ev tuimark.Event) error {
+		if id, ok := ev.Keys["item"].(string); ok {
+			_ = ui.Set("status", "selected "+id)
+		}
+		return nil
+	})
+	ui.On("open", func(ev tuimark.Event) error {
+		if id, ok := ev.Keys["item"].(string); ok {
+			_ = ui.Set("status", "opened "+id)
+		}
+		return nil
+	})
+	ui.On("search", func(ev tuimark.Event) error {
+		q, _ := ev.Value.(string)
+		show(q)
+		return nil
+	})
+	ui.On("refresh", func(tuimark.Event) error {
+		_ = ui.Set("query", "")
+		show("")
+		return nil
+	})
+	ui.On("quit", func(tuimark.Event) error { return tuimark.ErrQuit })
+
+	return ui.Run(os.Stdout)
+}

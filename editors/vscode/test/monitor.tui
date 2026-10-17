@@ -1,0 +1,161 @@
+<!-- SYNTAX TEST "text.tui" "an excerpt of the monitor (examples/monitor/studio.tui)"
+<tui version="3" theme="auto" mouse="mouse_enabled">
+<!--                          ^^^^^ entity.other.attribute-name.flag.tui
+<!--                                 ^^^^^^^^^^^^^ variable.other.path.tui
+  <style src="studio.tcss"/>
+  <keymap when="#app">
+<!--      ^^^^ entity.other.attribute-name.selector.tui
+<!--             ^^^ entity.name.selector.id.tui
+    <bind keys="q" action="quit" label="quit"/>
+<!--                             ^^^^^ entity.other.attribute-name.template.tui
+    <bind keys="ctrl+c" action="quit" when=""/>
+<!--            ^^^^ constant.language.key.modifier.tui
+<!--                ^ punctuation.separator.key-combo.tui
+<!--                 ^ constant.language.key.tui
+<!--                                  ^^^^ entity.other.attribute-name.selector.tui
+    <bind keys="?" action="help_open" label="help"/>
+<!--            ^ constant.character.key.tui
+  </keymap>
+  <keymap when="#filter">
+    <bind keys="tab,shift+tab" action="filter_apply"/>
+<!--            ^^^ constant.language.key.tui
+<!--               ^ punctuation.separator.list.tui
+<!--                ^^^^^^^^^ constant.language.key.tui
+    <bind keys="esc" action="filter_cancel" label="cancel"/>
+<!--            ^^^ constant.language.key.tui
+  </keymap>
+  <keymap when="#settings-list:focus">
+<!--             ^^^^^^^^^^^^^ entity.name.selector.id.tui
+    <bind keys="j" action="move-next"/>
+<!--                       ^^^^^^^^^ support.function.builtin.action.tui
+    <bind keys="k" action="move-prev"/>
+    <bind keys="enter,space" action="setting_next" label="change"/>
+<!--                  ^^^^^ constant.language.key.tui
+    <bind keys="-" action="setting_prev" label="back"/>
+<!--            ^ constant.character.key.tui
+    <bind keys="s" action="settings_save" when="#settings" label="save"/>
+  </keymap>
+  <screen id="studio">
+<!--          ^^^^^^ entity.name.selector.id.tui
+    <col id="app">
+      <row id="identity">
+        <text class="brand">◆ monitor</text>
+        <text class="muted">{host}</text>
+        <spacer/>
+        <text class="status" class:live="live" class:paused="paused" class:waiting="waiting" class:stale="stale">{status_label}</text>
+<!--                         ^^^^^^ keyword.other.class-guard-prefix.tui
+<!--                               ^^^^ entity.other.attribute-name.class-guard.tui
+<!--                                     ^^^^ variable.other.path.tui
+        <text class="muted">{sampled_at}</text>
+      </row>
+      <tabs id="nav" bind="view" mark="▸" focusable="true" on:select="view_changed">
+<!--   ^^^^ entity.name.tag.tui
+<!--                             ^^^^ entity.other.attribute-name.tui
+<!--                                   ^ string.quoted.tui
+<!--                                                                  ^^^^^^^^^^^^ entity.name.function.action.tui
+        <tab id="cpu" label="2 cpu" short="2 cpu">
+<!--     ^^^ entity.name.tag.tui
+<!--                  ^^^^^ entity.other.attribute-name.template.tui
+<!--                         ^^^^^ string.quoted.tui
+<!--                                ^^^^^ entity.other.attribute-name.template.tui
+          <scroll id="cores-view" class="panel" title="cores">
+            <box id="cores" each="cores as c" key="c.id">
+<!--                        ^^^^ entity.other.attribute-name.each.tui
+<!--                              ^^^^^ variable.other.path.tui
+              <row class="core">
+                <text class="core-label">{c.label}</text>
+                <progress class="gauge" bind="c.pct"/>
+<!--             ^^^^^^^^ entity.name.tag.tui
+<!--                                            ^^^ variable.other.path.tui
+              </row>
+            </box>
+          </scroll>
+        </tab>
+        <tab id="processes" label="7 processes" short="7 proc" focus="#procs">
+<!--                                                           ^^^^^ entity.other.attribute-name.selector.tui
+<!--                                                                   ^^^^^ entity.name.selector.id.tui
+          <col class="pane">
+            <row id="filter-row" if="filter_open">
+<!--                             ^^ entity.other.attribute-name.flag.tui
+<!--                                 ^^^^^^^^^^^ variable.other.path.tui
+              <text class="muted">/</text>
+              <input id="filter" bind="query" placeholder="filter" on:change="filter" on:submit="filter_apply"/>
+            </row>
+            <table id="procs" each="procs as p" key="p.pid" bind="cursor_pid"
+<!--                                                              ^^^^^^^^^^ variable.other.path.tui
+                   checked="marked_pids" mark="▸" placeholder="no results"
+<!--               ^^^^^^^ entity.other.attribute-name.path.tui
+<!--                        ^^^^^^^^^^^ variable.other.path.tui
+                   on:select="cursor_moved" on:change="marks_changed">
+<!--                          ^^^^^^^^^^^^ entity.name.function.action.tui
+<!--               ^^^ keyword.other.action-prefix.tui
+              <item class:blocked="p.protected"/>
+<!--                      ^^^^^^^ entity.other.attribute-name.class-guard.tui
+<!--                                 ^^^^^^^^^ variable.other.path.tui
+              <column id="c-pid" class="num" title="PID" width="7">{p.pid}</column>
+              <column id="c-name" title="{h.name}">{p.name}</column>
+              <column id="c-cpu" class="num" title="{h.cpu}" width="7" class:hot="p.cpu_hot" on:click="sort_cpu">{p.cpu}</column>
+<!--                                                ^^^^^^^ meta.interpolation.tui
+<!--                                                                   ^^^^^^ keyword.other.class-guard-prefix.tui
+<!--                                                                         ^^^ entity.other.attribute-name.class-guard.tui
+<!--                                                                                                   ^^^^^^^^ entity.name.function.action.tui
+              <column id="c-mem" class="num" title="{h.mem}" width="8" priority="3" on:click="sort_mem">{p.mem}</column>
+<!--                                                                   ^^^^^^^^ entity.other.attribute-name.tui
+<!--                                                                                                    ^^^^^^^ meta.interpolation.tui
+              <column id="c-thr" class="num" title="THR" width="4" priority="2">{p.threads}</column>
+              <column id="c-io" class="num" title="I/O" width="9" priority="1">{p.io}</column>
+              <column id="c-user" title="USER" width="10" priority="1">{p.user}</column>
+            </table>
+          </col>
+        </tab>
+        <tab id="settings" label="8 settings" short="8 cfg" focus="#settings-list">
+          <col class="pane">
+            <list id="settings-list" each="settings as s" key="s.key" bind="setting_cursor">
+              <item class:dirty="s.dirty" class:error="s.error">
+                <row class="setting">
+                  <text class="setting-label">{s.label}</text>
+                  <text class="setting-value">{s.value}</text>
+                </row>
+              </item>
+            </list>
+            <text id="settings-status" class:ok="settings_saved" class:error="settings_failed">{settings_status}</text>
+          </col>
+        </tab>
+      </tabs>
+      <hints id="keys"/>
+<!--   ^^^^^ entity.name.tag.tui
+    </col>
+    <modal id="kill" open="kill_open" title="kill processes" on:escape="kill_cancel">
+<!-- ^^^^^ entity.name.tag.tui
+<!--                 ^^^^ entity.other.attribute-name.flag.tui
+<!--                       ^^^^^^^^^ variable.other.path.tui
+<!--                                                            ^^^^^^ entity.other.attribute-name.action.tui
+      <col id="kill-rows" each="kill_rows as k" key="k.pid">
+<!--                            ^^^^^^^^^ variable.other.path.tui
+        <row class="kill-row" class:blocked="k.blocked">
+<!--                                           ^^^^^^^ variable.other.path.tui
+          <text class="kill-state">{k.state}</text>
+          <text class="num kill-pid">{k.pid}</text>
+          <text>{k.name}</text>
+          <text class="muted">{k.note}</text>
+        </row>
+      </col>
+      <text class="warn" if="kill_force">SIGKILL cannot be caught</text>
+<!--                                     ^^^^^^^^^^^^^^^^^^^^^^^^ - meta.interpolation.tui
+      <!-- The buttons take clicks but not focus: focus rests on the modal,
+<!--  ^^^^ punctuation.definition.comment.begin.tui
+           so only y, n, and esc act. A focused "yes" would confirm the
+<!--       ^^^^^^^^^^^^^^^^^^^^^^^^^ comment.block.tui
+           kill on enter or space. -->
+<!--                               ^^^ punctuation.definition.comment.end.tui
+      <row id="kill-actions">
+        <button id="kill-yes" label="yes (y)" focusable="false" on:click="kill_confirm"/>
+<!--     ^^^^^^ entity.name.tag.tui
+<!--                                          ^^^^^^^^^ entity.other.attribute-name.tui
+<!--                                 ^^^^^^^ string.quoted.tui
+<!--                                                                      ^^^^^^^^^^^^ entity.name.function.action.tui
+        <button id="kill-no" label="no (n)" focusable="false" on:click="kill_cancel"/>
+      </row>
+    </modal>
+  </screen>
+</tui>

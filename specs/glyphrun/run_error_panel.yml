@@ -1,0 +1,57 @@
+version: 1
+name: run_error_panel
+intent: |
+    A document that loads with an error-severity diagnostic still runs
+    under `tuimark run`, as under Run(), and its static diagnostics show in
+    the panel over the top rows from the first frame (SPEC v0.4a §15.9
+    "Diagnostics", "Panel", test 121 "Reload"): the V002 line of an unknown
+    attribute is the top row, in validate's text form, and the document is
+    laid out under it.
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "error"]
+    cwd: "."
+terminal:
+    cols: 100
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "V002"
+        timeoutMs: 5000
+    - snapshot: first_frame
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+outcomes:
+    - id: panel_from_the_start
+      description: the first frame's top row is the V002 diagnostic in validate's text form
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/first_frame.txt"
+                if head -n 1 "$f" | grep -q '^error V002 app.tui:4:11 /screen/text attribute "bogus" is not allowed on <text>'; then
+                  echo '{"ok": true, "evidence": "the panel shows the V002 line"}'
+                else
+                  echo '{"ok": false, "evidence": "no V002 panel line on the top row"}'
+                fi
+    - id: document_laid_out_under_the_panel
+      description: the document's second row shows under the one-line panel
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/first_frame.txt"
+                if sed -n 2p "$f" | grep -q "^STILL RUNS"; then
+                  echo '{"ok": true, "evidence": "the document runs under the panel"}'
+                else
+                  echo '{"ok": false, "evidence": "the document is not laid out under the panel"}'
+                fi
+    - id: document_still_runs
+      description: the session runs and ctrl+c exits 0
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:524938fc61c3f0b25e42a0dd1d30bca9bb07aec3a72ac00b6261eb443570a892

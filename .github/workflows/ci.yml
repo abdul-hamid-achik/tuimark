@@ -68,6 +68,33 @@ jobs:
       - name: golden dumps
         run: ./bin/tuimark test
 
+  # The performance benchmarks (SPEC test 125): each case must stay under
+  # 16 ms/op on this Linux runner too. They are recorded, not asserted (a
+  # shared runner's timings are noisy), so the numbers go to the job
+  # summary and the job never fails on them.
+  bench:
+    name: benchmarks (recorded, not gating)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - name: go test -bench
+        run: |
+          go test ./internal/play -run '^$' -bench . -benchmem -count 1 | tee bench.txt
+          {
+            echo '### Benchmarks (SPEC test 125, budget 16 ms/op)'
+            echo '```'
+            cat bench.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # GoReleaser ships Windows zips (.goreleaser.yaml), but no job runs on
   # Windows. Cross-compiling and vetting for it on Linux is cheap and
   # catches the usual breakage (a POSIX-only syscall outside a build-tagged
@@ -147,6 +174,44 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  # The VS Code extension (editors/vscode) is a separate package with its own
+  # lockfile (SPEC 0.4a, test 124). It needs no Go: it builds, runs its grammar
+  # and manifest tests, and packages a .vsix.
+  vscode:
+    name: vscode extension (build, grammar tests, package)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.2"
+
+      - name: Install (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Grammar, manifest, and client tests
+        run: bun run test
+
+      - name: Package
+        run: bunx @vscode/vsce package
+
+      - name: Upload the .vsix
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tuimark-vscode-vsix
+          path: editors/vscode/*.vsix
+          retention-days: 7
+          if-no-files-found: error
+
   docs:
     name: docs site (generated pages fresh, build + dead links)
     runs-on: ubuntu-latest
@@ -171,3 +236,33 @@ jobs:
 
       - name: Build the site (fails on dead links)
         run: cd docs && npm ci && npm run build
+
+  # @tuimark/host (sdk/ts, SPEC §19.2): Bun tests against a fake child, and a
+  # type-check. It needs neither Go nor the tuimark binary; the real child is
+  # driven by examples/host-ts in the specs job above.
+  sdk-ts:
+    name: "sdk/ts (@tuimark/host, test and type-check)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/ts
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.2"
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Test
+        run: bun test
+
+      - name: Type-check
+        run: bunx tsc --noEmit
+
+      - name: Type-check the tuimark new --ts template
+        run: bunx tsc -p tsconfig.template.json

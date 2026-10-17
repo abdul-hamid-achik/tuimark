@@ -16,13 +16,14 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
+	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
 // Version is the runtime version the start record of TUIMARK_LOG carries
 // (SPEC v0.2b §26.12). Release builds set it with -ldflags "-X", like the
 // CLI's own version.
-var Version = "0.3.2"
+var Version = "0.4.0"
 
 // Event is the payload a handler receives (SPEC §8.2).
 type Event struct {
@@ -86,6 +87,51 @@ type App struct {
 	// checked array while the store member it reads is unchanged
 	// (checkedSet).
 	checkedSets map[*ir.Node]*checkedCache
+	// derived are the Derive registrations, in registration order (SPEC
+	// v0.4a §18.2). deriveHold > 0 while a Batch applies its writes: the
+	// recomputation then runs once, at its end, when deriveDue is set.
+	// deriveErr is the first Derive error not reported yet.
+	derived    []*derivation
+	deriveHold int
+	deriveDue  bool
+	deriveErr  error
+	// cow is non-nil while a Batch's trial applies (applyBatchLocked):
+	// the containers of the store the trial owns, so that every store
+	// write then changes copies and never the store before the batch
+	// (cowSet).
+	cow cowSet
+	// The frame caches (framecache.go, listcache.go). writes counts every
+	// store write, whatever its path (wrote). frameKey is the fingerprint
+	// of every input of a frame (frameInputs) that the last build of
+	// Frame left behind, and frameLast that frame (liveFrame). listRows
+	// keeps, per list node, its inflated rows while the store members
+	// they read are unchanged; decls keeps each node's declarations as
+	// the cascade takes them; docKinds which widgets the document holds;
+	// interps each template text parsed. noCache turns every frame cache
+	// off: a cold app, which the equivalence tests compare a warm one
+	// against.
+	writes    uint64
+	frameKey  string
+	frameLast *Frame
+	listRows  map[*ir.Node]*listCache
+	decls     map[*ir.Node]*nodeDecls
+	docKinds  docKinds
+	interps   map[string]interpEntry
+	noCache   bool
+	// slab is the parity (1 or 2) of the live build under way (liveFrame),
+	// 0 outside one: a list's rows then go into its listSlab of that
+	// parity. passes numbers the builder passes of the live builds.
+	slab   uint8
+	passes uint64
+	// scratch is the memory every layout of this app cuts its work lists
+	// from (layout.Scratch): one Layout call at a time, under a.mu, and
+	// nothing it hands out outlives the call.
+	scratch layout.Scratch
+	// verifyPrev is, with the tuimark_verify build tag, the last frame
+	// Frame gave, and verifyDigest its frameDigest when it was built
+	// (checkRetained); unused otherwise.
+	verifyPrev   *Frame
+	verifyDigest string
 
 	screen    int
 	focus     string
@@ -101,7 +147,13 @@ type App struct {
 	openModals []*ir.Node   // modals open in the last frame, document order (top last)
 	modalStack []modalEntry // modals that took the focus trap, bottom first
 	pending    []Event
-	focusReq   *focusRequest
+	// carry holds the lifecycle events a settle kept when its 8th round
+	// ended with events still queued (SPEC v0.4a §15.4 point 3): the next
+	// settle dispatches them first, as its first round (TakeCarry,
+	// CarryOver). No render touches it, so Dump and Validate leave it as
+	// it is.
+	carry    []Event
+	focusReq *focusRequest
 	// tabMem is the tab the runtime remembers per tabs id, for a tabs
 	// without bind (SPEC §6.10.2); tabPrev is the active tab per tabs id in
 	// the last frame, for the activation focus rule (§6.10.3).
@@ -119,6 +171,18 @@ type App struct {
 	// Play rule 8): "" is idle, "run" a live loop (Run or Loop), "play" an
 	// active Play call. Guarded by mu.
 	mode string
+	// quitReq is the active Run's quit request channel (Quit), made by
+	// enterMode(modeRun) and cleared by exitMode; nil while no Run is
+	// active. Guarded by mu.
+	quitReq chan struct{}
+	// every holds the live Every registrations, in registration order
+	// (SPEC v0.4a §18.2), guarded by everyMu, not mu: stop is safe from
+	// anywhere, never waits on a held app lock, and the loop holds everyMu
+	// only briefly, never while fn runs. everyKick asks a running loop to
+	// arm its tick timer again.
+	everyMu   sync.Mutex
+	every     []*everyReg
+	everyKick chan struct{}
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity
@@ -168,10 +232,12 @@ func blankApp() *App {
 		store: map[string]any{}, handlers: map[string]Handler{},
 		lists: map[string]*listState{}, inputs: map[string]*inputState{},
 		scrolls: map[string][2]int{}, stickMax: map[string]int{}, wake: make(chan struct{}, 1),
+		everyKick:  make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
 		segGen:     map[string]uint64{}, tables: map[*ir.Node]*tableCache{},
 		checkedSets: map[*ir.Node]*checkedCache{},
 		tabMem:      map[string]string{}, tabPrev: map[string]string{},
+		listRows: map[*ir.Node]*listCache{}, decls: map[*ir.Node]*nodeDecls{},
 	}
 }
 
@@ -318,16 +384,24 @@ func (a *App) set(path string, v any, redraw bool) error {
 	if err != nil {
 		return err
 	}
-	a.mu.Lock()
-	err = a.applyLocked(path, jv)
-	a.mu.Unlock()
-	if err != nil {
+	if err := a.applyUnderLock(path, jv); err != nil {
 		return err
 	}
 	if redraw {
 		a.Wake()
 	}
 	return nil
+}
+
+// applyUnderLock is applyLocked under a.mu, released by a defer: a
+// Derive fn runs under the lock (recompute), and a panic in it, which is
+// not recovered (SPEC v0.4a §18.2), must still leave the lock released, so
+// that Run's deferred terminal restore and a host that recovers are not
+// blocked forever.
+func (a *App) applyUnderLock(path string, v any) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.applyLocked(path, v)
 }
 
 // applyLocked applies path=v (v already JSON-coerced) as Set does: the
@@ -360,12 +434,10 @@ func (a *App) applyLocked(path string, v any) error {
 				return fmt.Errorf("tuimark: the root value must be a JSON object, got %T", v)
 			}
 		}
-		root, err := assign(a.store, path, v)
-		if err != nil {
-			return err
-		}
-		a.store = root
-		a.wrote(path)
+		// storeWrite refuses a write that would break a derived value and
+		// recomputes the derived values after the write (SPEC v0.4a
+		// §18.2); inside a Batch (deriveHold) both wait for its end.
+		return a.storeWrite(path, v, a.deriveHold > 0)
 	}
 	return nil
 }
@@ -394,8 +466,10 @@ func (a *App) screenExists(id string) bool {
 // wrote records a write of path into the store ("" is the whole store):
 // every cached table whose rows read a path under the same top-level
 // member, or any path after a whole-store write, computes them again.
-// The caller holds a.mu.
+// It also counts the write for the frame skip (frameInputs), whatever its
+// path. The caller holds a.mu.
 func (a *App) wrote(path string) {
+	a.writes++
 	if path == "" {
 		a.storeGen++
 		return

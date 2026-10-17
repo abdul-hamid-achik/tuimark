@@ -134,9 +134,9 @@ func (fb *builder) buildHints(casc *css.Cascade, root *layout.Box) {
 			key := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintKey, Parent: row, Classes: []string{"hint-key"}, Text: it.keycap, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
 			label := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintLabel, Parent: row, Classes: []string{"hint-label"}, Text: it.label, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
 			row.Children = []*layout.Box{key, label}
-			row.Style = casc.Compute(row, &h.Style, nil, nil)
-			key.Style = casc.Compute(key, &row.Style, nil, nil)
-			label.Style = casc.Compute(label, &row.Style, nil, nil)
+			row.Style = newStyle(casc.Compute(row, h.Style, nil, nil))
+			key.Style = newStyle(casc.Compute(key, row.Style, nil, nil))
+			label.Style = newStyle(casc.Compute(label, row.Style, nil, nil))
 			h.Children = append(h.Children, row)
 		}
 	}

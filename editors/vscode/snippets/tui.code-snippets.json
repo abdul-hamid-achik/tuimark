@@ -1,0 +1,170 @@
+{
+  "Tuimark document": {
+    "prefix": ["tui", "tuimark", "doc"],
+    "description": "A version 3 document: stylesheet, keymap, and a screen",
+    "body": [
+      "<tui version=\"3\" theme=\"${1|dark,light,auto|}\">",
+      "  <style src=\"${2:theme.tcss}\"/>",
+      "  <keymap>",
+      "    <bind keys=\"q,ctrl+c\" action=\"quit\" label=\"quit\"/>",
+      "  </keymap>",
+      "  <screen id=\"${3:main}\">",
+      "    <col id=\"${4:app}\">",
+      "      $0",
+      "    </col>",
+      "  </screen>",
+      "</tui>"
+    ]
+  },
+  "Style include": {
+    "prefix": "style",
+    "description": "Load a stylesheet",
+    "body": "<style src=\"${1:theme.tcss}\"/>"
+  },
+  "Inline style": {
+    "prefix": "styleinline",
+    "description": "An inline stylesheet",
+    "body": ["<style>", "  ${1:#id} { ${2:gap}: ${3:1}; }", "</style>"]
+  },
+  "Keymap": {
+    "prefix": "keymap",
+    "description": "A keymap with one row",
+    "body": [
+      "<keymap>",
+      "  <bind keys=\"${1:q}\" action=\"${2:quit}\" label=\"${3:quit}\"/>",
+      "</keymap>"
+    ]
+  },
+  "Keymap row": {
+    "prefix": "bind",
+    "description": "A keymap row",
+    "body": "<bind keys=\"${1:enter}\" action=\"${2:open}\" when=\"#${3:list}:focus\" label=\"${4:open}\"/>"
+  },
+  "Keymap row (focus)": {
+    "prefix": "bindfocus",
+    "description": "A keymap row that moves focus to an id",
+    "body": "<bind keys=\"${1:/}\" action=\"focus\" to=\"#${2:query}\"/>"
+  },
+  "Screen": {
+    "prefix": "screen",
+    "description": "A screen",
+    "body": ["<screen id=\"${1:main}\" focus=\"#${2:query}\">", "  $0", "</screen>"]
+  },
+  "Column": {
+    "prefix": "col",
+    "description": "A vertical container",
+    "body": ["<col id=\"${1:name}\">", "  $0", "</col>"]
+  },
+  "Row": {
+    "prefix": "row",
+    "description": "A horizontal container",
+    "body": ["<row id=\"${1:name}\">", "  $0", "</row>"]
+  },
+  "Box": {
+    "prefix": "box",
+    "description": "A container with a title",
+    "body": ["<box title=\"${1:title}\">", "  $0", "</box>"]
+  },
+  "Text": {
+    "prefix": "text",
+    "description": "A text with a binding",
+    "body": "<text>${1:{path\\}}</text>"
+  },
+  "Input": {
+    "prefix": "input",
+    "description": "A text input bound to a path",
+    "body": "<input id=\"${1:query}\" bind=\"${2:query}\" placeholder=\"${3:search}\" on:submit=\"${4:search}\"/>"
+  },
+  "Button": {
+    "prefix": "button",
+    "description": "A button",
+    "body": "<button id=\"${1:ok}\" label=\"${2:OK}\" on:click=\"${3:confirm}\"/>"
+  },
+  "Progress": {
+    "prefix": "progress",
+    "description": "A progress bar bound to a path",
+    "body": "<progress bind=\"${1:pct}\"/>"
+  },
+  "List with each": {
+    "prefix": ["list", "listeach"],
+    "description": "A list over an array, with a key and a cursor",
+    "body": [
+      "<list id=\"${1:items}\" each=\"${2:items} as ${3:item}\" key=\"${3:item}.${4:id}\" bind=\"${5:selected}\" on:select=\"${6:open}\">",
+      "  <item>",
+      "    <text>{${3:item}.${7:title}}</text>",
+      "  </item>",
+      "</list>"
+    ]
+  },
+  "Table with columns": {
+    "prefix": ["table", "tablecols"],
+    "description": "A table over an array (version 2 or 3)",
+    "body": [
+      "<table id=\"${1:rows}\" each=\"${2:rows} as ${3:r}\" key=\"${3:r}.${4:id}\" bind=\"${5:cursor}\" placeholder=\"${6:no rows}\">",
+      "  <column id=\"c-${4:id}\" title=\"${7:ID}\" width=\"${8:6}\">{${3:r}.${4:id}}</column>",
+      "  <column id=\"c-${9:name}\" title=\"${10:Name}\" width=\"1fr\">{${3:r}.${9:name}}</column>",
+      "</table>"
+    ]
+  },
+  "Table column": {
+    "prefix": "column",
+    "description": "A table column (version 2 or 3)",
+    "body": "<column id=\"c-${1:name}\" title=\"${2:Name}\" width=\"${3:1fr}\">{${4:r}.${1:name}}</column>"
+  },
+  "Tabs": {
+    "prefix": "tabs",
+    "description": "A tab strip with two tabs (version 2 or 3)",
+    "body": [
+      "<tabs id=\"${1:nav}\" bind=\"${2:view}\" mark=\"▸\" focusable=\"true\">",
+      "  <tab id=\"${3:first}\" label=\"${4:1 first}\" short=\"${5:1 fst}\">",
+      "    $0",
+      "  </tab>",
+      "  <tab id=\"${6:second}\" label=\"${7:2 second}\" short=\"${8:2 snd}\">",
+      "  </tab>",
+      "</tabs>"
+    ]
+  },
+  "Tab": {
+    "prefix": "tab",
+    "description": "One tab of a tabs (version 2 or 3)",
+    "body": ["<tab id=\"${1:name}\" label=\"${2:1 name}\" short=\"${3:1 nm}\">", "  $0", "</tab>"]
+  },
+  "Modal": {
+    "prefix": "modal",
+    "description": "A modal opened by a bound path; it must be the last child of its screen",
+    "body": [
+      "<modal id=\"${1:confirm}\" open=\"${2:confirm_open}\" on:escape=\"${3:cancel}\">",
+      "  <text>${4:Are you sure?}</text>",
+      "  <row height=\"1\" gap=\"1\">",
+      "    <button id=\"${5:yes}\" label=\"Yes\" on:click=\"${6:confirm_yes}\"/>",
+      "    <button id=\"${7:no}\" label=\"No\" on:click=\"${3:cancel}\"/>",
+      "  </row>",
+      "</modal>"
+    ]
+  },
+  "Scroll": {
+    "prefix": "scroll",
+    "description": "A scrollable viewport",
+    "body": ["<scroll id=\"${1:log}\">", "  $0", "</scroll>"]
+  },
+  "Sparkline": {
+    "prefix": "sparkline",
+    "description": "A sparkline over a numeric array (version 2 or 3)",
+    "body": "<sparkline bind=\"${1:hist}\" min=\"${2:0}\" max=\"${3:100}\"/>"
+  },
+  "Hints": {
+    "prefix": "hints",
+    "description": "Key hints from the keymap rows that have a label (version 2 or 3)",
+    "body": "<hints scope=\"${1|active,all|}\"/>"
+  },
+  "Conditional": {
+    "prefix": "if",
+    "description": "A box shown while a path is truthy",
+    "body": ["<box if=\"${1:path}\">", "  $0", "</box>"]
+  },
+  "Class guard": {
+    "prefix": "classguard",
+    "description": "Add a class while a path is truthy (version 2 or 3)",
+    "body": "class:${1:name}=\"${2:path}\""
+  }
+}

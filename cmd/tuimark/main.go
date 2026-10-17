@@ -11,12 +11,17 @@
 //	                      [--format text|json] [--cells] [--styles] [--frames] [--strict]
 //	tuimark fmt      FILE [--write] [--check]
 //	tuimark ir       FILE
-//	tuimark agents   [--repo]
+//	tuimark agents   [--repo | --project]
+//	tuimark catalog
+//	tuimark new      NAME [--go | --ts]
 //	tuimark test     [DIR] [--update] [--allow-breaking]
 //	tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
 //	                      [--theme dark|light] [--strict] [--json]
+//	tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
+//	                      [--mock FILE.json] [--strip]
 //	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
 //	tuimark mcp                                — a Model Context Protocol server on stdin/stdout
+//	tuimark lsp                                — a Language Server Protocol server on stdin/stdout
 //
 // Exit codes: 0 ok, 1 I/O or crash, 2 validation errors.
 package main
@@ -32,12 +37,12 @@ import (
 // release this source tree is; release builds set all three at link time
 // (see .goreleaser.yaml):
 //
-//	go build -ldflags "-X main.version=0.3.2 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
+//	go build -ldflags "-X main.version=0.4.0 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
 //
 // A plain `go build` or `go install` leaves commit and date empty, and
 // `tuimark version` then prints the version alone.
 var (
-	version = "0.3.2"
+	version = "0.4.0"
 	commit  = ""
 	date    = ""
 )
@@ -72,15 +77,22 @@ usage:
                         [--format text|json] [--cells] [--styles] [--frames] [--strict]
   tuimark fmt      FILE [--write] [--check]
   tuimark ir       FILE                       print the source IR as JSON
-  tuimark agents   [--repo]                   print AGENTS.md generated from the catalog
+  tuimark agents   [--repo | --project]       print AGENTS.md generated from the catalog
+                                               (--project: the briefing tuimark new writes)
+  tuimark catalog                             print the closed vocabulary as JSON
+  tuimark new      NAME [--go | --ts]         create a project: app.tui, theme.tcss, sample.json, AGENTS.md
   tuimark test     [DIR] [--update] [--allow-breaking]
                                                check dump goldens under DIR (default testdata/golden)
   tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                         [--theme dark|light] [--strict] [--json]
                                                explain one node: path, classes, pseudo-classes, styles
+  tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
+                        [--mock FILE.json] [--strip]
+                                               run in the terminal: F12 shows the events, edits reload
   tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
                                                run in the terminal for a parent program (fd 3 in, fd 4 out)
   tuimark mcp                                 a Model Context Protocol server on stdin/stdout
+  tuimark lsp                                 a Language Server Protocol server on stdin/stdout
   tuimark version
 
 exit codes: 0 ok, 1 I/O or crash, 2 validation errors
@@ -123,10 +135,18 @@ func (c *cli) run(args []string) int {
 		return c.cmdTest(rest)
 	case "inspect":
 		return c.cmdInspect(rest)
+	case "run":
+		return c.cmdRun(rest)
 	case "host":
 		return c.cmdHost(rest)
 	case "mcp":
 		return c.cmdMCP(rest)
+	case "lsp":
+		return c.cmdLSP(rest)
+	case "catalog":
+		return c.cmdCatalog(rest)
+	case "new":
+		return c.cmdNew(rest)
 	case "version", "--version", "-v":
 		if len(rest) != 0 { // like agents and mcp: no arguments, a usage error
 			return c.fail(fmt.Errorf("tuimark version: takes no arguments"))

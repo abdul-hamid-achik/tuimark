@@ -102,7 +102,24 @@ tuimark validate app.tui --catalog actions.json   # unknown action names become 
 tuimark validate app.tui --json                   # diagnostics and the action catalog as JSON
 ```
 
-Bind checks need data: without `--data`, every path would read as missing, so they are skipped. `--catalog` takes a JSON array of action names, or `{"actions": [...]}`.
+Bind checks need data: without `--data`, every path would read as missing, so they are skipped, and the text output ends with `ok (bindings not checked: no --data)` instead of `ok`. With `--data` the line stays `ok`, and warnings are still printed before it. `--json` has the members `actions`, `data`, `diagnostics`, `file`, and `ok`, where `data` is the `--data` argument as given, or `null` without it. `--catalog` takes a JSON array of action names, or `{"actions": [...]}`.
+
+## catalog
+
+`tuimark catalog` prints the closed vocabulary as one JSON object: every tag with its attributes (and an enumerated attribute's keywords), every CSS property with its syntax and keywords, the pseudo-classes, the `@media` features, the key tokens, the built-in actions, and the diagnostic codes. On every item, `since` is the lowest document version that accepts it. It is generated from the runtime's own tables, takes no flags, and reads no environment variable, so an editor or an agent can read it instead of scraping `AGENTS.md`. `catalog` is the format version (1): adding members, items, or versions keeps it.
+
+```sh
+tuimark catalog | jq '.tags[] | select(.name == "list") | .attrs[] | select(.since > 1)'
+```
+
+## new
+
+`tuimark new NAME [--go | --ts]` creates a project in the directory `NAME`, which must not exist or must be empty. It writes `app.tui`, `theme.tcss`, `sample.json`, and `AGENTS.md` (the briefing `tuimark agents --project` prints); `--go` adds `main.go` and `go.mod`, and `--ts` adds `parent.ts` and `package.json`. No file is ever overwritten, and a usage error writes nothing. It prints the files and the command that runs the project, such as [`tuimark run`](/guide/run).
+
+```sh
+tuimark new todo
+cd todo && tuimark run app.tui --data sample.json
+```
 
 ## preview
 
@@ -116,9 +133,25 @@ Bind checks need data: without `--data`, every path would read as missing, so th
 
 `tuimark ir FILE` prints the parsed document as JSON: every node with its attributes, bindings, actions, and its own inline style, before any stylesheet is applied, plus the keymap and the resolved theme tokens. It is the document's structure as the runtime understands it. A schema for it ships in `schema/`.
 
+## Editor support (tuimark lsp)
+
+`tuimark lsp` is a [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) (3.17) server on stdin/stdout for `.tui` and `.tcss` files, so an editor shows what `validate` says as you type. It takes no arguments, uses only the standard library, and reads no environment variable. The VS Code extension starts it from `PATH`, and any editor with an LSP client can run `tuimark lsp` as a stdio server for the two file types. [Editors](/guide/editors) shows how to set it up in VS Code, Neovim, and Helix.
+
+What it offers:
+
+- **Diagnostics.** The checks `tuimark validate` runs, with the same messages, codes, and severities (error and warning), under both themes for a `theme="auto"` document. A diagnostic in a stylesheet shows on the stylesheet, not on the `.tui` that loads it: the server reads each `<style src>` as `Load` does (`..` included) and sends a diagnostic to the file it is in. It sends them after you open or change a file, at most once every 150 ms per file.
+- **Your unsaved text.** A document is checked as the editor has it, and so is a stylesheet it loads when that stylesheet is open too; one that is not open is read from disk.
+- **Bindings.** A `sample.json` next to the `.tui` is used as if you had passed `--data`, so `B001` to `B003` and `B008` to `B010` appear. Without one they are skipped, as `validate` skips them without `--data`, and the same goes for a `sample.json` that is not valid JSON.
+- **Completion.** In a `.tui`: tag names, the attributes of the tag, the keywords of an enumerated attribute, `#id` targets for `to`, `when`, and `focus`, action names (the built-in ones and the ones the document already uses), key tokens in `keys`, and the paths of `sample.json` in `{path}`, `each`, `bind`, and `if`. In a `.tcss`: property names and their keywords, `$tokens`, pseudo-classes, `@media` features, and the `#id`s and `.class`es of the documents that load it. Everything is filtered by the document's `version`; a stylesheet takes the newest version among the documents that load it.
+- **Hover.** The catalog entry of the tag, attribute, property, keyword, or diagnostic code under the cursor: its value syntax or keywords, and the version that introduced it.
+- **Go to definition.** An `#id` (in a selector, `to`, `when`, or `focus`) goes to its element, a `.class` to every element that has it, `<style src>` to its file, and a `$token` to where `:root` declares it.
+- **Formatting.** For a `.tui`, one edit with what `tuimark fmt` prints; none when the file is already formatted or is not well-formed XML. A `.tcss` has no formatter.
+
+A stylesheet is "loaded by" every open `.tui` that names it, and every `.tui` in its directory that does. Rename, code actions, semantic tokens, and workspace symbols are not offered. Positions are the protocol's: a 0-based line and a UTF-16 offset, converted from the 1-based line and code-point column `validate` prints. The server exits 0 on `exit` after `shutdown` (or when its input ends after one), and 1 otherwise.
+
 ## Environment variables
 
-Only a running app (`Run()`) and `preview` read the environment. The tools above never do.
+Only a running app (`Run()`, and the [`tuimark run`](/guide/run) and `tuimark host` sessions built on it) and `preview` read the environment. The tools above never do.
 
 | Variable | Values | Effect |
 |---|---|---|

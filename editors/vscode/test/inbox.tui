@@ -1,0 +1,101 @@
+<!-- SYNTAX TEST "text.tui" "the inbox fixture (examples/inbox/app.tui)"
+<tui version="1" theme="dark">
+<!-- ^^^^^^^ entity.other.attribute-name.tui
+<!--             ^^^^^ entity.other.attribute-name.tui
+<!--                    ^^^^ string.quoted.tui
+  <style src="theme.tcss"/>
+<!-- <~~~----- entity.name.tag.tui
+<!--     ^^^ entity.other.attribute-name.src.tui
+<!--          ^^^^^^^^^^ markup.underline.link.tui
+  <keymap>
+<!-- <~~~------ entity.name.tag.tui
+    <bind keys="q" action="quit"/>
+<!-- ^^^^ entity.name.tag.tui
+<!--      ^^^^ entity.other.attribute-name.keys.tui
+<!--            ^ constant.character.key.tui
+<!--               ^^^^^^ entity.other.attribute-name.tui
+<!--                       ^^^^ support.function.builtin.action.tui
+    <bind keys="enter" action="open" when="#inbox:focus"/>
+<!--            ^^^^^ constant.language.key.tui
+<!--                           ^^^^ entity.name.function.action.tui
+<!--                                 ^^^^ entity.other.attribute-name.selector.tui
+<!--                                        ^^^^^ entity.name.selector.id.tui
+<!--                                              ^^^^^ entity.other.attribute-name.pseudo-class.tui
+    <bind keys="/" action="focus" to="#query"/>
+<!--                       ^^^^^ support.function.builtin.action.tui
+<!--                                   ^^^^^ entity.name.selector.id.tui
+  </keymap>
+  <screen id="main" focus="#query">
+<!-- <~~~------ entity.name.tag.tui
+<!--          ^^^^ entity.name.selector.id.tui
+<!--                ^^^^^ entity.other.attribute-name.selector.tui
+<!--                        ^^^^^ entity.name.selector.id.tui
+    <col id="app">
+<!-- ^^^ entity.name.tag.tui
+      <row id="header" class="chrome">
+<!--                   ^^^^^ entity.other.attribute-name.class.tui
+<!--                          ^^^^^^ entity.other.class-name.tui
+        <text>mail  {folder}</text>
+<!--                ^ punctuation.section.interpolation.begin.tui
+<!--                 ^^^^^^ variable.other.path.tui
+<!--                       ^ punctuation.section.interpolation.end.tui
+<!--          ^^^^ - meta.interpolation.tui
+      </row>
+      <row id="body">
+        <col id="sidebar">
+          <input id="query" bind="query" placeholder="search" on:submit="search"/>
+<!--       ^^^^^ entity.name.tag.tui
+<!--                        ^^^^ entity.other.attribute-name.path.tui
+<!--                              ^^^^^ variable.other.path.tui
+<!--                                     ^^^^^^^^^^^ entity.other.attribute-name.template.tui
+<!--                                                  ^^^^^^ string.quoted.tui
+<!--                                                          ^^^ keyword.other.action-prefix.tui
+<!--                                                             ^^^^^^ entity.other.attribute-name.action.tui
+<!--                                                                     ^^^^^^ entity.name.function.action.tui
+          <list id="inbox" each="tickets as item" key="item.id" bind="selected" on:select="open">
+<!--                       ^^^^ entity.other.attribute-name.each.tui
+<!--                             ^^^^^^^ variable.other.path.tui
+<!--                                     ^^ keyword.control.each-as.tui
+<!--                                                   ^^^^ variable.other.path.tui
+<!--                                              ^^^ entity.other.attribute-name.path.tui
+<!--                                                                  ^^^^^^^^ variable.other.path.tui
+<!--                                                                               ^^^^^^ entity.other.attribute-name.action.tui
+<!--                                                                                       ^^^^ entity.name.function.action.tui
+            <item>
+              <row>
+                <text class="muted">{item.id}</text>
+<!--                                 ^^^^ variable.other.path.tui
+<!--                                     ^ punctuation.separator.path.tui
+<!--                                      ^^ variable.other.path.tui
+                <text>{item.title}</text>
+              </row>
+            </item>
+          </list>
+        </col>
+        <col id="detail">
+          <box if="selected_ticket">
+<!--           ^^ entity.other.attribute-name.flag.tui
+<!--               ^^^^^^^^^^^^^^^ variable.other.path.tui
+            <text class="title">{selected_ticket.title}</text>
+            <scroll>
+              <text wrap="wrap">{selected_ticket.body}</text>
+<!--                ^^^^ entity.other.attribute-name.tui
+            </scroll>
+          </box>
+          <box if="!selected_ticket">
+<!--               ^ keyword.operator.negation.tui
+<!--                ^^^^^^^^^^^^^^^ variable.other.path.tui
+            <text class="muted">no selection</text>
+          </box>
+        </col>
+      </row>
+      <row id="status" class="chrome">
+        <text>{status}</text>
+        <spacer/>
+<!--     ^^^^^^ entity.name.tag.tui
+<!--           ^^ punctuation.definition.tag.end.tui
+        <text>{count} tickets</text>
+      </row>
+    </col>
+  </screen>
+</tui>

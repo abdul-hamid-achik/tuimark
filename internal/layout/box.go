@@ -53,13 +53,77 @@ type Box struct {
 	Focused, Selected, Disabled bool
 	FocusWithin, Checked        bool
 
-	// Computed style (set by the host before Layout).
-	Style css.Style
+	// Computed style (set by the host before Layout). Boxes that look
+	// alike to every selector share one computed style (the host's style
+	// sharing), so a style is never written once a box holds it: a new
+	// style is a new value.
+	Style *css.Style
 	// Hints and Inline are the node's attribute/style="" declarations.
 	Hints, Inline []css.Decl
 
-	// Content (resolved by the host).
-	Text        string // text body, button label, or input value
+	// Content (resolved by the host; the members only some kinds of box
+	// use, from Placeholder on, are at the end).
+	Text string // text body, button label, or input value
+
+	// Chan is the mark channel of a row of a list with checked and mark
+	// (SPEC §6.14): the columns just inside the row's left border and
+	// padding, before its content box, reserved whether or not the row is
+	// checked. Mark (at the end) is painted in the first width(Mark) of
+	// them, on the first content row, when the row is Checked.
+	Chan int
+	// Fixed marks a box whose geometry its table sets (a column's header
+	// cell, a row, a body cell; SPEC §6.9.3): it ignores its own border,
+	// padding, margin, sizes, layout, and overflow, and a cell never wraps
+	// (wrap: wrap paints as truncate).
+	Fixed bool
+	// GroupLo and GroupHi are the shared range of a sparkline's scale
+	// group (see Scale, at the end), set by internal/host after layout.
+	GroupLo, GroupHi       float64
+	HasGroupLo, HasGroupHi bool
+
+	// Scroll state: offset in, clamped offset and content size out.
+	ScrollX, ScrollY int
+	Follow           int // list: index of the item to keep visible (-1 none)
+	ContentW         int
+	ContentH         int
+
+	Children []*Box
+
+	// Geometry (outputs).
+	X, Y, W, H int
+	Content    Rect // inside border and padding
+	Clip       Rect // visible area for this box's own painting
+	Laid       bool
+	Modal      bool
+	// Clipped is "text" or "children" when the layout engine reports L008
+	// or L009 for this node this frame (SPEC v0.3 §13.2, §14); "" when it
+	// does not. Only set for version="3" documents (Engine.V3).
+	Clipped string
+
+	autoW, autoH bool // size on this axis came from content (for L002)
+
+	// The engine's memo of this box (Engine.intrinsic, Engine.shrinkable),
+	// kept on the box instead of in maps keyed by it, valid only for the
+	// engine run whose generation memoGen holds: memo[axis] holds the
+	// intrinsic size for up to two avail values per axis (horizontal is
+	// axis 1; bit 2*axis+i of memoSet marks slot i in use) when both fit
+	// in 32 bits, the engine's map any others; shrink holds the
+	// shrinkable answer per axis (bit 0: known, bit 1: value; axis 1
+	// shifted by 2).
+	memoGen uint64
+	memo    [2][2]memoSlot
+	memoSet uint8
+	shrink  uint8
+	// ti holds what textInfo measured of Text.
+	ti textInfo
+
+	// The members below are read only for some kinds of box (inputs,
+	// tables, tabs, sparklines) and for a list row's key, and so come
+	// after the ones every frame reads and writes for every box: a list
+	// of 20 000 rows is a slab of 40 000 boxes walked several times per
+	// frame, and each walk then touches fewer cache lines of a box.
+
+	// The rest of the content.
 	Placeholder string
 	Secret      bool
 	Cursor      int     // input cursor (rune index)
@@ -68,14 +132,7 @@ type Box struct {
 	Title       string
 	Key         string // list item key, or the element key of a container each template child (dump; event payloads)
 	Index       int    // list item index, or element index of a container each template child
-
-	// Chan is the mark channel of a row of a list with checked and mark
-	// (SPEC §6.14): the columns just inside the row's left border and
-	// padding, before its content box, reserved whether or not the row is
-	// checked. Mark is painted in the first width(Mark) of them, on the
-	// first content row, when the row is Checked.
-	Chan int
-	Mark string
+	Mark        string // see Chan, and the tabs state below
 
 	// Table state (version="2", SPEC §6.9.3). The host sets, on a table
 	// box before Layout, Rows (n, the number of rows of its each array)
@@ -94,11 +151,6 @@ type Box struct {
 	// the same box read it, so a hidden column still counts in the first
 	// two and can come back in the third.
 	AllColumns []*Box
-	// Fixed marks a box whose geometry its table sets (a column's header
-	// cell, a row, a body cell; SPEC §6.9.3): it ignores its own border,
-	// padding, margin, sizes, layout, and overflow, and a cell never wraps
-	// (wrap: wrap paints as truncate).
-	Fixed bool
 
 	// Role names what the runtime generated a box for (SPEC §6.10.4,
 	// §6.12): a tab label (RoleTabLabel), a hint item row (RoleHintItem),
@@ -123,36 +175,36 @@ type Box struct {
 	Lo, Hi       float64
 	HasLo, HasHi bool
 	// Scale is the sparkline's scale="NAME" as written, "" when absent
-	// (version="3", SPEC v0.3b §6.11). GroupLo and GroupHi are the shared
-	// range of its scale group (the smallest/largest shown value among
-	// every laid-out sparkline of the frame with the same Scale), set by
-	// internal/host after layout, only when HasGroupLo/HasGroupHi: a
-	// member's own HasLo/HasHi (its own min=/max= literal) still wins over
-	// them at paint time.
-	Scale                  string
-	GroupLo, GroupHi       float64
-	HasGroupLo, HasGroupHi bool
+	// (version="3", SPEC v0.3b §6.11). GroupLo and GroupHi (above) are the
+	// shared range of its scale group (the smallest/largest shown value
+	// among every laid-out sparkline of the frame with the same Scale),
+	// set by internal/host after layout, only when HasGroupLo/HasGroupHi:
+	// a member's own HasLo/HasHi (its own min=/max= literal) still wins
+	// over them at paint time.
+	Scale string
+}
 
-	// Scroll state: offset in, clamped offset and content size out.
-	ScrollX, ScrollY int
-	Follow           int // list: index of the item to keep visible (-1 none)
-	ContentW         int
-	ContentH         int
+// ResetOutputs zeroes what laying out a frame and the steps after it
+// set on a box built from a template: its geometry (X, Y, W, H, Content,
+// Clip, Laid, Modal), Clipped, the auto marks, the scroll offsets and
+// content size, a sparkline's scale group, and the engine's memo (which
+// the next engine run would not read anyway). A box reused for the same
+// template and values is then as its template copy left it, except
+// Style, which the next cascade sets, and what it measured of its text,
+// which textInfo checks against Text.
+func (b *Box) ResetOutputs() {
+	b.X, b.Y, b.W, b.H = 0, 0, 0, 0
+	b.Content, b.Clip = Rect{}, Rect{}
+	b.Laid, b.Modal, b.autoW, b.autoH = false, false, false, false
+	b.Clipped = ""
+	b.ScrollX, b.ScrollY, b.ContentW, b.ContentH = 0, 0, 0, 0
+	b.GroupLo, b.GroupHi, b.HasGroupLo, b.HasGroupHi = 0, 0, false, false
+	b.memoGen, b.memoSet, b.shrink = 0, 0, 0
+}
 
-	Children []*Box
-
-	// Geometry (outputs).
-	X, Y, W, H int
-	Content    Rect // inside border and padding
-	Clip       Rect // visible area for this box's own painting
-	Laid       bool
-	Modal      bool
-	// Clipped is "text" or "children" when the layout engine reports L008
-	// or L009 for this node this frame (SPEC v0.3 §13.2, §14); "" when it
-	// does not. Only set for version="3" documents (Engine.V3).
-	Clipped string
-
-	autoW, autoH bool // size on this axis came from content (for L002)
+// memoSlot is one remembered intrinsic size: avail -> v.
+type memoSlot struct {
+	avail, v int32
 }
 
 // Outer returns the outer rectangle.
@@ -179,21 +231,32 @@ func (b *Box) HasClass(c string) bool {
 
 // HasPseudo reports pseudo-class state.
 func (b *Box) HasPseudo(p string) bool {
-	switch p {
-	case "focus":
-		return b.Focused
-	case "selected":
-		return b.Selected
-	case "disabled":
-		return b.Disabled
-	case "empty":
-		return len(b.Children) == 0 && b.Text == ""
-	case "focus-within":
-		return b.FocusWithin
-	case "checked":
-		return b.Checked
+	return b.PseudoBits()&css.PseudoBit(p) != 0
+}
+
+// PseudoBits returns every pseudo-class b matches, as a css.PseudoBits
+// mask: HasPseudo is one bit of it.
+func (b *Box) PseudoBits() uint8 {
+	var m uint8
+	if b.Focused {
+		m |= css.PseudoFocus
 	}
-	return false
+	if b.Selected {
+		m |= css.PseudoSelected
+	}
+	if b.Disabled {
+		m |= css.PseudoDisabled
+	}
+	if len(b.Children) == 0 && b.Text == "" {
+		m |= css.PseudoEmpty
+	}
+	if b.FocusWithin {
+		m |= css.PseudoFocusWithin
+	}
+	if b.Checked {
+		m |= css.PseudoChecked
+	}
+	return m
 }
 
 // ParentElement returns the parent for child-combinator matching.

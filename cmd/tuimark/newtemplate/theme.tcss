@@ -1,0 +1,42 @@
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --accent: cyan;
+  --ok: green;
+  --warn: yellow;
+  --danger: red;
+  --border: #30363d;
+  --focus: cyan;
+  --panel: #161b22;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #59636e;
+    --accent: #0550ae;
+    --ok: #1a7f37;
+    --warn: #9a6700;
+    --danger: #cf222e;
+    --border: #d1d9e0;
+    --focus: #0550ae;
+    --panel: #f6f8fa;
+  }
+}
+
+screen { layout: column; color: $fg; background: $bg; }
+#app { layout: column; width: 100%; height: 100%; }
+.chrome { height: 1; background: $panel; padding: 0 1; gap: 1; }
+.title { bold: true; color: $accent; }
+.muted { color: $muted; }
+#query { height: 1; padding: 0 1; }
+#query:focus { background: $panel; }
+#items { flex: 1; border: single; border-color: $border; }
+#items:focus { border-color: $focus; }
+.entry { gap: 1; }
+item:selected { bold: true; color: $accent; }
+hints { gap: 2; }
+.hint-key { bold: true; color: $accent; }
+.hint-label { color: $muted; }
