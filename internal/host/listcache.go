@@ -147,6 +147,7 @@ type listRows struct {
 	keyStr   []string
 	ids      []string
 	first    map[string]int
+	walked   bool // rowOf answered once without first
 	pre      ir.Diags
 	post     ir.Diags
 	protos   []protoBox
@@ -518,9 +519,31 @@ func (r *listRows) keyIDs() []string {
 	return r.ids
 }
 
-// rowOf returns the first row whose key equals v (keyEqual), or -1, from
-// an index built once per resolved rows (as tableData.rowOf).
+// rowOf returns the first row whose key equals v (keyEqual), or -1: the
+// first time by a walk of the keys (rows resolved again on every
+// keystroke are asked once), then from an index built once per resolved
+// rows (as tableData.rowOf).
 func (r *listRows) rowOf(v any) int {
+	if r.first == nil && !r.walked {
+		r.walked = true
+		if s, ok := v.(string); ok {
+			// keyID(k) == keyID(v) holds for exactly the string keys equal
+			// to s: typeName gives every other key another name.
+			for i, k := range r.keys {
+				if ks, ok := k.(string); ok && ks == s {
+					return i
+				}
+			}
+			return -1
+		}
+		id := keyID(v)
+		for i, kid := range r.keyIDs() {
+			if kid == id {
+				return i
+			}
+		}
+		return -1
+	}
 	if r.first == nil {
 		ids := r.keyIDs()
 		r.first = make(map[string]int, len(ids))
