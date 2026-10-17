@@ -135,7 +135,7 @@ cd todo && tuimark run app.tui --data sample.json
 
 ## Editor support (tuimark lsp)
 
-`tuimark lsp` is a [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) (3.17) server on stdin/stdout for `.tui` and `.tcss` files, so an editor shows what `validate` says as you type. It takes no arguments, uses only the standard library, and reads no environment variable. The VS Code extension starts it from `PATH`; any editor with an LSP client can run `tuimark lsp` as a stdio server for the two file types.
+`tuimark lsp` is a [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) (3.17) server on stdin/stdout for `.tui` and `.tcss` files, so an editor shows what `validate` says as you type. It takes no arguments, uses only the standard library, and reads no environment variable. The VS Code extension starts it from `PATH`, and any editor with an LSP client can run `tuimark lsp` as a stdio server for the two file types. [Editors](/guide/editors) shows how to set it up in VS Code, Neovim, and Helix.
 
 What it offers:
 

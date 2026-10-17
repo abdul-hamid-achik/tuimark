@@ -36,15 +36,7 @@ The command **Tuimark: Restart Language Server** restarts the server, for exampl
 
 ## What the language server does
 
-`tuimark lsp` runs the same checks as `tuimark validate`, with the same codes and the same messages, on the text in your editor, saved or not.
-
-- **Diagnostics.**
-  - A problem in a stylesheet is shown in the stylesheet, even when the document that loads it is the file you are editing.
-  - When the document's directory holds a `sample.json`, the data checks (`B001`–`B003`, `B008`–`B010`) run against it, as with `validate --data sample.json`. Without one, they are skipped, as with `validate` alone.
-- **Completion.** Tags, attributes, attribute values, `#id` targets, actions, key tokens, and paths from `sample.json`. In a `.tcss`, it completes properties, keywords, `$tokens`, pseudo-classes, and the ids and classes of the documents that load the stylesheet. It offers only what your document's `version` accepts.
-- **Hover.** The reference text of the tag, attribute, property, keyword, or diagnostic code under the cursor.
-- **Go to definition.** From an `#id` to its element, from a `.class` to every element that has it, from `<style src>` to the file, and from a `$token` to its declarations.
-- **Formatting.** It formats a `.tui` with `tuimark fmt`. A `.tcss` has no formatter.
+`tuimark lsp` runs the same checks as `tuimark validate` on the text in your editor, saved or not, with the same codes and messages. A problem in a stylesheet shows in the stylesheet. A `sample.json` next to the document is used as its data. On top of the diagnostics it gives completion, hover, go to definition, and formatting. [Editor support](/guide/tools#editor-support-tuimark-lsp) in the tools guide lists exactly what each one covers.
 
 ## Other editors
 
