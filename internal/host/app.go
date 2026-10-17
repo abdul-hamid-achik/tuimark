@@ -125,6 +125,10 @@ type App struct {
 	// Play rule 8): "" is idle, "run" a live loop (Run or Loop), "play" an
 	// active Play call. Guarded by mu.
 	mode string
+	// quitReq is the active Run's quit request channel (Quit), made by
+	// enterMode(modeRun) and cleared by exitMode; nil while no Run is
+	// active. Guarded by mu.
+	quitReq chan struct{}
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity

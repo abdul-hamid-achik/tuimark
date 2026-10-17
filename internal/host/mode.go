@@ -19,6 +19,11 @@ func (a *App) enterMode(mode string) error {
 		return fmt.Errorf("tuimark: %s cannot start while %s is active", verbFor(mode), verbFor(a.mode))
 	}
 	a.mode = mode
+	if mode == modeRun {
+		// A fresh quit request channel per Run (SPEC v0.4a §18.2 Quit): a
+		// Quit made while no Run is active is never seen by a later one.
+		a.quitReq = make(chan struct{}, 1)
+	}
 	return nil
 }
 
@@ -26,7 +31,30 @@ func (a *App) enterMode(mode string) error {
 func (a *App) exitMode() {
 	a.mu.Lock()
 	a.mode = ""
+	a.quitReq = nil
 	a.mu.Unlock()
+}
+
+// Quit asks the active Run (Loop, RunWith, RunHost) to end (SPEC v0.4a
+// §18.2). The request is taken at the loop's stop checks, as a
+// cancellation is: before each input of a read, between one event and the
+// next, and while the loop waits. From there it acts as a quit: the rest
+// of the round and of the read is not dispatched, no further frame is
+// drawn, and Run returns nil. A Quit made from a handler therefore takes
+// effect when that handler returns. It is safe from any goroutine, and it
+// does nothing while no Run is active (Play ignores it), so a later Run
+// does not see it.
+func (a *App) Quit() {
+	a.mu.Lock()
+	q := a.quitReq
+	a.mu.Unlock()
+	if q == nil {
+		return
+	}
+	select {
+	case q <- struct{}{}:
+	default:
+	}
 }
 
 func verbFor(mode string) string {
