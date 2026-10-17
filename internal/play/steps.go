@@ -8,6 +8,7 @@ package play
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -47,6 +48,10 @@ type Step struct {
 	X, Y  int    // KindClick, KindWheel: the 0-based cell
 	Dir   int    // KindWheel: -1 up, +1 down
 }
+
+// errNotKeyToken is ParseStep's error for a token that is neither a
+// prefixed step nor a valid key token.
+var errNotKeyToken = errors.New("not a valid key token")
 
 // checkSize is the 1-1000 range every size in the SPEC's tools shares
 // (--cols/--rows, resize:, Play's opts.Cols/opts.Rows).
@@ -119,7 +124,7 @@ func ParseStep(tok string) (Step, error) {
 		return st, nil
 	}
 	if !ir.ValidKey(tok) {
-		return Step{}, fmt.Errorf("not a valid key token")
+		return Step{}, errNotKeyToken
 	}
 	return Step{Kind: KindKey, Raw: tok, Key: KeyFromToken(tok)}, nil
 }
@@ -137,7 +142,15 @@ func ParseSteps(s string) ([]Step, error) {
 	for i, tok := range toks {
 		st, err := ParseStep(tok)
 		if err != nil {
-			return nil, fmt.Errorf("step %d (%s): %v", i+1, tok, err)
+			hint := ""
+			// "text:buy eggs": the split left "eggs" as a step of its own.
+			// When the token that fails as a key follows a text:/paste:
+			// step, say why (SPEC §15.4: --script carries embedded spaces).
+			if i > 0 && errors.Is(err, errNotKeyToken) &&
+				(strings.HasPrefix(toks[i-1], "text:") || strings.HasPrefix(toks[i-1], "paste:")) {
+				hint = "; --input splits steps at spaces, so text with a space needs --script FILE.ndjson"
+			}
+			return nil, fmt.Errorf("step %d (%s): %v%s", i+1, tok, err, hint)
 		}
 		steps = append(steps, st)
 	}

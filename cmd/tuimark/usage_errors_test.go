@@ -64,3 +64,18 @@ func TestUsageMentionsAgentsRepo(t *testing.T) {
 		t.Errorf("agents extra: exit %d, want 1", code)
 	}
 }
+
+// `play --input "text:buy eggs enter"` splits at the space; the error says
+// so (and keeps its usual prefix) when the bad token follows a text: step.
+func TestPlayInputTextWithSpaceHint(t *testing.T) {
+	code, out, errw := runCLI("play", mcpFixtureFile, "--input", "text:buy eggs enter")
+	want := "tuimark: play: step 2 (eggs): not a valid key token; --input splits steps at spaces, so text with a space needs --script FILE.ndjson\n"
+	if code != 1 || out != "" || errw != want {
+		t.Errorf("exit %d stdout %q stderr %q, want exit 1 and %q", code, out, errw, want)
+	}
+	// Without a text: step before it, the message is unchanged.
+	code, _, errw = runCLI("play", mcpFixtureFile, "--input", "down eggs")
+	if code != 1 || errw != "tuimark: play: step 2 (eggs): not a valid key token\n" {
+		t.Errorf("exit %d stderr %q", code, errw)
+	}
+}
