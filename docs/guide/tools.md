@@ -102,7 +102,24 @@ tuimark validate app.tui --catalog actions.json   # unknown action names become 
 tuimark validate app.tui --json                   # diagnostics and the action catalog as JSON
 ```
 
-Bind checks need data: without `--data`, every path would read as missing, so they are skipped. `--catalog` takes a JSON array of action names, or `{"actions": [...]}`.
+Bind checks need data: without `--data`, every path would read as missing, so they are skipped, and the text output ends with `ok (bindings not checked: no --data)` instead of `ok`. With `--data` the line stays `ok`, and warnings are still printed before it. `--json` has the members `actions`, `data`, `diagnostics`, `file`, and `ok`, where `data` is the `--data` argument as given, or `null` without it. `--catalog` takes a JSON array of action names, or `{"actions": [...]}`.
+
+## catalog
+
+`tuimark catalog` prints the closed vocabulary as one JSON object: every tag with its attributes (and an enumerated attribute's keywords), every CSS property with its syntax and keywords, the pseudo-classes, the `@media` features, the key tokens, the built-in actions, and the diagnostic codes. On every item, `since` is the lowest document version that accepts it. It is generated from the runtime's own tables, takes no flags, and reads no environment variable, so an editor or an agent can read it instead of scraping `AGENTS.md`. `catalog` is the format version (1): adding members, items, or versions keeps it.
+
+```sh
+tuimark catalog | jq '.tags[] | select(.name == "list") | .attrs[] | select(.since > 1)'
+```
+
+## new
+
+`tuimark new NAME [--go | --ts]` creates a project in the directory `NAME`, which must not exist or must be empty. It writes `app.tui`, `theme.tcss`, `sample.json`, and `AGENTS.md` (the briefing `tuimark agents --project` prints); `--go` adds `main.go` and `go.mod`, and `--ts` adds `parent.ts` and `package.json`. No file is ever overwritten, and a usage error writes nothing. It prints the files and the command that runs the project.
+
+```sh
+tuimark new todo
+cd todo && tuimark run app.tui --data sample.json
+```
 
 ## preview
 
