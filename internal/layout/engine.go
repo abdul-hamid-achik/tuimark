@@ -208,10 +208,10 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 		held = e.scrollLayout(b, childClip)
 	case len(b.Children) == 0:
 	default:
-		flow := inFlow(b.Children)
-		if len(flow) != len(b.Children) || b.IsGrid() {
+		if b.IsGrid() || !placesInOrder(b.Children) {
 			held = e.holdChecks()
 		}
+		flow := inFlow(b.Children)
 		area := e.dock(b, b.Content, childClip)
 		e.flex(b, flow, area, childClip)
 	}
@@ -220,9 +220,9 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 
 // holdChecks makes the boxes placed from now on wait for their checks
 // (placed), and reports true: their parent does not place its children
-// in their order (it places its docked children first, lays them out as
-// a grid, or is a table, a tabs, or a hints, which place theirs their own
-// way), so it checks its whole subtree, in order, once it is placed.
+// in their order (placesInOrder is false, it lays them out as a grid, or
+// it is a table, a tabs, or a hints, which place theirs their own way),
+// so it checks its whole subtree, in order, once it is placed.
 func (e *Engine) holdChecks() bool {
 	e.held++
 	return true
@@ -250,6 +250,29 @@ func (e *Engine) placed(b *Box, held bool) {
 	if e.held == 0 {
 		e.checkBox(b)
 	}
+}
+
+// placesInOrder reports whether a container that is not a grid places
+// children kids in their order: dock (carve) places the ones docked to
+// the top or the bottom, then the ones docked to the left or the right,
+// each in their order, and flex the ones in flow after them, so it does
+// when kids are those three groups, in that order (each may be empty).
+func placesInOrder(kids []*Box) bool {
+	group := 0
+	for _, c := range kids {
+		g := 1 // as carve: docked, not to the top or the bottom
+		switch c.Style.Dock {
+		case "":
+			g = 2
+		case "top", "bottom":
+			g = 0
+		}
+		if g < group {
+			return false
+		}
+		group = g
+	}
+	return true
 }
 
 // inFlow returns the children that are not docked, in order: kids itself
@@ -886,7 +909,8 @@ func (e *Engine) flexWith(b *Box, kids []*Box, area Rect, clip Rect, pre *alloca
 // as contentIntrinsic counts them, and scroll with it (SPEC §11.3 pass 1);
 // the in-flow children are laid out in what is left. It reports whether
 // it held the checks of b's subtree (holdChecks), before placing any
-// child: b has docked children, which it places first, or is a grid.
+// child: b does not place its children in their order (placesInOrder),
+// or is a grid.
 func (e *Engine) scrollLayout(b *Box, clip Rect) (held bool) {
 	area := b.Content
 	scrollX, scrollY := b.ScrollAxes()
@@ -902,7 +926,7 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) (held bool) {
 		}
 		kids = append(kids, c)
 	}
-	if len(kids) != len(b.Children) || b.IsGrid() {
+	if b.IsGrid() || !placesInOrder(b.Children) {
 		held = e.holdChecks()
 	}
 	contentW, contentH := area.W, area.H
