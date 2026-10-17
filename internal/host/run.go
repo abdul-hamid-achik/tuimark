@@ -14,6 +14,11 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/paint"
 )
 
+// ErrNoTerminal is Run's error when stdin is not a terminal (SPEC §26.1
+// step 2): nothing was touched. `tuimark run` tells it apart to point at
+// its own headless commands.
+var ErrNoTerminal = errors.New("tuimark: Run needs an interactive terminal on stdin (use Dump for headless output)")
+
 // signalGrace is how long Run lets the loop return on its own after a stop
 // signal (a handler may be running) before it ends the process with the
 // signal's default action. Tests shorten or lengthen it.
@@ -244,7 +249,7 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 	defer func() { lg.end(endReason(err, sess)) }()
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
-		return errors.New("tuimark: Run needs an interactive terminal on stdin (use Dump for headless output)"), false, false
+		return ErrNoTerminal, false, false
 	}
 	sizeFd := fd
 	outTTY := false

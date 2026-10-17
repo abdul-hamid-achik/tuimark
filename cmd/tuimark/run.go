@@ -531,6 +531,12 @@ func (r *runner) run(app *host.App, stdout, stderr io.Writer) int {
 	case "signal":
 		return 128 + signalNumber(res.Signal)
 	case "error":
+		if errors.Is(res.Err, host.ErrNoTerminal) {
+			// Run's own message names the Go API (Dump); the CLI user is
+			// pointed at the CLI's headless commands instead.
+			fmt.Fprintln(stderr, "tuimark: run: stdin is not a terminal; for output without a terminal use tuimark dump or tuimark play, or start run under a pseudo-terminal (glyph, script)")
+			return 1
+		}
 		fmt.Fprintf(stderr, "tuimark: run: %s\n", hostErrText(res.Err))
 		return 1
 	}
