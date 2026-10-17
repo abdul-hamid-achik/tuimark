@@ -202,8 +202,8 @@ func TestF12UnderRunIsNoKey(t *testing.T) {
 	}
 }
 
-// overlayDoc has a button on its last row: a click there goes to it.
-const overlayDoc = `<tui version="2" mouse="true">
+// stripDoc has a button on its last row: a click there goes to it.
+const stripDoc = `<tui version="2" mouse="true">
 <screen id="s">
   <text>TOPROW</text>
   <spacer/>
@@ -215,7 +215,7 @@ const overlayDoc = `<tui version="2" mouse="true">
 // it: the terminal gets it, but the frame, the dump, and the mouse hit
 // test never see it, so a click on the strip acts on the frame under it.
 func TestOverlayIsNotPartOfTheFrame(t *testing.T) {
-	a := doc(t, overlayDoc)
+	a := doc(t, stripDoc)
 	var mu sync.Mutex
 	strip := []string{}
 	hooks := HostHooks{Overlay: func(cols, rows int) (top, bottom []string) {
@@ -251,7 +251,7 @@ func TestOverlayIsNotPartOfTheFrame(t *testing.T) {
 }
 
 func TestOverlayPaintsPanelThenStrip(t *testing.T) {
-	a := doc(t, overlayDoc)
+	a := doc(t, stripDoc)
 	f := a.Frame(10, 2)
 	got := overlay(f.Grid, []string{"PANEL-LONG-LINE"}, []string{"STRIP", "S2"})
 	lines := got.Lines()
