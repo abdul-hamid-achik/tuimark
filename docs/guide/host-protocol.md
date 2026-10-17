@@ -137,6 +137,7 @@ for (const sig of ["SIGTERM", "SIGHUP"] as const) {
 await readMessages();
 const code = await proc.exited;
 closeSync(proc.stdio[3] as number); // FileSink.end() leaves the descriptor open
+closeSync(proc.stdio[4] as number); // and so does reading fd 4 to its end
 process.exit(code);
 ```
 
