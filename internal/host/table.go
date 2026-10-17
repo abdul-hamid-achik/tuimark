@@ -299,8 +299,17 @@ func (fb *builder) guardsOn(n *ir.Node, sc *scope) []bool {
 // value of each {path} in scope sc, formatted as text without control
 // characters; a missing path renders empty and reports B003.
 func (fb *builder) interpSegs(n *ir.Node, segs []ir.Segment, sc *scope) string {
-	if len(segs) == 1 && segs[0].Path == "" {
-		return segs[0].Lit
+	if len(segs) == 1 {
+		sg := segs[0]
+		if sg.Path == "" {
+			return sg.Lit
+		}
+		v, ok := sc.resolve(fb.a.store, sg.Path)
+		if !ok {
+			fb.missingBind(n, sg.Path)
+			return ""
+		}
+		return cleanText(Format(v))
 	}
 	var b strings.Builder
 	for _, sg := range segs {
@@ -313,10 +322,22 @@ func (fb *builder) interpSegs(n *ir.Node, segs []ir.Segment, sc *scope) string {
 			fb.missingBind(n, sg.Path)
 			continue
 		}
-		clean, _ := parse.StripControl(Format(v), true)
-		b.WriteString(clean)
+		b.WriteString(cleanText(Format(v)))
 	}
 	return b.String()
+}
+
+// cleanText is a value as a template shows it: without control
+// characters or ANSI sequences, newlines kept (parse.StripControl). Text
+// of printable ASCII and newlines only is already that, as it is.
+func cleanText(s string) string {
+	for i := 0; i < len(s); i++ {
+		if c := s[i]; (c < 0x20 && c != '\n') || c > 0x7e {
+			clean, _ := parse.StripControl(s, true)
+			return clean
+		}
+	}
+	return s
 }
 
 // guardClasses is the class list of a generated table node whose classes

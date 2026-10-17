@@ -210,7 +210,6 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box) (r *listRows, 
 	}
 	scopes := make([]scope, len(arr))
 	r.keys = make([]any, len(arr))
-	r.keyStr = make([]string, len(arr))
 	for i, el := range arr {
 		isc := &scopes[i]
 		*isc = scope{alias: p.each.Alias, value: el}
@@ -224,7 +223,16 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box) (r *listRows, 
 		}
 		isc.key = key
 		r.keys[i] = key
-		r.keyStr[i] = Format(key)
+	}
+	if old := c.rows; old != nil && identicalKeys(old.keys, r.keys) {
+		// The same keys as the rows these replace (only what the rows
+		// show changed): their texts and index still hold.
+		r.keyStr, r.ids, r.first = old.keyStr, old.keyIDs(), old.first
+	} else {
+		r.keyStr = make([]string, len(arr))
+		for i, k := range r.keys {
+			r.keyStr[i] = Format(k)
+		}
 	}
 	r.pre = sub.diags
 	sub.diags = nil
@@ -338,6 +346,37 @@ func (m *materializer) clone(parent *layout.Box) *layout.Box {
 		b.Children = ch
 	}
 	return b
+}
+
+// identicalKeys reports whether a and b hold the same keys, in order: equal
+// strings, numbers, booleans, or nulls (any other key counts as changed).
+func identicalKeys(a, b []any) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		switch x := a[i].(type) {
+		case string:
+			if y, ok := b[i].(string); !ok || x != y {
+				return false
+			}
+		case float64:
+			if y, ok := b[i].(float64); !ok || x != y {
+				return false
+			}
+		case bool:
+			if y, ok := b[i].(bool); !ok || x != y {
+				return false
+			}
+		case nil:
+			if b[i] != nil {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // keyIDs returns each row's keyID, built once per resolved rows.

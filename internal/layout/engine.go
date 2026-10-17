@@ -816,16 +816,22 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	if follow >= 0 && !row {
 		// The same allocation flex makes below, in the part of the content
 		// extent the docks leave (the same size as the area flex gets).
-		// Unless b lays out as a grid, where flex allocates nothing, flex
-		// takes it as it is instead of allocating again: its diagnostics
+		// When b stretches its children across (its align is stretch) and
+		// does not lay out as a grid (where flex allocates nothing), flex
+		// takes it as it is instead of allocating again. Its diagnostics
 		// and auto marks then come before the docked children are placed,
-		// which changes nothing (they concern b and its in-flow children,
+		// which changes nothing: they concern b and its in-flow children,
 		// the frame sorts diagnostics stably by position and code, and
-		// placing the docked children reads neither).
+		// placing the docked children reads neither. Under stretch the
+		// cross sizes mark no child auto, so every intrinsic size the
+		// allocation measures sees the marks a silent allocation would.
+		// Otherwise a cross size marks an auto-width child before its
+		// height is measured, which a percent width inside it reads, so
+		// this allocation stays silent and flex makes its own.
 		flowArea := e.carve(b, Rect{0, 0, contentW, contentH}, Rect{}, false)
-		grid := b.IsGrid()
-		sizes, cross, anyFr := e.allocate(b, kids, flowArea.H, flowArea.W, !grid)
-		if !grid {
+		reuse := !b.IsGrid() && isStretch(b.Style.Align)
+		sizes, cross, anyFr := e.allocate(b, kids, flowArea.H, flowArea.W, reuse)
+		if reuse {
 			pre = &allocation{sizes, cross, anyFr}
 		}
 		top := flowArea.Y

@@ -103,6 +103,24 @@ type builder struct {
 	// scopes holds the scope each tab was inflated in, for its content
 	// (step 3).
 	scopes map[*layout.Box]*scope
+	// boxes is what is left of the chunk newBox cuts boxes from, and
+	// chunk the size of the next one.
+	boxes []layout.Box
+	chunk int
+}
+
+// newBox returns a zeroed box for inflate, cut from a chunk the builder
+// allocates in bulk (growing from 16 to 1024 boxes), so a frame of many
+// boxes does not allocate once per box. A chunk lives as long as any of
+// its boxes, which all belong to the same pass of the same frame.
+func (fb *builder) newBox() *layout.Box {
+	if len(fb.boxes) == 0 {
+		fb.chunk = min(max(2*fb.chunk, 16), 1024)
+		fb.boxes = make([]layout.Box, fb.chunk)
+	}
+	b := &fb.boxes[0]
+	fb.boxes = fb.boxes[1:]
+	return b
 }
 
 // renderCtx is what one render keeps across its passes (SPEC §18 step 4
@@ -666,25 +684,11 @@ func (fb *builder) interp(n *ir.Node, s string, sc *scope) string {
 	if fb.a.doc.Spike || s == "" {
 		return s
 	}
-	segs, err := ir.ParseInterp(s)
-	if err != nil {
+	segs, ok := fb.a.segsOf(s)
+	if !ok {
 		return s
 	}
-	out := ""
-	for _, sg := range segs {
-		if sg.Path == "" {
-			out += sg.Lit
-			continue
-		}
-		v, ok := sc.resolve(fb.a.store, sg.Path)
-		if !ok {
-			fb.missingBind(n, sg.Path)
-			continue
-		}
-		clean, _ := parse.StripControl(Format(v), true)
-		out += clean
-	}
-	return out
+	return fb.interpSegs(n, segs, sc)
 }
 
 // focusableByDefault reports the kinds that take focus without
@@ -738,7 +742,8 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		}
 	}
 	classes, guardOn := fb.classes(n, sc)
-	b := &layout.Box{
+	b := fb.newBox()
+	*b = layout.Box{
 		Tag: n.Tag, Kind: n.Kind, ID: n.ID, Classes: classes, GuardOn: guardOn, Parent: parent, Src: n,
 		Hints: a.hintsOf(n), Inline: a.inlineOf(n), Follow: -1, Index: -1,
 		Axis: n.Attrs["axis"],
@@ -860,7 +865,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 			return b
 		}
 	}
-	for _, c := range n.Children {
+	for i, c := range n.Children {
 		cb := fb.inflate(c, b, sc, inItem)
 		if cb == nil {
 			continue
@@ -870,6 +875,10 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 			// child for selector matching: screen > modal matches.
 			fb.modals = append(fb.modals, cb)
 			continue
+		}
+		if b.Children == nil {
+			// Room for every child still to come, in one allocation.
+			b.Children = make([]*layout.Box, 0, len(n.Children)-i)
 		}
 		b.Children = append(b.Children, cb)
 	}

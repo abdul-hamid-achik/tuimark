@@ -92,15 +92,17 @@ type App struct {
 	// Frame left behind, and frameLast that frame (liveFrame). listRows
 	// keeps, per list node, its inflated rows while the store members
 	// they read are unchanged; decls keeps each node's declarations as
-	// the cascade takes them; docKinds which widgets the document holds.
-	// noCache turns every frame cache off: a cold app, which the
-	// equivalence tests compare a warm one against.
+	// the cascade takes them; docKinds which widgets the document holds;
+	// interps each template text parsed. noCache turns every frame cache
+	// off: a cold app, which the equivalence tests compare a warm one
+	// against.
 	writes    uint64
 	frameKey  string
 	frameLast *Frame
 	listRows  map[*ir.Node]*listCache
 	decls     map[*ir.Node]*nodeDecls
 	docKinds  docKinds
+	interps   map[string]interpEntry
 	noCache   bool
 
 	screen    int

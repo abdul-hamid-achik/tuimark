@@ -151,6 +151,30 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 	return string(b)
 }
 
+// interpEntry is a template parsed once (segsOf).
+type interpEntry struct {
+	segs []ir.Segment
+	ok   bool
+}
+
+// segsOf returns template s ({path} segments and literal text) parsed,
+// and whether it parsed: parsed once per template text, which is always
+// text of the document. The caller holds a.mu.
+func (a *App) segsOf(s string) ([]ir.Segment, bool) {
+	if e, ok := a.interps[s]; ok {
+		return e.segs, e.ok
+	}
+	segs, err := ir.ParseInterp(s)
+	e := interpEntry{segs, err == nil}
+	if !a.noCache {
+		if a.interps == nil {
+			a.interps = map[string]interpEntry{}
+		}
+		a.interps[s] = e
+	}
+	return e.segs, e.ok
+}
+
 // docKinds records which widgets a document holds anywhere (every screen
 // and modal): a frame of a document without them skips the steps that
 // only look for them (tab activation and the tab focus rule, the hints,

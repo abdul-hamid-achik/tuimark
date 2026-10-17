@@ -120,6 +120,23 @@ func BenchmarkBatchTick20k(b *testing.B) {
 	}
 }
 
+// BenchmarkListRowSet20k is not one of the cases: a Set of one row's name
+// under the list of case (a), and the settle that draws it. The list's
+// rows read that member of the store, so their cache is filled again on
+// every iteration: the cost of a frame that misses it (what a Derive
+// rewriting the list's array on every keystroke pays, case c).
+func BenchmarkListRowSet20k(b *testing.B) {
+	s := benchSession(b, benchList)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := s.App.Set("rows.5.name", fmt.Sprintf("renamed %d", i)); err != nil {
+			b.Fatal(err)
+		}
+		s.settle(i + 1)
+	}
+}
+
 // BenchmarkBatchOnly20k is the Batch of case (d) alone, without the
 // redraw: the cost of the atomic apply itself.
 func BenchmarkBatchOnly20k(b *testing.B) {
