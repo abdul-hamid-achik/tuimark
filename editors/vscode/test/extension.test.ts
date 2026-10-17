@@ -38,6 +38,14 @@ mock.module("vscode-languageclient/node", () => ({
       this.opts = opts;
       state.clients.push(this);
     }
+    running = false;
+    errors: unknown[][] = [];
+    isRunning() {
+      return this.running;
+    }
+    error(message: string, data?: unknown, show?: boolean | "force") {
+      this.errors.push([message, data, show]);
+    }
     async start() {
       if (state.failStart) throw new Error("spawn failed");
       if (state.closeOnStart) this.opts.errorHandler.closed();
@@ -94,6 +102,18 @@ describe("activate", () => {
     await ext.activate(ctx());
     expect(state.warnings).toHaveLength(1);
     expect(state.warnings[0]).toContain("did not start");
+    await ext.deactivate();
+  });
+
+  test("the library's own error toast is suppressed until the server runs", async () => {
+    state.path = fakeTuimark("exit 0");
+    await ext.activate(ctx());
+    const c = state.clients[0];
+    c.error("couldn't create connection to server", new Error("x"), "force");
+    expect(c.errors.at(-1)![2]).toBe(false);
+    c.running = true;
+    c.error("a request failed", undefined, true);
+    expect(c.errors.at(-1)![2]).toBe(true);
     await ext.deactivate();
   });
 

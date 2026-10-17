@@ -19,6 +19,16 @@ const OUTPUT_NAME = "Tuimark";
 const EARLY_EXIT_MS = 5000;
 const PROBE_TIMEOUT_MS = 5000;
 
+// vscode-languageclient shows its own error toast when a server cannot start
+// (start() reports "couldn't create connection to server" with 'force'). Until
+// the server is running, those errors go to the output channel only: the one
+// warning below says what the user needs to know.
+class TuimarkClient extends LanguageClient {
+  override error(message: string, data?: unknown, showNotification?: boolean | "force"): void {
+    super.error(message, data, this.isRunning() ? showNotification : false);
+  }
+}
+
 let client: LanguageClient | undefined;
 let output: vscode.OutputChannel | undefined;
 // One warning per activation; a restart (command or setting) re-arms it.
@@ -152,7 +162,7 @@ async function startClient(): Promise<void> {
     initializationFailedHandler: () => false,
   };
 
-  const next = new LanguageClient(CLIENT_ID, OUTPUT_NAME, serverOptions, clientOptions);
+  const next = new TuimarkClient(CLIENT_ID, OUTPUT_NAME, serverOptions, clientOptions);
   client = next;
   try {
     await next.start();

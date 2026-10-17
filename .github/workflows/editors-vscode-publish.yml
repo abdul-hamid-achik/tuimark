@@ -5,7 +5,8 @@ name: Publish VS Code extension
 # repository secrets: VSCE_PAT (a Marketplace personal access token for the
 # `abdul-hamid-achik` publisher, scope Marketplace > Manage) and OVSX_PAT (an
 # Open VSX access token for the same namespace). A missing secret skips that
-# store with a warning, so one account can be set up before the other.
+# store, still tries the other, and then fails the run, so a store that was not
+# published shows as pending instead of passing as done.
 
 on:
   push:
@@ -66,7 +67,8 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           if [ -z "$VSCE_PAT" ]; then
-            echo "::warning::VSCE_PAT is not set; skipping the Visual Studio Marketplace"
+            echo "::warning::VSCE_PAT is not set; the Visual Studio Marketplace is pending"
+            echo "Visual Studio Marketplace" >> "$RUNNER_TEMP/pending-stores"
             exit 0
           fi
           bunx @vscode/vsce publish --packagePath tuimark.vsix
@@ -76,7 +78,17 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           if [ -z "$OVSX_PAT" ]; then
-            echo "::warning::OVSX_PAT is not set; skipping Open VSX"
+            echo "::warning::OVSX_PAT is not set; Open VSX is pending"
+            echo "Open VSX" >> "$RUNNER_TEMP/pending-stores"
             exit 0
           fi
           bunx ovsx publish tuimark.vsix
+
+      # A store without its secret is pending, not published: the run goes red
+      # so it is not mistaken for a release.
+      - name: Fail if a store was left pending
+        run: |
+          if [ -s "$RUNNER_TEMP/pending-stores" ]; then
+            echo "::error::not published (secret missing): $(paste -sd, "$RUNNER_TEMP/pending-stores")"
+            exit 1
+          fi
