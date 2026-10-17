@@ -69,6 +69,10 @@ type listSlab struct {
 	reused   int
 }
 
+// NoReuseForBench turns listRows.reuse off. TEMPORARY: an A/B switch for
+// the CI benchmark job, removed before the branch is done.
+var NoReuseForBench bool
+
 // slabFor returns the slab of list cache c this builder's pass
 // materializes into, or nil for fresh memory: outside a live build
 // (pass 0), or when this pass already took it. The caller holds a.mu.
@@ -378,7 +382,7 @@ func (p *listPlan) flatten(dst []protoBox, b *layout.Box, kids *int) []protoBox 
 // or, when s's boxes were materialized from r last time, they are reused
 // (reuse), which leaves them as writing them whole would.
 func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
-	if s != nil && s.rows == r {
+	if s != nil && s.rows == r && !NoReuseForBench {
 		if items, ok := r.reuse(parent, s); ok {
 			s.reused++
 			checkReuse(r, parent, items)
