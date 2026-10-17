@@ -94,15 +94,18 @@ process.exit((await ui.exited).code);
 In another language, you speak the protocol yourself. This Bun excerpt does it by hand, so the transport is visible. It drives `examples/host-ts/view.tui`, a document with one action, `inc`, and answers it by writing the new count back to the store:
 
 ```ts
-import { createWriteStream } from "node:fs";
+import { closeSync } from "node:fs";
 
 const proc = Bun.spawn({
   cmd: ["tuimark", "host", "view.tui", "--data", "sample.json"],
   stdio: ["inherit", "inherit", "inherit", "pipe", "pipe"],
 });
 
-const toChild = createWriteStream("", { fd: proc.stdio[3] as number });
-const send = (msg: object) => toChild.write(`${JSON.stringify(msg)}\n`);
+const toChild = Bun.file(proc.stdio[3] as number).writer();
+const send = (msg: object) => {
+  toChild.write(`${JSON.stringify(msg)}\n`);
+  void toChild.flush();
+};
 
 let count = 0; // the parent owns the model; the view only shows it
 
@@ -127,21 +130,24 @@ async function readMessages() {
 }
 
 for (const sig of ["SIGTERM", "SIGHUP"] as const) {
-  process.on(sig, () => proc.kill(sig));
+  // after a grace, and only if the child is still running (see the rules below)
+  process.on(sig, () => setTimeout(() => proc.exitCode === null && proc.kill(sig), 1500));
 }
 
 await readMessages();
-process.exit(await proc.exited);
+const code = await proc.exited;
+closeSync(proc.stdio[3] as number); // FileSink.end() leaves the descriptor open
+process.exit(code);
 ```
 
-`fs.readSync`/`fs.createReadStream` fail on the raw socket-pair descriptors Bun hands back for fd 3/4 (`EAGAIN`); read fd 4 with `Bun.file(fd).stream()` and write fd 3 with `fs.createWriteStream("", { fd })`, whose `.end()` gives the child end of file on fd 3.
+`fs.readSync`/`fs.createReadStream` fail on the raw socket-pair descriptors Bun hands back for fd 3/4 (`EAGAIN`), and `fs.createWriteStream("", { fd })` breaks on a write of about 8 KB or more. Read fd 4 with `Bun.file(fd).stream()` and write fd 3 with `Bun.file(fd).writer()` (a `FileSink`, flushed after each message). Closing the descriptor with `closeSync` gives the child end of file on fd 3; `FileSink.end()` does not close it. Close fd 4 too once you have read it to the end, or each session leaks a descriptor.
 
 ## Rules for parents
 
 Follow these and a parent behaves correctly under every ending the protocol has:
 
 - **Never touch the terminal.** While the child runs, do not read stdin (`process.stdin` in Bun/Node reads keys the child is trying to read) and do not write stdout — the child owns fds 0 and 1 completely. A parent with its own full-screen UI unmounts it first and remounts it only after `exit`.
-- **Forward `SIGTERM` and `SIGHUP`** to the child, wait for its exit, and exit with its code. A parent that dies on the signal instead would orphan the child.
+- **Forward `SIGTERM` and `SIGHUP`** to the child, wait for its exit, and exit with its code. A parent that dies on the signal instead would orphan the child. Forward after a short grace (1.5 seconds), and only if the child is still running: a signal sent to the whole process group (closing the terminal window, systemd's `KillMode=control-group`) already reached the child, a second signal is fatal to it, and the child would die without writing `exit`. Forward at once if the same signal arrives again during the wait.
 - **End the child with `SIGTERM`, then `SIGKILL` after 2 seconds** if it has not exited — never `SIGKILL` first. `Run()`'s own signal handling restores the terminal within a 1-second grace period; killing it outright skips that and can leave the terminal in raw mode.
 - **Check `protocol` in `ready`**, and treat a child that exits without ever sending `exit` as an error — a well-behaved child always sends it last.
 

@@ -107,11 +107,15 @@ A rejection nobody awaits does not crash the process.
 
 | [Rule for parents](https://tuimark.vercel.app/guide/host-protocol) | Client |
 |---|---|
-| Pass fd 3 and fd 4 and read them as Bun needs. | `stdio: ["inherit", "inherit", "inherit", "pipe", "pipe"]`; fd 4 is read with `Bun.file(fd).stream()`, fd 3 is written with `fs.createWriteStream("", {fd})` and ended when the child is gone. |
-| Forward `SIGTERM` and `SIGHUP` to the child. | Listeners are installed from `spawnHost` until the child exits, and removed after. While they are installed the signals no longer end your process: wait for `exited`, or set `exitWithChild`, and exit with the child's code. |
+| Pass fd 3 and fd 4 and read them as Bun needs. | `stdio: ["inherit", "inherit", "inherit", "pipe", "pipe"]`; fd 4 is read with `Bun.file(fd).stream()`, fd 3 is written with `Bun.file(fd).writer()` (a `FileSink`: `fs.createWriteStream` breaks on writes of about 8 KB or more). Both descriptors are closed when the session ends, so the child sees end of file on fd 3 and nothing leaks. |
+| Forward `SIGTERM` and `SIGHUP` to the child. | Listeners are installed from `spawnHost` until the child exits, and removed after. While they are installed the signals no longer end your process: wait for `exited`, or set `exitWithChild`, and exit with the child's code. The forward goes out 1.5 seconds after the parent received the signal, and only if the child is still running then (below). |
 | Never read or write the terminal while the child runs. | The client never touches fds 0, 1, or 2. |
 | End the child with `SIGTERM`, then `SIGKILL` after at least 2 seconds. | `close()`. |
 | Check `protocol`; treat an exit without `exit` as `error`. | `exited` rejects in both cases. |
+
+### Signals to the parent
+
+A signal sent to the whole process group (closing the terminal window sends `SIGHUP` to the foreground group; systemd's `KillMode=control-group`; `kill -TERM -PGID`) reaches the child from the kernel and the parent at once. The child treats a second signal as fatal (the default action), so forwarding at once would kill it before it writes `exit`, and `exited` would reject with a `HostError`. The client therefore waits 1.5 seconds after it received `SIGTERM` or `SIGHUP`, and forwards only if the child is still running. The child's own grace is 1 second, so one that got the signal has exited by then and `exited` resolves with its `exit` message (`reason: "signal"`). A signal sent only to the parent's pid (`kill PID`, a test harness) is forwarded once the 1.5 seconds are over, and the child ends then. If the same signal reaches the parent again during the wait, it is forwarded at once: the user insists.
 
 ## Errors
 

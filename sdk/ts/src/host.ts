@@ -1,9 +1,10 @@
-import { createWriteStream, type WriteStream } from "node:fs";
+import { closeSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { constants as osConstants, tmpdir } from "node:os";
 import { join } from "node:path";
 import { HostError, ProtocolVersionError, RequestError } from "./errors.ts";
 import { readLines } from "./lines.ts";
+import { FdWriter } from "./sink.ts";
 import type {
   Ack,
   GetResult,
@@ -26,6 +27,24 @@ const KILL_AFTER_MS = 2000;
 
 /** How long the last of fd 4 may take to drain once the child has exited. */
 const DRAIN_GRACE_MS = 1000;
+
+/**
+ * How long a SIGTERM or SIGHUP the parent received waits before it is
+ * forwarded. A signal sent to the whole process group (a closing terminal
+ * window, systemd's `KillMode=control-group`) reaches the child from the
+ * kernel as well, and the child treats a second signal as fatal; its own
+ * grace is 1 second, so a child that got the signal has exited by now.
+ */
+const FORWARD_GRACE_MS = 1500;
+let forwardGraceMs = FORWARD_GRACE_MS;
+
+/**
+ * @internal A test hook (not exported from the package entry point): changes
+ * the forwarding delay for hosts created from now on; no argument restores it.
+ */
+export function setForwardGraceMs(ms?: number): void {
+  forwardGraceMs = ms ?? FORWARD_GRACE_MS;
+}
 
 type Subprocess = Bun.Subprocess<"inherit", "inherit", "inherit">;
 type Message = Record<string, unknown> & { type: string };
@@ -67,7 +86,9 @@ export class Host {
   readonly exited: Promise<HostExit>;
 
   readonly #proc: Subprocess;
-  readonly #out: WriteStream;
+  readonly #out: FdWriter;
+  readonly #stopReading = new AbortController();
+  readonly #forwardTimers = new Map<NodeJS.Signals, ReturnType<typeof setTimeout>>();
   readonly #handlers = new Map<string, HostHandler>();
   readonly #onError: SpawnHostOptions["onError"];
   readonly #onProtocolError: SpawnHostOptions["onProtocolError"];
@@ -109,12 +130,12 @@ export class Host {
 
     // Bun gives fd 3 and fd 4 as raw descriptor numbers, the ends of Unix
     // socket pairs (SPEC §19.1, "Parents by language"): write fd 3 with a
-    // write stream, read fd 4 with Bun.file().stream(). readSync,
-    // createReadStream, and net.Socket do not work on them.
-    this.#out = createWriteStream("", { fd: fd3 });
-    // A write after the child is gone fails with EPIPE; the exit is handled
-    // by the watcher below, so this stream's error is not.
-    this.#out.on("error", () => {});
+    // FileSink (Bun.file(fd).writer(), see FdWriter) and read fd 4 with
+    // Bun.file(fd).stream(); the client closes both when it is done with
+    // them. readSync, createReadStream, createWriteStream, and net.Socket do
+    // not work on them. A write after the child is gone fails with EPIPE; the
+    // exit is handled by the watcher below, so that error is dropped.
+    this.#out = new FdWriter(fd3);
 
     let resolveReady!: (ready: Ready) => void;
     let rejectReady!: (error: Error) => void;
@@ -142,20 +163,47 @@ export class Host {
     // SPEC §19.1, "Signals to the parent": forward SIGTERM and SIGHUP to the
     // child. Waiting for it and exiting with its code is the caller's choice
     // (`exitWithChild`, or `await host.exited`).
+    //
+    // The forward waits `forwardGraceMs` and only goes out if the child is
+    // still running then: a signal aimed at the whole process group has
+    // reached the child already, and a second one would kill it before it
+    // writes `exit`. A second signal of the same kind during the wait means the
+    // user insists; it is forwarded at once.
     for (const signal of ["SIGTERM", "SIGHUP"] as const) {
+      const forward = () => {
+        clearTimeout(this.#forwardTimers.get(signal));
+        this.#forwardTimers.delete(signal);
+        if (!this.#finished && proc.exitCode === null && proc.signalCode === null) proc.kill(signal);
+      };
       const listener = () => {
-        if (!this.#finished) proc.kill(signal);
+        if (this.#finished) return;
+        if (this.#forwardTimers.has(signal)) {
+          forward();
+          return;
+        }
+        this.#forwardTimers.set(signal, setTimeout(forward, forwardGraceMs));
       };
       process.on(signal, listener);
       this.#signalListeners.push([signal, listener]);
     }
 
     let transportError: unknown;
-    const readerDone = readLines(Bun.file(fd4).stream(), (line) => this.#onLine(line)).catch(
-      (error: unknown) => {
+    const readerDone = readLines(
+      Bun.file(fd4).stream(),
+      (line) => this.#onLine(line),
+      this.#stopReading.signal,
+    )
+      .catch((error: unknown) => {
         transportError = error;
-      },
-    );
+      })
+      .finally(() => {
+        // Reading never closes the descriptor; this does, once, when it settles.
+        try {
+          closeSync(fd4);
+        } catch {
+          // already closed
+        }
+      });
     void this.#watch(readerDone, () => transportError);
   }
 
@@ -423,9 +471,7 @@ export class Host {
       // The child would end the session on a line this long (SPEC §19.1).
       throw new RangeError("a line of 64 MiB or more would end the session; send less per message");
     }
-    if (this.#finished || this.#out.destroyed || this.#out.writableEnded) {
-      throw new HostError("the host has exited");
-    }
+    if (this.#finished || this.#out.ended) throw new HostError("the host has exited");
     this.#out.write(`${line}\n`);
   }
 
@@ -477,6 +523,10 @@ export class Host {
       }),
     ]);
     clearTimeout(timer);
+    // Still reading after the grace (something else holds the child's end of
+    // fd 4 open): stop, so that the descriptor can be closed.
+    this.#stopReading.abort();
+    await Promise.race([readerDone, new Promise<void>((resolve) => setTimeout(resolve, 250).unref())]);
     const code = exitCodeOf(this.#proc);
     this.#deliver(() => this.#finish(code, transportError()));
   }
@@ -484,12 +534,18 @@ export class Host {
   #finish(code: number, transportError: unknown): void {
     this.#finished = true;
     clearTimeout(this.#killTimer);
+    for (const timer of this.#forwardTimers.values()) clearTimeout(timer);
+    this.#forwardTimers.clear();
     for (const [signal, listener] of this.#signalListeners) process.off(signal, listener);
     this.#signalListeners.length = 0;
-    this.#out.end(); // gives the child end of file on fd 3, if it is still reading
+    // Gives the child end of file on fd 3, if it is still reading, and closes
+    // it. `exited` settles after that, so that a caller who awaits it sees no
+    // descriptor of this session left open.
+    const closed = this.#out.close();
     void this.#dropTemp();
 
     let error: Error | undefined;
+    let exit: HostExit | undefined;
     if (this.#ready === undefined) {
       error = new HostError(`tuimark host exited before it sent "ready" (code ${code})`, { code });
       this.#rejectReady(error);
@@ -497,7 +553,7 @@ export class Host {
       error = this.#failure;
       if (error instanceof HostError && error.code === undefined) error.code = code;
     } else if (this.#exitMessage) {
-      this.#resolveExit({ ...this.#exitMessage, code });
+      exit = { ...this.#exitMessage, code };
     } else {
       error = new HostError(
         `tuimark host exited without an "exit" message (code ${code})` +
@@ -511,7 +567,13 @@ export class Host {
       this.#pending.delete(id);
       pending.reject(pendingError);
     }
-    if (error) this.#rejectExit(error);
+    if (error) {
+      const rejectExit = this.#rejectExit;
+      void closed.then(() => rejectExit(error));
+    } else if (exit) {
+      const resolveExit = this.#resolveExit;
+      void closed.then(() => resolveExit(exit));
+    }
   }
 
   #exitWithChild(): void {

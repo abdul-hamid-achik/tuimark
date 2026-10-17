@@ -1,5 +1,5 @@
 // SPEC test 122, the parts that need a process of their own: forwarding of
-// SIGTERM and SIGHUP, and exitWithChild. test/parent-fixture.ts is a small
+// SIGTERM and SIGHUP (delayed, see FORWARD_GRACE_MS), and exitWithChild. test/parent-fixture.ts is a small
 // parent built on the package; the child is the fake of test/fake-child.ts.
 import { afterEach, describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
@@ -13,10 +13,10 @@ afterEach(() => {
   for (const p of running.splice(0)) p.kill("SIGKILL");
 });
 
-function runParent(scenario: object, mode: string) {
+function runParent(scenario: object, mode: string, extraEnv: Record<string, string> = {}) {
   const { env, log } = fakeEnv(scenario);
   const proc = Bun.spawn([process.execPath, fixture], {
-    env: { ...env, FAKE_BIN: fakeBin, FIXTURE_MODE: mode },
+    env: { ...env, FAKE_BIN: fakeBin, FIXTURE_MODE: mode, ...extraEnv },
     stdin: "ignore",
     stdout: "pipe",
     stderr: "pipe",
@@ -25,8 +25,11 @@ function runParent(scenario: object, mode: string) {
   return { proc, log };
 }
 
-/** Reads the parent's stdout up to and including the first line that is `want`. */
-async function waitForLine(proc: ReturnType<typeof runParent>["proc"], want: string): Promise<void> {
+/**
+ * Reads the parent's stdout up to and including the first line that is `want`.
+ * Resolves with a function that reads the rest of the output, to its end.
+ */
+async function waitForLine(proc: ReturnType<typeof runParent>["proc"], want: string): Promise<() => Promise<string>> {
   const reader = (proc.stdout as ReadableStream<Uint8Array>).getReader();
   const decoder = new TextDecoder();
   let seen = "";
@@ -35,20 +38,87 @@ async function waitForLine(proc: ReturnType<typeof runParent>["proc"], want: str
     if (done) throw new Error(`parent ended before printing ${JSON.stringify(want)}; got ${JSON.stringify(seen)}`);
     seen += decoder.decode(value, { stream: true });
   }
-  reader.releaseLock();
+  return async () => {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) return seen;
+      seen += decoder.decode(value, { stream: true });
+    }
+  };
 }
+
+/** The pid of the fake child, from its log. */
+async function childPid(log: string): Promise<number> {
+  for (let i = 0; i < 100; i++) {
+    const record = readLog(log).find((r) => "pid" in r);
+    if (record) return record.pid;
+    await Bun.sleep(20);
+  }
+  throw new Error("the fake child never logged its pid");
+}
+
+const signals = (log: string) => readLog(log).filter((r) => "signal" in r);
 
 describe("signal forwarding", () => {
   for (const [signal, code] of [
     ["SIGTERM", 143],
     ["SIGHUP", 129],
   ] as const) {
-    test(`${signal} to the parent reaches the child; the parent exits with the child's code`, async () => {
-      const { proc, log } = runParent({ hang: true }, "exitWithChild");
+    test(`${signal} to the parent only reaches the child, after the grace; the parent exits with the child's code`, async () => {
+      const { proc, log } = runParent({ hang: true }, "exitWithChild"); // the real 1500 ms
       await waitForLine(proc, "ready");
+      const t0 = performance.now();
       proc.kill(signal); // the parent's pid only, as a test harness does
       expect(await proc.exited).toBe(code);
-      expect(readLog(log)).toContainEqual({ signal });
+      expect(performance.now() - t0).toBeGreaterThanOrEqual(1400);
+      expect(signals(log)).toEqual([{ signal }]);
+    }, 15_000);
+  }
+
+  test("the forward waits: nothing reaches the child before the grace is over", async () => {
+    const { proc, log } = runParent({ hang: true }, "exitWithChild", { FIXTURE_GRACE: "800" });
+    await waitForLine(proc, "ready");
+    proc.kill("SIGTERM");
+    await Bun.sleep(300);
+    expect(signals(log)).toEqual([]);
+    expect(await proc.exited).toBe(143);
+    expect(signals(log)).toEqual([{ signal: "SIGTERM" }]);
+  }, 15_000);
+
+  test("a second signal of the same kind during the wait is forwarded at once", async () => {
+    const { proc, log } = runParent({ hang: true }, "exitWithChild", { FIXTURE_GRACE: "60000" });
+    await waitForLine(proc, "ready");
+    proc.kill("SIGTERM");
+    await Bun.sleep(150);
+    expect(signals(log)).toEqual([]);
+    proc.kill("SIGTERM");
+    expect(await proc.exited).toBe(143);
+    expect(signals(log)).toEqual([{ signal: "SIGTERM" }]);
+  }, 15_000);
+
+  for (const [signal, code] of [
+    ["SIGTERM", 143],
+    ["SIGHUP", 129],
+  ] as const) {
+    test(`${signal} to the whole process group ends with a clean exit message, not a second signal`, async () => {
+      // A group-wide signal reaches the child from the kernel and the parent from the
+      // same event; under Run() a second signal is fatal. Here the child takes 150 ms to
+      // end after its first, and kills itself on a second.
+      const { proc, log } = runParent(
+        { hang: true, signalExitDelayMs: 150, fatalSecondSignal: true },
+        "report",
+        { FIXTURE_GRACE: "600" },
+      );
+      const rest = await waitForLine(proc, "ready");
+      const pid = await childPid(log);
+      proc.kill(signal);
+      process.kill(pid, signal);
+      expect(await proc.exited).toBe(0);
+      const out = await rest();
+      expect(out).toContain(JSON.stringify({ reason: "signal", signal, code }));
+      expect(signals(log)).toEqual([{ signal }]);
+      await Bun.sleep(800); // longer than the grace: no stray forward comes after the exit
+      expect(signals(log)).toEqual([{ signal }]);
     }, 15_000);
   }
 });
