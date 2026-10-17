@@ -61,78 +61,23 @@ type Box struct {
 	// Hints and Inline are the node's attribute/style="" declarations.
 	Hints, Inline []css.Decl
 
-	// Content (resolved by the host).
-	Text        string // text body, button label, or input value
-	Placeholder string
-	Secret      bool
-	Cursor      int     // input cursor (rune index)
-	Value       float64 // progress 0-100
-	Axis        string  // rule/scroll axis
-	Title       string
-	Key         string // list item key, or the element key of a container each template child (dump; event payloads)
-	Index       int    // list item index, or element index of a container each template child
+	// Content (resolved by the host; the members only some kinds of box
+	// use, from Placeholder on, are at the end).
+	Text string // text body, button label, or input value
 
 	// Chan is the mark channel of a row of a list with checked and mark
 	// (SPEC §6.14): the columns just inside the row's left border and
 	// padding, before its content box, reserved whether or not the row is
-	// checked. Mark is painted in the first width(Mark) of them, on the
-	// first content row, when the row is Checked.
+	// checked. Mark (at the end) is painted in the first width(Mark) of
+	// them, on the first content row, when the row is Checked.
 	Chan int
-	Mark string
-
-	// Table state (version="2", SPEC §6.9.3). The host sets, on a table
-	// box before Layout, Rows (n, the number of rows of its each array)
-	// and MarkChan (c, the width of its mark channel: width(mark) + 1 with
-	// checked and mark, else 0), and on each of its column boxes Measure
-	// (the widest of the resolved title and the cell texts of every row).
-	// Layout sets Header (1 while the header row is shown, else 0) and
-	// View (V, the body viewport height) on the table.
-	Rows, MarkChan int
-	Header, View   int
-	Measure        int
-	// AllColumns is, on a version="3" table, its visible column boxes as
-	// they were before priority hid any (SPEC v0.3b §6.9.3), recorded by
-	// the table's first layout, which then narrows Children to the columns
-	// it keeps. The intrinsic width, the header row, and a later layout of
-	// the same box read it, so a hidden column still counts in the first
-	// two and can come back in the third.
-	AllColumns []*Box
 	// Fixed marks a box whose geometry its table sets (a column's header
 	// cell, a row, a body cell; SPEC §6.9.3): it ignores its own border,
 	// padding, margin, sizes, layout, and overflow, and a cell never wraps
 	// (wrap: wrap paints as truncate).
 	Fixed bool
-
-	// Role names what the runtime generated a box for (SPEC §6.10.4,
-	// §6.12): a tab label (RoleTabLabel), a hint item row (RoleHintItem),
-	// or one of its two texts (RoleHintKey, RoleHintLabel); "" for a node
-	// of the document and for a table's rows and cells. Generated boxes
-	// are Fixed: their geometry comes from their widget.
-	Role string
-	// Tabs state (version="2", SPEC §6.10). On a tabs box: TabList is its
-	// visible tabs in document order (the active one included; the others
-	// are not in Children), and TabActive is the active tab, or nil when
-	// no tab is visible; Mark is its mark. On a tab label: Full and Short
-	// are L(t) and S(t) (the label, and the short label or the label), and
-	// For is its tab. Layout sets the label's Text to its tier text.
-	TabList     []*Box
-	TabActive   *Box
-	Full, Short string
-	For         *Box
-	// Sparkline values (version="2", SPEC §6.11): Series holds the bound
-	// array, one value per element, NaN for a gap (null or not a number);
-	// Lo and Hi are min= and max= when HasLo and HasHi.
-	Series       []float64
-	Lo, Hi       float64
-	HasLo, HasHi bool
-	// Scale is the sparkline's scale="NAME" as written, "" when absent
-	// (version="3", SPEC v0.3b §6.11). GroupLo and GroupHi are the shared
-	// range of its scale group (the smallest/largest shown value among
-	// every laid-out sparkline of the frame with the same Scale), set by
-	// internal/host after layout, only when HasGroupLo/HasGroupHi: a
-	// member's own HasLo/HasHi (its own min=/max= literal) still wins over
-	// them at paint time.
-	Scale                  string
+	// GroupLo and GroupHi are the shared range of a sparkline's scale
+	// group (see Scale, at the end), set by internal/host after layout.
 	GroupLo, GroupHi       float64
 	HasGroupLo, HasGroupHi bool
 
@@ -171,6 +116,72 @@ type Box struct {
 	shrink  uint8
 	// ti holds what textInfo measured of Text.
 	ti textInfo
+
+	// The members below are read only for some kinds of box (inputs,
+	// tables, tabs, sparklines) and for a list row's key, and so come
+	// after the ones every frame reads and writes for every box: a list
+	// of 20 000 rows is a slab of 40 000 boxes walked several times per
+	// frame, and each walk then touches fewer cache lines of a box.
+
+	// The rest of the content.
+	Placeholder string
+	Secret      bool
+	Cursor      int     // input cursor (rune index)
+	Value       float64 // progress 0-100
+	Axis        string  // rule/scroll axis
+	Title       string
+	Key         string // list item key, or the element key of a container each template child (dump; event payloads)
+	Index       int    // list item index, or element index of a container each template child
+	Mark        string // see Chan, and the tabs state below
+
+	// Table state (version="2", SPEC §6.9.3). The host sets, on a table
+	// box before Layout, Rows (n, the number of rows of its each array)
+	// and MarkChan (c, the width of its mark channel: width(mark) + 1 with
+	// checked and mark, else 0), and on each of its column boxes Measure
+	// (the widest of the resolved title and the cell texts of every row).
+	// Layout sets Header (1 while the header row is shown, else 0) and
+	// View (V, the body viewport height) on the table.
+	Rows, MarkChan int
+	Header, View   int
+	Measure        int
+	// AllColumns is, on a version="3" table, its visible column boxes as
+	// they were before priority hid any (SPEC v0.3b §6.9.3), recorded by
+	// the table's first layout, which then narrows Children to the columns
+	// it keeps. The intrinsic width, the header row, and a later layout of
+	// the same box read it, so a hidden column still counts in the first
+	// two and can come back in the third.
+	AllColumns []*Box
+
+	// Role names what the runtime generated a box for (SPEC §6.10.4,
+	// §6.12): a tab label (RoleTabLabel), a hint item row (RoleHintItem),
+	// or one of its two texts (RoleHintKey, RoleHintLabel); "" for a node
+	// of the document and for a table's rows and cells. Generated boxes
+	// are Fixed: their geometry comes from their widget.
+	Role string
+	// Tabs state (version="2", SPEC §6.10). On a tabs box: TabList is its
+	// visible tabs in document order (the active one included; the others
+	// are not in Children), and TabActive is the active tab, or nil when
+	// no tab is visible; Mark is its mark. On a tab label: Full and Short
+	// are L(t) and S(t) (the label, and the short label or the label), and
+	// For is its tab. Layout sets the label's Text to its tier text.
+	TabList     []*Box
+	TabActive   *Box
+	Full, Short string
+	For         *Box
+	// Sparkline values (version="2", SPEC §6.11): Series holds the bound
+	// array, one value per element, NaN for a gap (null or not a number);
+	// Lo and Hi are min= and max= when HasLo and HasHi.
+	Series       []float64
+	Lo, Hi       float64
+	HasLo, HasHi bool
+	// Scale is the sparkline's scale="NAME" as written, "" when absent
+	// (version="3", SPEC v0.3b §6.11). GroupLo and GroupHi (above) are the
+	// shared range of its scale group (the smallest/largest shown value
+	// among every laid-out sparkline of the frame with the same Scale),
+	// set by internal/host after layout, only when HasGroupLo/HasGroupHi:
+	// a member's own HasLo/HasHi (its own min=/max= literal) still wins
+	// over them at paint time.
+	Scale string
 }
 
 // ResetOutputs zeroes what laying out a frame and the steps after it
