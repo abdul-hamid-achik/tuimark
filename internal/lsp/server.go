@@ -44,6 +44,9 @@ type Server struct {
 	debounce  time.Duration
 	afterFunc func(time.Duration, func()) timer
 	cat       catalog.Catalog
+	// analyze is the check a publish runs (analyze); a test replaces it
+	// with a slow one.
+	analyze func(sn *snapshot, path, text string) *analysis
 
 	// outMu serializes writes: a response from the read loop and a
 	// diagnostics notification from a debounce timer.
@@ -60,6 +63,15 @@ type Server struct {
 	published map[string]bool
 	lastDiags map[string][]lspDiagnostic
 	cache     map[string]cachedAnalysis
+	// uriLocks serialize the publishes of one URI: a publish takes its
+	// snapshot inside its URI's lock, so they run in the order of the
+	// state they read. lastGen is the generation of the snapshot a URI was
+	// last published from; reqGen is the generation current at the latest
+	// request to publish it (schedule), so a publish that finds a newer
+	// one asked for knows its result is stale and leaves it to that one.
+	uriLocks map[string]*sync.Mutex
+	lastGen  map[string]int
+	reqGen   map[string]int
 
 	// Protocol state, touched only by the read loop.
 	initialized bool
@@ -97,6 +109,10 @@ func newServer(opts Options) *Server {
 		published: map[string]bool{},
 		lastDiags: map[string][]lspDiagnostic{},
 		cache:     map[string]cachedAnalysis{},
+		analyze:   analyze,
+		uriLocks:  map[string]*sync.Mutex{},
+		lastGen:   map[string]int{},
+		reqGen:    map[string]int{},
 	}
 }
 
@@ -292,10 +308,23 @@ func (s *Server) notification(method string, params json.RawMessage) (int, bool)
 		if json.Unmarshal(params, &p) == nil {
 			s.didClose(p.TextDocument.URI)
 		}
-	case "textDocument/didSave", "workspace/didChangeWatchedFiles":
+	case "textDocument/didSave":
 		// A file on disk may have changed (a stylesheet nobody has open, a
 		// sample.json), which no buffer notification says.
-		s.touchAll()
+		s.touchAll(nil)
+	case "workspace/didChangeWatchedFiles":
+		var p struct {
+			Changes []struct {
+				URI string `json:"uri"`
+			} `json:"changes"`
+		}
+		var named []string
+		if json.Unmarshal(params, &p) == nil {
+			for _, c := range p.Changes {
+				named = append(named, c.URI)
+			}
+		}
+		s.touchAll(named)
 	}
 	return 0, false
 }
@@ -403,6 +432,7 @@ func (s *Server) didClose(uri string) {
 		return
 	}
 	delete(s.docs, uri)
+	delete(s.cache, d.path) // a closed .tui's analysis, with its decoded sample.json, is not needed again
 	s.gen++
 	s.mu.Unlock()
 	s.touch(d)
@@ -451,14 +481,29 @@ func (s *Server) touch(d *document) {
 }
 
 // touchAll is touch for every open .tui and .tcss, after a change on disk
-// no buffer reports.
-func (s *Server) touchAll() {
+// no buffer reports, and for the stylesheets the open .tui files load (one
+// nobody has open is only on disk: a save or a checkout changes it without
+// a notification of its own). named are the URIs a
+// workspace/didChangeWatchedFiles reports: each one that is open or was
+// published before is scheduled too.
+func (s *Server) touchAll(named []string) {
 	s.mu.Lock()
 	s.gen++
 	var uris []string
 	for _, d := range s.docs {
-		if d.kind != kindOther {
-			uris = append(uris, d.uri)
+		if d.kind == kindOther {
+			continue
+		}
+		uris = append(uris, d.uri)
+		if d.kind == kindTUI {
+			for _, p := range d.loads {
+				uris = append(uris, s.uriFor(p))
+			}
+		}
+	}
+	for _, u := range named {
+		if s.docs[u] != nil || s.published[u] {
+			uris = append(uris, u)
 		}
 	}
 	s.mu.Unlock()
@@ -485,6 +530,7 @@ func (s *Server) uriFor(path string) string {
 func (s *Server) schedule(uri string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.reqGen[uri] = s.gen
 	if _, ok := s.pending[uri]; ok {
 		return
 	}
@@ -523,18 +569,57 @@ func (s *Server) analysisOf(sn *snapshot, path, text string) *analysis {
 	if ok && c.gen == sn.gen && c.text == text {
 		return c.a
 	}
-	a := analyze(sn, path, text)
+	a := s.analyze(sn, path, text)
 	s.mu.Lock()
-	s.cache[path] = cachedAnalysis{gen: sn.gen, text: text, a: a}
+	// An entry of an older generation can never be hit again, so it goes;
+	// and a slow analysis does not overwrite a newer one.
+	for p, e := range s.cache {
+		if e.gen < sn.gen {
+			delete(s.cache, p)
+		}
+	}
+	if e, ok := s.cache[path]; !ok || e.gen <= sn.gen {
+		s.cache[path] = cachedAnalysis{gen: sn.gen, text: text, a: a}
+	}
 	s.mu.Unlock()
 	return a
+}
+
+// uriLock is the lock that serializes the publishes of uri.
+func (s *Server) uriLock(uri string) *sync.Mutex {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	m := s.uriLocks[uri]
+	if m == nil {
+		m = &sync.Mutex{}
+		s.uriLocks[uri] = m
+	}
+	return m
 }
 
 // publish sends the diagnostics of one URI (SPEC §15.12 "Diagnostics"): a
 // .tui's own, or a stylesheet's from every .tui that loads it. A closed
 // document, and a stylesheet no .tui loads any more, gets an empty list.
+//
+// The publishes of one URI run one at a time, each from a snapshot taken
+// once it holds the URI's lock, so a slow analysis cannot finish after a
+// newer one and replace its diagnostics with older ones. One that finds
+// a newer request for its URI (a change after its snapshot) sends nothing:
+// that request's publish is coming and says it all. One whose snapshot is
+// no newer than the URI's last publish has nothing to add and sends
+// nothing either, which is what keeps a .tui and its stylesheet opened
+// together from publishing the stylesheet twice.
 func (s *Server) publish(uri string) {
+	lock := s.uriLock(uri)
+	lock.Lock()
+	defer lock.Unlock()
 	sn := s.snapshot()
+	s.mu.Lock()
+	last, was := s.lastGen[uri]
+	s.mu.Unlock()
+	if was && sn.gen <= last {
+		return // nothing an analysis reads has changed since this URI was published
+	}
 	var diags []lspDiagnostic
 	var loaded *analysis // the .tui analyzed, whose stylesheets are noted after its publish
 	path, isFile := uriToPath(uri)
@@ -575,42 +660,43 @@ func (s *Server) publish(uri string) {
 		p["version"] = doc.version
 	}
 	s.mu.Lock()
+	if sn.gen < s.reqGen[uri] {
+		s.mu.Unlock()
+		return
+	}
 	s.published[uri] = true
 	s.lastDiags[uri] = diags
+	s.lastGen[uri] = sn.gen
 	s.mu.Unlock()
 	s.notify("textDocument/publishDiagnostics", p)
 	if loaded != nil {
-		s.noteLoads(doc, loaded)
+		s.noteLoads(doc, loaded, sn.gen)
 	}
 }
 
-// noteLoads records the stylesheets a .tui loads. One it did not load before
-// has diagnostics this document now contributes: published at once when
-// nothing has published it yet (a first publish is not a repeat), else
-// scheduled like any change.
-func (s *Server) noteLoads(doc *document, a *analysis) {
+// noteLoads records the stylesheets a .tui loads, whose analysis read the
+// state of generation gen. A stylesheet that has not been published since
+// has diagnostics this document now contributes (it may be a first
+// publish, or one it loses or gains by a changed <style src>), so it is
+// scheduled like any change: inside the debounce window, and a window
+// already open for it (a .tui and its stylesheet opened together) covers
+// it. One published from a generation at least as new has already read
+// this document, and is left alone.
+func (s *Server) noteLoads(doc *document, a *analysis, gen int) {
 	loads := a.loadPaths
 	s.mu.Lock()
-	var old []string
 	if d := s.docs[doc.uri]; d != nil {
-		old, d.loads = d.loads, loads
+		d.loads = loads
 	}
-	var fresh, changed []string
+	var due []string
 	for _, p := range loads {
 		u := s.uriFor(p)
-		switch {
-		case !s.published[u]:
-			s.published[u] = true
-			fresh = append(fresh, u)
-		case !contains(old, p):
-			changed = append(changed, u)
+		if !s.published[u] || s.lastGen[u] < gen {
+			due = append(due, u)
 		}
 	}
 	s.mu.Unlock()
-	for _, u := range fresh {
-		s.publish(u)
-	}
-	for _, u := range changed {
+	for _, u := range due {
 		s.schedule(u)
 	}
 }

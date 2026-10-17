@@ -288,7 +288,8 @@ func TestStylesheetChangeSchedulesTheDocumentsThatLoadIt(t *testing.T) {
 	dir := writeTree(t, map[string]string{"t.tcss": "screen { color: red; }\n"})
 	docURI := c.open(filepath.Join(dir, "a.tui"), "tuimark", `<tui version="1"><style src="t.tcss"/><screen id="s"><text>x</text></screen></tui>`+"\n")
 	c.call("textDocument/hover", map[string]any{"textDocument": map[string]any{"uri": docURI}, "position": Position{}})
-	fc.fire() // publishes the document; the stylesheet is noted and published at once
+	fc.fire() // publishes the document; the stylesheet it loads is scheduled
+	fc.fire() // and published in its own window
 	sheetURI := pathToURI(filepath.Join(dir, "t.tcss"))
 	c.nextPublish(docURI)
 	c.nextPublish(sheetURI)

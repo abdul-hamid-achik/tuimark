@@ -33,7 +33,17 @@ func (s *Server) definition(sn *snapshot, doc *document, pos Position) []locatio
 	return locs
 }
 
-func (s *Server) uriOfPath(sn *snapshot, path string) string {
+// uriOfPath is the URI of the file at path: self's own when it is self's
+// file (an untitled buffer has no path, and is only ever self), else the
+// URI of the open buffer for it, else a file: URI. A buffer with no path
+// is never matched by one.
+func (s *Server) uriOfPath(sn *snapshot, self *document, path string) string {
+	if self != nil && self.path == path {
+		return self.uri
+	}
+	if path == "" {
+		return ""
+	}
 	for _, d := range sn.byURI {
 		if d.path == path {
 			return d.uri
@@ -44,14 +54,14 @@ func (s *Server) uriOfPath(sn *snapshot, path string) string {
 
 // nodeLocation is the range of an element's start tag name in the file at
 // path, whose text is text.
-func (s *Server) nodeLocation(sn *snapshot, path, text string, n *ir.Node) location {
+func (s *Server) nodeLocation(sn *snapshot, self *document, path, text string, n *ir.Node) location {
 	lines := splitLines(text)
 	start := fromDiag(lines, n.Line, n.Col)
 	end := start
 	if n.Line >= 1 && n.Line <= len(lines) {
 		end.Character = tokenEnd(lines[start.Line], start.Character)
 	}
-	return location{URI: s.uriOfPath(sn, path), Range: Range{Start: start, End: end}}
+	return location{URI: s.uriOfPath(sn, self, path), Range: Range{Start: start, End: end}}
 }
 
 func (s *Server) definitionTUI(sn *snapshot, doc *document, off int) []location {
@@ -69,7 +79,7 @@ func (s *Server) definitionTUI(sn *snapshot, doc *document, off int) []location 
 		if _, ok := readText(sn, p); !ok {
 			return nil
 		}
-		return []location{{URI: s.uriOfPath(sn, p)}}
+		return []location{{URI: s.uriOfPath(sn, doc, p)}}
 	case ctx.attr == "to", ctx.attr == "focus", ctx.attr == "when":
 		word, _, _ := wordAt(doc.text, off)
 		i := strings.LastIndexByte(word, '#')
@@ -78,7 +88,7 @@ func (s *Server) definitionTUI(sn *snapshot, doc *document, off int) []location 
 		}
 		id, _, _ := strings.Cut(word[i+1:], ":")
 		if n := parseText(doc).IDs[id]; n != nil {
-			return []location{s.nodeLocation(sn, doc.path, doc.text, n)}
+			return []location{s.nodeLocation(sn, doc, doc.path, doc.text, n)}
 		}
 	}
 	return nil
@@ -115,12 +125,12 @@ func (s *Server) definitionTCSS(sn *snapshot, doc *document, off int) []location
 			switch sigil {
 			case '#':
 				if n := l.doc.IDs[name]; n != nil {
-					locs = append(locs, s.nodeLocation(sn, l.path, l.text, n))
+					locs = append(locs, s.nodeLocation(sn, doc, l.path, l.text, n))
 				}
 			case '.':
 				walkNodes(l.doc, func(n *ir.Node) {
 					if hasClass(n, name) {
-						locs = append(locs, s.nodeLocation(sn, l.path, l.text, n))
+						locs = append(locs, s.nodeLocation(sn, doc, l.path, l.text, n))
 					}
 				})
 			}
@@ -163,7 +173,7 @@ func (s *Server) tokenDeclarations(sn *snapshot, doc *document, loaders []parsed
 		for _, m := range re.FindAllStringIndex(text, -1) {
 			start := positionAt(text, m[0])
 			end := positionAt(text, m[0]+2+len(name))
-			locs = append(locs, location{URI: s.uriOfPath(sn, p), Range: Range{Start: start, End: end}})
+			locs = append(locs, location{URI: s.uriOfPath(sn, doc, p), Range: Range{Start: start, End: end}})
 		}
 	}
 	return locs

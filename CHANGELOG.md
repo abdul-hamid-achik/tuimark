@@ -53,6 +53,11 @@ every document keeps its meaning and its dumps.
     data.
   - Completion, hover, go to definition, and formatting with `tuimark
     fmt`.
+  - It reads only regular files, at most 64 MiB each (a `sample.json`,
+    a `.tui` or a `<style src>` that is a link to `/dev/zero` or
+    `/dev/stdin`, or a FIFO, counts as absent). Its diagnostics for one
+    document never arrive out of order, and a save or a watched file
+    refreshes those of a stylesheet nobody has open.
 - **VS Code extension** (`editors/vscode`): TextMate grammars that mark
   anything outside the closed vocabulary, snippets, and a client for
   `tuimark lsp`. Without the binary, highlighting and snippets still
