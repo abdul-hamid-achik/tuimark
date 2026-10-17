@@ -97,23 +97,27 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       # TEMPORARY: the same runner measures, interleaved, the commit before
-      # the Box member order (old), the member order (order), and the
-      # content height measured once (memo). Removed before the branch is
-      # done.
-      - name: A/B of the Box member order and the content height memo
+      # the Box member order (old), the content height memo after it
+      # (memo), and the row loop that leaves reused rows' keys (skip), then
+      # prints a CPU profile of case a at skip. Removed before the branch
+      # is done.
+      - name: A/B of the frame work, and a profile
         run: |
           git checkout -q 6c1ee7f130de46c5812c68dcfb81c84ca94d4199
           go test -c -o "$RUNNER_TEMP/old.test" ./internal/play
-          git checkout -q df89f4cef579811b866de020c849bbb9e994a2bc
-          go test -c -o "$RUNNER_TEMP/order.test" ./internal/play
           git checkout -q f268d927511814e0db6df45d8bc420e643c44d54
           go test -c -o "$RUNNER_TEMP/memo.test" ./internal/play
+          git checkout -q 757751928cb8ef1814604b7e6f74742feb0f41f0
+          go test -c -o "$RUNNER_TEMP/skip.test" ./internal/play
           for round in 1 2 3 4; do
-            for v in old order memo; do
+            for v in old memo skip; do
               echo "== $v"
               "$RUNNER_TEMP/$v.test" -test.run '^$' -test.bench 'ListDown20k$|BatchTick20k$|DeriveFilterText20k$' -test.benchmem | grep Benchmark
             done
           done
+          "$RUNNER_TEMP/skip.test" -test.run '^$' -test.bench 'ListDown20k$' -test.benchtime 400x -test.cpuprofile "$RUNNER_TEMP/down.pprof" | grep Benchmark
+          go tool pprof -top -nodecount=45 "$RUNNER_TEMP/skip.test" "$RUNNER_TEMP/down.pprof" | sed 's/^/PROF| /'
+          go tool pprof -top -cum -nodecount=70 "$RUNNER_TEMP/skip.test" "$RUNNER_TEMP/down.pprof" | sed 's/^/PROF| /'
 
   # GoReleaser ships Windows zips (.goreleaser.yaml), but no job runs on
   # Windows. Cross-compiling and vetting for it on Linux is cheap and
