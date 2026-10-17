@@ -1,0 +1,89 @@
+<!-- SYNTAX TEST "text.tui" "style bodies, unknown tags, invalid braces, entities, multi-line tags"
+<tui version="3" theme="auto" mouse="!plain">
+<!--                                 ^ keyword.operator.negation.tui
+<!--                                  ^^^^^ variable.other.path.tui
+<!-- <~--- entity.name.tag.tui
+  <style>
+<!-- <~~~----- meta.tag.style.tui entity.name.tag.tui
+    #title { bold: true; color: $accent; }
+<!-- ^^^^^ meta.embedded.block.tcss entity.name.selector.id.tcss
+<!--         ^^^^ support.type.property-name.tcss
+<!--                             ^^^^^^ variable.other.token.tcss
+    @media (max-cols: 80) { #title { gap: 1; } }
+<!--        ^^^^^^^^ support.type.property-name.media.tcss
+  </style>
+<!-- <~~~~----- entity.name.tag.tui
+  <style src="../theme.tcss"/>
+<!-- <~~~----- entity.name.tag.tui
+<!--          ^^^^^^^^^^^^^ markup.underline.link.tui
+<!--     ^^^ entity.other.attribute-name.src.tui
+  <keymap when="#main:focus-within">
+<!-- <~~~------ entity.name.tag.tui
+<!--             ^^^^ entity.name.selector.id.tui
+<!--                  ^^^^^^^^^^^^ entity.other.attribute-name.pseudo-class.tui
+    <bind keys="ctrl+a,pgup,space,-,j" action="check-all" to="#rows" keycap="^A" label="all"/>
+<!--            ^^^^ constant.language.key.modifier.tui
+<!--                          ^ constant.language.key.tui
+<!--                   ^^^^ constant.language.key.tui
+<!--                        ^^^^^ constant.language.key.tui
+<!--                              ^ constant.character.key.tui
+<!--                                           ^^^^^^^^^ support.function.builtin.action.tui
+<!--                                                                         ^^ string.quoted.tui
+    <bind keys="esc" action="switch-to" to="#overview"/>
+<!--                         ^^^^^^^^^ support.function.builtin.action.tui
+  </keymap>
+  <screen id="main" focus="#rows">
+      <blink id="x" shout="1">not in the catalog</blink>
+<!--   ^^^^^ invalid.illegal.unknown-tag.tui
+<!--   ^^^^^ invalid.illegal.unknown-tag.tui
+<!--                ^^^^^ entity.other.attribute-name.tui
+      <text id="title" class="a b" title="{user.name} ({count})" style="gap: 1; color: red">{ spaced } and {a + b} but {ok.path}</text>
+<!--                                       ^^^^ variable.other.path.tui
+<!--                                      ^^^^^^^^^^^ meta.interpolation.tui
+<!--                                                  ^ - meta.interpolation.tui
+<!--                          ^ entity.other.class-name.tui
+<!--                                                                    ^^^ meta.embedded.inline.tcss support.type.property-name.tcss
+<!--                                                                                   ^^^ support.constant.color.ansi.tcss
+<!--                                                                                        ^^^^^^^^^^ invalid.illegal.interpolation.tui
+<!--                                                                                                       ^^^^^^^ invalid.illegal.interpolation.tui
+<!--                                                                                                                   ^^^^^^^^^ meta.interpolation.tui
+<!--                                                                                                                    ^^ variable.other.path.tui
+      <text>1 &lt; 2 &amp; 3 &nbsp; 4</text>
+<!--          ^^^^ constant.character.entity.tui
+<!--                 ^^^^^ constant.character.entity.tui
+<!--                         ^^^^^^ invalid.illegal.bad-entity.tui
+      <text>a lone { brace</text>
+<!--               ^^^^^^^ - invalid.illegal.interpolation.tui
+      <text>a stray } closer</text>
+<!--                ^^^^^^^^ - invalid.illegal.interpolation.tui
+      <list id='rows' each='rows as r' key='r.id'>
+<!--   ^^^^ entity.name.tag.tui
+<!--            ^^^^ entity.name.selector.id.tui
+<!--                  ^^^^ entity.other.attribute-name.each.tui
+<!--                             ^^ keyword.control.each-as.tui
+<!--                                          ^^ variable.other.path.tui
+        <item class:hot='!r.cold' if="!r.hidden" hidden="true"/>
+<!--          ^^^^^^ keyword.other.class-guard-prefix.tui
+<!--                     ^ keyword.operator.negation.tui
+<!--                        ^^^^ variable.other.path.tui
+<!--                                     ^^^^^^ variable.other.path.tui
+<!--                                                     ^^^^ constant.language.boolean.tui
+      </list>
+      <box
+<!--   ^^^ entity.name.tag.tui
+        id="wrapped"
+<!--    ^^ entity.other.attribute-name.id.tui
+<!--        ^^^^^^^ entity.name.selector.id.tui
+        disabled="locked"
+<!--    ^^^^^^^^ entity.other.attribute-name.flag.tui
+<!--              ^^^^^^ variable.other.path.tui
+        on:click="poke"
+<!--       ^^^^^ entity.other.attribute-name.action.tui
+<!--              ^^^^ entity.name.function.action.tui
+        on:focus="focus"/>
+<!--              ^^^^^ support.function.builtin.action.tui
+<!--                    ^^ punctuation.definition.tag.end.tui
+      <![CDATA[ {raw} <tag> ]]>
+<!--            ^^^^^^^^^^^ string.unquoted.cdata.tui - meta.interpolation.tui
+  </screen>
+</tui>

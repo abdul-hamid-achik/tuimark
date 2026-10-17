@@ -95,6 +95,15 @@ tasks:
       - go build -o bin/tuimark ./cmd/tuimark
       - node docs/scripts/generate.mjs --check
 
+  vscode-test:
+    desc: Build, test (grammars, manifest, client), and package the VS Code extension in editors/vscode (needs bun; not part of verify).
+    dir: editors/vscode
+    cmds:
+      - bun install --frozen-lockfile
+      - bun run build
+      - bun run test
+      - bunx @vscode/vsce package
+
   verify:
     desc: fmt + vet + test + build + golden + glyph, in that order.
     cmds:

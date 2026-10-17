@@ -1,0 +1,34 @@
+<!-- SYNTAX TEST "text.tui" "the table fixture (SPEC 6.9.5, specs/fixtures/table.tui)"
+<tui version="2">
+<!-- ^^^^^^^ entity.other.attribute-name.tui
+  <style>
+<!-- <~~~----- entity.name.tag.tui
+    .num { content-align: end; }
+<!-- ^^^ entity.other.attribute-name.class.tcss
+<!--       ^^^^^^^^^^^^^ support.type.property-name.tcss
+<!--                      ^^^ support.constant.property-value.tcss
+  </style>
+<!-- <~~~~----- entity.name.tag.tui
+  <screen id="main" focus="#t">
+    <table id="t" each="rows as r" key="r.pid" bind="cur" gap="1">
+<!-- ^^^^^ entity.name.tag.tui
+<!--              ^^^^ entity.other.attribute-name.each.tui
+<!--                    ^^^^ variable.other.path.tui
+<!--                         ^^ keyword.control.each-as.tui
+<!--                                      ^^^ variable.other.path.tui
+<!--                                                 ^^^ variable.other.path.tui
+<!--                                                      ^^^ entity.other.attribute-name.tui
+      <column id="c-pid" class="num" title="PID" width="5">{r.pid}</column>
+<!--   ^^^^^^ entity.name.tag.tui
+<!--                                 ^^^^^ entity.other.attribute-name.template.tui
+<!--                                        ^^^ string.quoted.tui
+<!--                                                       ^ punctuation.section.interpolation.begin.tui
+<!--                                                          ^^^ variable.other.path.tui
+<!--                                                              ^^ punctuation.definition.tag.begin.tui
+<!--                                                                ^^^^^^ entity.name.tag.tui
+      <column id="c-name" title="Name" width="1fr">{r.name}</column>
+<!--                                          ^^^ string.quoted.tui
+      <column id="c-cpu" class="num" title="CPU%">{r.cpu}</column>
+    </table>
+  </screen>
+</tui>

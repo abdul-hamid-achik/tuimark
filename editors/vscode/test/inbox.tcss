@@ -1,0 +1,72 @@
+/* SYNTAX TEST "source.tcss" "the inbox theme (examples/inbox/theme.tcss)"
+:root {
+/* <- punctuation.definition.entity.pseudo.tcss
+  --bg: #0d1117;
+/* <~~---- variable.other.custom-property.tcss
+/*      ^^^^^^^ constant.other.color.rgb-value.tcss
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --accent: cyan;
+/*          ^^^^ support.constant.color.ansi.tcss
+  --ok: green;
+  --warn: yellow;
+  --danger: red;
+  --border: #30363d;
+  --focus: cyan;
+  --panel: #161b22;
+/* <~~------- variable.other.custom-property.tcss
+}
+
+screen { layout: column; color: $fg; background: $bg; }
+/* <------ entity.name.tag.tcss
+/*       ^^^^^^ support.type.property-name.tcss
+/*               ^^^^^^ support.constant.property-value.tcss
+/*                               ^^ variable.other.token.tcss
+/*                                   ^^^^^^^^^^ support.type.property-name.tcss
+#app { layout: column; width: 100%; height: 100%; }
+/*                            ^^^ constant.numeric.tcss
+/*                               ^ keyword.other.unit.tcss
+#header, #status { height: 1; background: $panel; }
+/* <~------ entity.name.selector.id.tcss
+/*     ^ punctuation.separator.list.tcss
+/*        ^^^^^^ entity.name.selector.id.tcss
+#body { flex: 1; layout: row; gap: 0; }
+/*                            ^^^ support.type.property-name.tcss
+#sidebar { width: 32; border: single; border-color: $border; }
+/*                    ^^^^^^ support.type.property-name.tcss
+/*                            ^^^^^^ support.constant.property-value.tcss
+/*                                    ^^^^^^^^^^^^ support.type.property-name.tcss
+#detail { flex: 1; border: single; border-color: $border; }
+#inbox { flex: 1; }
+#query { height: 1; }
+.title { bold: true; }
+/* <~----- entity.other.attribute-name.class.tcss
+/*             ^^^^ constant.language.boolean.tcss
+.muted { color: $muted; }
+/* <~----- entity.other.attribute-name.class.tcss
+list:focus { border-color: $focus; }
+/* <---- entity.name.tag.tcss
+/*   ^^^^^ entity.other.attribute-name.pseudo-class.tcss
+input:focus { border-color: $focus; }
+/* <----- entity.name.tag.tcss
+
+@media (max-cols: 80) {
+/* <- punctuation.definition.keyword.tcss
+/*      ^^^^^^^^ support.type.property-name.media.tcss
+/*                ^^ constant.numeric.integer.tcss
+  #body { layout: column; }
+  #sidebar { width: 100%; height: 8; }
+/* ^^^^^^^ entity.name.selector.id.tcss
+/*                                ^ constant.numeric.tcss
+  #detail { width: 100%; flex: 1; }
+/*                       ^^^^ support.type.property-name.tcss
+/*                 ^ constant.numeric.tcss
+}
+
+@media (max-cols: 40) {
+/*                ^^ constant.numeric.integer.tcss
+  #header { display: none; }
+/*          ^^^^^^^ support.type.property-name.tcss
+/*                   ^^^^ support.constant.property-value.tcss
+  #sidebar { height: 6; }
+}

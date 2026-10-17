@@ -1,0 +1,45 @@
+{
+  "Theme tokens": {
+    "prefix": ["root", "tokens"],
+    "description": "The :root block with the ten required theme tokens",
+    "body": [
+      ":root {",
+      "  --bg: ${1:#0d1117};",
+      "  --fg: ${2:#e6edf3};",
+      "  --muted: ${3:#8b949e};",
+      "  --accent: ${4:cyan};",
+      "  --ok: ${5:green};",
+      "  --warn: ${6:yellow};",
+      "  --danger: ${7:red};",
+      "  --border: ${8:#30363d};",
+      "  --focus: ${9:cyan};",
+      "  --panel: ${10:#161b22};",
+      "}"
+    ]
+  },
+  "Rule": {
+    "prefix": "rule",
+    "description": "A rule",
+    "body": ["${1:#id} {", "  $0", "}"]
+  },
+  "Media (columns)": {
+    "prefix": "media",
+    "description": "A breakpoint on the terminal width (documented: 40, 80, 120)",
+    "body": ["@media (${1|max-cols,min-cols,max-rows,min-rows|}: ${2:80}) {", "  $0", "}"]
+  },
+  "Media (theme)": {
+    "prefix": "mediatheme",
+    "description": "Per-theme rules or a :root palette (version 2 or 3 stylesheets)",
+    "body": ["@media (theme: ${1|light,dark|}) {", "  :root {", "    $0", "  }", "}"]
+  },
+  "Focus": {
+    "prefix": "focus",
+    "description": "A focus style",
+    "body": ["${1:button}:focus {", "  reverse: true;", "}"]
+  },
+  "Grid": {
+    "prefix": "grid",
+    "description": "An auto-fit grid container (version 2 or 3 stylesheets)",
+    "body": ["${1:#panels} {", "  layout: grid;", "  grid-columns: ${2:2};", "  grid-min-width: ${3:36};", "  gap: ${4:1};", "}"]
+  }
+}

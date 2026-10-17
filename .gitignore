@@ -20,6 +20,10 @@ node_modules/
 /docs/.vitepress/dist/
 .vercel
 
+# VS Code extension (editors/vscode): build output and packages
+/editors/vscode/out/
+*.vsix
+
 # Editor/OS cruft
 .DS_Store
 *.swp
