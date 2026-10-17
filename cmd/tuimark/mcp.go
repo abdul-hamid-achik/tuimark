@@ -113,8 +113,13 @@ func runMCPServer(in io.Reader, out io.Writer, errOut io.Writer) int {
 //     answer=false, whatever its method.
 //   - otherwise: dispatched by method, answer=true.
 func mcpHandleLine(line []byte) (resp rpcResp, answer bool) {
-	var probe any
-	if err := json.Unmarshal(line, &probe); err != nil {
+	// json.Valid checks syntax only. Decoding the line into an `any` would
+	// convert every number to a float64 and fail on a valid literal that
+	// float64 cannot hold (1e400, a 400-digit integer), reporting valid
+	// JSON as -32700; every number below stays raw text (RawMessage), so
+	// an "id" is echoed exactly as written and an integer argument keeps
+	// its digits (jsonIntText).
+	if !json.Valid(line) {
 		return rpcResp{JSONRPC: "2.0", ID: json.RawMessage("null"), Error: &rpcErrInfo{Code: -32700, Message: "parse error"}}, true
 	}
 	var members map[string]json.RawMessage
