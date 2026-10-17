@@ -130,7 +130,8 @@ async function readMessages() {
 }
 
 for (const sig of ["SIGTERM", "SIGHUP"] as const) {
-  process.on(sig, () => proc.kill(sig));
+  // after a grace, and only if the child is still running (see the rules below)
+  process.on(sig, () => setTimeout(() => proc.exitCode === null && proc.kill(sig), 1500));
 }
 
 await readMessages();
@@ -146,7 +147,7 @@ process.exit(code);
 Follow these and a parent behaves correctly under every ending the protocol has:
 
 - **Never touch the terminal.** While the child runs, do not read stdin (`process.stdin` in Bun/Node reads keys the child is trying to read) and do not write stdout — the child owns fds 0 and 1 completely. A parent with its own full-screen UI unmounts it first and remounts it only after `exit`.
-- **Forward `SIGTERM` and `SIGHUP`** to the child, wait for its exit, and exit with its code. A parent that dies on the signal instead would orphan the child.
+- **Forward `SIGTERM` and `SIGHUP`** to the child, wait for its exit, and exit with its code. A parent that dies on the signal instead would orphan the child. Forward after a short grace (1.5 seconds), and only if the child is still running: a signal sent to the whole process group (closing the terminal window, systemd's `KillMode=control-group`) already reached the child, a second signal is fatal to it, and the child would die without writing `exit`. Forward at once if the same signal arrives again during the wait.
 - **End the child with `SIGTERM`, then `SIGKILL` after 2 seconds** if it has not exited — never `SIGKILL` first. `Run()`'s own signal handling restores the terminal within a 1-second grace period; killing it outright skips that and can leave the terminal in raw mode.
 - **Check `protocol` in `ready`**, and treat a child that exits without ever sending `exit` as an error — a well-behaved child always sends it last.
 

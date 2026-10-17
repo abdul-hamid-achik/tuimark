@@ -16,6 +16,9 @@
 //   dieOn            exit(7) with no `exit` message on the first message of this type
 //   store            initial values for `get`
 //   noise            written right after `ready`: a string raw, anything else as JSON
+//   signalExitDelayMs  after the first signal, end this many ms later, not at once
+//   fatalSecondSignal  a second signal kills the child with no `exit` message, as
+//                    the default action does under Run() (SPEC §19.1)
 import { appendFileSync, readFileSync, writeSync } from "node:fs";
 
 interface Scenario {
@@ -31,6 +34,8 @@ interface Scenario {
   dieOn?: string;
   store?: Record<string, unknown>;
   noise?: unknown[];
+  signalExitDelayMs?: number;
+  fatalSecondSignal?: boolean;
 }
 
 const scenario = JSON.parse(process.env.FAKE_SCENARIO ?? "{}") as Scenario;
@@ -102,6 +107,7 @@ function advance(): void {
   else if (!scenario.hang) end(scenario.reason ?? "quit");
 }
 
+let signals = 0;
 for (const [signal, code] of [
   ["SIGTERM", 143],
   ["SIGHUP", 129],
@@ -109,7 +115,17 @@ for (const [signal, code] of [
 ] as const) {
   process.on(signal, () => {
     log({ signal });
+    signals++;
+    if (scenario.fatalSecondSignal && signals > 1) {
+      process.removeAllListeners(signal);
+      process.kill(process.pid, signal); // the default action: dead, with nothing written
+      return;
+    }
     if (signal === "SIGTERM" && scenario.ignoreTerm) return;
+    if (scenario.signalExitDelayMs) {
+      if (signals === 1) setTimeout(() => end("signal", { signal }, code), scenario.signalExitDelayMs);
+      return;
+    }
     end("signal", { signal }, code);
   });
 }

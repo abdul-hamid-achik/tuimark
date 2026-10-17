@@ -28,6 +28,24 @@ const KILL_AFTER_MS = 2000;
 /** How long the last of fd 4 may take to drain once the child has exited. */
 const DRAIN_GRACE_MS = 1000;
 
+/**
+ * How long a SIGTERM or SIGHUP the parent received waits before it is
+ * forwarded. A signal sent to the whole process group (a closing terminal
+ * window, systemd's `KillMode=control-group`) reaches the child from the
+ * kernel as well, and the child treats a second signal as fatal; its own
+ * grace is 1 second, so a child that got the signal has exited by now.
+ */
+const FORWARD_GRACE_MS = 1500;
+let forwardGraceMs = FORWARD_GRACE_MS;
+
+/**
+ * @internal A test hook (not exported from the package entry point): changes
+ * the forwarding delay for hosts created from now on; no argument restores it.
+ */
+export function setForwardGraceMs(ms?: number): void {
+  forwardGraceMs = ms ?? FORWARD_GRACE_MS;
+}
+
 type Subprocess = Bun.Subprocess<"inherit", "inherit", "inherit">;
 type Message = Record<string, unknown> & { type: string };
 
@@ -70,6 +88,7 @@ export class Host {
   readonly #proc: Subprocess;
   readonly #out: FdWriter;
   readonly #stopReading = new AbortController();
+  readonly #forwardTimers = new Map<NodeJS.Signals, ReturnType<typeof setTimeout>>();
   readonly #handlers = new Map<string, HostHandler>();
   readonly #onError: SpawnHostOptions["onError"];
   readonly #onProtocolError: SpawnHostOptions["onProtocolError"];
@@ -144,9 +163,25 @@ export class Host {
     // SPEC §19.1, "Signals to the parent": forward SIGTERM and SIGHUP to the
     // child. Waiting for it and exiting with its code is the caller's choice
     // (`exitWithChild`, or `await host.exited`).
+    //
+    // The forward waits `forwardGraceMs` and only goes out if the child is
+    // still running then: a signal aimed at the whole process group has
+    // reached the child already, and a second one would kill it before it
+    // writes `exit`. A second signal of the same kind during the wait means the
+    // user insists; it is forwarded at once.
     for (const signal of ["SIGTERM", "SIGHUP"] as const) {
+      const forward = () => {
+        clearTimeout(this.#forwardTimers.get(signal));
+        this.#forwardTimers.delete(signal);
+        if (!this.#finished && proc.exitCode === null && proc.signalCode === null) proc.kill(signal);
+      };
       const listener = () => {
-        if (!this.#finished) proc.kill(signal);
+        if (this.#finished) return;
+        if (this.#forwardTimers.has(signal)) {
+          forward();
+          return;
+        }
+        this.#forwardTimers.set(signal, setTimeout(forward, forwardGraceMs));
       };
       process.on(signal, listener);
       this.#signalListeners.push([signal, listener]);
@@ -499,6 +534,8 @@ export class Host {
   #finish(code: number, transportError: unknown): void {
     this.#finished = true;
     clearTimeout(this.#killTimer);
+    for (const timer of this.#forwardTimers.values()) clearTimeout(timer);
+    this.#forwardTimers.clear();
     for (const [signal, listener] of this.#signalListeners) process.off(signal, listener);
     this.#signalListeners.length = 0;
     // Gives the child end of file on fd 3, if it is still reading, and closes

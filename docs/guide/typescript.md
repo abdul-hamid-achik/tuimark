@@ -110,7 +110,7 @@ An event is `{seq, action, source, keys, value}`:
 
 The client follows every [rule for parents](/guide/host-protocol#rules-for-parents):
 
-- It forwards `SIGTERM` and `SIGHUP` to the child from `spawnHost` until the child exits.
+- It forwards `SIGTERM` and `SIGHUP` to the child from `spawnHost` until the child exits, 1.5 seconds after the parent received the signal and only if the child is still running then. A signal sent to the whole process group (closing the terminal window, systemd's `KillMode=control-group`) reaches the child from the kernel too, and a second signal would kill it before it writes `exit`; the child's own grace is 1 second, so a child that got the signal has gone by then, and `exited` resolves with its `exit` message. A signal sent only to the parent (`kill PID`, a test harness) is forwarded after the 1.5 seconds. If the same signal reaches the parent again during the wait, it is forwarded at once.
 - It ends the child with `SIGTERM` first, and with `SIGKILL` only after 2 seconds.
 - It never touches the terminal.
 
