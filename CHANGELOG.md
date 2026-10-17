@@ -95,12 +95,14 @@ every document keeps its meaning and its dumps.
 ### Changed
 
 - **Faster frames for big lists.** Moving the cursor in a 20 000-row
-  list now takes about 10 ms per key instead of about 120 ms (Apple M5).
-  A one-path `Batch` over a 20 000-row store takes about 12 ms instead of
-  64 ms. Three things do it:
+  list now takes about 6 ms per key instead of about 120 ms (Apple M5).
+  A one-path `Batch` over a 20 000-row store, with the frame it draws,
+  takes about 6 ms instead of 64 ms. Five things do it:
   - an unchanged frame is not rebuilt;
   - a list's rows are reused while the data they read is unchanged;
-  - equal rows share one computed style.
+  - equal rows share one computed style;
+  - a frame's rows are built in memory kept from the frame before last;
+  - a `Batch` copies only the parts of the store it writes.
 
   Dumps are byte for byte the same. `task bench` prints the numbers.
 - **Lifecycle events past the 8th round are kept**, not dropped. They are
