@@ -17,6 +17,8 @@
 //	tuimark test     [DIR] [--update] [--allow-breaking]
 //	tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
 //	                      [--theme dark|light] [--strict] [--json]
+//	tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
+//	                      [--mock FILE.json] [--strip]
 //	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
 //	tuimark mcp                                — a Model Context Protocol server on stdin/stdout
 //
@@ -83,6 +85,9 @@ usage:
   tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                         [--theme dark|light] [--strict] [--json]
                                                explain one node: path, classes, pseudo-classes, styles
+  tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
+                        [--mock FILE.json] [--strip]
+                                               run in the terminal: F12 shows the events, edits reload
   tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
                                                run in the terminal for a parent program (fd 3 in, fd 4 out)
   tuimark mcp                                 a Model Context Protocol server on stdin/stdout
@@ -128,6 +133,8 @@ func (c *cli) run(args []string) int {
 		return c.cmdTest(rest)
 	case "inspect":
 		return c.cmdInspect(rest)
+	case "run":
+		return c.cmdRun(rest)
 	case "host":
 		return c.cmdHost(rest)
 	case "mcp":
