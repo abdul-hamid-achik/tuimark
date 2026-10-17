@@ -209,6 +209,23 @@ func PropertyValues(name string) string {
 	return ""
 }
 
+// propSuggestion is the "; did you mean "X"?" suffix of an unknown
+// property: the closest property the document's version accepts, in
+// PropertyOrder (the catalog order), or "" when none is close.
+func propSuggestion(prop string, v2, v3 bool) string {
+	cands := make([]string, 0, len(PropertyOrder))
+	for _, n := range PropertyOrder {
+		if (props[n].v2 && !v2) || (props[n].v3 && !v3) {
+			continue
+		}
+		cands = append(cands, n)
+	}
+	if best := ir.Suggest(prop, cands); best != "" {
+		return fmt.Sprintf("; did you mean %q?", best)
+	}
+	return ""
+}
+
 // CheckDecl validates a declaration's syntax (tokens are resolved later)
 // in a version="1" document: CheckDeclIn with v2 and v3 false.
 func CheckDecl(prop, val string) error { return CheckDeclIn(prop, val, false, false) }
@@ -228,7 +245,7 @@ func CheckDeclIn(prop, val string, v2, v3 bool) error {
 	}
 	p, ok := props[prop]
 	if !ok {
-		return fmt.Errorf("unknown property %q", prop)
+		return fmt.Errorf("unknown property %q%s", prop, propSuggestion(prop, v2, v3))
 	}
 	if p.v3 && !v3 {
 		return fmt.Errorf("property %q%s", prop, ir.VersionHintV3)
@@ -308,7 +325,7 @@ func CheckDeclIn(prop, val string, v2, v3 bool) error {
 			return fmt.Errorf("%s: bad value %q (want a number >= 0)", prop, val)
 		}
 	case pGap:
-		n, err := strconv.Atoi(val)
+		n, err := atoiNoPlus(val)
 		if err != nil || n < 0 || n > 4 {
 			return fmt.Errorf("%s: bad value %q (want one integer 0-4)", prop, val)
 		}
@@ -350,6 +367,16 @@ func wholeNumber(s string) (int, bool) {
 	return n, true
 }
 
+// atoiNoPlus is strconv.Atoi that also rejects a leading '+': SPEC §10 cell
+// values are plain integers, and `gap: +3` is not one. A leading '-' keeps
+// whatever Atoi and the caller's range check make of it.
+func atoiNoPlus(s string) (int, error) {
+	if strings.HasPrefix(s, "+") {
+		return 0, strconv.ErrSyntax
+	}
+	return strconv.Atoi(s)
+}
+
 func parseBox(val string) ([4]int, error) {
 	fields := strings.Fields(val)
 	if len(fields) < 1 || len(fields) > 4 {
@@ -357,7 +384,7 @@ func parseBox(val string) ([4]int, error) {
 	}
 	nums := make([]int, len(fields))
 	for i, f := range fields {
-		n, err := strconv.Atoi(f)
+		n, err := atoiNoPlus(f)
 		if err != nil || n < 0 {
 			return [4]int{}, fmt.Errorf("bad cell value %q (cells only, no units)", f)
 		}

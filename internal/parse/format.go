@@ -17,11 +17,16 @@ import (
 // well-formed, err is the *SyntaxError describing why and the string
 // result is empty.
 func Format(src []byte) (string, error) {
-	root, prolog, epilog, err := ParseXML(src)
+	root, decl, prolog, epilog, err := parseXMLDecl(src)
 	if err != nil {
 		return "", err
 	}
 	var b strings.Builder
+	if decl != "" {
+		// The XML declaration is kept as written, on the first line.
+		b.WriteString(decl)
+		b.WriteString("\n")
+	}
 	for _, c := range prolog {
 		writeComment(&b, c, 0)
 	}

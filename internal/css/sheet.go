@@ -2,7 +2,6 @@ package css
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -240,7 +239,11 @@ func (p *sheetParser) rules(sheet *Sheet, media *Media) {
 		selText := p.readUntil("{};")
 		if p.eof() || p.src[p.pos] != '{' {
 			p.errAt(line, col, "expected '{' after selector %q", strings.TrimSpace(selText))
-			if !p.eof() {
+			// Inside an @media block a '}' here is the block's own closer
+			// (`@media (...) { row }`): leave it for the loop head so the
+			// rules after the block stay unconditional. At the top level,
+			// or on ';', the stop byte is junk and is consumed.
+			if !p.eof() && !(media != nil && p.src[p.pos] == '}') {
 				p.advance(1)
 			}
 			continue
@@ -411,7 +414,7 @@ func parseMedia(head string, v2 bool) (*Media, error) {
 		}
 		return nil, fmt.Errorf("@media feature %q is not supported (max-cols, min-cols, max-rows, min-rows)", feat)
 	}
-	n, err := strconv.Atoi(strings.TrimSpace(inner[colon+1:]))
+	n, err := atoiNoPlus(strings.TrimSpace(inner[colon+1:]))
 	if err != nil || n < 0 {
 		return nil, fmt.Errorf("@media %s: value must be a whole number of cells", cond)
 	}

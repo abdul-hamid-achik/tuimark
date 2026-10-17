@@ -409,6 +409,110 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 	return n
 }
 
+// htmlTagHints are common HTML/frontend names that are not in the
+// vocabulary, each with the Tuimark way to say it. An unknown tag found
+// here gets the hint appended to its V001 instead of a did-you-mean.
+var htmlTagHints = map[string]string{
+	"div":       "use <box>, <col>, or <row>",
+	"span":      "use <text>",
+	"p":         "use <text>",
+	"label":     "use <text>",
+	"h1":        "use <text>",
+	"h2":        "use <text>",
+	"h3":        "use <text>",
+	"h4":        "use <text>",
+	"h5":        "use <text>",
+	"h6":        "use <text>",
+	"ul":        "use <list>",
+	"ol":        "use <list>",
+	"li":        "use <item> inside a <list>",
+	"dialog":    "use <modal>",
+	"checkbox":  `a multi-select is a <list> with checked= (version="2")`,
+	"select":    "a <list> with on:select picks one row",
+	"option":    "a <list> with on:select picks one row",
+	"radio":     "a <list> with on:select picks one row",
+	"textarea":  "not in the vocabulary yet; use <input>",
+	"include":   "Tuimark has no components or includes; only <style src> loads another file",
+	"template":  "Tuimark has no components or includes; only <style src> loads another file",
+	"slot":      "Tuimark has no components or includes; only <style src> loads another file",
+	"component": "Tuimark has no components or includes; only <style src> loads another file",
+	"import":    "Tuimark has no components or includes; only <style src> loads another file",
+	"img":       "images are not supported",
+	"image":     "images are not supported",
+}
+
+// didYouMean formats the "; did you mean X?" suffix of a V001/V002/V003
+// message, or "" when there is no suggestion. shown is how X is written
+// (a tag in angle brackets, a name in quotes); best is Suggest's result.
+func didYouMean(shown, best string) string {
+	if best == "" {
+		return ""
+	}
+	return "; did you mean " + shown + "?"
+}
+
+// spikeTagSuggestion is tagSuggestion for an <app> document: the closest of
+// the five phase-0 tags.
+func spikeTagSuggestion(tag string) string {
+	best := ir.Suggest(tag, ir.SpikeKinds)
+	return didYouMean("<"+best+">", best)
+}
+
+// tagSuggestion is the suffix of an unknown tag's V001: a fixed hint for a
+// common HTML name, else the closest tag of the vocabulary (a
+// version="2" tag in a version="1" document says what it requires).
+func (b *builder) tagSuggestion(tag string) string {
+	if h, ok := htmlTagHints[tag]; ok {
+		return "; " + h
+	}
+	cands := make([]string, 0, len(ir.Kinds)+len(ir.KindsV2))
+	for _, k := range ir.Kinds {
+		if k != "tui" { // only valid as the root
+			cands = append(cands, k)
+		}
+	}
+	cands = append(cands, ir.KindsV2...)
+	best := ir.Suggest(tag, cands)
+	if best == "" {
+		return ""
+	}
+	if ir.IsKindV2(best) && !b.v2 {
+		return "; did you mean <" + best + "> (requires version=\"2\")?"
+	}
+	return didYouMean("<"+best+">", best)
+}
+
+// attrSuggestion is the suffix of an unknown attribute's V002: the closest
+// attribute the tag takes in this document's version, searched in sorted
+// order for a deterministic tie-break.
+func (b *builder) attrSuggestion(tag, parent, name string) string {
+	var set []map[string]bool
+	if tag == "item" && parent == "table" {
+		set = append(set, tableItemAttrs)
+	} else {
+		set = append(set, TagAttrs[tag])
+		if b.v2 {
+			set = append(set, TagAttrsV2[tag])
+		}
+		if b.v3 {
+			set = append(set, TagAttrsV3[tag])
+		}
+	}
+	seen := map[string]bool{}
+	var cands []string
+	for _, m := range set {
+		for a := range m {
+			if !seen[a] {
+				seen[a] = true
+				cands = append(cands, a)
+			}
+		}
+	}
+	sort.Strings(cands)
+	best := ir.Suggest(name, cands)
+	return didYouMean(fmt.Sprintf("%q", best), best)
+}
+
 func hasUpper(s string) bool {
 	for _, c := range s {
 		if unicode.IsUpper(c) {
@@ -439,7 +543,7 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 			if ir.IsKind(tag) {
 				b.errN(n, "V001", "<%s> is not in the phase-0 vocabulary (app col row box text); use a <tui> root for v1 tags", tag)
 			} else {
-				b.errN(n, "V001", "unknown tag <%s>", tag)
+				b.errN(n, "V001", "unknown tag <%s>%s", tag, spikeTagSuggestion(tag))
 			}
 			return
 		}
@@ -457,7 +561,7 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 		return
 	}
 	if !ir.IsKindIn(tag, b.v2) {
-		b.errN(n, "V001", "unknown tag <%s>", tag)
+		b.errN(n, "V001", "unknown tag <%s>%s", tag, b.tagSuggestion(tag))
 		return
 	}
 	ptag := ""
@@ -699,9 +803,9 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		}
 		if !allowed {
 			if strings.HasPrefix(name, "on:") && !eventNames[strings.TrimPrefix(name, "on:")] {
-				b.attrErr(n, a, "V002", "unknown event %q on <%s>", name, tag)
+				b.attrErr(n, a, "V002", "unknown event %q on <%s>%s", name, tag, b.attrSuggestion(tag, ptag, name))
 			} else {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed on <%s>", name, tag)
+				b.attrErr(n, a, "V002", "attribute %q is not allowed on <%s>%s", name, tag, b.attrSuggestion(tag, ptag, name))
 			}
 			return
 		}
@@ -918,10 +1022,15 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			return
 		}
 		if _, ok := css.Themes[val]; !ok {
+			cands := []string{"dark", "light"}
 			if b.v2 {
-				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light; or auto)", val)
+				cands = append(cands, "auto")
+			}
+			best := ir.Suggest(val, cands)
+			if b.v2 {
+				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light; or auto)%s", val, didYouMean(best, best))
 			} else {
-				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light)", val)
+				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light)%s", val, didYouMean(best, best))
 			}
 			return
 		}
@@ -1162,6 +1271,9 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "<%s> takes no text", n.Tag)
 		case b.tableItem(n):
 			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "a table's <item> is the row template and takes no text; the cells come from the <column> elements")
+		case !b.tagKnown(n.Tag):
+			// V001 already names this element; "wrap it in <text>" would
+			// only be noise next to it.
 		default:
 			b.diag(ir.Error, "V013", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <%s>; wrap it in <text>", n.Tag)
 		}
@@ -1182,7 +1294,7 @@ func (b *builder) checkStructure() {
 		return
 	}
 	if _, ok := root.Attr("version"); !ok {
-		b.errN(root, "V014", "<tui> needs version=\"1\" (or version=\"2\")")
+		b.errN(root, "V014", "<tui> needs version=\"1\", \"2\", or \"3\"")
 	}
 	for _, c := range root.Children {
 		if c.Tag == "screen" {
