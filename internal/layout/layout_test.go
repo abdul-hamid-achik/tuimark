@@ -16,7 +16,7 @@ func n(kind, decls string, kids ...*Box) *Box {
 	if i := strings.IndexByte(kind, '#'); i >= 0 {
 		kind, id = kind[:i], kind[i+1:]
 	}
-	b := &Box{Tag: kind, Kind: kind, ID: id, Follow: -1, Index: -1}
+	b := &Box{Tag: kind, Kind: kind, ID: id, Follow: -1, Index: -1, Style: &css.Style{}}
 	if decls != "" {
 		ds, err := css.ParseDecls(decls)
 		if err != nil {
@@ -39,9 +39,10 @@ func txt(s, decls string) *Box {
 }
 
 func styleTree(c *css.Cascade, b *Box, parent *css.Style) {
-	b.Style = c.Compute(b, parent, b.Hints, b.Inline)
+	st := c.Compute(b, parent, b.Hints, b.Inline)
+	b.Style = &st
 	for _, k := range b.Children {
-		styleTree(c, k, &b.Style)
+		styleTree(c, k, b.Style)
 	}
 }
 
@@ -384,7 +385,7 @@ func TestDockFlexAxis(t *testing.T) {
 		t.Errorf("left dock + flex in a row: %q %v", got, e.Diags)
 	}
 	expectGeo(t, row, map[string]string{"l": "1x4@(0,2)", "t": "20x2@(0,0)"})
-	if DockConflict(byID(row, "t").Style, true) || !DockConflict(byID(row, "t").Style, false) {
+	if DockConflict(*byID(row, "t").Style, true) || !DockConflict(*byID(row, "t").Style, false) {
 		t.Error("DockConflict: top dock + flex conflicts only in a column parent")
 	}
 }
@@ -940,7 +941,7 @@ func TestDockIgnoresBuiltInFrAndFlex(t *testing.T) {
 		t.Errorf("docked row/col/spacer with built-in sizes: %v", e.Diags)
 	}
 	expectGeo(t, root, map[string]string{"status": "40x1@(0,5)", "side": "4x5@(0,0)", "sp": "40x0@(0,0)"})
-	for _, st := range []css.Style{status.Style, side.Style, sp.Style} {
+	for _, st := range []css.Style{*status.Style, *side.Style, *sp.Style} {
 		if DockConflict(st, false) {
 			t.Errorf("DockConflict(%+v) with only built-in fr/flex", st)
 		}

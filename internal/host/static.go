@@ -70,7 +70,7 @@ func (a *App) checkDocks(themes []string) ir.Diags {
 			// §6.9.3), and so does a tab (§6.10.4): their widget
 			// places them.
 			if parent != nil && n.Kind != "modal" && st.Dock != "" && parent.n.Kind != "table" && parent.n.Kind != "tabs" {
-				row := (&layout.Box{Kind: parent.n.Kind, Style: *ps}).Direction() == "row"
+				row := (&layout.Box{Kind: parent.n.Kind, Style: ps}).Direction() == "row"
 				if layout.DockConflict(st, row) {
 					d := ir.At(n, a.file, ir.Error, "V010", "%s", layout.DockConflictMsg(st.Dock))
 					if !seen[d.String()] {

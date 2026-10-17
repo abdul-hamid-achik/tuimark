@@ -98,7 +98,7 @@ type chainKey struct {
 // before the maps: siblings and the rows of a list come in runs of equal
 // keys.
 type shareMemo struct {
-	styles   []Style
+	styles   []*Style
 	byKey    map[ShareKey]int32
 	chains   map[chainKey]int32
 	nextID   int32
@@ -115,7 +115,7 @@ type shareMemo struct {
 // Register, StyleID). Without it Sharing reports false and the host
 // computes every style with Compute.
 func (c *Cascade) EnableSharing() {
-	c.share = &shareMemo{byKey: map[ShareKey]int32{}, chains: map[chainKey]int32{}, ids: map[*Style]int32{}, styles: []Style{{}}}
+	c.share = &shareMemo{byKey: map[ShareKey]int32{}, chains: map[chainKey]int32{}, ids: map[*Style]int32{}, styles: []*Style{{}}}
 }
 
 // Sharing reports whether EnableSharing was called.
@@ -124,8 +124,9 @@ func (c *Cascade) Sharing() bool { return c.share != nil }
 // Shared returns the computed style of el (Compute(el, parent, hints,
 // inline)) and its style id, computing it only the first time this
 // cascade sees k. k must be el's key: its parent's chain and the style id
-// of parent, el's features as the subject, and hints and inline.
-func (c *Cascade) Shared(k ShareKey, el Element, parent *Style, hints, inline []Decl) (Style, int32) {
+// of parent, el's features as the subject, and hints and inline. Every
+// element with key k gets the same *Style, which nobody may write.
+func (c *Cascade) Shared(k ShareKey, el Element, parent *Style, hints, inline []Decl) (*Style, int32) {
 	m := c.share
 	for i := 0; i < m.recentN; i++ {
 		if m.recent[i] == k {
@@ -135,7 +136,8 @@ func (c *Cascade) Shared(k ShareKey, el Element, parent *Style, hints, inline []
 	id, ok := m.byKey[k]
 	if !ok {
 		id = int32(len(m.styles))
-		m.styles = append(m.styles, c.compute(el, parent, hints, inline, nil))
+		st := c.compute(el, parent, hints, inline, nil)
+		m.styles = append(m.styles, &st)
 		m.byKey[k] = id
 	}
 	slot := m.recentN

@@ -513,7 +513,7 @@ func (fb *builder) placeRows(casc *css.Cascade, t *layout.Box) {
 			})
 		}
 		layout.PlaceTableRow(t, row, cols, i)
-		computeStyles(casc, row, &t.Style)
+		computeStyles(casc, row, t.Style)
 		t.Children = append(t.Children, row)
 	}
 }

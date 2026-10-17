@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 	"github.com/abdul-hamid-achik/tuimark/internal/paint"
@@ -19,17 +20,18 @@ import (
 //	    item (key t-2)           (not laid out)
 //	modal#m 4x1 > button "OK"
 func frame() (*layout.Box, []*layout.Box, *paint.Grid) {
-	root := &layout.Box{Tag: "screen", Kind: "screen", ID: "main", W: 6, H: 3, Laid: true}
-	in := &layout.Box{Tag: "input", Kind: "input", ID: "q", W: 6, H: 1, Laid: true, Focused: true, Secret: true, Text: "abc"}
-	list := &layout.Box{Tag: "list", Kind: "list", ID: "l", Y: 1, W: 6, H: 2, Laid: true}
-	it1 := &layout.Box{Tag: "item", Kind: "item", Y: 1, W: 6, H: 1, Laid: true, Selected: true, Key: "t-1"}
-	t1 := &layout.Box{Tag: "text", Kind: "text", Y: 1, W: 3, H: 1, Laid: true, Text: "one"}
-	it2 := &layout.Box{Tag: "item", Kind: "item", Key: "t-2"}
+	zs := &css.Style{} // every box unstyled
+	root := &layout.Box{Tag: "screen", Style: zs, Kind: "screen", ID: "main", W: 6, H: 3, Laid: true}
+	in := &layout.Box{Tag: "input", Style: zs, Kind: "input", ID: "q", W: 6, H: 1, Laid: true, Focused: true, Secret: true, Text: "abc"}
+	list := &layout.Box{Tag: "list", Style: zs, Kind: "list", ID: "l", Y: 1, W: 6, H: 2, Laid: true}
+	it1 := &layout.Box{Tag: "item", Style: zs, Kind: "item", Y: 1, W: 6, H: 1, Laid: true, Selected: true, Key: "t-1"}
+	t1 := &layout.Box{Tag: "text", Style: zs, Kind: "text", Y: 1, W: 3, H: 1, Laid: true, Text: "one"}
+	it2 := &layout.Box{Tag: "item", Style: zs, Kind: "item", Key: "t-2"}
 	it1.Children = []*layout.Box{t1}
 	list.Children = []*layout.Box{it1, it2}
 	root.Children = []*layout.Box{in, list}
-	m := &layout.Box{Tag: "modal", Kind: "modal", ID: "m", X: 1, Y: 1, W: 4, H: 1, Laid: true}
-	m.Children = []*layout.Box{{Tag: "button", Kind: "button", X: 1, Y: 1, W: 4, H: 1, Laid: true, Text: "OK"}}
+	m := &layout.Box{Tag: "modal", Style: zs, Kind: "modal", ID: "m", X: 1, Y: 1, W: 4, H: 1, Laid: true}
+	m.Children = []*layout.Box{{Tag: "button", Style: zs, Kind: "button", X: 1, Y: 1, W: 4, H: 1, Laid: true, Text: "OK"}}
 	g := paint.NewGrid(6, 3)
 	g.At(0, 0).Ch = '•'
 	g.At(0, 0).Owner = "q"

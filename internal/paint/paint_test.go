@@ -16,7 +16,7 @@ func bx(kind, decls string, kids ...*layout.Box) *layout.Box {
 	if i := strings.IndexByte(kind, '#'); i >= 0 {
 		kind, id = kind[:i], kind[i+1:]
 	}
-	b := &layout.Box{Tag: kind, Kind: kind, ID: id, Follow: -1, Index: -1}
+	b := &layout.Box{Tag: kind, Kind: kind, ID: id, Follow: -1, Index: -1, Style: &css.Style{}}
 	if decls != "" {
 		ds, err := css.ParseDecls(decls)
 		if err != nil {
@@ -38,9 +38,10 @@ func tx(s, decls string) *layout.Box {
 }
 
 func styleAll(c *css.Cascade, b *layout.Box, parent *css.Style) {
-	b.Style = c.Compute(b, parent, nil, b.Inline)
+	st := c.Compute(b, parent, nil, b.Inline)
+	b.Style = &st
 	for _, k := range b.Children {
-		styleAll(c, k, &b.Style)
+		styleAll(c, k, b.Style)
 	}
 }
 

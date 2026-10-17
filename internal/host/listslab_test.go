@@ -122,3 +122,45 @@ func TestReusedSlabHoldsNothingStale(t *testing.T) {
 		}
 	}
 }
+
+// Boxes that look alike to every selector hold one computed style
+// (layout.Box.Style is a pointer the sharing hands out), and a box whose
+// state differs holds another: the selected row is bold, the rows around
+// it are not, whatever they share. A cold app computes each style on its
+// own, and the styles are the same.
+func TestRowsShareOneStyleAndTheSelectedRowItsOwn(t *testing.T) {
+	warm, cold := slabApp(t, 60), slabApp(t, 60)
+	cold.noCache = true
+	warm.Frame(40, 12)
+	cold.Frame(40, 12)
+	for i := 0; i < 2; i++ {
+		warm.HandleKey(Key{Name: "down"})
+		cold.HandleKey(Key{Name: "down"})
+	}
+	fw, fc := warm.Frame(40, 12), cold.Frame(40, 12)
+	if d := FrameDiff(fw, fc); d != "" {
+		t.Fatalf("shared styles differ from a cold build: %s", d)
+	}
+	items := func(f *Frame) []*layout.Box {
+		var out []*layout.Box
+		f.Root.Walk(func(b *layout.Box) {
+			if b.Kind == "item" {
+				out = append(out, b)
+			}
+		})
+		return out
+	}
+	rows, coldRows := items(fw), items(fc)
+	if len(rows) < 4 || len(rows) != len(coldRows) {
+		t.Fatalf("rows: %d warm, %d cold", len(rows), len(coldRows))
+	}
+	if rows[0].Style != rows[1].Style || rows[0].Style != rows[3].Style {
+		t.Fatalf("unselected rows do not share one style")
+	}
+	if !rows[2].Selected || rows[2].Style == rows[0].Style || !rows[2].Style.Bold || rows[0].Style.Bold {
+		t.Fatalf("the selected row does not hold a bold style of its own")
+	}
+	if coldRows[0].Style == coldRows[1].Style {
+		t.Fatalf("a cold build shared a style")
+	}
+}

@@ -91,7 +91,7 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 			Selected: v == active, Disabled: v.Disabled, Fixed: true, Mark: t.Mark,
 			Follow: -1, Index: -1,
 		}
-		l.Style = casc.Compute(l, &t.Style, nil, nil)
+		l.Style = newStyle(casc.Compute(l, t.Style, nil, nil))
 		kids = append(kids, l)
 		if v != active && fb.byID[v.ID] == v {
 			delete(fb.byID, v.ID)
@@ -104,7 +104,7 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 			if cb == nil || c.Kind == "modal" {
 				continue
 			}
-			computeStyles(casc, cb, &active.Style)
+			computeStyles(casc, cb, active.Style)
 			if cb.Style.Display != "none" {
 				active.Children = append(active.Children, cb)
 			}

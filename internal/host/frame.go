@@ -290,7 +290,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	}
 	eng := &layout.Engine{File: a.file, V3: a.doc.V3}
 	if rootBox == nil {
-		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: css.Initial()}
+		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: newStyle(css.Initial())}
 	}
 	keyed := a.hasKeyedOffsets()
 	if keyed {
@@ -389,7 +389,7 @@ func rootBoxStyle(b, root *layout.Box) *css.Style {
 	if b == root || root == nil {
 		return nil
 	}
-	return &root.Style
+	return root.Style
 }
 
 // offsetKey is the key the offset of viewport b is kept under in
@@ -506,6 +506,10 @@ func (a *App) rememberScroll(b *layout.Box, keyed bool) {
 	}
 }
 
+// newStyle returns a style of its own holding st, for a box whose style
+// is computed without the sharing (layout.Box.Style).
+func newStyle(st css.Style) *css.Style { return &st }
+
 // computeStyles runs the cascade top-down and drops display:none subtrees.
 // A list keeps following the same row: its Follow moves with the child it
 // names, or becomes -1 when display: none dropped that row.
@@ -520,11 +524,11 @@ func computeStyles(c *css.Cascade, b *layout.Box, parent *css.Style) {
 		shareStyles(c, b, parent, sp, known, chainOf(c, b.Parent))
 		return
 	}
-	b.Style = c.Compute(subjectOf(b), parent, b.Hints, b.Inline)
+	b.Style = newStyle(c.Compute(subjectOf(b), parent, b.Hints, b.Inline))
 	follow := followed(b)
 	kept := b.Children[:0]
 	for _, ch := range b.Children {
-		computeStyles(c, ch, &b.Style)
+		computeStyles(c, ch, b.Style)
 		if ch.Style.Display != "none" {
 			kept = append(kept, ch)
 		}
@@ -549,7 +553,7 @@ func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, kno
 		k := css.ShareKey{Chain: chain, Parent: sp, Self: boxFeatures(b, true), Hints: hk, NHints: hn, Inline: ik, NInline: in}
 		b.Style, id = c.Shared(k, subjectOf(b), parent, b.Hints, b.Inline)
 	} else {
-		b.Style = c.Compute(subjectOf(b), parent, b.Hints, b.Inline)
+		b.Style = newStyle(c.Compute(subjectOf(b), parent, b.Hints, b.Inline))
 		id = c.Unique()
 	}
 	switch b.Kind {
@@ -557,7 +561,7 @@ func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, kno
 		// The style parents of a later entry into the cascade: a modal's
 		// (the screen's), a tab's content (step 3), a table's rows (step
 		// 7).
-		c.Register(&b.Style, id)
+		c.Register(b.Style, id)
 	}
 	if len(b.Children) == 0 {
 		return
@@ -566,7 +570,7 @@ func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, kno
 	own := c.Chain(chain, boxFeatures(b, false))
 	kept := b.Children[:0]
 	for _, ch := range b.Children {
-		shareStyles(c, ch, &b.Style, id, true, own)
+		shareStyles(c, ch, b.Style, id, true, own)
 		if ch.Style.Display != "none" {
 			kept = append(kept, ch)
 		}

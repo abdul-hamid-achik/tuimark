@@ -53,8 +53,11 @@ type Box struct {
 	Focused, Selected, Disabled bool
 	FocusWithin, Checked        bool
 
-	// Computed style (set by the host before Layout).
-	Style css.Style
+	// Computed style (set by the host before Layout). Boxes that look
+	// alike to every selector share one computed style (the host's style
+	// sharing), so a style is never written once a box holds it: a new
+	// style is a new value.
+	Style *css.Style
 	// Hints and Inline are the node's attribute/style="" declarations.
 	Hints, Inline []css.Decl
 

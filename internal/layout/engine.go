@@ -357,7 +357,7 @@ func (e *Engine) dock(b *Box, area Rect, clip Rect) Rect {
 // clamped by its min and max.
 func (e *Engine) dockSize(d *Box, horizontal, parentRow bool, base, cross int) (int, bool) {
 	s := sizeSpec(d, horizontal)
-	if dockConflict(&d.Style, parentRow) {
+	if dockConflict(d.Style, parentRow) {
 		s = ir.Scalar{Kind: ir.Auto}
 	}
 	auto := false
@@ -392,7 +392,7 @@ func (e *Engine) carve(b *Box, area Rect, clip Rect, place bool) Rect {
 				bottoms++
 			}
 			horizontal := !vertical
-			if place && dockConflict(&d.Style, row) {
+			if place && dockConflict(d.Style, row) {
 				e.report(d, ir.Error, "V010", "%s", DockConflictMsg(side))
 			}
 			ms, me := margins(d, horizontal)
@@ -547,7 +547,7 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 			}
 		}
 	}
-	gap := mainGap(&b.Style, e.V3, horizontal)
+	gap := mainGap(b.Style, e.V3, horizontal)
 	remain := max(0, main-gap*(n-1))
 	parentAuto := b.autoH
 	if horizontal {
@@ -733,7 +733,7 @@ func (e *Engine) flexWith(b *Box, kids []*Box, area Rect, clip Rect, pre *alloca
 	} else {
 		sizes, crossSizes, anyFr = e.allocate(b, kids, main, cross, true)
 	}
-	gap := mainGap(&b.Style, e.V3, row)
+	gap := mainGap(b.Style, e.V3, row)
 	total := gap * (n - 1)
 	for _, s := range sizes {
 		total += s
@@ -835,7 +835,7 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 			pre = &allocation{sizes, cross, anyFr}
 		}
 		top := flowArea.Y
-		g := mainGap(&b.Style, e.V3, false)
+		g := mainGap(b.Style, e.V3, false)
 		for i := 0; i < follow; i++ {
 			top += sizes[i] + g
 		}
@@ -1367,7 +1367,7 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 			}
 		}
 		if alongMain {
-			total += mainGap(&b.Style, e.V3, row) * (n - 1)
+			total += mainGap(b.Style, e.V3, row) * (n - 1)
 		}
 	}
 	if horizontal {
