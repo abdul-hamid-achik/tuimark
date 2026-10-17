@@ -117,6 +117,16 @@ type App struct {
 	docKinds  docKinds
 	interps   map[string]interpEntry
 	noCache   bool
+	// slab is the parity (1 or 2) of the live build under way (liveFrame),
+	// 0 outside one: a list's rows then go into its listSlab of that
+	// parity. passes numbers the builder passes of the live builds.
+	slab   uint8
+	passes uint64
+	// verifyPrev is, with the tuimark_verify build tag, the last frame
+	// Frame gave, and verifyDigest its frameDigest when it was built
+	// (checkRetained); unused otherwise.
+	verifyPrev   *Frame
+	verifyDigest string
 
 	screen    int
 	focus     string

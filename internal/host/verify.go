@@ -67,6 +67,58 @@ func FrameDiff(f, g *Frame) string {
 	return ""
 }
 
+// frameDigest is everything FrameDiff compares of frame f, as text: its
+// JSON dump with cells, its --styles spans, diagnostics, members, and
+// every exported member of every box, one box per line (a box's Parent,
+// its tab and column lists, and For by the box they name). Two digests
+// of the same frame differ exactly when something wrote a member of it
+// in between (checkRetained).
+func frameDigest(f *Frame) string {
+	var sb strings.Builder
+	j, _ := dump.JSON(f.Dump(true))
+	sb.Write(j)
+	s, _ := json.Marshal(dump.BuildStyles(f.Grid))
+	sb.WriteString("\n")
+	sb.Write(s)
+	fmt.Fprintf(&sb, "\n%s\n%q %q %v %dx%d\n%s\n%s\n", diagsText(f.Diags), f.Focus, f.Theme, f.Mouse, f.Cols, f.Rows, boxNames(f.Focusables), idNames(f.ByID))
+	var walk func(b *layout.Box)
+	walk = func(b *layout.Box) {
+		if b == nil {
+			sb.WriteString("<nil>\n")
+			return
+		}
+		v := reflect.ValueOf(b).Elem()
+		for i := 0; i < boxType.NumField(); i++ {
+			fd := boxType.Field(i)
+			if !fd.IsExported() {
+				continue
+			}
+			fv := v.Field(i)
+			switch fd.Name {
+			case "Children":
+				fmt.Fprintf(&sb, "Children:%d ", len(b.Children))
+			case "Parent", "TabActive", "For":
+				fmt.Fprintf(&sb, "%s:%s ", fd.Name, boxName(fv.Interface().(*layout.Box)))
+			case "AllColumns", "TabList":
+				fmt.Fprintf(&sb, "%s:%s ", fd.Name, boxNames(fv.Interface().([]*layout.Box)))
+			case "Src":
+				fmt.Fprintf(&sb, "Src:%p ", b.Src)
+			default:
+				fmt.Fprintf(&sb, "%s:%+v ", fd.Name, fv.Interface())
+			}
+		}
+		sb.WriteString("\n")
+		for _, c := range b.Children {
+			walk(c)
+		}
+	}
+	walk(f.Root)
+	for _, m := range f.Modals {
+		walk(m)
+	}
+	return sb.String()
+}
+
 func firstLineDiff(a, b string) string {
 	al, bl := strings.Split(a, "\n"), strings.Split(b, "\n")
 	for i := 0; i < len(al) || i < len(bl); i++ {

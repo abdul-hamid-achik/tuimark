@@ -25,6 +25,10 @@ func (a *App) verifiedFrame(cols, rows int, theme string) *Frame {
 	warmAfter := a.frameInputs(cols, rows, theme)
 	g, coldPending, coldAfter := a.coldRender(in, cols, rows, theme)
 	a.mustMatch("Frame", f, g, warmPending, coldPending[nPending:], warmAfter, coldAfter)
+	a.checkRetained("Frame")
+	if f != a.verifyPrev {
+		a.verifyPrev, a.verifyDigest = f, frameDigest(f)
+	}
 	return f
 }
 
@@ -40,7 +44,21 @@ func (a *App) verifiedRender(cols, rows int, theme string) *Frame {
 	warmAfter := a.frameInputs(cols, rows, theme)
 	g, coldPending, coldAfter := a.coldRender(in, cols, rows, theme)
 	a.mustMatch("Dump", f, g, warmPending, coldPending[nPending:], warmAfter, coldAfter)
+	a.checkRetained("Dump")
 	return f
+}
+
+// checkRetained is the guard of the live builds' slab reuse (listSlab):
+// the frame Frame gave before (verifyPrev), which its caller may still
+// hold, is unchanged by every render since, the next live build included,
+// member for member (frameDigest, taken when it was built).
+func (a *App) checkRetained(what string) {
+	if a.verifyPrev == nil {
+		return
+	}
+	if d := frameDigest(a.verifyPrev); d != a.verifyDigest {
+		panic(fmt.Sprintf("tuimark_verify: %s: a render changed the frame Frame gave before it: %s", what, firstLineDiff(a.verifyDigest, d)))
+	}
 }
 
 func (a *App) mustMatch(what string, f, g *Frame, wp, cp []Event, wa, ca string) {

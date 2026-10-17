@@ -47,6 +47,10 @@ type Frame struct {
 	// that moved neither focus nor a tab (renderOnce), so building it again
 	// from the state it left behind gives the same frame (liveFrame).
 	settled bool
+	// slab is the parity of the live build that built the frame (App.slab:
+	// its lists' rows are in that listSlab), 0 when it was built in fresh
+	// memory.
+	slab uint8
 }
 
 // Dump returns the frame's dump (SPEC §13.2), with the --cells map when
@@ -107,6 +111,10 @@ type builder struct {
 	// chunk the size of the next one.
 	boxes []layout.Box
 	chunk int
+	// pass identifies the pass of a live build this builder runs (a
+	// list's rows then go into its listSlab, slabFor); 0 for every other
+	// builder, which allocates fresh memory.
+	pass uint64
 }
 
 // newBox returns a zeroed box for inflate, cut from a chunk the builder
@@ -202,7 +210,7 @@ func (a *App) modalOpenOn(req *focusRequest, cols, rows int, theme string) bool 
 func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	cols, rows = max(cols, 0), max(rows, 0)
 	theme = css.EffectiveTheme(theme)
-	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, settled: true}
+	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, settled: true, slab: a.slab}
 	static := a.staticFor(theme)
 	if a.doc.Root == nil {
 		f.Diags = append(f.Diags, static...)
@@ -246,6 +254,10 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	f.settled = false
 	for pass := 0; pass < 3; pass++ {
 		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
+		if a.slab != 0 {
+			a.passes++
+			fb.pass = a.passes
+		}
 		rootBox = fb.inflate(root, nil, nil, false) // step 1
 		rootBox = fb.cascade(casc, rootBox)         // step 2
 		if kinds.tabs {
@@ -1287,8 +1299,10 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 	for _, d := range r.post {
 		fb.add(d)
 	}
+	var slab *listSlab
 	if items == nil {
-		items = r.materialize(b)
+		slab = fb.slabFor(a.listRows[n])
+		items = r.materialize(b, slab)
 	}
 	var ids []string
 	if len(checked) > 0 {
@@ -1301,7 +1315,12 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 		}
 	}
 	if kept > 0 {
-		b.Children = make([]*layout.Box, 0, kept)
+		if slab != nil {
+			slab.children = grow(slab.children, kept)
+			b.Children = slab.children[:0:kept]
+		} else {
+			b.Children = make([]*layout.Box, 0, kept)
+		}
 	}
 	for i, ib := range items {
 		if ib == nil {

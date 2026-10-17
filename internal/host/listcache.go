@@ -3,7 +3,6 @@ package host
 import (
 	"strings"
 
-	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 )
@@ -34,10 +33,54 @@ var listCacheKinds = map[string]bool{
 }
 
 // listCache is what the runtime keeps per list node: its plan, parsed
-// once, and the rows it last resolved.
+// once, the rows it last resolved, and the memory the live builds
+// materialize them into (listSlab).
 type listCache struct {
-	plan *listPlan
-	rows *listRows
+	plan  *listPlan
+	rows  *listRows
+	slabs [2]listSlab
+}
+
+// listSlab is the memory a live build materializes a list's rows into,
+// kept from one live build to the one after it: the boxes, their children
+// slices, the items, and the list box's children. A live build writes the
+// slab of its parity (App.slab), never the one of the frame before it
+// (Frame.slab), which stays the live frame (a.last) the build reads and
+// the frame every caller of Frame holds until the build returns; so the
+// slab a build writes held the boxes of the frame two builds back, which
+// nothing holds any more. Every other render (Dump, Validate, a cold
+// render) materializes into fresh memory. pass is the builder pass that
+// last took the slab, so that one pass never takes it twice.
+type listSlab struct {
+	boxes    []layout.Box
+	kids     []*layout.Box
+	items    []*layout.Box
+	children []*layout.Box
+	pass     uint64
+}
+
+// slabFor returns the slab of list cache c this builder's pass
+// materializes into, or nil for fresh memory: outside a live build
+// (pass 0), or when this pass already took it. The caller holds a.mu.
+func (fb *builder) slabFor(c *listCache) *listSlab {
+	if fb.pass == 0 || fb.a.slab == 0 {
+		return nil
+	}
+	s := &c.slabs[fb.a.slab-1]
+	if s.pass == fb.pass {
+		return nil
+	}
+	s.pass = fb.pass
+	return s
+}
+
+// grow returns s resliced to n elements, or new memory with room for at
+// least n when s has less. The elements are not cleared.
+func grow[T any](s []T, n int) []T {
+	if cap(s) < n {
+		return make([]T, n, n+n/8)
+	}
+	return s[:n]
 }
 
 // listPlan is a list node's each, key path, and item template, with deps,
@@ -56,15 +99,10 @@ type listPlan struct {
 }
 
 // protoNode is what every box of one template node shares, whatever its
-// row: its identity, declarations, and attribute literals.
+// row: its identity, declarations, and attribute literals, as a box with
+// every other member zero, which each of its boxes starts as a copy of.
 type protoNode struct {
-	src           *ir.Node
-	tag, kind, id string
-	axis, scale   string
-	hints, inline []css.Decl
-	lo, hi        float64
-	hasLo, hasHi  bool
-	follow        int
+	box layout.Box
 }
 
 // protoBox is one box of a resolved row, in preorder: what inflate
@@ -279,11 +317,11 @@ func (r *listRows) packTexts() {
 func (p *listPlan) flatten(dst []protoBox, b *layout.Box, kids *int) []protoBox {
 	nd := p.nodes[b.Src]
 	if nd == nil {
-		nd = &protoNode{
-			src: b.Src, tag: b.Tag, kind: b.Kind, id: b.ID, axis: b.Axis, scale: b.Scale,
-			hints: b.Hints, inline: b.Inline, lo: b.Lo, hi: b.Hi, hasLo: b.HasLo, hasHi: b.HasHi,
-			follow: b.Follow,
-		}
+		nd = &protoNode{box: layout.Box{
+			Src: b.Src, Tag: b.Tag, Kind: b.Kind, ID: b.ID, Axis: b.Axis, Scale: b.Scale,
+			Hints: b.Hints, Inline: b.Inline, Lo: b.Lo, Hi: b.Hi, HasLo: b.HasLo, HasHi: b.HasHi,
+			Follow: b.Follow,
+		}}
 		p.nodes[b.Src] = nd
 	}
 	dst = append(dst, protoBox{
@@ -301,17 +339,27 @@ func (p *listPlan) flatten(dst []protoBox, b *layout.Box, kids *int) []protoBox 
 // materialize builds this frame's item boxes from the prototypes, one per
 // row (nil for a pruned row), children of list box parent: every box in
 // one slab, every children slice in another, each with its exact length
-// as capacity, so an append to one never reaches the next.
-func (r *listRows) materialize(parent *layout.Box) []*layout.Box {
-	m := materializer{
-		protos: r.protos,
-		boxes:  make([]layout.Box, len(r.protos)),
-		kids:   make([]*layout.Box, r.nkids),
+// as capacity, so an append to one never reaches the next. The memory is
+// s's (a live build's listSlab), or fresh when s is nil. Every box is
+// written whole (clone), so nothing a box held in an earlier frame stays.
+func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
+	var m materializer
+	var items []*layout.Box
+	if s == nil {
+		m = materializer{protos: r.protos, boxes: make([]layout.Box, len(r.protos)), kids: make([]*layout.Box, r.nkids)}
+		items = make([]*layout.Box, len(r.keys))
+	} else {
+		s.boxes = grow(s.boxes, len(r.protos))
+		s.kids = grow(s.kids, r.nkids)
+		s.items = grow(s.items, len(r.keys))
+		m = materializer{protos: r.protos, boxes: s.boxes, kids: s.kids}
+		items = s.items
 	}
-	items := make([]*layout.Box, len(r.keys))
 	for i := range items {
 		if r.start[i] < r.start[i+1] {
 			items[i] = m.clone(parent)
+		} else {
+			items[i] = nil
 		}
 	}
 	return items
@@ -329,11 +377,10 @@ func (m *materializer) clone(parent *layout.Box) *layout.Box {
 	m.pi++
 	b := &m.boxes[m.bi]
 	m.bi++
-	nd := p.node
-	b.Tag, b.Kind, b.ID, b.Src, b.Parent = nd.tag, nd.kind, nd.id, nd.src, parent
-	b.Hints, b.Inline, b.Axis, b.Scale = nd.hints, nd.inline, nd.axis, nd.scale
-	b.Lo, b.Hi, b.HasLo, b.HasHi = nd.lo, nd.hi, nd.hasLo, nd.hasHi
-	b.Follow = nd.follow
+	// The whole box, unexported members included (the engine's memo, the
+	// measured text), starts as its node's template.
+	*b = p.node.box
+	b.Parent = parent
 	b.Classes, b.GuardOn = p.classes, p.guardOn
 	b.Title, b.Text, b.Key, b.Series, b.Value = p.title, p.text, p.key, p.series, p.value
 	b.Index, b.Disabled = int(p.index), p.disabled

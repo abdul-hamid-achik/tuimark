@@ -66,12 +66,30 @@ func (a *App) liveFrame(cols, rows int, theme string) *Frame {
 			return a.last
 		}
 	}
-	f := a.render(cols, rows, theme)
+	f := a.renderLive(cols, rows, theme)
 	a.frameKey, a.frameLast = "", nil
 	if !a.noCache && f.settled && a.last == f && a.focusReq == nil {
 		a.frameKey, a.frameLast = a.frameInputs(cols, rows, theme), f
 	}
 	return f
+}
+
+// renderLive is render for a live build (liveFrame): a list's rows go
+// into its listSlab of the parity the live frame (a.last) does not use,
+// so the build never writes a box of that frame, which it reads and every
+// caller of Frame holds until it returns; the slab it writes held the
+// boxes of the frame two builds back. Every pass and every trial render
+// of this build (a focus request's, modalOpenOn) uses the same parity:
+// only one of them becomes the frame. A cold app (noCache) never caches
+// rows, so it allocates fresh memory as every other render does. The
+// caller holds a.mu.
+func (a *App) renderLive(cols, rows int, theme string) *Frame {
+	a.slab = 1
+	if a.last != nil && a.last.slab == 1 {
+		a.slab = 2
+	}
+	defer func() { a.slab = 0 }()
+	return a.render(cols, rows, theme)
 }
 
 // frameInputs is the fingerprint of everything a render reads besides the
