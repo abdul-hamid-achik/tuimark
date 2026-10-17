@@ -285,7 +285,7 @@ Everything above (Allowed edits, Forbidden, the Catalog/Loop/Bindings/Actions se
 
 ### Gate
 
-`task verify` runs, in order: the gofmt check (`gofmt -l .` must print nothing — `-l` only lists unformatted files, so empty output is the pass condition), `go vet ./...`, `go test ./...`, the `bin/` build, `./bin/tuimark test`, and every Glyphrun spec. It does not run the race detector, so also run `go test -race ./internal/host/` yourself.
+`task verify` runs, in order: the gofmt check (`gofmt -l .` must print nothing — `-l` only lists unformatted files, so empty output is the pass condition), `go vet ./...`, `go test ./...`, the `bin/` build, `./bin/tuimark test`, and every Glyphrun spec (after a fresh `bun install` of `examples/host-ts`, whose `host_ts*` specs use `@tuimark/host` from `sdk/ts`). It does not run the race detector, so also run `go test -race ./internal/host/` yourself.
 
 ```
 task verify
@@ -304,6 +304,7 @@ go build -o bin/dashboard ./examples/dashboard
 go build -o bin/monitor ./examples/monitor
 go build -o bin/agent ./examples/agent
 ./bin/tuimark test
+(cd examples/host-ts && rm -rf node_modules && bun install --frozen-lockfile)
 glyph run specs/glyphrun/*.yml --format md
 go test -race ./internal/host/
 ```

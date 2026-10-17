@@ -1138,6 +1138,12 @@ module; the only supported entry points are the functions above.
   go build -o bin/monitor ./examples/monitor
   go build -o bin/agent ./examples/agent
   ```
+  The `host_ts*` specs also need `examples/host-ts`'s dependencies, which
+  include `@tuimark/host` copied from `sdk/ts`. Reinstall them from scratch
+  so a stale copy never hides an SDK change:
+  ```sh
+  (cd examples/host-ts && rm -rf node_modules && bun install --frozen-lockfile)
+  ```
   or run `task build` (see `Taskfile.yml`), which builds all five in one
   step; `task glyph` builds and then runs every spec; `task verify` runs
   fmt, vet, test, build, golden, and glyph in order — the full local gate.
