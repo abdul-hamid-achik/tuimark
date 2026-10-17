@@ -1,0 +1,17 @@
+package agentsdoc
+
+import "strings"
+
+// writeV04aToolsSection documents the 0.4a commands this section's package
+// owns: `catalog`, `new`, `agents --project`, the changed `validate` line
+// and JSON, and the line bounds of `host` and `mcp` (SPEC v0.4a §15.1,
+// §15.8, §15.10, §15.11, §19.1). It names no path of the repository, since
+// the project briefing (ProjectMarkdown) is this same text.
+func writeV04aToolsSection(b *strings.Builder) {
+	b.WriteString("### v0.4a: catalog, new, and validate\n\n")
+	b.WriteString("- `tuimark catalog` prints the closed vocabulary as one JSON object, so an editor or an agent reads it instead of scraping this file. It takes no flags and reads no environment variable. Members: `catalog` (the format version, 1), `tuimark` (the bare runtime version), `versions` (the document versions this build accepts), `tags` (each with its `attrs`, and an enumerated attribute's `keywords`), `properties` (each with its `syntax` and `keywords`), `pseudo_classes`, `media` (each with `keywords`), `keys`, `actions` (`builtin`, `needs_to`), and `diagnostics` (the codes of the table above). On every item, `since` is the lowest document version that accepts it, so an attribute a tag gained later carries its own (`checked` on `list` is 2). An item that takes only numbers, sizes, colors, paths, or text has `keywords: []`. The catalog lists what each tag accepts anywhere: contextual rules, such as what a list `<item>` may hold, are the diagnostics' job. Removing or renaming a member needs `catalog: 2`; adding members, items, or versions does not.\n")
+	b.WriteString("- `tuimark new NAME [--go | --ts]` creates a project in the directory `NAME`, which must not exist or must be empty (otherwise it is a usage error that writes nothing, and no file is overwritten): `app.tui` (the newest document version, with a bound list, a status line, a keymap with labeled rows, and `<hints/>`), `theme.tcss`, `sample.json`, and this briefing as `AGENTS.md`. `--go` adds `main.go` and `go.mod`; `--ts` adds `parent.ts` and `package.json` (a Bun parent through `@tuimark/host`). The two flags are exclusive. `new` prints the files it wrote, then the next command.\n")
+	b.WriteString("- `tuimark agents --project` prints this briefing as `new` writes it into a project, so it can be regenerated after an upgrade; `tuimark agents` without a flag prints it for the authoring task as before. `--repo` and `--project` are exclusive.\n")
+	b.WriteString("- `tuimark validate` without `--data` ends its text output with `ok (bindings not checked: no --data)` instead of `ok`, since `B001`-`B003` and `B008`-`B010` were not checked; with `--data` the line stays `ok`, and warnings are still printed before it. `validate --json` has the members `actions`, `data`, `diagnostics`, `file`, and `ok`, where `data` is the `--data` argument as given, or `null` without it (so an agent reads from it whether bindings were checked, and against which file). `tuimark_validate` returns this JSON.\n")
+	b.WriteString("- A line of 64 MiB or more (the newline excluded) on `tuimark host`'s fd 3, or on `tuimark mcp`'s stdin, ends the session: `host` writes `{\"type\":\"error\",\"error\":\"fd 3 line of 64 MiB or more\"}` on fd 4 and ends with reason `error`, applying nothing of the line; `mcp` exits 1.\n\n")
+}

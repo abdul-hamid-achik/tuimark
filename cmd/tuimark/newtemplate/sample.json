@@ -1,0 +1,13 @@
+{
+  "title": "Tasks",
+  "query": "",
+  "status": "ready",
+  "count": 4,
+  "selected": "t-1",
+  "items": [
+    { "id": "t-1", "title": "write the first view" },
+    { "id": "t-2", "title": "bind it to sample.json" },
+    { "id": "t-3", "title": "check it at 80 and 120 columns" },
+    { "id": "t-4", "title": "wire the actions" }
+  ]
+}

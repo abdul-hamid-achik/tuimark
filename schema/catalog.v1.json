@@ -1,0 +1,120 @@
+{
+  "$id": "https://tui.local/schema/catalog.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "tuimark catalog output",
+  "description": "The closed vocabulary that `tuimark catalog` prints (SPEC v0.4a 15.10). `since` is the lowest document version that accepts an item. Every object allows additional members, so a later revision that adds members, items, or versions keeps `catalog: 1`; removing or renaming a member needs `catalog: 2`.",
+  "type": "object",
+  "required": ["catalog", "tuimark", "versions", "tags", "properties", "pseudo_classes", "media", "keys", "actions", "diagnostics"],
+  "additionalProperties": true,
+  "properties": {
+    "catalog": { "const": 1 },
+    "tuimark": { "type": "string", "minLength": 1 },
+    "versions": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 1 } },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "since", "attrs"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "since": { "$ref": "#/$defs/since" },
+          "attrs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "since", "keywords"],
+              "additionalProperties": true,
+              "properties": {
+                "name": { "type": "string" },
+                "since": { "$ref": "#/$defs/since" },
+                "pattern": { "type": "string" },
+                "keywords": { "$ref": "#/$defs/keywords" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "properties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "since", "syntax", "keywords"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "since": { "$ref": "#/$defs/since" },
+          "syntax": { "type": "string" },
+          "keywords": { "$ref": "#/$defs/keywords" }
+        }
+      }
+    },
+    "pseudo_classes": { "type": "array", "items": { "$ref": "#/$defs/item" } },
+    "media": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "since", "keywords"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "since": { "$ref": "#/$defs/since" },
+          "keywords": { "$ref": "#/$defs/keywords" }
+        }
+      }
+    },
+    "keys": {
+      "type": "object",
+      "required": ["named", "ctrl", "printable", "never_match"],
+      "additionalProperties": true,
+      "properties": {
+        "named": { "type": "array", "items": { "type": "string" } },
+        "ctrl": { "type": "string" },
+        "printable": { "type": "boolean" },
+        "never_match": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "since", "builtin", "needs_to"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "since": { "$ref": "#/$defs/since" },
+          "builtin": { "type": "boolean" },
+          "needs_to": { "type": "boolean" },
+          "keymap_only": { "type": "boolean" }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "pass", "when"],
+        "additionalProperties": true,
+        "properties": {
+          "code": { "type": "string", "pattern": "^[VLB][0-9]{3}$" },
+          "pass": { "type": "string" },
+          "when": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "since": { "type": "integer", "minimum": 1 },
+    "item": {
+      "type": "object",
+      "required": ["name", "since"],
+      "additionalProperties": true,
+      "properties": {
+        "name": { "type": "string" },
+        "since": { "$ref": "#/$defs/since" }
+      }
+    },
+    "keywords": { "type": "array", "items": { "$ref": "#/$defs/item" } }
+  }
+}

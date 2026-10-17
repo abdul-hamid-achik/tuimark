@@ -570,7 +570,9 @@ tuimark play     FILE [--cols 80] [--rows 24] [--data FILE.json] [--theme dark|l
                       [--format text|json] [--cells] [--styles] [--frames] [--strict]
 tuimark fmt      FILE [--write] [--check]
 tuimark ir       FILE
-tuimark agents
+tuimark agents   [--repo | --project]
+tuimark catalog
+tuimark new      NAME [--go | --ts]
 tuimark test     [DIR] [--update] [--allow-breaking]
 tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                       [--theme dark|light] [--strict] [--json]
@@ -592,7 +594,11 @@ tuimark version
   layout/bind problems (under both themes, dark first, for a `theme="auto"`
   document without `--theme`). Without `--data`, bind-dependent checks
   (`B001`–`B003`, and the 0.2b `B008`–`B010`) are skipped, since every path
-  would otherwise read as "missing". `--catalog FILE` (a JSON list of action names, or
+  would otherwise read as "missing", and the text output ends with
+  `ok (bindings not checked: no --data)` instead of `ok` (0.4a); with
+  `--data` the line stays `ok`. `--json` has the members `actions`, `data`
+  (the `--data` argument as given, or `null`), `diagnostics`, `file`, and
+  `ok`. `--catalog FILE` (a JSON list of action names, or
   `{"actions":[...]}`) turns unresolved actions into `B004` warnings.
 - `preview` writes the text dump to stdout, and also paints an ANSI frame
   first when stdout is a TTY, in the color profile from `--color`, else
@@ -621,21 +627,49 @@ tuimark version
 - `agents` prints `AGENTS.md`, generated from the runtime's own catalogs so
   it cannot drift; `AGENTS.md` at the repo root must equal this output,
   enforced by `internal/agentsdoc`'s `TestAGENTSDoesNotDrift` (regenerate
-  with `go run ./cmd/tuimark agents --repo > AGENTS.md`).
+  with `go run ./cmd/tuimark agents --repo > AGENTS.md`). `agents --project`
+  (0.4a) prints the project briefing instead: the same briefing adapted to
+  a project outside this repository, which `new` writes as the project's
+  `AGENTS.md` (so it can be regenerated after an upgrade). `--repo` and
+  `--project` are exclusive.
+- `catalog` (0.4a) prints the closed vocabulary as one JSON object, so an
+  editor, a language client, or an agent reads the catalog instead of
+  scraping `AGENTS.md`: `tags` (with their `attrs` and an enumerated
+  attribute's `keywords`), `properties`, `pseudo_classes`, `media`, `keys`,
+  `actions`, and `diagnostics`, every item with the lowest document version
+  that accepts it (`since`). It is generated from the runtime's own tables,
+  takes no flags, and reads no environment variable. `schema/catalog.v1.json`
+  validates it; `catalog: 1` is the format version, and adding members,
+  items, or versions keeps it.
+- `new NAME [--go | --ts]` (0.4a) creates a project in the directory `NAME`,
+  which must not exist or must be empty (otherwise it is a usage error that
+  writes nothing, and no file is ever overwritten): `app.tui` (the newest
+  document version, with a bound list, a status line, a keymap with labeled
+  rows, and `<hints/>`), `theme.tcss` (tokens for both themes, `:focus` and
+  `:selected` rules), `sample.json`, and the project briefing as
+  `AGENTS.md`. `--go` adds `main.go` and a `go.mod` that requires this
+  module at the version `tuimark version` reports; `--ts` adds `parent.ts`
+  and `package.json` (a Bun parent through `@tuimark/host`). The two flags
+  are exclusive. It prints the files it wrote, then the next command
+  (`cd NAME && tuimark run app.tui --data sample.json`, `… go mod tidy && go
+  run .`, or `… bun install && bun parent.ts`).
 - `test` runs the golden dump comparisons driven by
   `testdata/golden/manifest.json` (below).
 - `host` (0.3b) runs a document in the terminal for a parent process in any
   language: the terminal stays on fd 0/1/2 as with `Run()`, the parent
   writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 and reads
   `ready`/`event`/`ack`/`error`/`exit` JSON lines from fd 4. POSIX only
-  (a usage error on Windows). See the [host protocol
+  (a usage error on Windows). A line of 64 MiB or more on fd 3 (the newline
+  excluded) ends the session with exit reason `error` (0.4a), the bound
+  `mcp` uses for stdin. See the [host protocol
   guide](https://tuimark.vercel.app/guide/host-protocol) and
   `examples/host-ts` for a Bun parent.
 - `mcp` (0.3b) is a Model Context Protocol server on stdin/stdout (JSON-RPC,
   stdlib only) exposing `validate`, `dump`, `play`, `inspect`, and the
   `agents` briefing as five read-only tools, for an agent that reaches
-  Tuimark through an MCP gateway instead of a shell. See the [MCP server
-  guide](https://tuimark.vercel.app/guide/mcp).
+  Tuimark through an MCP gateway instead of a shell. A line of 64 MiB or
+  more on stdin (the newline excluded) ends the server with exit 1. See the
+  [MCP server guide](https://tuimark.vercel.app/guide/mcp).
 - `version` (also `--version` or `-v`) prints `tuimark 0.2.0`; release
   builds add the commit and build date, as in `tuimark 0.2.0 (commit
   abc1234, built 2026-09-27T12:00:00Z)`.
@@ -1235,7 +1269,8 @@ kept with the maintainer's project notes, outside this repository.
   ```
 
   Saved as `modal.tui`, this validates and dumps cleanly
-  (`./bin/tuimark validate modal.tui` reports `ok`; `./bin/tuimark dump
+  (`./bin/tuimark validate modal.tui` reports `ok (bindings not checked: no
+  --data)`; `./bin/tuimark dump
   modal.tui --cols 80 --rows 24` shows `actions` and both buttons at
   height 1, not stretched to the modal's height).
 

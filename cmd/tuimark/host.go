@@ -400,15 +400,45 @@ func (b *hostBridge) send(v any) bool {
 
 // ── Parent -> child (fd 3) ──────────────────────────────────────────────
 
+// maxFD3Line is the line bound of §19.1: a line on fd 3 of this many bytes
+// or more, the newline excluded, ends the session. It is the bound
+// `tuimark mcp` uses for stdin (§15.8).
+const maxFD3Line = 64 << 20
+
+// errFD3Line is the message of the fd 3 line bound, written on fd 4 as an
+// "error" and carried by the stop request (exit reason "error").
+var errFD3Line = errors.New("fd 3 line of 64 MiB or more")
+
 // readLoop reads fd 3 one line at a time, in order, from one goroutine
 // (§19.1 "Order"), until end of file or a read error: the parent is gone,
-// so the session ends with reason eof (§19.1 "Parent gone").
+// so the session ends with reason eof (§19.1 "Parent gone"). A line of
+// maxFD3Line bytes or more ends the session with reason error instead
+// (§19.1 "Line bound"): it is never applied, and nothing after it is read.
 func (b *hostBridge) readLoop() {
 	r := bufio.NewReaderSize(b.fd3, 64*1024)
+	var line []byte
 	for {
-		line, err := r.ReadBytes('\n')
+		chunk, err := r.ReadSlice('\n')
+		line = append(line, chunk...)
+		content := len(line)
+		if content > 0 && line[content-1] == '\n' {
+			content--
+		}
+		if content >= maxFD3Line {
+			b.sendError(nil, nil, errFD3Line.Error())
+			b.requestStop(host.HostStop{Err: errFD3Line})
+			return
+		}
+		if err == bufio.ErrBufferFull {
+			continue // the rest of the line is still to come
+		}
 		if len(line) > 0 {
 			b.handleLine(line)
+		}
+		if cap(line) > 1<<20 {
+			line = nil // do not keep a huge line's buffer
+		} else {
+			line = line[:0]
 		}
 		if err != nil {
 			break

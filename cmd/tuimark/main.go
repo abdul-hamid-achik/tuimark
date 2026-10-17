@@ -11,7 +11,9 @@
 //	                      [--format text|json] [--cells] [--styles] [--frames] [--strict]
 //	tuimark fmt      FILE [--write] [--check]
 //	tuimark ir       FILE
-//	tuimark agents   [--repo]
+//	tuimark agents   [--repo | --project]
+//	tuimark catalog
+//	tuimark new      NAME [--go | --ts]
 //	tuimark test     [DIR] [--update] [--allow-breaking]
 //	tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
 //	                      [--theme dark|light] [--strict] [--json]
@@ -72,7 +74,10 @@ usage:
                         [--format text|json] [--cells] [--styles] [--frames] [--strict]
   tuimark fmt      FILE [--write] [--check]
   tuimark ir       FILE                       print the source IR as JSON
-  tuimark agents   [--repo]                   print AGENTS.md generated from the catalog
+  tuimark agents   [--repo | --project]       print AGENTS.md generated from the catalog
+                                               (--project: the briefing tuimark new writes)
+  tuimark catalog                             print the closed vocabulary as JSON
+  tuimark new      NAME [--go | --ts]         create a project: app.tui, theme.tcss, sample.json, AGENTS.md
   tuimark test     [DIR] [--update] [--allow-breaking]
                                                check dump goldens under DIR (default testdata/golden)
   tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
@@ -127,6 +132,10 @@ func (c *cli) run(args []string) int {
 		return c.cmdHost(rest)
 	case "mcp":
 		return c.cmdMCP(rest)
+	case "catalog":
+		return c.cmdCatalog(rest)
+	case "new":
+		return c.cmdNew(rest)
 	case "version", "--version", "-v":
 		if len(rest) != 0 { // like agents and mcp: no arguments, a usage error
 			return c.fail(fmt.Errorf("tuimark version: takes no arguments"))
