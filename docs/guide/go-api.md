@@ -1,6 +1,6 @@
 ---
 title: Go API
-description: The Tuimark Go package - load a document (from disk or an embedded file system), bind and read data, handle actions, dump frames, test with Play and run in the terminal - with Event, ErrQuit and the reserved Set paths.
+description: The Tuimark Go package - load a document (from disk or an embedded file system), bind and read data, handle actions, dump frames, test with Play and run in the terminal, with a context, an error policy, timers (Every) and derived values (Derive) since 0.4.
 ---
 
 # Go API
@@ -28,9 +28,14 @@ func (a *App) Dump(cols, rows int) (*Dump, error)
 func (a *App) Validate() []Diagnostic
 func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) // 0.3
 func (a *App) Run(w io.Writer) error
+func (a *App) RunContext(ctx context.Context, w io.Writer) error            // 0.4
+func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error // 0.4
+func (a *App) Quit()                                                       // 0.4
+func (a *App) Every(d time.Duration, fn func(b *Batch) error) (stop func()) // 0.4
+func (a *App) Derive(path string, fn func(get func(path string) (any, bool)) (any, error)) error // 0.4
 ```
 
-That is the whole surface, plus the types they use: `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, `ErrQuit`, and, since 0.3, `Batch`, `PlayOptions`, `PlayEvent`, `PlayResult`, and, since 0.3b, `PlayFrame`.
+That is the whole surface, plus the types they use: `Event`, `Handler`, `ActionSpec`, `Dump`, `DumpNode`, `Diagnostic`, `ErrQuit`, and, since 0.3, `Batch`, `PlayOptions`, `PlayEvent`, `PlayResult`, since 0.3b, `PlayFrame`, and, since 0.4, `RunOptions`.
 
 ## Loading
 
@@ -221,6 +226,91 @@ Each `PlayFrame` is `{Step, Input, Events, Dump}`: `Step` is the step's number, 
 - restores the terminal (cooked mode, main screen, visible cursor) however it ends.
 
 It returns `nil` on quit. On `SIGINT`, `SIGTERM`, or `SIGHUP` it restores the terminal first and returns an error naming the signal, so the program can exit with a failure status. It reads the `TUIMARK_*` variables described in [environment variables](/guide/tools#environment-variables).
+
+### Context, errors, and Quit (0.4)
+
+`Run(w)` is `RunContext(context.Background(), w)`, and `RunContext` is `RunWith` with no options.
+
+**Cancellation.** A context that is already done when `RunWith` is called returns an error at once, without touching the terminal. A cancellation during the session acts as a quit:
+
+- the loop takes it before the next input or between two events;
+- the terminal is restored;
+- `RunWith` returns an error for which `errors.Is(err, ctx.Err())` holds.
+
+A handler that blocks keeps the session until it returns, so pass the context on to handlers that wait.
+
+**`Quit()`** ends the active session from any goroutine, the same way, and `Run` returns `nil`. Called from a handler, it takes effect when the handler returns, as `ErrQuit` does. Outside `Run` it does nothing, and `Play` ignores it.
+
+**`RunOptions.OnError`** keeps a session alive when a handler fails. It is called on the loop's goroutine with each error that a handler, an `Every` function, or a `Derive` function returns, other than a quit. `ev` is the failed event, or `nil` for `Every` and `Derive`. What it returns decides what follows:
+
+| `OnError` returns | The session |
+|---|---|
+| `nil` | goes on; the failed handler counts as having returned `nil` |
+| a quit (`ErrQuit`) | ends as a quit, and `RunWith` returns `nil` |
+| any other error | ends with that error |
+
+```go
+err := app.RunWith(ctx, os.Stdout, tuimark.RunOptions{
+	OnError: func(ev *tuimark.Event, err error) error {
+		_ = app.Set("status", "error: "+err.Error()) // show it and go on
+		return nil
+	},
+})
+```
+
+Without `OnError`, an error that is not a quit ends the session, as in `Run`.
+
+## Timers: Every (0.4)
+
+`Every(d, fn)` calls `fn` every `d` while `Run` is active. Each call gets a fresh `*Batch`, whose writes apply as one batch with one redraw:
+
+```go
+stop := app.Every(time.Second, func(b *tuimark.Batch) error {
+	return b.Set("clock", time.Now().Format("15:04:05"))
+})
+defer stop()
+```
+
+- **Where `fn` runs.** On the loop's goroutine, between inputs, as a handler does. A slow `fn` delays keys.
+- **Late ticks.** A tick that falls due while the loop is busy runs once when the loop is free. Ticks are never queued, as with `time.Ticker`.
+- **Lifetime.** Registrations persist across `Run` calls until `stop` is called. `stop` is safe from any goroutine, `fn` included, and never waits.
+- **Errors.** An error from `fn` is a handler error with no event. It goes to `OnError`, or it ends `Run` without it.
+- **Testing.** `Dump`, `Validate`, and `Play` never call `fn`, so a test drives time-based state with `set:` steps.
+
+## Derived values: Derive (0.4)
+
+Markup has no expressions. `Derive` keeps a computed value in the store instead: a filtered list, a count, or a label. The markup then reads it as any other path:
+
+```go
+err := app.Derive("visible", func(get func(string) (any, bool)) (any, error) {
+	all, _ := get("items")
+	q, _ := get("query")
+	return filter(all, q), nil
+})
+```
+
+**When `fn` runs.** Once at registration, then inside every change to the store:
+
+- `Set`, `Bind`, and `Batch` (once per batch, after all its writes);
+- every write the runtime makes: an input's text, a cursor, a checked array, or a tab.
+
+Nothing ever sees a stale value: not `Get`, `Dump`, a frame, a handler, or a `Play` step. Derived values are recomputed in registration order, so a later one reads the earlier ones' new values.
+
+**`get`** reads the store as the write left it, and returns deep copies. It returns `(nil, false)` for a missing path and for the reserved paths `@focus`, `@screen`, and `@theme`.
+
+**No App methods inside `fn`.** `fn` runs while the app holds its lock, so a call to any method of the `App` from inside it never returns.
+
+**A derived path is read-only.**
+- `Set`, `Bind`, or `b.Set` on a derived path, or on a path inside one, returns an error. A batch holding such a write applies none of its writes.
+- A write to an ancestor is allowed, but it fails as a whole when the recomputation could not write the derived path.
+- A widget bound to a derived path does not change and fires no `on:change` or `on:select`. A built-in keymap row that targets it does not match.
+
+**Errors.** When `fn` returns an error, `null` is written at the path and the error is reported once:
+
+- during `Run`, on the loop, as a handler error with no event;
+- during `Play`, as an error of the step being applied.
+
+The write that caused it returns `nil`.
 
 ## A complete host
 
