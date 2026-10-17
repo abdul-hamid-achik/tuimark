@@ -7,7 +7,7 @@ It is a parent library, not a second host. `tuimark` still lays out and paints e
 - ESM, written in TypeScript, no runtime dependencies.
 - Runs on Bun (CI tests it with Bun). Node is not supported in 1.0.
 - `1.x` versions speak `protocol: 1`.
-- Needs `tuimark` 0.3.0 or later on `PATH` (or pass `bin`).
+- Needs `tuimark` 0.3.1 or later (the release that added `tuimark host`) on `PATH`, or pass `bin`. The [host protocol guide](https://tuimark.vercel.app/guide/host-protocol) describes the wire protocol this package speaks.
 
 ```sh
 bun add @tuimark/host
@@ -105,7 +105,7 @@ A rejection nobody awaits does not crash the process.
 
 ## Rules for parents, and what the client does
 
-| Rule (SPEC §19.1) | Client |
+| [Rule for parents](https://tuimark.vercel.app/guide/host-protocol) | Client |
 |---|---|
 | Pass fd 3 and fd 4 and read them as Bun needs. | `stdio: ["inherit", "inherit", "inherit", "pipe", "pipe"]`; fd 4 is read with `Bun.file(fd).stream()`, fd 3 is written with `fs.createWriteStream("", {fd})` and ended when the child is gone. |
 | Forward `SIGTERM` and `SIGHUP` to the child. | Listeners are installed from `spawnHost` until the child exits, and removed after. While they are installed the signals no longer end your process: wait for `exited`, or set `exitWithChild`, and exit with the child's code. |
@@ -133,6 +133,8 @@ bun run build   # dist/, for publishing
 ```
 
 The tests need no terminal and no `tuimark` binary. The package is published from `sdk-ts-v*` tags by `.github/workflows/sdk-ts-publish.yml`.
+
+`examples/host-ts` depends on this package (`file:../../sdk/ts`) and records its dev dependencies in its own `bun.lock`. After you change the dependencies in `package.json` here, run `bun install` in `examples/host-ts` and commit its `bun.lock`, or `bun install --frozen-lockfile` fails in CI.
 
 ## License
 
