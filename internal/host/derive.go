@@ -70,6 +70,11 @@ func (a *App) Derive(path string, fn func(get func(path string) (any, bool)) (an
 	}
 	a.derived = append(a.derived, &derivation{path: path, fn: fn})
 	a.recompute()
+	// A registration changes what the runtime may write even when the
+	// recomputed value equals the stored one (and recompute wrote
+	// nothing): never let the frame skip (liveFrame) hand back a frame
+	// built before it.
+	a.writes++
 	a.mu.Unlock()
 	a.Wake()
 	return nil

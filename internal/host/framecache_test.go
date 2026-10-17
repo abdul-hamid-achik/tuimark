@@ -323,3 +323,27 @@ func TestListFollowAllocationUnderAlignStart(t *testing.T) {
 		}
 	}
 }
+
+// A Derive registration rebuilds the next frame even when the recomputed
+// value equals the stored one, so recompute wrote nothing: what the
+// runtime may write changed, and the frame skip must not hand back a
+// frame built before it (SPEC v0.4a §18.2).
+func TestDeriveRegistrationRebuildsFrame(t *testing.T) {
+	a, err := Parse(strings.NewReader(`<tui version="3"><screen id="s"><text>{n}</text></screen></tui>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Bind("", map[string]any{"n": float64(1)}); err != nil {
+		t.Fatal(err)
+	}
+	f1 := a.Frame(20, 3)
+	if f2 := a.Frame(20, 3); f2 != f1 {
+		t.Fatalf("an unchanged app rebuilt its frame: the skip is off, so this test checks nothing")
+	}
+	if err := a.Derive("n", func(func(string) (any, bool)) (any, error) { return float64(1), nil }); err != nil {
+		t.Fatal(err)
+	}
+	if f3 := a.Frame(20, 3); f3 == f1 {
+		t.Errorf("the frame built before the Derive registration was handed back")
+	}
+}

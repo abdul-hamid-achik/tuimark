@@ -93,15 +93,68 @@ func BenchmarkListDown20k(b *testing.B) { benchDown(b, benchList) }
 // four columns.
 func BenchmarkTableDown20k(b *testing.B) { benchDown(b, benchTable) }
 
+// benchFilter is case (c): a search input over the list of case (a),
+// whose rows are a Derive of the store's rows filtered by the input's
+// text.
+const benchFilter = `<tui version="3"><screen id="s" focus="#q">
+<input id="q" bind="q" style="dock: top"/>
+<list id="l" each="visible as r" key="r.id" bind="cur"><item><text>{r.name} {r.n}</text></item></list>
+</screen></tui>`
+
+// filterRows is case (c)'s Derive: the rows whose name holds the query.
+func filterRows(get func(string) (any, bool)) (any, error) {
+	rows, _ := get("rows")
+	q, _ := get("q")
+	qs, _ := q.(string)
+	all, _ := rows.([]any)
+	out := make([]any, 0, len(all))
+	for _, r := range all {
+		m, _ := r.(map[string]any)
+		if name, _ := m["name"].(string); strings.Contains(name, qs) {
+			out = append(out, r)
+		}
+	}
+	return out, nil
+}
+
 // BenchmarkDeriveFilterText20k is case (c): a text: keystroke into an
-// input whose bind a Derive filters over 20 000 rows.
-//
-// TODO(0.4a): Derive is being added to the runtime loop in parallel; write
-// this case on top of it (an input bound to "q", a Derive of
-// "visible" = rows filtered by q, a list over visible, one text: step per
-// iteration) once the API lands.
+// input whose bind a Derive filters over 20 000 rows. The query cycles
+// through "1", "12", "123" (13 439, 1 578, and 140 rows: every keystroke
+// changes the derived array, so the list's row cache misses each time)
+// and is cleared outside the timer before each cycle.
 func BenchmarkDeriveFilterText20k(b *testing.B) {
-	b.Skip("TODO(0.4a): needs the Derive API (SPEC v0.4a §21 test 125, case c)")
+	a, err := host.Parse(strings.NewReader(benchFilter))
+	if err != nil {
+		b.Fatal(err)
+	}
+	data := benchData(benchRows)
+	data["q"] = ""
+	if err := a.Bind("", data); err != nil {
+		b.Fatal(err)
+	}
+	if err := a.Derive("visible", filterRows); err != nil {
+		b.Fatal(err)
+	}
+	s := NewSession(a, 80, 24, false, false, false, true)
+	s.Run(nil)
+	const query = "123"
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if i > 0 && i%len(query) == 0 {
+			b.StopTimer()
+			if err := s.App.Set("q", ""); err != nil {
+				b.Fatal(err)
+			}
+			s.settle(i)
+			b.StartTimer()
+		}
+		s.handleText(i+1, query[i%len(query):i%len(query)+1])
+		s.settle(i + 1)
+	}
+	if s.Err != nil {
+		b.Fatal(s.Err)
+	}
 }
 
 // BenchmarkBatchTick20k is case (d): a one-path Batch, as an Every tick
