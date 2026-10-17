@@ -94,15 +94,18 @@ process.exit((await ui.exited).code);
 In another language, you speak the protocol yourself. This Bun excerpt does it by hand, so the transport is visible. It drives `examples/host-ts/view.tui`, a document with one action, `inc`, and answers it by writing the new count back to the store:
 
 ```ts
-import { createWriteStream } from "node:fs";
+import { closeSync } from "node:fs";
 
 const proc = Bun.spawn({
   cmd: ["tuimark", "host", "view.tui", "--data", "sample.json"],
   stdio: ["inherit", "inherit", "inherit", "pipe", "pipe"],
 });
 
-const toChild = createWriteStream("", { fd: proc.stdio[3] as number });
-const send = (msg: object) => toChild.write(`${JSON.stringify(msg)}\n`);
+const toChild = Bun.file(proc.stdio[3] as number).writer();
+const send = (msg: object) => {
+  toChild.write(`${JSON.stringify(msg)}\n`);
+  void toChild.flush();
+};
 
 let count = 0; // the parent owns the model; the view only shows it
 
@@ -131,10 +134,12 @@ for (const sig of ["SIGTERM", "SIGHUP"] as const) {
 }
 
 await readMessages();
-process.exit(await proc.exited);
+const code = await proc.exited;
+closeSync(proc.stdio[3] as number); // FileSink.end() leaves the descriptor open
+process.exit(code);
 ```
 
-`fs.readSync`/`fs.createReadStream` fail on the raw socket-pair descriptors Bun hands back for fd 3/4 (`EAGAIN`); read fd 4 with `Bun.file(fd).stream()` and write fd 3 with `fs.createWriteStream("", { fd })`, whose `.end()` gives the child end of file on fd 3.
+`fs.readSync`/`fs.createReadStream` fail on the raw socket-pair descriptors Bun hands back for fd 3/4 (`EAGAIN`), and `fs.createWriteStream("", { fd })` breaks on a write of about 8 KB or more. Read fd 4 with `Bun.file(fd).stream()` and write fd 3 with `Bun.file(fd).writer()` (a `FileSink`, flushed after each message). Closing the descriptor with `closeSync` gives the child end of file on fd 3; `FileSink.end()` does not close it. Close fd 4 too once you have read it to the end, or each session leaks a descriptor.
 
 ## Rules for parents
 

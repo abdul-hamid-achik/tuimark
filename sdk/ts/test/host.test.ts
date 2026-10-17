@@ -2,7 +2,7 @@
 // speaks the §19.1 protocol on fd 3 and fd 4. The parts that need a process of
 // their own (signals, exitWithChild) are in process.test.ts.
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HostError, ProtocolVersionError, RequestError, spawnHost } from "../src/index.ts";
@@ -156,6 +156,106 @@ describe("acks", () => {
     await host.exited;
     await expect(host.set("a", 1)).rejects.toBeInstanceOf(HostError);
   });
+});
+
+describe("large messages", () => {
+  // On Bun 1.4.2 a write of 8-16 KB or more to the raw fd 3 threw inside
+  // fs.createWriteStream, and nothing was ever acked again.
+  for (const [label, size] of [
+    ["16 KB", 16 * 1024],
+    ["1 MB", 1024 * 1024],
+    ["8 MB", 8 * 1024 * 1024],
+  ] as const) {
+    test(`a ${label} set is acked, arrives intact, and the session goes on`, async () => {
+      const { host, received } = await start({ hang: true });
+      const value = "é".repeat(size / 2) + "x".repeat(size % 2);
+      const ack = await host.set("big", value);
+      expect(ack).toMatchObject({ type: "ack", ok: true });
+      expect(received()[0]).toMatchObject({ type: "set", path: "big", value: `<${value.length} chars>` });
+      expect(await host.get("big")).toEqual({ found: true, value });
+      expect((await host.set("after", 1)).ok).toBe(true);
+    }, 30_000);
+  }
+
+  test("a large batch and a large get are acked", async () => {
+    const { host } = await start({ hang: true });
+    const a = "a".repeat(300_000);
+    const b = "b".repeat(300_000);
+    const ack = await host.batch([
+      { path: "a", value: a },
+      { path: "b", value: b },
+    ]);
+    expect(ack.ok).toBe(true);
+    expect(await host.get("b")).toEqual({ found: true, value: b });
+  }, 30_000);
+
+  test("large and small messages sent together are applied in the order they were sent", async () => {
+    const { host, received } = await start({ hang: true });
+    const big = (c: string) => c.repeat(2 * 1024 * 1024);
+    const sent: Array<Promise<unknown>> = [
+      host.set("k", "first"),
+      host.set("k", big("1")),
+      host.set("small", 1),
+      host.batch([{ path: "k", value: big("2") }]),
+      host.set("k", "last"),
+      host.get("k"),
+      host.set("k", big("3")),
+      host.get("k"),
+    ];
+    const results = await Promise.all(sent);
+    expect((results[5] as { value: unknown }).value).toBe("last");
+    expect((results[7] as { value: unknown }).value).toBe(big("3"));
+    expect(received().map((m) => (m.type === "batch" ? "batch" : `${m.type}:${m.path}`))).toEqual([
+      "set:k",
+      "set:k",
+      "set:small",
+      "batch",
+      "set:k",
+      "get:k",
+      "set:k",
+      "get:k",
+    ]);
+    expect(received().map((m) => m.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+  }, 30_000);
+
+  test("a reply written after a large set still reaches the child", async () => {
+    const { host } = await start({ events: [{ action: "go" }, { action: "again" }], hang: true });
+    const seen: string[] = [];
+    host.on("go", async () => {
+      await host.set("big", "x".repeat(1024 * 1024));
+      seen.push("go");
+    });
+    const second = new Promise<void>((resolve) => host.on("again", () => void (seen.push("again"), resolve())));
+    await second;
+    expect(seen).toEqual(["go", "again"]);
+  }, 30_000);
+});
+
+describe("descriptors", () => {
+  const openFds = () => readdirSync(process.platform === "linux" ? "/proc/self/fd" : "/dev/fd").length;
+
+  test("twenty sequential sessions leave no descriptor open", async () => {
+    const session = async () => {
+      const { host } = await start({ events: [{ action: "tick" }] });
+      host.on("tick", () => {});
+      await host.exited;
+    };
+    await session(); // warm-up: whatever the runtime opens once
+    const before = openFds();
+    for (let i = 0; i < 20; i++) await session();
+    expect(openFds() - before).toBeLessThanOrEqual(2);
+  }, 60_000);
+
+  test("sessions that fail leave no descriptor open either", async () => {
+    const failing = async () => {
+      const { host } = await start({ noExitMessage: true, code: 3 });
+      await host.exited.catch(() => {});
+    };
+    await failing();
+    const before = openFds();
+    for (let i = 0; i < 10; i++) await failing();
+    expect(openFds() - before).toBeLessThanOrEqual(2);
+  }, 60_000);
 });
 
 describe("replies", () => {

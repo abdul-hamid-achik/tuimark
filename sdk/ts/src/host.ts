@@ -1,9 +1,10 @@
-import { createWriteStream, type WriteStream } from "node:fs";
+import { closeSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { constants as osConstants, tmpdir } from "node:os";
 import { join } from "node:path";
 import { HostError, ProtocolVersionError, RequestError } from "./errors.ts";
 import { readLines } from "./lines.ts";
+import { FdWriter } from "./sink.ts";
 import type {
   Ack,
   GetResult,
@@ -67,7 +68,8 @@ export class Host {
   readonly exited: Promise<HostExit>;
 
   readonly #proc: Subprocess;
-  readonly #out: WriteStream;
+  readonly #out: FdWriter;
+  readonly #stopReading = new AbortController();
   readonly #handlers = new Map<string, HostHandler>();
   readonly #onError: SpawnHostOptions["onError"];
   readonly #onProtocolError: SpawnHostOptions["onProtocolError"];
@@ -109,12 +111,12 @@ export class Host {
 
     // Bun gives fd 3 and fd 4 as raw descriptor numbers, the ends of Unix
     // socket pairs (SPEC §19.1, "Parents by language"): write fd 3 with a
-    // write stream, read fd 4 with Bun.file().stream(). readSync,
-    // createReadStream, and net.Socket do not work on them.
-    this.#out = createWriteStream("", { fd: fd3 });
-    // A write after the child is gone fails with EPIPE; the exit is handled
-    // by the watcher below, so this stream's error is not.
-    this.#out.on("error", () => {});
+    // FileSink (Bun.file(fd).writer(), see FdWriter) and read fd 4 with
+    // Bun.file(fd).stream(); the client closes both when it is done with
+    // them. readSync, createReadStream, createWriteStream, and net.Socket do
+    // not work on them. A write after the child is gone fails with EPIPE; the
+    // exit is handled by the watcher below, so that error is dropped.
+    this.#out = new FdWriter(fd3);
 
     let resolveReady!: (ready: Ready) => void;
     let rejectReady!: (error: Error) => void;
@@ -151,11 +153,22 @@ export class Host {
     }
 
     let transportError: unknown;
-    const readerDone = readLines(Bun.file(fd4).stream(), (line) => this.#onLine(line)).catch(
-      (error: unknown) => {
+    const readerDone = readLines(
+      Bun.file(fd4).stream(),
+      (line) => this.#onLine(line),
+      this.#stopReading.signal,
+    )
+      .catch((error: unknown) => {
         transportError = error;
-      },
-    );
+      })
+      .finally(() => {
+        // Reading never closes the descriptor; this does, once, when it settles.
+        try {
+          closeSync(fd4);
+        } catch {
+          // already closed
+        }
+      });
     void this.#watch(readerDone, () => transportError);
   }
 
@@ -423,9 +436,7 @@ export class Host {
       // The child would end the session on a line this long (SPEC §19.1).
       throw new RangeError("a line of 64 MiB or more would end the session; send less per message");
     }
-    if (this.#finished || this.#out.destroyed || this.#out.writableEnded) {
-      throw new HostError("the host has exited");
-    }
+    if (this.#finished || this.#out.ended) throw new HostError("the host has exited");
     this.#out.write(`${line}\n`);
   }
 
@@ -477,6 +488,10 @@ export class Host {
       }),
     ]);
     clearTimeout(timer);
+    // Still reading after the grace (something else holds the child's end of
+    // fd 4 open): stop, so that the descriptor can be closed.
+    this.#stopReading.abort();
+    await Promise.race([readerDone, new Promise<void>((resolve) => setTimeout(resolve, 250).unref())]);
     const code = exitCodeOf(this.#proc);
     this.#deliver(() => this.#finish(code, transportError()));
   }
@@ -486,10 +501,14 @@ export class Host {
     clearTimeout(this.#killTimer);
     for (const [signal, listener] of this.#signalListeners) process.off(signal, listener);
     this.#signalListeners.length = 0;
-    this.#out.end(); // gives the child end of file on fd 3, if it is still reading
+    // Gives the child end of file on fd 3, if it is still reading, and closes
+    // it. `exited` settles after that, so that a caller who awaits it sees no
+    // descriptor of this session left open.
+    const closed = this.#out.close();
     void this.#dropTemp();
 
     let error: Error | undefined;
+    let exit: HostExit | undefined;
     if (this.#ready === undefined) {
       error = new HostError(`tuimark host exited before it sent "ready" (code ${code})`, { code });
       this.#rejectReady(error);
@@ -497,7 +516,7 @@ export class Host {
       error = this.#failure;
       if (error instanceof HostError && error.code === undefined) error.code = code;
     } else if (this.#exitMessage) {
-      this.#resolveExit({ ...this.#exitMessage, code });
+      exit = { ...this.#exitMessage, code };
     } else {
       error = new HostError(
         `tuimark host exited without an "exit" message (code ${code})` +
@@ -511,7 +530,13 @@ export class Host {
       this.#pending.delete(id);
       pending.reject(pendingError);
     }
-    if (error) this.#rejectExit(error);
+    if (error) {
+      const rejectExit = this.#rejectExit;
+      void closed.then(() => rejectExit(error));
+    } else if (exit) {
+      const resolveExit = this.#resolveExit;
+      void closed.then(() => resolveExit(exit));
+    }
   }
 
   #exitWithChild(): void {

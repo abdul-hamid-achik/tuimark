@@ -55,8 +55,19 @@ function send(message: object): void {
   write(`${JSON.stringify(message)}\n`);
 }
 
+// Long strings are logged by length, so a test that sends megabytes keeps the log small.
+function shrink(value: unknown): unknown {
+  if (typeof value === "string") return value.length > 256 ? `<${value.length} chars>` : value;
+  if (Array.isArray(value)) return value.map(shrink);
+  if (typeof value === "object" && value !== null) {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, shrink(v)]));
+  }
+  return value;
+}
+
 const argv = process.argv.slice(2);
 log({ argv });
+log({ pid: process.pid });
 const dataAt = argv.indexOf("--data");
 if (dataAt >= 0) log({ data: JSON.parse(readFileSync(argv[dataAt + 1]!, "utf8")) });
 
@@ -122,7 +133,7 @@ if (!scenario.burst) advance();
 else if (events.length === 0 && !scenario.hang) end(scenario.reason ?? "quit");
 
 function handle(msg: Record<string, any>): void {
-  log({ recv: msg });
+  log({ recv: shrink(msg) });
   if (scenario.dieOn === msg.type) process.exit(7);
   const ack = (ok: boolean, extra: object = {}) =>
     send({ type: "ack", id: msg.id, ok, ...(ok ? {} : { error: "boom: refused" }), ...extra });

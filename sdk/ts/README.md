@@ -107,7 +107,7 @@ A rejection nobody awaits does not crash the process.
 
 | [Rule for parents](https://tuimark.vercel.app/guide/host-protocol) | Client |
 |---|---|
-| Pass fd 3 and fd 4 and read them as Bun needs. | `stdio: ["inherit", "inherit", "inherit", "pipe", "pipe"]`; fd 4 is read with `Bun.file(fd).stream()`, fd 3 is written with `fs.createWriteStream("", {fd})` and ended when the child is gone. |
+| Pass fd 3 and fd 4 and read them as Bun needs. | `stdio: ["inherit", "inherit", "inherit", "pipe", "pipe"]`; fd 4 is read with `Bun.file(fd).stream()`, fd 3 is written with `Bun.file(fd).writer()` (a `FileSink`: `fs.createWriteStream` breaks on writes of about 8 KB or more). Both descriptors are closed when the session ends, so the child sees end of file on fd 3 and nothing leaks. |
 | Forward `SIGTERM` and `SIGHUP` to the child. | Listeners are installed from `spawnHost` until the child exits, and removed after. While they are installed the signals no longer end your process: wait for `exited`, or set `exitWithChild`, and exit with the child's code. |
 | Never read or write the terminal while the child runs. | The client never touches fds 0, 1, or 2. |
 | End the child with `SIGTERM`, then `SIGKILL` after at least 2 seconds. | `close()`. |
