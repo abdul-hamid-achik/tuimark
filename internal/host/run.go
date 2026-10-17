@@ -1083,7 +1083,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// Every clock from here on, while the old one gives them back; then
 	// Applied runs and the loop settles, so the first frame of the new app
 	// is diffed with the last frame of the old one and fires the lifecycle
-	// events of what changed between them.
+	// events of what changed between them. The app the session started
+	// with is released here too, and once more, harmlessly, by its
+	// caller's deferred exitMode: only the session ever held it.
 	swap := func(s HostSwap) (stop bool, err error) {
 		if next := s.App; next != nil && next != a {
 			if err := next.enterMode(modeRun); err != nil {
