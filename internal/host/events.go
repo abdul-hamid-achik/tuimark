@@ -138,10 +138,12 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 		// (SPEC §8.2).
 		ls := a.lists[b.ID]
 		if ls != nil && ls.index < len(ls.keys) {
+			// A copy: a handler that changes an object or array key
+			// must not change the store.
 			if ls.each {
-				ev.Keys[ls.alias] = ls.keys[ls.index]
+				ev.Keys[ls.alias] = deepCopyJSON(ls.keys[ls.index])
 			} else {
-				ev.Value = ls.keys[ls.index]
+				ev.Value = deepCopyJSON(ls.keys[ls.index])
 			}
 		}
 	case "input":

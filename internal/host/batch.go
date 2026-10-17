@@ -164,12 +164,35 @@ func (a *App) applyBatch(writes []batchWrite) error {
 	if len(writes) == 0 {
 		return nil
 	}
+	if err := a.applyBatchLocked(writes); err != nil {
+		return err
+	}
+	a.Wake() // at most one redraw for the whole batch
+	return nil
+}
+
+// applyBatchLocked is applyBatch's apply under a.mu. The lock is released
+// and the store and state restored by a defer, so a panic in a Derive fn
+// (recompute runs under the lock, and a panic in fn is not recovered:
+// SPEC v0.4a §18.2) leaves neither the lock held nor the trial copy in
+// place.
+func (a *App) applyBatchLocked(writes []batchWrite) (failErr error) {
 	a.mu.Lock()
 	origStore := a.store
 	snap := a.snapForBatch()
 	prevErr := a.deriveErr
+	hold := a.deriveHold
 	a.store = deepCopyJSON(a.store)
-	var failErr error
+	applied := false
+	defer func() {
+		if !applied {
+			a.store = origStore
+			a.restoreBatchSnap(snap)
+			a.deriveErr = prevErr
+			a.deriveHold, a.deriveDue = hold, false
+		}
+		a.mu.Unlock()
+	}()
 	// The derived values are recomputed once, after every write of the
 	// batch, on the trial copy (SPEC v0.4a §18.2: get sees every write of
 	// the batch); a Derive error counts only when the batch applies. A
@@ -193,14 +216,6 @@ func (a *App) applyBatch(writes []batchWrite) error {
 			a.recompute()
 		}
 	}
-	if failErr != nil {
-		a.store = origStore
-		a.restoreBatchSnap(snap)
-		a.deriveErr = prevErr
-		a.mu.Unlock()
-		return failErr
-	}
-	a.mu.Unlock()
-	a.Wake() // at most one redraw for the whole batch
-	return nil
+	applied = failErr == nil
+	return failErr
 }
