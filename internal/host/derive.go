@@ -201,7 +201,9 @@ func (a *App) storeWrite(path string, v any, batch bool) error {
 			return err
 		}
 	}
-	root, err := assign(a.store, path, v)
+	// Inside a Batch's trial (a.cow) the write changes only the trial's
+	// copies of the containers on its path (cowSet).
+	root, err := assignIn(a.store, path, v, a.cow)
 	if err != nil {
 		return err
 	}
@@ -212,7 +214,7 @@ func (a *App) storeWrite(path string, v any, batch bool) error {
 }
 
 // unwriteStore removes the last member of path from its parent object
-// (unassign), for the undo of a tab activation, unless path is or lies
+// (unassignIn), for the undo of a tab activation, unless path is or lies
 // inside a derived path; the derived values are then recomputed. The
 // caller holds a.mu.
 func (a *App) unwriteStore(path string) {
@@ -221,7 +223,7 @@ func (a *App) unwriteStore(path string) {
 			return
 		}
 	}
-	unassign(a.store, path)
+	a.store = unassignIn(a.store, path, a.cow)
 	a.wrote(path)
 	a.recompute()
 }
@@ -260,7 +262,7 @@ func (a *App) recompute() {
 		if cur, ok := lookup(a.store, d.path); ok && reflect.DeepEqual(cur, v) {
 			continue // unchanged: no write, so the caches stay valid
 		}
-		root, err := assign(a.store, d.path, v)
+		root, err := assignIn(a.store, d.path, v, a.cow)
 		if err != nil {
 			// Writes that could break a derived path are refused before
 			// they apply (derivedConflict), so this does not happen.

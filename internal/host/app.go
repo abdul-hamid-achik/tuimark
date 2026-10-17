@@ -94,6 +94,11 @@ type App struct {
 	deriveHold int
 	deriveDue  bool
 	deriveErr  error
+	// cow is non-nil while a Batch's trial applies (applyBatchLocked):
+	// the containers of the store the trial owns, so that every store
+	// write then changes copies and never the store before the batch
+	// (cowSet).
+	cow cowSet
 	// The frame caches (framecache.go, listcache.go). writes counts every
 	// store write, whatever its path (wrote). frameKey is the fingerprint
 	// of every input of a frame (frameInputs) that the last build of

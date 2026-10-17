@@ -1,6 +1,7 @@
 package host
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
@@ -573,20 +574,52 @@ func (a *App) undoTabActs(acts []tabAct) bool {
 	return changed
 }
 
-// unassign removes the last member of path from its parent object, when
-// there is one.
-func unassign(root any, path string) {
-	parent, last := root, path
-	if i := strings.LastIndexByte(path, '.'); i >= 0 {
-		p, ok := lookup(root, path[:i])
+// unassignIn removes the last member of path from its parent object, when
+// there is one (the parent found as lookup finds it), and returns root.
+// Through a non-nil cow (a Batch's trial, assignIn) every container along
+// the path is copied first when the trial does not own it, and the copy
+// of root is returned instead.
+func unassignIn(root any, path string, cow cowSet) any {
+	out, _ := unassignSegs(root, strings.Split(path, "."), cow)
+	return out
+}
+
+// unassignSegs is unassignIn below cur; changed reports whether a member
+// was removed.
+func unassignSegs(cur any, segs []string, cow cowSet) (out any, changed bool) {
+	seg := segs[0]
+	switch c := cur.(type) {
+	case map[string]any:
+		e, ok := c[seg]
 		if !ok {
-			return
+			return c, false
 		}
-		parent, last = p, path[i+1:]
+		if len(segs) == 1 {
+			c = cow.ownMap(c)
+			delete(c, seg)
+			return c, true
+		}
+		ne, ch := unassignSegs(e, segs[1:], cow)
+		if !ch {
+			return c, false
+		}
+		c = cow.ownMap(c)
+		c[seg] = ne
+		return c, true
+	case []any:
+		i, err := strconv.Atoi(seg)
+		if err != nil || i < 0 || i >= len(c) || len(segs) == 1 {
+			return c, false
+		}
+		ne, ch := unassignSegs(c[i], segs[1:], cow)
+		if !ch {
+			return c, false
+		}
+		c = cow.ownArray(c)
+		c[i] = ne
+		return c, true
 	}
-	if m, ok := parent.(map[string]any); ok {
-		delete(m, last)
-	}
+	return cur, false
 }
 
 // tabSelects returns the on:select events of the tabs a landed focus
