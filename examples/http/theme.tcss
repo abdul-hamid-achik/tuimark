@@ -1,0 +1,157 @@
+/* examples/http: the whole look of the HTTP client. Dark palette first,
+   light one after it in @media (theme: light), because tokens apply in
+   document order. */
+:root {
+  --bg: #14171c;
+  --fg: #d7dde5;
+  --muted: #7b8594;
+  --accent: #5aa9ff;
+  --ok: #4cc38a;
+  --warn: #e5a63b;
+  --danger: #ef5b5b;
+  --border: #2d343d;
+  --focus: #5aa9ff;
+  --panel: #1b2027;
+  --field: #222934;
+  --field-hi: #2c3646;
+  --sel: #232b36;
+  --sel-hi: #2f4562;
+  --key: #9fb3c8;
+  --get: #4cc38a;
+  --post: #e5a63b;
+  --put: #5aa9ff;
+  --patch: #b78cf2;
+  --delete: #ef5b5b;
+  --redir: #4fc3d9;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --fg: #1d232b;
+    --muted: #66707d;
+    --accent: #1763c7;
+    --ok: #1c7f50;
+    --warn: #8f5a00;
+    --danger: #c22b2b;
+    --border: #c9d0d8;
+    --focus: #1763c7;
+    --panel: #eef1f4;
+    --field: #e3e8ee;
+    --field-hi: #d3e2f6;
+    --sel: #e3e8ee;
+    --sel-hi: #c9ddf6;
+    --key: #3e5670;
+    --get: #1c7f50;
+    --post: #9a5b00;
+    --put: #1763c7;
+    --patch: #7a3fc4;
+    --delete: #c22b2b;
+    --redir: #0b7a8f;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+text { wrap: truncate; }
+.muted { color: $muted; }
+.num { content-align: end; color: $muted; }
+.label { width: 8; color: $muted; }
+
+/* chrome */
+#titlebar { height: 1; gap: 2; padding: 0 1; background: $panel; overflow: hidden; }
+.brand { color: $accent; bold: true; width: 6; }
+.summary { width: 1fr; color: $muted; wrap: truncate-middle; }
+.mode { color: $muted; }
+#statusbar { height: 1; gap: 2; padding: 0 1; overflow: hidden; }
+.status { width: 1fr; }
+.status.fail { color: $danger; }
+#keys { height: 1; padding: 0 1; background: $panel; overflow: hidden; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+.panel { border: rounded; border-color: $border; title-color: $muted; padding: 0 1; overflow: hidden; }
+.panel:focus-within { border-color: $focus; }
+#main-row { height: 1fr; gap: 1; overflow: hidden; }
+#side { width: 34; }
+#work { width: 1fr; overflow: hidden; }
+
+/* method badges and status colors */
+.method { width: 6; bold: true; }
+.get { color: $get; }
+.post { color: $post; }
+.put { color: $put; }
+.patch { color: $patch; }
+.delete { color: $delete; }
+.code { bold: true; }
+.ok { color: $ok; }
+.redir { color: $redir; }
+.client { color: $warn; }
+.server { color: $danger; }
+.fail { color: $danger; }
+
+/* sidebar */
+#filter-row { height: 1; gap: 1; }
+#filter-row > .label { width: 1; }
+#filter-row:focus-within > .label { color: $accent; }
+#side-tabs { height: 1fr; gap: 2; }
+.tab-label { color: $muted; padding: 0 1; }
+.tab-label:selected { color: $accent; bold: true; underline: true; }
+#reqs, #hist { width: 1fr; height: 1fr; }
+#reqs > item:selected, #hist > item:selected { reverse: false; background: $sel; }
+#reqs:focus > item:selected, #hist:focus > item:selected { background: $sel-hi; bold: true; }
+.req-row, .hist-row { height: 1; gap: 1; }
+.req-name { width: 1fr; }
+.hist-row > .code { width: 3; }
+.hist-path { width: 1fr; }
+
+/* editor */
+#editor { height: auto; }
+#url-row { height: 1; gap: 1; }
+#url-row > .method { width: 8; }
+input { width: 1fr; color: $fg; background: $field; }
+input:focus { background: $field-hi; }
+#send { width: 8; content-align: center; color: $bg; background: $accent; bold: true; }
+#send:focus { reverse: true; }
+#hdr-row { height: 3; gap: 1; }
+#hdrs { width: 1fr; height: 3; }
+#hdrs > item:selected { reverse: false; }
+#hdrs:focus > item:selected { background: $sel-hi; }
+.hdr-line { height: 1; gap: 1; }
+.hk { width: 22; color: $key; }
+.hv { width: 1fr; }
+#draft-row, #body-row { height: 1; gap: 1; }
+
+/* response */
+#response { height: 1fr; }
+#status-row, #flight-row { height: 1; gap: 2; }
+.meta { color: $muted; }
+.ctype { width: 1fr; }
+.spin { color: $accent; width: 1; }
+.flight-label { width: 1fr; }
+#flight-bar { width: 12; color: $accent; bar: eighths; }
+#rtabs { height: 1fr; gap: 2; }
+#body-scroll { height: 1fr; scrollbar: auto; }
+.resp-body { width: 100%; }
+.resp-body.fail { wrap: wrap; }
+.resp-body.stale { dim: true; }
+#rhdrs { height: 1fr; scrollbar: auto; }
+#rhdrs > column { bold: true; color: $muted; }
+#rhdrs > item:selected { reverse: false; }
+#rhdrs:focus > item:selected { background: $sel-hi; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#help { width: 50; max-width: 100%; height: auto; max-height: 100%; padding: 0 1; }
+.help { layout: column; gap: 0; }
+
+@media (max-cols: 99) {
+  #side { width: 28; }
+  .hk { width: 16; }
+}
+@media (max-cols: 71) {
+  #side { display: none; }
+}
+@media (min-rows: 28) {
+  #hdr-row { height: 4; }
+  #hdrs { height: 4; }
+}

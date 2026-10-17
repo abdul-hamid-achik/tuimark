@@ -1,0 +1,402 @@
+{
+  "base": "http://127.0.0.1:8099",
+  "mode": "demo · timeout 10s",
+  "status": "POST /users → 201 Created in 143 ms",
+  "status_err": false,
+  "side_tab": "t-coll",
+  "resp_tab": "t-body",
+  "query": "",
+  "cursor": "c3",
+  "hcursor": "h3",
+  "hdr_cursor": null,
+  "help_open": false,
+  "flight": {
+    "active": false,
+    "label": "",
+    "spin": "⠋",
+    "elapsed": "0.0s",
+    "pct": 0
+  },
+  "req": {
+    "id": "c3",
+    "name": "Create user",
+    "method": "POST",
+    "url": "{{base}}/users",
+    "body": "{\"name\":\"Ada Lovelace\",\"team\":\"math\"}",
+    "draft": "",
+    "dirty": false,
+    "headers": [
+      {
+        "n": 1,
+        "k": "Content-Type",
+        "v": "application/json"
+      },
+      {
+        "n": 2,
+        "k": "Accept",
+        "v": "application/json"
+      }
+    ]
+  },
+  "collection": [
+    {
+      "id": "c1",
+      "name": "List users",
+      "method": "GET",
+      "url": "{{base}}/users",
+      "body": "",
+      "headers": [
+        "Accept: application/json"
+      ]
+    },
+    {
+      "id": "c2",
+      "name": "Get user",
+      "method": "GET",
+      "url": "{{base}}/users/1",
+      "body": "",
+      "headers": [
+        "Accept: application/json"
+      ]
+    },
+    {
+      "id": "c3",
+      "name": "Create user",
+      "method": "POST",
+      "url": "{{base}}/users",
+      "body": "{\"name\":\"Ada Lovelace\",\"team\":\"math\"}",
+      "headers": [
+        "Content-Type: application/json",
+        "Accept: application/json"
+      ]
+    },
+    {
+      "id": "c4",
+      "name": "Replace user",
+      "method": "PUT",
+      "url": "{{base}}/users/1",
+      "body": "{\"name\": \"Grace Hopper\", \"email\": \"grace@navy.mil\", \"role\": \"admin\"}",
+      "headers": [
+        "Content-Type: application/json"
+      ]
+    },
+    {
+      "id": "c5",
+      "name": "Update email",
+      "method": "PATCH",
+      "url": "{{base}}/users/1",
+      "body": "{\"email\": \"grace@hopper.dev\"}",
+      "headers": [
+        "Content-Type: application/json"
+      ]
+    },
+    {
+      "id": "c6",
+      "name": "Remove user",
+      "method": "DELETE",
+      "url": "{{base}}/users/1",
+      "body": "",
+      "headers": []
+    },
+    {
+      "id": "c7",
+      "name": "Health check",
+      "method": "GET",
+      "url": "{{base}}/health",
+      "body": "",
+      "headers": []
+    },
+    {
+      "id": "c8",
+      "name": "Slow endpoint",
+      "method": "GET",
+      "url": "{{base}}/slow",
+      "body": "",
+      "headers": []
+    },
+    {
+      "id": "c9",
+      "name": "Server error",
+      "method": "GET",
+      "url": "{{base}}/error",
+      "body": "",
+      "headers": []
+    },
+    {
+      "id": "c10",
+      "name": "Missing page",
+      "method": "GET",
+      "url": "{{base}}/nope",
+      "body": "",
+      "headers": []
+    }
+  ],
+  "history": [
+    {
+      "id": "h3",
+      "method": "POST",
+      "url": "{{base}}/users",
+      "status": 201,
+      "error": "",
+      "took": "143 ms",
+      "at": "09:30:12",
+      "req": {
+        "method": "POST",
+        "url": "{{base}}/users",
+        "body": "{\"name\":\"Ada Lovelace\",\"team\":\"math\"}",
+        "headers": [
+          "Content-Type: application/json",
+          "Accept: application/json"
+        ]
+      }
+    },
+    {
+      "id": "h2",
+      "method": "GET",
+      "url": "{{base}}/missing",
+      "status": 404,
+      "error": "",
+      "took": "4 ms",
+      "at": "09:29:47",
+      "req": {
+        "method": "GET",
+        "url": "{{base}}/missing",
+        "body": "",
+        "headers": []
+      }
+    },
+    {
+      "id": "h1",
+      "method": "GET",
+      "url": "{{base}}/health",
+      "status": 200,
+      "error": "",
+      "took": "6 ms",
+      "at": "09:29:30",
+      "req": {
+        "method": "GET",
+        "url": "{{base}}/health",
+        "body": "",
+        "headers": []
+      }
+    }
+  ],
+  "resp": {
+    "status": 201,
+    "reason": "Created",
+    "error": "",
+    "time": "143 ms",
+    "size": "169 B",
+    "ctype": "application/json",
+    "body": "{\n  \"active\": true,\n  \"created_at\": \"2026-10-17T09:30:00Z\",\n  \"id\": 4,\n  \"links\": {\n    \"orders\": \"/users/4/orders\",\n    \"self\": \"/users/4\"\n  },\n  \"name\": \"Ada Lovelace\",\n  \"roles\": [\n    \"member\"\n  ],\n  \"team\": \"math\"\n}",
+    "hcount": 6,
+    "headers": [
+      {
+        "n": 1,
+        "name": "Content-Length",
+        "value": "169"
+      },
+      {
+        "n": 2,
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "n": 3,
+        "name": "Date",
+        "value": "Sat, 17 Oct 2026 09:30:12 GMT"
+      },
+      {
+        "n": 4,
+        "name": "Location",
+        "value": "/users/4"
+      },
+      {
+        "n": 5,
+        "name": "Server",
+        "value": "fakeapi/1.0"
+      },
+      {
+        "n": 6,
+        "name": "X-Request-Id",
+        "value": "req-0003"
+      }
+    ]
+  },
+  "mf": {
+    "delete": false,
+    "get": false,
+    "patch": false,
+    "post": true,
+    "put": false
+  },
+  "visible": [
+    {
+      "delete": false,
+      "get": true,
+      "id": "c1",
+      "method": "GET",
+      "name": "List users",
+      "patch": false,
+      "post": false,
+      "put": false
+    },
+    {
+      "delete": false,
+      "get": true,
+      "id": "c2",
+      "method": "GET",
+      "name": "Get user",
+      "patch": false,
+      "post": false,
+      "put": false
+    },
+    {
+      "delete": false,
+      "get": false,
+      "id": "c3",
+      "method": "POST",
+      "name": "Create user",
+      "patch": false,
+      "post": true,
+      "put": false
+    },
+    {
+      "delete": false,
+      "get": false,
+      "id": "c4",
+      "method": "PUT",
+      "name": "Replace user",
+      "patch": false,
+      "post": false,
+      "put": true
+    },
+    {
+      "delete": false,
+      "get": false,
+      "id": "c5",
+      "method": "PATCH",
+      "name": "Update email",
+      "patch": true,
+      "post": false,
+      "put": false
+    },
+    {
+      "delete": true,
+      "get": false,
+      "id": "c6",
+      "method": "DELETE",
+      "name": "Remove user",
+      "patch": false,
+      "post": false,
+      "put": false
+    },
+    {
+      "delete": false,
+      "get": true,
+      "id": "c7",
+      "method": "GET",
+      "name": "Health check",
+      "patch": false,
+      "post": false,
+      "put": false
+    },
+    {
+      "delete": false,
+      "get": true,
+      "id": "c8",
+      "method": "GET",
+      "name": "Slow endpoint",
+      "patch": false,
+      "post": false,
+      "put": false
+    },
+    {
+      "delete": false,
+      "get": true,
+      "id": "c9",
+      "method": "GET",
+      "name": "Server error",
+      "patch": false,
+      "post": false,
+      "put": false
+    },
+    {
+      "delete": false,
+      "get": true,
+      "id": "c10",
+      "method": "GET",
+      "name": "Missing page",
+      "patch": false,
+      "post": false,
+      "put": false
+    }
+  ],
+  "history_view": [
+    {
+      "code": "201",
+      "delete": false,
+      "get": false,
+      "id": "h3",
+      "k2": true,
+      "k3": false,
+      "k4": false,
+      "k5": false,
+      "kerr": false,
+      "method": "POST",
+      "patch": false,
+      "path": "/users",
+      "post": true,
+      "put": false,
+      "took": "143 ms"
+    },
+    {
+      "code": "404",
+      "delete": false,
+      "get": true,
+      "id": "h2",
+      "k2": false,
+      "k3": false,
+      "k4": true,
+      "k5": false,
+      "kerr": false,
+      "method": "GET",
+      "patch": false,
+      "path": "/missing",
+      "post": false,
+      "put": false,
+      "took": "4 ms"
+    },
+    {
+      "code": "200",
+      "delete": false,
+      "get": true,
+      "id": "h1",
+      "k2": true,
+      "k3": false,
+      "k4": false,
+      "k5": false,
+      "kerr": false,
+      "method": "GET",
+      "patch": false,
+      "path": "/health",
+      "post": false,
+      "put": false,
+      "took": "6 ms"
+    }
+  ],
+  "counts": {
+    "coll": "10",
+    "hist": "3"
+  },
+  "rv": {
+    "k2": true,
+    "k3": false,
+    "k4": false,
+    "k5": false,
+    "kerr": false,
+    "line": "201 Created"
+  },
+  "summary": "POST http://127.0.0.1:8099/users · 2 headers · body 37 B",
+  "edit_title": "request · Create user"
+}

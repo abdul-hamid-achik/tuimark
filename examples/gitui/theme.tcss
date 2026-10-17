@@ -1,0 +1,145 @@
+:root {
+  --bg: #14171c;
+  --fg: #d5d9e0;
+  --muted: #7f8896;
+  --accent: #5aa9ff;
+  --border: #2f353e;
+  --focus: #5aa9ff;
+  --panel: #1b1f26;
+  --sel: #25456b;
+  --sel-dim: #232a35;
+  --add: #4cc26b;
+  --del: #f0645c;
+  --mod: #e0a83c;
+  --ren: #b58cf5;
+  --unt: #8f98a6;
+  --add-bg: #14281c;
+  --del-bg: #2c171a;
+  --hunk: #7cb8ff;
+  --hunk-bg: #182638;
+  --err: #f0645c;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #656d76;
+    --accent: #0969da;
+    --border: #d0d7de;
+    --focus: #0969da;
+    --panel: #f3f5f8;
+    --sel: #b6d6f8;
+    --sel-dim: #e6ebf1;
+    --add: #1a7f37;
+    --del: #cf222e;
+    --mod: #965f00;
+    --ren: #8250df;
+    --unt: #6b7480;
+    --add-bg: #dafbe1;
+    --del-bg: #ffebe9;
+    --hunk: #0550ae;
+    --hunk-bg: #ddf4ff;
+    --err: #cf222e;
+  }
+}
+
+screen { color: $fg; background: $bg; wrap: truncate; }
+.muted { color: $muted; }
+
+#identity { height: 1; gap: 1; padding: 0 1; background: $panel; }
+.brand { color: $accent; bold: true; }
+.repo { bold: true; }
+.branch { color: $ren; bold: true; }
+.sync { color: $muted; }
+.mode { color: $muted; }
+
+#nav { height: 1fr; gap: 2; }
+.tab-label { color: $muted; }
+.tab-label:selected { color: $accent; bold: true; }
+
+.panel { border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+.panel:focus-within { border-color: $focus; title-color: $accent; }
+
+#status-pane { gap: 0; }
+#files { width: 40%; min-width: 34; max-width: 44; }
+#diff { width: 1fr; }
+.files { height: 1fr; }
+.file { height: 1; gap: 1; }
+.code { width: 1; bold: true; }
+.k-m { color: $mod; }
+.k-a { color: $add; }
+.k-d { color: $del; }
+.k-r { color: $ren; }
+.k-u { color: $unt; }
+.path { width: 1fr; wrap: truncate-start; }
+list > item:selected { reverse: false; background: $sel-dim; }
+list:focus > item:selected { reverse: false; background: $sel; bold: true; }
+
+#diff-lines { height: auto; }
+.dl { color: $fg; }
+.dl-meta { color: $muted; }
+.dl-hunk { color: $hunk; background: $hunk-bg; }
+.dl-add { color: $add; background: $add-bg; }
+.dl-del { color: $del; background: $del-bg; }
+
+#log-pane { gap: 0; }
+#filter-row { height: 1; gap: 1; padding: 0 1; }
+#filter-row:focus-within > text { color: $accent; }
+#commits, #branch-table { gap: 1; height: 1fr; scrollbar: auto; }
+#commits > column, #branch-table > column { bold: true; color: $muted; }
+#commits > item:selected, #branch-table > item:selected { reverse: false; background: $sel-dim; }
+#commits:focus > item:selected, #branch-table:focus > item:selected { reverse: false; background: $sel; bold: true; }
+.hash { color: $accent; }
+.author { color: $fg; }
+.when { color: $muted; }
+.refs { color: $mod; }
+.refs.head { color: $add; bold: true; }
+.mark { color: $add; bold: true; }
+.track { color: $mod; }
+.upstream { color: $muted; }
+.current { bold: true; color: $add; }
+
+#statusline { height: 1; padding: 0 1; background: $panel; }
+.status { color: $muted; }
+.status.err { color: $err; bold: true; }
+#keys { height: 1; padding: 0 1; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#commit { width: 100%; height: 90%; }
+.meta { color: $muted; }
+.subject { bold: true; }
+.stats { color: $accent; }
+#commit-body { height: auto; }
+#commit-lines { height: auto; }
+#checkout { width: 56; max-width: 100%; height: 7; }
+#checkout-actions { height: 1; gap: 2; }
+#help { width: 60%; height: 80%; }
+.help { layout: column; gap: 0; }
+#c-subject { min-width: 28; }
+#c-refs { max-width: 26; }
+#b-subject { min-width: 16; }
+#staged-box { height: auto; max-height: 50%; }
+#unstaged-box { height: 1fr; }
+.files { height: auto; }
+#unstaged { height: 1fr; }
+.counts { color: $fg; }
+
+@media (max-cols: 70) {
+  .counts { display: none; }
+}
+
+@media (max-cols: 59) {
+  #identity { padding: 0; }
+  #status-pane { layout: column; }
+  #files { width: 1fr; max-width: 100%; height: 50%; }
+  #diff { height: 1fr; }
+}
+#commit-diff { height: 1fr; scrollbar: auto; }
+.status { width: 1fr; }
+.repo { max-width: 24; }
+.branch { max-width: 28; }
+#help { overflow: hidden; }

@@ -1,0 +1,91 @@
+:root {
+  --bg: #14171c;
+  --fg: #d7dce2;
+  --muted: #7d8590;
+  --accent: #58a6ff;
+  --ok: #56b870;
+  --warn: #e3b341;
+  --danger: #f2615c;
+  --border: #30363d;
+  --focus: #58a6ff;
+  --panel: #1b1f26;
+  --error-bg: #2a1a1d;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --fg: #1f2328;
+    --muted: #6a737d;
+    --accent: #0b64c0;
+    --ok: #1f7a3a;
+    --warn: #8a5a00;
+    --danger: #c3261f;
+    --border: #d0d7de;
+    --focus: #0b64c0;
+    --panel: #eef1f4;
+    --error-bg: #fdecea;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+.muted { color: $muted; }
+
+#identity { height: 1; gap: 1; background: $panel; }
+.brand { color: $accent; bold: true; }
+.source { color: $muted; }
+#rate { width: auto; color: $accent; }
+.rate { color: $muted; }
+.state { bold: true; }
+.live { color: $ok; }
+.paused { color: $warn; }
+
+#levelbar { height: 1; gap: 3; }
+.chip { width: auto; height: 1; gap: 1; }
+.chip-key { color: $muted; }
+.chip.off { color: $muted; dim: true; }
+
+#filterbar { height: 1; gap: 1; }
+.prompt { color: $muted; }
+#filter { width: 1fr; }
+#filterbar:focus-within > .prompt { color: $accent; bold: true; }
+.notice { color: $danger; bold: true; wrap: truncate; width: 1fr; }
+
+#log { height: 1fr; padding: 0 1; border: rounded; border-color: $border; title-color: $muted; }
+#log:focus { border-color: $focus; }
+#rows { height: auto; }
+.empty { color: $muted; }
+
+.line { height: 1; gap: 1; }
+.line > text { wrap: truncate; }
+.ts { width: 12; color: $muted; }
+.lvl { width: 5; bold: true; }
+.svc { width: 8; color: $accent; }
+.msg { width: 1fr; }
+.error { color: $danger; }
+.warn { color: $warn; }
+.debug { color: $muted; }
+.line.error { background: $error-bg; }
+.info > .lvl { color: $ok; }
+.cont > .msg { dim: true; }
+
+#keys { height: 1; background: $panel; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#help { width: 50; height: auto; }
+.help { layout: column; gap: 0; }
+
+@media (max-cols: 76) {
+  .source, #rate { display: none; }
+}
+
+@media (max-cols: 60) {
+  #levelbar { gap: 1; }
+  .chip { gap: 0; }
+  .chip-key { display: none; }
+  .ts, .svc { display: none; }
+  .alert > .rate { display: none; }
+}

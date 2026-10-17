@@ -1,0 +1,152 @@
+<tui version="3" theme="auto">
+  <style src="theme.tcss"/>
+  <keymap when="#filter">
+    <bind keys="esc" action="filter_clear" label="clear"/>
+  </keymap>
+  <keymap when="#app">
+    <bind keys="ctrl+s,r" action="send" keycap="ctrl+s" label="send"/>
+    <bind keys="esc" action="cancel" label="cancel"/>
+    <bind keys="s" action="req_save" label="save"/>
+    <bind keys="m,ctrl+t" action="method_next" keycap="m" label="method"/>
+    <bind keys="/" action="focus" to="#filter" label="filter"/>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="ctrl+c" action="quit" when=""/>
+  </keymap>
+  <keymap when="#reqs:focus">
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+    <bind keys="enter" action="focus" to="#url" label="edit"/>
+    <bind keys="D" action="req_delete" label="delete"/>
+  </keymap>
+  <keymap when="#hist:focus">
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+    <bind keys="enter" action="focus" to="#url" label="edit"/>
+  </keymap>
+  <keymap when="#hdrs:focus">
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+    <bind keys="d" action="header_del" label="drop header"/>
+  </keymap>
+  <keymap when="#body-scroll:focus">
+    <bind keys="j" action="move-next" label="scroll"/>
+    <bind keys="k" action="move-prev"/>
+    <bind keys="g" action="move-first"/>
+    <bind keys="G" action="move-last"/>
+  </keymap>
+  <keymap when="#app">
+    <bind keys="1" action="switch-to" to="#t-coll" keycap="1-2" label="pane"/>
+    <bind keys="2" action="switch-to" to="#t-hist"/>
+    <bind keys="b" action="switch-to" to="#t-body" keycap="b/h" label="body/headers"/>
+    <bind keys="h" action="switch-to" to="#t-headers"/>
+    <bind keys="n" action="req_new" label="new"/>
+  </keymap>
+  <keymap when="#help">
+    <bind keys="?,q" action="help_close" label="close"/>
+  </keymap>
+  <screen id="main" focus="#reqs">
+    <col id="app">
+      <row id="titlebar">
+        <text class="brand">◆ http</text>
+        <text class="summary">{summary}</text>
+        <text class="mode">{mode}</text>
+      </row>
+      <row id="main-row">
+        <col id="side" class="panel">
+          <row id="filter-row">
+            <text class="label">/</text>
+            <input id="filter" bind="query" placeholder="filter requests" on:submit="filter_done"/>
+          </row>
+          <tabs id="side-tabs" bind="side_tab">
+            <tab id="t-coll" label="collection {counts.coll}" short="coll {counts.coll}" focus="#reqs">
+              <list id="reqs" each="visible as r" key="r.id" bind="cursor" on:select="req_select">
+                <item>
+                  <row class="req-row">
+                    <text class="method" class:get="r.get" class:post="r.post" class:put="r.put" class:patch="r.patch" class:delete="r.delete">{r.method}</text>
+                    <text class="req-name">{r.name}</text>
+                  </row>
+                </item>
+              </list>
+            </tab>
+            <tab id="t-hist" label="history {counts.hist}" short="hist {counts.hist}" focus="#hist">
+              <list id="hist" each="history_view as e" key="e.id" bind="hcursor" on:select="hist_select">
+                <item>
+                  <row class="hist-row">
+                    <text class="method" class:get="e.get" class:post="e.post" class:put="e.put" class:patch="e.patch" class:delete="e.delete">{e.method}</text>
+                    <text class="code" class:ok="e.k2" class:redir="e.k3" class:client="e.k4" class:server="e.k5" class:fail="e.kerr">{e.code}</text>
+                    <text class="hist-path">{e.path}</text>
+                    <text class="num">{e.took}</text>
+                  </row>
+                </item>
+              </list>
+            </tab>
+          </tabs>
+        </col>
+        <col id="work">
+          <box id="editor" class="panel" title="{edit_title}">
+            <row id="url-row">
+              <text class="method" class:get="mf.get" class:post="mf.post" class:put="mf.put" class:patch="mf.patch" class:delete="mf.delete">{req.method}</text>
+              <input id="url" bind="req.url" placeholder="https://api.example.com/path" on:change="edited" on:submit="send"/>
+              <button id="send" label="Send" on:click="send"/>
+            </row>
+            <row id="hdr-row">
+              <text class="label">headers</text>
+              <list id="hdrs" each="req.headers as h" key="h.n" bind="hdr_cursor">
+                <item>
+                  <row class="hdr-line">
+                    <text class="hk">{h.k}</text>
+                    <text class="hv">{h.v}</text>
+                  </row>
+                </item>
+              </list>
+            </row>
+            <row id="draft-row">
+              <text class="label">+ header</text>
+              <input id="draft" bind="req.draft" placeholder="Key: Value, then enter" on:submit="header_add"/>
+            </row>
+            <row id="body-row">
+              <text class="label">body</text>
+              <input id="body" bind="req.body" placeholder="raw body, e.g. a JSON document" on:change="edited"/>
+            </row>
+          </box>
+          <box id="response" class="panel" title="response">
+            <row id="flight-row" if="flight.active">
+              <text class="spin">{flight.spin}</text>
+              <text class="flight-label">{flight.label}</text>
+              <progress id="flight-bar" bind="flight.pct"/>
+              <text class="num">{flight.elapsed}</text>
+              <text class="muted">esc cancels</text>
+            </row>
+            <row id="status-row" if="!flight.active">
+              <text class="code" class:ok="rv.k2" class:redir="rv.k3" class:client="rv.k4" class:server="rv.k5" class:fail="rv.kerr">{rv.line}</text>
+              <text class="meta">{resp.time}</text>
+              <text class="meta">{resp.size}</text>
+              <text class="meta ctype">{resp.ctype}</text>
+            </row>
+            <tabs id="rtabs" bind="resp_tab">
+              <tab id="t-body" label="body" focus="#body-scroll">
+                <scroll id="body-scroll" focusable="true">
+                  <text class="resp-body" class:fail="rv.kerr" class:stale="flight.active">{resp.body}</text>
+                </scroll>
+              </tab>
+              <tab id="t-headers" label="headers {resp.hcount}" short="hdrs {resp.hcount}">
+                <table id="rhdrs" each="resp.headers as h" key="h.n" placeholder="no response headers">
+                  <column id="c-hname" title="Header" width="22">{h.name}</column>
+                  <column id="c-hvalue" title="Value" width="1fr">{h.value}</column>
+                </table>
+              </tab>
+            </tabs>
+          </box>
+        </col>
+      </row>
+      <row id="statusbar">
+        <text class="status" class:fail="status_err">{status}</text>
+      </row>
+      <hints id="keys"/>
+    </col>
+    <modal id="help" open="help_open" title="keys" on:escape="help_close">
+      <hints id="help-keys" class="help" scope="all"/>
+    </modal>
+  </screen>
+</tui>
