@@ -1,0 +1,31 @@
+/* SYNTAX TEST "source.tcss" "@media with the brace and the condition on later lines"
+/* The runtime accepts these (tuimark validate); the grammar must not mark them. */
+@media (min-cols: 80)
+/* <- punctuation.definition.keyword.tcss
+/* <~----- keyword.control.at-rule.media.tcss
+/*      ^^^^^^^^ support.type.property-name.media.tcss
+/*                ^^ constant.numeric.integer.tcss
+{
+/* <- punctuation.section.media.begin.tcss
+  .b { width: 50%; }
+/* ^ entity.other.attribute-name.class.tcss
+/*     ^^^^^ support.type.property-name.tcss
+}
+/* <- punctuation.section.media.end.tcss
+
+@media
+  (theme: light) {
+/* ^^^^^ support.type.property-name.media.tcss
+/*        ^^^^^ constant.language.theme.tcss
+  .b { color: red; }
+/* ^ entity.other.attribute-name.class.tcss
+}
+
+@media (theme: dark)
+{
+  .b { color: bright-cyan; }
+/*            ^^^^^^^^^^^ support.constant.color.ansi.tcss
+}
+
+.after { gap: 1; }
+/* <~~~~~ entity.other.attribute-name.class.tcss

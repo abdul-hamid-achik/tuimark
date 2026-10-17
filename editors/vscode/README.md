@@ -22,18 +22,22 @@ A property, pseudo-class, media feature, or tag that Tuimark does not have is ma
 
 ## Requirements
 
-Nothing, for highlighting and snippets. For the language server, install `tuimark` (see the [repository](https://github.com/abdul-hamid-achik/tuimark#install)) and make sure `tuimark version` works in a terminal.
+Nothing, for highlighting and snippets. For the language server, install `tuimark` (see the [repository](https://github.com/abdul-hamid-achik/tuimark#install)) and make sure `tuimark version` works in a terminal. The extension runs `tuimark version` first and starts the server only if it exits with status 0 and prints a `tuimark ...` version line.
+
+## Restricted Mode
+
+The extension supports [Workspace Trust](https://code.visualstudio.com/docs/editor/workspace-trust) in a limited way. In a workspace you have not trusted (Restricted Mode), highlighting and snippets keep working, but the language server does not start: a workspace can set `tuimark.path` in `.vscode/settings.json`, which chooses the program the extension runs. The workspace value of `tuimark.path` is ignored until you trust the workspace, and the server starts as soon as you do, with no reload.
 
 ## Settings
 
 | Setting | Default | |
 |---|---|---|
-| `tuimark.path` | `tuimark` | Path to the `tuimark` binary. The default is looked up on `PATH`. Changing it restarts the server. |
+| `tuimark.path` | `tuimark` | Path to the `tuimark` binary. The default is looked up on `PATH`. A relative path such as `./bin/tuimark` is resolved against the first workspace folder. Restricted in untrusted workspaces. Changing it restarts the server. |
 | `tuimark.trace.server` | `off` | `messages` or `verbose` logs the traffic with `tuimark lsp` in the *Tuimark* output channel. |
 
 ## Commands
 
-- **Tuimark: Restart Language Server** restarts `tuimark lsp`, for example after you install or upgrade the binary.
+- **Tuimark: Restart Language Server** restarts `tuimark lsp`, for example after you install or upgrade the binary. It does nothing in a workspace that is not trusted.
 
 ## The loop this is for
 

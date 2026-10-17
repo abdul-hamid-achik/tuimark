@@ -80,6 +80,19 @@ describe("package.json", () => {
     }
   });
 
+  test("restricted mode keeps grammars and snippets and restricts tuimark.path", () => {
+    const u = pkg.capabilities.untrustedWorkspaces;
+    expect(u.supported).toBe("limited");
+    expect(String(u.description).length).toBeGreaterThan(20);
+    expect(u.restrictedConfigurations).toEqual(["tuimark.path"]);
+    // Every restricted setting is one the extension declares.
+    for (const name of u.restrictedConfigurations) {
+      expect(pkg.contributes.configuration.properties[name]).toBeDefined();
+    }
+    // A workspace can still pick a project-local binary once it is trusted.
+    expect(pkg.contributes.configuration.properties["tuimark.path"].scope).toBe("machine-overridable");
+  });
+
   test("settings", () => {
     const props = pkg.contributes.configuration.properties;
     expect(props["tuimark.path"].default).toBe("tuimark");

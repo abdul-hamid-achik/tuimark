@@ -39,24 +39,35 @@
       }
     },
     "media": {
-      "comment": "@media (feature: value) { rules }. One feature per @media (SPEC section 10.5).",
+      "comment": "@media (feature: value) { rules }. One feature per @media (SPEC section 10.5). The condition and the opening brace may be on later lines (Allman style): the rule begins at @media, reads the condition up to the brace, then the block, and ends right after the block's closing brace.",
       "name": "meta.at-rule.media.tcss",
-      "begin": "(@)(media)(?![\\w-])([^{]*)(\\{)",
+      "begin": "(@)(media)(?![\\w-])",
       "beginCaptures": {
         "1": {
           "name": "punctuation.definition.keyword.tcss"
         },
         "2": {
           "name": "keyword.control.at-rule.media.tcss"
+        }
+      },
+      "end": "(?<=\\})",
+      "patterns": [
+        {
+          "include": "#comment"
         },
-        "3": {
-          "patterns": [
-            {
-              "include": "#media-query"
-            }
-          ]
+        {
+          "include": "#media-query"
         },
-        "4": {
+        {
+          "include": "#media-block"
+        }
+      ]
+    },
+    "media-block": {
+      "name": "meta.block.media.tcss",
+      "begin": "\\{",
+      "beginCaptures": {
+        "0": {
           "name": "punctuation.section.media.begin.tcss"
         }
       },
