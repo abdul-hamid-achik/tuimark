@@ -94,6 +94,24 @@ type App struct {
 	deriveHold int
 	deriveDue  bool
 	deriveErr  error
+	// The frame caches (framecache.go, listcache.go). writes counts every
+	// store write, whatever its path (wrote). frameKey is the fingerprint
+	// of every input of a frame (frameInputs) that the last build of
+	// Frame left behind, and frameLast that frame (liveFrame). listRows
+	// keeps, per list node, its inflated rows while the store members
+	// they read are unchanged; decls keeps each node's declarations as
+	// the cascade takes them; docKinds which widgets the document holds;
+	// interps each template text parsed. noCache turns every frame cache
+	// off: a cold app, which the equivalence tests compare a warm one
+	// against.
+	writes    uint64
+	frameKey  string
+	frameLast *Frame
+	listRows  map[*ir.Node]*listCache
+	decls     map[*ir.Node]*nodeDecls
+	docKinds  docKinds
+	interps   map[string]interpEntry
+	noCache   bool
 
 	screen    int
 	focus     string
@@ -199,6 +217,7 @@ func blankApp() *App {
 		segGen:     map[string]uint64{}, tables: map[*ir.Node]*tableCache{},
 		checkedSets: map[*ir.Node]*checkedCache{},
 		tabMem:      map[string]string{}, tabPrev: map[string]string{},
+		listRows: map[*ir.Node]*listCache{}, decls: map[*ir.Node]*nodeDecls{},
 	}
 }
 
@@ -419,8 +438,10 @@ func (a *App) screenExists(id string) bool {
 // wrote records a write of path into the store ("" is the whole store):
 // every cached table whose rows read a path under the same top-level
 // member, or any path after a whole-store write, computes them again.
-// The caller holds a.mu.
+// It also counts the write for the frame skip (frameInputs), whatever its
+// path. The caller holds a.mu.
 func (a *App) wrote(path string) {
+	a.writes++
 	if path == "" {
 		a.storeGen++
 		return

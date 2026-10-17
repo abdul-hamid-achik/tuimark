@@ -201,10 +201,96 @@ func Wrap(p string, width int) []string {
 // MaxWidth returns the width of the widest paragraph of text.
 func MaxWidth(text string) int {
 	m := 0
-	for _, p := range strings.Split(text, "\n") {
+	for {
+		p, rest, more := strings.Cut(text, "\n")
 		if w := Width(p); w > m {
 			m = w
 		}
+		if !more {
+			return m
+		}
+		text = rest
 	}
-	return m
+}
+
+// LineCount is len(Lines(text, width, mode)) without building the lines:
+// one per paragraph, except that wrap with a width breaks each paragraph
+// as Wrap does (a paragraph of printable ASCII that fits is one line).
+func LineCount(text string, width int, mode string) int {
+	if text == "" {
+		return 0
+	}
+	if mode != "wrap" || width <= 0 {
+		return strings.Count(text, "\n") + 1
+	}
+	n := 0
+	for {
+		p, rest, more := strings.Cut(text, "\n")
+		if len(p) <= width && printableASCII(p) {
+			n++
+		} else {
+			n += len(Wrap(p, width))
+		}
+		if !more {
+			return n
+		}
+		text = rest
+	}
+}
+
+// printableASCII reports whether every byte of s is printable ASCII
+// (0x20-0x7E): every byte one cluster of width 1, the space the only
+// separator Wrap sees.
+func printableASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < 0x20 || s[i] > 0x7e {
+			return false
+		}
+	}
+	return true
+}
+
+// textInfo is what a box remembers of its Text (Box.textInfo): the string
+// it measured, which it holds so that comparing it with Text is exact,
+// the width of its widest paragraph (MaxWidth), its paragraph count
+// (LineCount without wrapping), and whether every paragraph is printable
+// ASCII.
+type textInfo struct {
+	s     string
+	w     int
+	paras int
+	ascii bool
+	set   bool
+}
+
+// textInfo returns the measures of b.Text, measured again only when Text
+// is not the string they were measured from.
+func (b *Box) textInfo() *textInfo {
+	t := &b.ti
+	if !t.set || t.s != b.Text {
+		*t = textInfo{s: b.Text, w: MaxWidth(b.Text), paras: LineCount(b.Text, 0, ""), ascii: printableParas(b.Text), set: true}
+	}
+	return t
+}
+
+// lineCount is LineCount(b.Text, width, mode): the paragraph count unless
+// wrap breaks a paragraph, which it never does when every paragraph is
+// printable ASCII no wider than width.
+func (b *Box) lineCount(width int, mode string) int {
+	t := b.textInfo()
+	if mode != "wrap" || width <= 0 || (t.ascii && t.w <= width) {
+		return t.paras
+	}
+	return LineCount(b.Text, width, mode)
+}
+
+// printableParas reports whether every paragraph of text is printable
+// ASCII (its newlines aside).
+func printableParas(text string) bool {
+	for i := 0; i < len(text); i++ {
+		if c := text[i]; c != '\n' && (c < 0x20 || c > 0x7e) {
+			return false
+		}
+	}
+	return true
 }

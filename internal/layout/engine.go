@@ -2,6 +2,8 @@ package layout
 
 import (
 	"fmt"
+	"math"
+	"sync/atomic"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -13,10 +15,14 @@ type Engine struct {
 	Diags ir.Diags
 	// V3 is set for a version="3" document (SPEC v0.3 §5.1): Layout also
 	// reports the clipping warnings L008 and L009 (§14, §30.2).
-	V3     bool
-	memo   map[memoKey]int
-	shrink map[axisKey]bool
-	seen   map[string]bool
+	V3 bool
+	// memo holds the intrinsic sizes that do not fit a box's own memo
+	// slots (Box.memo); gen is this engine's generation (generation).
+	memo map[memoKey]int
+	gen  uint64
+	seen map[string]bool
+	// intBuf is what is left of the chunk ints cuts size lists from.
+	intBuf []int
 	// l003 and l006 record, for this frame, the boxes L003 and L006 were
 	// reported on (SPEC v0.3 §14): L009 does not repeat either.
 	l003, l006 map[*Box]bool
@@ -28,11 +34,6 @@ type memoKey struct {
 	avail      int
 }
 
-type axisKey struct {
-	b          *Box
-	horizontal bool
-}
-
 // Layout places root to fill (at most) cols×rows, then centers each open
 // modal over the root. Every placed box gets Laid=true. Viewports that can
 // never show part of their content are reported last, as L006 (SPEC §11.3
@@ -41,9 +42,6 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 	if e.memo == nil {
 		e.memo = map[memoKey]int{}
 		e.seen = map[string]bool{}
-	}
-	if e.shrink == nil {
-		e.shrink = map[axisKey]bool{}
 	}
 	screen := Rect{0, 0, cols, rows}
 	w := min(clampAxis(root, true, resolveRoot(root.Style.Width, cols), cols), cols)
@@ -58,18 +56,33 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 		y := root.Y + (root.H-mh)/2
 		e.place(m, Rect{x, y, mw, mh}, screen)
 	}
-	e.checkViewports(root)
+	e.check(root)
 	for _, m := range modals {
-		e.checkViewports(m)
+		e.check(m)
 	}
+}
+
+// check reports L006 (checkViewport) and, in a version="3" document,
+// L008 and L009 (checkTextClip, checkChildrenClip; SPEC v0.3 §14, §30.2)
+// for every laid-out box under b, in one walk, children first: when L009
+// looks at a box's children, L006 has already been decided for each of
+// them, as L009 needs (it does not repeat L006, nor L003, which place
+// recorded). The diagnostics come out in another order than one walk per
+// code would give, which changes nothing: the frame sorts them stably by
+// file, line, column, and code, and two that compare equal there come
+// from the same source element, whose boxes are never nested in each
+// other, so they keep their order.
+func (e *Engine) check(b *Box) {
+	for _, c := range b.Children {
+		e.check(c)
+	}
+	if !b.Laid {
+		return
+	}
+	e.checkViewport(b)
 	if e.V3 {
-		// L008/L009 (SPEC v0.3 §14, §30.2), only for version="3" documents.
-		// Run after checkViewports so L003 and L006 are already recorded
-		// for this frame (L009 does not repeat either).
-		e.checkClipping(root)
-		for _, m := range modals {
-			e.checkClipping(m)
-		}
+		e.checkTextClip(b)
+		e.checkChildrenClip(b)
 	}
 }
 
@@ -169,14 +182,26 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 	case len(b.Children) == 0:
 	default:
 		area := e.dock(b, b.Content, childClip)
-		var flow []*Box
-		for _, c := range b.Children {
+		e.flex(b, inFlow(b.Children), area, childClip)
+	}
+}
+
+// inFlow returns the children that are not docked, in order: kids itself
+// when none is (flex only reads the list).
+func inFlow(kids []*Box) []*Box {
+	for i, c := range kids {
+		if c.Style.Dock == "" {
+			continue
+		}
+		flow := append([]*Box(nil), kids[:i]...)
+		for _, c := range kids[i+1:] {
 			if c.Style.Dock == "" {
 				flow = append(flow, c)
 			}
 		}
-		e.flex(b, flow, area, childClip)
+		return flow
 	}
+	return kids
 }
 
 // columnGap and rowGap are a container's gap between siblings placed side
@@ -187,21 +212,21 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 // layout) or vertical (a column layout); table columns, tabs labels, and
 // a hint item's keycap+label are always laid out along x, so their
 // callers use columnGap directly.
-func columnGap(st css.Style, v3 bool) int {
+func columnGap(st *css.Style, v3 bool) int {
 	if v3 {
 		return st.ColumnGap
 	}
 	return st.Gap
 }
 
-func rowGap(st css.Style, v3 bool) int {
+func rowGap(st *css.Style, v3 bool) int {
 	if v3 {
 		return st.RowGap
 	}
 	return st.Gap
 }
 
-func mainGap(st css.Style, v3, horizontal bool) int {
+func mainGap(st *css.Style, v3, horizontal bool) int {
 	if horizontal {
 		return columnGap(st, v3)
 	}
@@ -267,6 +292,11 @@ func authorFr(b *Box, horizontal bool) string {
 // built-in sheet's defaults (col/row 1fr, spacer flex: 1) never conflict;
 // a docked box treats them as auto like any other fr on its axis.
 func DockConflict(st css.Style, parentRow bool) bool {
+	return dockConflict(&st, parentRow)
+}
+
+// dockConflict is DockConflict without copying the style.
+func dockConflict(st *css.Style, parentRow bool) bool {
 	grows := st.FlexSet && st.Flex > 0 && !st.FlexUA
 	switch st.Dock {
 	case "top", "bottom":
@@ -327,7 +357,7 @@ func (e *Engine) dock(b *Box, area Rect, clip Rect) Rect {
 // clamped by its min and max.
 func (e *Engine) dockSize(d *Box, horizontal, parentRow bool, base, cross int) (int, bool) {
 	s := sizeSpec(d, horizontal)
-	if DockConflict(d.Style, parentRow) {
+	if dockConflict(&d.Style, parentRow) {
 		s = ir.Scalar{Kind: ir.Auto}
 	}
 	auto := false
@@ -362,7 +392,7 @@ func (e *Engine) carve(b *Box, area Rect, clip Rect, place bool) Rect {
 				bottoms++
 			}
 			horizontal := !vertical
-			if place && DockConflict(d.Style, row) {
+			if place && dockConflict(&d.Style, row) {
 				e.report(d, ir.Error, "V010", "%s", DockConflictMsg(side))
 			}
 			ms, me := margins(d, horizontal)
@@ -483,7 +513,7 @@ func axisName(horizontal bool) string {
 // left, in document order, before the fr split.
 func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes []int, unbounded, fit, report bool) (sizes []int, anyFr bool) {
 	n := len(kids)
-	sizes = make([]int, n)
+	sizes = e.ints(n)
 	if n == 0 {
 		return sizes, false
 	}
@@ -517,7 +547,7 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 			}
 		}
 	}
-	gap := mainGap(b.Style, e.V3, horizontal)
+	gap := mainGap(&b.Style, e.V3, horizontal)
 	remain := max(0, main-gap*(n-1))
 	parentAuto := b.autoH
 	if horizontal {
@@ -626,6 +656,23 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 	return sizes, anyFr
 }
 
+// ints returns a zeroed []int of length (and capacity) n for a size list
+// of this engine run: a short one is cut from a chunk the engine
+// allocates in bulk and never hands out twice, so laying out many small
+// containers does not allocate once per container.
+func (e *Engine) ints(n int) []int {
+	const chunk = 2048
+	if n > chunk/8 {
+		return make([]int, n)
+	}
+	if len(e.intBuf) < n {
+		e.intBuf = make([]int, chunk)
+	}
+	out := e.intBuf[:n:n]
+	e.intBuf = e.intBuf[n:]
+	return out
+}
+
 // allocate sizes the in-flow children of b in a main×cross area (SPEC
 // §11.4): the slots along b's main axis and the border-box sizes across it.
 // An axis on which b itself scrolls is unbounded; the others are bounded
@@ -635,14 +682,14 @@ func (e *Engine) allocate(b *Box, kids []*Box, main, cross int, report bool) (si
 	row := b.Direction() == "row"
 	mainUnbounded, crossUnbounded := b.scrollsOn(row), b.scrollsOn(!row)
 	if !row {
-		crossSizes = make([]int, n)
+		crossSizes = e.ints(n)
 		for i, k := range kids {
 			crossSizes[i] = e.crossSize(b, k, row, cross, -1, !crossUnbounded, report)
 		}
 	}
 	sizes, anyFr = e.mainSizes(b, kids, row, main, crossSizes, mainUnbounded, true, report)
 	if row {
-		crossSizes = make([]int, n)
+		crossSizes = e.ints(n)
 		for i, k := range kids {
 			ms, me := margins(k, true)
 			crossSizes[i] = e.crossSize(b, k, row, cross, max(0, sizes[i]-ms-me), !crossUnbounded, report)
@@ -654,6 +701,18 @@ func (e *Engine) allocate(b *Box, kids []*Box, main, cross int, report bool) (si
 // flex allocates and places in-flow children of b inside area; a grid
 // container places them with the grid of SPEC §11.7 instead.
 func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect) {
+	e.flexWith(b, kids, area, clip, nil)
+}
+
+// allocation is what allocate returns.
+type allocation struct {
+	sizes, cross []int
+	anyFr        bool
+}
+
+// flexWith is flex with the allocation of kids in area already made (with
+// diagnostics), or nil to make it.
+func (e *Engine) flexWith(b *Box, kids []*Box, area Rect, clip Rect, pre *allocation) {
 	n := len(kids)
 	if n == 0 {
 		return
@@ -667,8 +726,14 @@ func (e *Engine) flex(b *Box, kids []*Box, area Rect, clip Rect) {
 	if row {
 		main, cross = area.W, area.H
 	}
-	sizes, crossSizes, anyFr := e.allocate(b, kids, main, cross, true)
-	gap := mainGap(b.Style, e.V3, row)
+	var sizes, crossSizes []int
+	var anyFr bool
+	if pre != nil {
+		sizes, crossSizes, anyFr = pre.sizes, pre.cross, pre.anyFr
+	} else {
+		sizes, crossSizes, anyFr = e.allocate(b, kids, main, cross, true)
+	}
+	gap := mainGap(&b.Style, e.V3, row)
 	total := gap * (n - 1)
 	for _, s := range sizes {
 		total += s
@@ -747,13 +812,30 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	b.ContentW, b.ContentH = contentW, contentH
 	offX, offY := b.ScrollX, b.ScrollY
 	row := b.Direction() == "row"
+	var pre *allocation
 	if follow >= 0 && !row {
-		// The same allocation flex makes below, without diagnostics, in
-		// the part of the content extent the docks leave.
+		// The same allocation flex makes below, in the part of the content
+		// extent the docks leave (the same size as the area flex gets).
+		// When b stretches its children across (its align is stretch) and
+		// does not lay out as a grid (where flex allocates nothing), flex
+		// takes it as it is instead of allocating again. Its diagnostics
+		// and auto marks then come before the docked children are placed,
+		// which changes nothing: they concern b and its in-flow children,
+		// the frame sorts diagnostics stably by position and code, and
+		// placing the docked children reads neither. Under stretch the
+		// cross sizes mark no child auto, so every intrinsic size the
+		// allocation measures sees the marks a silent allocation would.
+		// Otherwise a cross size marks an auto-width child before its
+		// height is measured, which a percent width inside it reads, so
+		// this allocation stays silent and flex makes its own.
 		flowArea := e.carve(b, Rect{0, 0, contentW, contentH}, Rect{}, false)
-		sizes, _, _ := e.allocate(b, kids, flowArea.H, flowArea.W, false)
+		reuse := !b.IsGrid() && isStretch(b.Style.Align)
+		sizes, cross, anyFr := e.allocate(b, kids, flowArea.H, flowArea.W, reuse)
+		if reuse {
+			pre = &allocation{sizes, cross, anyFr}
+		}
 		top := flowArea.Y
-		g := mainGap(b.Style, e.V3, false)
+		g := mainGap(&b.Style, e.V3, false)
 		for i := 0; i < follow; i++ {
 			top += sizes[i] + g
 		}
@@ -769,7 +851,7 @@ func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	offX = max(0, min(offX, contentW-area.W))
 	b.ScrollX, b.ScrollY = offX, offY
 	virtual := Rect{area.X - offX, area.Y - offY, contentW, contentH}
-	e.flex(b, kids, e.dock(b, virtual, clip), clip)
+	e.flexWith(b, kids, e.dock(b, virtual, clip), clip, pre)
 }
 
 // ScrollAxes reports the axes b scrolls on (SPEC §11.4): for a scroll, its
@@ -822,9 +904,10 @@ func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
 		// intrinsic sizes.
 		return false
 	}
-	key := axisKey{b, horizontal}
-	if v, ok := e.shrink[key]; ok {
-		return v
+	e.memoOf(b)
+	shift := 2 * axisIndex(horizontal)
+	if b.shrink>>shift&1 != 0 {
+		return b.shrink>>shift&2 != 0
 	}
 	v := false
 	for _, c := range b.Children {
@@ -833,32 +916,33 @@ func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
 			break
 		}
 	}
-	e.shrink[key] = v
+	bits := uint8(1)
+	if v {
+		bits = 3
+	}
+	b.shrink |= bits << shift
 	return v
 }
 
-// checkViewports reports L006 (SPEC §11.4) once per laid-out viewport V
-// under b that can never show part of its content on one of its scroll
-// axes A: (a) its content box is 0 cells on A while its content is not
+// checkViewport reports L006 (SPEC §11.4) once for laid-out viewport V
+// when it can never show part of its content on one of its scroll axes A
+// (y first): (a) its content box is 0 cells on A while its content is not
 // empty there, or (b) its outer rect sticks out, on A, of the content box
 // of an ancestor below the nearest ancestor that scrolls on A. Clipping by
 // an ancestor that scrolls on A is by design and never reported.
-func (e *Engine) checkViewports(b *Box) {
-	b.Walk(func(v *Box) {
-		if !v.Laid {
+func (e *Engine) checkViewport(v *Box) {
+	sx, sy := v.ScrollAxes()
+	if sy {
+		if msg := e.neverShown(v, false); msg != "" {
+			e.report(v, ir.Warning, "L006", "%s", msg)
 			return
 		}
-		sx, sy := v.ScrollAxes()
-		for _, horizontal := range []bool{false, true} {
-			if (horizontal && !sx) || (!horizontal && !sy) {
-				continue
-			}
-			if msg := e.neverShown(v, horizontal); msg != "" {
-				e.report(v, ir.Warning, "L006", "%s", msg)
-				return
-			}
+	}
+	if sx {
+		if msg := e.neverShown(v, true); msg != "" {
+			e.report(v, ir.Warning, "L006", "%s", msg)
 		}
-	})
+	}
 }
 
 // neverShown returns the L006 message for viewport v on one axis, or "".
@@ -928,18 +1012,6 @@ func clipRef(c *Box) string {
 	return c.Tag
 }
 
-// checkClipping reports L008 and L009 under b (SPEC v0.3 §14, §30.2),
-// only called for version="3" documents (Engine.V3).
-func (e *Engine) checkClipping(b *Box) {
-	b.Walk(func(n *Box) {
-		if !n.Laid {
-			return
-		}
-		e.checkTextClip(n)
-		e.checkChildrenClip(n)
-	})
-}
-
 // checkTextClip reports L008: a painted text (not visibility: hidden, not
 // a generated node — a table cell, tab label, or hint item, all Fixed,
 // SPEC §6.9.4, §6.10.4, §6.12) that loses content without saying so.
@@ -960,7 +1032,7 @@ func (e *Engine) checkTextClip(n *Box) {
 	// produce L008a either (SPEC §11.5.2).
 	nowrap := mode != "wrap" && mode != "truncate" && mode != "truncate-start" && mode != "truncate-middle"
 	if nowrap && !n.Style.WrapWritten {
-		if w, c := MaxWidth(n.Text), n.Content.W; w > c {
+		if w, c := n.textInfo().w, n.Content.W; w > c {
 			if e.clipFirst(n, "L008a") {
 				e.report(n, ir.Warning, "L008", "text is %d columns wide but its content box has %d; set wrap: truncate, or write wrap: nowrap to keep the cut", w, c)
 			}
@@ -968,10 +1040,10 @@ func (e *Engine) checkTextClip(n *Box) {
 		}
 	}
 	if !n.Style.OverflowWritten {
-		lines := Lines(n.Text, n.Content.W, mode)
-		if r := n.Content.H; len(lines) > r {
+		lines := n.lineCount(n.Content.W, mode)
+		if r := n.Content.H; lines > r {
 			if e.clipFirst(n, "L008b") {
-				e.report(n, ir.Warning, "L008", "text has %d lines but its content box has %d rows; give it room, or write overflow: hidden to keep the cut", len(lines), r)
+				e.report(n, ir.Warning, "L008", "text has %d lines but its content box has %d rows; give it room, or write overflow: hidden to keep the cut", lines, r)
 			}
 			n.Clipped = "text"
 		}
@@ -1054,10 +1126,82 @@ func (e *Engine) clipFirst(n *Box, kind string) bool {
 // intrinsic returns b's content-driven border-box size on one axis.
 // avail is b's size on the other axis (used to wrap text); 0 if unknown.
 func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
-	key := memoKey{b, horizontal, avail}
-	if v, ok := e.memo[key]; ok {
+	if v, ok := e.memoGet(b, horizontal, avail); ok {
 		return v
 	}
+	v := e.measure(b, horizontal, avail)
+	e.memoPut(b, horizontal, avail, v)
+	return v
+}
+
+// engineGen hands out the generations of engine runs (Engine.gen).
+var engineGen atomic.Uint64
+
+// generation returns this engine's generation: the stamp that makes its
+// memo on a box (Box.memoGen) valid for it alone, as its maps would be.
+func (e *Engine) generation() uint64 {
+	if e.gen == 0 {
+		e.gen = engineGen.Add(1)
+	}
+	return e.gen
+}
+
+// memoOf returns b's memo for this engine run, cleared when b holds
+// another run's.
+func (e *Engine) memoOf(b *Box) {
+	if g := e.generation(); b.memoGen != g {
+		b.memoGen, b.memoSet, b.shrink = g, 0, 0
+	}
+}
+
+// fits32 reports whether v fits a memo slot.
+func fits32(v int) bool { return v >= math.MinInt32 && v <= math.MaxInt32 }
+
+func axisIndex(horizontal bool) int {
+	if horizontal {
+		return 1
+	}
+	return 0
+}
+
+// memoGet returns the intrinsic size this engine run computed for b on
+// one axis at avail, if any: the first value computed for that key, as a
+// map keyed by (b, horizontal, avail) holds it.
+func (e *Engine) memoGet(b *Box, horizontal bool, avail int) (int, bool) {
+	e.memoOf(b)
+	if fits32(avail) {
+		ax := axisIndex(horizontal)
+		for i, s := range &b.memo[ax] {
+			if b.memoSet&(1<<(2*ax+i)) != 0 && int(s.avail) == avail {
+				return int(s.v), true
+			}
+		}
+	}
+	v, ok := e.memo[memoKey{b, horizontal, avail}]
+	return v, ok
+}
+
+// memoPut remembers v for (b, horizontal, avail): in a free slot of b
+// when both fit one, else in the engine's map.
+func (e *Engine) memoPut(b *Box, horizontal bool, avail, v int) {
+	if fits32(avail) && fits32(v) {
+		ax := axisIndex(horizontal)
+		for i := range b.memo[ax] {
+			if bit := uint8(1) << (2*ax + i); b.memoSet&bit == 0 {
+				b.memo[ax][i] = memoSlot{avail: int32(avail), v: int32(v)}
+				b.memoSet |= bit
+				return
+			}
+		}
+	}
+	if e.memo == nil {
+		e.memo = map[memoKey]int{}
+	}
+	e.memo[memoKey{b, horizontal, avail}] = v
+}
+
+// measure computes intrinsic's value.
+func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 	fh, fv := b.frameH(), b.frameV()
 	frame := fv
 	if horizontal {
@@ -1067,11 +1211,11 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 	switch b.Kind {
 	case "text":
 		if horizontal {
-			v = MaxWidth(b.Text)
+			v = b.textInfo().w
 		} else if b.Style.Wrap == "wrap" && avail > 0 {
-			v = len(Lines(b.Text, max(1, avail-fh), "wrap"))
+			v = b.lineCount(max(1, avail-fh), "wrap")
 		} else {
-			v = len(Lines(b.Text, 0, ""))
+			v = b.textInfo().paras
 		}
 	case "input":
 		if horizontal {
@@ -1124,9 +1268,7 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 			v = e.contentIntrinsic(b, horizontal, max(0, inner))
 		}
 	}
-	v += frame
-	e.memo[key] = v
-	return v
+	return v + frame
 }
 
 // contentIntrinsic measures a container's children (without its own
@@ -1225,7 +1367,7 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 			}
 		}
 		if alongMain {
-			total += mainGap(b.Style, e.V3, row) * (n - 1)
+			total += mainGap(&b.Style, e.V3, row) * (n - 1)
 		}
 	}
 	if horizontal {

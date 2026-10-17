@@ -82,7 +82,7 @@ func tableIntrinsic(t *Box, horizontal, v3 bool) int {
 	}
 	v := clampCells(t.MarkChan)
 	if k := len(cols); k > 0 {
-		v += columnGap(t.Style, v3) * (k - 1)
+		v += columnGap(&t.Style, v3) * (k - 1)
 	}
 	for _, c := range cols {
 		if s := c.Style.Width; s.Kind == ir.Cell {
@@ -118,7 +118,7 @@ func (e *Engine) tableLayout(t *Box, clip Rect) {
 	t.Header = tableHeader(cols)
 	ch := min(clampCells(t.MarkChan), c.W)
 	a := max(0, c.W-ch)
-	gap := columnGap(t.Style, e.V3)
+	gap := columnGap(&t.Style, e.V3)
 	if e.V3 {
 		t.AllColumns = cols
 		cols = hidePriority(cols, a, gap)
@@ -168,7 +168,7 @@ func (e *Engine) tableColumns(t *Box, cols []*Box, a int) []int {
 	if k == 0 {
 		return sizes
 	}
-	gap := columnGap(t.Style, e.V3)
+	gap := columnGap(&t.Style, e.V3)
 	remain := max(0, a-gap*(k-1))
 	need := gap * (k - 1)
 	var frs []int

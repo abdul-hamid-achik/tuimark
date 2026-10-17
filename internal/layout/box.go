@@ -153,6 +153,26 @@ type Box struct {
 	Clipped string
 
 	autoW, autoH bool // size on this axis came from content (for L002)
+
+	// The engine's memo of this box (Engine.intrinsic, Engine.shrinkable),
+	// kept on the box instead of in maps keyed by it, valid only for the
+	// engine run whose generation memoGen holds: memo[axis] holds the
+	// intrinsic size for up to two avail values per axis (horizontal is
+	// axis 1; bit 2*axis+i of memoSet marks slot i in use) when both fit
+	// in 32 bits, the engine's map any others; shrink holds the
+	// shrinkable answer per axis (bit 0: known, bit 1: value; axis 1
+	// shifted by 2).
+	memoGen uint64
+	memo    [2][2]memoSlot
+	memoSet uint8
+	shrink  uint8
+	// ti holds what textInfo measured of Text.
+	ti textInfo
+}
+
+// memoSlot is one remembered intrinsic size: avail -> v.
+type memoSlot struct {
+	avail, v int32
 }
 
 // Outer returns the outer rectangle.
@@ -179,21 +199,32 @@ func (b *Box) HasClass(c string) bool {
 
 // HasPseudo reports pseudo-class state.
 func (b *Box) HasPseudo(p string) bool {
-	switch p {
-	case "focus":
-		return b.Focused
-	case "selected":
-		return b.Selected
-	case "disabled":
-		return b.Disabled
-	case "empty":
-		return len(b.Children) == 0 && b.Text == ""
-	case "focus-within":
-		return b.FocusWithin
-	case "checked":
-		return b.Checked
+	return b.PseudoBits()&css.PseudoBit(p) != 0
+}
+
+// PseudoBits returns every pseudo-class b matches, as a css.PseudoBits
+// mask: HasPseudo is one bit of it.
+func (b *Box) PseudoBits() uint8 {
+	var m uint8
+	if b.Focused {
+		m |= css.PseudoFocus
 	}
-	return false
+	if b.Selected {
+		m |= css.PseudoSelected
+	}
+	if b.Disabled {
+		m |= css.PseudoDisabled
+	}
+	if len(b.Children) == 0 && b.Text == "" {
+		m |= css.PseudoEmpty
+	}
+	if b.FocusWithin {
+		m |= css.PseudoFocusWithin
+	}
+	if b.Checked {
+		m |= css.PseudoChecked
+	}
+	return m
 }
 
 // ParentElement returns the parent for child-combinator matching.
