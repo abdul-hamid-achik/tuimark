@@ -1,0 +1,6 @@
+<tui version="1">
+  <screen id="s">
+    <text>TOP ROW</text>
+    <text bogus="1">STILL RUNS</text>
+  </screen>
+</tui>

@@ -1,0 +1,62 @@
+version: 1
+name: run_ctrl_c_bound
+intent: |
+    Under `tuimark run` there is always an exit (SPEC v0.4a §15.9 "Always
+    an exit", test 121 "Exit"): when the document binds ctrl+c to a host
+    action, the first press is dispatched as usual (its event shows in the
+    strip, and the session goes on), and a second press within one second
+    ends the session with exit 0.
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "ctrlc", "--strip"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "CTRLC"
+        timeoutMs: 5000
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "cc - {} null"
+        timeoutMs: 3000
+    - snapshot: first_press
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+    - snapshot: done
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: first_press_is_dispatched
+      description: the first ctrl+c fires the bound host action and the session goes on
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/first_press.txt"
+                if grep -q "cc - {} null" "$f" && grep -q "CTRLC" "$f" && ! grep -q "run-exit" "$f"; then
+                  echo '{"ok": true, "evidence": "cc fired and the session still runs"}'
+                else
+                  echo '{"ok": false, "evidence": "the first ctrl+c was not dispatched, or ended the session"}'
+                fi
+    - id: second_press_exits_zero
+      description: the second ctrl+c within a second ends the session with exit 0, and is not dispatched
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/done.txt"
+                n=$(grep -c '"action":"cc"' "$f" || true)
+                if grep -q "run-exit=0" "$f" && [ "$n" = 1 ]; then
+                  echo '{"ok": true, "evidence": "exit 0 with one cc record"}'
+                else
+                  echo "{\"ok\": false, \"evidence\": \"exit line missing or $n cc records\"}"
+                fi
+contractHash: sha256:ebb5941c08fcc9c2daf2f489ca3d241e4cd813492f9378d71cf8bbd2d11b8452

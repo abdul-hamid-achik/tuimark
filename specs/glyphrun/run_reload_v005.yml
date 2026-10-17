@@ -1,0 +1,85 @@
+version: 1
+name: run_reload_v005
+intent: |
+    A failed reload keeps the previous document (SPEC v0.4a §15.9
+    "Failure", test 121): an edit that makes the .tui not well-formed (V005)
+    shows its diagnostic in the panel over the top rows while the old app
+    runs on, its keymap included; the next edit fixes it, the reload
+    succeeds, the strip gains a "reload" line, and the panel goes away. The
+    fixture script makes each edit when the session records another "edit"
+    action (ctrl+r).
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "v005", "--strip"]
+    cwd: "."
+terminal:
+    cols: 100
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "FIRST VERSION"
+        timeoutMs: 5000
+    - press: ctrl+r
+    - wait:
+        screen:
+            contains: "V005"
+        timeoutMs: 5000
+    - snapshot: broken
+    - press: ctrl+r
+    - wait:
+        screen:
+            contains: "FIXED VERSION"
+        timeoutMs: 5000
+    - wait:
+        screen:
+            notContains: "V005"
+        timeoutMs: 3000
+    - snapshot: fixed
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+outcomes:
+    - id: panel_shows_v005_and_old_document_runs
+      description: after the broken edit the panel's top row holds the V005 diagnostic over the old document, whose second row still shows, and no reload happened
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/broken.txt"
+                if head -n 1 "$f" | grep -q "^error V005" && sed -n 2p "$f" | grep -q "^FIRST VERSION" && ! grep -q "BROKEN" "$f" && ! grep -q "^reload" "$f"; then
+                  echo '{"ok": true, "evidence": "the panel shows V005 over the old document"}'
+                else
+                  echo '{"ok": false, "evidence": "no V005 panel, or the broken document replaced the old one"}'
+                fi
+    - id: old_keymap_still_works
+      description: the second ctrl+r reached the old app's keymap, whose edit action triggered the fix
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/fixed.txt"
+                if grep -q "FIXED VERSION" "$f"; then
+                  echo '{"ok": true, "evidence": "the fix was made after the old app fired edit again"}'
+                else
+                  echo '{"ok": false, "evidence": "the old app stopped taking keys"}'
+                fi
+    - id: fix_reloads_and_panel_goes_away
+      description: after the fix the strip has a reload line and the panel is gone
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/fixed.txt"
+                if grep -q "^reload" "$f" && ! grep -q "V005" "$f" && head -n 1 "$f" | grep -q "^TOP ROW" && sed -n 2p "$f" | grep -q "^FIXED VERSION"; then
+                  echo '{"ok": true, "evidence": "reloaded, panel gone"}'
+                else
+                  echo '{"ok": false, "evidence": "no reload line, or the panel stayed"}'
+                fi
+    - id: exits_zero
+      description: ctrl+c exits 0
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:a6ec4f2cae9ff96ae5b5a03b2feb8eed1c9eb2cb5b84424881e5a552e7e36af0

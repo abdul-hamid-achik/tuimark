@@ -1,0 +1,50 @@
+version: 1
+name: run_usage_errors
+intent: |
+    `tuimark run` reports its usage errors before the terminal is touched
+    (SPEC v0.4a §15.9 "Errors before the session", test 121 "Exit"): a
+    --mock naming an action the document does not have, and an --events
+    path that is a terminal (the spec's own), each print one "tuimark: run:
+    …" line on stderr and exit 1, with nothing written to stdout.
+target:
+    cmd: ["sh", "specs/fixtures/run/usage.sh", "${vars.tuimark}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "usage-done"
+        timeoutMs: 5000
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: bad_mock_is_a_usage_error
+      description: an unknown action in --mock exits 1 with nothing on stdout
+      verify:
+        screen:
+            contains: "mock-exit=1 stdout-bytes=0"
+    - id: bad_mock_message
+      description: the one stderr line names the unknown action
+      verify:
+        screen:
+            contains: 'tuimark: run: '
+    - id: bad_mock_names_the_action
+      description: the message says the member is not an action of the document
+      verify:
+        screen:
+            contains: '"sav" is not an action of the document'
+    - id: terminal_events_is_a_usage_error
+      description: an --events path that is a terminal exits 1 with nothing on stdout
+      verify:
+        screen:
+            contains: "tty-exit=1 stdout-bytes=0"
+    - id: terminal_events_message
+      description: the one stderr line says the event log never goes to a terminal
+      verify:
+        screen:
+            contains: "tuimark: run: --events: TTY is a terminal; the event log never goes to a terminal (use a file or a pipe)"
+contractHash: sha256:87e1ed42863f26016c166a4e6c1eaad3a43ad8a3f31c783095bcc373c73d541e

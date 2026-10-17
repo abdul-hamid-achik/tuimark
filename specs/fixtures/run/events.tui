@@ -1,0 +1,7 @@
+<tui version="1">
+  <screen id="s" focus="#b">
+    <text>EVENTS</text>
+    <button id="b" on:click="save">save</button>
+    <input id="pw" secret="true" placeholder="password" on:submit="login"/>
+  </screen>
+</tui>

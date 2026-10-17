@@ -1,0 +1,75 @@
+version: 1
+name: run_strip
+intent: |
+    With --strip the event strip of `tuimark run` shows from the start
+    (SPEC v0.4a §15.9, test 121 "Events"), and it holds the last
+    min(8, max(1, floor(rows / 3))) entries: on a 30-row terminal, after
+    nine host actions, the last eight (a2 to a9), newest last on the bottom
+    row, and the first one is gone.
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "strip", "--strip"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 30
+steps:
+    - wait:
+        screen:
+            contains: "STRIP"
+        timeoutMs: 5000
+    - press: "1"
+    - wait:
+        screen:
+            contains: "a1 - {} null"
+        timeoutMs: 3000
+    - press: "2"
+    - press: "3"
+    - press: "4"
+    - press: "5"
+    - press: "6"
+    - press: "7"
+    - press: "8"
+    - press: "9"
+    - wait:
+        screen:
+            contains: "a9 - {} null"
+        timeoutMs: 3000
+    - snapshot: nine
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+outcomes:
+    - id: strip_shows_from_the_start
+      description: with --strip the first host action shows in the strip without F12
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/nine.txt"
+                if grep -q "a2 - {} null" "$f"; then
+                  echo '{"ok": true, "evidence": "the strip was shown without F12"}'
+                else
+                  echo '{"ok": false, "evidence": "no strip line without F12"}'
+                fi
+    - id: strip_holds_eight_entries_at_30_rows
+      description: at 30 rows the strip holds exactly the last eight entries, a2 to a9, on the bottom eight rows, newest last
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/nine.txt"
+                n=$(grep -c -- "- {} null" "$f" || true)
+                tail_rows=$(tail -n 8 "$f" | cut -c1-2 | tr -d '\n')
+                if [ "$n" = 8 ] && [ "$tail_rows" = "a2a3a4a5a6a7a8a9" ] && ! grep -q "a1 - " "$f"; then
+                  echo '{"ok": true, "evidence": "eight entries, a2..a9, on the last eight rows"}'
+                else
+                  echo "{\"ok\": false, \"evidence\": \"$n entries; last rows: $tail_rows\"}"
+                fi
+    - id: ctrl_c_exits_zero
+      description: an unbound ctrl+c quits and run exits 0
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:892573c96105b9c429cd8180c1bf385bafade2dd677ece7db4b810d76075237c

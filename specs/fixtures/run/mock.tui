@@ -1,0 +1,9 @@
+<tui version="1">
+  <keymap>
+    <bind keys="s" action="save"/>
+    <bind keys="f" action="fail"/>
+  </keymap>
+  <screen id="s">
+    <text>MOCK {status}</text>
+  </screen>
+</tui>
