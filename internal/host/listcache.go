@@ -56,7 +56,8 @@ type listCache struct {
 // (nil when they hold anything else, such as rows inflated into them),
 // and kidsN each box's number of children then: a build that takes the
 // slab for the same rows reuses its boxes (listRows.reuse) instead of
-// writing each one whole again.
+// writing each one whole again; reused counts those builds (read by the
+// tests).
 type listSlab struct {
 	boxes    []layout.Box
 	kids     []*layout.Box
@@ -65,6 +66,7 @@ type listSlab struct {
 	pass     uint64
 	rows     *listRows
 	kidsN    []int32
+	reused   int
 }
 
 // slabFor returns the slab of list cache c this builder's pass
@@ -378,6 +380,7 @@ func (p *listPlan) flatten(dst []protoBox, b *layout.Box, kids *int) []protoBox 
 func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
 	if s != nil && s.rows == r {
 		if items, ok := r.reuse(parent, s); ok {
+			s.reused++
 			checkReuse(r, parent, items)
 			return items
 		}

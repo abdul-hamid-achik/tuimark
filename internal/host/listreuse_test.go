@@ -114,26 +114,48 @@ func TestReusedRowsAreTheRowsWrittenWhole(t *testing.T) {
 			t.Fatalf("step %d: the frame from reused rows differs from a cold build: %s", i, d)
 		}
 	}
-	// The steps above went through the reuse: two live builds apart, a
-	// box no step writes after inflation keeps what it holds.
+	if reusedBuilds(t, warm) < 8 {
+		t.Fatalf("the steps above reused a slab's rows in %d builds: they check little", reusedBuilds(t, warm))
+	}
+	// Rows resolved again are never reused: the build that resolves them
+	// writes its slab, and the next one takes the other slab, which holds
+	// the rows before; only the builds after those two reuse.
 	a := reuseApp(t, 5)
-	for i := 0; i < 3; i++ {
+	tick = 0
+	build := func() {
+		tick++
+		_ = a.Set("tick", tick)
 		a.Frame(40, 12)
-		_ = a.Set("tick", float64(i+1))
 	}
-	f := a.Frame(40, 12)
-	firstRow(f).Tag = "seen"
-	_ = a.Set("tick", 10.0)
-	a.Frame(40, 12)
-	_ = a.Set("tick", 11.0)
-	if g := a.Frame(40, 12); firstRow(g) != firstRow(f) || firstRow(g).Tag != "seen" {
-		t.Fatalf("a build from unchanged rows did not reuse the slab's boxes")
+	for i := 0; i < 6; i++ {
+		build()
 	}
-	// Rows resolved again are written whole.
+	n := reusedBuilds(t, a)
+	if n == 0 {
+		t.Fatalf("six builds from unchanged rows reused no slab")
+	}
 	_ = a.Set("rows.0.name", "other")
-	a.Frame(40, 12)
-	_ = a.Set("tick", 12.0)
-	if g := a.Frame(40, 12); firstRow(g).Tag == "seen" {
-		t.Fatalf("a build from rows resolved again kept a box member of the rows before")
+	build()
+	build()
+	if m := reusedBuilds(t, a); m != n {
+		t.Fatalf("the two builds after the rows changed reused %d slabs", m-n)
 	}
+	build()
+	build()
+	if m := reusedBuilds(t, a); m != n+1 {
+		t.Fatalf("the third and fourth builds after the rows changed reused %d slabs, want 1", m-n)
+	}
+}
+
+// reusedBuilds returns the number of live builds that reused the rows of
+// a's only list's slabs.
+func reusedBuilds(t *testing.T, a *App) int {
+	t.Helper()
+	if len(a.listRows) != 1 {
+		t.Fatalf("%d list caches, want 1", len(a.listRows))
+	}
+	for _, c := range a.listRows {
+		return c.slabs[0].reused + c.slabs[1].reused
+	}
+	return 0
 }
