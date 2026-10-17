@@ -2,7 +2,13 @@
 
 package host
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+	"reflect"
+
+	"github.com/abdul-hamid-achik/tuimark/internal/layout"
+)
 
 // verifyFrames checks every frame Frame and Dump give against a cold build
 // from the same state (coldRender) and panics on the first difference:
@@ -71,4 +77,73 @@ func (a *App) mustMatch(what string, f, g *Frame, wp, cp []Event, wa, ca string)
 	if wa != ca {
 		panic(fmt.Sprintf("tuimark_verify: %s: the state left behind differs:\n  warm: %q\n  cold: %q", what, wa, ca))
 	}
+}
+
+// checkReuse is the guard of the reuse of a slab's list rows
+// (listRows.reuse): the items it made this frame's again, and every box
+// under them, are member for member what materializing r into fresh
+// memory gives, so the frame is what writing every box whole would have
+// built. Style is not compared (the cascade writes it next), Parent and
+// Children are compared by place, and an item's Key, Index, Chan, and
+// Mark, which the row loop writes next (inflateListCached), are skipped.
+// What the engine memoizes on a box is valid only for the engine run it
+// names (memoGen), and what it measured of its text only for the same
+// text, so neither is compared.
+func checkReuse(r *listRows, parent *layout.Box, items []*layout.Box) {
+	fresh := r.materialize(parent, nil)
+	if len(fresh) != len(items) {
+		panic(fmt.Sprintf("tuimark_verify: reused list rows: %d items, fresh %d", len(items), len(fresh)))
+	}
+	for i := range items {
+		if d := reusedBoxDiff(items[i], fresh[i], parent, parent, true); d != "" {
+			panic(fmt.Sprintf("tuimark_verify: reused list row %d differs from a fresh one: %s", i, d))
+		}
+	}
+}
+
+func reusedBoxDiff(x, y, xp, yp *layout.Box, item bool) string {
+	if (x == nil) != (y == nil) {
+		return fmt.Sprintf("box %v, fresh %v", x != nil, y != nil)
+	}
+	if x == nil {
+		return ""
+	}
+	if x.Parent != xp || y.Parent != yp {
+		return x.Kind + ": parent"
+	}
+	if len(x.Children) != len(y.Children) {
+		return fmt.Sprintf("%s: %d children, fresh %d", x.Kind, len(x.Children), len(y.Children))
+	}
+	vx, vy := reflect.ValueOf(x).Elem(), reflect.ValueOf(y).Elem()
+	t := vx.Type()
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+		switch f.Name {
+		case "Parent", "Children", "Style":
+			continue
+		case "Key", "Index", "Chan", "Mark":
+			if item {
+				continue
+			}
+		}
+		a, b := vx.Field(i), vy.Field(i)
+		if a.Kind() == reflect.Float64 {
+			if fa, fb := a.Float(), b.Float(); fa != fb && !(math.IsNaN(fa) && math.IsNaN(fb)) {
+				return fmt.Sprintf("%s.%s: %v, fresh %v", x.Kind, f.Name, fa, fb)
+			}
+			continue
+		}
+		if !reflect.DeepEqual(a.Interface(), b.Interface()) {
+			return fmt.Sprintf("%s.%s: %#v, fresh %#v", x.Kind, f.Name, a.Interface(), b.Interface())
+		}
+	}
+	for j := range x.Children {
+		if d := reusedBoxDiff(x.Children[j], y.Children[j], x, y, false); d != "" {
+			return d
+		}
+	}
+	return ""
 }

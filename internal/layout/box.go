@@ -173,6 +173,24 @@ type Box struct {
 	ti textInfo
 }
 
+// ResetOutputs zeroes what laying out a frame and the steps after it
+// set on a box built from a template: its geometry (X, Y, W, H, Content,
+// Clip, Laid, Modal), Clipped, the auto marks, the scroll offsets and
+// content size, a sparkline's scale group, and the engine's memo (which
+// the next engine run would not read anyway). A box reused for the same
+// template and values is then as its template copy left it, except
+// Style, which the next cascade sets, and what it measured of its text,
+// which textInfo checks against Text.
+func (b *Box) ResetOutputs() {
+	b.X, b.Y, b.W, b.H = 0, 0, 0, 0
+	b.Content, b.Clip = Rect{}, Rect{}
+	b.Laid, b.Modal, b.autoW, b.autoH = false, false, false, false
+	b.Clipped = ""
+	b.ScrollX, b.ScrollY, b.ContentW, b.ContentH = 0, 0, 0, 0
+	b.GroupLo, b.GroupHi, b.HasGroupLo, b.HasGroupHi = 0, 0, false, false
+	b.memoGen, b.memoSet, b.shrink = 0, 0, 0
+}
+
 // memoSlot is one remembered intrinsic size: avail -> v.
 type memoSlot struct {
 	avail, v int32

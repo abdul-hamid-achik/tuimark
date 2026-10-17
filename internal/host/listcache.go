@@ -51,12 +51,20 @@ type listCache struct {
 // nothing holds any more. Every other render (Dump, Validate, a cold
 // render) materializes into fresh memory. pass is the builder pass that
 // last took the slab, so that one pass never takes it twice.
+//
+// rows is the resolved rows the slab's boxes were last materialized from
+// (nil when they hold anything else, such as rows inflated into them),
+// and kidsN each box's number of children then: a build that takes the
+// slab for the same rows reuses its boxes (listRows.reuse) instead of
+// writing each one whole again.
 type listSlab struct {
 	boxes    []layout.Box
 	kids     []*layout.Box
 	items    []*layout.Box
 	children []*layout.Box
 	pass     uint64
+	rows     *listRows
+	kidsN    []int32
 }
 
 // slabFor returns the slab of list cache c this builder's pass
@@ -282,7 +290,9 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box, slab *listSlab
 	sub.diags = nil
 	if slab != nil {
 		// Every box inflate takes is written whole there (newBox's
-		// caller), so what the slab held before is never read.
+		// caller), so what the slab held before is never read; and the
+		// slab no longer holds materialized rows to reuse.
+		slab.rows = nil
 		sub.boxes = slab.boxes[:cap(slab.boxes)]
 		slab.items = grow(slab.items, len(arr))
 		items = slab.items
@@ -361,8 +371,16 @@ func (p *listPlan) flatten(dst []protoBox, b *layout.Box, kids *int) []protoBox 
 // one slab, every children slice in another, each with its exact length
 // as capacity, so an append to one never reaches the next. The memory is
 // s's (a live build's listSlab), or fresh when s is nil. Every box is
-// written whole (clone), so nothing a box held in an earlier frame stays.
+// written whole (clone), so nothing a box held in an earlier frame stays;
+// or, when s's boxes were materialized from r last time, they are reused
+// (reuse), which leaves them as writing them whole would.
 func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
+	if s != nil && s.rows == r {
+		if items, ok := r.reuse(parent, s); ok {
+			checkReuse(r, parent, items)
+			return items
+		}
+	}
 	var m materializer
 	var items []*layout.Box
 	if s == nil {
@@ -372,7 +390,8 @@ func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
 		s.boxes = grow(s.boxes, len(r.protos))
 		s.kids = grow(s.kids, r.nkids)
 		s.items = grow(s.items, len(r.keys))
-		m = materializer{protos: r.protos, boxes: s.boxes, kids: s.kids}
+		s.kidsN = grow(s.kidsN, len(r.protos))
+		m = materializer{protos: r.protos, boxes: s.boxes, kids: s.kids, kidsN: s.kidsN}
 		items = s.items
 	}
 	for i := range items {
@@ -382,13 +401,50 @@ func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
 			items[i] = nil
 		}
 	}
+	if s != nil {
+		s.rows = r
+	}
 	return items
+}
+
+// reuse makes the boxes of slab s, which a build of this parity
+// materialized from r and every step after it then wrote to, this
+// frame's boxes again, as materialize would write them: what a box's
+// template and prototype give it was never written since (Text, classes,
+// keys, children; the cascade rewrites Style every frame), so only what
+// the steps after inflation set goes back to its template value: the
+// layout's outputs (layout.Box.ResetOutputs), an item's parent (this
+// frame's list box), and its :selected and :checked state (the row loop
+// sets them again, Checked only for a list with checked keys). It
+// reports false, and changes nothing that matters, when display: none
+// dropped a child of one of the boxes in that frame (its children then
+// differ from r's); materialize then writes every box whole. With the
+// tuimark_verify build tag, every reuse is checked member for member
+// against fresh boxes (checkReuse).
+func (r *listRows) reuse(parent *layout.Box, s *listSlab) ([]*layout.Box, bool) {
+	boxes, kidsN := s.boxes[:len(r.protos)], s.kidsN[:len(r.protos)]
+	for i := range boxes {
+		b := &boxes[i]
+		if len(b.Children) != int(kidsN[i]) {
+			return nil, false
+		}
+		b.ResetOutputs()
+	}
+	items := s.items[:len(r.keys)]
+	for _, it := range items {
+		if it != nil {
+			it.Parent = parent
+			it.Selected, it.Checked = false, false
+		}
+	}
+	return items, true
 }
 
 type materializer struct {
 	protos     []protoBox
 	boxes      []layout.Box
 	kids       []*layout.Box
+	kidsN      []int32 // each box's number of children, for a slab (listSlab.kidsN)
 	pi, bi, ki int
 }
 
@@ -396,6 +452,9 @@ func (m *materializer) clone(parent *layout.Box) *layout.Box {
 	p := &m.protos[m.pi]
 	m.pi++
 	b := &m.boxes[m.bi]
+	if m.kidsN != nil {
+		m.kidsN[m.bi] = p.kids
+	}
 	m.bi++
 	// The whole box, unexported members included (the engine's memo),
 	// starts as its node's template; only what it measured of its text
