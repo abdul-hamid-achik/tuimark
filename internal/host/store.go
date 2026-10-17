@@ -3,6 +3,7 @@ package host
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math"
 	"reflect"
 	"strconv"
@@ -137,18 +138,33 @@ func (s cowSet) created(m map[string]any) {
 // float64, string, []any, or map[string]any). Get hands this out instead
 // of the store's own maps, so a host can never mutate state behind the
 // lock (SPEC v0.3 §18.1, §30.4 decision 3).
+//
+// An object is cloned whole (maps.Clone copies its table as it is,
+// without hashing each key again), and only its members that are
+// containers are then replaced by their copies; a nil map or slice gives
+// an empty one.
 func deepCopyJSON(v any) any {
 	switch x := v.(type) {
 	case map[string]any:
-		out := make(map[string]any, len(x))
-		for k, e := range x {
-			out[k] = deepCopyJSON(e)
+		if x == nil {
+			return map[string]any{}
+		}
+		out := maps.Clone(x)
+		for k, e := range out {
+			switch e.(type) {
+			case map[string]any, []any:
+				out[k] = deepCopyJSON(e)
+			}
 		}
 		return out
 	case []any:
 		out := make([]any, len(x))
-		for i, e := range x {
-			out[i] = deepCopyJSON(e)
+		copy(out, x)
+		for i, e := range out {
+			switch e.(type) {
+			case map[string]any, []any:
+				out[i] = deepCopyJSON(e)
+			}
 		}
 		return out
 	default:
