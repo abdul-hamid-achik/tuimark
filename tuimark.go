@@ -97,7 +97,10 @@ func Parse(r io.Reader) (*App, error) {
 
 // Bind stores v at a dotted path in the JSON store. v is coerced to JSON
 // (null, bool, number, string, array, object). The empty path replaces the
-// whole store with an object.
+// whole store with an object. The store is JSON-shaped, so every number
+// is kept as a float64: an integer beyond ±2^53 (a snowflake ID, say)
+// loses precision, and Get returns the rounded value. Pass such values as
+// strings.
 func (a *App) Bind(path string, v any) error { return a.h.Bind(path, v) }
 
 // Set is Bind for a running app: it also schedules a redraw and is safe to
@@ -105,7 +108,9 @@ func (a *App) Bind(path string, v any) error { return a.h.Bind(path, v) }
 // "@screen" ("id") move focus and switch screens; "@theme" ("dark",
 // "light", or "auto") sets the host's theme, which beats the document's
 // theme attribute in Dump, Validate, and Run (TUIMARK_THEME still wins in
-// Run); any other value is an error and changes nothing.
+// Run); any other value is an error and changes nothing. Values are
+// coerced as Bind coerces them: numbers become float64, so integers beyond
+// ±2^53 lose precision (pass them as strings).
 func (a *App) Set(path string, v any) error { return a.h.Set(path, v) }
 
 // Get returns a deep copy of the value at path, JSON-shaped (nil, bool,
@@ -160,8 +165,9 @@ type Batch = host.Batch
 // switch err, and a type assertion on it no longer match that failure;
 // use errors.Is and errors.As instead, and Unwrap() []error to walk every
 // part in order. A b.Set called on a *Batch kept after fn has returned
-// also returns an error (and is one such part when checked) and changes
-// nothing. Batch is safe to call from any goroutine, including a
+// returns an error and changes nothing; Batch has returned by then, so
+// that error reaches only the caller of that b.Set and is never one of
+// the parts of the error Batch returned. Batch is safe to call from any goroutine, including a
 // handler.
 func (a *App) Batch(fn func(b *Batch) error) error { return a.h.Batch(fn) }
 
