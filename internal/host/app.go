@@ -364,16 +364,24 @@ func (a *App) set(path string, v any, redraw bool) error {
 	if err != nil {
 		return err
 	}
-	a.mu.Lock()
-	err = a.applyLocked(path, jv)
-	a.mu.Unlock()
-	if err != nil {
+	if err := a.applyUnderLock(path, jv); err != nil {
 		return err
 	}
 	if redraw {
 		a.Wake()
 	}
 	return nil
+}
+
+// applyUnderLock is applyLocked under a.mu, released by a defer: a
+// Derive fn runs under the lock (recompute), and a panic in it, which is
+// not recovered (SPEC v0.4a §18.2), must still leave the lock released, so
+// that Run's deferred terminal restore and a host that recovers are not
+// blocked forever.
+func (a *App) applyUnderLock(path string, v any) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.applyLocked(path, v)
 }
 
 // applyLocked applies path=v (v already JSON-coerced) as Set does: the

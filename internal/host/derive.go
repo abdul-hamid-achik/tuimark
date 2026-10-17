@@ -31,7 +31,11 @@ type derivation struct {
 // except that a reserved path ("@focus", "@screen", "@theme") gives
 // (nil, false). fn's value is coerced to JSON as Bind coerces it. fn must
 // not call any method of the App (the lock is held), and a panic in it is
-// not recovered.
+// not recovered: it propagates out of the call whose write ran fn, with
+// the lock released. A Batch's writes are then undone, and a Derive call
+// registers nothing; a Set's or a runtime write's write stays applied,
+// and the derived values after the one that panicked keep their old
+// values.
 //
 // When fn returns an error, or a value that cannot be coerced, null is
 // written at path and the error is reported once: while Run is active, on
@@ -57,26 +61,42 @@ func (a *App) Derive(path string, fn func(get func(path string) (any, bool)) (an
 	case path == "" || !validStorePath(path):
 		return fmt.Errorf("tuimark: Derive: bad path %q", path)
 	}
+	if err := a.register(path, fn); err != nil {
+		return err
+	}
+	a.Wake()
+	return nil
+}
+
+// register is Derive's registration under a.mu, released by a defer even
+// when fn panics in the first computation (see applyUnderLock); the
+// registration is then dropped.
+func (a *App) register(path string, fn func(get func(path string) (any, bool)) (any, error)) error {
 	a.mu.Lock()
+	defer a.mu.Unlock()
 	for _, d := range a.derived {
 		if covers(d.path, path) || covers(path, d.path) {
-			a.mu.Unlock()
 			return fmt.Errorf("tuimark: Derive %q: the path is inside or above the derived path %q", path, d.path)
 		}
 	}
 	if !canAssign(a.store, path) {
-		a.mu.Unlock()
 		return fmt.Errorf("tuimark: Derive %q: the path cannot be written in the current store", path)
 	}
 	a.derived = append(a.derived, &derivation{path: path, fn: fn})
-	a.recompute()
+	computed := false
+	defer func() {
+		if !computed { // fn panicked: register nothing, as for an error
+			a.derived = a.derived[:len(a.derived)-1]
+		}
+	}()
 	// A registration changes what the runtime may write even when the
 	// recomputed value equals the stored one (and recompute wrote
 	// nothing): never let the frame skip (liveFrame) hand back a frame
-	// built before it.
+	// built before it. Counted before the computation, so a panic in it
+	// still invalidates the frame.
 	a.writes++
-	a.mu.Unlock()
-	a.Wake()
+	a.recompute()
+	computed = true
 	return nil
 }
 

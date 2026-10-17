@@ -456,15 +456,20 @@ func (a *App) moveList(b *layout.Box, to func(index, rows, page int) int) []Even
 	if idx == ls.index {
 		return nil
 	}
+	// The key is the store's own value at the row's key path: an object
+	// or array key is copied, so that the bind path and the row never
+	// share memory (a later Set through one would change the other
+	// unseen by the caches).
+	key := deepCopyJSON(ls.keys[idx])
 	// A cursor bound to a derived path does not move, and on:select does
 	// not fire (SPEC v0.4a §18.2).
-	if b.Src.Bind != "" && a.derivedBlocked(b.Src.Bind, ls.keys[idx]) {
+	if b.Src.Bind != "" && a.derivedBlocked(b.Src.Bind, key) {
 		return nil
 	}
 	ls.index = idx
 	a.markStale()
 	if b.Src.Bind != "" {
-		_ = a.writeStore(b.Src.Bind, ls.keys[idx])
+		_ = a.writeStore(b.Src.Bind, key)
 	}
 	if act, ok := b.Src.On["select"]; ok {
 		return []Event{a.eventFor(act, b)}
@@ -713,7 +718,8 @@ func (a *App) check(b *layout.Box, action string) []Event {
 	next := []any{}
 	switch action {
 	case "check-toggle":
-		k := ls.keys[min(max(ls.index, 0), len(ls.keys)-1)]
+		// Keys are copied as moveList copies them.
+		k := deepCopyJSON(ls.keys[min(max(ls.index, 0), len(ls.keys)-1)])
 		if hasKey(old, k) {
 			for _, x := range old {
 				if !keyEqual(x, k) {
@@ -732,7 +738,7 @@ func (a *App) check(b *layout.Box, action string) []Event {
 			id := keyID(k)
 			if _, ok := seen[id]; !ok {
 				seen[id] = struct{}{}
-				next = append(next, k)
+				next = append(next, deepCopyJSON(k))
 			}
 		}
 		if len(next) == len(old) {
@@ -750,7 +756,7 @@ func (a *App) check(b *layout.Box, action string) []Event {
 	a.markStale()
 	if act, ok := b.Src.On["change"]; ok {
 		ev := a.eventFor(act, b)
-		ev.Value = append([]any{}, next...)
+		ev.Value = deepCopyJSON(next)
 		return []Event{ev}
 	}
 	return nil

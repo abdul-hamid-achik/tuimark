@@ -37,7 +37,9 @@ type everyReg struct {
 // stop cancels the registration: it is idempotent, safe from any
 // goroutine (fn included), and never waits for a running fn. Once it
 // returns, no new call of fn starts; a call already running finishes and
-// its batch applies.
+// its batch applies. A call starts when the loop checks, under the lock
+// stop takes, that the registration is live, immediately before calling
+// fn: a stop that returns after that check finds the call running.
 func (a *App) Every(d time.Duration, fn func(b *Batch) error) (stop func()) {
 	if d <= 0 {
 		panic("tuimark: non-positive interval for Every")
@@ -116,7 +118,9 @@ func (a *App) takeDue(now time.Time) []*everyReg {
 }
 
 // startTick reports whether fn of r may start now: stop has not been
-// called. Checked under everyMu, so once stop returns no new call starts.
+// called. Checked under everyMu, inside the tick's Batch right before fn,
+// so once stop returns no new call starts; this check is the start of a
+// call (Every).
 func (a *App) startTick(r *everyReg) bool {
 	a.everyMu.Lock()
 	defer a.everyMu.Unlock()

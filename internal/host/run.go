@@ -1035,10 +1035,19 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// and the stop checks run after each function, as after an event.
 	ticks := func() (stop bool, err error) {
 		for _, r := range a.takeDue(time.Now()) {
-			if !a.startTick(r) {
+			started := false
+			err := a.Batch(func(b *Batch) error {
+				// The check is the call's start (startTick): it runs
+				// right before fn, with nothing of the tick done yet.
+				if started = a.startTick(r); !started {
+					return nil
+				}
+				return r.fn(b)
+			})
+			if !started {
 				continue
 			}
-			if err := a.Batch(r.fn); err != nil {
+			if err != nil {
 				if errors.Is(err, ErrQuit) {
 					return true, nil
 				}
