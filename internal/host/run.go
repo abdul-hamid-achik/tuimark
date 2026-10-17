@@ -1,6 +1,7 @@
 package host
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -71,7 +72,41 @@ var escTimeout = 25 * time.Millisecond
 // the process ends with the signal's default action. When Run returns,
 // nothing is left reading stdin.
 func (a *App) Run(w io.Writer) (err error) {
-	err, _, _ = a.run(w, HostHooks{})
+	return a.RunWith(context.Background(), w, RunOptions{})
+}
+
+// RunOptions are RunWith's options (SPEC v0.4a §18.2).
+type RunOptions struct {
+	// OnError, when set, is called on the loop's goroutine with each error
+	// that a handler, an Every function, or a Derive function returns and
+	// that is not a quit (errors.Is(err, ErrQuit)). ev is the event whose
+	// handler failed, or nil for Every and Derive. Its result decides what
+	// follows: nil continues the session (the failed handler counts as
+	// having returned nil), a quit ends it as a quit (RunWith returns
+	// nil), and any other error ends it with that error.
+	OnError func(ev *Event, err error) error
+}
+
+// RunContext is RunWith(ctx, w, RunOptions{}) (SPEC v0.4a §18.2).
+func (a *App) RunContext(ctx context.Context, w io.Writer) error {
+	return a.RunWith(ctx, w, RunOptions{})
+}
+
+// RunWith is Run with a context and options (SPEC v0.4a §18.2). When ctx
+// is already done as RunWith is called, it returns an error wrapping
+// ctx.Err() without touching the terminal (the Run/Play exclusion is
+// checked first). A cancellation during the session is taken at the
+// loop's stop checks, where a stop signal is taken (before each input of
+// a read, between one event and the next, and while the loop waits), and
+// acts as a quit: the rest of the round and of the read is not
+// dispatched, no further frame is drawn, the terminal is restored, and
+// RunWith returns an error wrapping ctx.Err(). The signal-only rules (the
+// forced restore after 50ms, the 1-second grace) do not apply: a handler
+// that blocks keeps the session until it returns. TUIMARK_LOG's end
+// record gives "error" for a cancellation, and "quit" for a quit that
+// opts.OnError returned.
+func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error {
+	err, _, _ := a.run(ctx, w, HostHooks{}, opts)
 	return err
 }
 
@@ -101,7 +136,7 @@ func (a *App) Run(w io.Writer) (err error) {
 // v0.3b §19.1's "exit" message and exit code), which a plain error
 // cannot: Run's own nil return conflates "quit" and "eof".
 func (a *App) RunHost(w io.Writer, hooks HostHooks) HostResult {
-	err, eof, started := a.run(w, hooks)
+	err, eof, started := a.run(context.Background(), w, hooks, RunOptions{})
 	var sig *SignalError
 	switch {
 	case errors.As(err, &sig):
@@ -152,7 +187,7 @@ type HostResult struct {
 // RunHost's result (SPEC v0.3b §19.1), so which of them a defer settles
 // last never matters. started reports whether raw mode was entered (see
 // HostResult.Started).
-func (a *App) run(w io.Writer, hooks HostHooks) (err error, eof, started bool) {
+func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOptions) (err error, eof, started bool) {
 	// Play and Run exclude each other (SPEC v0.3 §18.1 rule 8): checked
 	// before anything else, so Run called while Play is active returns an
 	// error before it looks at the terminal.
@@ -160,6 +195,11 @@ func (a *App) run(w io.Writer, hooks HostHooks) (err error, eof, started bool) {
 		return err, false, false
 	}
 	defer a.exitMode()
+	// A context already done ends RunWith here, before the environment,
+	// the log file, or the terminal is touched (SPEC v0.4a §18.2).
+	if ctx.Err() != nil {
+		return cancelled(ctx), false, false
+	}
 	start := time.Now()
 	cfg, err := readRunConfig(os.Getenv)
 	if err != nil {
@@ -175,7 +215,7 @@ func (a *App) run(w io.Writer, hooks HostHooks) (err error, eof, started bool) {
 	if err != nil {
 		return err, false, false
 	}
-	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg}
+	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg, ctx: ctx, onError: opts.OnError}
 	defer func() { lg.end(endReason(err, sess)) }()
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
@@ -381,6 +421,12 @@ func (e *SignalError) Error() string {
 	return fmt.Sprintf("tuimark: stopped by signal (%v); the terminal was restored", e.Signal)
 }
 
+// cancelled is what RunWith returns for a done context (SPEC v0.4a
+// §18.2): an error for which errors.Is(err, ctx.Err()) holds.
+func cancelled(ctx context.Context) error {
+	return fmt.Errorf("tuimark: Run cancelled: %w", ctx.Err())
+}
+
 // Loop is the terminal event loop behind Run, with injectable input,
 // output, size, and resize notifications (tests drive it with pipes). It
 // writes Run's enter and leave sequences (bracketed paste included) but
@@ -461,6 +507,24 @@ func (a *App) loop(in io.Reader, out io.Writer, size func() (int, int), resize <
 	return a.session(in, out, size, resize, sigs, &termSession{}, HostHooks{})
 }
 
+// loopWith is Loop with RunWith's context and options (SPEC v0.4a §18.2)
+// and an optional TUIMARK_LOG log, whose end record it writes as run
+// does: the headless entry point the tests of RunWith, Quit, OnError, and
+// Every drive. Like Loop, it takes part in the Run/Play exclusion, and a
+// context already done returns before the session starts.
+func (a *App) loopWith(ctx context.Context, in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, opts RunOptions, lg *runLog) (err error) {
+	if err := a.enterMode(modeRun); err != nil {
+		return err
+	}
+	defer a.exitMode()
+	if ctx.Err() != nil {
+		return cancelled(ctx)
+	}
+	sess := &termSession{ctx: ctx, onError: opts.OnError, log: lg}
+	defer func() { lg.end(endReason(err, sess)) }()
+	return a.session(in, out, size, resize, nil, sess, HostHooks{})
+}
+
 // session is loop in a terminal session sess: Run's probe, color profile,
 // synchronized output, and grapheme mode (SPEC v0.2 §26). hooks is the
 // zero HostHooks for Loop and Run (every field nil, so hostStop and the
@@ -475,6 +539,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	if lg != nil {
 		lg.begin(size())
 	}
+	// Every registration's first tick falls due d after the session
+	// starts (SPEC v0.4a §18.2).
+	a.everyBegin(time.Now())
 
 	reads := make(chan chunk, 16)
 	done := make(chan struct{})
@@ -514,6 +581,54 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		return s.Err
 	}
 
+	// RunWith's context and Quit's requests (SPEC v0.4a §18.2) are taken
+	// where a stop signal is: at stopCheck, before each input of a read and
+	// between one event and the next, and in the waits below. A nil
+	// channel is never ready.
+	var ctxDone <-chan struct{}
+	if sess.ctx != nil {
+		ctxDone = sess.ctx.Done()
+	}
+	a.mu.Lock()
+	quitReq := a.quitReq
+	a.mu.Unlock()
+	// stopCheck reports whether the loop must stop right now, and with
+	// what error: a caught stop signal, a pending HostHooks.Stop request
+	// (RunHost only, SPEC v0.3b §19.1), a cancelled context, or a Quit
+	// request (nil, a quit).
+	stopCheck := func() (bool, error) {
+		select {
+		case s := <-sigs:
+			return true, &SignalError{Signal: s}
+		case s := <-hooks.Stop:
+			return true, hostStop(s)
+		case <-ctxDone:
+			return true, cancelled(sess.ctx)
+		case <-quitReq:
+			return true, nil
+		default:
+			return false, nil
+		}
+	}
+	// handlerErr decides what a handler's (or, ev nil, an Every or Derive
+	// function's) error that is not a quit does (SPEC v0.4a §18.2
+	// OnError): without OnError it ends the session; with it, OnError's
+	// result decides: nil continues as if the handler had returned nil, a
+	// quit ends the session as a quit, and any other error ends it.
+	handlerErr := func(ev *Event, err error) (quit bool, _ error) {
+		if sess.onError == nil {
+			return false, err
+		}
+		r := sess.onError(ev, err)
+		switch {
+		case r == nil:
+			return false, nil
+		case errors.Is(r, ErrQuit):
+			return true, nil
+		}
+		return false, r
+	}
+
 	// The capability probe (§26.2), once, before the first frame. Keys and
 	// pastes that arrive before it ends are queued and handled after the
 	// first frame, and so is the end of the input. The esc timeout is not
@@ -549,6 +664,10 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				return &SignalError{Signal: s}
 			case s := <-hooks.Stop:
 				return hostStop(s)
+			case <-ctxDone:
+				return cancelled(sess.ctx)
+			case <-quitReq:
+				return nil
 			}
 		}
 	}
@@ -612,27 +731,67 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		return nil
 	}
-	// runEvents dispatches events and pending lifecycle events until quiet.
-	runEvents := func(evs []Event) (bool, error) {
-		for round := 0; round < 8; round++ {
-			for _, ev := range evs {
+	// runEvents dispatches events and pending lifecycle events until quiet,
+	// at most MaxRounds rounds (SPEC §15.4 point 3). The events the
+	// previous settle kept at its cap come first, in the first round,
+	// ahead of evs (TakeCarry); carried reports that there were any, so the
+	// caller redraws as after any event. When the last round ends with
+	// events still queued, they are kept for the next settle (CarryOver)
+	// and TUIMARK_LOG records the cap (SPEC v0.4a §26.12). A handler error
+	// goes through handlerErr (OnError), and the stop checks run after
+	// each event, so a cancellation or a Quit made while a handler ran
+	// drops the rest of the round and draws nothing more.
+	// deriveErr reports a Derive error waiting in the app (SPEC v0.4a
+	// §18.2) as a handler error with no event: at the start of every
+	// settle and at the end of every round, before the frame is drawn.
+	deriveErr := func() (quit bool, err error) {
+		derr := a.TakeDeriveErr()
+		switch {
+		case derr == nil:
+			return false, nil
+		case errors.Is(derr, ErrQuit):
+			return true, nil
+		}
+		return handlerErr(nil, derr)
+	}
+	runEvents := func(evs []Event) (carried, quit bool, err error) {
+		if c := a.TakeCarry(); len(c) > 0 {
+			evs, carried = append(c, evs...), true
+		}
+		for round := 0; round < MaxRounds; round++ {
+			if quit, err := deriveErr(); quit || err != nil {
+				return carried, quit, err
+			}
+			for i := range evs {
+				ev := evs[i]
 				if lg != nil {
 					lg.action(ev, a.secretInput(ev.Source))
 				}
 				quit, err := a.Dispatch(ev)
-				if err != nil || quit {
-					return quit, err
+				if err != nil {
+					quit, err = handlerErr(&ev, err)
 				}
+				if err != nil || quit {
+					return carried, quit, err
+				}
+				if stop, err := stopCheck(); stop {
+					return carried, err == nil, err
+				}
+			}
+			if quit, err := deriveErr(); quit || err != nil {
+				return carried, quit, err
 			}
 			evs = a.TakePending()
 			if len(evs) == 0 {
-				return false, nil
+				return carried, false, nil
 			}
 			if err := draw(); err != nil {
-				return false, err
+				return carried, false, err
 			}
 		}
-		return false, nil
+		n := a.CarryOver(evs)
+		lg.write("rounds", member{"queued", n})
+		return carried, false, nil
 	}
 	// settle redraws and runs the lifecycle events queued so far. stop
 	// reports that the loop must return err.
@@ -640,7 +799,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		if err := draw(); err != nil {
 			return true, err
 		}
-		if quit, err := runEvents(nil); quit || err != nil {
+		if _, quit, err := runEvents(nil); quit || err != nil {
 			return true, err
 		}
 		return false, nil
@@ -652,7 +811,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// when, class guards, if, and built-in targets see; later input in the
 	// same read must see the new frame (SPEC v0.2b §8.6).
 	dispatch := func(evs []Event, focus string) (stop bool, err error) {
-		quit, err := runEvents(evs)
+		carried, quit, err := runEvents(evs)
 		if err != nil {
 			return true, err
 		}
@@ -661,7 +820,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		// The input may have changed the frame without an event or a
 		// focus move (TakeDirty).
-		if changed := a.TakeDirty(); len(evs) > 0 || a.Focus() != focus || changed {
+		if changed := a.TakeDirty(); len(evs) > 0 || carried || a.Focus() != focus || changed {
 			if err := draw(); err != nil {
 				return true, err
 			}
@@ -677,20 +836,10 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// (KeyRun). A bracketed paste is one edit too, or nothing
 	// (HandlePaste).
 	handleInputs := func(ins []Input) (stop bool, err error) {
-		// signaled reports whether the loop must stop right now, and with
-		// what error: a caught stop signal, or (RunHost only, SPEC v0.3b
-		// §19.1) a pending HostHooks.Stop request, honored at the same
-		// granularity as a signal — between one input/event and the next.
-		signaled := func() (bool, error) {
-			select {
-			case s := <-sigs:
-				return true, &SignalError{Signal: s}
-			case s := <-hooks.Stop:
-				return true, hostStop(s)
-			default:
-				return false, nil
-			}
-		}
+		// signaled is the stop check before each input (stopCheck): a
+		// stop signal, a HostHooks.Stop request, a cancelled context, or
+		// a Quit request is honored between one input and the next.
+		signaled := stopCheck
 		for len(ins) > 0 {
 			if ins[0].IsPaste {
 				if stop, err := signaled(); stop {
@@ -786,7 +935,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	if err := draw(); err != nil {
 		return err
 	}
-	if quit, err := runEvents(nil); quit || err != nil {
+	if _, quit, err := runEvents(nil); quit || err != nil {
 		return err
 	}
 	if len(queued) > 0 || endErr != nil {
@@ -807,12 +956,67 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	if dec.escPending() {
 		escWait = time.After(escTimeout)
 	}
+	// ticks runs the Every registrations due now, in registration order,
+	// each as one Batch (SPEC v0.4a §18.2), then settles once: a tick is a
+	// settle. An error that is not a quit goes to handlerErr with no event,
+	// and the stop checks run after each function, as after an event.
+	ticks := func() (stop bool, err error) {
+		for _, r := range a.takeDue(time.Now()) {
+			if !a.startTick(r) {
+				continue
+			}
+			if err := a.Batch(r.fn); err != nil {
+				if errors.Is(err, ErrQuit) {
+					return true, nil
+				}
+				if quit, err := handlerErr(nil, err); quit || err != nil {
+					return true, err
+				}
+			}
+			if stop, err := stopCheck(); stop {
+				return true, err
+			}
+		}
+		// The batches asked for a redraw (Wake); the settle below draws
+		// it, so the request is dropped rather than drawing twice.
+		select {
+		case <-a.wake:
+		default:
+		}
+		return settle()
+	}
+	// tickTimer fires when the earliest Every registration falls due; it
+	// is armed again before each wait, so a registration made or stopped
+	// meanwhile (everyKick) and a tick that just ran move it.
+	tickTimer := time.NewTimer(time.Hour)
+	defer tickTimer.Stop()
+	armTick := func() <-chan time.Time {
+		if !tickTimer.Stop() {
+			select {
+			case <-tickTimer.C:
+			default:
+			}
+		}
+		due, ok := a.everyDue()
+		if !ok {
+			return nil
+		}
+		tickTimer.Reset(max(0, time.Until(due)))
+		return tickTimer.C
+	}
 	for {
+		tick := armTick()
 		select {
 		case c := <-reads:
 			if stop, err := onChunk(c); stop {
 				return err
 			}
+		case <-tick:
+			if stop, err := ticks(); stop {
+				return err
+			}
+		case <-a.everyKick:
+			// A registration was made or stopped: arm the timer again.
 		case <-escWait:
 			escWait = nil
 			// A read that arrived meanwhile continues the sequence.
@@ -834,6 +1038,10 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			return &SignalError{Signal: s}
 		case s := <-hooks.Stop:
 			return hostStop(s)
+		case <-ctxDone:
+			return cancelled(sess.ctx)
+		case <-quitReq:
+			return nil
 		case <-resize:
 			// A new size can open or hide modals and move focus (@media):
 			// their on:open/on:close/on:focus run now, like after a key.

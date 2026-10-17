@@ -1,6 +1,7 @@
 package host
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -259,6 +260,13 @@ type termSession struct {
 	fgbg       string  // the theme COLORFGBG gives, "" for none
 	log        *runLog // TUIMARK_LOG, nil for none
 	eof        bool    // the session ended because the input ended
+	// ctx is RunWith's context (SPEC v0.4a §18.2): its cancellation is
+	// taken at the loop's stop checks and ends the session with an error
+	// wrapping ctx.Err(). nil never cancels (Loop, RunHost, tests).
+	ctx context.Context
+	// onError is RunOptions.OnError: nil ends the session on any handler
+	// error that is not a quit, as Run always has.
+	onError func(ev *Event, err error) error
 
 	mu       sync.Mutex
 	grapheme bool // mode 2027 was turned on: leaving turns it off

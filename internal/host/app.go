@@ -86,6 +86,14 @@ type App struct {
 	// checked array while the store member it reads is unchanged
 	// (checkedSet).
 	checkedSets map[*ir.Node]*checkedCache
+	// derived are the Derive registrations, in registration order (SPEC
+	// v0.4a §18.2). deriveHold > 0 while a Batch applies its writes: the
+	// recomputation then runs once, at its end, when deriveDue is set.
+	// deriveErr is the first Derive error not reported yet.
+	derived    []*derivation
+	deriveHold int
+	deriveDue  bool
+	deriveErr  error
 
 	screen    int
 	focus     string
@@ -101,7 +109,13 @@ type App struct {
 	openModals []*ir.Node   // modals open in the last frame, document order (top last)
 	modalStack []modalEntry // modals that took the focus trap, bottom first
 	pending    []Event
-	focusReq   *focusRequest
+	// carry holds the lifecycle events a settle kept when its 8th round
+	// ended with events still queued (SPEC v0.4a §15.4 point 3): the next
+	// settle dispatches them first, as its first round (TakeCarry,
+	// CarryOver). No render touches it, so Dump and Validate leave it as
+	// it is.
+	carry    []Event
+	focusReq *focusRequest
 	// tabMem is the tab the runtime remembers per tabs id, for a tabs
 	// without bind (SPEC §6.10.2); tabPrev is the active tab per tabs id in
 	// the last frame, for the activation focus rule (§6.10.3).
@@ -119,6 +133,18 @@ type App struct {
 	// Play rule 8): "" is idle, "run" a live loop (Run or Loop), "play" an
 	// active Play call. Guarded by mu.
 	mode string
+	// quitReq is the active Run's quit request channel (Quit), made by
+	// enterMode(modeRun) and cleared by exitMode; nil while no Run is
+	// active. Guarded by mu.
+	quitReq chan struct{}
+	// every holds the live Every registrations, in registration order
+	// (SPEC v0.4a §18.2), guarded by everyMu, not mu: stop is safe from
+	// anywhere, never waits on a held app lock, and the loop holds everyMu
+	// only briefly, never while fn runs. everyKick asks a running loop to
+	// arm its tick timer again.
+	everyMu   sync.Mutex
+	every     []*everyReg
+	everyKick chan struct{}
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity
@@ -168,6 +194,7 @@ func blankApp() *App {
 		store: map[string]any{}, handlers: map[string]Handler{},
 		lists: map[string]*listState{}, inputs: map[string]*inputState{},
 		scrolls: map[string][2]int{}, stickMax: map[string]int{}, wake: make(chan struct{}, 1),
+		everyKick:  make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
 		segGen:     map[string]uint64{}, tables: map[*ir.Node]*tableCache{},
 		checkedSets: map[*ir.Node]*checkedCache{},
@@ -360,12 +387,10 @@ func (a *App) applyLocked(path string, v any) error {
 				return fmt.Errorf("tuimark: the root value must be a JSON object, got %T", v)
 			}
 		}
-		root, err := assign(a.store, path, v)
-		if err != nil {
-			return err
-		}
-		a.store = root
-		a.wrote(path)
+		// storeWrite refuses a write that would break a derived value and
+		// recomputes the derived values after the write (SPEC v0.4a
+		// §18.2); inside a Batch (deriveHold) both wait for its end.
+		return a.storeWrite(path, v, a.deriveHold > 0)
 	}
 	return nil
 }

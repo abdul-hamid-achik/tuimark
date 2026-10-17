@@ -932,7 +932,8 @@ example) — say why in the commit that updates the goldens.
 
 ## Public Go API
 
-The public surface is deliberately small (package `tuimark`, SPEC §18):
+The public surface is deliberately small (package `tuimark`, SPEC §18): eighteen
+entry points.
 
 ```go
 func Load(path string) (*App, error)
@@ -949,6 +950,15 @@ func (a *App) Dump(cols, rows int) (*Dump, error)
 func (a *App) Validate() []Diagnostic
 func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) // 0.3
 func (a *App) Run(w io.Writer) error
+func (a *App) RunContext(ctx context.Context, w io.Writer) error                // 0.4
+func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error  // 0.4
+func (a *App) Quit()                                                            // 0.4
+func (a *App) Every(d time.Duration, fn func(b *Batch) error) (stop func())    // 0.4
+func (a *App) Derive(path string, fn func(get func(path string) (any, bool)) (any, error)) error // 0.4
+
+type RunOptions struct {                                        // 0.4
+    OnError func(ev *Event, err error) error
+}
 ```
 
 `internal/layout` and `internal/paint` are not importable from outside this
@@ -1004,6 +1014,21 @@ module; the only supported entry points are the functions above.
   events and the final dump. The state carries over to the next call. With
   `NoHandlers` on a freshly loaded app, it gives exactly what `tuimark play`
   prints.
+- **`RunContext`/`RunWith`** (0.4) are `Run` with a context: a cancelled
+  context ends the session as a quit does (the terminal is restored) and
+  `RunWith` returns an error wrapping `ctx.Err()`. `RunOptions.OnError`
+  receives each handler, `Every`, or `Derive` error that is not a quit
+  (`ev` is nil for the last two); returning nil keeps the session going.
+- **`Quit`** (0.4) asks the active `Run` to end, from any goroutine; `Run`
+  then returns nil. It does nothing while no `Run` is active.
+- **`Every`** (0.4) calls a function every `d` while `Run` is active, on the
+  loop, its writes applied as one `Batch`. Missed ticks are dropped, as with
+  `time.Ticker`; `Play`, `Dump`, and `Validate` never call it.
+- **`Derive`** (0.4) keeps a store path computed from the rest of the store
+  (a filtered list, a count), recomputed inside every write, so markup reads
+  it as any other path and stays free of expressions. Only its function
+  writes it: a `Set` to it is an error, and a widget bound to it does not
+  change.
 
 ## Examples
 
