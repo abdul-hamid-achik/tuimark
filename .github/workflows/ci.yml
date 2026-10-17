@@ -68,6 +68,33 @@ jobs:
       - name: golden dumps
         run: ./bin/tuimark test
 
+  # The performance benchmarks (SPEC test 125): each case must stay under
+  # 16 ms/op on this Linux runner too. They are recorded, not asserted (a
+  # shared runner's timings are noisy), so the numbers go to the job
+  # summary and the job never fails on them.
+  bench:
+    name: benchmarks (recorded, not gating)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - name: go test -bench
+        run: |
+          go test ./internal/play -run '^$' -bench . -benchmem -count 1 | tee bench.txt
+          {
+            echo '### Benchmarks (SPEC test 125, budget 16 ms/op)'
+            echo '```'
+            cat bench.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # GoReleaser ships Windows zips (.goreleaser.yaml), but no job runs on
   # Windows. Cross-compiling and vetting for it on Linux is cheap and
   # catches the usual breakage (a POSIX-only syscall outside a build-tagged
