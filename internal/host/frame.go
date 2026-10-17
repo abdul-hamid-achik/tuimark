@@ -569,14 +569,72 @@ func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, kno
 	follow := followed(b)
 	own := c.Chain(chain, boxFeatures(b, false))
 	kept := b.Children[:0]
+	// prev is the last row of a list kept so far: a row whose subtree
+	// looks to the selectors exactly as prev's did (sameStyleInputs) has
+	// the same parent style and chain, so every key in it is the key of
+	// the box in the same place in prev, and it takes prev's styles.
+	var prev *layout.Box
 	for _, ch := range b.Children {
-		shareStyles(c, ch, b.Style, id, true, own)
+		if prev != nil && sameStyleInputs(ch, prev) {
+			copyStyles(ch, prev)
+		} else {
+			shareStyles(c, ch, b.Style, id, true, own)
+		}
 		if ch.Style.Display != "none" {
 			kept = append(kept, ch)
+			if b.Kind == "list" {
+				prev = ch
+			}
 		}
 	}
 	b.Children = kept
 	refollow(b, follow)
+}
+
+// sameStyleInputs reports whether x and y, siblings, and every box under
+// them look the same to the cascade: in every place, the same features
+// (kind, id, classes, and pseudo-classes, :empty with the children as
+// they are), the same declaration slices, and as many children. y's
+// styles are computed, and its children are the ones they kept; x's are
+// not yet, so a y that dropped a child for display: none differs from x
+// in the count. Boxes the cascade treats apart (a style other entries
+// into the cascade read, a list's followed row, a tab's subject) never
+// match.
+func sameStyleInputs(x, y *layout.Box) bool {
+	switch x.Kind {
+	case "screen", "tab", "table", "list", "tabs", "modal", "hints":
+		return false
+	}
+	if x.Kind != y.Kind || x.ID != y.ID || len(x.Children) != len(y.Children) || x.PseudoBits() != y.PseudoBits() ||
+		!sameDecls(x.Hints, y.Hints) || !sameDecls(x.Inline, y.Inline) || len(x.Classes) != len(y.Classes) {
+		return false
+	}
+	for i := range x.Classes {
+		if x.Classes[i] != y.Classes[i] {
+			return false
+		}
+	}
+	for i := range x.Children {
+		if !sameStyleInputs(x.Children[i], y.Children[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// sameDecls reports whether a and b are the same declaration slice, as
+// css.DeclKey names it.
+func sameDecls(a, b []css.Decl) bool {
+	return len(a) == len(b) && (len(a) == 0 || &a[0] == &b[0])
+}
+
+// copyStyles gives every box of x the style of the box in the same place
+// in y (sameStyleInputs holds).
+func copyStyles(x, y *layout.Box) {
+	x.Style = y.Style
+	for i := range x.Children {
+		copyStyles(x.Children[i], y.Children[i])
+	}
 }
 
 // followed returns the row a list follows (Follow), before display: none
