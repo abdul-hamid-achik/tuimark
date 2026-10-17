@@ -30,6 +30,15 @@
     "onLanguage:tuimark",
     "onLanguage:tcss"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In a workspace you have not trusted, highlighting and snippets work, but the language server (tuimark lsp) does not start: a workspace can choose which program tuimark.path runs.",
+      "restrictedConfigurations": [
+        "tuimark.path"
+      ]
+    }
+  },
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
@@ -89,7 +98,7 @@
           "type": "string",
           "default": "tuimark",
           "scope": "machine-overridable",
-          "markdownDescription": "Path to the `tuimark` binary. The extension runs `tuimark lsp` from it. The default, `tuimark`, is looked up on `PATH`."
+          "markdownDescription": "Path to the `tuimark` binary. The extension runs `tuimark lsp` from it. The default, `tuimark`, is looked up on `PATH`. A relative path such as `./bin/tuimark` is resolved against the first workspace folder. The server only starts in a trusted workspace, and a workspace value of this setting is ignored until you trust the workspace."
         },
         "tuimark.trace.server": {
           "type": "string",

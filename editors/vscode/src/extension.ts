@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import * as path from "node:path";
 import * as vscode from "vscode";
 import {
   CloseAction,
@@ -12,6 +13,10 @@ import {
 // The language server is `tuimark lsp` over stdio (SPEC section 15.12). It may
 // ship in a later 0.4.N than the rest of 0.4a, so every failure to reach it
 // degrades to "grammars and snippets only" with one non-modal warning.
+//
+// The server is an executable the workspace can influence (tuimark.path may be
+// set in .vscode/settings.json), so it only starts in a trusted workspace; in
+// Restricted Mode the extension is limited to grammars and snippets.
 
 const CLIENT_ID = "tuimark";
 const OUTPUT_NAME = "Tuimark";
@@ -48,6 +53,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         await restart();
       }
     }),
+    // Trust granted later in the session: now the server may start.
+    vscode.workspace.onDidGrantWorkspaceTrust(async () => {
+      await restart();
+    }),
   );
 
   await startClient();
@@ -75,10 +84,23 @@ async function stopClient(): Promise<void> {
   }
 }
 
+// The command to run, as one value for both the probe and the server. A bare
+// name ("tuimark") is looked up on PATH. A relative path with a separator
+// ("./bin/tuimark") is resolved once, to an absolute path, against the first
+// workspace folder: the language client starts the server with the workspace
+// root as its cwd, and the probe would otherwise use the extension host's.
 function binaryPath(): string {
   const configured = vscode.workspace.getConfiguration("tuimark").get<string>("path");
   const trimmed = (configured ?? "").trim();
-  return trimmed === "" ? "tuimark" : trimmed;
+  if (trimmed === "") {
+    return "tuimark";
+  }
+  const hasSeparator = trimmed.includes("/") || trimmed.includes("\\");
+  if (!hasSeparator || path.isAbsolute(trimmed)) {
+    return trimmed;
+  }
+  const base = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+  return path.resolve(base, trimmed);
 }
 
 function warnOnce(message: string): void {
@@ -100,14 +122,24 @@ function warnOnce(message: string): void {
     });
 }
 
-// Runs `tuimark version` to learn whether the binary exists at all. A missing
-// binary is the one failure vscode-languageclient reports with its own error
-// toast, so it is caught here first.
+// Runs `tuimark version` and accepts only a real tuimark: exit status 0 and
+// output that starts with "tuimark ". "The process ran" is not enough: a
+// workspace-chosen tuimark.path such as /bin/sh runs (and fails) on `version`
+// and would then be started as `sh lsp`. A missing binary is also the one
+// failure vscode-languageclient reports with its own error toast, so it is
+// caught here first.
 function probeBinary(command: string): Promise<{ ok: true } | { ok: false; reason: string }> {
   return new Promise((resolve) => {
-    execFile(command, ["version"], { timeout: PROBE_TIMEOUT_MS, windowsHide: true }, (err) => {
+    execFile(command, ["version"], { timeout: PROBE_TIMEOUT_MS, windowsHide: true }, (err, stdout) => {
       if (!err) {
-        resolve({ ok: true });
+        if (String(stdout).trimStart().startsWith("tuimark ")) {
+          resolve({ ok: true });
+        } else {
+          resolve({
+            ok: false,
+            reason: `"${command} version" did not print a tuimark version. Is tuimark.path a tuimark binary?`,
+          });
+        }
         return;
       }
       const code = (err as NodeJS.ErrnoException).code;
@@ -118,13 +150,21 @@ function probeBinary(command: string): Promise<{ ok: true } | { ok: false; reaso
         });
         return;
       }
-      // The binary ran but `version` failed: let the server start decide.
-      resolve({ ok: true });
+      resolve({
+        ok: false,
+        reason: `"${command} version" failed (${code ?? "non-zero exit"}). Is tuimark.path a tuimark binary?`,
+      });
     });
   });
 }
 
 async function startClient(): Promise<void> {
+  if (!vscode.workspace.isTrusted) {
+    output?.appendLine(
+      "The workspace is not trusted: the language server starts once you trust it. Highlighting and snippets work meanwhile.",
+    );
+    return;
+  }
   const command = binaryPath();
   const probe = await probeBinary(command);
   if (!probe.ok) {

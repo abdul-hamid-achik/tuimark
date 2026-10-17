@@ -29,10 +29,12 @@ The vocabulary is closed, so a tag, property, pseudo-class, or media feature tha
 
 | Setting | Default | |
 |---|---|---|
-| `tuimark.path` | `tuimark` | The `tuimark` binary. The default is looked up on `PATH`. Changing it restarts the server. |
+| `tuimark.path` | `tuimark` | The `tuimark` binary. The default is looked up on `PATH`, and a relative path such as `./bin/tuimark` is resolved against the first workspace folder. Changing it restarts the server. |
 | `tuimark.trace.server` | `off` | Set it to `messages` or `verbose` to log the traffic with the server in the *Tuimark* output channel. |
 
 The command **Tuimark: Restart Language Server** restarts the server, for example after you upgrade `tuimark`.
+
+**Restricted Mode.** A workspace can set `tuimark.path` in its `.vscode/settings.json`, which chooses the program the extension runs. So the server starts only in a [trusted workspace](https://code.visualstudio.com/docs/editor/workspace-trust): in Restricted Mode, highlighting and snippets work, the workspace value of `tuimark.path` is ignored, and the server starts as soon as you trust the workspace. The extension also checks that `tuimark.path` is a tuimark binary (`tuimark version` exits 0 and prints a version) before it starts the server.
 
 ## What the language server does
 
