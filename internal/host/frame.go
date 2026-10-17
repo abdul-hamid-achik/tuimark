@@ -43,6 +43,10 @@ type Frame struct {
 	// Mouse is the value of the document's mouse attribute on this frame
 	// (SPEC v0.2b §8.5): mouse events act only while it is true.
 	Mouse bool
+	// settled is set when the render that built the frame reached a pass
+	// that moved neither focus nor a tab (renderOnce), so building it again
+	// from the state it left behind gives the same frame (liveFrame).
+	settled bool
 }
 
 // Dump returns the frame's dump (SPEC §13.2), with the --cells map when
@@ -63,6 +67,9 @@ func (a *App) Dump(cols, rows int, cells bool) *dump.Dump {
 	defer a.mu.Unlock()
 	saved := a.saveState()
 	defer a.restoreState(saved)
+	if verifyFrames {
+		return a.verifiedRender(cols, rows, a.toolTheme()).Dump(cells)
+	}
 	return a.render(cols, rows, a.toolTheme()).Dump(cells)
 }
 
@@ -73,7 +80,11 @@ func (a *App) Frame(cols, rows int) *Frame {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.dirty = false // the live frame is fresh again (TakeDirty)
-	return a.render(cols, rows, a.frameTheme())
+	theme := a.frameTheme()
+	if verifyFrames {
+		return a.verifiedFrame(cols, rows, theme)
+	}
+	return a.liveFrame(cols, rows, theme)
 }
 
 type builder struct {
@@ -173,7 +184,7 @@ func (a *App) modalOpenOn(req *focusRequest, cols, rows int, theme string) bool 
 func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	cols, rows = max(cols, 0), max(rows, 0)
 	theme = css.EffectiveTheme(theme)
-	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3}
+	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, settled: true}
 	static := a.staticFor(theme)
 	if a.doc.Root == nil {
 		f.Diags = append(f.Diags, static...)
@@ -206,14 +217,19 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		}
 	}
 	casc := css.NewCascade(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: theme})
+	if !a.noCache {
+		casc.EnableSharing()
+	}
 	var fb *builder
 	var rootBox *layout.Box
+	f.settled = false
 	for pass := 0; pass < 3; pass++ {
 		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
 		rootBox = fb.inflate(root, nil, nil, false) // step 1
 		rootBox = fb.cascade(casc, rootBox)         // step 2
 		fb.activateTabs(casc, rootBox)              // step 3
 		if !a.resolveFocus(f, fb, rootBox) {
+			f.settled = true
 			break // step 4
 		}
 	}
@@ -432,12 +448,19 @@ func (a *App) rememberScroll(b *layout.Box, keyed bool) {
 // computeStyles runs the cascade top-down and drops display:none subtrees.
 // A list keeps following the same row: its Follow moves with the child it
 // names, or becomes -1 when display: none dropped that row.
+//
+// With style sharing on (css.Cascade.EnableSharing, every frame but a
+// cold app's), boxes that look alike to every selector and inherit from
+// equal styles share one computation (shareStyles); the styles are the
+// same either way.
 func computeStyles(c *css.Cascade, b *layout.Box, parent *css.Style) {
-	b.Style = c.Compute(subjectOf(b), parent, b.Hints, b.Inline)
-	var follow *layout.Box
-	if b.Kind == "list" && b.Follow >= 0 && b.Follow < len(b.Children) {
-		follow = b.Children[b.Follow]
+	if c.Sharing() {
+		sp, known := c.StyleID(parent)
+		shareStyles(c, b, parent, sp, known, chainOf(c, b.Parent))
+		return
 	}
+	b.Style = c.Compute(subjectOf(b), parent, b.Hints, b.Inline)
+	follow := followed(b)
 	kept := b.Children[:0]
 	for _, ch := range b.Children {
 		computeStyles(c, ch, &b.Style)
@@ -446,15 +469,101 @@ func computeStyles(c *css.Cascade, b *layout.Box, parent *css.Style) {
 		}
 	}
 	b.Children = kept
-	if follow != nil {
-		b.Follow = -1
-		for i, ch := range kept {
-			if ch == follow {
-				b.Follow = i
-				break
-			}
+	refollow(b, follow)
+}
+
+// shareStyles is computeStyles with style sharing: a computed style is a
+// function of what the cascade reads (css.ShareKey), so computing each
+// distinct key once per frame changes no style. sp is the style id of
+// parent (known is false when the style passed in was never registered:
+// b is then computed on its own) and chain the chain of b's parent as the
+// selectors see it now. b's own chain is taken once its style is
+// computed, before its children are: nothing the matching reads changes
+// while they are.
+func shareStyles(c *css.Cascade, b *layout.Box, parent *css.Style, sp int32, known bool, chain int32) {
+	var id int32
+	if known {
+		hk, hn := css.DeclKey(b.Hints)
+		ik, in := css.DeclKey(b.Inline)
+		k := css.ShareKey{Chain: chain, Parent: sp, Self: boxFeatures(b, true), Hints: hk, NHints: hn, Inline: ik, NInline: in}
+		b.Style, id = c.Shared(k, subjectOf(b), parent, b.Hints, b.Inline)
+	} else {
+		b.Style = c.Compute(subjectOf(b), parent, b.Hints, b.Inline)
+		id = c.Unique()
+	}
+	switch b.Kind {
+	case "screen", "tab", "table":
+		// The style parents of a later entry into the cascade: a modal's
+		// (the screen's), a tab's content (step 3), a table's rows (step
+		// 7).
+		c.Register(&b.Style, id)
+	}
+	if len(b.Children) == 0 {
+		return
+	}
+	follow := followed(b)
+	own := c.Chain(chain, boxFeatures(b, false))
+	kept := b.Children[:0]
+	for _, ch := range b.Children {
+		shareStyles(c, ch, &b.Style, id, true, own)
+		if ch.Style.Display != "none" {
+			kept = append(kept, ch)
 		}
 	}
+	b.Children = kept
+	refollow(b, follow)
+}
+
+// followed returns the row a list follows (Follow), before display: none
+// drops any of its children; nil for anything else.
+func followed(b *layout.Box) *layout.Box {
+	if b.Kind == "list" && b.Follow >= 0 && b.Follow < len(b.Children) {
+		return b.Children[b.Follow]
+	}
+	return nil
+}
+
+// refollow points a list's Follow at follow again among its kept
+// children, or at -1 when display: none dropped it.
+func refollow(b *layout.Box, follow *layout.Box) {
+	if follow == nil {
+		return
+	}
+	b.Follow = -1
+	for i, ch := range b.Children {
+		if ch == follow {
+			b.Follow = i
+			break
+		}
+	}
+}
+
+// chainOf returns the chain of b (css.Cascade.Chain): b and each of its
+// ancestors as the selectors see them now; 0 for nil.
+func chainOf(c *css.Cascade, b *layout.Box) int32 {
+	if b == nil {
+		return 0
+	}
+	return c.Chain(chainOf(c, b.Parent), boxFeatures(b, false))
+}
+
+// boxFeatures is b as the selectors see it (css.Features): as the subject
+// of its own cascade (subjectOf: a tab never matches :empty or
+// :focus-within then), or as an ancestor.
+func boxFeatures(b *layout.Box, subject bool) css.Features {
+	bits := b.PseudoBits()
+	if subject && b.Kind == "tab" {
+		bits &^= css.PseudoEmpty | css.PseudoFocusWithin
+	}
+	cl := ""
+	switch len(b.Classes) {
+	case 0:
+	case 1:
+		cl = b.Classes[0]
+	default:
+		cl = strings.Join(b.Classes, " ")
+	}
+	return css.Features{Tag: b.Kind, ID: b.ID, Classes: cl, Pseudos: bits}
 }
 
 // subjectOf is the element the cascade matches as the subject when it
@@ -600,7 +709,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	classes, guardOn := fb.classes(n, sc)
 	b := &layout.Box{
 		Tag: n.Tag, Kind: n.Kind, ID: n.ID, Classes: classes, GuardOn: guardOn, Parent: parent, Src: n,
-		Hints: a.toDecls(n.Hints), Inline: a.toDecls(n.Inline), Follow: -1, Index: -1,
+		Hints: a.hintsOf(n), Inline: a.inlineOf(n), Follow: -1, Index: -1,
 		Axis: n.Attrs["axis"],
 	}
 	if n.ID != "" && !inItem {
@@ -865,7 +974,7 @@ func (fb *builder) checkedSet(n *ir.Node, path string, keys []any, sc *scope) ke
 	if len(keys) == 0 {
 		return nil
 	}
-	if sc != nil {
+	if sc != nil || fb.a.noCache {
 		return newKeySet(keys)
 	}
 	a := fb.a

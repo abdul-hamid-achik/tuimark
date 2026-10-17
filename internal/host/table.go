@@ -190,11 +190,11 @@ func (fb *builder) tableRows(n *ir.Node, p *tablePlan, sc *scope) *tableData {
 	a := fb.a
 	c := a.tables[n]
 	var td *tableData
-	if sc == nil && c.data != nil && c.data.strict == a.strict && sameStamp(c.data.stamp, a.stamp(p.deps)) {
+	if sc == nil && !a.noCache && c.data != nil && c.data.strict == a.strict && sameStamp(c.data.stamp, a.stamp(p.deps)) {
 		td = c.data
 	} else {
 		td = fb.resolveTable(n, p, sc)
-		if sc == nil {
+		if sc == nil && !a.noCache {
 			td.stamp = a.stamp(p.deps)
 			c.data = td
 		}
@@ -365,7 +365,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	for j, c := range p.cols {
 		cb := &layout.Box{
 			Tag: c.Tag, Kind: c.Kind, ID: c.ID, Classes: c.Classes, Parent: b, Src: c,
-			Hints: a.toDecls(c.Hints), Inline: a.toDecls(c.Inline), Follow: -1, Index: -1,
+			Hints: a.hintsOf(c), Inline: a.inlineOf(c), Follow: -1, Index: -1,
 			Fixed: true, Disabled: b.Disabled,
 		}
 		cb.Title = fb.interp(c, c.Attrs["title"], sc)

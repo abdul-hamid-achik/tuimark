@@ -179,21 +179,32 @@ func (b *Box) HasClass(c string) bool {
 
 // HasPseudo reports pseudo-class state.
 func (b *Box) HasPseudo(p string) bool {
-	switch p {
-	case "focus":
-		return b.Focused
-	case "selected":
-		return b.Selected
-	case "disabled":
-		return b.Disabled
-	case "empty":
-		return len(b.Children) == 0 && b.Text == ""
-	case "focus-within":
-		return b.FocusWithin
-	case "checked":
-		return b.Checked
+	return b.PseudoBits()&css.PseudoBit(p) != 0
+}
+
+// PseudoBits returns every pseudo-class b matches, as a css.PseudoBits
+// mask: HasPseudo is one bit of it.
+func (b *Box) PseudoBits() uint8 {
+	var m uint8
+	if b.Focused {
+		m |= css.PseudoFocus
 	}
-	return false
+	if b.Selected {
+		m |= css.PseudoSelected
+	}
+	if b.Disabled {
+		m |= css.PseudoDisabled
+	}
+	if len(b.Children) == 0 && b.Text == "" {
+		m |= css.PseudoEmpty
+	}
+	if b.FocusWithin {
+		m |= css.PseudoFocusWithin
+	}
+	if b.Checked {
+		m |= css.PseudoChecked
+	}
+	return m
 }
 
 // ParentElement returns the parent for child-combinator matching.
