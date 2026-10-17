@@ -88,6 +88,7 @@ var (
 	guardRE    = regexp.MustCompile(`\bclass:([a-z_][a-z0-9_-]*)\s*=`)
 	tokenDecl  = regexp.MustCompile(`--([A-Za-z_][A-Za-z0-9_-]*)\s*:`)
 	wordSplit  = regexp.MustCompile(`\s+`)
+	styleSrcRE = regexp.MustCompile(`<style\b[^>]*?\bsrc\s*=\s*"([^"]+)"`)
 )
 
 // idsOf are the ids written in a .tui, sorted, found in the text so they
@@ -148,7 +149,10 @@ func walkNodes(doc *parse.Document, fn func(*ir.Node)) {
 			walk(c)
 		}
 	}
-	walk(doc.Root)
+	if doc.Root != nil {
+		walk(doc.Root)
+		return
+	}
 	for _, sc := range doc.Screens {
 		walk(sc)
 	}
@@ -180,4 +184,14 @@ func docVersionOf(text string) int {
 		}
 	}
 	return 1
+}
+
+// styleSrcsOf are the stylesheets a .tui text names, found in the text so
+// they are there while the document is not yet well-formed.
+func styleSrcsOf(path, text string) []string {
+	var out []string
+	for _, src := range submatches(styleSrcRE, text) {
+		out = append(out, resolveSrc(path, src))
+	}
+	return out
 }

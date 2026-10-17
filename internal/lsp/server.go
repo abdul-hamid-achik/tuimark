@@ -545,7 +545,14 @@ func (s *Server) publish(uri string) {
 			}
 		}
 	default:
-		return
+		// A closed buffer has no extension to say what it was: whatever it
+		// was sent is cleared with an empty list.
+		s.mu.Lock()
+		was := s.published[uri]
+		s.mu.Unlock()
+		if !was {
+			return
+		}
 	}
 	diags = dedupe(diags)
 	if diags == nil {

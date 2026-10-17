@@ -275,7 +275,7 @@ func (s *Server) addKeys(c *completer) {
 // those the stylesheets it loads select.
 func (s *Server) classesFor(sn *snapshot, doc *document) []string {
 	out := classesOf(doc.text)
-	for _, p := range loadedPathsOf(doc) {
+	for _, p := range styleSrcsOf(doc.path, doc.text) {
 		if t, ok := readText(sn, p); ok {
 			out = append(out, selectorClasses(t)...)
 		}
@@ -528,9 +528,4 @@ func (s *Server) tokensFor(sn *snapshot, doc *document, loaders []parsedDoc) []s
 		}
 	}
 	return uniqueSorted(out)
-}
-
-// loadedPathsOf are the stylesheets a .tui names, by a parse of its text.
-func loadedPathsOf(doc *document) []string {
-	return loadedPaths(doc.path, parseText(doc))
 }
