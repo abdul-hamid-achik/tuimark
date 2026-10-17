@@ -208,11 +208,22 @@ func TestDerive(t *testing.T) {
 		}
 		wantGet(t, a, "items", items("x"))
 		wantGet(t, a, "count", float64(1))
+		// A Batch is judged by the store it leaves, where its one
+		// recomputation runs: a later write that makes view an object
+		// again lets view.label be written.
+		if err := a.Batch(func(b *Batch) error {
+			_ = b.Set("view", 5)
+			_ = b.Set("items", items("p", "q"))
+			return b.Set("view", map[string]any{})
+		}); err != nil {
+			t.Fatalf("Batch ending with view an object: %v", err)
+		}
+		wantGet(t, a, "view", map[string]any{"label": "2 items"})
 		// A root without an object at view cannot hold view.label.
 		if err := a.Set("", map[string]any{"view": "flat"}); err == nil {
 			t.Fatal(`Set("", {"view": "flat"}): want an error`)
 		}
-		wantGet(t, a, "items", items("x"))
+		wantGet(t, a, "items", items("p", "q"))
 	})
 
 	t.Run("registration errors", func(t *testing.T) {

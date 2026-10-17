@@ -94,14 +94,20 @@ var errDerived = errors.New("derived path")
 // derivedConflict reports why writing v at path would break a derived
 // value (SPEC v0.4a §18.2), or nil: path is a derived path or lies inside
 // one, or path is an ancestor of a derived path (the root included) and
-// the derived path could not be written under v. The caller holds a.mu.
-func (a *App) derivedConflict(path string, v any) error {
+// the derived path could not be written under v. With insideOnly, only
+// the first is checked: a Batch's own writes are checked as ancestors
+// once, against the store the whole batch leaves (derivedUnwritable). The
+// caller holds a.mu.
+func (a *App) derivedConflict(path string, v any, insideOnly bool) error {
 	for _, d := range a.derived {
 		if path != "" && covers(d.path, path) {
 			if path == d.path {
 				return fmt.Errorf("tuimark: %q is a %w (Derive): only its function writes it", path, errDerived)
 			}
 			return fmt.Errorf("tuimark: %q is inside the %w %q (Derive): only its function writes it", path, errDerived, d.path)
+		}
+		if insideOnly {
+			continue
 		}
 		if path == "" || covers(path, d.path) {
 			rel := d.path
@@ -125,9 +131,17 @@ func (a *App) derivedTarget(path string) error {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	return a.derivedConflict(path, nil, true)
+}
+
+// derivedUnwritable returns an error naming the first derived path the
+// store cannot hold: a Batch's end check, before its one recomputation
+// (SPEC v0.4a §18.2: a write to an ancestor fails as a whole when the
+// recomputation cannot write the derived path). The caller holds a.mu.
+func (a *App) derivedUnwritable() error {
 	for _, d := range a.derived {
-		if covers(d.path, path) {
-			return a.derivedConflict(path, nil)
+		if !canAssign(a.store, d.path) {
+			return fmt.Errorf("tuimark: Batch: the %w %q could not be written under the batch's writes", errDerived, d.path)
 		}
 	}
 	return nil
@@ -138,7 +152,7 @@ func (a *App) derivedTarget(path string) error {
 // that would write it does not change (SPEC v0.4a §18.2). The caller
 // holds a.mu.
 func (a *App) derivedBlocked(path string, v any) bool {
-	return len(a.derived) > 0 && path != "" && a.derivedConflict(path, v) != nil
+	return len(a.derived) > 0 && path != "" && a.derivedConflict(path, v, false) != nil
 }
 
 // writeStore writes v (JSON-shaped) at path, "" being the whole store: the
@@ -148,8 +162,17 @@ func (a *App) derivedBlocked(path string, v any) bool {
 // otherwise records the write for the caches (wrote) and recomputes the
 // derived values (recompute). The caller holds a.mu.
 func (a *App) writeStore(path string, v any) error {
+	return a.storeWrite(path, v, false)
+}
+
+// storeWrite is writeStore; with batch, for a Batch's own queued write,
+// it leaves the ancestor check to the batch's end (derivedUnwritable), so
+// a later write of the batch can make the derived path writable again.
+// The runtime's writes made while a Batch applies (a "@focus" request's
+// tab activations) keep the full check. The caller holds a.mu.
+func (a *App) storeWrite(path string, v any, batch bool) error {
 	if len(a.derived) > 0 {
-		if err := a.derivedConflict(path, v); err != nil {
+		if err := a.derivedConflict(path, v, batch); err != nil {
 			return err
 		}
 	}

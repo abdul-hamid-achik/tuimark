@@ -172,7 +172,10 @@ func (a *App) applyBatch(writes []batchWrite) error {
 	var failErr error
 	// The derived values are recomputed once, after every write of the
 	// batch, on the trial copy (SPEC v0.4a §18.2: get sees every write of
-	// the batch); a Derive error counts only when the batch applies.
+	// the batch); a Derive error counts only when the batch applies. A
+	// write to an ancestor of a derived path is checked then too, against
+	// the store the whole batch leaves: the batch fails when a derived
+	// path cannot be written there.
 	a.deriveHold++
 	for _, w := range writes {
 		if err := a.applyLocked(w.path, w.v); err != nil {
@@ -184,7 +187,11 @@ func (a *App) applyBatch(writes []batchWrite) error {
 	due := a.deriveDue
 	a.deriveDue = false
 	if failErr == nil && due {
-		a.recompute()
+		if err := a.derivedUnwritable(); err != nil {
+			failErr = err
+		} else {
+			a.recompute()
+		}
 	}
 	if failErr != nil {
 		a.store = origStore

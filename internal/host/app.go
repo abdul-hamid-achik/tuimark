@@ -387,10 +387,10 @@ func (a *App) applyLocked(path string, v any) error {
 				return fmt.Errorf("tuimark: the root value must be a JSON object, got %T", v)
 			}
 		}
-		// writeStore refuses a write that would break a derived value and
+		// storeWrite refuses a write that would break a derived value and
 		// recomputes the derived values after the write (SPEC v0.4a
-		// §18.2).
-		return a.writeStore(path, v)
+		// §18.2); inside a Batch (deriveHold) both wait for its end.
+		return a.storeWrite(path, v, a.deriveHold > 0)
 	}
 	return nil
 }
