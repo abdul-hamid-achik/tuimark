@@ -1,35 +1,89 @@
 package play
 
-// TEMPORARY: same-runner A/B of listRows.reuse for the CI benchmark job,
-// interleaved, removed before the branch is done.
+// TEMPORARY: a CPU profile of cases a and c on the CI runner, printed to
+// the bench job's log, removed before the branch is done.
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime/pprof"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 )
 
-func abDown(b *testing.B, off bool) {
-	host.NoReuseForBench = off
-	defer func() { host.NoReuseForBench = false }()
-	benchDown(b, benchList)
+var profOnce sync.Once
+
+func profileCase(name string, iters int, setup func() (step func(i int))) {
+	step := setup()
+	dir, _ := os.MkdirTemp("", "prof")
+	path := filepath.Join(dir, name+".pprof")
+	f, err := os.Create(path)
+	if err != nil {
+		fmt.Println("profile:", err)
+		return
+	}
+	if err := pprof.StartCPUProfile(f); err != nil {
+		fmt.Println("profile:", err)
+		return
+	}
+	for i := 0; i < iters; i++ {
+		step(i)
+	}
+	pprof.StopCPUProfile()
+	f.Close()
+	for _, args := range [][]string{
+		{"tool", "pprof", "-top", "-nodecount=40", os.Args[0], path},
+		{"tool", "pprof", "-top", "-cum", "-nodecount=60", os.Args[0], path},
+	} {
+		out, err := exec.Command("go", args...).CombinedOutput()
+		fmt.Printf("=== PROFILE %s %s (err %v)\n", name, strings.Join(args[2:4], " "), err)
+		for _, l := range strings.Split(string(out), "\n") {
+			fmt.Println("PROF|", l)
+		}
+	}
 }
 
-func abTick(b *testing.B, off bool) {
-	host.NoReuseForBench = off
-	defer func() { host.NoReuseForBench = false }()
-	BenchmarkBatchTick20k(b)
+func BenchmarkZZProfile(b *testing.B) {
+	profOnce.Do(func() {
+		profileCase("down", 400, func() func(int) {
+			s := benchSession(b, benchList)
+			down := KeyFromToken("down")
+			return func(i int) {
+				s.handleKeys(i+1, []host.Key{down})
+				s.settle(i + 1)
+			}
+		})
+		profileCase("derive", 400, func() func(int) {
+			a, err := host.Parse(strings.NewReader(benchFilter))
+			if err != nil {
+				b.Fatal(err)
+			}
+			data := benchData(benchRows)
+			data["q"] = ""
+			if err := a.Bind("", data); err != nil {
+				b.Fatal(err)
+			}
+			if err := a.Derive("visible", filterRows); err != nil {
+				b.Fatal(err)
+			}
+			s := NewSession(a, 80, 24, false, false, false, true)
+			s.Run(nil)
+			const query = "123"
+			return func(i int) {
+				if i > 0 && i%len(query) == 0 {
+					_ = s.App.Set("q", "")
+					s.settle(i)
+				}
+				s.handleText(i+1, query[i%len(query):i%len(query)+1])
+				s.settle(i + 1)
+			}
+		})
+	})
+	for i := 0; i < b.N; i++ {
+	}
 }
-
-func BenchmarkZZ1DownReuse(b *testing.B)   { abDown(b, false) }
-func BenchmarkZZ1DownNoReuse(b *testing.B) { abDown(b, true) }
-func BenchmarkZZ2DownReuse(b *testing.B)   { abDown(b, false) }
-func BenchmarkZZ2DownNoReuse(b *testing.B) { abDown(b, true) }
-func BenchmarkZZ3DownReuse(b *testing.B)   { abDown(b, false) }
-func BenchmarkZZ3DownNoReuse(b *testing.B) { abDown(b, true) }
-func BenchmarkZZ4TickReuse(b *testing.B)   { abTick(b, false) }
-func BenchmarkZZ4TickNoReuse(b *testing.B) { abTick(b, true) }
-func BenchmarkZZ5TickReuse(b *testing.B)   { abTick(b, false) }
-func BenchmarkZZ5TickNoReuse(b *testing.B) { abTick(b, true) }
-func BenchmarkZZ6TickReuse(b *testing.B)   { abTick(b, false) }
-func BenchmarkZZ6TickNoReuse(b *testing.B) { abTick(b, true) }
