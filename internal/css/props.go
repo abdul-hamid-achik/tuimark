@@ -210,20 +210,21 @@ func PropertyValues(name string) string {
 }
 
 // propSuggestion is the "; did you mean "X"?" suffix of an unknown
-// property: the closest property the document's version accepts, in
-// PropertyOrder (the catalog order), or "" when none is close.
+// property: the closest property of the catalog, in PropertyOrder, or ""
+// when none is close. A property the document's version does not accept
+// says which version it needs, as CheckDeclIn does for the exact name.
 func propSuggestion(prop string, v2, v3 bool) string {
-	cands := make([]string, 0, len(PropertyOrder))
-	for _, n := range PropertyOrder {
-		if (props[n].v2 && !v2) || (props[n].v3 && !v3) {
-			continue
-		}
-		cands = append(cands, n)
+	best := ir.Suggest(prop, PropertyOrder)
+	if best == "" {
+		return ""
 	}
-	if best := ir.Suggest(prop, cands); best != "" {
-		return fmt.Sprintf("; did you mean %q?", best)
+	need := ""
+	if props[best].v3 && !v3 {
+		need = ir.VersionHintV3
+	} else if props[best].v2 && !v2 {
+		need = ir.VersionHint
 	}
-	return ""
+	return fmt.Sprintf("; did you mean %q%s?", best, need)
 }
 
 // CheckDecl validates a declaration's syntax (tokens are resolved later)

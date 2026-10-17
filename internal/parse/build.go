@@ -482,10 +482,28 @@ func (b *builder) tagSuggestion(tag string) string {
 	return didYouMean("<"+best+">", best)
 }
 
+// attrExists reports whether any tag of any version takes an attribute
+// called name.
+func attrExists(name string) bool {
+	for _, cat := range []map[string]map[string]bool{TagAttrs, TagAttrsV2, TagAttrsV3} {
+		for _, m := range cat {
+			if m[name] {
+				return true
+			}
+		}
+	}
+	return tableItemAttrs[name]
+}
+
 // attrSuggestion is the suffix of an unknown attribute's V002: the closest
 // attribute the tag takes in this document's version, searched in sorted
 // order for a deterministic tie-break.
 func (b *builder) attrSuggestion(tag, parent, name string) string {
+	// An attribute some other tag (or version) takes is misplaced, not
+	// misspelled: pointing it at a lookalike (bind -> id) would mislead.
+	if attrExists(name) {
+		return ""
+	}
 	var set []map[string]bool
 	if tag == "item" && parent == "table" {
 		set = append(set, tableItemAttrs)
@@ -1028,9 +1046,9 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			}
 			best := ir.Suggest(val, cands)
 			if b.v2 {
-				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light; or auto)%s", val, didYouMean(best, best))
+				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light; or auto)%s", val, didYouMean(fmt.Sprintf("%q", best), best))
 			} else {
-				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light)%s", val, didYouMean(best, best))
+				b.attrErr(n, a, "V003", "unknown theme %q (built-in: dark, light)%s", val, didYouMean(fmt.Sprintf("%q", best), best))
 			}
 			return
 		}

@@ -119,10 +119,13 @@ func TestDidYouMeanHints(t *testing.T) {
 		{"attr no match", "1", `<box zzzzzz="1"/>`, "V002", "did you mean", true},
 		{"v2 attr typo in v2", "2", `<list id="l" each="xs as x" key="x" chekced="m"><item/></list>`, "V002", `; did you mean "checked"?`, false},
 		{"v2 attr is not suggested in v1", "1", `<list id="l" each="xs as x" key="x" chekced="m"><item/></list>`, "V002", "did you mean", true},
+		// A real attribute on the wrong tag is misplaced, not misspelled.
+		{"misplaced bind", "1", `<box bind="x"/>`, "V002", "did you mean", true},
+		{"misplaced wrap", "1", `<box wrap="truncate"/>`, "V002", "did you mean", true},
 		{"prop typo", "1", `<box style="colr: red"/>`, "V003", `; did you mean "color"?`, false},
 		{"prop typo 2", "1", `<box style="paddng: 1"/>`, "V003", `; did you mean "padding"?`, false},
 		{"prop no match", "1", `<box style="zzzzzz: 1"/>`, "V003", "did you mean", true},
-		{"v2 prop is not suggested in v1", "1", `<box style="grid-colums: 2"/>`, "V003", "did you mean", true},
+		{"v2 prop in v1 says what it needs", "1", `<box style="grid-colums: 2"/>`, "V003", `; did you mean "grid-columns" (requires version="2")?`, false},
 		{"v2 prop typo in v2", "2", `<box style="grid-colums: 2"/>`, "V003", `; did you mean "grid-columns"?`, false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -137,7 +140,7 @@ func TestDidYouMeanHints(t *testing.T) {
 		})
 	}
 	for _, c := range []struct{ val, want string }{
-		{"darkk", "did you mean dark?"}, {"ligth", "did you mean light?"}, {"qqqqqq", ""},
+		{"darkk", `did you mean "dark"?`}, {"ligth", `did you mean "light"?`}, {"qqqqqq", ""},
 	} {
 		doc := parse.Parse([]byte(`<tui version="1" theme="`+c.val+`"><screen/></tui>`), "")
 		d, ok := coreFind(doc, "V003")
@@ -147,7 +150,7 @@ func TestDidYouMeanHints(t *testing.T) {
 	}
 	// "auto" is a version="2" theme: suggested there, not in version="1".
 	doc := parse.Parse([]byte(`<tui version="2" theme="aut"><screen/></tui>`), "")
-	if d, _ := coreFind(doc, "V003"); !strings.Contains(d.Msg, "did you mean auto?") {
+	if d, _ := coreFind(doc, "V003"); !strings.Contains(d.Msg, `did you mean "auto"?`) {
 		t.Errorf("theme aut in v2: %v", d)
 	}
 }

@@ -105,9 +105,10 @@ func TestUnknownPropertySuggestion(t *testing.T) {
 		{"paddin", false, false, `; did you mean "padding"?`, false},
 		{"backgrund", false, false, `; did you mean "background"?`, false},
 		{"zzzzzz", false, false, "did you mean", true},
-		{"grid-colums", false, false, "did you mean", true},
+		// A close name that needs a newer version says so.
+		{"grid-colums", false, false, `; did you mean "grid-columns" (requires version="2")?`, false},
 		{"grid-colums", true, false, `; did you mean "grid-columns"?`, false},
-		{"row-gp", true, false, "did you mean", true},
+		{"row-gp", true, false, `; did you mean "row-gap" (requires version="3")?`, false},
 		{"row-gp", true, true, `; did you mean "row-gap"?`, false},
 	} {
 		err := CheckDeclIn(c.prop, "1", c.v2, c.v3)
