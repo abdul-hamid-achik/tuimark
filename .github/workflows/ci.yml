@@ -96,17 +96,20 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # TEMPORARY: the same runner measures the Box member order before
-      # (old) and after (new), interleaved. Removed before the branch is
+      # TEMPORARY: the same runner measures, interleaved, the commit before
+      # the Box member order (old), the member order (order), and the
+      # content height measured once (memo). Removed before the branch is
       # done.
-      - name: A/B of the Box member order
+      - name: A/B of the Box member order and the content height memo
         run: |
           git checkout -q 6c1ee7f130de46c5812c68dcfb81c84ca94d4199
           go test -c -o "$RUNNER_TEMP/old.test" ./internal/play
           git checkout -q df89f4cef579811b866de020c849bbb9e994a2bc
-          go test -c -o "$RUNNER_TEMP/new.test" ./internal/play
-          for round in 1 2 3 4 5; do
-            for v in old new; do
+          go test -c -o "$RUNNER_TEMP/order.test" ./internal/play
+          git checkout -q f268d927511814e0db6df45d8bc420e643c44d54
+          go test -c -o "$RUNNER_TEMP/memo.test" ./internal/play
+          for round in 1 2 3 4; do
+            for v in old order memo; do
               echo "== $v"
               "$RUNNER_TEMP/$v.test" -test.run '^$' -test.bench 'ListDown20k$|BatchTick20k$|DeriveFilterText20k$' -test.benchmem | grep Benchmark
             done
