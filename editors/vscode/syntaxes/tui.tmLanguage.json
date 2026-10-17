@@ -1,0 +1,404 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Tuimark",
+  "scopeName": "text.tui",
+  "fileTypes": ["tui"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#cdata" },
+    { "include": "#style-block" },
+    { "include": "#tag" },
+    { "include": "#text-content" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.block.tui",
+      "begin": "<!--",
+      "beginCaptures": { "0": { "name": "punctuation.definition.comment.begin.tui" } },
+      "end": "-->",
+      "endCaptures": { "0": { "name": "punctuation.definition.comment.end.tui" } }
+    },
+    "cdata": {
+      "name": "string.unquoted.cdata.tui",
+      "begin": "<!\\[CDATA\\[",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.tui" } },
+      "end": "\\]\\]>",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } }
+    },
+    "style-block": {
+      "comment": "<style> with a body: the body is TCSS. <style src=\"...\"/> is an ordinary tag.",
+      "begin": "(<)(style)(?=[\\s>])((?:\\s+[^>]*?)?)(?<!/)(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.tui" },
+        "2": { "name": "entity.name.tag.tui" },
+        "3": { "patterns": [{ "include": "#attributes" }] },
+        "4": { "name": "punctuation.definition.tag.end.tui" }
+      },
+      "end": "(</)(style)(\\s*)(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.tui" },
+        "2": { "name": "entity.name.tag.tui" },
+        "4": { "name": "punctuation.definition.tag.end.tui" }
+      },
+      "name": "meta.tag.style.tui",
+      "contentName": "meta.embedded.block.tcss",
+      "patterns": [{ "include": "source.tcss" }]
+    },
+    "tag": {
+      "patterns": [
+        {
+          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags and the spike alias app).",
+          "name": "meta.tag.tui",
+          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|app)(?![\\w:.-])",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.tui" },
+            "2": { "name": "entity.name.tag.tui" }
+          },
+          "end": "(/?>)",
+          "endCaptures": { "1": { "name": "punctuation.definition.tag.end.tui" } },
+          "patterns": [{ "include": "#attributes" }]
+        },
+        {
+          "comment": "Any other name: not in the catalog (V001).",
+          "name": "meta.tag.unknown.tui",
+          "begin": "(</?)([A-Za-z_][\\w:.-]*)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.tui" },
+            "2": { "name": "entity.name.tag.unknown.tui invalid.illegal.unknown-tag.tui" }
+          },
+          "end": "(/?>)",
+          "endCaptures": { "1": { "name": "punctuation.definition.tag.end.tui" } },
+          "patterns": [{ "include": "#attributes" }]
+        }
+      ]
+    },
+
+    "text-content": {
+      "patterns": [
+        { "include": "#interpolation" },
+        { "include": "#entity" }
+      ]
+    },
+    "interpolation": {
+      "patterns": [
+        {
+          "comment": "{path}: a path with no spaces (binding grammar, SPEC section 7).",
+          "name": "meta.interpolation.tui",
+          "match": "(\\{)([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)(\\})",
+          "captures": {
+            "1": { "name": "punctuation.section.interpolation.begin.tui" },
+            "2": { "patterns": [{ "include": "#path-parts" }] },
+            "3": { "name": "punctuation.section.interpolation.end.tui" }
+          }
+        },
+        {
+          "comment": "A pair of braces that does not hold exactly a path is V003.",
+          "name": "invalid.illegal.interpolation.tui",
+          "match": "\\{[^{}\\n<]*\\}"
+        }
+      ]
+    },
+    "path-parts": {
+      "patterns": [
+        { "name": "punctuation.separator.path.tui", "match": "\\." },
+        { "name": "variable.other.path.tui", "match": "[A-Za-z_][A-Za-z0-9_]*" }
+      ]
+    },
+    "entity": {
+      "patterns": [
+        {
+          "name": "constant.character.entity.tui",
+          "match": "&(?:lt|gt|amp|quot|apos);"
+        },
+        {
+          "name": "invalid.illegal.bad-entity.tui",
+          "match": "&(?:#[0-9A-Fa-f]*|#x[0-9A-Fa-f]*|[A-Za-z_][\\w.-]*)?;?"
+        }
+      ]
+    },
+
+    "attributes": {
+      "patterns": [
+        { "include": "#attr-action" },
+        { "include": "#attr-class-guard" },
+        { "include": "#attr-each" },
+        { "include": "#attr-flag" },
+        { "include": "#attr-path" },
+        { "include": "#attr-template" },
+        { "include": "#attr-keys" },
+        { "include": "#attr-action-name" },
+        { "include": "#attr-selector" },
+        { "include": "#attr-class" },
+        { "include": "#attr-id" },
+        { "include": "#attr-style" },
+        { "include": "#attr-src" },
+        { "include": "#attr-generic" }
+      ]
+    },
+
+    "attr-action": {
+      "comment": "on:select=\"open\": the value names an action the host implements, or a built-in.",
+      "name": "meta.attribute.action.tui",
+      "begin": "(?<![\\w:.-])(on:)([a-z][a-z0-9_-]*)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "keyword.other.action-prefix.tui" },
+        "2": { "name": "entity.other.attribute-name.action.tui" },
+        "4": { "name": "punctuation.separator.key-value.tui" },
+        "6": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\6",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.action-name.tui",
+      "patterns": [{ "include": "#action-name" }]
+    },
+    "action-name": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.action.tui",
+          "match": "(?<![\\w.-])(?:focus|quit|move-next|move-prev|move-first|move-last|move-page-down|move-page-up|check-toggle|check-all|check-none|switch-to)(?![\\w.-])"
+        },
+        { "name": "entity.name.function.action.tui", "match": "[A-Za-z_][\\w.-]*" }
+      ]
+    },
+    "attr-action-name": {
+      "comment": "action=\"...\" on a keymap row.",
+      "name": "meta.attribute.tui",
+      "begin": "(?<![\\w:.-])(action)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.action-name.tui",
+      "patterns": [{ "include": "#action-name" }]
+    },
+    "attr-class-guard": {
+      "comment": "class:NAME=\"path\" or \"!path\" (version 2).",
+      "name": "meta.attribute.class-guard.tui",
+      "begin": "(?<![\\w:.-])(class:)([A-Za-z_][\\w-]*)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "keyword.other.class-guard-prefix.tui" },
+        "2": { "name": "entity.other.attribute-name.class-guard.tui" },
+        "4": { "name": "punctuation.separator.key-value.tui" },
+        "6": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\6",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.guard.tui",
+      "patterns": [{ "include": "#flag-value" }]
+    },
+    "attr-each": {
+      "comment": "each=\"path as alias\".",
+      "name": "meta.attribute.each.tui",
+      "begin": "(?<![\\w:.-])(each)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.each.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.each.tui",
+      "patterns": [
+        { "name": "keyword.control.each-as.tui", "match": "(?<=\\s)as(?=\\s)" },
+        { "include": "#path-parts" }
+      ]
+    },
+    "flag-value": {
+      "patterns": [
+        { "name": "keyword.operator.negation.tui", "match": "!" },
+        { "name": "constant.language.boolean.tui", "match": "(?<![\\w.])(?:true|false)(?![\\w.])" },
+        { "include": "#path-parts" }
+      ]
+    },
+    "attr-flag": {
+      "comment": "if, hidden, disabled, open, mouse: path, !path, true, false.",
+      "name": "meta.attribute.flag.tui",
+      "begin": "(?<![\\w:.-])(if|hidden|disabled|open|mouse)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.flag.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.flag.tui",
+      "patterns": [{ "include": "#flag-value" }]
+    },
+    "attr-path": {
+      "comment": "bind, checked, key: a path into the store or the each alias.",
+      "name": "meta.attribute.path.tui",
+      "begin": "(?<![\\w:.-])(bind|checked|key)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.path.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.path.tui",
+      "patterns": [{ "include": "#path-parts" }]
+    },
+    "attr-template": {
+      "comment": "title, placeholder, label, short: literal text with {path} interpolations.",
+      "name": "meta.attribute.template.tui",
+      "begin": "(?<![\\w:.-])(title|placeholder|label|short)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.template.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui",
+      "patterns": [{ "include": "#text-content" }]
+    },
+    "attr-keys": {
+      "comment": "keys=\"q,ctrl+c,shift+tab\": key tokens separated by commas (SPEC section 8.1).",
+      "name": "meta.attribute.keys.tui",
+      "begin": "(?<![\\w:.-])(keys)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.keys.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.keys.tui",
+      "patterns": [
+        { "name": "punctuation.separator.list.tui", "match": "," },
+        {
+          "name": "constant.language.key.tui",
+          "match": "(?<![\\w+-])(?:enter|esc|tab|backspace|space|up|down|left|right|home|end|pgup|pgdn|shift\\+tab)(?![\\w+-])"
+        },
+        {
+          "match": "(?<![\\w+-])(ctrl)(\\+)([a-z])(?![\\w+-])",
+          "captures": {
+            "1": { "name": "constant.language.key.modifier.tui" },
+            "2": { "name": "punctuation.separator.key-combo.tui" },
+            "3": { "name": "constant.language.key.tui" }
+          }
+        },
+        { "name": "constant.character.key.tui", "match": "(?<![\\w+-])[!-+\\--~](?![\\w+-])" }
+      ]
+    },
+    "attr-selector": {
+      "comment": "to, when, focus: #id targets, with an optional pseudo-class (when=\"#inbox:focus\").",
+      "name": "meta.attribute.selector.tui",
+      "begin": "(?<![\\w:.-])(to|when|focus)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.selector.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.selector.tui",
+      "patterns": [
+        {
+          "match": "(#)([A-Za-z_][\\w-]*)",
+          "captures": {
+            "1": { "name": "punctuation.definition.entity.id.tui" },
+            "2": { "name": "entity.name.selector.id.tui" }
+          }
+        },
+        {
+          "match": "(\\.)([A-Za-z_][\\w-]*)",
+          "captures": {
+            "1": { "name": "punctuation.definition.entity.class.tui" },
+            "2": { "name": "entity.other.attribute-name.class.tui" }
+          }
+        },
+        {
+          "match": "(:)(focus-within|focus|selected|disabled|empty|checked)(?![\\w-])",
+          "captures": {
+            "1": { "name": "punctuation.definition.entity.pseudo.tui" },
+            "2": { "name": "entity.other.attribute-name.pseudo-class.tui" }
+          }
+        },
+        { "name": "keyword.operator.combinator.tui", "match": ">" },
+        { "name": "punctuation.separator.list.tui", "match": "," },
+        { "name": "entity.name.tag.selector.tui", "match": "[a-z][a-z0-9_-]*" }
+      ]
+    },
+    "attr-class": {
+      "comment": "class=\"a b\": whitespace-separated class names.",
+      "name": "meta.attribute.class.tui",
+      "begin": "(?<![\\w:.-])(class)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.class.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.class-list.tui",
+      "patterns": [{ "name": "entity.other.class-name.tui", "match": "[^\\s\"']+" }]
+    },
+    "attr-id": {
+      "name": "meta.attribute.id.tui",
+      "begin": "(?<![\\w:.-])(id)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.id.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui",
+      "patterns": [{ "name": "entity.name.selector.id.tui", "match": "[^\\s\"']+" }]
+    },
+    "attr-style": {
+      "comment": "style=\"...\": a declaration list in TCSS.",
+      "name": "meta.attribute.style.tui",
+      "begin": "(?<![\\w:.-])(style)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.style.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.embedded.inline.tcss",
+      "patterns": [{ "include": "source.tcss#declarations-inline" }]
+    },
+    "attr-src": {
+      "comment": "src=\"theme.tcss\" on <style>.",
+      "name": "meta.attribute.src.tui",
+      "begin": "(?<![\\w:.-])(src)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.src.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui markup.underline.link.tui",
+      "patterns": [{ "include": "#entity" }]
+    },
+    "attr-generic": {
+      "patterns": [
+        {
+          "name": "meta.attribute.tui",
+          "begin": "(?<![\\w:.-])([A-Za-z_][\\w:.-]*)(\\s*)(=)(\\s*)(\"|')",
+          "beginCaptures": {
+            "1": { "name": "entity.other.attribute-name.tui" },
+            "3": { "name": "punctuation.separator.key-value.tui" },
+            "5": { "name": "punctuation.definition.string.begin.tui" }
+          },
+          "end": "\\5",
+          "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+          "contentName": "string.quoted.tui",
+          "patterns": [{ "include": "#entity" }]
+        },
+        {
+          "comment": "An attribute with no value is not well-formed XML (V005).",
+          "name": "entity.other.attribute-name.tui",
+          "match": "(?<![\\w:.-])[A-Za-z_][\\w:.-]*"
+        }
+      ]
+    }
+  }
+}

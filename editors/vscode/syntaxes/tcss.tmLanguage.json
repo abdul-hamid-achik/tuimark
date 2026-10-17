@@ -1,0 +1,545 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "TCSS",
+  "scopeName": "source.tcss",
+  "fileTypes": [
+    "tcss"
+  ],
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#media"
+    },
+    {
+      "include": "#at-rule-unknown"
+    },
+    {
+      "include": "#rule-list"
+    },
+    {
+      "include": "#selector"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.block.tcss",
+      "begin": "/\\*",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.begin.tcss"
+        }
+      },
+      "end": "\\*/",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.end.tcss"
+        }
+      }
+    },
+    "media": {
+      "comment": "@media (feature: value) { rules }. One feature per @media (SPEC section 10.5).",
+      "name": "meta.at-rule.media.tcss",
+      "begin": "(@)(media)(?![\\w-])([^{]*)(\\{)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.keyword.tcss"
+        },
+        "2": {
+          "name": "keyword.control.at-rule.media.tcss"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "#media-query"
+            }
+          ]
+        },
+        "4": {
+          "name": "punctuation.section.media.begin.tcss"
+        }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.media.end.tcss"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#rule-list"
+        },
+        {
+          "include": "#selector"
+        }
+      ]
+    },
+    "media-query": {
+      "patterns": [
+        {
+          "name": "meta.media-query.tcss",
+          "match": "(\\()\\s*(max-cols|min-cols|max-rows|min-rows|theme)\\s*(:)\\s*([^)\\s]*)\\s*(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.media-query.begin.tcss"
+            },
+            "2": {
+              "name": "support.type.property-name.media.tcss"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.tcss"
+            },
+            "4": {
+              "patterns": [
+                {
+                  "name": "constant.numeric.integer.tcss",
+                  "match": "(?<![\\w-])[0-9]+(?![\\w-])"
+                },
+                {
+                  "name": "constant.language.theme.tcss",
+                  "match": "(?<![\\w-])(?:dark|light)(?![\\w-])"
+                },
+                {
+                  "name": "invalid.illegal.media-value.tcss",
+                  "match": "\\S+"
+                }
+              ]
+            },
+            "5": {
+              "name": "punctuation.definition.media-query.end.tcss"
+            }
+          }
+        },
+        {
+          "comment": "A feature that is not max-cols, min-cols, max-rows, min-rows, or theme.",
+          "name": "meta.media-query.tcss",
+          "match": "(\\()\\s*([\\w-]+)\\s*(:)\\s*([^)\\s]*)\\s*(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.media-query.begin.tcss"
+            },
+            "2": {
+              "name": "invalid.illegal.media-feature.tcss"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.tcss"
+            },
+            "4": {
+              "name": "constant.other.media-value.tcss"
+            },
+            "5": {
+              "name": "punctuation.definition.media-query.end.tcss"
+            }
+          }
+        }
+      ]
+    },
+    "at-rule-unknown": {
+      "name": "invalid.illegal.at-rule.tcss",
+      "match": "@[\\w-]+"
+    },
+    "selector": {
+      "patterns": [
+        {
+          "include": "#selector-id"
+        },
+        {
+          "include": "#selector-class"
+        },
+        {
+          "include": "#selector-pseudo"
+        },
+        {
+          "include": "#selector-type"
+        },
+        {
+          "name": "keyword.operator.combinator.tcss",
+          "match": ">"
+        },
+        {
+          "name": "punctuation.separator.list.tcss",
+          "match": ","
+        },
+        {
+          "comment": "Forbidden by SPEC section 10.1: *, &, [attr].",
+          "name": "invalid.illegal.selector.tcss",
+          "match": "\\*|&|\\[[^\\]]*\\]?"
+        }
+      ]
+    },
+    "selector-id": {
+      "match": "(#)([A-Za-z_][\\w-]*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.entity.id.tcss"
+        },
+        "2": {
+          "name": "entity.name.selector.id.tcss"
+        }
+      }
+    },
+    "selector-class": {
+      "match": "(\\.)([A-Za-z_][\\w-]*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.entity.class.tcss"
+        },
+        "2": {
+          "name": "entity.other.attribute-name.class.tcss"
+        }
+      }
+    },
+    "selector-pseudo": {
+      "patterns": [
+        {
+          "match": "(:)(root)(?![\\w-])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.entity.pseudo.tcss"
+            },
+            "2": {
+              "name": "entity.other.attribute-name.pseudo-class.root.tcss"
+            }
+          }
+        },
+        {
+          "match": "(:)(focus-within|focus|selected|disabled|empty|checked)(?![\\w-])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.entity.pseudo.tcss"
+            },
+            "2": {
+              "name": "entity.other.attribute-name.pseudo-class.tcss"
+            }
+          }
+        },
+        {
+          "comment": ":hover and friends are forbidden (SPEC section 10.1).",
+          "match": "(:)([A-Za-z][\\w-]*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.entity.pseudo.tcss"
+            },
+            "2": {
+              "name": "invalid.illegal.pseudo-class.tcss"
+            }
+          }
+        }
+      ]
+    },
+    "selector-type": {
+      "patterns": [
+        {
+          "name": "entity.name.tag.tcss",
+          "match": "(?<![\\w-])(?:tui|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|app)(?![\\w-])"
+        },
+        {
+          "name": "entity.name.tag.unknown.tcss invalid.illegal.unknown-tag.tcss",
+          "match": "(?<![\\w-])[A-Za-z_][\\w-]*"
+        }
+      ]
+    },
+    "rule-list": {
+      "name": "meta.property-list.tcss",
+      "begin": "\\{",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.section.property-list.begin.tcss"
+        }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.property-list.end.tcss"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#declarations"
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#declaration"
+        },
+        {
+          "name": "punctuation.terminator.rule.tcss",
+          "match": ";"
+        }
+      ]
+    },
+    "declaration": {
+      "patterns": [
+        {
+          "comment": "A custom property: a token declared in :root.",
+          "name": "meta.property-declaration.tcss",
+          "begin": "(?<![\\w-])(--[A-Za-z_][\\w-]*)(\\s*)(:)",
+          "beginCaptures": {
+            "1": {
+              "name": "variable.other.custom-property.tcss"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.tcss"
+            }
+          },
+          "end": "(;)|(?=\\})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.terminator.rule.tcss"
+            }
+          },
+          "contentName": "meta.property-value.tcss",
+          "patterns": [
+            {
+              "include": "#value"
+            }
+          ]
+        },
+        {
+          "name": "meta.property-declaration.tcss",
+          "begin": "(?<![\\w-])(align|background|bar|bold|border-color|border|color|column-gap|content-align|dim|display|dock|flex|gap|grid-columns|grid-min-width|height|italic|justify|layout|margin|max-height|max-width|min-height|min-width|overflow|padding|reverse|row-gap|scrollbar|title-color|underline|visibility|width|wrap)(?![\\w-])(\\s*)(:)",
+          "beginCaptures": {
+            "1": {
+              "name": "support.type.property-name.tcss"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.tcss"
+            }
+          },
+          "end": "(;)|(?=\\})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.terminator.rule.tcss"
+            }
+          },
+          "contentName": "meta.property-value.tcss",
+          "patterns": [
+            {
+              "include": "#value"
+            }
+          ]
+        },
+        {
+          "comment": "A property that is not in the catalog (V003).",
+          "name": "meta.property-declaration.tcss",
+          "begin": "(?<![\\w-])([A-Za-z][\\w-]*)(\\s*)(:)",
+          "beginCaptures": {
+            "1": {
+              "name": "support.type.property-name.unknown.tcss invalid.illegal.unknown-property.tcss"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.tcss"
+            }
+          },
+          "end": "(;)|(?=\\})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.terminator.rule.tcss"
+            }
+          },
+          "contentName": "meta.property-value.tcss",
+          "patterns": [
+            {
+              "include": "#value"
+            }
+          ]
+        }
+      ]
+    },
+    "value": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#token"
+        },
+        {
+          "include": "#var"
+        },
+        {
+          "include": "#color-hex"
+        },
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#color-ansi"
+        },
+        {
+          "include": "#keyword"
+        }
+      ]
+    },
+    "token": {
+      "match": "(\\$)([A-Za-z_][\\w-]*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.variable.tcss"
+        },
+        "2": {
+          "name": "variable.other.token.tcss"
+        }
+      }
+    },
+    "var": {
+      "name": "meta.function-call.var.tcss",
+      "match": "(var)(\\()\\s*(--[A-Za-z_][\\w-]*)\\s*(\\))",
+      "captures": {
+        "1": {
+          "name": "support.function.var.tcss"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.tcss"
+        },
+        "3": {
+          "name": "variable.other.token.tcss"
+        },
+        "4": {
+          "name": "punctuation.section.function.end.tcss"
+        }
+      }
+    },
+    "color-hex": {
+      "name": "constant.other.color.rgb-value.tcss",
+      "match": "(#)(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})(?![\\w-])",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.constant.tcss"
+        }
+      }
+    },
+    "number": {
+      "match": "(?<![\\w.#$-])(-?[0-9]+(?:\\.[0-9]+)?)(%|fr)?(?![\\w.-])",
+      "captures": {
+        "1": {
+          "name": "constant.numeric.tcss"
+        },
+        "2": {
+          "name": "keyword.other.unit.tcss"
+        }
+      }
+    },
+    "color-ansi": {
+      "name": "support.constant.color.ansi.tcss",
+      "match": "(?<![\\w-])(?:bright-)?(?:black|red|green|yellow|blue|magenta|cyan|white)(?![\\w-])"
+    },
+    "keyword": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.tcss",
+          "match": "(?<![\\w-])(?:true|false)(?![\\w-])"
+        },
+        {
+          "name": "support.constant.property-value.tcss",
+          "match": "(?<![\\w-])(?:start|center|end|stretch|flex|none|single|double|rounded|thick|block|eighths|row|column|grid|hidden|scroll|visible|auto|space-between|top|right|bottom|left|default|wrap|nowrap|truncate-start|truncate-middle|truncate)(?![\\w-])"
+        },
+        {
+          "name": "invalid.illegal.unknown-value.tcss",
+          "match": "(?<![\\w-])[A-Za-z_][\\w-]*"
+        }
+      ]
+    },
+    "declaration-inline": {
+      "patterns": [
+        {
+          "comment": "A custom property: a token declared in :root.",
+          "name": "meta.property-declaration.tcss",
+          "begin": "(?<![\\w-])(--[A-Za-z_][\\w-]*)(\\s*)(:)",
+          "beginCaptures": {
+            "1": {
+              "name": "variable.other.custom-property.tcss"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.tcss"
+            }
+          },
+          "end": "(;)|(?=\\})|(?=[\"'])",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.terminator.rule.tcss"
+            }
+          },
+          "contentName": "meta.property-value.tcss",
+          "patterns": [
+            {
+              "include": "#value"
+            }
+          ]
+        },
+        {
+          "name": "meta.property-declaration.tcss",
+          "begin": "(?<![\\w-])(align|background|bar|bold|border-color|border|color|column-gap|content-align|dim|display|dock|flex|gap|grid-columns|grid-min-width|height|italic|justify|layout|margin|max-height|max-width|min-height|min-width|overflow|padding|reverse|row-gap|scrollbar|title-color|underline|visibility|width|wrap)(?![\\w-])(\\s*)(:)",
+          "beginCaptures": {
+            "1": {
+              "name": "support.type.property-name.tcss"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.tcss"
+            }
+          },
+          "end": "(;)|(?=\\})|(?=[\"'])",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.terminator.rule.tcss"
+            }
+          },
+          "contentName": "meta.property-value.tcss",
+          "patterns": [
+            {
+              "include": "#value"
+            }
+          ]
+        },
+        {
+          "comment": "A property that is not in the catalog (V003).",
+          "name": "meta.property-declaration.tcss",
+          "begin": "(?<![\\w-])([A-Za-z][\\w-]*)(\\s*)(:)",
+          "beginCaptures": {
+            "1": {
+              "name": "support.type.property-name.unknown.tcss invalid.illegal.unknown-property.tcss"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.tcss"
+            }
+          },
+          "end": "(;)|(?=\\})|(?=[\"'])",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.terminator.rule.tcss"
+            }
+          },
+          "contentName": "meta.property-value.tcss",
+          "patterns": [
+            {
+              "include": "#value"
+            }
+          ]
+        }
+      ]
+    },
+    "declarations-inline": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#declaration-inline"
+        },
+        {
+          "name": "punctuation.terminator.rule.tcss",
+          "match": ";"
+        }
+      ]
+    }
+  }
+}

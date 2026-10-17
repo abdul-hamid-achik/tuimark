@@ -1,0 +1,96 @@
+/* SYNTAX TEST "source.tcss" "@media, theme tokens, var(), colors, and pseudo-classes"
+/* A palette, a per-theme refinement, breakpoints, and the forbidden. */
+:root {
+/* <~---- entity.other.attribute-name.pseudo-class.root.tcss
+  --accent: cyan;
+/* <~~-------- variable.other.custom-property.tcss
+/*          ^^^^ support.constant.color.ansi.tcss
+  --focus: bright-blue;
+/*         ^^^^^^^^^^^ support.constant.color.ansi.tcss
+  --bg: #0d1117;
+/*      ^ punctuation.definition.constant.tcss
+/*       ^^^^^^ constant.other.color.rgb-value.tcss
+  --fg: #fff;
+/*      ^^^^ constant.other.color.rgb-value.tcss
+}
+
+@media (theme: light) {
+/* <- punctuation.definition.keyword.tcss
+/* <~----- keyword.control.at-rule.media.tcss
+/*      ^^^^^ support.type.property-name.media.tcss
+/*             ^^^^^ constant.language.theme.tcss
+  :root { --accent: #c8102e; }
+/* ^^^^ entity.other.attribute-name.pseudo-class.root.tcss
+/*                  ^^^^^^^ constant.other.color.rgb-value.tcss
+}
+
+@media (min-cols: 81) {
+/*      ^^^^^^^^ support.type.property-name.media.tcss
+/*                ^^ constant.numeric.integer.tcss
+  #sidebar { width: 32; }
+/* ^^^^^^^ entity.name.selector.id.tcss
+/*           ^^^^^ support.type.property-name.tcss
+/*                  ^^ constant.numeric.tcss
+}
+
+@media (max-rows: 20) {
+/*      ^^^^^^^^ support.type.property-name.media.tcss
+  #header { display: none; }
+/*                   ^^^^ support.constant.property-value.tcss
+}
+
+@media (min-rows: 21) { }
+/*      ^^^^^^^^ support.type.property-name.media.tcss
+
+@media (min-width: 80) { }
+/*      ^^^^^^^^^ invalid.illegal.media-feature.tcss
+
+@media (theme: auto) { }
+/*             ^^^^ invalid.illegal.media-value.tcss
+
+text {
+  color: $accent;
+/* <~~----- support.type.property-name.tcss
+/*       ^ punctuation.definition.variable.tcss
+/*        ^^^^^^ variable.other.token.tcss
+  background: var(--bg);
+/*            ^^^ support.function.var.tcss
+/*                ^^^^ variable.other.token.tcss
+  border-color: default;
+/*              ^^^^^^^ support.constant.property-value.tcss
+  border: rounded;
+  margin: 1 2 1 2;
+/*        ^ constant.numeric.tcss
+/*          ^ constant.numeric.tcss
+  width: 50%;
+/*       ^^ constant.numeric.tcss
+/*         ^ keyword.other.unit.tcss
+  height: 1fr;
+/*        ^ constant.numeric.tcss
+/*         ^^ keyword.other.unit.tcss
+  wrap: truncate-middle;
+/*      ^^^^^^^^^^^^^^^ support.constant.property-value.tcss
+  bold: false;
+/*      ^^^^^ constant.language.boolean.tcss
+  colour: red;
+/* <~~------ invalid.illegal.unknown-property.tcss
+}
+
+list:focus, item:selected > text, #a:disabled, .b:empty, table:focus-within, item:checked {
+/*   ^^^^^ entity.other.attribute-name.pseudo-class.tcss
+/*               ^^^^^^^^ entity.other.attribute-name.pseudo-class.tcss
+/*                        ^ keyword.operator.combinator.tcss
+/*                                   ^^^^^^^^ entity.other.attribute-name.pseudo-class.tcss
+/*                                                ^^^^^ entity.other.attribute-name.pseudo-class.tcss
+/*                                                             ^^^^^^^^^^^^ entity.other.attribute-name.pseudo-class.tcss
+/*                                                                                ^^^^^^^ entity.other.attribute-name.pseudo-class.tcss
+  gap: 2;
+}
+
+button:hover { gap: 1; }
+/*     ^^^^^ invalid.illegal.pseudo-class.tcss
+blink { gap: 1; }
+/* <----- entity.name.tag.unknown.tcss invalid.illegal.unknown-tag.tcss
+
+* { gap: 1; }
+/* <- invalid.illegal.selector.tcss
