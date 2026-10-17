@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"encoding/json"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -110,7 +109,7 @@ func readSample(sn *snapshot, path string) (any, bool) {
 	p := filepath.Join(filepath.Dir(path), sampleName)
 	text, ok := sn.docText(p)
 	if !ok {
-		raw, err := os.ReadFile(p)
+		raw, err := host.ReadRegular(p, 0)
 		if err != nil {
 			return nil, false
 		}
