@@ -21,8 +21,9 @@ type Engine struct {
 	memo map[memoKey]int
 	gen  uint64
 	seen map[string]bool
-	// intBuf is what is left of the chunk ints cuts size lists from.
-	intBuf []int
+	// Scratch is the memory this engine's Layout calls cut their work
+	// lists from (nil: the engine makes its own on first use).
+	Scratch *Scratch
 	// l003 and l006 record, for this frame, the boxes L003 and L006 were
 	// reported on (SPEC v0.3 §14): L009 does not repeat either.
 	l003, l006 map[*Box]bool
@@ -43,6 +44,7 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 		e.memo = map[memoKey]int{}
 		e.seen = map[string]bool{}
 	}
+	e.scratch().reset()
 	screen := Rect{0, 0, cols, rows}
 	w := min(clampAxis(root, true, resolveRoot(root.Style.Width, cols), cols), cols)
 	h := min(clampAxis(root, false, resolveRoot(root.Style.Height, rows), rows), rows)
@@ -518,7 +520,8 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 		return sizes, false
 	}
 	horizontal := row
-	specs := make([]ir.Scalar, n)
+	var specBuf, weightBuf [smallList]ir.Scalar
+	specs := e.scalars(&specBuf, n)
 	for i, k := range kids {
 		specs[i] = mainSpec(k, horizontal)
 		if specs[i].Kind == ir.Fr {
@@ -553,7 +556,7 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 	if horizontal {
 		parentAuto = b.autoW
 	}
-	weights := make([]ir.Scalar, n)
+	weights := e.scalars(&weightBuf, n)
 	// L003 sums what cannot shrink: fixed cells and min bounds.
 	fixedSum := 0
 	fixedOrMin := false
@@ -656,21 +659,51 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 	return sizes, anyFr
 }
 
+// scratch returns the engine's Scratch, made on first use.
+func (e *Engine) scratch() *Scratch {
+	if e.Scratch == nil {
+		e.Scratch = &Scratch{}
+	}
+	return e.Scratch
+}
+
 // ints returns a zeroed []int of length (and capacity) n for a size list
-// of this engine run: a short one is cut from a chunk the engine
-// allocates in bulk and never hands out twice, so laying out many small
-// containers does not allocate once per container.
-func (e *Engine) ints(n int) []int {
-	const chunk = 2048
-	if n > chunk/8 {
-		return make([]int, n)
+// of this Layout call, cut from its Scratch, so laying out many
+// containers, or one of many children, allocates nothing per container.
+func (e *Engine) ints(n int) []int { return e.scratch().ints.take(n) }
+
+// smallList is the length up to which a container's work lists live on
+// the stack of the function that builds them (the arrays below), and
+// beyond which they are cut from the Scratch.
+const smallList = 8
+
+// scalars returns a zeroed []ir.Scalar of length n: buf's first n
+// elements when n fits it, else one cut from the Scratch.
+func (e *Engine) scalars(buf *[smallList]ir.Scalar, n int) []ir.Scalar {
+	if n <= smallList {
+		*buf = [smallList]ir.Scalar{}
+		return buf[:n:n]
 	}
-	if len(e.intBuf) < n {
-		e.intBuf = make([]int, chunk)
+	return e.scratch().scalars.take(n)
+}
+
+// boxList returns an empty []*Box with room for n: buf when n fits it,
+// else one cut from the Scratch. Appending up to n boxes never moves it.
+func (e *Engine) boxList(buf *[smallList]*Box, n int) []*Box {
+	if n <= smallList {
+		return buf[:0:smallList]
 	}
-	out := e.intBuf[:n:n]
-	e.intBuf = e.intBuf[n:]
-	return out
+	return e.scratch().boxes.take(n)[:0]
+}
+
+// intList is ints for a list only the calling function reads: buf's
+// first n elements when n fits it, else one cut from the Scratch.
+func (e *Engine) intList(buf *[smallList]int, n int) []int {
+	if n <= smallList {
+		*buf = [smallList]int{}
+		return buf[:n:n]
+	}
+	return e.ints(n)
 }
 
 // allocate sizes the in-flow children of b in a main×cross area (SPEC
@@ -791,7 +824,8 @@ func (e *Engine) flexWith(b *Box, kids []*Box, area Rect, clip Rect, pre *alloca
 func (e *Engine) scrollLayout(b *Box, clip Rect) {
 	area := b.Content
 	scrollX, scrollY := b.ScrollAxes()
-	var kids []*Box
+	var kidBuf [smallList]*Box
+	kids := e.boxList(&kidBuf, len(b.Children))
 	follow := -1 // b.Follow as an index into kids
 	for i, c := range b.Children {
 		if c.Style.Dock != "" {
@@ -1281,7 +1315,8 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 // are laid out at. A left or right dock's own height is measured at its
 // own width.
 func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
-	var flow []*Box
+	var flowBuf [smallList]*Box
+	flow := e.boxList(&flowBuf, len(b.Children))
 	dockMain, dockCross := 0, 0
 	row := b.Direction() == "row"
 	flowAvail := avail
@@ -1326,7 +1361,8 @@ func (e *Engine) contentIntrinsic(b *Box, horizontal bool, avail int) int {
 	}
 	if n > 0 {
 		// Sizes on the other axis, needed to measure wrapped text.
-		others := make([]int, n)
+		var otherBuf [smallList]int
+		others := e.intList(&otherBuf, n)
 		if horizontal {
 			for i := range flow {
 				others[i] = flowAvail

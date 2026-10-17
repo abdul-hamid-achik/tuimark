@@ -288,7 +288,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	if kinds.hints {
 		fb.buildHints(casc, rootBox) // step 5
 	}
-	eng := &layout.Engine{File: a.file, V3: a.doc.V3}
+	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Scratch: &a.scratch}
 	if rootBox == nil {
 		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: newStyle(css.Initial())}
 	}

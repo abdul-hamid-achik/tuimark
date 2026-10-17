@@ -16,6 +16,7 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
+	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
@@ -122,6 +123,10 @@ type App struct {
 	// parity. passes numbers the builder passes of the live builds.
 	slab   uint8
 	passes uint64
+	// scratch is the memory every layout of this app cuts its work lists
+	// from (layout.Scratch): one Layout call at a time, under a.mu, and
+	// nothing it hands out outlives the call.
+	scratch layout.Scratch
 	// verifyPrev is, with the tuimark_verify build tag, the last frame
 	// Frame gave, and verifyDigest its frameDigest when it was built
 	// (checkRetained); unused otherwise.
