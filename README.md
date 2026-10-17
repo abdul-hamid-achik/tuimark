@@ -24,7 +24,7 @@ agent edits again
 and reference for the language, the CLI, and the Go API. Release history is
 in the [Changelog](CHANGELOG.md).
 
-The Tuimark specification (the SPEC, currently v0.2) is the source of truth
+The Tuimark specification (the SPEC, currently v0.3) is the source of truth
 for the language and the runtime. It is maintained by the author outside
 this repository; "SPEC §N" references in code and docs point to it. This
 file is the map of what's in the repo and how to drive it.
@@ -1180,7 +1180,17 @@ kept with the maintainer's project notes, outside this repository.
   to force a leading or trailing space into the body (CDATA is trimmed the
   same way, and numeric character references are rejected outright); use
   `gap`, `padding`, or `margin` on a parent for spacing, or a non-XML space
-  such as U+00A0 (NBSP) if you need it as literal content.
+  such as U+00A0 (NBSP) if you need it as literal content. Both points hold
+  for the default `wrap: nowrap` (and the `truncate*` values) only: with
+  `wrap: wrap`, a line is cut into words at every Unicode space (§11.5), so
+  a run of spaces becomes one, and an NBSP is a break point painted as a
+  plain space, not literal content.
+
+- **Numbers in the store are float64** (SPEC §7, §18). The store holds JSON
+  values, so `Bind`, `Set`, `Batch`, `--data`, and the host protocol's
+  `set`/`batch` keep every number as a double: an integer beyond ±2^53 (a
+  snowflake or database ID, say) is rounded, and `{path}` and `Get` show the
+  rounded value. Pass such values as strings.
 
 - **Modal visibility: `open` vs `bind`** (SPEC §6.5, §7). A `<modal>`'s
   `open` attribute takes `true`, `false`, a bare path, or `!path` — never

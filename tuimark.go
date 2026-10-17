@@ -167,8 +167,8 @@ type Batch = host.Batch
 // part in order. A b.Set called on a *Batch kept after fn has returned
 // returns an error and changes nothing; Batch has returned by then, so
 // that error reaches only the caller of that b.Set and is never one of
-// the parts of the error Batch returned. Batch is safe to call from any goroutine, including a
-// handler.
+// the parts of the error Batch returned. Batch is safe to call from any
+// goroutine, including a handler.
 func (a *App) Batch(fn func(b *Batch) error) error { return a.h.Batch(fn) }
 
 // Catalog lists the actions the document references, with where they are
@@ -186,7 +186,7 @@ func (a *App) Dump(cols, rows int) (*Dump, error) {
 		return nil, fmt.Errorf("tuimark: Dump size %dx%d is negative", cols, rows)
 	}
 	if cols > 1000 || rows > 1000 {
-		return nil, fmt.Errorf("tuimark: Dump --cols and --rows must be at most 1000 (got %dx%d)", cols, rows)
+		return nil, fmt.Errorf("tuimark: Dump size %dx%d is above 1000 in a dimension", cols, rows)
 	}
 	return a.h.Dump(cols, rows, false), nil
 }
