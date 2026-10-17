@@ -379,6 +379,14 @@ func (p *painter) box(b *layout.Box, owner string) {
 	if b == nil || !b.Laid {
 		return
 	}
+	if b.Clip.W <= 0 || b.Clip.H <= 0 {
+		// Nothing of b can show: every cell it or a descendant paints, its
+		// ownership, and the input cursor are clipped to b.Clip, which
+		// layout makes contain each descendant's Clip (a child's is its
+		// parent's content clip cut by its own rect). A long list's rows
+		// off screen end here.
+		return
+	}
 	owner = ownerOf(b, owner)
 	st := b.Style
 	visible := st.Visibility != "hidden"

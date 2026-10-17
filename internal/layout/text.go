@@ -201,10 +201,51 @@ func Wrap(p string, width int) []string {
 // MaxWidth returns the width of the widest paragraph of text.
 func MaxWidth(text string) int {
 	m := 0
-	for _, p := range strings.Split(text, "\n") {
+	for {
+		p, rest, more := strings.Cut(text, "\n")
 		if w := Width(p); w > m {
 			m = w
 		}
+		if !more {
+			return m
+		}
+		text = rest
 	}
-	return m
+}
+
+// LineCount is len(Lines(text, width, mode)) without building the lines:
+// one per paragraph, except that wrap with a width breaks each paragraph
+// as Wrap does (a paragraph of printable ASCII that fits is one line).
+func LineCount(text string, width int, mode string) int {
+	if text == "" {
+		return 0
+	}
+	if mode != "wrap" || width <= 0 {
+		return strings.Count(text, "\n") + 1
+	}
+	n := 0
+	for {
+		p, rest, more := strings.Cut(text, "\n")
+		if len(p) <= width && printableASCII(p) {
+			n++
+		} else {
+			n += len(Wrap(p, width))
+		}
+		if !more {
+			return n
+		}
+		text = rest
+	}
+}
+
+// printableASCII reports whether every byte of s is printable ASCII
+// (0x20-0x7E): every byte one cluster of width 1, the space the only
+// separator Wrap sees.
+func printableASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < 0x20 || s[i] > 0x7e {
+			return false
+		}
+	}
+	return true
 }

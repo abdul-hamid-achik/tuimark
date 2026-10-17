@@ -2,6 +2,7 @@ package layout
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -13,10 +14,12 @@ type Engine struct {
 	Diags ir.Diags
 	// V3 is set for a version="3" document (SPEC v0.3 §5.1): Layout also
 	// reports the clipping warnings L008 and L009 (§14, §30.2).
-	V3     bool
-	memo   map[memoKey]int
-	shrink map[axisKey]bool
-	seen   map[string]bool
+	V3 bool
+	// memo holds the intrinsic sizes that do not fit a box's own memo
+	// slots (Box.memo); gen is this engine's generation (generation).
+	memo map[memoKey]int
+	gen  uint64
+	seen map[string]bool
 	// l003 and l006 record, for this frame, the boxes L003 and L006 were
 	// reported on (SPEC v0.3 §14): L009 does not repeat either.
 	l003, l006 map[*Box]bool
@@ -28,11 +31,6 @@ type memoKey struct {
 	avail      int
 }
 
-type axisKey struct {
-	b          *Box
-	horizontal bool
-}
-
 // Layout places root to fill (at most) cols×rows, then centers each open
 // modal over the root. Every placed box gets Laid=true. Viewports that can
 // never show part of their content are reported last, as L006 (SPEC §11.3
@@ -41,9 +39,6 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 	if e.memo == nil {
 		e.memo = map[memoKey]int{}
 		e.seen = map[string]bool{}
-	}
-	if e.shrink == nil {
-		e.shrink = map[axisKey]bool{}
 	}
 	screen := Rect{0, 0, cols, rows}
 	w := min(clampAxis(root, true, resolveRoot(root.Style.Width, cols), cols), cols)
@@ -822,9 +817,10 @@ func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
 		// intrinsic sizes.
 		return false
 	}
-	key := axisKey{b, horizontal}
-	if v, ok := e.shrink[key]; ok {
-		return v
+	e.memoOf(b)
+	shift := 2 * axisIndex(horizontal)
+	if b.shrink>>shift&1 != 0 {
+		return b.shrink>>shift&2 != 0
 	}
 	v := false
 	for _, c := range b.Children {
@@ -833,7 +829,11 @@ func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
 			break
 		}
 	}
-	e.shrink[key] = v
+	bits := uint8(1)
+	if v {
+		bits = 3
+	}
+	b.shrink |= bits << shift
 	return v
 }
 
@@ -968,10 +968,10 @@ func (e *Engine) checkTextClip(n *Box) {
 		}
 	}
 	if !n.Style.OverflowWritten {
-		lines := Lines(n.Text, n.Content.W, mode)
-		if r := n.Content.H; len(lines) > r {
+		lines := LineCount(n.Text, n.Content.W, mode)
+		if r := n.Content.H; lines > r {
 			if e.clipFirst(n, "L008b") {
-				e.report(n, ir.Warning, "L008", "text has %d lines but its content box has %d rows; give it room, or write overflow: hidden to keep the cut", len(lines), r)
+				e.report(n, ir.Warning, "L008", "text has %d lines but its content box has %d rows; give it room, or write overflow: hidden to keep the cut", lines, r)
 			}
 			n.Clipped = "text"
 		}
@@ -1054,10 +1054,73 @@ func (e *Engine) clipFirst(n *Box, kind string) bool {
 // intrinsic returns b's content-driven border-box size on one axis.
 // avail is b's size on the other axis (used to wrap text); 0 if unknown.
 func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
-	key := memoKey{b, horizontal, avail}
-	if v, ok := e.memo[key]; ok {
+	if v, ok := e.memoGet(b, horizontal, avail); ok {
 		return v
 	}
+	v := e.measure(b, horizontal, avail)
+	e.memoPut(b, horizontal, avail, v)
+	return v
+}
+
+// engineGen hands out the generations of engine runs (Engine.gen).
+var engineGen atomic.Uint64
+
+// generation returns this engine's generation: the stamp that makes its
+// memo on a box (Box.memoGen) valid for it alone, as its maps would be.
+func (e *Engine) generation() uint64 {
+	if e.gen == 0 {
+		e.gen = engineGen.Add(1)
+	}
+	return e.gen
+}
+
+// memoOf returns b's memo for this engine run, cleared when b holds
+// another run's.
+func (e *Engine) memoOf(b *Box) {
+	if g := e.generation(); b.memoGen != g {
+		b.memoGen, b.memo, b.shrink = g, [2][2]memoSlot{}, 0
+	}
+}
+
+func axisIndex(horizontal bool) int {
+	if horizontal {
+		return 1
+	}
+	return 0
+}
+
+// memoGet returns the intrinsic size this engine run computed for b on
+// one axis at avail, if any: the first value computed for that key, as a
+// map keyed by (b, horizontal, avail) holds it.
+func (e *Engine) memoGet(b *Box, horizontal bool, avail int) (int, bool) {
+	e.memoOf(b)
+	for _, s := range &b.memo[axisIndex(horizontal)] {
+		if s.set && s.avail == avail {
+			return s.v, true
+		}
+	}
+	v, ok := e.memo[memoKey{b, horizontal, avail}]
+	return v, ok
+}
+
+// memoPut remembers v for (b, horizontal, avail): in a free slot of b,
+// else in the engine's map.
+func (e *Engine) memoPut(b *Box, horizontal bool, avail, v int) {
+	slots := &b.memo[axisIndex(horizontal)]
+	for i := range slots {
+		if !slots[i].set {
+			slots[i] = memoSlot{set: true, avail: avail, v: v}
+			return
+		}
+	}
+	if e.memo == nil {
+		e.memo = map[memoKey]int{}
+	}
+	e.memo[memoKey{b, horizontal, avail}] = v
+}
+
+// measure computes intrinsic's value.
+func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 	fh, fv := b.frameH(), b.frameV()
 	frame := fv
 	if horizontal {
@@ -1069,9 +1132,9 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 		if horizontal {
 			v = MaxWidth(b.Text)
 		} else if b.Style.Wrap == "wrap" && avail > 0 {
-			v = len(Lines(b.Text, max(1, avail-fh), "wrap"))
+			v = LineCount(b.Text, max(1, avail-fh), "wrap")
 		} else {
-			v = len(Lines(b.Text, 0, ""))
+			v = LineCount(b.Text, 0, "")
 		}
 	case "input":
 		if horizontal {
@@ -1124,9 +1187,7 @@ func (e *Engine) intrinsic(b *Box, horizontal bool, avail int) int {
 			v = e.contentIntrinsic(b, horizontal, max(0, inner))
 		}
 	}
-	v += frame
-	e.memo[key] = v
-	return v
+	return v + frame
 }
 
 // contentIntrinsic measures a container's children (without its own
