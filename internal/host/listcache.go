@@ -73,6 +73,20 @@ type listSlab struct {
 // the CI benchmark job, removed before the branch is done.
 var NoReuseForBench bool
 
+// NoHugeForBench turns adviseHuge off. TEMPORARY, as NoReuseForBench.
+var NoHugeForBench bool
+
+// growBoxes is grow for a slab's boxes, whose new memory is advised to be
+// backed by huge pages (adviseHuge).
+func growBoxes(s []layout.Box, n int) []layout.Box {
+	if cap(s) < n {
+		s = make([]layout.Box, n, n+n/8)
+		adviseHuge(s)
+		return s
+	}
+	return s[:n]
+}
+
 // slabFor returns the slab of list cache c this builder's pass
 // materializes into, or nil for fresh memory: outside a live build
 // (pass 0), or when this pass already took it. The caller holds a.mu.
@@ -320,6 +334,7 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box, slab *listSlab
 		// Room for this many next time (the boxes beyond the slab's
 		// room came from fresh memory this time).
 		slab.boxes = make([]layout.Box, 0, len(r.protos)+len(r.protos)/8)
+		adviseHuge(slab.boxes)
 	}
 	r.post = sub.diags
 	r.packTexts()
@@ -395,7 +410,7 @@ func (r *listRows) materialize(parent *layout.Box, s *listSlab) []*layout.Box {
 		m = materializer{protos: r.protos, boxes: make([]layout.Box, len(r.protos)), kids: make([]*layout.Box, r.nkids)}
 		items = make([]*layout.Box, len(r.keys))
 	} else {
-		s.boxes = grow(s.boxes, len(r.protos))
+		s.boxes = growBoxes(s.boxes, len(r.protos))
 		s.kids = grow(s.kids, r.nkids)
 		s.items = grow(s.items, len(r.keys))
 		s.kidsN = grow(s.kidsN, len(r.protos))
