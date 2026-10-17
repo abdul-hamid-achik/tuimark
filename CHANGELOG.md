@@ -7,6 +7,77 @@ line.
 
 ## [Unreleased]
 
+0.4a is the "frontend loop" release. It adds the tools that let you build
+a terminal app the way you build a web front end:
+
+- see the document live and edit it while it runs (`tuimark run`);
+- start a project from a template (`tuimark new`);
+- get diagnostics and completion in the editor (`tuimark lsp` and a VS
+  Code extension);
+- drive the view from TypeScript (`@tuimark/host`);
+- keep timers and computed values out of the markup (`Every`, `Derive`).
+
+The vocabulary does not change: `version="3"` is still the newest, and
+every document keeps its meaning and its dumps.
+
+### Added
+
+- **Go API.**
+  - `RunContext(ctx, w)` and `RunWith(ctx, w, RunOptions{OnError})` run
+    the app under a context. A cancellation ends the session as a quit
+    and restores the terminal.
+  - `OnError` decides whether an error from a handler, an `Every`, or a
+    `Derive` ends the session or is shown and survived.
+  - `Quit()` ends the active session from any goroutine.
+  - `Every(d, fn)` runs `fn` every `d` on the loop's goroutine, as one
+    `Batch` with one redraw. Late ticks are coalesced, and `stop` is safe
+    from anywhere.
+  - `Derive(path, fn)` keeps a computed value (a filtered list, a count)
+    in the store. It is recomputed inside every write, so nothing ever
+    sees a stale value, and it is read-only for every writer: a widget
+    bound to it does not change.
+- **`tuimark catalog`** prints the whole vocabulary as JSON: tags,
+  attributes and their keywords, CSS properties and values,
+  pseudo-classes, media features, actions, key tokens, and diagnostic
+  codes, each with the `version` that introduced it. The format is
+  described by `schema/catalog.v1.json`.
+- **`tuimark new NAME [--go | --ts]`** writes a project that validates
+  cleanly at 40, 80, and 120 columns under both themes: `app.tui`,
+  `theme.tcss`, `sample.json`, and an `AGENTS.md` briefing for coding
+  agents (`tuimark agents --project`). `--go` adds a `main.go` host and
+  `--ts` a `parent.ts` built on `@tuimark/host`.
+- **`tuimark lsp`** is a Language Server Protocol server for `.tui` and
+  `.tcss`.
+  - Diagnostics are exactly `validate`'s. They are routed to the
+    stylesheet they belong to, and a sibling `sample.json` is used as the
+    data.
+  - Completion, hover, go to definition, and formatting with `tuimark
+    fmt`.
+- **VS Code extension** (`editors/vscode`): TextMate grammars that mark
+  anything outside the closed vocabulary, snippets, and a client for
+  `tuimark lsp`. Without the binary, highlighting and snippets still
+  work.
+- **`@tuimark/host`** (`sdk/ts`), the TypeScript client of the host
+  protocol, for Bun. `spawnHost` starts `tuimark host`, and `on`, `set`,
+  `batch`, `get`, and `exited` do the rest. It follows every rule for
+  parents: signal forwarding, `SIGTERM` then `SIGKILL`, and never
+  touching the terminal. `examples/host-ts` now uses it.
+- **`TUIMARK_LOG`** writes a `{"ev":"rounds","queued":N}` record when the
+  lifecycle rounds hit their cap.
+
+### Changed
+
+- **Lifecycle events past the 8th round are kept**, not dropped. They are
+  dispatched first at the next settle, whatever causes it: a key, a
+  resize, a tick, or a `Play` step.
+- **`tuimark validate` says when it did not check bindings.** Without
+  `--data` the text output ends with `ok (bindings not checked: no
+  --data)`, and the JSON output has a `data` member (the path, or
+  `null`).
+- **`tuimark host` bounds fd 3 lines.** A line of 64 MiB or more ends the
+  session with `{"type":"error","error":"fd 3 line of 64 MiB or more"}`,
+  instead of growing without limit. `tuimark mcp` already stopped there.
+
 ## [0.3.2] - 2026-10-17
 
 A patch: fixes and friendlier diagnostics from a full review of 0.3.1.
