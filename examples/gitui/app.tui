@@ -1,0 +1,153 @@
+<tui version="3" theme="auto" mouse="mouse_on">
+  <style src="theme.tcss"/>
+  <keymap when="#app">
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="?" action="help_open" label="help"/>
+  </keymap>
+  <keymap when="#files">
+    <bind keys="space" action="stage_toggle" keycap="space" label="(un)stage"/>
+    <bind keys="a" action="stage_all" label="stage all"/>
+    <bind keys="A" action="unstage_all" label="unstage all"/>
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+  </keymap>
+  <keymap when="#commits:focus">
+    <bind keys="enter" action="commit_open" label="open"/>
+    <bind keys="/" action="filter_open" label="filter"/>
+    <bind keys="esc" action="filter_cancel"/>
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+  </keymap>
+  <keymap when="#filter">
+    <bind keys="esc" action="filter_cancel" label="clear"/>
+  </keymap>
+  <keymap when="#branch-table:focus">
+    <bind keys="enter" action="checkout_ask" label="checkout"/>
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+  </keymap>
+  <keymap when="#diff">
+    <bind keys="j" action="move-next" keycap="j/k" label="scroll"/>
+    <bind keys="k" action="move-prev"/>
+  </keymap>
+  <keymap when="#app">
+    <bind keys="r" action="refresh" label="refresh"/>
+    <bind keys="1" action="switch-to" to="#status" keycap="1-3" label="tabs"/>
+    <bind keys="2" action="switch-to" to="#log"/>
+    <bind keys="3" action="switch-to" to="#branches"/>
+    <bind keys="]" action="move-next" to="#nav"/>
+    <bind keys="[" action="move-prev" to="#nav"/>
+  </keymap>
+  <keymap when="#commit">
+    <bind keys="q,enter" action="commit_close" keycap="q" label="close commit"/>
+    <bind keys="j" action="move-next" keycap="j/k" label="scroll"/>
+    <bind keys="k" action="move-prev"/>
+  </keymap>
+  <keymap when="#checkout">
+    <bind keys="y" action="checkout_confirm" label="confirm checkout"/>
+    <bind keys="n" action="checkout_cancel" label="cancel checkout"/>
+  </keymap>
+  <keymap when="#help">
+    <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
+  </keymap>
+  <screen id="gitui" focus="#unstaged">
+    <col id="app">
+      <row id="identity">
+        <text class="brand">◆ gitui</text>
+        <text class="repo">{repo.name}</text>
+        <text class="branch">{repo.branch}</text>
+        <text class="sync">{sync_label}</text>
+        <spacer/>
+        <text class="counts">{counts.label}</text>
+        <text class="mode">{mode}</text>
+      </row>
+      <tabs id="nav" bind="view" mark="▸">
+        <tab id="status" label="1 status ({counts.total})" short="1 st" focus="#unstaged">
+          <row id="status-pane">
+            <col id="files">
+              <box id="staged-box" class="panel" title="staged · {counts.staged}">
+                <list id="staged" class="files" each="staged as f" key="f.path" bind="cur.staged" on:select="file_select" on:focus="file_select">
+                  <item>
+                    <row class="file">
+                      <text class="code" class:k-m="f.is_m" class:k-a="f.is_a" class:k-d="f.is_d" class:k-r="f.is_r" class:k-u="f.is_u">{f.code}</text>
+                      <text class="path">{f.path}</text>
+                    </row>
+                  </item>
+                </list>
+              </box>
+              <box id="unstaged-box" class="panel" title="unstaged · {counts.unstaged}">
+                <list id="unstaged" class="files" each="unstaged as f" key="f.path" bind="cur.unstaged" on:select="file_select" on:focus="file_select">
+                  <item>
+                    <row class="file">
+                      <text class="code" class:k-m="f.is_m" class:k-a="f.is_a" class:k-d="f.is_d" class:k-r="f.is_r" class:k-u="f.is_u">{f.code}</text>
+                      <text class="path">{f.path}</text>
+                    </row>
+                  </item>
+                </list>
+              </box>
+            </col>
+            <scroll id="diff" class="panel" focusable="true" title="{diff.title}">
+              <col id="diff-lines" each="diff.lines as l" key="l.n">
+                <text class="dl" class:dl-add="l.add" class:dl-del="l.del" class:dl-hunk="l.hunk" class:dl-meta="l.meta">{l.text}</text>
+              </col>
+            </scroll>
+          </row>
+        </tab>
+        <tab id="log" label="2 log" short="2 log" focus="#commits">
+          <col id="log-pane">
+            <row id="filter-row" if="filter_open">
+              <text class="muted">/</text>
+              <input id="filter" bind="log_query" placeholder="filter by subject or author" on:submit="filter_apply"/>
+            </row>
+            <table id="commits" class="panel" each="log_view as c" key="c.hash" bind="cur.log" title="{log_label}" placeholder="no commits match">
+              <column id="c-hash" class="hash" title="HASH" width="7">{c.short}</column>
+              <column id="c-subject" title="SUBJECT" width="1fr">{c.subject}</column>
+              <column id="c-author" class="author" title="AUTHOR" priority="2">{c.author}</column>
+              <column id="c-date" class="when" title="WHEN" priority="3">{c.date}</column>
+              <column id="c-refs" class="refs" class:head="c.head" title="REFS" priority="1">{c.refs}</column>
+            </table>
+          </col>
+        </tab>
+        <tab id="branches" label="3 branches" short="3 br" focus="#branch-table">
+          <table id="branch-table" class="panel" each="branches as b" key="b.name" bind="cur.branch" title="local branches" placeholder="no branches">
+            <column id="b-mark" class="mark" class:current="b.current" width="1">{b.mark}</column>
+            <column id="b-name" class:current="b.current" title="BRANCH">{b.name}</column>
+            <column id="b-track" class="track" title="SYNC" priority="3">{b.track}</column>
+            <column id="b-upstream" class="upstream" title="UPSTREAM" priority="2">{b.upstream}</column>
+            <column id="b-hash" class="hash" title="HEAD" width="7" priority="4">{b.hash}</column>
+            <column id="b-subject" title="LAST COMMIT" width="1fr" priority="1">{b.subject}</column>
+            <column id="b-date" class="when" title="WHEN" priority="5">{b.date}</column>
+          </table>
+        </tab>
+      </tabs>
+      <row id="statusline">
+        <text class="status" class:err="status.err">{status.text}</text>
+      </row>
+      <hints id="keys"/>
+    </col>
+    <modal id="commit" open="detail_open" title="{detail.title}" focus="#commit-diff" on:escape="commit_close">
+      <text class="meta">{detail.meta}</text>
+      <text class="subject">{detail.subject}</text>
+      <col id="commit-body" each="detail.body as p" key="p.n">
+        <text class="body" wrap="wrap">{p.text}</text>
+      </col>
+      <text class="stats">{detail.stats}</text>
+      <scroll id="commit-diff" class="panel" focusable="true">
+        <col id="commit-lines" each="detail.lines as l" key="l.n">
+          <text class="dl" class:dl-add="l.add" class:dl-del="l.del" class:dl-hunk="l.hunk" class:dl-meta="l.meta">{l.text}</text>
+        </col>
+      </scroll>
+    </modal>
+    <modal id="checkout" open="confirm_open" title="checkout" on:escape="checkout_cancel">
+      <text class="subject">Check out {confirm.branch}?</text>
+      <text class="muted" wrap="wrap">{confirm.note}</text>
+      <row id="checkout-actions">
+        <button id="checkout-yes" label="yes (y)" focusable="false" on:click="checkout_confirm"/>
+        <button id="checkout-no" label="no (n)" focusable="false" on:click="checkout_cancel"/>
+      </row>
+    </modal>
+    <modal id="help" open="help_open" title="keys" on:escape="help_close">
+      <hints id="help-keys" class="help" scope="all"/>
+    </modal>
+  </screen>
+</tui>

@@ -7,6 +7,25 @@ line.
 
 ## [Unreleased]
 
+### Added
+
+- **Four example apps** in `examples/`, each a `version="3"` document, a
+  stylesheet with dark and light palettes, sample data, a `mock.json` for
+  `tuimark run --mock`, and a Go host on the 0.4 API with its own tests:
+  - `logs`: a live log viewer. Lines stream in with `Every`, the view
+    follows the end with `<scroll stick="bottom">`, and `Derive` keeps the
+    filter and the counts. `-follow FILE` tails a real file.
+  - `tasks`: a kanban board with three lanes, multi-select, a form modal,
+    and a delete confirmation. `-file` keeps the board in a JSON file.
+  - `gitui`: a git client with status and a diff preview, the log with
+    each commit's detail, and the branches. `-repo PATH` reads a real
+    repository, read-only unless `-write` is also given.
+  - `http`: an HTTP API client with a collection, a request editor, and
+    the response's body and headers. It runs against an in-process fake
+    API unless `-base URL` is given.
+- `examples/README.md` lists every example and what it shows. The docs
+  site's Examples page has screenshots of the four new apps.
+
 ## [0.4.0] - 2026-10-17
 
 0.4a is the "frontend loop" release. It adds the tools that let you build

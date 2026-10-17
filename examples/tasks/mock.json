@@ -1,0 +1,60 @@
+{
+  "card_new": [
+    {"path": "form.heading", "value": "New card in Todo"},
+    {"path": "form.title", "value": ""},
+    {"path": "form.tag", "value": ""},
+    {"path": "form.due", "value": ""},
+    {"path": "form.error", "value": ""},
+    {"path": "form.open", "value": true}
+  ],
+  "card_edit": [
+    {"path": "form.heading", "value": "Edit card"},
+    {"path": "form.title", "value": "Fix login redirect"},
+    {"path": "form.tag", "value": "bug"},
+    {"path": "form.due", "value": "2026-10-20"},
+    {"path": "form.error", "value": ""},
+    {"path": "form.open", "value": true}
+  ],
+  "form_prio": [
+    {"path": "form.prio_mark", "value": "▲"},
+    {"path": "form.prio_label", "value": "high"},
+    {"path": "form.p_high", "value": true},
+    {"path": "form.p_med", "value": false}
+  ],
+  "card_save": [
+    {"path": "form.open", "value": false},
+    {"path": "status", "value": "saved (preview only: build the Go host to change the board)"}
+  ],
+  "card_cancel": [
+    {"path": "form.open", "value": false}
+  ],
+  "card_delete": [
+    {"path": "del.text", "value": "Delete “Fix login redirect”?"},
+    {"path": "del.open", "value": true}
+  ],
+  "delete_confirm": [
+    {"path": "del.open", "value": false},
+    {"path": "status", "value": "deleted (preview only: build the Go host to change the board)"}
+  ],
+  "delete_cancel": [
+    {"path": "del.open", "value": false}
+  ],
+  "card_left": [
+    {"path": "status", "value": "preview only: build the Go host to move cards"}
+  ],
+  "card_right": [
+    {"path": "status", "value": "preview only: build the Go host to move cards"}
+  ],
+  "card_up": [
+    {"path": "status", "value": "preview only: build the Go host to reorder cards"}
+  ],
+  "card_down": [
+    {"path": "status", "value": "preview only: build the Go host to reorder cards"}
+  ],
+  "filter_apply": [
+    {"path": "status", "value": "preview only: the filter needs the Go host (Derive)"}
+  ],
+  "filter_clear": [
+    {"path": "filter", "value": ""}
+  ]
+}

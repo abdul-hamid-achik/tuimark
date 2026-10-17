@@ -1,0 +1,122 @@
+:root {
+  --bg: #14161f;
+  --fg: #e6e8ef;
+  --muted: #8a90a6;
+  --accent: #7aa2f7;
+  --border: #2c3044;
+  --panel: #1b1e2b;
+  --sel: #2a3150;
+  --sel-dim: #232842;
+  --bug: #f7768e;
+  --feature: #9ece6a;
+  --chore: #e0af68;
+  --high: #f7768e;
+  --med: #e0af68;
+  --low: #7dcfff;
+  --late: #f7768e;
+  --soon: #e0af68;
+  --ok: #9ece6a;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1d2030;
+    --muted: #6b7089;
+    --accent: #3b5bdb;
+    --border: #cfd3e4;
+    --panel: #e9ebf5;
+    --sel: #d3dcfa;
+    --sel-dim: #dde2f6;
+    --bug: #c92a4a;
+    --feature: #2b8a3e;
+    --chore: #a05a00;
+    --high: #c92a4a;
+    --med: #a05a00;
+    --low: #0b7285;
+    --late: #c92a4a;
+    --soon: #a05a00;
+    --ok: #2b8a3e;
+  }
+}
+
+screen { color: $fg; background: $bg; wrap: truncate; }
+
+/* chrome */
+#app { gap: 0; }
+#top { height: 1; gap: 1; background: $panel; padding: 0 1; }
+.brand { color: $accent; bold: true; width: auto; }
+.slash { color: $muted; width: auto; }
+#filter { width: 40; max-width: 60%; color: $fg; }
+#filter:focus { background: $sel; }
+.file { color: $muted; width: 1fr; wrap: truncate-start; content-align: end; }
+
+#status { height: 1; gap: 1; padding: 0 1; background: $panel; }
+.msg { color: $muted; width: 1fr; }
+.msg.err { color: $high; bold: true; }
+.summary { color: $muted; width: auto; }
+#keys { height: 1; gap: 2; padding: 0 1; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* lanes */
+#board { height: 1fr; gap: 1; }
+#board > list {
+  width: 1fr;
+  gap: 1;
+  border: rounded;
+  border-color: $border;
+  title-color: $muted;
+  padding: 0 1;
+  scrollbar: auto;
+  overflow: hidden;
+}
+#board > list:focus { border-color: $accent; title-color: $accent; }
+#todo, #doing, #done { height: 1fr; }
+
+/* cards */
+#board > list > item { height: 2; }
+#board > list > item:selected { reverse: false; background: $sel-dim; }
+#board > list:focus > item:selected { background: $sel; }
+#board > list > item:checked { color: $accent; }
+.card-top, .card-meta { height: 1; gap: 1; overflow: hidden; }
+.card-meta { padding: 0 0 0 2; }
+.card-title { width: 1fr; bold: true; }
+.prio { width: 1; }
+.prio-word { width: auto; color: $muted; }
+.tag { width: auto; }
+.due { width: auto; color: $muted; }
+.p-high { color: $high; }
+.p-med { color: $med; }
+.p-low { color: $low; }
+.bug { color: $bug; }
+.feature { color: $feature; }
+.chore { color: $chore; }
+.soon { color: $soon; }
+.overdue { color: $late; bold: true; }
+#done > item { dim: true; }
+
+/* modals */
+#form, #confirm { background: $panel; border-color: $accent; title-color: $accent; }
+#form { width: 64; max-width: 100%; height: auto; padding: 1 2; }
+.field { height: 1; gap: 1; }
+.prio-value { width: 1fr; }
+.flabel { width: 9; color: $muted; }
+.field > input { width: 1fr; background: $bg; }
+.field > input:focus { background: $sel; }
+.error { color: $high; bold: true; }
+#form-actions { height: 1; gap: 2; margin: 1 0 0 0; }
+#form-keys { gap: 2; width: 1fr; content-align: end; }
+#confirm { width: 50; max-width: 100%; height: auto; padding: 1 2; }
+#confirm-actions { height: 1; gap: 2; margin: 1 0 0 0; }
+button { color: $fg; }
+button:focus { reverse: true; }
+
+@media (max-cols: 100) {
+  .prio-word { display: none; }
+}
+
+@media (max-cols: 70) {
+  #filter { width: 1fr; }
+  .file { display: none; }
+}

@@ -1155,6 +1155,27 @@ module; the only supported entry points are the functions above.
     --cols 120 --input "tab tab 9 tab click:70,1"
   ```
 
+- `examples/logs`, `examples/tasks`, `examples/gitui`, `examples/http` —
+  four complete apps in `version="3"` documents, each a `.tui`, a `.tcss`,
+  `sample.json`, a `mock.json` for `tuimark run --mock`, and a Go host on
+  the 0.4 API (`Every`, `Derive`, `RunWith`) with its own `Play` tests and
+  README. `logs` is a live log viewer (`<scroll stick="bottom">`, a filter,
+  level toggles; `-follow FILE` tails a real file); `tasks` a kanban board
+  (multi-select, form and confirm modals; `-file` persists it); `gitui` a
+  git client (status with a diff preview, the log, branches; `-repo PATH`
+  reads a real repository, read-only without `-write`); `http` an HTTP API
+  client (a collection, an editor, the response; an in-process fake API
+  unless `-base URL`). `examples/README.md` lists every example.
+
+  ```sh
+  go build -o bin/logs ./examples/logs && ./bin/logs
+  go build -o bin/tasks ./examples/tasks && ./bin/tasks
+  go build -o bin/gitui ./examples/gitui && ./bin/gitui -repo .
+  go build -o bin/http ./examples/http && ./bin/http
+  ./bin/tuimark run examples/tasks/app.tui --data examples/tasks/sample.json \
+    --mock examples/tasks/mock.json   # the view with no Go
+  ```
+
 - `examples/stacked/{app.tui,theme.tcss}` — the phase-1 media fixture (SPEC
   §4, §21 test 10): the inbox layout with static text, where `@media
   (max-cols: 80)` stacks `#sidebar` above `#detail`. It only feeds the

@@ -1,0 +1,85 @@
+<tui version="3" theme="auto" mouse="mouse">
+  <style src="theme.tcss"/>
+  <keymap when="#app">
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="ctrl+c" action="quit" when=""/>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="/" action="focus" to="#filter" label="filter"/>
+    <bind keys="p" action="pause" label="pause"/>
+    <bind keys="c" action="clear" label="clear"/>
+    <bind keys="1" action="toggle_error" keycap="1-4" label="levels"/>
+    <bind keys="2" action="toggle_warn"/>
+    <bind keys="3" action="toggle_info"/>
+    <bind keys="4" action="toggle_debug"/>
+    <bind keys="g" action="move-first" to="#log" label="top"/>
+    <bind keys="G" action="move-last" to="#log" label="bottom"/>
+    <bind keys="m" action="toggle_mouse" label="mouse"/>
+  </keymap>
+  <keymap when="#filter">
+    <bind keys="enter" action="filter_apply" label="apply"/>
+    <bind keys="esc" action="filter_clear" label="clear"/>
+  </keymap>
+  <keymap when="#help">
+    <bind keys="enter,q" action="help_close"/>
+  </keymap>
+  <screen id="main" focus="#log">
+    <col id="app">
+      <row id="identity" class:alert="notice">
+        <text class="brand">◆ logs</text>
+        <text class="source" if="!notice">{source}</text>
+        <text class="notice" if="notice">{notice}</text>
+        <spacer/>
+        <sparkline id="rate" bind="rate_hist" min="0"/>
+        <text class="rate">{rate_label}</text>
+        <text class="state" class:live="!paused" class:paused="paused">{state_label}</text>
+      </row>
+      <row id="levelbar">
+        <row class="chip error" class:off="!levels.error">
+          <text class="chip-key">1</text>
+          <text class="chip-dot" if="levels.error">●</text>
+          <text class="chip-dot" if="!levels.error">○</text>
+          <text>error {stats.error}</text>
+        </row>
+        <row class="chip warn" class:off="!levels.warn">
+          <text class="chip-key">2</text>
+          <text class="chip-dot" if="levels.warn">●</text>
+          <text class="chip-dot" if="!levels.warn">○</text>
+          <text>warn {stats.warn}</text>
+        </row>
+        <row class="chip info" class:off="!levels.info">
+          <text class="chip-key">3</text>
+          <text class="chip-dot" if="levels.info">●</text>
+          <text class="chip-dot" if="!levels.info">○</text>
+          <text>info {stats.info}</text>
+        </row>
+        <row class="chip debug" class:off="!levels.debug">
+          <text class="chip-key">4</text>
+          <text class="chip-dot" if="levels.debug">●</text>
+          <text class="chip-dot" if="!levels.debug">○</text>
+          <text>debug {stats.debug}</text>
+        </row>
+      </row>
+      <row id="filterbar">
+        <text class="prompt">/</text>
+        <input id="filter" bind="filter" placeholder="filter: words, -exclude"/>
+      </row>
+      <scroll id="log" axis="y" stick="bottom" focusable="true" title="{stats.shown} of {stats.total} lines">
+        <text class="empty" if="stats.none">no lines to show</text>
+        <col id="rows" each="visible as l" key="l.id">
+          <row class="line" class:error="l.error" class:warn="l.warn" class:info="l.info" class:debug="l.debug" class:cont="l.cont">
+            <text class="ts">{l.ts}</text>
+            <text class="lvl">{l.lvl}</text>
+            <text class="svc">{l.svc}</text>
+            <text class="msg">{l.msg}</text>
+          </row>
+        </col>
+      </scroll>
+      <hints id="keys"/>
+    </col>
+    <modal id="help" open="help_open" title="keys" on:escape="help_close">
+      <hints id="help-keys" class="help" scope="all"/>
+      <text class="muted">Filter: words must all match; -word excludes.</text>
+      <button id="help-ok" label="close" on:click="help_close"/>
+    </modal>
+  </screen>
+</tui>

@@ -76,11 +76,15 @@ func TestAnalyzeIsValidate(t *testing.T) {
 	files := []string{
 		"examples/agent/agent.tui",
 		"examples/dashboard/app.tui",
+		"examples/gitui/app.tui",
 		"examples/host-ts/view.tui",
+		"examples/http/app.tui",
 		"examples/inbox/app.tui",
+		"examples/logs/app.tui",
 		"examples/monitor/studio.tui",
 		"examples/spike/inbox.tui",
 		"examples/stacked/app.tui",
+		"examples/tasks/app.tui",
 		"examples/unicode/app.tui",
 	}
 	var paths []string

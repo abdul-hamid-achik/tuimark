@@ -1,0 +1,45 @@
+{
+  "today": "2026-10-19",
+  "filter": "",
+  "file": "in memory",
+  "status": "ready",
+  "status_err": false,
+  "cards": [
+    {"id": "c1", "title": "Fix login redirect", "tag": "bug", "prio": 3, "due": "2026-10-20", "col": "todo"},
+    {"id": "c2", "title": "Write v0.5 notes", "tag": "chore", "prio": 2, "due": "2026-10-23", "col": "todo"},
+    {"id": "c3", "title": "Dark mode settings", "tag": "feature", "prio": 2, "due": "2026-11-02", "col": "todo"},
+    {"id": "c4", "title": "Rate-limit exports", "tag": "feature", "prio": 3, "due": "2026-10-17", "col": "todo"},
+    {"id": "c5", "title": "Upgrade toolchain", "tag": "chore", "prio": 1, "due": "", "col": "todo"},
+    {"id": "c6", "title": "Search all boards", "tag": "feature", "prio": 3, "due": "2026-10-21", "col": "doing"},
+    {"id": "c7", "title": "Empty import crash", "tag": "bug", "prio": 3, "due": "2026-10-19", "col": "doing"},
+    {"id": "c8", "title": "Keys cheatsheet", "tag": "chore", "prio": 1, "due": "2026-10-26", "col": "doing"},
+    {"id": "c9", "title": "Set up CI pipeline", "tag": "chore", "prio": 2, "due": "2026-10-12", "col": "done"},
+    {"id": "c10", "title": "Add CSV export", "tag": "feature", "prio": 2, "due": "2026-10-14", "col": "done"},
+    {"id": "c11", "title": "Fix timezone drift", "tag": "bug", "prio": 3, "due": "2026-10-15", "col": "done"}
+  ],
+  "cur": {"todo": "c1", "doing": "c6", "done": "c9"},
+  "sel": {"todo": [], "doing": [], "done": []},
+  "form": {"open": false, "heading": "New card", "title": "", "tag": "", "due": "", "error": "", "prio_mark": "◆", "prio_label": "medium", "p_high": false, "p_med": true, "p_low": false},
+  "del": {"open": false, "text": ""},
+  "cols": {
+    "doing": [
+      {"due": "Oct 21", "id": "c6", "is_bug": false, "is_chore": false, "is_feature": true, "overdue": false, "p_high": true, "p_low": false, "p_med": false, "prio_label": "high", "prio_mark": "▲", "soon": true, "tag": "feature", "title": "Search all boards"},
+      {"due": "Oct 19", "id": "c7", "is_bug": true, "is_chore": false, "is_feature": false, "overdue": false, "p_high": true, "p_low": false, "p_med": false, "prio_label": "high", "prio_mark": "▲", "soon": true, "tag": "bug", "title": "Empty import crash"},
+      {"due": "Oct 26", "id": "c8", "is_bug": false, "is_chore": true, "is_feature": false, "overdue": false, "p_high": false, "p_low": true, "p_med": false, "prio_label": "low", "prio_mark": "▽", "soon": false, "tag": "chore", "title": "Keys cheatsheet"}
+    ],
+    "done": [
+      {"due": "Oct 12", "id": "c9", "is_bug": false, "is_chore": true, "is_feature": false, "overdue": false, "p_high": false, "p_low": false, "p_med": true, "prio_label": "medium", "prio_mark": "◆", "soon": false, "tag": "chore", "title": "Set up CI pipeline"},
+      {"due": "Oct 14", "id": "c10", "is_bug": false, "is_chore": false, "is_feature": true, "overdue": false, "p_high": false, "p_low": false, "p_med": true, "prio_label": "medium", "prio_mark": "◆", "soon": false, "tag": "feature", "title": "Add CSV export"},
+      {"due": "Oct 15", "id": "c11", "is_bug": true, "is_chore": false, "is_feature": false, "overdue": false, "p_high": true, "p_low": false, "p_med": false, "prio_label": "high", "prio_mark": "▲", "soon": false, "tag": "bug", "title": "Fix timezone drift"}
+    ],
+    "todo": [
+      {"due": "Oct 20", "id": "c1", "is_bug": true, "is_chore": false, "is_feature": false, "overdue": false, "p_high": true, "p_low": false, "p_med": false, "prio_label": "high", "prio_mark": "▲", "soon": true, "tag": "bug", "title": "Fix login redirect"},
+      {"due": "Oct 23", "id": "c2", "is_bug": false, "is_chore": true, "is_feature": false, "overdue": false, "p_high": false, "p_low": false, "p_med": true, "prio_label": "medium", "prio_mark": "◆", "soon": false, "tag": "chore", "title": "Write v0.5 notes"},
+      {"due": "Nov 2", "id": "c3", "is_bug": false, "is_chore": false, "is_feature": true, "overdue": false, "p_high": false, "p_low": false, "p_med": true, "prio_label": "medium", "prio_mark": "◆", "soon": false, "tag": "feature", "title": "Dark mode settings"},
+      {"due": "Oct 17", "id": "c4", "is_bug": false, "is_chore": false, "is_feature": true, "overdue": true, "p_high": true, "p_low": false, "p_med": false, "prio_label": "high", "prio_mark": "▲", "soon": false, "tag": "feature", "title": "Rate-limit exports"},
+      {"due": "", "id": "c5", "is_bug": false, "is_chore": true, "is_feature": false, "overdue": false, "p_high": false, "p_low": true, "p_med": false, "prio_label": "low", "prio_mark": "▽", "soon": false, "tag": "chore", "title": "Upgrade toolchain"}
+    ]
+  },
+  "counts": {"doing": "3", "done": "3", "marked": 0, "shown": 11, "todo": "5", "total": 11},
+  "summary": "11 cards"
+}

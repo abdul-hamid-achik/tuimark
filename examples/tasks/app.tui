@@ -1,0 +1,136 @@
+<tui version="3" theme="auto">
+  <style src="theme.tcss"/>
+  <keymap when="#board">
+    <bind keys="H" action="card_left" keycap="H/L" label="move"/>
+    <bind keys="L" action="card_right"/>
+    <bind keys="K" action="card_up" keycap="K/J" label="reorder"/>
+    <bind keys="J" action="card_down"/>
+    <bind keys="space" action="check-toggle" label="mark"/>
+    <bind keys="ctrl+a" action="check-all" keycap="^A"/>
+    <bind keys="esc" action="check-none"/>
+    <bind keys="n" action="card_new" label="new"/>
+    <bind keys="e,enter" action="card_edit" label="edit"/>
+    <bind keys="d" action="card_delete" label="delete"/>
+    <bind keys="/" action="focus" to="#filter" label="filter"/>
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <keymap when="#todo:focus">
+    <bind keys="right,l" action="focus" to="#doing"/>
+  </keymap>
+  <keymap when="#doing:focus">
+    <bind keys="left,h" action="focus" to="#todo"/>
+    <bind keys="right,l" action="focus" to="#done"/>
+  </keymap>
+  <keymap when="#done:focus">
+    <bind keys="left,h" action="focus" to="#doing"/>
+  </keymap>
+  <keymap when="#filter">
+    <bind keys="esc" action="filter_clear" label="clear"/>
+    <bind keys="down" action="filter_apply" keycap="↓" label="to board"/>
+  </keymap>
+  <keymap when="#form">
+    <bind keys="ctrl+p" action="form_prio" keycap="^P" label="priority"/>
+    <bind keys="ctrl+s" action="card_save" keycap="^S" label="save"/>
+  </keymap>
+  <keymap when="#confirm">
+    <bind keys="y" action="delete_confirm" label="delete"/>
+    <bind keys="n" action="delete_cancel" label="keep"/>
+  </keymap>
+  <keymap>
+    <bind keys="ctrl+c" action="quit"/>
+  </keymap>
+  <screen id="tasks" focus="#todo">
+    <col id="app">
+      <row id="top">
+        <text class="brand">▤ tasks</text>
+        <text class="slash">/</text>
+        <input id="filter" bind="filter" placeholder="filter by title, tag or priority" on:submit="filter_apply"/>
+        <text class="file">{file}</text>
+      </row>
+      <row id="board">
+        <list id="todo" title="Todo · {counts.todo}" each="cols.todo as c" key="c.id" bind="cur.todo" checked="sel.todo" mark="✓" on:focus="col_focus">
+          <item>
+            <row class="card-top">
+              <text class="prio" class:p-high="c.p_high" class:p-med="c.p_med" class:p-low="c.p_low">{c.prio_mark}</text>
+              <text class="card-title">{c.title}</text>
+            </row>
+            <row class="card-meta">
+              <text class="tag" class:bug="c.is_bug" class:feature="c.is_feature" class:chore="c.is_chore">{c.tag}</text>
+              <text class="prio-word" class:p-high="c.p_high" class:p-med="c.p_med" class:p-low="c.p_low">{c.prio_label}</text>
+              <spacer/>
+              <text class="due" class:overdue="c.overdue" class:soon="c.soon">{c.due}</text>
+            </row>
+          </item>
+        </list>
+        <list id="doing" title="Doing · {counts.doing}" each="cols.doing as c" key="c.id" bind="cur.doing" checked="sel.doing" mark="✓" on:focus="col_focus">
+          <item>
+            <row class="card-top">
+              <text class="prio" class:p-high="c.p_high" class:p-med="c.p_med" class:p-low="c.p_low">{c.prio_mark}</text>
+              <text class="card-title">{c.title}</text>
+            </row>
+            <row class="card-meta">
+              <text class="tag" class:bug="c.is_bug" class:feature="c.is_feature" class:chore="c.is_chore">{c.tag}</text>
+              <text class="prio-word" class:p-high="c.p_high" class:p-med="c.p_med" class:p-low="c.p_low">{c.prio_label}</text>
+              <spacer/>
+              <text class="due" class:overdue="c.overdue" class:soon="c.soon">{c.due}</text>
+            </row>
+          </item>
+        </list>
+        <list id="done" title="Done · {counts.done}" each="cols.done as c" key="c.id" bind="cur.done" checked="sel.done" mark="✓" on:focus="col_focus">
+          <item>
+            <row class="card-top">
+              <text class="prio" class:p-high="c.p_high" class:p-med="c.p_med" class:p-low="c.p_low">{c.prio_mark}</text>
+              <text class="card-title">{c.title}</text>
+            </row>
+            <row class="card-meta">
+              <text class="tag" class:bug="c.is_bug" class:feature="c.is_feature" class:chore="c.is_chore">{c.tag}</text>
+              <text class="prio-word" class:p-high="c.p_high" class:p-med="c.p_med" class:p-low="c.p_low">{c.prio_label}</text>
+              <spacer/>
+              <text class="due" class:overdue="c.overdue" class:soon="c.soon">{c.due}</text>
+            </row>
+          </item>
+        </list>
+      </row>
+      <row id="status">
+        <text class="msg" class:err="status_err">{status}</text>
+        <spacer/>
+        <text class="summary">{summary}</text>
+      </row>
+      <hints id="keys"/>
+    </col>
+    <modal id="form" open="form.open" title="{form.heading}" focus="#f-title" on:escape="card_cancel">
+      <row class="field">
+        <text class="flabel">title</text>
+        <input id="f-title" bind="form.title" placeholder="what needs doing?" on:submit="card_save"/>
+      </row>
+      <row class="field">
+        <text class="flabel">tag</text>
+        <input id="f-tag" bind="form.tag" placeholder="bug, feature or chore" on:submit="card_save"/>
+      </row>
+      <row class="field">
+        <text class="flabel">due</text>
+        <input id="f-due" bind="form.due" placeholder="YYYY-MM-DD, optional" on:submit="card_save"/>
+      </row>
+      <row class="field">
+        <text class="flabel">priority</text>
+        <text class="prio-value" class:p-high="form.p_high" class:p-med="form.p_med" class:p-low="form.p_low">{form.prio_mark} {form.prio_label}</text>
+      </row>
+      <text class="error" if="form.error">{form.error}</text>
+      <row id="form-actions">
+        <button id="f-save" label="Save" on:click="card_save"/>
+        <button id="f-cancel" label="Cancel" on:click="card_cancel"/>
+        <spacer/>
+        <hints id="form-keys"/>
+      </row>
+    </modal>
+    <modal id="confirm" open="del.open" title="Delete" on:escape="delete_cancel">
+      <text>{del.text}</text>
+      <row id="confirm-actions">
+        <button id="del-yes" label="Delete (y)" focusable="false" on:click="delete_confirm"/>
+        <button id="del-no" label="Keep (n)" focusable="false" on:click="delete_cancel"/>
+      </row>
+    </modal>
+  </screen>
+</tui>
