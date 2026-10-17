@@ -19,6 +19,7 @@
 //	                      [--theme dark|light] [--strict] [--json]
 //	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
 //	tuimark mcp                                — a Model Context Protocol server on stdin/stdout
+//	tuimark lsp                                — a Language Server Protocol server on stdin/stdout
 //
 // Exit codes: 0 ok, 1 I/O or crash, 2 validation errors.
 package main
@@ -86,6 +87,7 @@ usage:
   tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
                                                run in the terminal for a parent program (fd 3 in, fd 4 out)
   tuimark mcp                                 a Model Context Protocol server on stdin/stdout
+  tuimark lsp                                 a Language Server Protocol server on stdin/stdout
   tuimark version
 
 exit codes: 0 ok, 1 I/O or crash, 2 validation errors
@@ -132,6 +134,8 @@ func (c *cli) run(args []string) int {
 		return c.cmdHost(rest)
 	case "mcp":
 		return c.cmdMCP(rest)
+	case "lsp":
+		return c.cmdLSP(rest)
 	case "catalog":
 		return c.cmdCatalog(rest)
 	case "new":

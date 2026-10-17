@@ -4,7 +4,7 @@ import "strings"
 
 // writeV04aToolsSection documents the 0.4a commands this section's package
 // owns: `catalog`, `new`, `agents --project`, the changed `validate` line
-// and JSON, and the line bounds of `host` and `mcp` (SPEC v0.4a §15.1,
+// and JSON, `lsp`, and the line bounds of `host` and `mcp` (SPEC v0.4a §15.1,
 // §15.8, §15.10, §15.11, §19.1). It names no path of the repository, since
 // the project briefing (ProjectMarkdown) is this same text.
 func writeV04aToolsSection(b *strings.Builder) {
@@ -13,5 +13,6 @@ func writeV04aToolsSection(b *strings.Builder) {
 	b.WriteString("- `tuimark new NAME [--go | --ts]` creates a project in the directory `NAME`, which must not exist or must be empty (otherwise it is a usage error that writes nothing, and no file is overwritten): `app.tui` (the newest document version, with a bound list, a status line, a keymap with labeled rows, and `<hints/>`), `theme.tcss`, `sample.json`, and this briefing as `AGENTS.md`. `--go` adds `main.go` and `go.mod`; `--ts` adds `parent.ts` and `package.json` (a Bun parent through `@tuimark/host`). The two flags are exclusive. `new` prints the files it wrote, then the next command.\n")
 	b.WriteString("- `tuimark agents --project` prints this briefing as `new` writes it into a project, so it can be regenerated after an upgrade; `tuimark agents` without a flag prints it for the authoring task as before. `--repo` and `--project` are exclusive.\n")
 	b.WriteString("- `tuimark validate` without `--data` ends its text output with `ok (bindings not checked: no --data)` instead of `ok`, since `B001`-`B003` and `B008`-`B010` were not checked; with `--data` the line stays `ok`, and warnings are still printed before it. `validate --json` has the members `actions`, `data`, `diagnostics`, `file`, and `ok`, where `data` is the `--data` argument as given, or `null` without it (so an agent reads from it whether bindings were checked, and against which file). `tuimark_validate` returns this JSON.\n")
+	b.WriteString("- `tuimark lsp` is a Language Server Protocol server on stdin/stdout for `.tui` and `.tcss` files, which an editor starts (the VS Code extension does). Its diagnostics are the ones `tuimark validate` prints, with a `sample.json` beside the document used as if passed with `--data`, and it offers completion, hover, definition, and `.tui` formatting from the catalog. It takes no arguments and reads no environment variable.\n")
 	b.WriteString("- A line of 64 MiB or more (the newline excluded) on `tuimark host`'s fd 3, or on `tuimark mcp`'s stdin, ends the session: `host` writes `{\"type\":\"error\",\"error\":\"fd 3 line of 64 MiB or more\"}` on fd 4 and ends with reason `error`, applying nothing of the line; `mcp` exits 1.\n\n")
 }
