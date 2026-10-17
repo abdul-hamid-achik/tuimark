@@ -171,12 +171,16 @@ func (a *App) Catalog() []ActionSpec { return a.h.Catalog() }
 
 // Dump renders the current state at cols×rows. It is a snapshot: it does
 // not move focus, fire events, or change what Run starts from, so dumps at
-// several sizes do not depend on their order. A negative size is an error;
-// 0 gives an empty grid. The dump's grid always has exactly rows lines of
-// cols cells.
+// several sizes do not depend on their order. A negative size, or one
+// above 1000 in either dimension (the limit Play and the CLI share), is an
+// error; 0 gives an empty grid. The dump's grid always has exactly rows
+// lines of cols cells.
 func (a *App) Dump(cols, rows int) (*Dump, error) {
 	if cols < 0 || rows < 0 {
 		return nil, fmt.Errorf("tuimark: Dump size %dx%d is negative", cols, rows)
+	}
+	if cols > 1000 || rows > 1000 {
+		return nil, fmt.Errorf("tuimark: Dump --cols and --rows must be at most 1000 (got %dx%d)", cols, rows)
 	}
 	return a.h.Dump(cols, rows, false), nil
 }
