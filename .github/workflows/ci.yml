@@ -209,3 +209,30 @@ jobs:
 
       - name: Build the site (fails on dead links)
         run: cd docs && npm ci && npm run build
+
+  # @tuimark/host (sdk/ts, SPEC §19.2): Bun tests against a fake child, and a
+  # type-check. It needs neither Go nor the tuimark binary; the real child is
+  # driven by examples/host-ts in the specs job above.
+  sdk-ts:
+    name: "sdk/ts (@tuimark/host, test and type-check)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/ts
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.2"
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Test
+        run: bun test
+
+      - name: Type-check
+        run: bunx tsc --noEmit
