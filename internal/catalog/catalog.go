@@ -187,7 +187,7 @@ func attrs(tag string) []Attr {
 	sort.Strings(names)
 	out := make([]Attr, 0, len(names)+1)
 	for _, name := range names {
-		out = append(out, Attr{Name: name, Since: since[name], Keywords: attrKeywords(tag, name)})
+		out = append(out, Attr{Name: name, Since: since[name], Keywords: attrKeywords(tag, name, since[name])})
 	}
 	if parse.TakesClassGuard(tag) {
 		// class:NAME sorts after "class" and before "disabled" ('c' < 'd'),
@@ -198,10 +198,14 @@ func attrs(tag string) []Attr {
 	return out
 }
 
-func attrKeywords(tag, attr string) []Item {
+// attrKeywords lists the attribute's keywords on the tag. The table says
+// which version accepts a keyword wherever its attribute exists; on a tag
+// that is itself newer (border on a table, say) the attribute's own since
+// is the floor, so a keyword is never listed lower than its attribute.
+func attrKeywords(tag, attr string, attrSince int) []Item {
 	out := []Item{}
 	for _, k := range parse.AttrKeywords(tag, attr) {
-		out = append(out, Item{k.Name, k.Since})
+		out = append(out, Item{k.Name, max(k.Since, attrSince)})
 	}
 	return out
 }

@@ -46,8 +46,10 @@ func flagKeywords(since int) []AttrKeyword {
 
 // AttrKeywords lists the literal values the attribute takes on the tag
 // (SPEC v0.4a §15.10), or nil when it takes none. The Since of a keyword is
-// the lowest document version that accepts it there, never lower than the
-// attribute's own.
+// the lowest version that accepts the keyword on a tag that has the
+// attribute from version 1. The attribute may itself be newer on its tag
+// (border on a table), so a caller reporting it takes the larger of the two
+// sinces, as internal/catalog does.
 func AttrKeywords(tag, attr string) []AttrKeyword {
 	list, ok := attrKeywords[tag+"."+attr]
 	if !ok {
