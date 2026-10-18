@@ -1,6 +1,6 @@
 ---
 title: Examples
-description: Complete Tuimark apps from the repository - a system monitor studio, a live log viewer, a kanban board, a git client, an HTTP client, an inbox, a deploy dashboard, a coding-agent chat, Unicode text and the phase-0 spike - with screenshots rendered from tuimark play.
+description: Complete Tuimark apps from the repository - a Snake game, a CI pipeline runner, a music player, a Pomodoro timer, a system monitor studio, a live log viewer, a kanban board, a git client, an HTTP client, an inbox, a deploy dashboard, a coding-agent chat, Unicode text and the phase-0 spike - with screenshots rendered from tuimark play.
 ---
 
 # Examples
@@ -8,6 +8,8 @@ description: Complete Tuimark apps from the repository - a system monitor studio
 Every example lives in the repository's [`examples/`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples) directory as a `.tui`, a `.tcss`, and sample data, most with a small Go host. Each picture is rendered from `tuimark play` on those files (the command is in its title bar), so you can reproduce it exactly. Screens that come in two palettes follow this site's light or dark mode.
 
 `tuimark play` runs no host program, so these pictures show the sample data and what the built-in keys do. The apps' own actions, such as sending a request or moving a card, need the Go host.
+
+The first four examples move on their own, so their pictures are animations: each Go app has a `-demo` flag that replays a scripted session on a fake clock with a fixed seed and prints every frame, and the site turns those frames into an animated SVG. Use the button in the title bar to pause one; with reduced motion turned on in your system settings, they start paused.
 
 To run them, clone the repository and build:
 
@@ -17,6 +19,62 @@ cd tuimark
 go build -o bin/tuimark ./cmd/tuimark
 go build -o bin/monitor ./examples/monitor
 ./bin/monitor
+```
+
+## snake
+
+[`examples/snake`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/snake) is a playable Snake. The game loop is an `Every` tick whose interval is the snake's speed: each food raises the level, and the tick re-arms itself faster. `-autopilot` (or `A` while playing) hands the wheel to a small search that steers to the food.
+
+<TermShot name="snake-demo">
+The autopilot playing from a fresh game. The board is a nested <code>each</code>: one row per board line, one text per run of same-kind cells, colored by <code>class:</code> guards. Nothing on the screen takes focus, so the arrow keys reach the keymap.
+</TermShot>
+
+```sh
+go build -o bin/snake ./examples/snake
+./bin/snake                      # arrows, hjkl or wasd steer; space pauses
+./bin/snake -autopilot           # watch it play
+```
+
+## pipeline
+
+[`examples/pipeline`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/pipeline) is a CI run in the terminal: stages of parallel jobs with spinners, progress bars and timers, and the selected job's log streaming into a `<scroll stick="bottom">`. A flaky test fails on the first run; `r` retries it and the later stages go on.
+
+<TermShot name="pipeline-demo">
+The run from the start: build and test jobs in parallel, the integration log streaming, the failure, a retry with <code>r</code>, and every stage passing. The spinner frame, the bars, and the counts are <code>Derive</code>d from one simulation clock that a tick advances.
+</TermShot>
+
+```sh
+go build -o bin/pipeline ./examples/pipeline
+./bin/pipeline                   # j/k pick a job, r retries, R reruns, c cancels
+./bin/pipeline -speed 8          # simulated seconds per real second
+```
+
+## music
+
+[`examples/music`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/music) is a music player with no audio: a library table with a filter, a queue, albums, and a now-playing panel whose spectrum visualizer is a six-row `<sparkline>` the tick feeds.
+
+<TermShot name="music-demo">
+A track playing, a skip with <code>n</code> to the queued track, then <code>space</code> to pause, which lets the bars fall to rest. The position and volume bars use <code>bar: eighths</code>, and the tab labels carry live counts (<code>label="queue {counts.queue}"</code>).
+</TermShot>
+
+```sh
+go build -o bin/music ./examples/music
+./bin/music                      # space plays and pauses, n/p skip, a queues
+./bin/music -speed 8             # run the playback clock faster
+```
+
+## pomodoro
+
+[`examples/pomodoro`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/pomodoro) is a Pomodoro timer and a clock in big block digits. The digits are one derived string per frame shown in a `<text>` (the blinking colon is drawn into that string), and the phase colors and the pulse of the last ten seconds are `class:` guards on values the tick computes.
+
+<TermShot name="pomodoro-demo">
+The last seconds of a work session, the flash at zero, and the short break starting in green. The second tab is a clock with a small world-clock table whose offset columns drop out on narrow terminals through <code>&lt;column priority&gt;</code>.
+</TermShot>
+
+```sh
+go build -o bin/pomodoro ./examples/pomodoro
+./bin/pomodoro -start            # space starts and pauses, s skips, 2 shows the clock
+./bin/pomodoro -work 50m -short 10m
 ```
 
 ## monitor studio
@@ -175,7 +233,7 @@ Widths are measured by grapheme cluster, a cluster is never split when text wrap
 
 Start from [getting started](/guide/getting-started), borrow freely from these files, and keep the [widgets](/guide/widgets) page open.
 
-`logs`, `tasks`, `gitui`, and `http` also ship a `mock.json`, so you can try their views in the terminal with no Go at all through [`tuimark run`](/guide/run):
+`logs`, `tasks`, `gitui`, `http`, `snake`, `pipeline`, `music`, and `pomodoro` also ship a `mock.json`, so you can try their views in the terminal with no Go at all through [`tuimark run`](/guide/run):
 
 ```sh
 tuimark run examples/tasks/app.tui --data examples/tasks/sample.json --mock examples/tasks/mock.json

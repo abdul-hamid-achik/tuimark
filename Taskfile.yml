@@ -9,7 +9,7 @@ vars:
 
 tasks:
   build:
-    desc: Build tuimark, the example apps (inbox, dashboard, monitor, logs, tasks, gitui, http), and (once it has Go files) agent into bin/.
+    desc: Build tuimark, the example apps (inbox, dashboard, monitor, logs, tasks, gitui, http, snake, pipeline, music, pomodoro), and (once it has Go files) agent into bin/.
     cmds:
       - go build -o bin/tuimark ./cmd/tuimark
       - go build -o bin/inbox ./examples/inbox
@@ -19,6 +19,10 @@ tasks:
       - go build -o bin/tasks ./examples/tasks
       - go build -o bin/gitui ./examples/gitui
       - go build -o bin/http ./examples/http
+      - go build -o bin/snake ./examples/snake
+      - go build -o bin/pipeline ./examples/pipeline
+      - go build -o bin/music ./examples/music
+      - go build -o bin/pomodoro ./examples/pomodoro
       - |
         if ls {{.AGENT_DIR}}/*.go >/dev/null 2>&1; then
           go build -o bin/agent ./{{.AGENT_DIR}}

@@ -1,0 +1,33 @@
+{
+  "help_close": [{"path":"help_open","value":false}],
+  "help_open": [{"path":"help_open","value":true}],
+  "minute_add": [
+    {"path":"left_ms","value":1316000},
+    {"path":"timer","value":{"big":"▄████▄  ▄██      ██████ ▄████▄\n▀▀  ██ ▀███   ██ ██     ██    \n ▄██▀    ██      ▀████▄ █████▄\n██▀      ██   ██     ██ ██  ██\n██████ ▄████▄    ▀████▀ ▀████▀","dots":"● ◉ ○ ○","label":"21:56","next":"next: short break · 5m","pct":"15%","progress":15.64102564102564,"state":"▶ RUNNING","title":"FOCUS"}},
+    {"path":"total_ms","value":1560000}
+  ],
+  "minute_sub": [
+    {"path":"left_ms","value":1196000},
+    {"path":"timer","value":{"big":" ▄██   ▄████▄    ██████ ▄████▄\n▀███   ██  ██ ██ ██     ██    \n  ██   ▀█████    ▀████▄ █████▄\n  ██       ██ ██     ██ ██  ██\n▄████▄ ▀████▀    ▀████▀ ▀████▀","dots":"● ◉ ○ ○","label":"19:56","next":"next: short break · 5m","pct":"16%","progress":16.944444444444443,"state":"▶ RUNNING","title":"FOCUS"}},
+    {"path":"total_ms","value":1440000}
+  ],
+  "reset": [
+    {"path":"is","value":{"flash":false,"flash_on":false,"last10":false,"long":false,"paused":false,"pulse":false,"ready":true,"running":false,"short":false,"work":true}},
+    {"path":"left_ms","value":1500000},
+    {"path":"running","value":false},
+    {"path":"timer","value":{"big":"▄████▄ ██████    ▄████▄ ▄████▄\n▀▀  ██ ██     ██ ██  ██ ██  ██\n ▄██▀  ▀████▄    ██  ██ ██  ██\n██▀        ██ ██ ██  ██ ██  ██\n██████ ▀████▀    ▀████▀ ▀████▀","dots":"● ◉ ○ ○","label":"25:00","next":"next: short break · 5m","pct":"0%","progress":0,"state":"○ READY","title":"FOCUS"}}
+  ],
+  "skip": [
+    {"path":"is","value":{"flash":false,"flash_on":false,"last10":false,"long":false,"paused":false,"pulse":false,"ready":false,"running":true,"short":true,"work":false}},
+    {"path":"left_ms","value":300000},
+    {"path":"pos","value":3},
+    {"path":"timer","value":{"big":"▄████▄ ██████    ▄████▄ ▄████▄\n██  ██ ██     ██ ██  ██ ██  ██\n██  ██ ▀████▄    ██  ██ ██  ██\n██  ██     ██ ██ ██  ██ ██  ██\n▀████▀ ▀████▀    ▀████▀ ▀████▀","dots":"● ● ○ ○","label":"05:00","next":"next: work · 25m","pct":"0%","progress":0,"state":"▶ RUNNING","title":"SHORT BREAK"}},
+    {"path":"total_ms","value":300000}
+  ],
+  "task_done": [{"path":"@focus","value":"#nav"}],
+  "toggle": [
+    {"path":"is","value":{"flash":false,"flash_on":false,"last10":false,"long":false,"paused":true,"pulse":false,"ready":false,"running":false,"short":false,"work":true}},
+    {"path":"running","value":false},
+    {"path":"timer","value":{"big":"▄████▄ ▄████▄    ██████ ▄████▄\n▀▀  ██ ██  ██ ██ ██     ██    \n ▄██▀  ██  ██    ▀████▄ █████▄\n██▀    ██  ██ ██     ██ ██  ██\n██████ ▀████▀    ▀████▀ ▀████▀","dots":"● ◉ ○ ○","label":"20:56","next":"next: short break · 5m","pct":"16%","progress":16.266666666666666,"state":"‖ PAUSED","title":"FOCUS"}}
+  ]
+}

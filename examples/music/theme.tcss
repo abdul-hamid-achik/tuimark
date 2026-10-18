@@ -1,0 +1,125 @@
+:root {
+  --bg: #12141c;
+  --fg: #dde1ec;
+  --muted: #7b8299;
+  --accent: #5ee0b0;
+  --accent2: #c792ea;
+  --border: #2b3045;
+  --panel: #1a1d2b;
+  --sel: #2b3354;
+  --sel-dim: #222842;
+  --warn: #f2a65a;
+  --danger: #f2615c;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #f7f6f3;
+    --fg: #1e2230;
+    --muted: #6a7088;
+    --accent: #0a7f5a;
+    --accent2: #7b3fb0;
+    --border: #cfd2de;
+    --panel: #ebecf2;
+    --sel: #cfd8f5;
+    --sel-dim: #dde2f4;
+    --warn: #a35a00;
+    --danger: #c3261f;
+  }
+}
+
+screen { color: $fg; background: $bg; wrap: truncate; }
+.muted { color: $muted; }
+
+/* now playing */
+#np { border: rounded; border-color: $border; title-color: $accent; padding: 0 1; height: auto; }
+#np-row { height: 7; gap: 2; overflow: hidden; }
+#np-info { width: 1fr; height: 7; overflow: hidden; }
+.np-head { height: 1; gap: 1; }
+.np-icon { width: 1; color: $muted; }
+.np-icon.on { color: $accent; }
+.np-title { width: 1fr; bold: true; }
+.np-sub { color: $muted; height: 1; }
+.np-line { height: 1; gap: 1; }
+.np-state { width: auto; color: $warn; bold: true; }
+.np-state.on { color: $accent; }
+.np-next { width: 1fr; color: $muted; }
+.np-notice { width: 1fr; color: $danger; bold: true; }
+.np-bar { height: 1; gap: 1; }
+#pos { width: 1fr; bar: eighths; color: $accent; background: $border; }
+.np-time { width: 11; color: $fg; }
+.np-modes { height: 1; gap: 2; }
+.mode { width: auto; color: $muted; dim: true; }
+.mode.on { color: $accent2; dim: false; bold: true; }
+.np-vol { height: 1; gap: 1; }
+.vol-name { width: auto; color: $muted; }
+#vol { width: 12; bar: eighths; color: $accent2; background: $border; }
+.vol-label { width: 4; color: $muted; }
+
+/* the visualizer */
+#viz-col { width: 40; height: 7; }
+#viz { width: 40; height: 6; color: $accent; }
+#loud-row { height: 1; gap: 1; }
+#loud { width: 24; color: $accent2; }
+
+/* tabs */
+.tab-label { color: $muted; }
+.tab-label:selected { color: $accent; bold: true; }
+#tabs { height: 1fr; }
+#lib-pane { height: 1fr; }
+
+#filterbar { height: 1; gap: 1; }
+.prompt { color: $muted; width: auto; }
+#filter { width: 1fr; }
+#filterbar:focus-within > .prompt { color: $accent; bold: true; }
+
+/* tables */
+table { height: 1fr; gap: 1; scrollbar: auto; }
+table > column { bold: true; color: $muted; }
+table > item:selected { reverse: false; background: $sel-dim; }
+table:focus > item:selected { reverse: false; background: $sel; bold: true; }
+.c-mark { width: 1; color: $accent; }
+.c-title { min-width: 22; }
+.c-artist, .c-album { color: $muted; }
+.c-time, .c-n { content-align: end; color: $muted; }
+.c-title.on, .c-mark.on { color: $accent; bold: true; }
+
+#keys { height: 1; gap: 2; background: $panel; padding: 0 1; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#help { width: 60; max-width: 100%; height: auto; padding: 0 1; }
+#help-body { height: auto; }
+.kv { height: 1; gap: 1; }
+.k { width: 6; color: $accent; bold: true; }
+.d { width: 1fr; }
+button { color: $fg; }
+button:focus { reverse: true; }
+
+/* Below 76 columns the spectrum goes and the panel keeps the track info. */
+@media (max-cols: 76) {
+  #viz-col { display: none; }
+  #np-row { height: 6; }
+  #np-info { height: 6; }
+  .np-line { display: none; }
+}
+
+@media (max-cols: 50) {
+  .np-modes { gap: 1; }
+  #vol { width: 8; }
+}
+
+/* A short terminal keeps the track, its position, and the lists. */
+@media (max-rows: 16) {
+  #viz-col, .np-line, .np-modes, .np-vol { display: none; }
+  #np-row, #np-info { height: 3; }
+}
+
+/* On a short terminal the help fills the screen and its keys scroll, so
+   the close button stays on it. */
+@media (max-rows: 11) {
+  #help { height: 100%; }
+  #help-body { height: 1fr; }
+}

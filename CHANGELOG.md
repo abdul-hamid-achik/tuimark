@@ -25,6 +25,23 @@ line.
     API unless `-base URL` is given.
 - `examples/README.md` lists every example and what it shows. The docs
   site's Examples page has screenshots of the four new apps.
+- **Four animated example apps**, built the same way:
+  - `snake`: a playable Snake whose `Every` tick re-arms faster as the
+    level rises; `-autopilot` plays it.
+  - `pipeline`: a CI run with parallel jobs, spinners, progress bars, the
+    selected job's log streaming into a `<scroll stick="bottom">`, a flaky
+    test, retry, rerun, and cancel.
+  - `music`: a music player with no audio, with a library, a queue,
+    albums, and a spectrum visualizer drawn by a six-row `<sparkline>`.
+  - `pomodoro`: a Pomodoro timer and a clock in big block digits drawn
+    from one derived string, with phase colors from `class:` guards.
+
+  Each has a `-demo COLSxROWS` flag that replays a scripted session on a
+  fake clock and prints its frames as JSON lines.
+- The docs site's Examples page shows those four as animations: the
+  generator renders the `-demo` frames as one CSS-animated SVG per theme
+  (only the cells that change are stored per frame), and each has a pause
+  button. Readers who prefer reduced motion start on the last frame.
 
 ## [0.4.0] - 2026-10-17
 

@@ -1,0 +1,123 @@
+:root {
+  --bg: #12151a;
+  --fg: #d7dce2;
+  --muted: #7d8590;
+  --accent: #58a6ff;
+  --ok: #56d364;
+  --warn: #e3b341;
+  --danger: #f85149;
+  --panel: #1b2027;
+  --border: #30363d;
+  --board: #1a1f27;
+  --wall: #4a5260;
+  --snake: #2ea043;
+  --head: #7ee787;
+  --eyes: #0d1117;
+  --food: #ff7b72;
+  --dead: #7d3b3b;
+  --dead-head: #f85149;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --fg: #1f2328;
+    --muted: #6a737d;
+    --accent: #0b64c0;
+    --ok: #1f7a3a;
+    --warn: #8a5a00;
+    --danger: #c3261f;
+    --panel: #eef1f4;
+    --border: #d0d7de;
+    --board: #e4e9ee;
+    --wall: #8c959f;
+    --snake: #2da44e;
+    --head: #116329;
+    --eyes: #ffffff;
+    --food: #cf222e;
+    --dead: #d8a3a3;
+    --dead-head: #a40e26;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+.muted { color: $muted; }
+
+#app { gap: 0; }
+
+#top { height: 1; gap: 2; background: $panel; padding: 0 1; }
+.brand { color: $accent; bold: true; }
+.mode { color: $muted; }
+.mode.on { color: $accent; bold: true; }
+.compact { display: none; color: $fg; }
+.notice { color: $danger; bold: true; wrap: truncate; width: 1fr; }
+.state { bold: true; }
+.playing { color: $ok; }
+.paused { color: $warn; }
+.over { color: $danger; }
+
+#stage { height: 1fr; justify: center; align: center; gap: 2; }
+
+/* The board: 24 x 16 cells, two columns each, inside a wall. */
+#field { width: 50; height: 18; border: thick; border-color: $wall; background: $board; }
+#field.dead { border-color: $danger; }
+.line { height: 1; }
+.cell { height: 1; background: $board; }
+.cell.snake { background: $snake; }
+.cell.head { background: $head; color: $eyes; bold: true; }
+.cell.food { color: $food; bold: true; }
+.cell.snake.dead { background: $dead; }
+.cell.head.dead { background: $dead-head; color: $bg; }
+
+#side { width: 26; height: 18; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+.stat { height: 1; }
+.k { color: $muted; }
+.v { color: $fg; bold: true; }
+.v.score { color: $accent; }
+.sep { color: $border; }
+#pace { width: auto; color: $accent; }
+.legend { height: 1; gap: 1; }
+.sw.snake { color: $snake; }
+.sw.head { color: $head; }
+.sw.food { color: $food; bold: true; }
+
+#toosmall { display: none; color: $warn; wrap: wrap; }
+
+#keys { height: 1; background: $panel; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#over { width: 40; height: auto; border-color: $danger; }
+.big { color: $fg; bold: true; }
+/* Below 52x20 the board gives way to a notice; the help then clips to the
+   terminal instead of reporting a cut. */
+#help { width: 50; height: auto; overflow: hidden; }
+#help > .muted { wrap: wrap; }
+.help { layout: column; gap: 0; }
+
+/* Without room for the side panel, the status line carries the score. */
+@media (max-cols: 79) {
+  #side { display: none; }
+  .compact { display: flex; }
+}
+
+/* The status line has 52 columns at the least: with a 5-digit score the
+   brand goes first, then (below 52, when the board is gone) the mode. */
+@media (max-cols: 63) {
+  .brand { display: none; }
+}
+
+/* Too small for the board: say so, once. */
+@media (max-cols: 51) {
+  #stage { display: none; }
+  #toosmall { display: flex; }
+  .compact { display: none; }
+  .mode { display: none; }
+}
+
+@media (max-rows: 19) {
+  #stage { display: none; }
+  #toosmall { display: flex; }
+}

@@ -1,0 +1,132 @@
+:root {
+  --bg: #14171c;
+  --fg: #d7dce2;
+  --muted: #7d8590;
+  --accent: #58a6ff;
+  --ok: #56b870;
+  --warn: #e3b341;
+  --danger: #f2615c;
+  --border: #30363d;
+  --focus: #58a6ff;
+  --panel: #1b1f26;
+  --sel: #25456b;
+  --sel-dim: #232a35;
+  --err-bg: #2a1a1d;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --fg: #1f2328;
+    --muted: #6a737d;
+    --accent: #0b64c0;
+    --ok: #1f7a3a;
+    --warn: #8a5a00;
+    --danger: #c3261f;
+    --border: #d0d7de;
+    --focus: #0b64c0;
+    --panel: #eef1f4;
+    --sel: #b6d6f8;
+    --sel-dim: #e3e8ee;
+    --err-bg: #fdecea;
+  }
+}
+
+screen { color: $fg; background: $bg; wrap: truncate; }
+.muted { color: $muted; }
+
+/* header */
+#identity { height: 1; gap: 1; padding: 0 1; background: $panel; }
+.brand { color: $accent; bold: true; width: auto; }
+.repo { bold: true; width: auto; }
+.branch { color: $accent; width: auto; }
+.commit { color: $muted; width: auto; }
+.subject { color: $muted; width: auto; max-width: 40; }
+.runno { color: $muted; width: auto; }
+.badge { bold: true; width: auto; }
+.b-queued { color: $muted; }
+.b-running { color: $accent; }
+.b-passed { color: $ok; }
+.b-failed { color: $danger; }
+.b-canceled { color: $warn; }
+
+#overall { height: 1; gap: 1; padding: 0 1; }
+progress { bar: eighths; color: $accent; }
+#overall-bar { width: 1fr; }
+.pct { width: 4; content-align: end; }
+.summary { color: $muted; width: 28; }
+#load { width: auto; color: $accent; }
+.live { color: $muted; width: 10; }
+.p-run { color: $accent; }
+.p-ok { color: $ok; }
+.p-fail { color: $danger; }
+.p-cancel { color: $warn; }
+
+/* panes */
+#main-row { height: 1fr; }
+#jobs { width: 50; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; scrollbar: auto; }
+#jobs:focus { border-color: $focus; title-color: $accent; }
+list > item:selected { reverse: false; background: $sel-dim; }
+list:focus > item:selected { reverse: false; background: $sel; bold: true; }
+
+.job { height: 1; gap: 1; }
+.icon { width: 1; bold: true; }
+.i-run { color: $accent; }
+.i-ok { color: $ok; }
+.i-fail { color: $danger; }
+.i-cancel { color: $warn; }
+.i-idle { color: $muted; }
+.stage { width: 7; color: $muted; }
+.name { width: 1fr; }
+.n-idle { color: $muted; }
+.n-fail { color: $danger; }
+.bar { width: 14; }
+.time { width: 4; color: $muted; content-align: end; }
+
+#log { width: 1fr; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; scrollbar: auto; }
+#log:focus { border-color: $focus; title-color: $accent; }
+#log-lines { height: auto; }
+.empty { color: $muted; }
+.line { height: 1; gap: 1; }
+.ts { width: 7; color: $muted; }
+.out { width: 1fr; wrap: truncate; }
+.cmd > .out { color: $accent; bold: true; }
+.ok > .out { color: $ok; }
+.warn > .out { color: $warn; }
+.err > .out { color: $danger; }
+.line.err { background: $err-bg; }
+.dim > .out { color: $muted; }
+
+/* footer */
+#statusline { height: 1; padding: 0 1; }
+.status { color: $muted; width: 1fr; }
+.status.err { color: $danger; bold: true; }
+#keys { height: 1; padding: 0 1; background: $panel; gap: 2; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#confirm { width: 48; max-width: 100%; height: auto; overflow: hidden; }
+#confirm-actions { height: 1; gap: 2; }
+#help { width: 50; max-width: 100%; height: auto; max-height: 100%; overflow: hidden; }
+#help-scroll { height: auto; }
+.help { layout: column; gap: 0; height: auto; }
+
+@media (max-cols: 99) {
+  #jobs { width: 44; }
+  .bar { width: 10; }
+  #load, .live { display: none; }
+}
+
+@media (max-cols: 79) {
+  .subject, .stage { display: none; }
+  .bar { width: 14; }
+  #main-row { layout: column; }
+  #jobs { width: 1fr; height: 50%; }
+  #log { height: 1fr; }
+}
+
+@media (max-cols: 49) {
+  .commit, .runno { display: none; }
+}

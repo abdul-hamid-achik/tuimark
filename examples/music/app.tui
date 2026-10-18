@@ -1,0 +1,166 @@
+<tui version="3" theme="auto">
+  <style src="theme.tcss"/>
+  <keymap when="#lib">
+    <bind keys="enter" action="lib_play" keycap="↵" label="play"/>
+    <bind keys="a" action="lib_add" label="queue"/>
+  </keymap>
+  <keymap when="#q">
+    <bind keys="enter" action="q_play" keycap="↵" label="play"/>
+    <bind keys="x" action="q_remove" label="remove"/>
+    <bind keys="c" action="q_clear" label="clear"/>
+  </keymap>
+  <keymap when="#albums">
+    <bind keys="enter" action="album_play" keycap="↵" label="play album"/>
+    <bind keys="a" action="album_add" label="queue album"/>
+  </keymap>
+  <keymap when="#filter">
+    <bind keys="enter" action="filter_apply" keycap="↵" label="apply"/>
+    <bind keys="esc" action="filter_clear" label="clear"/>
+  </keymap>
+  <keymap when="#app">
+    <bind keys="space" action="toggle_play" label="play/pause"/>
+    <bind keys="n" action="next" label="next"/>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="p" action="prev" label="prev"/>
+    <bind keys="s" action="toggle_shuffle" label="shuffle"/>
+    <bind keys="r" action="cycle_repeat" label="repeat"/>
+    <bind keys="left" action="seek_back" keycap="←/→" label="seek"/>
+    <bind keys="right" action="seek_fwd"/>
+    <bind keys="+,=" action="vol_up" keycap="+/-" label="volume"/>
+    <bind keys="-" action="vol_down"/>
+    <bind keys="/" action="focus" to="#filter" label="filter"/>
+    <bind keys="1" action="switch-to" to="#t-library" keycap="1-3" label="tabs"/>
+    <bind keys="2" action="switch-to" to="#t-queue"/>
+    <bind keys="3" action="switch-to" to="#t-albums"/>
+  </keymap>
+  <keymap when="#help">
+    <bind keys="enter,q,?" action="help_close"/>
+  </keymap>
+  <keymap>
+    <bind keys="ctrl+c" action="quit"/>
+  </keymap>
+  <screen id="main" focus="#lib">
+    <col id="app">
+      <box id="np" title="◆ music">
+        <row id="np-row">
+          <col id="np-info">
+            <row class="np-head">
+              <text class="np-icon" class:on="player.playing">{now.icon}</text>
+              <text class="np-title">{now.title}</text>
+            </row>
+            <text class="np-sub">{now.artist} · {now.album}</text>
+            <row class="np-line">
+              <text class="np-state" class:on="player.playing">{now.state}</text>
+              <text class="np-next" if="!notice">· up next: {now.next}</text>
+              <text class="np-notice" if="notice">{notice}</text>
+            </row>
+            <row class="np-bar">
+              <progress id="pos" bind="now.pct"/>
+              <text class="np-time">{now.time}</text>
+            </row>
+            <row class="np-modes">
+              <text class="mode" class:on="player.shuffle">{now.shuffle_label}</text>
+              <text class="mode" class:on="now.repeat_on">{now.repeat_label}</text>
+            </row>
+            <row class="np-vol">
+              <text class="vol-name">vol</text>
+              <progress id="vol" bind="vol.pct"/>
+              <text class="vol-label">{vol.label}</text>
+            </row>
+          </col>
+          <col id="viz-col">
+            <sparkline id="viz" bind="spectrum" min="0" max="100"/>
+            <row id="loud-row">
+              <text class="vol-name">level</text>
+              <sparkline id="loud" bind="loud" min="0" max="60"/>
+            </row>
+          </col>
+        </row>
+      </box>
+      <tabs id="tabs" bind="tab" gap="3">
+        <tab id="t-library" label="library {counts.library}" short="lib {counts.library}" focus="#lib">
+          <col id="lib-pane">
+            <row id="filterbar">
+              <text class="prompt">/</text>
+              <input id="filter" bind="filter" placeholder="filter by title, artist or album"/>
+            </row>
+            <table id="lib" each="lib_rows as r" key="r.id" bind="cur.lib" placeholder="no tracks match the filter">
+              <column class="c-mark" class:on="r.playing" width="1">{r.mark}</column>
+              <column class="c-title" class:on="r.playing" title="TITLE" width="1fr">{r.title}</column>
+              <column class="c-artist" class:on="r.playing" title="ARTIST" width="18" priority="2">{r.artist}</column>
+              <column class="c-album" class:on="r.playing" title="ALBUM" width="18" priority="1">{r.album}</column>
+              <column class="c-time" class:on="r.playing" title="TIME" width="5">{r.time}</column>
+            </table>
+          </col>
+        </tab>
+        <tab id="t-queue" label="queue {counts.queue}" short="q {counts.queue}" focus="#q">
+          <table id="q" each="queue_rows as r" key="r.qid" bind="cur.q" placeholder="the queue is empty: press a on a track to add it">
+            <column class="c-n" title="#" width="3">{r.n}</column>
+            <column class="c-title" title="TITLE" width="1fr">{r.title}</column>
+            <column class="c-artist" title="ARTIST" width="18" priority="1">{r.artist}</column>
+            <column class="c-time" title="TIME" width="5">{r.time}</column>
+          </table>
+        </tab>
+        <tab id="t-albums" label="albums {counts.albums}" short="alb {counts.albums}" focus="#albums">
+          <table id="albums" each="album_rows as r" key="r.key" bind="cur.albums">
+            <column class="c-mark" class:on="r.playing" width="1">{r.mark}</column>
+            <column class="c-title" class:on="r.playing" title="ALBUM" width="1fr">{r.album}</column>
+            <column class="c-artist" class:on="r.playing" title="ARTIST" width="18" priority="1">{r.artist}</column>
+            <column class="c-n" class:on="r.playing" title="TRACKS" width="6">{r.tracks}</column>
+            <column class="c-time" class:on="r.playing" title="TIME" width="5">{r.time}</column>
+          </table>
+        </tab>
+      </tabs>
+      <hints id="keys"/>
+    </col>
+    <modal id="help" open="help_open" title="keys" focus="#help-ok" on:escape="help_close">
+      <scroll id="help-body" focusable="true">
+        <row class="kv">
+          <text class="k">space</text>
+          <text class="d">play / pause</text>
+          <text class="k">n  p</text>
+          <text class="d">next / previous</text>
+        </row>
+        <row class="kv">
+          <text class="k">← →</text>
+          <text class="d">seek 5 s</text>
+          <text class="k">+  -</text>
+          <text class="d">volume</text>
+        </row>
+        <row class="kv">
+          <text class="k">s</text>
+          <text class="d">shuffle</text>
+          <text class="k">r</text>
+          <text class="d">repeat off/all/one</text>
+        </row>
+        <row class="kv">
+          <text class="k">enter</text>
+          <text class="d">play</text>
+          <text class="k">a</text>
+          <text class="d">add to queue</text>
+        </row>
+        <row class="kv">
+          <text class="k">x  c</text>
+          <text class="d">queue remove/clear</text>
+          <text class="k">/</text>
+          <text class="d">filter</text>
+        </row>
+        <row class="kv">
+          <text class="k">1 2 3</text>
+          <text class="d">tabs</text>
+          <text class="k">?</text>
+          <text class="d">this help</text>
+        </row>
+        <row class="kv">
+          <text class="k">q</text>
+          <text class="d">quit</text>
+          <text class="k">esc</text>
+          <text class="d">close/clear filter</text>
+        </row>
+        <text class="muted">Filter: every word must match.</text>
+      </scroll>
+      <button id="help-ok" label="close" on:click="help_close"/>
+    </modal>
+  </screen>
+</tui>

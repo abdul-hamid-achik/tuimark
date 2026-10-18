@@ -57,7 +57,16 @@ const DOUBLE_GAP = 2.4
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const n = (v) => Number(v.toFixed(2)).toString()
 
-export function renderSVG(dump, { title = '' } = {}) {
+// One frame's primitives, in paint order: rects (cell backgrounds on the
+// 'bg' layer, block elements and underlines on 'fg'), strokes (box
+// drawing), and texts. renderSVG merges them by color; renderAnimatedSVG
+// keys each one by the frames it appears in.
+//
+// bleed widens every opaque rect by that much on each side. A shape whose
+// cells sit in different animation groups is drawn as separate elements,
+// and anti-aliasing leaves a hairline between two elements that meet at a
+// fractional x; an overlap hides it.
+function primitives(dump, canvasOverride, bleed = 0) {
   const { cols, rows } = dump
   if (!Array.isArray(dump.cells) || !Array.isArray(dump.styles)) {
     throw new Error('svg: the dump needs --cells and --styles')
@@ -82,23 +91,24 @@ export function renderSVG(dump, { title = '' } = {}) {
   // The canvas takes the most common background, so the padding blends in.
   const bgCount = new Map()
   for (const row of grid) for (const c of row) bgCount.set(c.bg, (bgCount.get(c.bg) ?? 0) + 1)
-  const canvas = [...bgCount].sort((a, b) => b[1] - a[1])[0][0]
+  const canvas = canvasOverride ?? [...bgCount].sort((a, b) => b[1] - a[1])[0][0]
 
   const W = cols * CW + 2 * PAD
   const H = rows * RH + 2 * PAD
   const X = (x) => PAD + x * CW
   const Y = (y) => PAD + y * RH
 
-  const rects = new Map() // fill|opacity → path data
-  const strokes = new Map() // stroke|width|opacity → path data
+  const prims = []
   const texts = []
-  const addRect = (fill, opacity, x, y, w, h) => {
-    const k = `${fill}|${opacity}`
-    rects.set(k, (rects.get(k) ?? '') + `M${n(x)} ${n(y)}h${n(w)}v${n(h)}h${n(-w)}z`)
+  const addRect = (fill, opacity, x, y, w, h, layer = 'fg') => {
+    if (bleed && opacity === 1) {
+      x -= bleed
+      w += 2 * bleed
+    }
+    prims.push({ kind: 'rect', layer, key: `${fill}|${opacity}`, d: `M${n(x)} ${n(y)}h${n(w)}v${n(h)}h${n(-w)}z` })
   }
   const addStroke = (col, width, opacity, d) => {
-    const k = `${col}|${width}|${opacity}`
-    strokes.set(k, (strokes.get(k) ?? '') + d)
+    prims.push({ kind: 'stroke', key: `${col}|${width}|${opacity}`, d })
   }
 
   // Backgrounds, merged along each row.
@@ -108,7 +118,7 @@ export function renderSVG(dump, { title = '' } = {}) {
       const bg = grid[y][x].bg
       let end = x + 1
       while (end < cols && grid[y][end].bg === bg) end++
-      if (bg !== canvas) addRect(bg, 1, X(x), Y(y), (end - x) * CW, RH)
+      if (bg !== canvas) addRect(bg, 1, X(x), Y(y), (end - x) * CW, RH, 'bg')
       x = end
     }
   }
@@ -204,25 +214,6 @@ export function renderSVG(dump, { title = '' } = {}) {
     flush()
   }
 
-  const out = []
-  out.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${n(W)}" height="${n(H)}" viewBox="0 0 ${n(W)} ${n(H)}" role="img" aria-label="${esc(title)}">`,
-  )
-  if (title) out.push(`<title>${esc(title)}</title>`)
-  out.push(`<rect width="${n(W)}" height="${n(H)}" rx="6" fill="${canvas}"/>`)
-  for (const [k, d] of rects) {
-    const [fill, op] = k.split('|')
-    out.push(`<path fill="${fill}"${op === '1' ? '' : ` fill-opacity="${op}"`} d="${d}"/>`)
-  }
-  out.push(`<g fill="none" stroke-linecap="square" stroke-linejoin="miter">`)
-  for (const [k, d] of strokes) {
-    const [stroke, width, op] = k.split('|')
-    out.push(`<path stroke="${stroke}" stroke-width="${width}"${op === '1' ? '' : ` stroke-opacity="${op}"`} d="${d}"/>`)
-  }
-  out.push('</g>')
-  out.push(
-    `<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="${FS}" xml:space="preserve">`,
-  )
   for (const t of texts) {
     // A wide cluster (CJK, emoji) is centered on its two cells at its own
     // width; a run of narrow cells is spread over exactly its cells.
@@ -232,10 +223,130 @@ export function renderSVG(dump, { title = '' } = {}) {
     if (t.bold) attrs.push('font-weight="700"')
     if (t.italic) attrs.push('font-style="italic"')
     if (t.dim) attrs.push('fill-opacity="0.55"')
-    out.push(`<text ${attrs.join(' ')}>${esc(t.text)}</text>`)
-    if (t.underline) out.push(`<rect x="${n(X(t.x))}" y="${n(Y(t.y) + RH - 3)}" width="${n(t.w * CW)}" height="1" fill="${t.fg}"/>`)
+    prims.push({ kind: 'text', s: `<text ${attrs.join(' ')}>${esc(t.text)}</text>` })
+    if (t.underline) prims.push({ kind: 'text', s: `<rect x="${n(X(t.x))}" y="${n(Y(t.y) + RH - 3)}" width="${n(t.w * CW)}" height="1" fill="${t.fg}"/>` })
   }
-  out.push('</g>')
+  return { cols, rows, W, H, canvas, prims }
+}
+
+const BLEED = 0.5
+
+const STROKES_OPEN = `<g fill="none" stroke-linecap="square" stroke-linejoin="miter">`
+const TEXTS_OPEN = `<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="${FS}" xml:space="preserve">`
+
+function head({ W, H, canvas }, title) {
+  const out = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${n(W)}" height="${n(H)}" viewBox="0 0 ${n(W)} ${n(H)}" role="img" aria-label="${esc(title)}">`,
+  ]
+  if (title) out.push(`<title>${esc(title)}</title>`)
+  return out
+}
+
+// Rects and strokes of one color merge into one path, in first-seen order.
+function rectPaths(prims) {
+  const m = new Map()
+  for (const p of prims) m.set(p.key, (m.get(p.key) ?? '') + p.d)
+  return [...m].map(([k, d]) => {
+    const [fill, op] = k.split('|')
+    return `<path fill="${fill}"${op === '1' ? '' : ` fill-opacity="${op}"`} d="${d}"/>`
+  })
+}
+
+function strokePaths(prims) {
+  const m = new Map()
+  for (const p of prims) m.set(p.key, (m.get(p.key) ?? '') + p.d)
+  return [...m].map(([k, d]) => {
+    const [stroke, width, op] = k.split('|')
+    return `<path stroke="${stroke}" stroke-width="${width}"${op === '1' ? '' : ` stroke-opacity="${op}"`} d="${d}"/>`
+  })
+}
+
+export function renderSVG(dump, { title = '' } = {}) {
+  const f = primitives(dump)
+  const out = head(f, title)
+  out.push(`<rect width="${n(f.W)}" height="${n(f.H)}" rx="6" fill="${f.canvas}"/>`)
+  out.push(...rectPaths(f.prims.filter((p) => p.kind === 'rect')))
+  out.push(STROKES_OPEN, ...strokePaths(f.prims.filter((p) => p.kind === 'stroke')), '</g>')
+  out.push(TEXTS_OPEN, ...f.prims.filter((p) => p.kind === 'text').map((p) => p.s), '</g>')
+  out.push('</svg>')
+  return out.join('\n')
+}
+
+// Paints a sequence of dumps ({ms, dump}, all the same size) as one SVG
+// that plays them in a loop with CSS animations, so it animates inside an
+// <img> with no script. Every primitive (a background run, a block, a box
+// line, a text run) is drawn once, in a group of the primitives that
+// appear in exactly the same frames, and that group's keyframes show it
+// during those frames only: what never changes costs nothing per frame.
+// Without animation (prefers-reduced-motion, or a renderer that ignores
+// CSS) the last frame shows.
+export function renderAnimatedSVG(frames, { title = '' } = {}) {
+  if (frames.length < 2) throw new Error('svg: an animation needs at least two frames')
+  const { cols, rows } = frames[0].dump
+  const first = primitives(frames[0].dump)
+  const per = frames.map((f, i) => {
+    if (f.dump.cols !== cols || f.dump.rows !== rows) throw new Error(`svg: frame ${i} is ${f.dump.cols}x${f.dump.rows}, not ${cols}x${rows}`)
+    if (!(f.ms > 0)) throw new Error(`svg: frame ${i} has no duration`)
+    return primitives(f.dump, first.canvas, BLEED).prims
+  })
+  const F = frames.length
+  const last = F - 1
+
+  // Each distinct primitive, with the frames it appears in.
+  const seen = new Map()
+  per.forEach((prims, f) => {
+    for (const p of prims) {
+      const id = p.kind === 'text' ? `t${p.s}` : `${p.kind}|${p.layer ?? ''}|${p.key}|${p.d}`
+      let e = seen.get(id)
+      if (!e) seen.set(id, (e = { p, in: new Array(F).fill(false) }))
+      e.in[f] = true
+    }
+  })
+
+  // Groups by frame set, in first-seen order; the one with every frame is
+  // static.
+  const groups = new Map()
+  for (const e of seen.values()) {
+    const mask = e.in.map((b) => (b ? '1' : '0')).join('')
+    let g = groups.get(mask)
+    if (!g) groups.set(mask, (g = { mask: e.in, prims: [] }))
+    g.prims.push(e.p)
+  }
+  const all = '1'.repeat(F)
+  const fixed = groups.get(all)?.prims ?? []
+  const moving = [...groups].filter(([m]) => m !== all).map(([, g], i) => ({ ...g, cls: `a${i}` }))
+
+  const T = frames.reduce((t, f) => t + f.ms, 0)
+  const starts = []
+  frames.reduce((t, f) => (starts.push(t), t + f.ms), 0)
+  const pct = (t) => `${Number(((t / T) * 100).toFixed(3))}%`
+  const vis = (b) => `{visibility:${b ? 'visible' : 'hidden'}}`
+  const css = []
+  for (const g of moving) {
+    const keys = [`0%${vis(g.mask[0])}`]
+    for (let f = 1; f < F; f++) if (g.mask[f] !== g.mask[f - 1]) keys.push(`${pct(starts[f])}${vis(g.mask[f])}`)
+    css.push(`@keyframes k${g.cls}{${keys.join('')}}.${g.cls}{animation:k${g.cls} ${n(T / 1000)}s step-end infinite}`)
+  }
+  css.push('@media (prefers-reduced-motion:reduce){.a{animation:none}}')
+
+  const layer = (pick, paint) => {
+    const out = paint(fixed.filter(pick))
+    for (const g of moving) {
+      const ps = g.prims.filter(pick)
+      if (ps.length === 0) continue
+      out.push(`<g class="a ${g.cls}"${g.mask[last] ? '' : ' visibility="hidden"'}>`, ...paint(ps), '</g>')
+    }
+    return out
+  }
+  const texts = (ps) => ps.map((p) => p.s)
+
+  const out = head(first, title)
+  out.push(`<style>${css.join('')}</style>`)
+  out.push(`<rect width="${n(first.W)}" height="${n(first.H)}" rx="6" fill="${first.canvas}"/>`)
+  out.push(...layer((p) => p.kind === 'rect' && p.layer === 'bg', rectPaths))
+  out.push(...layer((p) => p.kind === 'rect' && p.layer === 'fg', rectPaths))
+  out.push(STROKES_OPEN, ...layer((p) => p.kind === 'stroke', strokePaths), '</g>')
+  out.push(TEXTS_OPEN, ...layer((p) => p.kind === 'text', texts), '</g>')
   out.push('</svg>')
   return out.join('\n')
 }

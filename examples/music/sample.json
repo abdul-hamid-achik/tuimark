@@ -1,0 +1,56 @@
+{
+  "album_rows": [
+    {"album":"Low Tide Atlas","artist":"Marlowe Quays","key":"Low Tide Atlas","mark":"▶","playing":true,"time":"20:27","tracks":"5"},
+    {"album":"Night Bus Hymns","artist":"Ona Verdell","key":"Night Bus Hymns","mark":"","playing":false,"time":"17:57","tracks":"5"},
+    {"album":"Ferrous Bloom","artist":"Pale Meridian","key":"Ferrous Bloom","mark":"","playing":false,"time":"16:45","tracks":"4"},
+    {"album":"Sunburnt Tapes","artist":"Dune Cassette","key":"Sunburnt Tapes","mark":"","playing":false,"time":"18:42","tracks":"5"},
+    {"album":"Orbit Etiquette","artist":"Halcyon Drift","key":"Orbit Etiquette","mark":"","playing":false,"time":"13:57","tracks":"3"},
+    {"album":"Small Hours","artist":"Ona Verdell","key":"Small Hours","mark":"","playing":false,"time":"9:38","tracks":"3"}
+  ],
+  "counts": {"albums":6,"library":25,"library_empty":false,"queue":2,"queue_empty":false},
+  "cur": {"albums":"Night Bus Hymns","lib":"t04","q":"q1"},
+  "filter": "",
+  "help_open": false,
+  "lib_rows": [
+    {"album":"Low Tide Atlas","artist":"Marlowe Quays","id":"t01","mark":"","playing":false,"time":"3:41","title":"Glass Orchard"},
+    {"album":"Low Tide Atlas","artist":"Marlowe Quays","id":"t02","mark":"▶","playing":true,"time":"4:12","title":"Tessellate"},
+    {"album":"Low Tide Atlas","artist":"Marlowe Quays","id":"t03","mark":"","playing":false,"time":"3:05","title":"Salt Lanterns"},
+    {"album":"Low Tide Atlas","artist":"Marlowe Quays","id":"t04","mark":"","playing":false,"time":"5:02","title":"Harbour Static"},
+    {"album":"Low Tide Atlas","artist":"Marlowe Quays","id":"t05","mark":"","playing":false,"time":"4:27","title":"Slow Cartography"},
+    {"album":"Night Bus Hymns","artist":"Ona Verdell","id":"t06","mark":"","playing":false,"time":"3:28","title":"Last Stop Lullaby"},
+    {"album":"Night Bus Hymns","artist":"Ona Verdell","id":"t07","mark":"","playing":false,"time":"3:54","title":"Neon Puddles"},
+    {"album":"Night Bus Hymns","artist":"Ona Verdell","id":"t08","mark":"","playing":false,"time":"2:47","title":"Fare Evasion"},
+    {"album":"Night Bus Hymns","artist":"Ona Verdell","id":"t09","mark":"+","playing":false,"time":"4:36","title":"Window Seat Aurora"},
+    {"album":"Night Bus Hymns","artist":"Ona Verdell","id":"t10","mark":"","playing":false,"time":"3:12","title":"Transfer Point"},
+    {"album":"Ferrous Bloom","artist":"Pale Meridian","id":"t11","mark":"","playing":false,"time":"4:05","title":"Rust Garden"},
+    {"album":"Ferrous Bloom","artist":"Pale Meridian","id":"t12","mark":"","playing":false,"time":"3:33","title":"Copper Weather"},
+    {"album":"Ferrous Bloom","artist":"Pale Meridian","id":"t13","mark":"","playing":false,"time":"5:18","title":"Magnet Tide"},
+    {"album":"Ferrous Bloom","artist":"Pale Meridian","id":"t14","mark":"+","playing":false,"time":"3:49","title":"Soft Alloy"},
+    {"album":"Sunburnt Tapes","artist":"Dune Cassette","id":"t15","mark":"","playing":false,"time":"2:58","title":"Poolside Fax"},
+    {"album":"Sunburnt Tapes","artist":"Dune Cassette","id":"t16","mark":"","playing":false,"time":"3:22","title":"Cassette Summer"},
+    {"album":"Sunburnt Tapes","artist":"Dune Cassette","id":"t17","mark":"","playing":false,"time":"4:01","title":"Dial Tone Dreams"},
+    {"album":"Sunburnt Tapes","artist":"Dune Cassette","id":"t18","mark":"","playing":false,"time":"3:37","title":"Sand in the Reels"},
+    {"album":"Sunburnt Tapes","artist":"Dune Cassette","id":"t19","mark":"","playing":false,"time":"4:44","title":"Laminated Sky"},
+    {"album":"Orbit Etiquette","artist":"Halcyon Drift","id":"t20","mark":"","playing":false,"time":"3:57","title":"Polite Gravity"},
+    {"album":"Orbit Etiquette","artist":"Halcyon Drift","id":"t21","mark":"","playing":false,"time":"4:19","title":"Tea at Apogee"},
+    {"album":"Orbit Etiquette","artist":"Halcyon Drift","id":"t22","mark":"","playing":false,"time":"5:41","title":"Docking Waltz"},
+    {"album":"Small Hours","artist":"Ona Verdell","id":"t23","mark":"","playing":false,"time":"2:36","title":"Kettle Song"},
+    {"album":"Small Hours","artist":"Ona Verdell","id":"t24","mark":"","playing":false,"time":"3:18","title":"Midnight Ferns"},
+    {"album":"Small Hours","artist":"Ona Verdell","id":"t25","mark":"","playing":false,"time":"3:44","title":"Porch Light Hymn"}
+  ],
+  "loud": [47,29,43,32,35,36,34,50,32,47,28,40,33,35,41,32,49,30,45,29,40,34,33,44],
+  "notice": "",
+  "now": {"album":"Low Tide Atlas","artist":"Marlowe Quays","dur":"4:12","icon":"▶","next":"Window Seat Aurora","pct":28.6,"pos":"1:12","repeat_label":"↻ repeat off","repeat_on":false,"shuffle_label":"⇄ shuffle off","state":"playing","time":"1:12 / 4:12","title":"Tessellate"},
+  "player": {"current":"t02","playing":true,"pos":72,"repeat":"off","shuffle":false,"volume":70},
+  "queue": [
+    {"id":"t09","qid":"q1"},
+    {"id":"t14","qid":"q2"}
+  ],
+  "queue_rows": [
+    {"artist":"Ona Verdell","id":"t09","n":"1","qid":"q1","time":"4:36","title":"Window Seat Aurora"},
+    {"artist":"Pale Meridian","id":"t14","n":"2","qid":"q2","time":"3:49","title":"Soft Alloy"}
+  ],
+  "spectrum": [27,84,41,58,98,48,83,70,24,88,21,82,48,37,80,21,64,56,30,61,23,48,43,25,61,30,33,45,14,63,25,14,61,17,30,42,12,33,14,25],
+  "tab": "t-library",
+  "vol": {"label":"70%","pct":70}
+}
