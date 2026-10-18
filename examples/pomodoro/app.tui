@@ -1,0 +1,102 @@
+<tui version="3" theme="auto" mouse="true">
+  <style src="theme.tcss"/>
+  <keymap when="#app">
+    <bind keys="space" action="toggle" keycap="space" label="start/pause"/>
+    <bind keys="r" action="reset" label="reset"/>
+    <bind keys="s" action="skip" label="skip"/>
+    <bind keys="+" action="minute_add" keycap="+/-" label="±1 min"/>
+    <bind keys="-" action="minute_sub"/>
+    <bind keys="1" action="switch-to" to="#pomo" keycap="1/2" label="tabs"/>
+    <bind keys="2" action="switch-to" to="#clock"/>
+    <bind keys="[" action="move-prev" to="#nav"/>
+    <bind keys="]" action="move-next" to="#nav"/>
+    <bind keys="t" action="focus" to="#task" label="task"/>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <keymap when="#task">
+    <bind keys="esc" action="focus" to="#nav" label="leave"/>
+  </keymap>
+  <keymap when="#help">
+    <bind keys="enter,q" action="help_close"/>
+  </keymap>
+  <keymap>
+    <bind keys="ctrl+c" action="quit"/>
+  </keymap>
+  <screen id="main" focus="#nav">
+    <col id="app">
+      <row id="top">
+        <text class="brand">◆ pomodoro</text>
+        <text class="notice" if="notice">{notice}</text>
+        <spacer/>
+        <text class="state" class:work="is.work" class:short="is.short" class:long="is.long" class:paused="is.paused" class:pulse="is.pulse">{timer.state}</text>
+      </row>
+      <tabs id="nav" bind="tab" focusable="true" mark="▸" gap="2">
+        <tab id="pomo" label="1 Pomodoro" short="1 Pomo" focus="#tone">
+          <col id="face">
+            <col id="tone" class:work="is.work" class:short="is.short" class:long="is.long" class:paused="is.paused" class:pulse="is.pulse" class:flash-on="is.flash_on" focusable="true">
+              <row class="digits-row">
+                <text class="digits">{timer.big}</text>
+              </row>
+              <row class="line">
+                <text class="title">{timer.title}</text>
+              </row>
+              <row class="line">
+                <text class="dots">{timer.dots}</text>
+                <text class="pct">{timer.pct}</text>
+                <text class="next">{timer.next}</text>
+              </row>
+              <progress id="bar" bind="timer.progress"/>
+            </col>
+            <row id="taskrow">
+              <text class="prompt">task</text>
+              <input id="task" bind="task" placeholder="what are you working on?  (t)" on:submit="task_done"/>
+            </row>
+            <col id="history" title="completed · {stats.count} · focus {stats.focus}">
+              <text class="empty" if="stats.empty">nothing yet: press space to start a phase</text>
+              <list id="sessions" each="sessions as s" key="s.id" if="!stats.empty">
+                <item>
+                  <row class="srow" class:work="s.work" class:short="s.short" class:long="s.long">
+                    <text class="s-dot">●</text>
+                    <text class="s-start">{s.start}</text>
+                    <text class="s-label">{s.label}</text>
+                    <text class="s-dur">{s.dur}</text>
+                    <text class="s-task">{s.task}</text>
+                  </row>
+                </item>
+              </list>
+            </col>
+          </col>
+        </tab>
+        <tab id="clock" label="2 Clock" short="2 Clock">
+          <col id="clockface">
+            <row class="digits-row clock-big">
+              <text class="clock-digits">{clock.big}</text>
+            </row>
+            <row class="line clock-small">
+              <text class="clock-time">{clock.time}</text>
+            </row>
+            <row class="line">
+              <text class="date">{clock.date}</text>
+            </row>
+            <row class="line">
+              <text class="zone">{clock.zone}</text>
+            </row>
+            <table id="world" each="world as w" key="w.city" title="world clocks · standard time">
+              <column class="city" title="City" width="1fr">{w.city}</column>
+              <column title="Offset" width="10" priority="1">{w.offset}</column>
+              <column title="Time" width="6">{w.time}</column>
+              <column title="Day" width="4" priority="2">{w.day}</column>
+            </table>
+          </col>
+        </tab>
+      </tabs>
+      <hints id="keys"/>
+    </col>
+    <modal id="help" open="help_open" title="pomodoro keys" on:escape="help_close">
+      <hints id="help-keys" class="help" scope="all"/>
+      <text class="muted note">The cycle is work and a short break, three times, then work and a long break.</text>
+      <button id="help-ok" label="close" on:click="help_close"/>
+    </modal>
+  </screen>
+</tui>

@@ -1,0 +1,125 @@
+:root {
+  --bg: #15171c;
+  --fg: #dde1e7;
+  --muted: #7f8794;
+  --accent: #6cb6ff;
+  --border: #2f343d;
+  --panel: #1c1f26;
+  --work: #ff6b5b;
+  --rest: #5ec27a;
+  --long: #4fc3c7;
+  --pulse: #ffd9d2;
+  --danger: #ff6b5b;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfaf8;
+    --fg: #23262d;
+    --muted: #6d7480;
+    --accent: #0b64c0;
+    --border: #d5d8de;
+    --panel: #eeeff2;
+    --work: #c4301f;
+    --rest: #1f7a3a;
+    --long: #0f7c80;
+    --pulse: #6e0f05;
+    --danger: #c4301f;
+  }
+}
+
+screen { color: $fg; background: $bg; wrap: truncate; }
+.muted { color: $muted; }
+
+/* chrome */
+#top { height: 1; gap: 2; padding: 0 1; background: $panel; }
+.brand { color: $accent; bold: true; width: auto; }
+.notice { color: $danger; bold: true; wrap: truncate; width: 1fr; }
+.state { bold: true; width: auto; }
+#nav { height: 1fr; }
+#keys { height: 1; gap: 2; padding: 0 1; background: $panel; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* the phase color: work, break, long break, paused, and the last seconds */
+.state, #tone { color: $accent; }
+.state.work, #tone.work { color: $work; }
+.state.short, #tone.short { color: $rest; }
+.state.long, #tone.long { color: $long; }
+.state.paused, #tone.paused { color: $muted; }
+.state.pulse, #tone.pulse { color: $pulse; }
+#tone.flash-on > .digits-row > .digits { reverse: true; }
+
+/* the Pomodoro tab */
+#face { padding: 1 2 0; }
+#tone { height: auto; }
+.digits-row { height: 5; justify: center; }
+.digits { wrap: nowrap; width: auto; padding: 0 2; }
+.line { height: 1; justify: center; gap: 3; }
+.title { bold: true; }
+.dots { width: auto; }
+.pct { width: auto; }
+.next { color: $muted; width: auto; }
+#bar { height: 1; bar: eighths; }
+
+#taskrow { height: 1; gap: 1; }
+.prompt { color: $muted; width: auto; }
+#task { width: 1fr; }
+#task:focus { background: $panel; }
+
+#history { height: 1fr; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+#history:focus-within { border-color: $accent; }
+.empty { color: $muted; }
+#sessions { height: 1fr; }
+#sessions > item { height: 1; }
+#sessions > item:selected { reverse: false; background: $panel; }
+.srow { height: 1; gap: 2; }
+.s-dot { width: 1; color: $accent; }
+.srow.work > .s-dot { color: $work; }
+.srow.short > .s-dot { color: $rest; }
+.srow.long > .s-dot { color: $long; }
+.s-start { width: 5; color: $muted; }
+.s-label { width: 11; }
+.s-dur { width: 5; color: $muted; }
+.s-task { width: 1fr; wrap: truncate; }
+
+/* the Clock tab */
+#clockface { padding: 1 2 0; align: center; }
+#clockface > row { width: 100%; }
+.clock-digits { wrap: nowrap; width: auto; color: $fg; }
+.clock-small { display: none; }
+.clock-time { color: $fg; bold: true; width: auto; }
+.date { color: $fg; bold: true; }
+.zone { color: $muted; }
+#world { height: 1fr; width: 60; max-width: 100%; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+#world:focus { border-color: $accent; }
+.city { min-width: 24; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#help { width: 56; height: auto; }
+.help { layout: column; gap: 0; }
+.note { wrap: wrap; height: auto; }
+
+@media (max-cols: 70) {
+  .next { display: none; }
+}
+
+@media (max-cols: 49) {
+  .clock-big { display: none; }
+  .clock-small { display: flex; }
+}
+
+@media (max-cols: 52) {
+  .digits { padding: 0; }
+  #face, #clockface { padding: 1 0 0; }
+}
+
+@media (max-rows: 16) {
+  #history, #world { display: none; }
+}
+
+/* The help modal is 9 key rows, the button, and a border: the note would push the button off a 14-row screen. */
+@media (max-rows: 14) {
+  .note { display: none; }
+}

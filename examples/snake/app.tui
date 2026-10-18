@@ -1,0 +1,95 @@
+<tui version="3" theme="auto">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="up,k,w" action="up" keycap="↑↓←→" label="steer"/>
+    <bind keys="down,j,s" action="down"/>
+    <bind keys="left,h,a" action="left"/>
+    <bind keys="right,l,d" action="right"/>
+    <bind keys="space,p" action="pause" keycap="space" label="pause"/>
+    <bind keys="r" action="restart" label="restart"/>
+    <bind keys="A,t" action="autopilot" keycap="A" label="auto"/>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="q,ctrl+c" action="quit" label="quit"/>
+  </keymap>
+  <screen id="main">
+    <col id="app">
+      <row id="top">
+        <text class="brand">◆ snake</text>
+        <text class="mode" class:on="auto" if="!notice">{mode_label}</text>
+        <text class="notice" if="notice">{notice}</text>
+        <spacer if="!notice"/>
+        <text class="compact">score {score} best {best}</text>
+        <text class="state" class:playing="state.playing" class:paused="state.paused" class:over="state.over">{state.label}</text>
+      </row>
+      <row id="stage">
+        <col id="field" class:dead="state.over" each="board as line">
+          <row class="line" each="line.runs as r">
+            <text class="cell" class:empty="r.empty" class:snake="r.snake" class:head="r.head" class:food="r.food" class:dead="r.dead">{r.t}</text>
+          </row>
+        </col>
+        <col id="side" title="stats">
+          <row class="stat">
+            <text class="k">score</text>
+            <spacer/>
+            <text class="v score">{score}</text>
+          </row>
+          <row class="stat">
+            <text class="k">best</text>
+            <spacer/>
+            <text class="v">{best}</text>
+          </row>
+          <row class="stat">
+            <text class="k">length</text>
+            <spacer/>
+            <text class="v">{length}</text>
+          </row>
+          <row class="stat">
+            <text class="k">level</text>
+            <spacer/>
+            <text class="v">{level_label}</text>
+          </row>
+          <row class="stat">
+            <text class="k">speed</text>
+            <spacer/>
+            <text class="v">{speed_label}</text>
+          </row>
+          <row class="stat">
+            <text class="k">time</text>
+            <spacer/>
+            <text class="v">{elapsed}</text>
+          </row>
+          <rule class="sep"/>
+          <text class="k">pace, moves/s</text>
+          <sparkline id="pace" bind="speed_hist" min="6" max="15"/>
+          <spacer/>
+          <row class="legend">
+            <text class="sw snake">██</text>
+            <text class="k">body</text>
+          </row>
+          <row class="legend">
+            <text class="sw head">██</text>
+            <text class="k">head</text>
+          </row>
+          <row class="legend">
+            <text class="sw food">▐▌</text>
+            <text class="k">food</text>
+          </row>
+        </col>
+      </row>
+      <text id="toosmall">terminal too small: the board needs 52 columns by 20 rows</text>
+      <hints id="keys"/>
+    </col>
+    <modal id="over" open="over" title="{over_title}">
+      <text class="big">score {score}  ·  length {length}</text>
+      <text class="big">best {best}</text>
+      <text class="muted">r restart  ·  q quit</text>
+    </modal>
+    <modal id="help" open="help_open" title="snake" on:escape="help_close">
+      <hints id="help-keys" class="help" scope="all"/>
+      <text class="muted">Steer with the arrows, h j k l or w a s d.</text>
+      <text class="muted">Food adds 10 and speeds the snake up.</text>
+      <text class="muted">Steering by hand turns the autopilot off.</text>
+      <text class="muted">esc or ? closes this and resumes.</text>
+    </modal>
+  </screen>
+</tui>

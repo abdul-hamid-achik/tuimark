@@ -1,0 +1,33 @@
+{
+  "auto": true,
+  "clock": {"big":" ▄██   ██  ██    ██████ ██  ██    ▄████▄ ██████\n▀███   ██  ██ ██    ▄█▀ ██  ██ ██ ██  ██ ▀▀  ██\n  ██   ▀█████       ▀█▄ ▀█████    ██  ██    ██▀\n  ██       ██ ██ ██  ██     ██ ██ ██  ██   ██  \n▄████▄     ██    ▀████▀     ██    ▀████▀   ██  ","date":"Saturday, 17 October 2026","time":"14:34:07","zone":"UTC · UTC+0"},
+  "flash_ms": 0,
+  "help_open": false,
+  "is": {"flash":false,"flash_on":false,"last10":false,"long":false,"paused":false,"pulse":false,"ready":false,"running":true,"short":false,"work":true},
+  "left_ms": 1256000,
+  "notice": "",
+  "now_ms": 1792247647000,
+  "plan": {"long_ms":900000,"short_ms":300000,"work_ms":1500000},
+  "pos": 2,
+  "running": true,
+  "sessions": [
+    {"dur":"05:00","id":2,"kind":"short","label":"Short break","long":false,"secs":300,"short":true,"start":"14:25","task":"","work":false},
+    {"dur":"25:00","id":1,"kind":"work","label":"Work","long":false,"secs":1500,"short":false,"start":"14:00","task":"write the spec","work":true}
+  ],
+  "stats": {"count":2,"empty":false,"focus":"25m"},
+  "tab": "pomo",
+  "task": "write the spec",
+  "timer": {"big":"▄████▄ ▄████▄    ██████ ▄████▄\n▀▀  ██ ██  ██ ██ ██     ██    \n ▄██▀  ██  ██    ▀████▄ █████▄\n██▀    ██  ██ ██     ██ ██  ██\n██████ ▀████▀    ▀████▀ ▀████▀","dots":"● ◉ ○ ○","label":"20:56","next":"next: short break · 5m","pct":"16%","progress":16.266666666666666,"state":"▶ RUNNING","title":"FOCUS"},
+  "total_ms": 1500000,
+  "world": [
+    {"city":"Local","day":"","offset":"UTC+0","time":"14:34"},
+    {"city":"Honolulu","day":"","offset":"UTC-10","time":"04:34"},
+    {"city":"New York","day":"","offset":"UTC-5","time":"09:34"},
+    {"city":"London","day":"","offset":"UTC+0","time":"14:34"},
+    {"city":"Berlin","day":"","offset":"UTC+1","time":"15:34"},
+    {"city":"Mumbai","day":"","offset":"UTC+5:30","time":"20:04"},
+    {"city":"Tokyo","day":"","offset":"UTC+9","time":"23:34"},
+    {"city":"Sydney","day":"+1d","offset":"UTC+10","time":"00:34"}
+  ],
+  "zone": {"name":"UTC","off":0}
+}

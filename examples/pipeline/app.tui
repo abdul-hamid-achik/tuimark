@@ -1,0 +1,87 @@
+<tui version="3" theme="auto">
+  <style src="theme.tcss"/>
+  <keymap when="#app">
+    <bind keys="j" action="move-next" to="#jobs" keycap="j/k" label="move"/>
+    <bind keys="k" action="move-prev" to="#jobs"/>
+    <bind keys="enter" action="focus" to="#log" when="#jobs" label="log"/>
+    <bind keys="esc" action="focus" to="#jobs" when="#log" label="jobs"/>
+    <bind keys="r" action="job_retry" label="retry"/>
+    <bind keys="c" action="run_cancel" label="cancel"/>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="R" action="run_rerun" label="rerun"/>
+    <bind keys="f" action="follow_toggle" label="follow"/>
+    <bind keys="g" action="move-first" to="#log"/>
+    <bind keys="G" action="move-last" to="#log" keycap="g/G" label="top/end"/>
+    <bind keys="ctrl+c" action="quit" when=""/>
+  </keymap>
+  <keymap when="#confirm">
+    <bind keys="y" action="cancel_confirm" label="cancel run"/>
+    <bind keys="n" action="cancel_abort" label="keep"/>
+  </keymap>
+  <keymap when="#help">
+    <bind keys="enter,q" action="help_close" keycap="enter/q" label="close"/>
+  </keymap>
+  <screen id="main" focus="#jobs">
+    <col id="app">
+      <row id="identity">
+        <text class="brand">◆ ci</text>
+        <text class="repo">{pipeline.name}</text>
+        <text class="branch">{pipeline.branch}</text>
+        <text class="commit">{pipeline.commit}</text>
+        <text class="subject">{pipeline.message}</text>
+        <spacer/>
+        <text class="runno">run #{pipeline.run}</text>
+        <text class="badge" class:b-queued="run.is_queued" class:b-running="run.is_running" class:b-passed="run.is_passed" class:b-failed="run.is_failed" class:b-canceled="run.is_canceled">{run.badge}</text>
+      </row>
+      <row id="overall">
+        <progress id="overall-bar" class:p-run="run.is_running" class:p-ok="run.is_passed" class:p-fail="run.is_failed" class:p-cancel="run.is_canceled" bind="run.pct"/>
+        <text class="pct">{run.pct_label}</text>
+        <text class="summary">{run.summary}</text>
+        <sparkline id="load" bind="spark" min="0" max="4"/>
+        <text class="live">{run.live}</text>
+      </row>
+      <row id="main-row">
+        <list id="jobs" each="rows as j" key="j.id" bind="cur" title="jobs" on:select="job_select">
+          <item>
+            <row class="job">
+              <text class="icon" class:i-run="j.running" class:i-ok="j.passed" class:i-fail="j.failed" class:i-cancel="j.canceled" class:i-idle="j.idle">{j.icon}</text>
+              <text class="stage">{j.stage_label}</text>
+              <text class="name" class:n-idle="j.idle" class:n-fail="j.failed">{j.name}</text>
+              <progress class="bar" class:p-run="j.running" class:p-ok="j.passed" class:p-fail="j.failed" class:p-cancel="j.canceled" bind="j.pct"/>
+              <text class="time">{j.time}</text>
+            </row>
+          </item>
+        </list>
+        <scroll id="log" axis="y" stick="bottom" focusable="true" title="{log.title}">
+          <text class="empty" if="log.none">{log.empty}</text>
+          <col id="log-lines" each="log.lines as l" key="l.n">
+            <row class="line" class:cmd="l.cmd" class:ok="l.ok" class:warn="l.warn" class:err="l.err" class:dim="l.dim">
+              <text class="ts">{l.ts}</text>
+              <text class="out">{l.text}</text>
+            </row>
+          </col>
+        </scroll>
+      </row>
+      <row id="statusline">
+        <text class="status" class:err="status.err">{status.text}</text>
+      </row>
+      <hints id="keys"/>
+    </col>
+    <modal id="confirm" open="confirm_open" title="cancel run" on:escape="cancel_abort">
+      <text wrap="wrap">Cancel run #{pipeline.run}?</text>
+      <text class="muted" wrap="wrap">{run.cancel_note}</text>
+      <row id="confirm-actions">
+        <button id="confirm-yes" label="cancel run (y)" focusable="false" on:click="cancel_confirm"/>
+        <button id="confirm-no" label="keep (n)" focusable="false" on:click="cancel_abort"/>
+      </row>
+    </modal>
+    <modal id="help" open="help_open" title="keys" on:escape="help_close">
+      <scroll id="help-scroll" axis="y" focusable="true">
+        <hints id="help-keys" class="help" scope="all"/>
+        <text class="muted" wrap="wrap">f pauses and resumes the log.</text>
+      </scroll>
+      <button id="help-ok" label="close" on:click="help_close"/>
+    </modal>
+  </screen>
+</tui>
