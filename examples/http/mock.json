@@ -1,0 +1,279 @@
+{
+  "send": [
+    {
+      "path": "resp",
+      "value": {
+        "status": 201,
+        "reason": "Created",
+        "error": "",
+        "time": "98 ms",
+        "size": "169 B",
+        "ctype": "application/json",
+        "body": "{\n  \"active\": true,\n  \"created_at\": \"2026-10-17T09:31:02Z\",\n  \"id\": 5,\n  \"links\": {\n    \"orders\": \"/users/5/orders\",\n    \"self\": \"/users/5\"\n  },\n  \"name\": \"Ada Lovelace\",\n  \"roles\": [\n    \"member\"\n  ],\n  \"team\": \"math\"\n}",
+        "hcount": 6,
+        "headers": [
+          {
+            "n": 1,
+            "name": "Content-Length",
+            "value": "169"
+          },
+          {
+            "n": 2,
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "n": 3,
+            "name": "Date",
+            "value": "Sat, 17 Oct 2026 09:31:02 GMT"
+          },
+          {
+            "n": 4,
+            "name": "Location",
+            "value": "/users/5"
+          },
+          {
+            "n": 5,
+            "name": "Server",
+            "value": "fakeapi/1.0"
+          },
+          {
+            "n": 6,
+            "name": "X-Request-Id",
+            "value": "req-0004"
+          }
+        ]
+      }
+    },
+    {
+      "path": "rv",
+      "value": {
+        "k2": true,
+        "k3": false,
+        "k4": false,
+        "k5": false,
+        "kerr": false,
+        "line": "201 Created"
+      }
+    },
+    {
+      "path": "history_view",
+      "value": [
+        {
+          "get": false,
+          "post": true,
+          "put": false,
+          "patch": false,
+          "delete": false,
+          "k2": true,
+          "k3": false,
+          "k4": false,
+          "k5": false,
+          "kerr": false,
+          "id": "h4",
+          "method": "POST",
+          "code": "201",
+          "path": "/users",
+          "took": "98 ms"
+        },
+        {
+          "code": "201",
+          "delete": false,
+          "get": false,
+          "id": "h3",
+          "k2": true,
+          "k3": false,
+          "k4": false,
+          "k5": false,
+          "kerr": false,
+          "method": "POST",
+          "patch": false,
+          "path": "/users",
+          "post": true,
+          "put": false,
+          "took": "143 ms"
+        },
+        {
+          "code": "404",
+          "delete": false,
+          "get": true,
+          "id": "h2",
+          "k2": false,
+          "k3": false,
+          "k4": true,
+          "k5": false,
+          "kerr": false,
+          "method": "GET",
+          "patch": false,
+          "path": "/missing",
+          "post": false,
+          "put": false,
+          "took": "4 ms"
+        },
+        {
+          "code": "200",
+          "delete": false,
+          "get": true,
+          "id": "h1",
+          "k2": true,
+          "k3": false,
+          "k4": false,
+          "k5": false,
+          "kerr": false,
+          "method": "GET",
+          "patch": false,
+          "path": "/health",
+          "post": false,
+          "put": false,
+          "took": "6 ms"
+        }
+      ]
+    },
+    {
+      "path": "counts",
+      "value": {
+        "coll": "10",
+        "hist": "4"
+      }
+    },
+    {
+      "path": "flight",
+      "value": {
+        "active": false,
+        "label": "",
+        "spin": "⠋",
+        "elapsed": "0.0s",
+        "pct": 0
+      }
+    },
+    {
+      "path": "status",
+      "value": "POST /users → 201 Created in 98 ms (canned by --mock: nothing was sent)"
+    },
+    {
+      "path": "status_err",
+      "value": false
+    }
+  ],
+  "method_next": [
+    {
+      "path": "req.method",
+      "value": "PUT"
+    },
+    {
+      "path": "mf",
+      "value": {
+        "get": false,
+        "post": false,
+        "put": true,
+        "patch": false,
+        "delete": false
+      }
+    },
+    {
+      "path": "req.dirty",
+      "value": true
+    },
+    {
+      "path": "edit_title",
+      "value": "request · Create user ●"
+    },
+    {
+      "path": "summary",
+      "value": "PUT http://127.0.0.1:8099/users · 2 headers · body 37 B"
+    }
+  ],
+  "edited": [
+    {
+      "path": "req.dirty",
+      "value": true
+    },
+    {
+      "path": "edit_title",
+      "value": "request · Create user ●"
+    }
+  ],
+  "req_save": [
+    {
+      "path": "req.dirty",
+      "value": false
+    },
+    {
+      "path": "edit_title",
+      "value": "request · Create user"
+    },
+    {
+      "path": "status",
+      "value": "saved Create user to the collection"
+    },
+    {
+      "path": "status_err",
+      "value": false
+    }
+  ],
+  "cancel": [
+    {
+      "path": "status",
+      "value": "canceled"
+    },
+    {
+      "path": "status_err",
+      "value": false
+    }
+  ],
+  "req_new": [
+    {
+      "path": "req",
+      "value": {
+        "id": "",
+        "name": "new request",
+        "method": "GET",
+        "url": "{{base}}/",
+        "body": "",
+        "draft": "",
+        "dirty": false,
+        "headers": []
+      }
+    },
+    {
+      "path": "mf",
+      "value": {
+        "get": true,
+        "post": false,
+        "put": false,
+        "patch": false,
+        "delete": false
+      }
+    },
+    {
+      "path": "summary",
+      "value": "GET http://127.0.0.1:8099/ · 0 headers · no body"
+    },
+    {
+      "path": "edit_title",
+      "value": "request · new request"
+    },
+    {
+      "path": "status",
+      "value": "new request: type a URL, ctrl+s sends, s saves it"
+    }
+  ],
+  "help_open": [
+    {
+      "path": "help_open",
+      "value": true
+    }
+  ],
+  "help_close": [
+    {
+      "path": "help_open",
+      "value": false
+    }
+  ],
+  "filter_clear": [
+    {
+      "path": "query",
+      "value": ""
+    }
+  ]
+}

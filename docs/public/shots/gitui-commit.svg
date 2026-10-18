@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="988" height="548" viewBox="0 0 988 548" role="img" aria-label="gitui: a commit opened from the log, with its author, message, stats and a scrolling colored diff">
+<title>gitui: a commit opened from the log, with its author, message, stats and a scrolling colored diff</title>
+<rect width="988" height="548" rx="6" fill="#14171c"/>
+<path fill="#1b1f26" d="M14 14h960v20h-960zM14 494h960v20h-960z"/>
+<path fill="#182638" d="M42.8 254h902.4v20h-902.4z"/>
+<path fill="#2c171a" d="M42.8 294h902.4v20h-902.4zM42.8 314h902.4v20h-902.4zM42.8 334h902.4v20h-902.4z"/>
+<path fill="#14281c" d="M42.8 354h902.4v20h-902.4zM42.8 374h902.4v20h-902.4zM42.8 394h902.4v20h-902.4zM42.8 414h902.4v20h-902.4zM42.8 434h902.4v20h-902.4z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#d5d9e0" stroke-width="1.3" d="M23.6 44H18.8V54M23.6 44H33.2M186.8 44H196.4M196.4 44H206M206 44H215.6M215.6 44H225.2M225.2 44H234.8M234.8 44H244.4M244.4 44H254M254 44H263.6M263.6 44H273.2M273.2 44H282.8M282.8 44H292.4M292.4 44H302M302 44H311.6M311.6 44H321.2M321.2 44H330.8M330.8 44H340.4M340.4 44H350M350 44H359.6M359.6 44H369.2M369.2 44H378.8M378.8 44H388.4M388.4 44H398M398 44H407.6M407.6 44H417.2M417.2 44H426.8M426.8 44H436.4M436.4 44H446M446 44H455.6M455.6 44H465.2M465.2 44H474.8M474.8 44H484.4M484.4 44H494M494 44H503.6M503.6 44H513.2M513.2 44H522.8M522.8 44H532.4M532.4 44H542M542 44H551.6M551.6 44H561.2M561.2 44H570.8M570.8 44H580.4M580.4 44H590M590 44H599.6M599.6 44H609.2M609.2 44H618.8M618.8 44H628.4M628.4 44H638M638 44H647.6M647.6 44H657.2M657.2 44H666.8M666.8 44H676.4M676.4 44H686M686 44H695.6M695.6 44H705.2M705.2 44H714.8M714.8 44H724.4M724.4 44H734M734 44H743.6M743.6 44H753.2M753.2 44H762.8M762.8 44H772.4M772.4 44H782M782 44H791.6M791.6 44H801.2M801.2 44H810.8M810.8 44H820.4M820.4 44H830M830 44H839.6M839.6 44H849.2M849.2 44H858.8M858.8 44H868.4M868.4 44H878M878 44H887.6M887.6 44H897.2M897.2 44H906.8M906.8 44H916.4M916.4 44H926M926 44H935.6M935.6 44H945.2M945.2 44H954.8M954.8 44H964.4M964.4 44H969.2V54M18.8 54V74M969.2 54V74M18.8 74V94M969.2 74V94M18.8 94V114M969.2 94V114M18.8 114V134M969.2 114V134M18.8 134V154M969.2 134V154M18.8 154V174M969.2 154V174M18.8 174V194M969.2 174V194M18.8 194V214M969.2 194V214M18.8 214V234M969.2 214V234M18.8 234V254M969.2 234V254M18.8 254V274M969.2 254V274M18.8 274V294M969.2 274V294M18.8 294V314M969.2 294V314M18.8 314V334M969.2 314V334M18.8 334V354M969.2 334V354M18.8 354V374M969.2 354V374M18.8 374V394M969.2 374V394M18.8 394V414M969.2 394V414M18.8 414V434M969.2 414V434M18.8 434V454M969.2 434V454M18.8 454V474M969.2 454V474M23.6 484H18.8V474M23.6 484H33.2M33.2 484H42.8M42.8 484H52.4M52.4 484H62M62 484H71.6M71.6 484H81.2M81.2 484H90.8M90.8 484H100.4M100.4 484H110M110 484H119.6M119.6 484H129.2M129.2 484H138.8M138.8 484H148.4M148.4 484H158M158 484H167.6M167.6 484H177.2M177.2 484H186.8M186.8 484H196.4M196.4 484H206M206 484H215.6M215.6 484H225.2M225.2 484H234.8M234.8 484H244.4M244.4 484H254M254 484H263.6M263.6 484H273.2M273.2 484H282.8M282.8 484H292.4M292.4 484H302M302 484H311.6M311.6 484H321.2M321.2 484H330.8M330.8 484H340.4M340.4 484H350M350 484H359.6M359.6 484H369.2M369.2 484H378.8M378.8 484H388.4M388.4 484H398M398 484H407.6M407.6 484H417.2M417.2 484H426.8M426.8 484H436.4M436.4 484H446M446 484H455.6M455.6 484H465.2M465.2 484H474.8M474.8 484H484.4M484.4 484H494M494 484H503.6M503.6 484H513.2M513.2 484H522.8M522.8 484H532.4M532.4 484H542M542 484H551.6M551.6 484H561.2M561.2 484H570.8M570.8 484H580.4M580.4 484H590M590 484H599.6M599.6 484H609.2M609.2 484H618.8M618.8 484H628.4M628.4 484H638M638 484H647.6M647.6 484H657.2M657.2 484H666.8M666.8 484H676.4M676.4 484H686M686 484H695.6M695.6 484H705.2M705.2 484H714.8M714.8 484H724.4M724.4 484H734M734 484H743.6M743.6 484H753.2M753.2 484H762.8M762.8 484H772.4M772.4 484H782M782 484H791.6M791.6 484H801.2M801.2 484H810.8M810.8 484H820.4M820.4 484H830M830 484H839.6M839.6 484H849.2M849.2 484H858.8M858.8 484H868.4M868.4 484H878M878 484H887.6M887.6 484H897.2M897.2 484H906.8M906.8 484H916.4M916.4 484H926M926 484H935.6M935.6 484H945.2M945.2 484H954.8M954.8 484H964.4M964.4 484H969.2V474"/>
+<path stroke="#5aa9ff" stroke-width="1.3" d="M33.2 164H33.2Q28.4 164 28.4 168.8V174M33.2 164H42.8M42.8 164H52.4M52.4 164H62M62 164H71.6M71.6 164H81.2M81.2 164H90.8M90.8 164H100.4M100.4 164H110M110 164H119.6M119.6 164H129.2M129.2 164H138.8M138.8 164H148.4M148.4 164H158M158 164H167.6M167.6 164H177.2M177.2 164H186.8M186.8 164H196.4M196.4 164H206M206 164H215.6M215.6 164H225.2M225.2 164H234.8M234.8 164H244.4M244.4 164H254M254 164H263.6M263.6 164H273.2M273.2 164H282.8M282.8 164H292.4M292.4 164H302M302 164H311.6M311.6 164H321.2M321.2 164H330.8M330.8 164H340.4M340.4 164H350M350 164H359.6M359.6 164H369.2M369.2 164H378.8M378.8 164H388.4M388.4 164H398M398 164H407.6M407.6 164H417.2M417.2 164H426.8M426.8 164H436.4M436.4 164H446M446 164H455.6M455.6 164H465.2M465.2 164H474.8M474.8 164H484.4M484.4 164H494M494 164H503.6M503.6 164H513.2M513.2 164H522.8M522.8 164H532.4M532.4 164H542M542 164H551.6M551.6 164H561.2M561.2 164H570.8M570.8 164H580.4M580.4 164H590M590 164H599.6M599.6 164H609.2M609.2 164H618.8M618.8 164H628.4M628.4 164H638M638 164H647.6M647.6 164H657.2M657.2 164H666.8M666.8 164H676.4M676.4 164H686M686 164H695.6M695.6 164H705.2M705.2 164H714.8M714.8 164H724.4M724.4 164H734M734 164H743.6M743.6 164H753.2M753.2 164H762.8M762.8 164H772.4M772.4 164H782M782 164H791.6M791.6 164H801.2M801.2 164H810.8M810.8 164H820.4M820.4 164H830M830 164H839.6M839.6 164H849.2M849.2 164H858.8M858.8 164H868.4M868.4 164H878M878 164H887.6M887.6 164H897.2M897.2 164H906.8M906.8 164H916.4M916.4 164H926M926 164H935.6M935.6 164H945.2M945.2 164H954.8M954.8 164H954.8Q959.6 164 959.6 168.8V174M28.4 174V194M28.4 194V214M28.4 214V234M28.4 234V254M28.4 254V274M28.4 274V294M28.4 294V314M28.4 314V334M28.4 334V354M28.4 354V374M28.4 374V394M28.4 394V414M28.4 414V434M959.6 414V434M28.4 434V454M959.6 434V454M33.2 464H33.2Q28.4 464 28.4 459.2V454M33.2 464H42.8M42.8 464H52.4M52.4 464H62M62 464H71.6M71.6 464H81.2M81.2 464H90.8M90.8 464H100.4M100.4 464H110M110 464H119.6M119.6 464H129.2M129.2 464H138.8M138.8 464H148.4M148.4 464H158M158 464H167.6M167.6 464H177.2M177.2 464H186.8M186.8 464H196.4M196.4 464H206M206 464H215.6M215.6 464H225.2M225.2 464H234.8M234.8 464H244.4M244.4 464H254M254 464H263.6M263.6 464H273.2M273.2 464H282.8M282.8 464H292.4M292.4 464H302M302 464H311.6M311.6 464H321.2M321.2 464H330.8M330.8 464H340.4M340.4 464H350M350 464H359.6M359.6 464H369.2M369.2 464H378.8M378.8 464H388.4M388.4 464H398M398 464H407.6M407.6 464H417.2M417.2 464H426.8M426.8 464H436.4M436.4 464H446M446 464H455.6M455.6 464H465.2M465.2 464H474.8M474.8 464H484.4M484.4 464H494M494 464H503.6M503.6 464H513.2M513.2 464H522.8M522.8 464H532.4M532.4 464H542M542 464H551.6M551.6 464H561.2M561.2 464H570.8M570.8 464H580.4M580.4 464H590M590 464H599.6M599.6 464H609.2M609.2 464H618.8M618.8 464H628.4M628.4 464H638M638 464H647.6M647.6 464H657.2M657.2 464H666.8M666.8 464H676.4M676.4 464H686M686 464H695.6M695.6 464H705.2M705.2 464H714.8M714.8 464H724.4M724.4 464H734M734 464H743.6M743.6 464H753.2M753.2 464H762.8M762.8 464H772.4M772.4 464H782M782 464H791.6M791.6 464H801.2M801.2 464H810.8M810.8 464H820.4M820.4 464H830M830 464H839.6M839.6 464H849.2M849.2 464H858.8M858.8 464H868.4M868.4 464H878M878 464H887.6M887.6 464H897.2M897.2 464H906.8M906.8 464H916.4M916.4 464H926M926 464H935.6M935.6 464H945.2M945.2 464H954.8M954.8 464H954.8Q959.6 464 959.6 459.2V454"/>
+<path stroke="#5aa9ff" stroke-width="2.6" d="M959.6 174V194M959.6 194V214M959.6 214V234M959.6 234V254M959.6 254V274M959.6 274V294M959.6 294V314M959.6 314V334M959.6 334V354M959.6 354V374M959.6 374V394M959.6 394V414"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#5aa9ff" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="48" lengthAdjust="spacing" fill="#5aa9ff" font-weight="700">gitui</text>
+<text x="100.4" y="29" textLength="76.8" lengthAdjust="spacing" fill="#d5d9e0" font-weight="700">tidepool</text>
+<text x="186.8" y="29" textLength="38.4" lengthAdjust="spacing" fill="#b58cf5" font-weight="700">main</text>
+<text x="234.8" y="29" textLength="19.2" lengthAdjust="spacing" fill="#7f8896">↑2</text>
+<text x="263.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#7f8896">↓1</text>
+<text x="695.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#d5d9e0">4</text>
+<text x="714.8" y="29" textLength="57.6" lengthAdjust="spacing" fill="#d5d9e0">staged</text>
+<text x="782" y="29" textLength="9.6" lengthAdjust="spacing" fill="#d5d9e0">·</text>
+<text x="801.2" y="29" textLength="9.6" lengthAdjust="spacing" fill="#d5d9e0">5</text>
+<text x="820.4" y="29" textLength="76.8" lengthAdjust="spacing" fill="#d5d9e0">unstaged</text>
+<text x="906.8" y="29" textLength="57.6" lengthAdjust="spacing" fill="#7f8896">sample</text>
+<text x="42.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#d5d9e0">commit</text>
+<text x="110" y="49" textLength="67.2" lengthAdjust="spacing" fill="#d5d9e0">82556a8</text>
+<text x="23.6" y="69" textLength="48" lengthAdjust="spacing" fill="#7f8896">Priya</text>
+<text x="81.2" y="69" textLength="48" lengthAdjust="spacing" fill="#7f8896">Raman</text>
+<text x="138.8" y="69" textLength="192" lengthAdjust="spacing" fill="#7f8896">&lt;priya@tidepool.dev&gt;</text>
+<text x="340.4" y="69" textLength="9.6" lengthAdjust="spacing" fill="#7f8896">·</text>
+<text x="359.6" y="69" textLength="9.6" lengthAdjust="spacing" fill="#7f8896">2</text>
+<text x="378.8" y="69" textLength="48" lengthAdjust="spacing" fill="#7f8896">hours</text>
+<text x="436.4" y="69" textLength="28.8" lengthAdjust="spacing" fill="#7f8896">ago</text>
+<text x="23.6" y="89" textLength="57.6" lengthAdjust="spacing" fill="#d5d9e0" font-weight="700">queue:</text>
+<text x="90.8" y="89" textLength="48" lengthAdjust="spacing" fill="#d5d9e0" font-weight="700">retry</text>
+<text x="148.4" y="89" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0" font-weight="700">with</text>
+<text x="196.4" y="89" textLength="76.8" lengthAdjust="spacing" fill="#d5d9e0" font-weight="700">jittered</text>
+<text x="282.8" y="89" textLength="67.2" lengthAdjust="spacing" fill="#d5d9e0" font-weight="700">backoff</text>
+<text x="23.6" y="109" textLength="67.2" lengthAdjust="spacing" fill="#d5d9e0">Retries</text>
+<text x="100.4" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0">from</text>
+<text x="148.4" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0">many</text>
+<text x="196.4" y="109" textLength="67.2" lengthAdjust="spacing" fill="#d5d9e0">workers</text>
+<text x="273.2" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0">used</text>
+<text x="321.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d5d9e0">to</text>
+<text x="350" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0">line</text>
+<text x="398" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d5d9e0">up</text>
+<text x="426.8" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d5d9e0">on</text>
+<text x="455.6" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d5d9e0">the</text>
+<text x="494" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0">same</text>
+<text x="542" y="109" textLength="67.2" lengthAdjust="spacing" fill="#d5d9e0">second.</text>
+<text x="618.8" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0">Grow</text>
+<text x="666.8" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d5d9e0">the</text>
+<text x="705.2" y="109" textLength="48" lengthAdjust="spacing" fill="#d5d9e0">delay</text>
+<text x="762.8" y="109" textLength="124.8" lengthAdjust="spacing" fill="#d5d9e0">exponentially</text>
+<text x="897.2" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0">from</text>
+<text x="945.2" y="109" textLength="9.6" lengthAdjust="spacing" fill="#d5d9e0">a</text>
+<text x="23.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#d5d9e0">base</text>
+<text x="71.6" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d5d9e0">and</text>
+<text x="110" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d5d9e0">add</text>
+<text x="148.4" y="129" textLength="19.2" lengthAdjust="spacing" fill="#d5d9e0">up</text>
+<text x="177.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#d5d9e0">to</text>
+<text x="206" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d5d9e0">25%</text>
+<text x="244.4" y="129" textLength="57.6" lengthAdjust="spacing" fill="#d5d9e0">random</text>
+<text x="311.6" y="129" textLength="67.2" lengthAdjust="spacing" fill="#d5d9e0">jitter.</text>
+<text x="23.6" y="149" textLength="9.6" lengthAdjust="spacing" fill="#5aa9ff">1</text>
+<text x="42.8" y="149" textLength="38.4" lengthAdjust="spacing" fill="#5aa9ff">file</text>
+<text x="90.8" y="149" textLength="76.8" lengthAdjust="spacing" fill="#5aa9ff">changed,</text>
+<text x="177.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#5aa9ff">+7</text>
+<text x="206" y="149" textLength="19.2" lengthAdjust="spacing" fill="#5aa9ff">−3</text>
+<text x="42.8" y="189" textLength="38.4" lengthAdjust="spacing" fill="#7f8896">diff</text>
+<text x="90.8" y="189" textLength="48" lengthAdjust="spacing" fill="#7f8896">--git</text>
+<text x="148.4" y="189" textLength="240" lengthAdjust="spacing" fill="#7f8896">a/internal/queue/retry.go</text>
+<text x="398" y="189" textLength="240" lengthAdjust="spacing" fill="#7f8896">b/internal/queue/retry.go</text>
+<text x="42.8" y="209" textLength="48" lengthAdjust="spacing" fill="#7f8896">index</text>
+<text x="100.4" y="209" textLength="153.6" lengthAdjust="spacing" fill="#7f8896">3f2a1c4..8b7d9e0</text>
+<text x="263.6" y="209" textLength="57.6" lengthAdjust="spacing" fill="#7f8896">100644</text>
+<text x="42.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#7f8896">---</text>
+<text x="81.2" y="229" textLength="240" lengthAdjust="spacing" fill="#7f8896">a/internal/queue/retry.go</text>
+<text x="42.8" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7f8896">+++</text>
+<text x="81.2" y="249" textLength="240" lengthAdjust="spacing" fill="#7f8896">b/internal/queue/retry.go</text>
+<text x="42.8" y="269" textLength="19.2" lengthAdjust="spacing" fill="#7cb8ff">@@</text>
+<text x="71.6" y="269" textLength="38.4" lengthAdjust="spacing" fill="#7cb8ff">-9,6</text>
+<text x="119.6" y="269" textLength="48" lengthAdjust="spacing" fill="#7cb8ff">+9,11</text>
+<text x="177.2" y="269" textLength="19.2" lengthAdjust="spacing" fill="#7cb8ff">@@</text>
+<text x="206" y="269" textLength="57.6" lengthAdjust="spacing" fill="#7cb8ff">import</text>
+<text x="273.2" y="269" textLength="9.6" lengthAdjust="spacing" fill="#7cb8ff">(</text>
+<text x="42.8" y="309" textLength="48" lengthAdjust="spacing" fill="#f0645c">-func</text>
+<text x="100.4" y="309" textLength="86.4" lengthAdjust="spacing" fill="#f0645c">Backoff(n</text>
+<text x="196.4" y="309" textLength="38.4" lengthAdjust="spacing" fill="#f0645c">int)</text>
+<text x="244.4" y="309" textLength="124.8" lengthAdjust="spacing" fill="#f0645c">time.Duration</text>
+<text x="378.8" y="309" textLength="9.6" lengthAdjust="spacing" fill="#f0645c">{</text>
+<text x="42.8" y="329" textLength="9.6" lengthAdjust="spacing" fill="#f0645c">-</text>
+<text x="90.8" y="329" textLength="57.6" lengthAdjust="spacing" fill="#f0645c">return</text>
+<text x="158" y="329" textLength="172.8" lengthAdjust="spacing" fill="#f0645c">time.Duration(n*n)</text>
+<text x="340.4" y="329" textLength="9.6" lengthAdjust="spacing" fill="#f0645c">*</text>
+<text x="359.6" y="329" textLength="105.6" lengthAdjust="spacing" fill="#f0645c">time.Second</text>
+<text x="42.8" y="349" textLength="19.2" lengthAdjust="spacing" fill="#f0645c">-}</text>
+<text x="42.8" y="369" textLength="28.8" lengthAdjust="spacing" fill="#4cc26b">+//</text>
+<text x="81.2" y="369" textLength="76.8" lengthAdjust="spacing" fill="#4cc26b">Jittered</text>
+<text x="167.6" y="369" textLength="48" lengthAdjust="spacing" fill="#4cc26b">grows</text>
+<text x="225.2" y="369" textLength="124.8" lengthAdjust="spacing" fill="#4cc26b">exponentially</text>
+<text x="359.6" y="369" textLength="38.4" lengthAdjust="spacing" fill="#4cc26b">from</text>
+<text x="407.6" y="369" textLength="38.4" lengthAdjust="spacing" fill="#4cc26b">base</text>
+<text x="455.6" y="369" textLength="28.8" lengthAdjust="spacing" fill="#4cc26b">and</text>
+<text x="494" y="369" textLength="38.4" lengthAdjust="spacing" fill="#4cc26b">adds</text>
+<text x="542" y="369" textLength="19.2" lengthAdjust="spacing" fill="#4cc26b">up</text>
+<text x="570.8" y="369" textLength="19.2" lengthAdjust="spacing" fill="#4cc26b">to</text>
+<text x="599.6" y="369" textLength="28.8" lengthAdjust="spacing" fill="#4cc26b">25%</text>
+<text x="638" y="369" textLength="67.2" lengthAdjust="spacing" fill="#4cc26b">jitter.</text>
+<text x="42.8" y="389" textLength="48" lengthAdjust="spacing" fill="#4cc26b">+func</text>
+<text x="100.4" y="389" textLength="124.8" lengthAdjust="spacing" fill="#4cc26b">Jittered(base</text>
+<text x="234.8" y="389" textLength="134.4" lengthAdjust="spacing" fill="#4cc26b">time.Duration)</text>
+<text x="378.8" y="389" textLength="67.2" lengthAdjust="spacing" fill="#4cc26b">Backoff</text>
+<text x="455.6" y="389" textLength="9.6" lengthAdjust="spacing" fill="#4cc26b">{</text>
+<text x="42.8" y="409" textLength="9.6" lengthAdjust="spacing" fill="#4cc26b">+</text>
+<text x="90.8" y="409" textLength="57.6" lengthAdjust="spacing" fill="#4cc26b">return</text>
+<text x="158" y="409" textLength="57.6" lengthAdjust="spacing" fill="#4cc26b">func(n</text>
+<text x="225.2" y="409" textLength="38.4" lengthAdjust="spacing" fill="#4cc26b">int)</text>
+<text x="273.2" y="409" textLength="124.8" lengthAdjust="spacing" fill="#4cc26b">time.Duration</text>
+<text x="407.6" y="409" textLength="9.6" lengthAdjust="spacing" fill="#4cc26b">{</text>
+<text x="42.8" y="429" textLength="9.6" lengthAdjust="spacing" fill="#4cc26b">+</text>
+<text x="129.2" y="429" textLength="9.6" lengthAdjust="spacing" fill="#4cc26b">d</text>
+<text x="148.4" y="429" textLength="19.2" lengthAdjust="spacing" fill="#4cc26b">:=</text>
+<text x="177.2" y="429" textLength="38.4" lengthAdjust="spacing" fill="#4cc26b">base</text>
+<text x="225.2" y="429" textLength="19.2" lengthAdjust="spacing" fill="#4cc26b">&lt;&lt;</text>
+<text x="254" y="429" textLength="67.2" lengthAdjust="spacing" fill="#4cc26b">uint(n)</text>
+<text x="42.8" y="449" textLength="9.6" lengthAdjust="spacing" fill="#4cc26b">+</text>
+<text x="129.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#4cc26b">return</text>
+<text x="196.4" y="449" textLength="9.6" lengthAdjust="spacing" fill="#4cc26b">d</text>
+<text x="215.6" y="449" textLength="9.6" lengthAdjust="spacing" fill="#4cc26b">+</text>
+<text x="234.8" y="449" textLength="384" lengthAdjust="spacing" fill="#4cc26b">time.Duration(rand.Int63n(int64(d)/4+1))</text>
+<text x="23.6" y="509" textLength="57.6" lengthAdjust="spacing" fill="#7f8896">sample</text>
+<text x="90.8" y="509" textLength="96" lengthAdjust="spacing" fill="#7f8896">repository</text>
+<text x="196.4" y="509" textLength="9.6" lengthAdjust="spacing" fill="#7f8896">·</text>
+<text x="215.6" y="509" textLength="9.6" lengthAdjust="spacing" fill="#7f8896">9</text>
+<text x="234.8" y="509" textLength="67.2" lengthAdjust="spacing" fill="#7f8896">changed</text>
+<text x="311.6" y="509" textLength="48" lengthAdjust="spacing" fill="#7f8896">files</text>
+<text x="23.6" y="529" textLength="9.6" lengthAdjust="spacing" fill="#5aa9ff" font-weight="700">q</text>
+<text x="42.8" y="529" textLength="48" lengthAdjust="spacing" fill="#7f8896">close</text>
+<text x="100.4" y="529" textLength="57.6" lengthAdjust="spacing" fill="#7f8896">commit</text>
+<text x="177.2" y="529" textLength="28.8" lengthAdjust="spacing" fill="#5aa9ff" font-weight="700">j/k</text>
+<text x="215.6" y="529" textLength="57.6" lengthAdjust="spacing" fill="#7f8896">scroll</text>
+</g>
+</svg>

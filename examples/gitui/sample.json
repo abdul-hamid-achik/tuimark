@@ -1,0 +1,851 @@
+{
+  "mode": "sample",
+  "view": "status",
+  "repo": {
+    "name": "tidepool",
+    "branch": "main",
+    "upstream": "origin/main",
+    "ahead": 2,
+    "behind": 1
+  },
+  "sync_label": "↑2 ↓1",
+  "files": [
+    {
+      "path": "README.md",
+      "orig": "",
+      "x": " ",
+      "y": "M"
+    },
+    {
+      "path": "cmd/tidepool/main.go",
+      "orig": "",
+      "x": " ",
+      "y": "M"
+    },
+    {
+      "path": "internal/cfg/load.go",
+      "orig": "internal/cfg/config.go",
+      "x": "R",
+      "y": " "
+    },
+    {
+      "path": "internal/queue/backoff_test.go",
+      "orig": "",
+      "x": "?",
+      "y": "?"
+    },
+    {
+      "path": "internal/queue/dedupe.go",
+      "orig": "",
+      "x": "A",
+      "y": " "
+    },
+    {
+      "path": "internal/queue/retry.go",
+      "orig": "",
+      "x": " ",
+      "y": "M"
+    },
+    {
+      "path": "internal/queue/worker.go",
+      "orig": "",
+      "x": "M",
+      "y": " "
+    },
+    {
+      "path": "scripts/release-old.sh",
+      "orig": "",
+      "x": "D",
+      "y": " "
+    },
+    {
+      "path": "testdata/legacy.json",
+      "orig": "",
+      "x": " ",
+      "y": "D"
+    }
+  ],
+  "staged": [
+    {
+      "path": "internal/cfg/load.go",
+      "orig": "internal/cfg/config.go",
+      "code": "R",
+      "is_m": false,
+      "is_a": false,
+      "is_d": false,
+      "is_r": true,
+      "is_u": false
+    },
+    {
+      "path": "internal/queue/dedupe.go",
+      "orig": "",
+      "code": "A",
+      "is_m": false,
+      "is_a": true,
+      "is_d": false,
+      "is_r": false,
+      "is_u": false
+    },
+    {
+      "path": "internal/queue/worker.go",
+      "orig": "",
+      "code": "M",
+      "is_m": true,
+      "is_a": false,
+      "is_d": false,
+      "is_r": false,
+      "is_u": false
+    },
+    {
+      "path": "scripts/release-old.sh",
+      "orig": "",
+      "code": "D",
+      "is_m": false,
+      "is_a": false,
+      "is_d": true,
+      "is_r": false,
+      "is_u": false
+    }
+  ],
+  "unstaged": [
+    {
+      "path": "README.md",
+      "orig": "",
+      "code": "M",
+      "is_m": true,
+      "is_a": false,
+      "is_d": false,
+      "is_r": false,
+      "is_u": false
+    },
+    {
+      "path": "cmd/tidepool/main.go",
+      "orig": "",
+      "code": "M",
+      "is_m": true,
+      "is_a": false,
+      "is_d": false,
+      "is_r": false,
+      "is_u": false
+    },
+    {
+      "path": "internal/queue/backoff_test.go",
+      "orig": "",
+      "code": "?",
+      "is_m": false,
+      "is_a": false,
+      "is_d": false,
+      "is_r": false,
+      "is_u": true
+    },
+    {
+      "path": "internal/queue/retry.go",
+      "orig": "",
+      "code": "M",
+      "is_m": true,
+      "is_a": false,
+      "is_d": false,
+      "is_r": false,
+      "is_u": false
+    },
+    {
+      "path": "testdata/legacy.json",
+      "orig": "",
+      "code": "D",
+      "is_m": false,
+      "is_a": false,
+      "is_d": true,
+      "is_r": false,
+      "is_u": false
+    }
+  ],
+  "counts": {
+    "staged": 4,
+    "unstaged": 5,
+    "total": 9,
+    "label": "4 staged · 5 unstaged"
+  },
+  "log": [
+    {
+      "hash": "82556a8914f02048624316d058e9a62b8a74845c",
+      "short": "82556a8",
+      "subject": "queue: retry with jittered backoff",
+      "author": "Priya Raman",
+      "date": "2h",
+      "refs": "main",
+      "head": true
+    },
+    {
+      "hash": "65a3e23a62988e440ba923ae5b31c31b6c5aa1a3",
+      "short": "65a3e23",
+      "subject": "queue: fix lost wakeup in worker shutdown",
+      "author": "Marcus Webb",
+      "date": "5h",
+      "refs": "",
+      "head": false
+    },
+    {
+      "hash": "697a0f0a0331d1cdf4efddc2da57755ef54277f7",
+      "short": "697a0f0",
+      "subject": "cfg: load config from XDG paths",
+      "author": "Lena Fischer",
+      "date": "1d",
+      "refs": "origin/main",
+      "head": false
+    },
+    {
+      "hash": "18d8996390893209563f5601e776ac94b0b9cb34",
+      "short": "18d8996",
+      "subject": "docs: describe the dedupe design",
+      "author": "Tomás Ibarra",
+      "date": "2d",
+      "refs": "feature/dedupe",
+      "head": false
+    },
+    {
+      "hash": "9885728079ad665f527f04201a9ef6a65bc53b1f",
+      "short": "9885728",
+      "subject": "queue: add visibility timeout to leases",
+      "author": "Priya Raman",
+      "date": "3d",
+      "refs": "",
+      "head": false
+    },
+    {
+      "hash": "28d69a9c05147ce4b26f8f24fcf37eaf80effa47",
+      "short": "28d69a9",
+      "subject": "release v0.4.0",
+      "author": "Priya Raman",
+      "date": "5d",
+      "refs": "v0.4.0",
+      "head": false
+    },
+    {
+      "hash": "8e4745307775204aadacd1ad4367eac4fb9c0d74",
+      "short": "8e47453",
+      "subject": "ci: cache the Go build in actions",
+      "author": "Marcus Webb",
+      "date": "1w",
+      "refs": "",
+      "head": false
+    },
+    {
+      "hash": "f211835fe32e64143e92f898803f10b14f83259e",
+      "short": "f211835",
+      "subject": "cmd: add tidepool drain subcommand",
+      "author": "Tomás Ibarra",
+      "date": "1w",
+      "refs": "wip/cli-polish",
+      "head": false
+    },
+    {
+      "hash": "9d70c3bc638a7bc0017b5a5f23981e6999aea9b4",
+      "short": "9d70c3b",
+      "subject": "queue: stop double-delivering expired leases",
+      "author": "Lena Fischer",
+      "date": "2w",
+      "refs": "",
+      "head": false
+    },
+    {
+      "hash": "97d6c9813d86c51eda95e022d74632359be99c2f",
+      "short": "97d6c98",
+      "subject": "release v0.3.0",
+      "author": "Priya Raman",
+      "date": "3w",
+      "refs": "v0.3.0",
+      "head": false
+    },
+    {
+      "hash": "61beb2b0574ed7e3ab1c46959e9711499d4e490e",
+      "short": "61beb2b",
+      "subject": "cfg: reject unknown keys",
+      "author": "Lena Fischer",
+      "date": "1mo",
+      "refs": "release/0.4",
+      "head": false
+    },
+    {
+      "hash": "9fea5347df76c3bf933567540b9f021410b5e3fa",
+      "short": "9fea534",
+      "subject": "initial import",
+      "author": "Priya Raman",
+      "date": "2mo",
+      "refs": "",
+      "head": false
+    }
+  ],
+  "log_query": "",
+  "filter_open": false,
+  "log_view": [
+    {
+      "hash": "82556a8914f02048624316d058e9a62b8a74845c",
+      "short": "82556a8",
+      "subject": "queue: retry with jittered backoff",
+      "author": "Priya Raman",
+      "date": "2h",
+      "refs": "main",
+      "head": true
+    },
+    {
+      "hash": "65a3e23a62988e440ba923ae5b31c31b6c5aa1a3",
+      "short": "65a3e23",
+      "subject": "queue: fix lost wakeup in worker shutdown",
+      "author": "Marcus Webb",
+      "date": "5h",
+      "refs": "",
+      "head": false
+    },
+    {
+      "hash": "697a0f0a0331d1cdf4efddc2da57755ef54277f7",
+      "short": "697a0f0",
+      "subject": "cfg: load config from XDG paths",
+      "author": "Lena Fischer",
+      "date": "1d",
+      "refs": "origin/main",
+      "head": false
+    },
+    {
+      "hash": "18d8996390893209563f5601e776ac94b0b9cb34",
+      "short": "18d8996",
+      "subject": "docs: describe the dedupe design",
+      "author": "Tomás Ibarra",
+      "date": "2d",
+      "refs": "feature/dedupe",
+      "head": false
+    },
+    {
+      "hash": "9885728079ad665f527f04201a9ef6a65bc53b1f",
+      "short": "9885728",
+      "subject": "queue: add visibility timeout to leases",
+      "author": "Priya Raman",
+      "date": "3d",
+      "refs": "",
+      "head": false
+    },
+    {
+      "hash": "28d69a9c05147ce4b26f8f24fcf37eaf80effa47",
+      "short": "28d69a9",
+      "subject": "release v0.4.0",
+      "author": "Priya Raman",
+      "date": "5d",
+      "refs": "v0.4.0",
+      "head": false
+    },
+    {
+      "hash": "8e4745307775204aadacd1ad4367eac4fb9c0d74",
+      "short": "8e47453",
+      "subject": "ci: cache the Go build in actions",
+      "author": "Marcus Webb",
+      "date": "1w",
+      "refs": "",
+      "head": false
+    },
+    {
+      "hash": "f211835fe32e64143e92f898803f10b14f83259e",
+      "short": "f211835",
+      "subject": "cmd: add tidepool drain subcommand",
+      "author": "Tomás Ibarra",
+      "date": "1w",
+      "refs": "wip/cli-polish",
+      "head": false
+    },
+    {
+      "hash": "9d70c3bc638a7bc0017b5a5f23981e6999aea9b4",
+      "short": "9d70c3b",
+      "subject": "queue: stop double-delivering expired leases",
+      "author": "Lena Fischer",
+      "date": "2w",
+      "refs": "",
+      "head": false
+    },
+    {
+      "hash": "97d6c9813d86c51eda95e022d74632359be99c2f",
+      "short": "97d6c98",
+      "subject": "release v0.3.0",
+      "author": "Priya Raman",
+      "date": "3w",
+      "refs": "v0.3.0",
+      "head": false
+    },
+    {
+      "hash": "61beb2b0574ed7e3ab1c46959e9711499d4e490e",
+      "short": "61beb2b",
+      "subject": "cfg: reject unknown keys",
+      "author": "Lena Fischer",
+      "date": "1mo",
+      "refs": "release/0.4",
+      "head": false
+    },
+    {
+      "hash": "9fea5347df76c3bf933567540b9f021410b5e3fa",
+      "short": "9fea534",
+      "subject": "initial import",
+      "author": "Priya Raman",
+      "date": "2mo",
+      "refs": "",
+      "head": false
+    }
+  ],
+  "log_label": "12 commits",
+  "branches": [
+    {
+      "name": "main",
+      "mark": "●",
+      "current": true,
+      "upstream": "origin/main",
+      "track": "↑2 ↓1",
+      "hash": "82556a8",
+      "subject": "queue: retry with jittered backoff",
+      "date": "2h"
+    },
+    {
+      "name": "feature/dedupe",
+      "mark": "",
+      "current": false,
+      "upstream": "origin/feature/dedupe",
+      "track": "",
+      "hash": "18d8996",
+      "subject": "docs: describe the dedupe design",
+      "date": "2d"
+    },
+    {
+      "name": "fix/shutdown-race",
+      "mark": "",
+      "current": false,
+      "upstream": "",
+      "track": "",
+      "hash": "65a3e23",
+      "subject": "queue: fix lost wakeup in worker shutdown",
+      "date": "5h"
+    },
+    {
+      "name": "release/0.4",
+      "mark": "",
+      "current": false,
+      "upstream": "origin/release/0.4",
+      "track": "↓3",
+      "hash": "61beb2b",
+      "subject": "cfg: reject unknown keys",
+      "date": "1mo"
+    },
+    {
+      "name": "wip/cli-polish",
+      "mark": "",
+      "current": false,
+      "upstream": "",
+      "track": "",
+      "hash": "f211835",
+      "subject": "cmd: add tidepool drain subcommand",
+      "date": "1w"
+    }
+  ],
+  "cur": {
+    "staged": "internal/cfg/load.go",
+    "unstaged": "README.md",
+    "log": "82556a8914f02048624316d058e9a62b8a74845c",
+    "branch": "main"
+  },
+  "diff": {
+    "title": "README.md (unstaged)",
+    "lines": [
+      {
+        "n": 0,
+        "text": "diff --git a/README.md b/README.md",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": true
+      },
+      {
+        "n": 1,
+        "text": "index 3f2a1c4..8b7d9e0 100644",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": true
+      },
+      {
+        "n": 2,
+        "text": "--- a/README.md",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": true
+      },
+      {
+        "n": 3,
+        "text": "+++ b/README.md",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": true
+      },
+      {
+        "n": 4,
+        "text": "@@ -12,7 +12,10 @@ Tidepool is a small, durable job queue for Go services.",
+        "add": false,
+        "del": false,
+        "hunk": true,
+        "meta": false
+      },
+      {
+        "n": 5,
+        "text": " ## Quick start",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 6,
+        "text": " ",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 7,
+        "text": " ```go",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 8,
+        "text": "-q := tidepool.Open(\"jobs.db\")",
+        "add": false,
+        "del": true,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 9,
+        "text": "+q, err := tidepool.Open(\"jobs.db\", tidepool.WithRetry(tidepool.Jittered(time.Second)))",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 10,
+        "text": "+if err != nil {",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 11,
+        "text": "+    log.Fatal(err)",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 12,
+        "text": "+}",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 13,
+        "text": " defer q.Close()",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 14,
+        "text": " ```",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 15,
+        "text": " ",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      }
+    ]
+  },
+  "detail": {
+    "title": "commit 82556a8",
+    "hash": "82556a8914f02048624316d058e9a62b8a74845c",
+    "meta": "Priya Raman <priya@tidepool.dev> · 2 hours ago",
+    "subject": "queue: retry with jittered backoff",
+    "body": [
+      {
+        "n": 0,
+        "text": "Retries from many workers used to line up on the same second. Grow the delay exponentially from a base and add up to 25% random jitter."
+      }
+    ],
+    "stats": "1 file changed, +7 −3",
+    "lines": [
+      {
+        "n": 0,
+        "text": "diff --git a/internal/queue/retry.go b/internal/queue/retry.go",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": true
+      },
+      {
+        "n": 1,
+        "text": "index 3f2a1c4..8b7d9e0 100644",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": true
+      },
+      {
+        "n": 2,
+        "text": "--- a/internal/queue/retry.go",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": true
+      },
+      {
+        "n": 3,
+        "text": "+++ b/internal/queue/retry.go",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": true
+      },
+      {
+        "n": 4,
+        "text": "@@ -9,6 +9,11 @@ import (",
+        "add": false,
+        "del": false,
+        "hunk": true,
+        "meta": false
+      },
+      {
+        "n": 5,
+        "text": " ",
+        "add": false,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 6,
+        "text": "-func Backoff(n int) time.Duration {",
+        "add": false,
+        "del": true,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 7,
+        "text": "-    return time.Duration(n*n) * time.Second",
+        "add": false,
+        "del": true,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 8,
+        "text": "-}",
+        "add": false,
+        "del": true,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 9,
+        "text": "+// Jittered grows exponentially from base and adds up to 25% jitter.",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 10,
+        "text": "+func Jittered(base time.Duration) Backoff {",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 11,
+        "text": "+    return func(n int) time.Duration {",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 12,
+        "text": "+        d := base << uint(n)",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 13,
+        "text": "+        return d + time.Duration(rand.Int63n(int64(d)/4+1))",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 14,
+        "text": "+    }",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      },
+      {
+        "n": 15,
+        "text": "+}",
+        "add": true,
+        "del": false,
+        "hunk": false,
+        "meta": false
+      }
+    ]
+  },
+  "detail_open": false,
+  "confirm": {
+    "branch": "feature/dedupe",
+    "note": "2 files with changes will come along (stash or commit first if checkout fails)"
+  },
+  "confirm_open": false,
+  "status": {
+    "text": "sample repository · 9 changed files",
+    "err": false
+  },
+  "help_open": false,
+  "mouse_on": true,
+  "sim": {
+    "diffs": {
+      "README.md": {
+        "staged": "",
+        "unstaged": "diff --git a/README.md b/README.md\nindex 3f2a1c4..8b7d9e0 100644\n--- a/README.md\n+++ b/README.md\n@@ -12,7 +12,10 @@ Tidepool is a small, durable job queue for Go services.\n ## Quick start\n \n ```go\n-q := tidepool.Open(\"jobs.db\")\n+q, err := tidepool.Open(\"jobs.db\", tidepool.WithRetry(tidepool.Jittered(time.Second)))\n+if err != nil {\n+\tlog.Fatal(err)\n+}\n defer q.Close()\n ```\n \n"
+      },
+      "cmd/tidepool/main.go": {
+        "staged": "",
+        "unstaged": "diff --git a/cmd/tidepool/main.go b/cmd/tidepool/main.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/cmd/tidepool/main.go\n+++ b/cmd/tidepool/main.go\n@@ -21,6 +21,7 @@ func main() {\n \tvar (\n \t\tdbPath  = flag.String(\"db\", \"jobs.db\", \"path to the queue database\")\n \t\tworkers = flag.Int(\"workers\", 4, \"number of concurrent workers\")\n+\t\tdrain   = flag.Duration(\"drain\", 30*time.Second, \"how long to wait for in-flight jobs on shutdown\")\n \t)\n \tflag.Parse()\n \n@@ -38,5 +39,8 @@ func main() {\n \tif err := q.Run(ctx, *workers); err != nil {\n \t\tlog.Fatal(err)\n \t}\n+\tif err := q.Drain(*drain); err != nil {\n+\t\tlog.Printf(\"drain: %v\", err)\n+\t}\n }\n"
+      },
+      "internal/cfg/load.go": {
+        "staged": "diff --git a/internal/cfg/config.go b/internal/cfg/load.go\nsimilarity index 91%\nrename from internal/cfg/config.go\nrename to internal/cfg/load.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/cfg/config.go\n+++ b/internal/cfg/load.go\n@@ -1,5 +1,5 @@\n-package config\n+package cfg\n \n import (\n \t\"os\"\n@@ -14,7 +14,7 @@ type Config struct {\n }\n \n-// Read parses the file at path.\n-func Read(path string) (*Config, error) {\n+// Load parses the file at path.\n+func Load(path string) (*Config, error) {\n \tb, err := os.ReadFile(path)\n \tif err != nil {\n \t\treturn nil, err\n",
+        "unstaged": ""
+      },
+      "internal/queue/backoff_test.go": {
+        "staged": "",
+        "unstaged": "diff --git a/internal/queue/backoff_test.go b/internal/queue/backoff_test.go\nnew file mode 100644\nindex 0000000..8b7d9e0\n--- /dev/null\n+++ b/internal/queue/backoff_test.go\n@@ -0,0 +1,24 @@\n+package queue\n+\n+import (\n+\t\"testing\"\n+\t\"time\"\n+)\n+\n+func TestJitteredGrows(t *testing.T) {\n+\tb := Jittered(time.Second)\n+\tprev := time.Duration(0)\n+\tfor n := 0; n < 5; n++ {\n+\t\td := b(n)\n+\t\tif d < prev {\n+\t\t\tt.Fatalf(\"attempt %d: %v is shorter than %v\", n, d, prev)\n+\t\t}\n+\t\tprev = d\n+\t}\n+}\n+\n+func TestJitteredBounds(t *testing.T) {\n+\tif d := Jittered(time.Second)(0); d < time.Second || d > 1250*time.Millisecond {\n+\t\tt.Fatalf(\"got %v, want 1s..1.25s\", d)\n+\t}\n+}\n"
+      },
+      "internal/queue/dedupe.go": {
+        "staged": "diff --git a/internal/queue/dedupe.go b/internal/queue/dedupe.go\nnew file mode 100644\nindex 0000000..8b7d9e0\n--- /dev/null\n+++ b/internal/queue/dedupe.go\n@@ -0,0 +1,18 @@\n+package queue\n+\n+// Dedupe drops a job when one with the same key is already pending.\n+type Dedupe struct {\n+\tseen map[string]struct{}\n+}\n+\n+func (d *Dedupe) Admit(key string) bool {\n+\tif d.seen == nil {\n+\t\td.seen = map[string]struct{}{}\n+\t}\n+\tif _, ok := d.seen[key]; ok {\n+\t\treturn false\n+\t}\n+\td.seen[key] = struct{}{}\n+\treturn true\n+}\n",
+        "unstaged": ""
+      },
+      "internal/queue/retry.go": {
+        "staged": "",
+        "unstaged": "diff --git a/internal/queue/retry.go b/internal/queue/retry.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/queue/retry.go\n+++ b/internal/queue/retry.go\n@@ -9,13 +9,22 @@ import (\n \n-// Backoff returns how long to wait before attempt n.\n-func Backoff(n int) time.Duration {\n-\treturn time.Duration(n*n) * time.Second\n-}\n+// Jittered returns a backoff that grows exponentially from base and adds up\n+// to 25% random jitter, so retries from many workers do not line up.\n+func Jittered(base time.Duration) Backoff {\n+\treturn func(n int) time.Duration {\n+\t\td := base << uint(n)\n+\t\treturn d + time.Duration(rand.Int63n(int64(d)/4+1))\n+\t}\n+}\n+\n+// Backoff returns how long to wait before attempt n.\n+type Backoff func(n int) time.Duration\n \n func (q *Queue) retryAt(j *Job) time.Time {\n-\treturn time.Now().Add(Backoff(j.Attempts))\n+\treturn time.Now().Add(q.backoff(j.Attempts))\n }\n"
+      },
+      "internal/queue/worker.go": {
+        "staged": "diff --git a/internal/queue/worker.go b/internal/queue/worker.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/queue/worker.go\n+++ b/internal/queue/worker.go\n@@ -44,11 +44,16 @@ func (w *worker) loop(ctx context.Context) {\n \tfor {\n \t\tselect {\n \t\tcase <-ctx.Done():\n+\t\t\tw.finish()\n \t\t\treturn\n \t\tcase j := <-w.jobs:\n-\t\t\tw.run(ctx, j)\n+\t\t\tif err := w.run(ctx, j); err != nil {\n+\t\t\t\tw.q.fail(j, err)\n+\t\t\t}\n \t\t}\n \t}\n }\n+\n+// finish waits for the job in flight, if any, before the worker exits.\n+func (w *worker) finish() { w.wg.Wait() }\n",
+        "unstaged": ""
+      },
+      "scripts/release-old.sh": {
+        "staged": "diff --git a/scripts/release-old.sh b/scripts/release-old.sh\ndeleted file mode 100644\nindex 3f2a1c4..0000000\n--- a/scripts/release-old.sh\n+++ /dev/null\n@@ -1,7 +0,0 @@\n-#!/bin/sh\n-set -e\n-VERSION=\"$1\"\n-git tag \"v$VERSION\"\n-go build -o dist/tidepool ./cmd/tidepool\n-tar czf \"dist/tidepool-$VERSION.tgz\" dist/tidepool\n-echo \"released $VERSION\"\n",
+        "unstaged": ""
+      },
+      "testdata/legacy.json": {
+        "staged": "",
+        "unstaged": "diff --git a/testdata/legacy.json b/testdata/legacy.json\ndeleted file mode 100644\nindex 3f2a1c4..0000000\n--- a/testdata/legacy.json\n+++ /dev/null\n@@ -1,6 +0,0 @@\n-{\n-  \"version\": 1,\n-  \"jobs\": [\n-    {\"id\": \"a1\", \"kind\": \"email\", \"attempts\": 0}\n-  ]\n-}\n"
+      }
+    },
+    "commits": {
+      "82556a8914f02048624316d058e9a62b8a74845c": {
+        "message": "queue: retry with jittered backoff\n\nRetries from many workers used to line up on the same second. Grow the\ndelay exponentially from a base and add up to 25% random jitter.",
+        "diff": "diff --git a/internal/queue/retry.go b/internal/queue/retry.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/queue/retry.go\n+++ b/internal/queue/retry.go\n@@ -9,6 +9,11 @@ import (\n \n-func Backoff(n int) time.Duration {\n-\treturn time.Duration(n*n) * time.Second\n-}\n+// Jittered grows exponentially from base and adds up to 25% jitter.\n+func Jittered(base time.Duration) Backoff {\n+\treturn func(n int) time.Duration {\n+\t\td := base << uint(n)\n+\t\treturn d + time.Duration(rand.Int63n(int64(d)/4+1))\n+\t}\n+}\n",
+        "email": "priya@tidepool.dev",
+        "date": "2 hours ago"
+      },
+      "65a3e23a62988e440ba923ae5b31c31b6c5aa1a3": {
+        "message": "queue: fix lost wakeup in worker shutdown\n\nA worker that was between select and run missed the cancel and kept\nrunning for one more job. Check ctx.Err before taking the next job.",
+        "diff": "diff --git a/internal/queue/worker.go b/internal/queue/worker.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/queue/worker.go\n+++ b/internal/queue/worker.go\n@@ -52,6 +52,9 @@ func (w *worker) loop(ctx context.Context) {\n \t\tcase j := <-w.jobs:\n+\t\t\tif ctx.Err() != nil {\n+\t\t\t\tw.q.release(j)\n+\t\t\t\treturn\n+\t\t\t}\n \t\t\tw.run(ctx, j)\n",
+        "email": "marcus@tidepool.dev",
+        "date": "5 hours ago"
+      },
+      "697a0f0a0331d1cdf4efddc2da57755ef54277f7": {
+        "message": "cfg: load config from XDG paths\n\nLook in $XDG_CONFIG_HOME/tidepool before falling back to ~/.tidepool.",
+        "diff": "diff --git a/internal/cfg/config.go b/internal/cfg/config.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/cfg/config.go\n+++ b/internal/cfg/config.go\n@@ -22,7 +22,12 @@ func Default() string {\n-\treturn filepath.Join(os.Getenv(\"HOME\"), \".tidepool\")\n+\tif x := os.Getenv(\"XDG_CONFIG_HOME\"); x != \"\" {\n+\t\treturn filepath.Join(x, \"tidepool\")\n+\t}\n+\treturn filepath.Join(os.Getenv(\"HOME\"), \".tidepool\")\n",
+        "email": "lena@tidepool.dev",
+        "date": "1 day ago"
+      },
+      "18d8996390893209563f5601e776ac94b0b9cb34": {
+        "message": "docs: describe the dedupe design\n\nExplain why dedupe keys are scoped to a queue and how long they live.",
+        "diff": "diff --git a/docs/dedupe.md b/docs/dedupe.md\nnew file mode 100644\nindex 0000000..8b7d9e0\n--- /dev/null\n+++ b/docs/dedupe.md\n@@ -0,0 +1,9 @@\n+# Dedupe\n+\n+A job may carry a key. While a job with the same key is pending,\n+later submissions with that key are dropped.\n+\n+Keys are scoped to a single queue and forgotten once the job\n+finishes, fails for good, or expires.\n",
+        "email": "tomás@tidepool.dev",
+        "date": "2 days ago"
+      },
+      "9885728079ad665f527f04201a9ef6a65bc53b1f": {
+        "message": "queue: add visibility timeout to leases\n\nA leased job now reappears after the visibility timeout instead of\nwaiting for the sweeper, which made recovery take up to a minute.",
+        "diff": "diff --git a/internal/queue/lease.go b/internal/queue/lease.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/queue/lease.go\n+++ b/internal/queue/lease.go\n@@ -14,6 +14,7 @@ type Lease struct {\n \tJobID     string\n \tWorker    string\n \tExpiresAt time.Time\n+\tVisible   time.Duration\n }\n \n@@ -31,4 +32,7 @@ func (q *Queue) lease(j *Job) *Lease {\n-\treturn &Lease{JobID: j.ID, ExpiresAt: time.Now().Add(q.ttl)}\n+\treturn &Lease{JobID: j.ID, ExpiresAt: time.Now().Add(q.ttl), Visible: q.visibility}\n",
+        "email": "priya@tidepool.dev",
+        "date": "3 days ago"
+      },
+      "28d69a9c05147ce4b26f8f24fcf37eaf80effa47": {
+        "message": "release v0.4.0",
+        "diff": "diff --git a/VERSION b/VERSION\nindex 3f2a1c4..8b7d9e0 100644\n--- a/VERSION\n+++ b/VERSION\n@@ -1 +1 @@\n-0.3.2\n+0.4.0\ndiff --git a/CHANGELOG.md b/CHANGELOG.md\nindex 3f2a1c4..8b7d9e0 100644\n--- a/CHANGELOG.md\n+++ b/CHANGELOG.md\n@@ -1,3 +1,8 @@\n # Changelog\n \n+## 0.4.0\n+\n+- Visibility timeouts for leases.\n+- Config is read from XDG paths.\n+\n",
+        "email": "priya@tidepool.dev",
+        "date": "5 days ago"
+      },
+      "8e4745307775204aadacd1ad4367eac4fb9c0d74": {
+        "message": "ci: cache the Go build in actions\n\nCuts the median CI run from 4m10s to 1m50s.",
+        "diff": "diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml\nindex 3f2a1c4..8b7d9e0 100644\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -9,6 +9,12 @@ jobs:\n       - uses: actions/checkout@v4\n       - uses: actions/setup-go@v5\n+        with:\n+          go-version-file: go.mod\n+          cache: true\n       - run: go build ./...\n       - run: go test -race ./...\n",
+        "email": "marcus@tidepool.dev",
+        "date": "1 week ago"
+      },
+      "f211835fe32e64143e92f898803f10b14f83259e": {
+        "message": "cmd: add tidepool drain subcommand\n\ntidepool drain waits for in-flight jobs and exits non-zero on timeout.",
+        "diff": "diff --git a/cmd/tidepool/drain.go b/cmd/tidepool/drain.go\nnew file mode 100644\nindex 0000000..8b7d9e0\n--- /dev/null\n+++ b/cmd/tidepool/drain.go\n@@ -0,0 +1,14 @@\n+package main\n+\n+import \"time\"\n+\n+func drain(q *queue.Queue, d time.Duration) error {\n+\tif err := q.Drain(d); err != nil {\n+\t\treturn fmt.Errorf(\"drain: %w\", err)\n+\t}\n+\treturn nil\n+}\n",
+        "email": "tomás@tidepool.dev",
+        "date": "1 week ago"
+      },
+      "9d70c3bc638a7bc0017b5a5f23981e6999aea9b4": {
+        "message": "queue: stop double-delivering expired leases\n\nThe sweeper and a worker could both pick up a job whose lease had just\nexpired. Take the job lock before re-enqueueing.",
+        "diff": "diff --git a/internal/queue/sweep.go b/internal/queue/sweep.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/queue/sweep.go\n+++ b/internal/queue/sweep.go\n@@ -20,5 +20,8 @@ func (q *Queue) sweep() {\n \tfor _, l := range q.expired() {\n+\t\tif !q.lock(l.JobID) {\n+\t\t\tcontinue\n+\t\t}\n \t\tq.requeue(l.JobID)\n \t}\n",
+        "email": "lena@tidepool.dev",
+        "date": "2 weeks ago"
+      },
+      "97d6c9813d86c51eda95e022d74632359be99c2f": {
+        "message": "release v0.3.0",
+        "diff": "diff --git a/VERSION b/VERSION\nindex 3f2a1c4..8b7d9e0 100644\n--- a/VERSION\n+++ b/VERSION\n@@ -1 +1 @@\n-0.2.9\n+0.3.0\n",
+        "email": "priya@tidepool.dev",
+        "date": "3 weeks ago"
+      },
+      "61beb2b0574ed7e3ab1c46959e9711499d4e490e": {
+        "message": "cfg: reject unknown keys\n\nTypos in the config file used to be ignored silently.",
+        "diff": "diff --git a/internal/cfg/config.go b/internal/cfg/config.go\nindex 3f2a1c4..8b7d9e0 100644\n--- a/internal/cfg/config.go\n+++ b/internal/cfg/config.go\n@@ -30,3 +30,4 @@ func Read(path string) (*Config, error) {\n \tdec := json.NewDecoder(f)\n+\tdec.DisallowUnknownFields()\n \treturn &c, dec.Decode(&c)\n",
+        "email": "lena@tidepool.dev",
+        "date": "1 month ago"
+      },
+      "9fea5347df76c3bf933567540b9f021410b5e3fa": {
+        "message": "initial import\n\nTidepool: a small, durable job queue for Go services.",
+        "diff": "diff --git a/README.md b/README.md\nnew file mode 100644\nindex 0000000..8b7d9e0\n--- /dev/null\n+++ b/README.md\n@@ -0,0 +1,3 @@\n+# Tidepool\n+\n+A small, durable job queue for Go services.\n",
+        "email": "priya@tidepool.dev",
+        "date": "2 months ago"
+      }
+    }
+  }
+}

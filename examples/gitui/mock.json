@@ -1,0 +1,16 @@
+{
+  "stage_toggle": [{"path": "status", "value": {"text": "mock: toggled the selected file (the Go host does the real thing)", "err": false}}],
+  "stage_all": [{"path": "status", "value": {"text": "mock: staged everything", "err": false}}],
+  "unstage_all": [{"path": "status", "value": {"text": "mock: unstaged everything", "err": false}}],
+  "refresh": [{"path": "status", "value": {"text": "mock: refreshed", "err": false}}],
+  "commit_open": [{"path": "detail_open", "value": true}],
+  "commit_close": [{"path": "detail_open", "value": false}],
+  "filter_open": [{"path": "filter_open", "value": true}, {"path": "@focus", "value": "#filter"}],
+  "filter_apply": [{"path": "@focus", "value": "#commits"}],
+  "filter_cancel": [{"path": "log_query", "value": ""}, {"path": "filter_open", "value": false}, {"path": "@focus", "value": "#commits"}],
+  "checkout_ask": [{"path": "confirm_open", "value": true}],
+  "checkout_confirm": [{"path": "confirm_open", "value": false}, {"path": "status", "value": {"text": "mock: checked out feature/dedupe", "err": false}}],
+  "checkout_cancel": [{"path": "confirm_open", "value": false}],
+  "help_open": [{"path": "help_open", "value": true}],
+  "help_close": [{"path": "help_open", "value": false}]
+}
