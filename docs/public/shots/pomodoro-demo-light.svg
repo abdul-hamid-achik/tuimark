@@ -1,0 +1,367 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="892" height="508" viewBox="0 0 892 508" role="img" aria-label="pomodoro: big block digits counting down the last seconds of a work session, the colon blinking, a flash at zero, then the short break starting in green">
+<title>pomodoro: big block digits counting down the last seconds of a work session, the colon blinking, a flash at zero, then the short break starting in green</title>
+<style>@keyframes ka0{0%{visibility:visible}4.348%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a0{animation:ka0 11.5s step-end infinite}@keyframes ka1{0%{visibility:visible}4.348%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}}.a1{animation:ka1 11.5s step-end infinite}@keyframes ka2{0%{visibility:visible}4.348%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a2{animation:ka2 11.5s step-end infinite}@keyframes ka3{0%{visibility:visible}4.348%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a3{animation:ka3 11.5s step-end infinite}@keyframes ka4{0%{visibility:visible}4.348%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a4{animation:ka4 11.5s step-end infinite}@keyframes ka5{0%{visibility:visible}4.348%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a5{animation:ka5 11.5s step-end infinite}@keyframes ka6{0%{visibility:visible}4.348%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a6{animation:ka6 11.5s step-end infinite}@keyframes ka7{0%{visibility:visible}4.348%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a7{animation:ka7 11.5s step-end infinite}@keyframes ka8{0%{visibility:visible}4.348%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a8{animation:ka8 11.5s step-end infinite}@keyframes ka9{0%{visibility:visible}4.348%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}}.a9{animation:ka9 11.5s step-end infinite}@keyframes ka10{0%{visibility:visible}4.348%{visibility:hidden}}.a10{animation:ka10 11.5s step-end infinite}@keyframes ka11{0%{visibility:visible}4.348%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a11{animation:ka11 11.5s step-end infinite}@keyframes ka12{0%{visibility:visible}4.348%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}}.a12{animation:ka12 11.5s step-end infinite}@keyframes ka13{0%{visibility:visible}73.913%{visibility:hidden}}.a13{animation:ka13 11.5s step-end infinite}@keyframes ka14{0%{visibility:visible}60.87%{visibility:hidden}}.a14{animation:ka14 11.5s step-end infinite}@keyframes ka15{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a15{animation:ka15 11.5s step-end infinite}@keyframes ka16{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}}.a16{animation:ka16 11.5s step-end infinite}@keyframes ka17{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a17{animation:ka17 11.5s step-end infinite}@keyframes ka18{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a18{animation:ka18 11.5s step-end infinite}@keyframes ka19{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}}.a19{animation:ka19 11.5s step-end infinite}@keyframes ka20{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}}.a20{animation:ka20 11.5s step-end infinite}@keyframes ka21{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a21{animation:ka21 11.5s step-end infinite}@keyframes ka22{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a22{animation:ka22 11.5s step-end infinite}@keyframes ka23{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}}.a23{animation:ka23 11.5s step-end infinite}@keyframes ka24{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a24{animation:ka24 11.5s step-end infinite}@keyframes ka25{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}}.a25{animation:ka25 11.5s step-end infinite}@keyframes ka26{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}}.a26{animation:ka26 11.5s step-end infinite}@keyframes ka27{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}73.913%{visibility:hidden}}.a27{animation:ka27 11.5s step-end infinite}@keyframes ka28{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}}.a28{animation:ka28 11.5s step-end infinite}@keyframes ka29{0%{visibility:hidden}4.348%{visibility:visible}8.696%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}}.a29{animation:ka29 11.5s step-end infinite}@keyframes ka30{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a30{animation:ka30 11.5s step-end infinite}@keyframes ka31{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}}.a31{animation:ka31 11.5s step-end infinite}@keyframes ka32{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a32{animation:ka32 11.5s step-end infinite}@keyframes ka33{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}}.a33{animation:ka33 11.5s step-end infinite}@keyframes ka34{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a34{animation:ka34 11.5s step-end infinite}@keyframes ka35{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}}.a35{animation:ka35 11.5s step-end infinite}@keyframes ka36{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a36{animation:ka36 11.5s step-end infinite}@keyframes ka37{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}}.a37{animation:ka37 11.5s step-end infinite}@keyframes ka38{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a38{animation:ka38 11.5s step-end infinite}@keyframes ka39{0%{visibility:hidden}8.696%{visibility:visible}13.043%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a39{animation:ka39 11.5s step-end infinite}@keyframes ka40{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a40{animation:ka40 11.5s step-end infinite}@keyframes ka41{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a41{animation:ka41 11.5s step-end infinite}@keyframes ka42{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a42{animation:ka42 11.5s step-end infinite}@keyframes ka43{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a43{animation:ka43 11.5s step-end infinite}@keyframes ka44{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}}.a44{animation:ka44 11.5s step-end infinite}@keyframes ka45{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}}.a45{animation:ka45 11.5s step-end infinite}@keyframes ka46{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a46{animation:ka46 11.5s step-end infinite}@keyframes ka47{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a47{animation:ka47 11.5s step-end infinite}@keyframes ka48{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a48{animation:ka48 11.5s step-end infinite}@keyframes ka49{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a49{animation:ka49 11.5s step-end infinite}@keyframes ka50{0%{visibility:hidden}13.043%{visibility:visible}17.391%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a50{animation:ka50 11.5s step-end infinite}@keyframes ka51{0%{visibility:hidden}17.391%{visibility:visible}21.739%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}}.a51{animation:ka51 11.5s step-end infinite}@keyframes ka52{0%{visibility:hidden}21.739%{visibility:visible}26.087%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}}.a52{animation:ka52 11.5s step-end infinite}@keyframes ka53{0%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}}.a53{animation:ka53 11.5s step-end infinite}@keyframes ka54{0%{visibility:hidden}26.087%{visibility:visible}30.435%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a54{animation:ka54 11.5s step-end infinite}@keyframes ka55{0%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}65.217%{visibility:visible}69.565%{visibility:hidden}}.a55{animation:ka55 11.5s step-end infinite}@keyframes ka56{0%{visibility:hidden}30.435%{visibility:visible}34.783%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}}.a56{animation:ka56 11.5s step-end infinite}@keyframes ka57{0%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}}.a57{animation:ka57 11.5s step-end infinite}@keyframes ka58{0%{visibility:hidden}34.783%{visibility:visible}39.13%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a58{animation:ka58 11.5s step-end infinite}@keyframes ka59{0%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}}.a59{animation:ka59 11.5s step-end infinite}@keyframes ka60{0%{visibility:hidden}39.13%{visibility:visible}43.478%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}}.a60{animation:ka60 11.5s step-end infinite}@keyframes ka61{0%{visibility:hidden}43.478%{visibility:visible}47.826%{visibility:hidden}}.a61{animation:ka61 11.5s step-end infinite}@keyframes ka62{0%{visibility:hidden}47.826%{visibility:visible}52.174%{visibility:hidden}}.a62{animation:ka62 11.5s step-end infinite}@keyframes ka63{0%{visibility:hidden}52.174%{visibility:visible}56.522%{visibility:hidden}}.a63{animation:ka63 11.5s step-end infinite}@keyframes ka64{0%{visibility:hidden}56.522%{visibility:visible}60.87%{visibility:hidden}}.a64{animation:ka64 11.5s step-end infinite}@keyframes ka65{0%{visibility:hidden}56.522%{visibility:visible}73.913%{visibility:hidden}}.a65{animation:ka65 11.5s step-end infinite}@keyframes ka66{0%{visibility:hidden}60.87%{visibility:visible}65.217%{visibility:hidden}69.565%{visibility:visible}73.913%{visibility:hidden}}.a66{animation:ka66 11.5s step-end infinite}@keyframes ka67{0%{visibility:hidden}60.87%{visibility:visible}73.913%{visibility:hidden}}.a67{animation:ka67 11.5s step-end infinite}@keyframes ka68{0%{visibility:hidden}60.87%{visibility:visible}}.a68{animation:ka68 11.5s step-end infinite}@keyframes ka69{0%{visibility:hidden}73.913%{visibility:visible}}.a69{animation:ka69 11.5s step-end infinite}@keyframes ka70{0%{visibility:hidden}73.913%{visibility:visible}82.609%{visibility:hidden}}.a70{animation:ka70 11.5s step-end infinite}@keyframes ka71{0%{visibility:hidden}73.913%{visibility:visible}91.304%{visibility:hidden}}.a71{animation:ka71 11.5s step-end infinite}@keyframes ka72{0%{visibility:hidden}73.913%{visibility:visible}82.609%{visibility:hidden}91.304%{visibility:visible}}.a72{animation:ka72 11.5s step-end infinite}@keyframes ka73{0%{visibility:hidden}73.913%{visibility:visible}78.261%{visibility:hidden}}.a73{animation:ka73 11.5s step-end infinite}@keyframes ka74{0%{visibility:hidden}78.261%{visibility:visible}82.609%{visibility:hidden}86.957%{visibility:visible}91.304%{visibility:hidden}}.a74{animation:ka74 11.5s step-end infinite}@keyframes ka75{0%{visibility:hidden}78.261%{visibility:visible}82.609%{visibility:hidden}}.a75{animation:ka75 11.5s step-end infinite}@keyframes ka76{0%{visibility:hidden}82.609%{visibility:visible}}.a76{animation:ka76 11.5s step-end infinite}@keyframes ka77{0%{visibility:hidden}82.609%{visibility:visible}86.957%{visibility:hidden}}.a77{animation:ka77 11.5s step-end infinite}@keyframes ka78{0%{visibility:hidden}86.957%{visibility:visible}91.304%{visibility:hidden}}.a78{animation:ka78 11.5s step-end infinite}@keyframes ka79{0%{visibility:hidden}91.304%{visibility:visible}}.a79{animation:ka79 11.5s step-end infinite}@media (prefers-reduced-motion:reduce){.a{animation:none}}</style>
+<rect width="892" height="508" rx="6" fill="#fbfaf8"/>
+<path fill="#eeeff2" d="M13.5 14h865v20h-865zM51.9 274h788.2v20h-788.2zM13.5 474h865v20h-865z"/>
+<g class="a a66" visibility="hidden">
+<path fill="#c4301f" d="M282.3 74h327.4v20h-327.4zM282.3 94h327.4v20h-327.4zM282.3 114h327.4v20h-327.4zM282.3 134h327.4v20h-327.4zM282.3 154h327.4v20h-327.4z"/>
+</g>
+<g class="a a0" visibility="hidden">
+<path fill="#6e0f05" d="M301.5 84h10.6v10h-10.6zM311.1 74h10.6v20h-10.6zM320.7 74h10.6v20h-10.6zM330.3 74h10.6v20h-10.6zM339.9 74h10.6v20h-10.6zM349.5 84h10.6v10h-10.6zM368.7 84h10.6v10h-10.6zM378.3 74h10.6v20h-10.6zM387.9 74h10.6v20h-10.6zM397.5 74h10.6v20h-10.6zM407.1 74h10.6v20h-10.6zM416.7 84h10.6v10h-10.6zM464.7 84h10.6v10h-10.6zM474.3 74h10.6v20h-10.6zM483.9 74h10.6v20h-10.6zM493.5 74h10.6v20h-10.6zM503.1 74h10.6v20h-10.6zM512.7 84h10.6v10h-10.6zM301.5 94h10.6v20h-10.6zM311.1 94h10.6v20h-10.6zM339.9 94h10.6v20h-10.6zM349.5 94h10.6v20h-10.6zM368.7 94h10.6v20h-10.6zM378.3 94h10.6v20h-10.6zM407.1 94h10.6v20h-10.6zM416.7 94h10.6v20h-10.6zM435.9 94h10.6v20h-10.6zM445.5 94h10.6v20h-10.6zM464.7 94h10.6v20h-10.6zM474.3 94h10.6v20h-10.6zM503.1 94h10.6v20h-10.6zM512.7 94h10.6v20h-10.6zM301.5 114h10.6v20h-10.6zM311.1 114h10.6v20h-10.6zM339.9 114h10.6v20h-10.6zM349.5 114h10.6v20h-10.6zM368.7 114h10.6v20h-10.6zM378.3 114h10.6v20h-10.6zM407.1 114h10.6v20h-10.6zM416.7 114h10.6v20h-10.6zM464.7 114h10.6v20h-10.6zM474.3 114h10.6v20h-10.6zM503.1 114h10.6v20h-10.6zM512.7 114h10.6v20h-10.6zM301.5 134h10.6v20h-10.6zM311.1 134h10.6v20h-10.6zM339.9 134h10.6v20h-10.6zM349.5 134h10.6v20h-10.6zM368.7 134h10.6v20h-10.6zM378.3 134h10.6v20h-10.6zM407.1 134h10.6v20h-10.6zM416.7 134h10.6v20h-10.6zM435.9 134h10.6v20h-10.6zM445.5 134h10.6v20h-10.6zM464.7 134h10.6v20h-10.6zM474.3 134h10.6v20h-10.6zM503.1 134h10.6v20h-10.6zM512.7 134h10.6v20h-10.6zM301.5 154h10.6v10h-10.6zM311.1 154h10.6v20h-10.6zM320.7 154h10.6v20h-10.6zM330.3 154h10.6v20h-10.6zM339.9 154h10.6v20h-10.6zM349.5 154h10.6v10h-10.6zM368.7 154h10.6v10h-10.6zM378.3 154h10.6v20h-10.6zM387.9 154h10.6v20h-10.6zM397.5 154h10.6v20h-10.6zM407.1 154h10.6v20h-10.6zM416.7 154h10.6v10h-10.6zM464.7 154h10.6v10h-10.6zM474.3 154h10.6v20h-10.6zM483.9 154h10.6v20h-10.6zM493.5 154h10.6v20h-10.6zM503.1 154h10.6v20h-10.6zM512.7 154h10.6v10h-10.6zM32.7 214h10.6v20h-10.6zM42.3 214h10.6v20h-10.6zM51.9 214h10.6v20h-10.6zM61.5 214h10.6v20h-10.6zM71.1 214h10.6v20h-10.6zM80.7 214h10.6v20h-10.6zM90.3 214h10.6v20h-10.6zM99.9 214h10.6v20h-10.6zM109.5 214h10.6v20h-10.6zM119.1 214h10.6v20h-10.6zM128.7 214h10.6v20h-10.6zM138.3 214h10.6v20h-10.6zM147.9 214h10.6v20h-10.6zM157.5 214h10.6v20h-10.6zM167.1 214h10.6v20h-10.6zM176.7 214h10.6v20h-10.6zM186.3 214h10.6v20h-10.6zM195.9 214h10.6v20h-10.6zM205.5 214h10.6v20h-10.6zM215.1 214h10.6v20h-10.6zM224.7 214h10.6v20h-10.6zM234.3 214h10.6v20h-10.6zM243.9 214h10.6v20h-10.6zM253.5 214h10.6v20h-10.6zM263.1 214h10.6v20h-10.6zM272.7 214h10.6v20h-10.6zM282.3 214h10.6v20h-10.6zM291.9 214h10.6v20h-10.6zM301.5 214h10.6v20h-10.6zM311.1 214h10.6v20h-10.6zM320.7 214h10.6v20h-10.6zM330.3 214h10.6v20h-10.6zM339.9 214h10.6v20h-10.6zM349.5 214h10.6v20h-10.6zM359.1 214h10.6v20h-10.6zM368.7 214h10.6v20h-10.6zM378.3 214h10.6v20h-10.6zM387.9 214h10.6v20h-10.6zM397.5 214h10.6v20h-10.6zM407.1 214h10.6v20h-10.6zM416.7 214h10.6v20h-10.6zM426.3 214h10.6v20h-10.6zM435.9 214h10.6v20h-10.6zM445.5 214h10.6v20h-10.6zM455.1 214h10.6v20h-10.6zM464.7 214h10.6v20h-10.6zM474.3 214h10.6v20h-10.6zM483.9 214h10.6v20h-10.6zM493.5 214h10.6v20h-10.6zM503.1 214h10.6v20h-10.6zM512.7 214h10.6v20h-10.6zM522.3 214h10.6v20h-10.6zM531.9 214h10.6v20h-10.6zM541.5 214h10.6v20h-10.6zM551.1 214h10.6v20h-10.6zM560.7 214h10.6v20h-10.6zM570.3 214h10.6v20h-10.6zM579.9 214h10.6v20h-10.6zM589.5 214h10.6v20h-10.6zM599.1 214h10.6v20h-10.6zM608.7 214h10.6v20h-10.6zM618.3 214h10.6v20h-10.6zM627.9 214h10.6v20h-10.6zM637.5 214h10.6v20h-10.6zM647.1 214h10.6v20h-10.6zM656.7 214h10.6v20h-10.6zM666.3 214h10.6v20h-10.6zM675.9 214h10.6v20h-10.6zM685.5 214h10.6v20h-10.6zM695.1 214h10.6v20h-10.6zM704.7 214h10.6v20h-10.6zM714.3 214h10.6v20h-10.6zM723.9 214h10.6v20h-10.6zM733.5 214h10.6v20h-10.6zM743.1 214h10.6v20h-10.6zM752.7 214h10.6v20h-10.6zM762.3 214h10.6v20h-10.6zM771.9 214h10.6v20h-10.6zM781.5 214h10.6v20h-10.6zM791.1 214h10.6v20h-10.6zM800.7 214h10.6v20h-10.6zM810.3 214h10.6v20h-10.6zM819.9 214h10.6v20h-10.6zM829.5 214h10.6v20h-10.6zM839.1 214h10.6v20h-10.6z"/>
+</g>
+<g class="a a1" visibility="hidden">
+<path fill="#6e0f05" d="M531.9 74h10.6v20h-10.6zM579.9 74h10.6v20h-10.6z"/>
+</g>
+<g class="a a2" visibility="hidden">
+<path fill="#6e0f05" d="M541.5 74h10.6v20h-10.6zM570.3 74h10.6v20h-10.6z"/>
+</g>
+<g class="a a3" visibility="hidden">
+<path fill="#6e0f05" d="M551.1 74h10.6v20h-10.6zM560.7 74h10.6v20h-10.6zM551.1 154h10.6v20h-10.6zM560.7 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a4" visibility="hidden">
+<path fill="#6e0f05" d="M531.9 94h10.6v10h-10.6z"/>
+</g>
+<g class="a a5" visibility="hidden">
+<path fill="#6e0f05" d="M541.5 94h10.6v10h-10.6z"/>
+</g>
+<g class="a a6" visibility="hidden">
+<path fill="#6e0f05" d="M570.3 94h10.6v20h-10.6z"/>
+</g>
+<g class="a a7" visibility="hidden">
+<path fill="#6e0f05" d="M579.9 94h10.6v20h-10.6z"/>
+</g>
+<g class="a a8" visibility="hidden">
+<path fill="#6e0f05" d="M560.7 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a9" visibility="hidden">
+<path fill="#6e0f05" d="M570.3 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a10" visibility="hidden">
+<path fill="#6e0f05" d="M579.9 114h10.6v10h-10.6z"/>
+</g>
+<g class="a a11" visibility="hidden">
+<path fill="#6e0f05" d="M551.1 134h10.6v20h-10.6zM560.7 134h10.6v20h-10.6z"/>
+</g>
+<g class="a a12" visibility="hidden">
+<path fill="#6e0f05" d="M848.7 214h7v20h-7z"/>
+</g>
+<g class="a a15" visibility="hidden">
+<path fill="#c4301f" d="M301.5 84h10.6v10h-10.6zM311.1 74h10.6v20h-10.6zM320.7 74h10.6v20h-10.6zM330.3 74h10.6v20h-10.6zM339.9 74h10.6v20h-10.6zM349.5 84h10.6v10h-10.6zM368.7 84h10.6v10h-10.6zM378.3 74h10.6v20h-10.6zM387.9 74h10.6v20h-10.6zM397.5 74h10.6v20h-10.6zM407.1 74h10.6v20h-10.6zM416.7 84h10.6v10h-10.6zM464.7 84h10.6v10h-10.6zM474.3 74h10.6v20h-10.6zM483.9 74h10.6v20h-10.6zM493.5 74h10.6v20h-10.6zM503.1 74h10.6v20h-10.6zM512.7 84h10.6v10h-10.6zM301.5 94h10.6v20h-10.6zM311.1 94h10.6v20h-10.6zM339.9 94h10.6v20h-10.6zM349.5 94h10.6v20h-10.6zM368.7 94h10.6v20h-10.6zM378.3 94h10.6v20h-10.6zM407.1 94h10.6v20h-10.6zM416.7 94h10.6v20h-10.6zM464.7 94h10.6v20h-10.6zM474.3 94h10.6v20h-10.6zM503.1 94h10.6v20h-10.6zM512.7 94h10.6v20h-10.6zM301.5 114h10.6v20h-10.6zM311.1 114h10.6v20h-10.6zM339.9 114h10.6v20h-10.6zM349.5 114h10.6v20h-10.6zM368.7 114h10.6v20h-10.6zM378.3 114h10.6v20h-10.6zM407.1 114h10.6v20h-10.6zM416.7 114h10.6v20h-10.6zM464.7 114h10.6v20h-10.6zM474.3 114h10.6v20h-10.6zM503.1 114h10.6v20h-10.6zM512.7 114h10.6v20h-10.6zM301.5 134h10.6v20h-10.6zM311.1 134h10.6v20h-10.6zM339.9 134h10.6v20h-10.6zM349.5 134h10.6v20h-10.6zM368.7 134h10.6v20h-10.6zM378.3 134h10.6v20h-10.6zM407.1 134h10.6v20h-10.6zM416.7 134h10.6v20h-10.6zM464.7 134h10.6v20h-10.6zM474.3 134h10.6v20h-10.6zM503.1 134h10.6v20h-10.6zM512.7 134h10.6v20h-10.6zM301.5 154h10.6v10h-10.6zM311.1 154h10.6v20h-10.6zM320.7 154h10.6v20h-10.6zM330.3 154h10.6v20h-10.6zM339.9 154h10.6v20h-10.6zM349.5 154h10.6v10h-10.6zM368.7 154h10.6v10h-10.6zM378.3 154h10.6v20h-10.6zM387.9 154h10.6v20h-10.6zM397.5 154h10.6v20h-10.6zM407.1 154h10.6v20h-10.6zM416.7 154h10.6v10h-10.6zM464.7 154h10.6v10h-10.6zM474.3 154h10.6v20h-10.6zM483.9 154h10.6v20h-10.6zM493.5 154h10.6v20h-10.6zM503.1 154h10.6v20h-10.6zM512.7 154h10.6v10h-10.6z"/>
+</g>
+<g class="a a16" visibility="hidden">
+<path fill="#c4301f" d="M531.9 74h10.6v20h-10.6zM579.9 74h10.6v20h-10.6z"/>
+</g>
+<g class="a a17" visibility="hidden">
+<path fill="#c4301f" d="M541.5 74h10.6v20h-10.6zM570.3 74h10.6v20h-10.6z"/>
+</g>
+<g class="a a18" visibility="hidden">
+<path fill="#c4301f" d="M551.1 74h10.6v20h-10.6zM560.7 74h10.6v20h-10.6zM551.1 154h10.6v20h-10.6zM560.7 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a19" visibility="hidden">
+<path fill="#c4301f" d="M531.9 94h10.6v10h-10.6z"/>
+</g>
+<g class="a a20" visibility="hidden">
+<path fill="#c4301f" d="M541.5 94h10.6v10h-10.6z"/>
+</g>
+<g class="a a21" visibility="hidden">
+<path fill="#c4301f" d="M570.3 94h10.6v20h-10.6z"/>
+</g>
+<g class="a a22" visibility="hidden">
+<path fill="#c4301f" d="M579.9 94h10.6v20h-10.6z"/>
+</g>
+<g class="a a23" visibility="hidden">
+<path fill="#c4301f" d="M560.7 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a24" visibility="hidden">
+<path fill="#c4301f" d="M570.3 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a25" visibility="hidden">
+<path fill="#c4301f" d="M579.9 114h10.6v10h-10.6z"/>
+</g>
+<g class="a a26" visibility="hidden">
+<path fill="#c4301f" d="M551.1 134h10.6v20h-10.6zM560.7 134h10.6v20h-10.6z"/>
+</g>
+<g class="a a27" visibility="hidden">
+<path fill="#c4301f" d="M32.7 214h10.6v20h-10.6zM42.3 214h10.6v20h-10.6zM51.9 214h10.6v20h-10.6zM61.5 214h10.6v20h-10.6zM71.1 214h10.6v20h-10.6zM80.7 214h10.6v20h-10.6zM90.3 214h10.6v20h-10.6zM99.9 214h10.6v20h-10.6zM109.5 214h10.6v20h-10.6zM119.1 214h10.6v20h-10.6zM128.7 214h10.6v20h-10.6zM138.3 214h10.6v20h-10.6zM147.9 214h10.6v20h-10.6zM157.5 214h10.6v20h-10.6zM167.1 214h10.6v20h-10.6zM176.7 214h10.6v20h-10.6zM186.3 214h10.6v20h-10.6zM195.9 214h10.6v20h-10.6zM205.5 214h10.6v20h-10.6zM215.1 214h10.6v20h-10.6zM224.7 214h10.6v20h-10.6zM234.3 214h10.6v20h-10.6zM243.9 214h10.6v20h-10.6zM253.5 214h10.6v20h-10.6zM263.1 214h10.6v20h-10.6zM272.7 214h10.6v20h-10.6zM282.3 214h10.6v20h-10.6zM291.9 214h10.6v20h-10.6zM301.5 214h10.6v20h-10.6zM311.1 214h10.6v20h-10.6zM320.7 214h10.6v20h-10.6zM330.3 214h10.6v20h-10.6zM339.9 214h10.6v20h-10.6zM349.5 214h10.6v20h-10.6zM359.1 214h10.6v20h-10.6zM368.7 214h10.6v20h-10.6zM378.3 214h10.6v20h-10.6zM387.9 214h10.6v20h-10.6zM397.5 214h10.6v20h-10.6zM407.1 214h10.6v20h-10.6zM416.7 214h10.6v20h-10.6zM426.3 214h10.6v20h-10.6zM435.9 214h10.6v20h-10.6zM445.5 214h10.6v20h-10.6zM455.1 214h10.6v20h-10.6zM464.7 214h10.6v20h-10.6zM474.3 214h10.6v20h-10.6zM483.9 214h10.6v20h-10.6zM493.5 214h10.6v20h-10.6zM503.1 214h10.6v20h-10.6zM512.7 214h10.6v20h-10.6zM522.3 214h10.6v20h-10.6zM531.9 214h10.6v20h-10.6zM541.5 214h10.6v20h-10.6zM551.1 214h10.6v20h-10.6zM560.7 214h10.6v20h-10.6zM570.3 214h10.6v20h-10.6zM579.9 214h10.6v20h-10.6zM589.5 214h10.6v20h-10.6zM599.1 214h10.6v20h-10.6zM608.7 214h10.6v20h-10.6zM618.3 214h10.6v20h-10.6zM627.9 214h10.6v20h-10.6zM637.5 214h10.6v20h-10.6zM647.1 214h10.6v20h-10.6zM656.7 214h10.6v20h-10.6zM666.3 214h10.6v20h-10.6zM675.9 214h10.6v20h-10.6zM685.5 214h10.6v20h-10.6zM695.1 214h10.6v20h-10.6zM704.7 214h10.6v20h-10.6zM714.3 214h10.6v20h-10.6zM723.9 214h10.6v20h-10.6zM733.5 214h10.6v20h-10.6zM743.1 214h10.6v20h-10.6zM752.7 214h10.6v20h-10.6zM762.3 214h10.6v20h-10.6zM771.9 214h10.6v20h-10.6zM781.5 214h10.6v20h-10.6zM791.1 214h10.6v20h-10.6zM800.7 214h10.6v20h-10.6zM810.3 214h10.6v20h-10.6zM819.9 214h10.6v20h-10.6zM829.5 214h10.6v20h-10.6zM839.1 214h10.6v20h-10.6z"/>
+</g>
+<g class="a a28" visibility="hidden">
+<path fill="#c4301f" d="M848.7 214h7v20h-7z"/>
+</g>
+<g class="a a30" visibility="hidden">
+<path fill="#6e0f05" d="M531.9 84h10.6v10h-10.6zM579.9 84h10.6v10h-10.6z"/>
+</g>
+<g class="a a31" visibility="hidden">
+<path fill="#6e0f05" d="M531.9 94h10.6v20h-10.6zM541.5 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a32" visibility="hidden">
+<path fill="#6e0f05" d="M541.5 94h10.6v20h-10.6z"/>
+</g>
+<g class="a a33" visibility="hidden">
+<path fill="#6e0f05" d="M531.9 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a34" visibility="hidden">
+<path fill="#6e0f05" d="M551.1 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a35" visibility="hidden">
+<path fill="#6e0f05" d="M579.9 124h10.6v10h-10.6zM531.9 154h10.6v10h-10.6zM579.9 154h10.6v10h-10.6z"/>
+</g>
+<g class="a a36" visibility="hidden">
+<path fill="#6e0f05" d="M531.9 134h10.6v20h-10.6zM541.5 134h10.6v20h-10.6z"/>
+</g>
+<g class="a a37" visibility="hidden">
+<path fill="#6e0f05" d="M570.3 134h10.6v20h-10.6zM579.9 134h10.6v20h-10.6z"/>
+</g>
+<g class="a a38" visibility="hidden">
+<path fill="#6e0f05" d="M541.5 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a39" visibility="hidden">
+<path fill="#6e0f05" d="M570.3 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a40" visibility="hidden">
+<path fill="#c4301f" d="M531.9 84h10.6v10h-10.6zM579.9 84h10.6v10h-10.6z"/>
+</g>
+<g class="a a41" visibility="hidden">
+<path fill="#c4301f" d="M531.9 94h10.6v20h-10.6zM541.5 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a42" visibility="hidden">
+<path fill="#c4301f" d="M541.5 94h10.6v20h-10.6z"/>
+</g>
+<g class="a a43" visibility="hidden">
+<path fill="#c4301f" d="M531.9 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a44" visibility="hidden">
+<path fill="#c4301f" d="M551.1 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a45" visibility="hidden">
+<path fill="#c4301f" d="M579.9 124h10.6v10h-10.6z"/>
+</g>
+<g class="a a46" visibility="hidden">
+<path fill="#c4301f" d="M531.9 134h10.6v20h-10.6zM541.5 134h10.6v20h-10.6z"/>
+</g>
+<g class="a a47" visibility="hidden">
+<path fill="#c4301f" d="M570.3 134h10.6v20h-10.6zM579.9 134h10.6v20h-10.6z"/>
+</g>
+<g class="a a48" visibility="hidden">
+<path fill="#c4301f" d="M531.9 154h10.6v10h-10.6zM579.9 154h10.6v10h-10.6z"/>
+</g>
+<g class="a a49" visibility="hidden">
+<path fill="#c4301f" d="M541.5 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a50" visibility="hidden">
+<path fill="#c4301f" d="M570.3 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a51" visibility="hidden">
+<path fill="#6e0f05" d="M531.9 114h10.6v10h-10.6zM848.7 214h8.2v20h-8.2z"/>
+</g>
+<g class="a a52" visibility="hidden">
+<path fill="#c4301f" d="M531.9 114h10.6v10h-10.6zM848.7 214h8.2v20h-8.2z"/>
+</g>
+<g class="a a53" visibility="hidden">
+<path fill="#6e0f05" d="M579.9 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a54" visibility="hidden">
+<path fill="#6e0f05" d="M579.9 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a55" visibility="hidden">
+<path fill="#c4301f" d="M579.9 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a56" visibility="hidden">
+<path fill="#c4301f" d="M579.9 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a57" visibility="hidden">
+<path fill="#6e0f05" d="M560.7 104h10.6v10h-10.6zM579.9 94h10.6v10h-10.6zM560.7 114h10.6v10h-10.6z"/>
+</g>
+<g class="a a58" visibility="hidden">
+<path fill="#6e0f05" d="M848.7 214h9.4v20h-9.4z"/>
+</g>
+<g class="a a59" visibility="hidden">
+<path fill="#c4301f" d="M560.7 104h10.6v10h-10.6zM579.9 94h10.6v10h-10.6zM560.7 114h10.6v10h-10.6z"/>
+</g>
+<g class="a a60" visibility="hidden">
+<path fill="#c4301f" d="M848.7 214h9.4v20h-9.4z"/>
+</g>
+<g class="a a61" visibility="hidden">
+<path fill="#6e0f05" d="M541.5 124h10.6v10h-10.6zM570.3 114h10.6v10h-10.6zM551.1 134h10.6v10h-10.6zM531.9 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a62" visibility="hidden">
+<path fill="#c4301f" d="M541.5 124h10.6v10h-10.6zM570.3 114h10.6v10h-10.6zM551.1 134h10.6v10h-10.6zM531.9 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a63" visibility="hidden">
+<path fill="#6e0f05" d="M541.5 84h10.6v10h-10.6zM551.1 94h10.6v20h-10.6zM560.7 94h10.6v20h-10.6zM531.9 164h10.6v10h-10.6zM579.9 164h10.6v10h-10.6zM848.7 214h10.6v20h-10.6z"/>
+</g>
+<g class="a a64" visibility="hidden">
+<path fill="#c4301f" d="M541.5 84h10.6v10h-10.6zM551.1 94h10.6v20h-10.6zM560.7 94h10.6v20h-10.6zM531.9 164h10.6v10h-10.6zM579.9 164h10.6v10h-10.6z"/>
+</g>
+<g class="a a65" visibility="hidden">
+<path fill="#c4301f" d="M848.7 214h10.6v20h-10.6z"/>
+</g>
+<g class="a a66" visibility="hidden">
+<path fill="#fbfaf8" d="M301.5 84h10.6v10h-10.6zM311.1 74h10.6v20h-10.6zM320.7 74h10.6v20h-10.6zM330.3 74h10.6v20h-10.6zM339.9 74h10.6v20h-10.6zM349.5 84h10.6v10h-10.6zM368.7 84h10.6v10h-10.6zM378.3 74h10.6v20h-10.6zM387.9 74h10.6v20h-10.6zM397.5 74h10.6v20h-10.6zM407.1 74h10.6v20h-10.6zM416.7 84h10.6v10h-10.6zM464.7 84h10.6v10h-10.6zM474.3 74h10.6v20h-10.6zM483.9 74h10.6v20h-10.6zM493.5 74h10.6v20h-10.6zM503.1 74h10.6v20h-10.6zM512.7 84h10.6v10h-10.6zM531.9 84h10.6v10h-10.6zM541.5 74h10.6v20h-10.6zM551.1 74h10.6v20h-10.6zM560.7 74h10.6v20h-10.6zM570.3 74h10.6v20h-10.6zM579.9 84h10.6v10h-10.6zM301.5 94h10.6v20h-10.6zM311.1 94h10.6v20h-10.6zM339.9 94h10.6v20h-10.6zM349.5 94h10.6v20h-10.6zM368.7 94h10.6v20h-10.6zM378.3 94h10.6v20h-10.6zM407.1 94h10.6v20h-10.6zM416.7 94h10.6v20h-10.6zM435.9 94h10.6v20h-10.6zM445.5 94h10.6v20h-10.6zM464.7 94h10.6v20h-10.6zM474.3 94h10.6v20h-10.6zM503.1 94h10.6v20h-10.6zM512.7 94h10.6v20h-10.6zM531.9 94h10.6v20h-10.6zM541.5 94h10.6v20h-10.6zM570.3 94h10.6v20h-10.6zM579.9 94h10.6v20h-10.6zM301.5 114h10.6v20h-10.6zM311.1 114h10.6v20h-10.6zM339.9 114h10.6v20h-10.6zM349.5 114h10.6v20h-10.6zM368.7 114h10.6v20h-10.6zM378.3 114h10.6v20h-10.6zM407.1 114h10.6v20h-10.6zM416.7 114h10.6v20h-10.6zM464.7 114h10.6v20h-10.6zM474.3 114h10.6v20h-10.6zM503.1 114h10.6v20h-10.6zM512.7 114h10.6v20h-10.6zM531.9 114h10.6v20h-10.6zM541.5 114h10.6v20h-10.6zM570.3 114h10.6v20h-10.6zM579.9 114h10.6v20h-10.6zM301.5 134h10.6v20h-10.6zM311.1 134h10.6v20h-10.6zM339.9 134h10.6v20h-10.6zM349.5 134h10.6v20h-10.6zM368.7 134h10.6v20h-10.6zM378.3 134h10.6v20h-10.6zM407.1 134h10.6v20h-10.6zM416.7 134h10.6v20h-10.6zM435.9 134h10.6v20h-10.6zM445.5 134h10.6v20h-10.6zM464.7 134h10.6v20h-10.6zM474.3 134h10.6v20h-10.6zM503.1 134h10.6v20h-10.6zM512.7 134h10.6v20h-10.6zM531.9 134h10.6v20h-10.6zM541.5 134h10.6v20h-10.6zM570.3 134h10.6v20h-10.6zM579.9 134h10.6v20h-10.6zM301.5 154h10.6v10h-10.6zM311.1 154h10.6v20h-10.6zM320.7 154h10.6v20h-10.6zM330.3 154h10.6v20h-10.6zM339.9 154h10.6v20h-10.6zM349.5 154h10.6v10h-10.6zM368.7 154h10.6v10h-10.6zM378.3 154h10.6v20h-10.6zM387.9 154h10.6v20h-10.6zM397.5 154h10.6v20h-10.6zM407.1 154h10.6v20h-10.6zM416.7 154h10.6v10h-10.6zM464.7 154h10.6v10h-10.6zM474.3 154h10.6v20h-10.6zM483.9 154h10.6v20h-10.6zM493.5 154h10.6v20h-10.6zM503.1 154h10.6v20h-10.6zM512.7 154h10.6v10h-10.6zM531.9 154h10.6v10h-10.6zM541.5 154h10.6v20h-10.6zM551.1 154h10.6v20h-10.6zM560.7 154h10.6v20h-10.6zM570.3 154h10.6v20h-10.6zM579.9 154h10.6v10h-10.6z"/>
+</g>
+<g class="a a69">
+<path fill="#1f7a3a" d="M301.5 84h10.6v10h-10.6zM311.1 74h10.6v20h-10.6zM320.7 74h10.6v20h-10.6zM330.3 74h10.6v20h-10.6zM339.9 74h10.6v20h-10.6zM349.5 84h10.6v10h-10.6zM368.7 74h10.6v20h-10.6zM378.3 74h10.6v20h-10.6zM407.1 74h10.6v20h-10.6zM416.7 74h10.6v20h-10.6zM474.3 74h10.6v20h-10.6zM483.9 74h10.6v20h-10.6zM493.5 74h10.6v20h-10.6zM503.1 74h10.6v20h-10.6zM531.9 84h10.6v10h-10.6zM541.5 74h10.6v20h-10.6zM551.1 74h10.6v20h-10.6zM560.7 74h10.6v20h-10.6zM570.3 74h10.6v20h-10.6zM579.9 84h10.6v10h-10.6zM301.5 94h10.6v20h-10.6zM311.1 94h10.6v20h-10.6zM339.9 94h10.6v20h-10.6zM349.5 94h10.6v20h-10.6zM368.7 94h10.6v20h-10.6zM378.3 94h10.6v20h-10.6zM464.7 94h10.6v20h-10.6zM474.3 94h10.6v20h-10.6zM531.9 94h10.6v20h-10.6zM541.5 94h10.6v20h-10.6zM570.3 94h10.6v20h-10.6zM579.9 94h10.6v20h-10.6zM301.5 114h10.6v20h-10.6zM311.1 114h10.6v20h-10.6zM339.9 114h10.6v20h-10.6zM349.5 114h10.6v20h-10.6zM368.7 114h10.6v10h-10.6zM378.3 114h10.6v20h-10.6zM387.9 114h10.6v20h-10.6zM397.5 114h10.6v20h-10.6zM407.1 114h10.6v20h-10.6zM474.3 114h10.6v20h-10.6zM503.1 114h10.6v20h-10.6zM541.5 114h10.6v20h-10.6zM570.3 114h10.6v20h-10.6zM301.5 134h10.6v20h-10.6zM311.1 134h10.6v20h-10.6zM339.9 134h10.6v20h-10.6zM349.5 134h10.6v20h-10.6zM407.1 134h10.6v20h-10.6zM416.7 134h10.6v20h-10.6zM503.1 134h10.6v20h-10.6zM512.7 134h10.6v20h-10.6zM570.3 134h10.6v20h-10.6zM579.9 134h10.6v20h-10.6zM301.5 154h10.6v10h-10.6zM311.1 154h10.6v20h-10.6zM320.7 154h10.6v20h-10.6zM330.3 154h10.6v20h-10.6zM339.9 154h10.6v20h-10.6zM349.5 154h10.6v10h-10.6zM407.1 154h10.6v20h-10.6zM464.7 154h10.6v10h-10.6zM474.3 154h10.6v20h-10.6zM483.9 154h10.6v20h-10.6zM493.5 154h10.6v20h-10.6zM503.1 154h10.6v20h-10.6zM512.7 154h10.6v10h-10.6zM531.9 154h10.6v10h-10.6zM541.5 154h10.6v20h-10.6zM551.1 154h10.6v20h-10.6zM560.7 154h10.6v20h-10.6zM570.3 154h10.6v20h-10.6zM579.9 154h10.6v10h-10.6z"/>
+<path fill="#1f7a3a" fill-opacity="0.12100000000000001" d="M42.8 214h9.6v20h-9.6zM52.4 214h9.6v20h-9.6zM62 214h9.6v20h-9.6zM71.6 214h9.6v20h-9.6zM81.2 214h9.6v20h-9.6zM90.8 214h9.6v20h-9.6zM100.4 214h9.6v20h-9.6zM110 214h9.6v20h-9.6zM119.6 214h9.6v20h-9.6zM129.2 214h9.6v20h-9.6zM138.8 214h9.6v20h-9.6zM148.4 214h9.6v20h-9.6zM158 214h9.6v20h-9.6zM167.6 214h9.6v20h-9.6zM177.2 214h9.6v20h-9.6zM186.8 214h9.6v20h-9.6zM196.4 214h9.6v20h-9.6zM206 214h9.6v20h-9.6zM215.6 214h9.6v20h-9.6zM225.2 214h9.6v20h-9.6zM234.8 214h9.6v20h-9.6zM244.4 214h9.6v20h-9.6zM254 214h9.6v20h-9.6zM263.6 214h9.6v20h-9.6zM273.2 214h9.6v20h-9.6zM282.8 214h9.6v20h-9.6zM292.4 214h9.6v20h-9.6zM302 214h9.6v20h-9.6zM311.6 214h9.6v20h-9.6zM321.2 214h9.6v20h-9.6zM330.8 214h9.6v20h-9.6zM340.4 214h9.6v20h-9.6zM350 214h9.6v20h-9.6zM359.6 214h9.6v20h-9.6zM369.2 214h9.6v20h-9.6zM378.8 214h9.6v20h-9.6zM388.4 214h9.6v20h-9.6zM398 214h9.6v20h-9.6zM407.6 214h9.6v20h-9.6zM417.2 214h9.6v20h-9.6zM426.8 214h9.6v20h-9.6zM436.4 214h9.6v20h-9.6zM446 214h9.6v20h-9.6zM455.6 214h9.6v20h-9.6zM465.2 214h9.6v20h-9.6zM474.8 214h9.6v20h-9.6zM484.4 214h9.6v20h-9.6zM494 214h9.6v20h-9.6zM503.6 214h9.6v20h-9.6zM513.2 214h9.6v20h-9.6zM522.8 214h9.6v20h-9.6zM532.4 214h9.6v20h-9.6zM542 214h9.6v20h-9.6zM551.6 214h9.6v20h-9.6zM561.2 214h9.6v20h-9.6zM570.8 214h9.6v20h-9.6zM580.4 214h9.6v20h-9.6zM590 214h9.6v20h-9.6zM599.6 214h9.6v20h-9.6zM609.2 214h9.6v20h-9.6zM618.8 214h9.6v20h-9.6zM628.4 214h9.6v20h-9.6zM638 214h9.6v20h-9.6zM647.6 214h9.6v20h-9.6zM657.2 214h9.6v20h-9.6zM666.8 214h9.6v20h-9.6zM676.4 214h9.6v20h-9.6zM686 214h9.6v20h-9.6zM695.6 214h9.6v20h-9.6zM705.2 214h9.6v20h-9.6zM714.8 214h9.6v20h-9.6zM724.4 214h9.6v20h-9.6zM734 214h9.6v20h-9.6zM743.6 214h9.6v20h-9.6zM753.2 214h9.6v20h-9.6zM762.8 214h9.6v20h-9.6zM772.4 214h9.6v20h-9.6zM782 214h9.6v20h-9.6zM791.6 214h9.6v20h-9.6zM801.2 214h9.6v20h-9.6zM810.8 214h9.6v20h-9.6zM820.4 214h9.6v20h-9.6zM830 214h9.6v20h-9.6zM839.6 214h9.6v20h-9.6zM849.2 214h9.6v20h-9.6z"/>
+</g>
+<g class="a a70" visibility="hidden">
+<path fill="#1f7a3a" d="M387.9 74h10.6v20h-10.6zM397.5 74h10.6v20h-10.6zM464.7 84h10.6v10h-10.6zM512.7 84h10.6v10h-10.6zM503.1 94h10.6v20h-10.6zM512.7 94h10.6v20h-10.6zM416.7 124h10.6v10h-10.6zM464.7 114h10.6v20h-10.6zM512.7 114h10.6v20h-10.6zM531.9 114h10.6v20h-10.6zM464.7 134h10.6v20h-10.6zM474.3 134h10.6v20h-10.6zM368.7 154h10.6v10h-10.6zM378.3 154h10.6v20h-10.6zM387.9 154h10.6v20h-10.6zM397.5 154h10.6v20h-10.6zM416.7 154h10.6v10h-10.6z"/>
+</g>
+<g class="a a71" visibility="hidden">
+<path fill="#1f7a3a" d="M579.9 114h10.6v20h-10.6z"/>
+</g>
+<g class="a a72">
+<path fill="#1f7a3a" d="M531.9 134h10.6v20h-10.6zM541.5 134h10.6v20h-10.6z"/>
+</g>
+<g class="a a73" visibility="hidden">
+<path fill="#1f7a3a" fill-opacity="0.12100000000000001" d="M33.2 214h9.6v20h-9.6z"/>
+</g>
+<g class="a a74" visibility="hidden">
+<path fill="#1f7a3a" d="M435.9 94h10.6v20h-10.6zM445.5 94h10.6v20h-10.6zM435.9 134h10.6v20h-10.6zM445.5 134h10.6v20h-10.6z"/>
+</g>
+<g class="a a75" visibility="hidden">
+<path fill="#1f7a3a" d="M32.7 214h2.2v20h-2.2z"/>
+</g>
+<g class="a a76">
+<path fill="#1f7a3a" d="M464.7 74h10.6v20h-10.6zM512.7 74h10.6v20h-10.6zM407.1 94h10.6v20h-10.6zM416.7 94h10.6v20h-10.6zM416.7 114h10.6v20h-10.6zM464.7 114h10.6v10h-10.6zM483.9 114h10.6v20h-10.6zM493.5 114h10.6v20h-10.6zM512.7 124h10.6v10h-10.6zM531.9 114h10.6v10h-10.6zM551.1 114h10.6v20h-10.6zM560.7 114h10.6v20h-10.6zM416.7 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a77" visibility="hidden">
+<path fill="#1f7a3a" d="M32.7 214h3.4v20h-3.4z"/>
+</g>
+<g class="a a78" visibility="hidden">
+<path fill="#1f7a3a" d="M32.7 214h4.6v20h-4.6z"/>
+</g>
+<g class="a a79">
+<path fill="#1f7a3a" d="M579.9 114h10.6v10h-10.6zM32.7 214h7v20h-7z"/>
+</g>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#d5d8de" stroke-width="1.3" d="M42.8 264H42.8Q38 264 38 268.8V274M42.8 264H52.4M311.6 264H321.2M321.2 264H330.8M330.8 264H340.4M340.4 264H350M350 264H359.6M359.6 264H369.2M369.2 264H378.8M378.8 264H388.4M388.4 264H398M398 264H407.6M407.6 264H417.2M417.2 264H426.8M426.8 264H436.4M436.4 264H446M446 264H455.6M455.6 264H465.2M465.2 264H474.8M474.8 264H484.4M484.4 264H494M494 264H503.6M503.6 264H513.2M513.2 264H522.8M522.8 264H532.4M532.4 264H542M542 264H551.6M551.6 264H561.2M561.2 264H570.8M570.8 264H580.4M580.4 264H590M590 264H599.6M599.6 264H609.2M609.2 264H618.8M618.8 264H628.4M628.4 264H638M638 264H647.6M647.6 264H657.2M657.2 264H666.8M666.8 264H676.4M676.4 264H686M686 264H695.6M695.6 264H705.2M705.2 264H714.8M714.8 264H724.4M724.4 264H734M734 264H743.6M743.6 264H753.2M753.2 264H762.8M762.8 264H772.4M772.4 264H782M782 264H791.6M791.6 264H801.2M801.2 264H810.8M810.8 264H820.4M820.4 264H830M830 264H839.6M839.6 264H849.2M849.2 264H849.2Q854 264 854 268.8V274M38 274V294M854 274V294M38 294V314M854 294V314M38 314V334M854 314V334M38 334V354M854 334V354M38 354V374M854 354V374M38 374V394M854 374V394M38 394V414M854 394V414M38 414V434M854 414V434M38 434V454M854 434V454M42.8 464H42.8Q38 464 38 459.2V454M42.8 464H52.4M52.4 464H62M62 464H71.6M71.6 464H81.2M81.2 464H90.8M90.8 464H100.4M100.4 464H110M110 464H119.6M119.6 464H129.2M129.2 464H138.8M138.8 464H148.4M148.4 464H158M158 464H167.6M167.6 464H177.2M177.2 464H186.8M186.8 464H196.4M196.4 464H206M206 464H215.6M215.6 464H225.2M225.2 464H234.8M234.8 464H244.4M244.4 464H254M254 464H263.6M263.6 464H273.2M273.2 464H282.8M282.8 464H292.4M292.4 464H302M302 464H311.6M311.6 464H321.2M321.2 464H330.8M330.8 464H340.4M340.4 464H350M350 464H359.6M359.6 464H369.2M369.2 464H378.8M378.8 464H388.4M388.4 464H398M398 464H407.6M407.6 464H417.2M417.2 464H426.8M426.8 464H436.4M436.4 464H446M446 464H455.6M455.6 464H465.2M465.2 464H474.8M474.8 464H484.4M484.4 464H494M494 464H503.6M503.6 464H513.2M513.2 464H522.8M522.8 464H532.4M532.4 464H542M542 464H551.6M551.6 464H561.2M561.2 464H570.8M570.8 464H580.4M580.4 464H590M590 464H599.6M599.6 464H609.2M609.2 464H618.8M618.8 464H628.4M628.4 464H638M638 464H647.6M647.6 464H657.2M657.2 464H666.8M666.8 464H676.4M676.4 464H686M686 464H695.6M695.6 464H705.2M705.2 464H714.8M714.8 464H724.4M724.4 464H734M734 464H743.6M743.6 464H753.2M753.2 464H762.8M762.8 464H772.4M772.4 464H782M782 464H791.6M791.6 464H801.2M801.2 464H810.8M810.8 464H820.4M820.4 464H830M830 464H839.6M839.6 464H849.2M849.2 464H849.2Q854 464 854 459.2V454"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">pomodoro</text>
+<text x="14" y="49" textLength="19.2" lengthAdjust="spacing" fill="#23262d">▸1</text>
+<text x="42.8" y="49" textLength="76.8" lengthAdjust="spacing" fill="#23262d">Pomodoro</text>
+<text x="148.4" y="49" textLength="9.6" lengthAdjust="spacing" fill="#23262d">2</text>
+<text x="167.6" y="49" textLength="48" lengthAdjust="spacing" fill="#23262d">Clock</text>
+<text x="33.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#6d7480">task</text>
+<text x="81.2" y="249" textLength="48" lengthAdjust="spacing" fill="#23262d">write</text>
+<text x="138.8" y="249" textLength="28.8" lengthAdjust="spacing" fill="#23262d">the</text>
+<text x="177.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#23262d">spec</text>
+<text x="62" y="269" textLength="86.4" lengthAdjust="spacing" fill="#6d7480">completed</text>
+<text x="158" y="269" textLength="9.6" lengthAdjust="spacing" fill="#6d7480">·</text>
+<text x="196.4" y="269" textLength="9.6" lengthAdjust="spacing" fill="#6d7480">·</text>
+<text x="215.6" y="269" textLength="48" lengthAdjust="spacing" fill="#6d7480">focus</text>
+<text x="23.6" y="489" textLength="48" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">space</text>
+<text x="81.2" y="489" textLength="105.6" lengthAdjust="spacing" fill="#6d7480">start/pause</text>
+<text x="206" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">r</text>
+<text x="225.2" y="489" textLength="48" lengthAdjust="spacing" fill="#6d7480">reset</text>
+<text x="292.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">s</text>
+<text x="311.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#6d7480">skip</text>
+<text x="369.2" y="489" textLength="28.8" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">+/-</text>
+<text x="407.6" y="489" textLength="19.2" lengthAdjust="spacing" fill="#6d7480">±1</text>
+<text x="436.4" y="489" textLength="28.8" lengthAdjust="spacing" fill="#6d7480">min</text>
+<text x="484.4" y="489" textLength="28.8" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">1/2</text>
+<text x="522.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#6d7480">tabs</text>
+<text x="580.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">t</text>
+<text x="599.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#6d7480">task</text>
+<text x="657.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">?</text>
+<text x="676.4" y="489" textLength="38.4" lengthAdjust="spacing" fill="#6d7480">help</text>
+<text x="734" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">q</text>
+<text x="753.2" y="489" textLength="38.4" lengthAdjust="spacing" fill="#6d7480">quit</text>
+<g class="a a0" visibility="hidden">
+<text x="782" y="29" textLength="9.6" lengthAdjust="spacing" fill="#6e0f05" font-weight="700">▶</text>
+<text x="801.2" y="29" textLength="67.2" lengthAdjust="spacing" fill="#6e0f05" font-weight="700">RUNNING</text>
+<text x="417.2" y="189" textLength="48" lengthAdjust="spacing" fill="#6e0f05" font-weight="700">FOCUS</text>
+<text x="263.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#6e0f05">●</text>
+<text x="282.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#6e0f05">◉</text>
+<text x="302" y="209" textLength="9.6" lengthAdjust="spacing" fill="#6e0f05">○</text>
+<text x="321.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#6e0f05">○</text>
+<text x="359.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#6e0f05">99%</text>
+</g>
+<g class="a a13" visibility="hidden">
+<text x="417.2" y="209" textLength="48" lengthAdjust="spacing" fill="#6d7480">next:</text>
+<text x="474.8" y="209" textLength="48" lengthAdjust="spacing" fill="#6d7480">short</text>
+<text x="532.4" y="209" textLength="48" lengthAdjust="spacing" fill="#6d7480">break</text>
+<text x="590" y="209" textLength="9.6" lengthAdjust="spacing" fill="#6d7480">·</text>
+<text x="609.2" y="209" textLength="19.2" lengthAdjust="spacing" fill="#6d7480">5m</text>
+</g>
+<g class="a a14" visibility="hidden">
+<text x="177.2" y="269" textLength="9.6" lengthAdjust="spacing" fill="#6d7480">2</text>
+<text x="273.2" y="269" textLength="28.8" lengthAdjust="spacing" fill="#6d7480">25m</text>
+<text x="52.4" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f7a3a">●</text>
+<text x="81.2" y="289" textLength="48" lengthAdjust="spacing" fill="#6d7480">14:00</text>
+<text x="148.4" y="289" textLength="48" lengthAdjust="spacing" fill="#23262d">Short</text>
+<text x="206" y="289" textLength="48" lengthAdjust="spacing" fill="#23262d">break</text>
+<text x="273.2" y="289" textLength="48" lengthAdjust="spacing" fill="#6d7480">05:00</text>
+<text x="52.4" y="309" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">●</text>
+<text x="81.2" y="309" textLength="48" lengthAdjust="spacing" fill="#6d7480">13:34</text>
+<text x="148.4" y="309" textLength="38.4" lengthAdjust="spacing" fill="#23262d">Work</text>
+<text x="273.2" y="309" textLength="48" lengthAdjust="spacing" fill="#6d7480">25:00</text>
+<text x="340.4" y="309" textLength="67.2" lengthAdjust="spacing" fill="#23262d">outline</text>
+<text x="417.2" y="309" textLength="28.8" lengthAdjust="spacing" fill="#23262d">the</text>
+<text x="455.6" y="309" textLength="38.4" lengthAdjust="spacing" fill="#23262d">talk</text>
+</g>
+<g class="a a29" visibility="hidden">
+<text x="782" y="29" textLength="9.6" lengthAdjust="spacing" fill="#c4301f" font-weight="700">▶</text>
+<text x="801.2" y="29" textLength="67.2" lengthAdjust="spacing" fill="#c4301f" font-weight="700">RUNNING</text>
+<text x="417.2" y="189" textLength="48" lengthAdjust="spacing" fill="#c4301f" font-weight="700">FOCUS</text>
+<text x="263.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">●</text>
+<text x="282.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">◉</text>
+<text x="302" y="209" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">○</text>
+<text x="321.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">○</text>
+<text x="359.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#c4301f">99%</text>
+</g>
+<g class="a a67" visibility="hidden">
+<text x="810.8" y="29" textLength="9.6" lengthAdjust="spacing" fill="#c4301f" font-weight="700">✓</text>
+<text x="830" y="29" textLength="38.4" lengthAdjust="spacing" fill="#c4301f" font-weight="700">DONE</text>
+<text x="330.8" y="189" textLength="38.4" lengthAdjust="spacing" fill="#c4301f" font-weight="700">DONE</text>
+<text x="378.8" y="189" textLength="9.6" lengthAdjust="spacing" fill="#c4301f" font-weight="700">—</text>
+<text x="398" y="189" textLength="38.4" lengthAdjust="spacing" fill="#c4301f" font-weight="700">time</text>
+<text x="446" y="189" textLength="28.8" lengthAdjust="spacing" fill="#c4301f" font-weight="700">for</text>
+<text x="484.4" y="189" textLength="9.6" lengthAdjust="spacing" fill="#c4301f" font-weight="700">a</text>
+<text x="503.6" y="189" textLength="48" lengthAdjust="spacing" fill="#c4301f" font-weight="700">break</text>
+<text x="254" y="209" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">●</text>
+<text x="273.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">●</text>
+<text x="292.4" y="209" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">○</text>
+<text x="311.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">○</text>
+<text x="350" y="209" textLength="38.4" lengthAdjust="spacing" fill="#c4301f">100%</text>
+</g>
+<g class="a a68">
+<text x="177.2" y="269" textLength="9.6" lengthAdjust="spacing" fill="#6d7480">3</text>
+<text x="273.2" y="269" textLength="28.8" lengthAdjust="spacing" fill="#6d7480">50m</text>
+<text x="52.4" y="289" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">●</text>
+<text x="81.2" y="289" textLength="48" lengthAdjust="spacing" fill="#6d7480">14:05</text>
+<text x="148.4" y="289" textLength="38.4" lengthAdjust="spacing" fill="#23262d">Work</text>
+<text x="273.2" y="289" textLength="48" lengthAdjust="spacing" fill="#6d7480">25:00</text>
+<text x="340.4" y="289" textLength="48" lengthAdjust="spacing" fill="#23262d">write</text>
+<text x="398" y="289" textLength="28.8" lengthAdjust="spacing" fill="#23262d">the</text>
+<text x="436.4" y="289" textLength="38.4" lengthAdjust="spacing" fill="#23262d">spec</text>
+<text x="52.4" y="309" textLength="9.6" lengthAdjust="spacing" fill="#1f7a3a">●</text>
+<text x="81.2" y="309" textLength="48" lengthAdjust="spacing" fill="#6d7480">14:00</text>
+<text x="148.4" y="309" textLength="48" lengthAdjust="spacing" fill="#23262d">Short</text>
+<text x="206" y="309" textLength="48" lengthAdjust="spacing" fill="#23262d">break</text>
+<text x="273.2" y="309" textLength="48" lengthAdjust="spacing" fill="#6d7480">05:00</text>
+<text x="52.4" y="329" textLength="9.6" lengthAdjust="spacing" fill="#c4301f">●</text>
+<text x="81.2" y="329" textLength="48" lengthAdjust="spacing" fill="#6d7480">13:34</text>
+<text x="148.4" y="329" textLength="38.4" lengthAdjust="spacing" fill="#23262d">Work</text>
+<text x="273.2" y="329" textLength="48" lengthAdjust="spacing" fill="#6d7480">25:00</text>
+<text x="340.4" y="329" textLength="67.2" lengthAdjust="spacing" fill="#23262d">outline</text>
+<text x="417.2" y="329" textLength="28.8" lengthAdjust="spacing" fill="#23262d">the</text>
+<text x="455.6" y="329" textLength="38.4" lengthAdjust="spacing" fill="#23262d">talk</text>
+</g>
+<g class="a a69">
+<text x="782" y="29" textLength="9.6" lengthAdjust="spacing" fill="#1f7a3a" font-weight="700">▶</text>
+<text x="801.2" y="29" textLength="67.2" lengthAdjust="spacing" fill="#1f7a3a" font-weight="700">RUNNING</text>
+<text x="388.4" y="189" textLength="48" lengthAdjust="spacing" fill="#1f7a3a" font-weight="700">SHORT</text>
+<text x="446" y="189" textLength="48" lengthAdjust="spacing" fill="#1f7a3a" font-weight="700">BREAK</text>
+<text x="292.4" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f7a3a">●</text>
+<text x="311.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f7a3a">●</text>
+<text x="330.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f7a3a">○</text>
+<text x="350" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f7a3a">○</text>
+<text x="388.4" y="209" textLength="19.2" lengthAdjust="spacing" fill="#1f7a3a">0%</text>
+<text x="436.4" y="209" textLength="48" lengthAdjust="spacing" fill="#6d7480">next:</text>
+<text x="494" y="209" textLength="38.4" lengthAdjust="spacing" fill="#6d7480">work</text>
+<text x="542" y="209" textLength="9.6" lengthAdjust="spacing" fill="#6d7480">·</text>
+<text x="561.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#6d7480">25m</text>
+</g>
+</g>
+</svg>

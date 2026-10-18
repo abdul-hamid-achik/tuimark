@@ -206,5 +206,45 @@
     "rows": 12,
     "alt": "the original spike: two bordered boxes and a status line, no stylesheet",
     "cmd": "tuimark play examples/spike/inbox.tui --cols 80 --rows 12"
+  },
+  {
+    "name": "snake-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "snake: the autopilot steering the snake to the food, the score, level and speed climbing in the stats panel",
+    "cmd": "go run ./examples/snake",
+    "animated": true,
+    "ms": 8345
+  },
+  {
+    "name": "pipeline-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "pipeline: CI jobs running in parallel with spinners and progress bars, the integration log streaming in, a failure, a retry, and the run ending green",
+    "cmd": "go run ./examples/pipeline",
+    "animated": true,
+    "ms": 10220
+  },
+  {
+    "name": "music-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "music: a track playing with a bouncing spectrum visualizer and a moving position bar, a skip to the queued track, then a pause that lets the bars fall",
+    "cmd": "go run ./examples/music",
+    "animated": true,
+    "ms": 9200
+  },
+  {
+    "name": "pomodoro-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "pomodoro: big block digits counting down the last seconds of a work session, the colon blinking, a flash at zero, then the short break starting in green",
+    "cmd": "go run ./examples/pomodoro",
+    "animated": true,
+    "ms": 11500
   }
 ]

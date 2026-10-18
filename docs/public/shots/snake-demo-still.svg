@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="892" height="508" viewBox="0 0 892 508" role="img" aria-label="snake: the autopilot steering the snake to the food, the score, level and speed climbing in the stats panel">
+<title>snake: the autopilot steering the snake to the food, the score, level and speed climbing in the stats panel</title>
+<rect width="892" height="508" rx="6" fill="#12151a"/>
+<path fill="#1b2027" d="M14 14h864v20h-864zM14 474h864v20h-864z"/>
+<path fill="#1a1f27" d="M71.6 74h480v20h-480zM71.6 94h480v20h-480zM71.6 114h480v20h-480zM71.6 134h480v20h-480zM71.6 154h480v20h-480zM71.6 174h124.8v20h-124.8zM369.2 174h182.4v20h-182.4zM71.6 194h480v20h-480zM71.6 214h480v20h-480zM71.6 234h480v20h-480zM71.6 254h480v20h-480zM71.6 274h480v20h-480zM71.6 294h480v20h-480zM71.6 314h480v20h-480zM71.6 334h480v20h-480zM71.6 354h480v20h-480zM71.6 374h480v20h-480zM71.6 394h480v20h-480zM71.6 414h480v20h-480z"/>
+<path fill="#7ee787" d="M196.4 174h19.2v20h-19.2zM590 374h9.6v20h-9.6zM599.6 374h9.6v20h-9.6z"/>
+<path fill="#2ea043" d="M215.6 174h153.6v20h-153.6zM590 354h9.6v20h-9.6zM599.6 354h9.6v20h-9.6z"/>
+<path fill="#ff7b72" d="M393.2 234h4.8v20h-4.8zM398 234h4.8v20h-4.8zM594.8 394h4.8v20h-4.8zM599.6 394h4.8v20h-4.8z"/>
+<path fill="#58a6ff" d="M590 266.5h9.6v7.5h-9.6zM599.6 266.5h9.6v7.5h-9.6zM609.2 266.5h9.6v7.5h-9.6zM618.8 266.5h9.6v7.5h-9.6zM628.4 266.5h9.6v7.5h-9.6zM638 266.5h9.6v7.5h-9.6zM647.6 266.5h9.6v7.5h-9.6zM657.2 266.5h9.6v7.5h-9.6zM666.8 266.5h9.6v7.5h-9.6zM676.4 266.5h9.6v7.5h-9.6zM686 266.5h9.6v7.5h-9.6zM695.6 266.5h9.6v7.5h-9.6zM705.2 266.5h9.6v7.5h-9.6zM714.8 266.5h9.6v7.5h-9.6zM724.4 266.5h9.6v7.5h-9.6zM734 266.5h9.6v7.5h-9.6zM743.6 266.5h9.6v7.5h-9.6zM753.2 266.5h9.6v7.5h-9.6zM762.8 266.5h9.6v7.5h-9.6zM772.4 266.5h9.6v7.5h-9.6zM782 266.5h9.6v7.5h-9.6zM791.6 264h9.6v10h-9.6z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#4a5260" stroke-width="2.6" d="M81.2 84H76.4V94M81.2 84H90.8M90.8 84H100.4M100.4 84H110M110 84H119.6M119.6 84H129.2M129.2 84H138.8M138.8 84H148.4M148.4 84H158M158 84H167.6M167.6 84H177.2M177.2 84H186.8M186.8 84H196.4M196.4 84H206M206 84H215.6M215.6 84H225.2M225.2 84H234.8M234.8 84H244.4M244.4 84H254M254 84H263.6M263.6 84H273.2M273.2 84H282.8M282.8 84H292.4M292.4 84H302M302 84H311.6M311.6 84H321.2M321.2 84H330.8M330.8 84H340.4M340.4 84H350M350 84H359.6M359.6 84H369.2M369.2 84H378.8M378.8 84H388.4M388.4 84H398M398 84H407.6M407.6 84H417.2M417.2 84H426.8M426.8 84H436.4M436.4 84H446M446 84H455.6M455.6 84H465.2M465.2 84H474.8M474.8 84H484.4M484.4 84H494M494 84H503.6M503.6 84H513.2M513.2 84H522.8M522.8 84H532.4M532.4 84H542M542 84H546.8V94M76.4 94V114M546.8 94V114M76.4 114V134M546.8 114V134M76.4 134V154M546.8 134V154M76.4 154V174M546.8 154V174M76.4 174V194M546.8 174V194M76.4 194V214M546.8 194V214M76.4 214V234M546.8 214V234M76.4 234V254M546.8 234V254M76.4 254V274M546.8 254V274M76.4 274V294M546.8 274V294M76.4 294V314M546.8 294V314M76.4 314V334M546.8 314V334M76.4 334V354M546.8 334V354M76.4 354V374M546.8 354V374M76.4 374V394M546.8 374V394M76.4 394V414M546.8 394V414M81.2 424H76.4V414M81.2 424H90.8M90.8 424H100.4M100.4 424H110M110 424H119.6M119.6 424H129.2M129.2 424H138.8M138.8 424H148.4M148.4 424H158M158 424H167.6M167.6 424H177.2M177.2 424H186.8M186.8 424H196.4M196.4 424H206M206 424H215.6M215.6 424H225.2M225.2 424H234.8M234.8 424H244.4M244.4 424H254M254 424H263.6M263.6 424H273.2M273.2 424H282.8M282.8 424H292.4M292.4 424H302M302 424H311.6M311.6 424H321.2M321.2 424H330.8M330.8 424H340.4M340.4 424H350M350 424H359.6M359.6 424H369.2M369.2 424H378.8M378.8 424H388.4M388.4 424H398M398 424H407.6M407.6 424H417.2M417.2 424H426.8M426.8 424H436.4M436.4 424H446M446 424H455.6M455.6 424H465.2M465.2 424H474.8M474.8 424H484.4M484.4 424H494M494 424H503.6M503.6 424H513.2M513.2 424H522.8M522.8 424H532.4M532.4 424H542M542 424H546.8V414"/>
+<path stroke="#30363d" stroke-width="1.3" d="M580.4 84H580.4Q575.6 84 575.6 88.8V94M580.4 84H590M657.2 84H666.8M666.8 84H676.4M676.4 84H686M686 84H695.6M695.6 84H705.2M705.2 84H714.8M714.8 84H724.4M724.4 84H734M734 84H743.6M743.6 84H753.2M753.2 84H762.8M762.8 84H772.4M772.4 84H782M782 84H791.6M791.6 84H801.2M801.2 84H810.8M810.8 84H810.8Q815.6 84 815.6 88.8V94M575.6 94V114M815.6 94V114M575.6 114V134M815.6 114V134M575.6 134V154M815.6 134V154M575.6 154V174M815.6 154V174M575.6 174V194M815.6 174V194M575.6 194V214M815.6 194V214M575.6 214V234M590 224H599.6M599.6 224H609.2M609.2 224H618.8M618.8 224H628.4M628.4 224H638M638 224H647.6M647.6 224H657.2M657.2 224H666.8M666.8 224H676.4M676.4 224H686M686 224H695.6M695.6 224H705.2M705.2 224H714.8M714.8 224H724.4M724.4 224H734M734 224H743.6M743.6 224H753.2M753.2 224H762.8M762.8 224H772.4M772.4 224H782M782 224H791.6M791.6 224H801.2M815.6 214V234M575.6 234V254M815.6 234V254M575.6 254V274M815.6 254V274M575.6 274V294M815.6 274V294M575.6 294V314M815.6 294V314M575.6 314V334M815.6 314V334M575.6 334V354M815.6 334V354M575.6 354V374M815.6 354V374M575.6 374V394M815.6 374V394M575.6 394V414M815.6 394V414M580.4 424H580.4Q575.6 424 575.6 419.2V414M580.4 424H590M590 424H599.6M599.6 424H609.2M609.2 424H618.8M618.8 424H628.4M628.4 424H638M638 424H647.6M647.6 424H657.2M657.2 424H666.8M666.8 424H676.4M676.4 424H686M686 424H695.6M695.6 424H705.2M705.2 424H714.8M714.8 424H724.4M724.4 424H734M734 424H743.6M743.6 424H753.2M753.2 424H762.8M762.8 424H772.4M772.4 424H782M782 424H791.6M791.6 424H801.2M801.2 424H810.8M810.8 424H810.8Q815.6 424 815.6 419.2V414"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">snake</text>
+<text x="110" y="29" textLength="86.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">autopilot</text>
+<text x="782" y="29" textLength="9.6" lengthAdjust="spacing" fill="#56d364" font-weight="700">●</text>
+<text x="801.2" y="29" textLength="67.2" lengthAdjust="spacing" fill="#56d364" font-weight="700">PLAYING</text>
+<text x="599.6" y="89" textLength="48" lengthAdjust="spacing" fill="#7d8590">stats</text>
+<text x="590" y="109" textLength="48" lengthAdjust="spacing" fill="#7d8590">score</text>
+<text x="782" y="109" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">60</text>
+<text x="590" y="129" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">best</text>
+<text x="782" y="129" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">60</text>
+<text x="590" y="149" textLength="57.6" lengthAdjust="spacing" fill="#7d8590">length</text>
+<text x="791.6" y="149" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">9</text>
+<text x="590" y="169" textLength="48" lengthAdjust="spacing" fill="#7d8590">level</text>
+<text x="743.6" y="169" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">7</text>
+<text x="762.8" y="169" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">/</text>
+<text x="782" y="169" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">11</text>
+<text x="196.4" y="189" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">••</text>
+<text x="590" y="189" textLength="48" lengthAdjust="spacing" fill="#7d8590">speed</text>
+<text x="753.2" y="189" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">98</text>
+<text x="782" y="189" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">ms</text>
+<text x="590" y="209" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">time</text>
+<text x="762.8" y="209" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">0:06</text>
+<text x="590" y="249" textLength="48" lengthAdjust="spacing" fill="#7d8590">pace,</text>
+<text x="647.6" y="249" textLength="67.2" lengthAdjust="spacing" fill="#7d8590">moves/s</text>
+<text x="618.8" y="369" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">body</text>
+<text x="618.8" y="389" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">head</text>
+<text x="618.8" y="409" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">food</text>
+<text x="14" y="489" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">↑↓←→</text>
+<text x="62" y="489" textLength="48" lengthAdjust="spacing" fill="#7d8590">steer</text>
+<text x="129.2" y="489" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">space</text>
+<text x="186.8" y="489" textLength="48" lengthAdjust="spacing" fill="#7d8590">pause</text>
+<text x="254" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">r</text>
+<text x="273.2" y="489" textLength="67.2" lengthAdjust="spacing" fill="#7d8590">restart</text>
+<text x="359.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">A</text>
+<text x="378.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">auto</text>
+<text x="436.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
+<text x="455.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">help</text>
+<text x="513.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
+<text x="532.4" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">quit</text>
+</g>
+</svg>

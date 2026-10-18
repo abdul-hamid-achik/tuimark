@@ -4,7 +4,8 @@
 //
 //   reference/{cli,tags,css,keys,diagnostics}.md   from `tuimark --help` and `tuimark agents`
 //   snippets/out/*                                  the command output the guide pages show
-//   public/shots/*.svg                              screenshots rendered from `tuimark play`
+//   public/shots/*.svg                              screenshots rendered from `tuimark play`, and
+//                                                   animated demos from the examples' own -demo
 //
 // Usage, from the repository root (or `task docs-gen` / `task docs-check`):
 //
@@ -21,7 +22,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { homedir } from 'node:os'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { renderSVG } from './svg.mjs'
+import { renderAnimatedSVG, renderSVG } from './svg.mjs'
 
 const DOCS = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const REPO = resolve(DOCS, '..')
@@ -468,6 +469,68 @@ for (const s of SHOTS) {
   if (s.input) cmd.push('--input', shellQuote(s.input))
   shotIndex.push({ name: s.name, light: (s.themes ?? []).includes('light'), cols: s.cols, rows: s.rows, alt: s.alt, cmd: cmd.join(' ') })
 }
+// ── Animated demos ─────────────────────────────────────────────────────────
+//
+// `tuimark play` runs no host, so it cannot show an app whose screen moves
+// on its own (an App.Every tick). Each of these examples has a `-demo
+// COLSxROWS` flag instead: the Go app replays a scripted session on a fake
+// clock and a fixed seed, and prints one {"ms", "dump"} line per frame,
+// where dump is App.Play's frame with Styles and Cells. Those frames
+// become one CSS-animated SVG (renderAnimatedSVG), plus NAME-still.svg,
+// the last frame, which TermShot shows when the animation is paused or
+// the reader prefers reduced motion.
+
+const DEMOS = [
+  { name: 'snake-demo', example: 'snake', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'snake: the autopilot steering the snake to the food, the score, level and speed climbing in the stats panel' },
+  { name: 'pipeline-demo', example: 'pipeline', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'pipeline: CI jobs running in parallel with spinners and progress bars, the integration log streaming in, a failure, a retry, and the run ending green' },
+  { name: 'music-demo', example: 'music', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'music: a track playing with a bouncing spectrum visualizer and a moving position bar, a skip to the queued track, then a pause that lets the bars fall' },
+  { name: 'pomodoro-demo', example: 'pomodoro', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'pomodoro: big block digits counting down the last seconds of a work session, the colon blinking, a flash at zero, then the short break starting in green' },
+]
+
+// An animated SVG keeps every cell run that ever changes; keep the pages
+// light.
+const MAX_DEMO_BYTES = 1_500_000
+
+const built = new Set()
+function demoFrames(example, cols, rows, theme) {
+  const bin = join(REPO, 'bin', `demo-${example}`)
+  if (!built.has(example)) {
+    const r = spawnSync('go', ['build', '-o', bin, `./examples/${example}`], { cwd: REPO, encoding: 'utf8' })
+    if (r.error) throw r.error
+    if (r.status !== 0) throw new Error(`generate: go build ./examples/${example} exited ${r.status}\n${r.stderr}`)
+    built.add(example)
+  }
+  const args = ['-demo', `${cols}x${rows}`]
+  if (theme === 'light') args.push('-theme', 'light')
+  const r = spawnSync(bin, args, {
+    cwd: REPO,
+    encoding: 'utf8',
+    maxBuffer: 512 << 20,
+    env: { PATH: process.env.PATH ?? '', HOME: process.env.HOME ?? '', LANG: 'en_US.UTF-8' },
+  })
+  if (r.error) throw r.error
+  if (r.status !== 0) throw new Error(`generate: examples/${example} -demo exited ${r.status}\n${r.stderr}`)
+  const frames = r.stdout.split('\n').filter((l) => l.trim() !== '').map((l) => JSON.parse(l))
+  frames.forEach((f, i) => {
+    if (!f.dump.ok || f.dump.errors.length) throw new Error(`generate: examples/${example} demo frame ${i} has diagnostics: ${JSON.stringify(f.dump.errors)}`)
+  })
+  return frames
+}
+
+for (const d of DEMOS) {
+  let ms = 0
+  for (const theme of d.themes ?? [null]) {
+    const frames = demoFrames(d.example, d.cols, d.rows, theme)
+    ms = frames.reduce((t, f) => t + f.ms, 0)
+    const sfx = theme === 'light' ? '-light' : ''
+    const svg = renderAnimatedSVG(frames, { title: d.alt })
+    if (svg.length > MAX_DEMO_BYTES) throw new Error(`generate: demo ${d.name}${sfx} is ${svg.length} bytes, over ${MAX_DEMO_BYTES}`)
+    emit(`public/shots/${d.name}${sfx}.svg`, svg)
+    emit(`public/shots/${d.name}-still${sfx}.svg`, renderSVG(frames[frames.length - 1].dump, { title: d.alt }))
+  }
+  shotIndex.push({ name: d.name, light: (d.themes ?? []).includes('light'), cols: d.cols, rows: d.rows, alt: d.alt, cmd: `go run ./examples/${d.example}`, animated: true, ms })
+}
+
 emit('.vitepress/theme/shots.json', JSON.stringify(shotIndex, null, 2))
 
 // ── Write or check ─────────────────────────────────────────────────────────

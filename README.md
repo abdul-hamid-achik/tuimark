@@ -1176,6 +1176,24 @@ module; the only supported entry points are the functions above.
     --mock examples/tasks/mock.json   # the view with no Go
   ```
 
+- `examples/snake`, `examples/pipeline`, `examples/music`,
+  `examples/pomodoro` — four apps that move on their own, built the same
+  way (a `version="3"` document, a `.tcss` with both palettes, sample data,
+  a `mock.json`, a Go host with its own tests). `snake` is a playable game
+  whose `Every` tick re-arms faster as the level rises (`-autopilot` plays
+  it for you); `pipeline` a CI run with parallel jobs, spinners, a
+  streaming log, and a retry; `music` a player with a spectrum visualizer
+  (no audio); `pomodoro` a timer and a clock in big block digits. Each has
+  a `-demo COLSxROWS` flag that prints a scripted session's frames as JSON
+  lines; the docs site animates them.
+
+  ```sh
+  go build -o bin/snake ./examples/snake && ./bin/snake -autopilot
+  go build -o bin/pipeline ./examples/pipeline && ./bin/pipeline
+  go build -o bin/music ./examples/music && ./bin/music
+  go build -o bin/pomodoro ./examples/pomodoro && ./bin/pomodoro -start
+  ```
+
 - `examples/stacked/{app.tui,theme.tcss}` — the phase-1 media fixture (SPEC
   §4, §21 test 10): the inbox layout with static text, where `@media
   (max-cols: 80)` stacks `#sidebar` above `#detail`. It only feeds the
