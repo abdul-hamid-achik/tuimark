@@ -651,6 +651,8 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		label := layout.ButtonLabel(b)
 		x := c.X + alignOffset(b.Style.ContentAlign, c.W, layout.Width(label))
 		p.text(clip, x, c.Y, label, st)
+	case "checkbox":
+		p.checkbox(b, clip, st)
 	case "input":
 		p.input(b, clip, st)
 	case "sparkline":

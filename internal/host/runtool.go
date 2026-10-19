@@ -156,6 +156,13 @@ func (a *App) takeOver(old *App, keepStore bool) {
 			a.inputs[id] = &c
 		}
 	}
+	// A checkbox without bind keeps its value (SPEC v0.4b §15.9, decision
+	// 46).
+	for id, v := range old.checks {
+		if kept(id) != nil {
+			a.checks[id] = v
+		}
+	}
 	// An offset the wheel gave a viewport without an id is kept under a
 	// key naming its old element (offsetKey), which no id matches: it
 	// starts at 0 again.
