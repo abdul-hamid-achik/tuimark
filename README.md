@@ -20,7 +20,7 @@ grid + node geometry
 agent edits again
 ```
 
-**Documentation:** [tuimark.vercel.app](https://tuimark.vercel.app) — guides
+**Documentation:** [tuimark.dev](https://tuimark.dev) — guides
 and reference for the language, the CLI, and the Go API. Release history is
 in the [Changelog](CHANGELOG.md).
 
@@ -687,7 +687,7 @@ tuimark version
   quit or the end of input, 1 for an error (a bad `--mock`, an `--events`
   path that is a terminal, … are one `tuimark: run: …` line before the
   terminal is touched), 128 + the signal number for a stop signal. See the
-  [run guide](https://tuimark.vercel.app/guide/run).
+  [run guide](https://tuimark.dev/guide/run).
 - `host` (0.3b) runs a document in the terminal for a parent process in any
   language: the terminal stays on fd 0/1/2 as with `Run()`, the parent
   writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 and reads
@@ -695,19 +695,19 @@ tuimark version
   (a usage error on Windows). A line of 64 MiB or more on fd 3 (the newline
   excluded) ends the session with exit reason `error` (0.4a), the bound
   `mcp` uses for stdin. See the [host protocol
-  guide](https://tuimark.vercel.app/guide/host-protocol) and
+  guide](https://tuimark.dev/guide/host-protocol) and
   `examples/host-ts` for a Bun parent.
 - `mcp` (0.3b) is a Model Context Protocol server on stdin/stdout (JSON-RPC,
   stdlib only) exposing `validate`, `dump`, `play`, `inspect`, and the
   `agents` briefing as five read-only tools, for an agent that reaches
   Tuimark through an MCP gateway instead of a shell. A line of 64 MiB or
   more on stdin (the newline excluded) ends the server with exit 1. See the
-  [MCP server guide](https://tuimark.vercel.app/guide/mcp).
+  [MCP server guide](https://tuimark.dev/guide/mcp).
 - `lsp` (0.4a) is a Language Server Protocol 3.17 server on stdin/stdout (stdlib
   only) for `.tui` and `.tcss` files: diagnostics (the checks `validate`
   runs, against a sibling `sample.json`), completion, hover, definition,
   and formatting for `.tui`, from the catalog. The VS Code extension
-  starts it. See [Editor support](https://tuimark.vercel.app/guide/tools#editor-support-tuimark-lsp).
+  starts it. See [Editor support](https://tuimark.dev/guide/tools#editor-support-tuimark-lsp).
 - `version` (also `--version` or `-v`) prints `tuimark 0.2.0`; release
   builds add the commit and build date, as in `tuimark 0.2.0 (commit
   abc1234, built 2026-09-27T12:00:00Z)`.

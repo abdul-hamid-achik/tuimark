@@ -121,6 +121,20 @@ playground.
   release it runs (it was `1.0.0`), and `sdk-ts-publish.yml` and its `sdk-ts-v*`
   tags are gone.
 
+### Changed
+
+- **The website moves to [tuimark.dev](https://tuimark.dev)** and is rebuilt
+  with Next.js and Fumadocs in place of VitePress. Every page keeps its URL
+  (the old `NAME.html` addresses redirect), and so does `tuimark.vercel.app`,
+  which redirects to the new domain. New: a landing page whose hero is a
+  `tuimark play` session of a three-file document, a static search, Open
+  Graph images for every page, a sitemap, and pages for agents: each page as
+  Markdown at its URL plus `.md`, `/llms.txt`, and `/llms-full.txt`. The
+  agents guide becomes "Use Tuimark with AI agents", with the `tuimark mcp`
+  setup for Claude Code and Cursor. `task docs` serves the site, `task
+  docs-build` builds it and checks every link, and the generated pages are
+  still `task docs-gen` and `task docs-check`.
+
 ## [0.4.1] - 2026-10-18
 
 A patch on 0.4a. `version` on `<tui>` becomes optional, and `examples/`

@@ -345,7 +345,7 @@ go test -race ./internal/host/
 
 ### Documentation boundary
 
-- `docs/` is the public Tuimark website (VitePress, deployed from `main`). Put only publishable content there: landing page, user guides, public reference, static assets. Its reference pages and screenshots are generated: run `task docs-gen` after changing the CLI, the catalogs, or an example, and `task docs-check` to confirm nothing is stale.
+- `docs/` is the public Tuimark website (Next.js and Fumadocs, tuimark.dev, deployed from `main`). Put only publishable content there: landing page, user guides, public reference, static assets. Its reference pages and screenshots are generated: run `task docs-gen` after changing the CLI, the catalogs, or an example, and `task docs-check` to confirm nothing is stale.
 - Design decisions, ADRs, specs in progress, plans, handoffs, review findings, and progress logs live outside this repository, in the maintainer's Obsidian vault at `~/notes/projects/tuimark/` (ADRs under `adrs/NNNN-title.md`, the topic-organized decision record in `design-decisions.md`). Never add them to the repo, and never link public docs to those private paths.
 - The SPEC itself lives there too (ADR 0012), not in this repository. The repository keeps only a frozen copy of its §22 block, `internal/agentsdoc/testdata/spec22.md`, for the AGENTS.md prefix test; set `TUIMARK_SPEC` to the SPEC's path to check that copy against the source.
 - In the repo, `README.md` is the front page (user-facing clarifications go in its "Language notes") and `AGENTS.md` is generated from `internal/agentsdoc`.
