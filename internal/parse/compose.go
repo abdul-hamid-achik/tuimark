@@ -52,6 +52,14 @@ type Loader struct {
 // fragments that hold no element.
 const ExpansionLimit = 100000
 
+// ExpansionByteLimit is the most source an expansion may place in one
+// document, in bytes (ADR 0034, second amendment): each expansion is
+// charged, before it builds anything, the size of the source it places (an
+// include, its fragment's file; a use, its template's span). The work of an
+// expansion is linear in the bytes it places, so this bounds it for any
+// content, which the count of elements does not.
+const ExpansionByteLimit = 16 << 20
+
 // expFrame is an expansion under way: the innermost one reports V021.
 type expFrame struct{}
 
@@ -79,6 +87,7 @@ type composer struct {
 	// once one went over: no later include expands (ADR 0034).
 	frames []*expFrame
 	count  int
+	bytes  int
 	dead   bool
 	// files caches each fragment read and parsed, by Canon: an expansion
 	// may place a file many times, and reading and parsing it again each
@@ -91,6 +100,7 @@ type fragFile struct {
 	root    *RawNode
 	readErr error
 	syntax  *SyntaxError
+	size    int // the file's size in bytes
 }
 
 // chainFile is one file on the chain of includes that leads to the
@@ -100,6 +110,21 @@ type chainFile struct {
 	// real is the file's resolved path in the loader's file system, for
 	// Same ("" for a document that has none).
 	real string
+}
+
+// chargeBytes charges the expansion under way n bytes of placed source.
+// Going over ExpansionByteLimit unwinds to the innermost expansion, like
+// passing ExpansionLimit does. F2's <use> charges its template's source
+// span through it.
+func (b *builder) chargeBytes(n int) {
+	cp := b.comp
+	if cp == nil || cp.dead || len(cp.frames) == 0 {
+		return
+	}
+	cp.bytes += n
+	if cp.bytes > ExpansionByteLimit {
+		panic(&expansionOverflow{frame: cp.frames[len(cp.frames)-1]})
+	}
 }
 
 // countElement counts an element built inside an expansion. The one that
@@ -263,6 +288,7 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 			ff.readErr = err
 		} else {
 			b.doc.Fragments = append(b.doc.Fragments, FragmentRef{Path: resolved, Name: name})
+			ff.size = len(data)
 			ff.root, _, _, ff.syntax = ParseXML(data)
 		}
 		if cp.files == nil {
@@ -286,7 +312,7 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		b.errInc(w, "V020", "include src=%q is not a fragment: its root is <%s>, and an included file's root is <fragment>", src, root.Name)
 		return
 	}
-	b.expandFragment(n, w, outer, root, fo, chainFile{path: resolved, canon: canon, name: name, real: resolved}, src)
+	b.expandFragment(n, w, outer, root, fo, chainFile{path: resolved, canon: canon, name: name, real: resolved}, src, ff.size)
 }
 
 // expandFragment builds the elements of a fragment in n (SPEC v0.4b
@@ -294,12 +320,12 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 // inserts nothing, whatever it had inserted is discarded, and it reports
 // V021; the includes around it keep what they inserted, and none expands
 // after it (ADR 0034).
-func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Origin, file chainFile, src string) {
+func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Origin, file chainFile, src string, size int) {
 	cp := b.comp
 	saved := b.org
 	chainLen := len(cp.chain)
 	nChildren, nDropped, nDroppedIn := len(n.Children), len(b.doc.dropped), len(b.droppedIn[n])
-	nStyles, nDiags, count := len(b.doc.Styles), len(b.doc.Diags), cp.count
+	nStyles, nDiags, count, bytes := len(b.doc.Styles), len(b.doc.Diags), cp.count, cp.bytes
 	nList := len(n.Source)
 	if outer != nil {
 		nList = len(outer.Children)
@@ -327,14 +353,18 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 		if b.droppedIn != nil {
 			b.droppedIn[n] = b.droppedIn[n][:nDroppedIn]
 		}
+		for _, st := range b.doc.Styles[nStyles:] {
+			delete(b.styleSeen, styleKey(st.File, st.Line, st.Col))
+		}
 		b.doc.Styles = b.doc.Styles[:nStyles]
 		b.doc.Diags = b.doc.Diags[:nDiags]
 		w.Children = nil
-		cp.count = count
+		cp.count, cp.bytes = count, bytes
 		cp.dead = true
-		b.errInc(w, "V021", "include src=%q exceeds the expansion limit of %d elements: it inserts nothing, and no later include or use expands", src, ExpansionLimit)
+		b.errInc(w, "V021", "include src=%q exceeds the expansion limit (%d elements or %d MiB of placed source): it inserts nothing, and no later include or use expands", src, ExpansionLimit, ExpansionByteLimit>>20)
 	}()
-	b.countElement() // the include itself, so it is the one that reports
+	b.chargeBytes(size) // before anything is built
+	b.countElement()    // the include itself, so it is the one that reports
 	b.org = fo
 	cp.chain = append(cp.chain, file)
 	b.fragmentRoot(root)

@@ -44,7 +44,7 @@ func TestExpansionLimitBoundary(t *testing.T) {
 		t.Errorf("at the limit: V021 %v, %d children", got, screenChildren(doc))
 	}
 	doc = parse.ParseWith([]byte(app), "app.tui", memLoader(map[string]string{"big.tui": texts(parse.ExpansionLimit)}, "app.tui", nil))
-	want := `app.tui:3:1 include src="big.tui" exceeds the expansion limit of 100000 elements: it inserts nothing, and no later include or use expands`
+	want := `app.tui:3:1 include src="big.tui" exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands`
 	if got := v021(doc); len(got) != 1 || got[0] != want {
 		t.Errorf("over the limit: V021 %v, want %s", got, want)
 	}

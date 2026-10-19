@@ -346,6 +346,13 @@ type builder struct {
 	// elements while one is (SPEC v0.4b §6.18.6). Every diagnostic made
 	// while building an element names its file.
 	org *ir.Origin
+	// attrNames and attrCands cache what attrSuggestion looks up: the
+	// names every tag takes, and the sorted attributes of each tag.
+	// styleSeen holds the places of the <style> elements recorded in
+	// doc.Styles (styleKey), so one placed again is not added again.
+	styleSeen map[string]bool
+	attrNames map[string]bool
+	attrCands map[string][]string
 	// comp holds the state of composition (<include>); nil in a document
 	// that is not the current language.
 	comp *composer
@@ -672,18 +679,33 @@ func (b *builder) tagSuggestion(tag string) string {
 // language, so a pinned document keeps 0.4.1's suggestion for a name a
 // 0.4b attribute shares (SPEC v0.4b §5.1).
 func attrExists(name string, l ir.Lang) bool {
+	return attrNameSet(l)[name]
+}
+
+// attrNameSet is every attribute name any tag takes in language l: one set
+// to look a name up in, built from the tables each call (they are tables
+// tests replace), so a caller that asks many times keeps the result.
+func attrNameSet(l ir.Lang) map[string]bool {
 	cats := []map[string]map[string]bool{TagAttrs, TagAttrsV2, TagAttrsV3}
 	if l.V4() {
 		cats = append(cats, TagAttrsCurrent)
 	}
+	out := map[string]bool{}
 	for _, cat := range cats {
 		for _, m := range cat {
-			if m[name] {
-				return true
+			for a, ok := range m {
+				if ok {
+					out[a] = true
+				}
 			}
 		}
 	}
-	return tableItemAttrs[name]
+	for a, ok := range tableItemAttrs {
+		if ok {
+			out[a] = true
+		}
+	}
+	return out
 }
 
 // attrSuggestion is the suffix of an unknown attribute's V002: the closest
@@ -692,9 +714,32 @@ func attrExists(name string, l ir.Lang) bool {
 func (b *builder) attrSuggestion(tag, parent, name string) string {
 	// An attribute some other tag (or version) takes is misplaced, not
 	// misspelled: pointing it at a lookalike (bind -> id) would mislead.
-	if attrExists(name, b.lang) {
+	if b.attrNames == nil {
+		b.attrNames = attrNameSet(b.lang)
+	}
+	if b.attrNames[name] {
 		return ""
 	}
+	key := tag
+	if tag == "item" && parent == "table" {
+		key = "item|table"
+	}
+	cands, ok := b.attrCands[key]
+	if !ok {
+		cands = b.attrCandidates(tag, parent)
+		if b.attrCands == nil {
+			b.attrCands = map[string][]string{}
+		}
+		b.attrCands[key] = cands
+	}
+	best := ir.Suggest(name, cands)
+	return didYouMean(fmt.Sprintf("%q", best), best)
+}
+
+// attrCandidates are the attributes the tag takes in this document's
+// version, sorted, for attrSuggestion (kept per tag: a document with many
+// unknown attributes asks again and again).
+func (b *builder) attrCandidates(tag, parent string) []string {
 	var set []map[string]bool
 	if tag == "item" && parent == "table" {
 		set = append(set, tableItemAttrs)
@@ -721,8 +766,7 @@ func (b *builder) attrSuggestion(tag, parent, name string) string {
 		}
 	}
 	sort.Strings(cands)
-	best := ir.Suggest(name, cands)
-	return didYouMean(fmt.Sprintf("%q", best), best)
+	return cands
 }
 
 func hasUpper(s string) bool {
@@ -1558,17 +1602,25 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 	}
 }
 
+// styleKey names the place a <style> is written: its file, line, and column.
+func styleKey(file string, line, col int) string {
+	return fmt.Sprintf("%s\x00%d\x00%d", file, line, col)
+}
+
 // addStyle records a <style> element. A <style> placed more than once (a
 // fragment included twice) is applied once, at its first place in document
 // order (SPEC v0.4b §6.18.2): the elements written at the same place of the
 // same file are one.
 func (b *builder) addStyle(n *ir.Node, body string, textLine, textCol int) {
 	file := n.FileName(b.file)
-	for _, s := range b.doc.Styles {
-		if s.File == file && s.Line == n.Line && s.Col == n.Col {
-			return
-		}
+	key := styleKey(file, n.Line, n.Col)
+	if b.styleSeen[key] {
+		return
 	}
+	if b.styleSeen == nil {
+		b.styleSeen = map[string]bool{}
+	}
+	b.styleSeen[key] = true
 	ref := StyleRef{Src: n.Attrs["src"], Body: body, Line: n.Line, Col: n.Col, BodyLine: textLine, BodyCol: textCol, File: file}
 	if n.Org != nil && n.Org.Placed != nil {
 		ref.Org = n.Org
