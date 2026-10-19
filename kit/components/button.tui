@@ -18,7 +18,7 @@
       <row width="1fr" height="1" gap="2">
         <button id="b-danger" class="btn danger" label="Delete" on:click="delete"/>
         <button id="b-ghost" class="btn ghost" label="Skip" on:click="skip"/>
-        <button id="b-off" class="btn" label="Locked" disabled="true"/>
+        <button id="b-off" class="btn secondary" label="Locked" disabled="true"/>
       </row>
       <text class="muted">last action: {last}</text>
     </col>

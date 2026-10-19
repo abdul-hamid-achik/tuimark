@@ -121,8 +121,8 @@ No actions, no keys.
 
 ### button (`components/button.tui`)
 
-`button` with class `btn` and a variant: `primary`, `secondary`, `danger`,
-`ghost`. The focused button is drawn inverted and underlined, and no variant
+`button` with class `btn` and a variant: `primary`, `secondary` (the neutral
+filled one), `danger`, `ghost` (no background at all). The focused button is drawn inverted and underlined, and no variant
 shares its focus look with its idle look. A `disabled` button is dimmed. The
 label is literal text (a `{path}` in `label` is V003).
 
@@ -316,12 +316,12 @@ the host trims the array.
 
 Today a component is markup you copy, and the repetition shows: the gallery
 spells out the same `meter`, `stat`, `field` and `alert` blocks several times.
-Composition will turn each component into a **fragment**: a `<template>` that
-takes parameters, written once, and a one-line `<use>` where you need it.
+Composition will turn each component into a **fragment**: written once, used
+with a single element where you need it.
 
-What stays: the class vocabulary and both stylesheets are unchanged, because
-the fragments are built from the same classes. What moves: the markup under
-`components/` becomes the template definitions, and `<!-- COPY -->` blocks
-become `<use name="field" .../>`. The things the kit works around today (the
-button label that cannot be a `{path}`, the unrepeatable ids in an `each`
-template) are the first candidates for parameters. Until then, copy.
+What stays: the class vocabulary and both stylesheets, because a fragment is
+built from the same classes. What moves: the markup under `components/` becomes
+the fragment definitions, and the `<!-- COPY -->` blocks become uses. The limits
+the kit works around today (a button `label` that cannot be a `{path}`, ids that
+cannot repeat inside an `each` template) are the first things a fragment
+design has to answer. Until then, copy.

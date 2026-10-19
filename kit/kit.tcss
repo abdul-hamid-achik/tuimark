@@ -25,17 +25,20 @@
 
 /* --------------------------------------------------------------- button */
 
-.btn { width: auto; height: 1; padding: 0; color: $fg; background: $surface-2; }
+.btn { width: auto; height: 1; padding: 0; color: $fg; }
 .btn.primary { color: $accent-fg; background: $accent; bold: true; }
 .btn.secondary { color: $fg; background: $surface-2; }
 .btn.danger { color: $accent-fg; background: $danger; bold: true; }
-.btn.ghost { color: $muted; background: default; }
+/* Ghost sets no background: there is no "transparent" value to undo a base
+ * background with, so the base `.btn` has none and each filled variant adds
+ * its own. */
+.btn.ghost { color: $muted; }
 /* Focus: an inverted label that no variant shares with its idle look. */
 .btn:focus { color: $accent-fg; background: $focus; bold: true; underline: true; }
 .btn.primary:focus { color: $bg; background: $fg; }
 .btn.danger:focus { color: $bg; background: $fg; }
 .btn.ghost:focus { color: $fg; background: $selected; }
-.btn:disabled { color: $muted; background: $surface-2; dim: true; }
+.btn:disabled { color: $muted; dim: true; }
 
 /* ----------------------------------------------------------- card/panel */
 
