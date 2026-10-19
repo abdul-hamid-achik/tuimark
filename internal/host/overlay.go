@@ -53,7 +53,7 @@ func LoadBuffers(path string, src []byte, open func(abs string) ([]byte, bool)) 
 	}
 	res.readFile = func(p string) ([]byte, error) {
 		text, _, err := buffer(p)
-		return text, err
+		return text, includeReadErr(err)
 	}
 	res.base = func(p string) string { abs, _ := filepath.Abs(p); return abs }
 	res.name = res.base

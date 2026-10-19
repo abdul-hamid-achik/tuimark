@@ -284,16 +284,16 @@ func (a *App) loadStyles(res styleResolver) {
 		d := ir.Diagnostic{Severity: ir.Error, Code: "V006", File: file, Line: s.Line, Col: s.Col, Path: "/style"}
 		resolved, outside := res.resolve(s.From, s.Src)
 		if outside {
-			d.Msg = fmt.Sprintf("style src=%q is outside the file system", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q is outside the file system", s.Src)
 			a.static = append(a.static, d)
 			continue
 		}
 		canon := res.canon(resolved)
 		switch {
 		case canon == res.self || strings.HasSuffix(canon, ".tui"):
-			d.Msg = fmt.Sprintf("style src=%q includes a .tui document (include cycle)", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q includes a .tui document (include cycle)", s.Src)
 		case seen[canon]:
-			d.Msg = fmt.Sprintf("style src=%q is included twice (include cycle)", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q is included twice (include cycle)", s.Src)
 		}
 		if d.Msg != "" {
 			a.static = append(a.static, d)
@@ -302,7 +302,7 @@ func (a *App) loadStyles(res styleResolver) {
 		seen[canon] = true
 		body, err := res.read(resolved)
 		if err != nil {
-			d.Msg = fmt.Sprintf("style src=%q cannot be read: %v", s.Src, unwrapOrSelf(err))
+			d.Msg = placedMsg(s.Org, "style src=%q cannot be read: %v", s.Src, unwrapOrSelf(err))
 			a.static = append(a.static, d)
 			continue
 		}
@@ -317,6 +317,13 @@ func (a *App) loadStyles(res styleResolver) {
 		a.static = append(a.static, diags...)
 		a.sheets = append(a.sheets, sh)
 	}
+}
+
+// placedMsg is the message of a diagnostic about a <style> written in a
+// fragment: it ends with the placement suffix of the include (SPEC v0.4b
+// §6.18.6). For a <style> of the document itself it is the message alone.
+func placedMsg(org *ir.Origin, format string, args ...any) string {
+	return fmt.Sprintf(format, args...) + org.PlacedSuffix()
 }
 
 // unwrapOrSelf is errors.Unwrap(err), falling back to err itself when
@@ -648,7 +655,7 @@ func (a *App) CheckCatalog(known map[string]bool) ir.Diags {
 	}
 	for _, k := range a.doc.Keymap {
 		if k.Action != "" && !a.isBuiltin(k.Action) && !known[k.Action] {
-			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw), File: k.Org.FileOr(a.file), Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
+			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw) + k.Org.PlacedSuffix(), File: k.Org.FileOr(a.file), Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
 		}
 	}
 	walkIR(a.doc.Root, func(n *ir.Node) {

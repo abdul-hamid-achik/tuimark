@@ -336,7 +336,7 @@ func (b *builder) dupID(n, prev *ir.Node) {
 	// The element and the file where the diagnostic stands.
 	at, atFile := n, nFile
 	if nFile == pFile && n.Line == prev.Line && n.Col == prev.Col && n.Org != nil && n.Org.Placed != nil {
-		at = n.Org.Placed
+		at = outermostNewPlacer(n, prev)
 		atFile = at.FileName(docFile)
 	}
 	loc := fmt.Sprintf("%d:%d", prev.Line, prev.Col)
@@ -355,6 +355,31 @@ func (b *builder) dupID(n, prev *ir.Node) {
 		path = at.Path
 	}
 	b.diagOrg(at.Org, false, ir.Error, "V004", at.Line, at.Col, path, n.ID, "%s", msg)
+}
+
+// outermostNewPlacer is the include that placed the second occurrence n of
+// a written element and did not place the first, prev (SPEC v0.4b §6.18.4):
+// walking out from the innermost include of n, the first whose written
+// element (file, line, column) is not on prev's chain of includes. For a
+// fragment included three times through one fragment that includes it, the
+// innermost include is the same written element every time, so it is the
+// outer one that tells the copies apart. It falls back to the innermost
+// include when every one is on both chains.
+func outermostNewPlacer(n, prev *ir.Node) *ir.Node {
+	type site struct {
+		file      string
+		line, col int
+	}
+	seen := map[site]bool{}
+	for p := prev.Placer(); p != nil; p = p.Placer() {
+		seen[site{p.FileName(""), p.Line, p.Col}] = true
+	}
+	for p := n.Placer(); p != nil; p = p.Placer() {
+		if !seen[site{p.FileName(""), p.Line, p.Col}] {
+			return p
+		}
+	}
+	return n.Org.Placed
 }
 
 // docBase is how diagnostics name a document: its base name ("" for none).

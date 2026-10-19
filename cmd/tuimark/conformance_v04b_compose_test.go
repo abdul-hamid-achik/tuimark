@@ -205,3 +205,23 @@ func TestV04bSameFragmentTwiceIR(t *testing.T) {
 		t.Errorf("ir: exit %d %s", code, errw)
 	}
 }
+
+// B004 for a keymap row written in a fragment is in that file and names the
+// include, as B004 for an on:* attribute does (SPEC v0.4b §6.18.6; review of
+// phase F1, round 3).
+func TestV04bCatalogWarningInAFragmentNamesTheInclude(t *testing.T) {
+	dir := t.TempDir()
+	app := filepath.Join(dir, "app.tui")
+	if err := os.WriteFile(app, []byte("<tui>\n  <include src=\"keys.tui\"/>\n  <screen id=\"s\"/>\n</tui>\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "keys.tui"), []byte("<fragment>\n  <keymap>\n    <bind keys=\"a\" action=\"nope\"/>\n  </keymap>\n</fragment>\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cat := writeTemp(t, "C.json", `["known"]`)
+	code, out, errw := runCLI("validate", app, "--catalog", cat)
+	want := `warning B004 keys.tui:3:5 /keymap/bind action "nope" (keys a) is not in the catalog, placed by <include> at app.tui:2:3`
+	if code != 0 || !strings.Contains(out, want) {
+		t.Errorf("validate: exit %d\n%s%s\nwant a line %s", code, out, errw, want)
+	}
+}

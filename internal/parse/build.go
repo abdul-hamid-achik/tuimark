@@ -29,6 +29,9 @@ type StyleRef struct {
 	// for the document): a relative src resolves against its directory
 	// (SPEC v0.4b §6.18.2).
 	From string
+	// Org is where the <style> is written when an include placed it (nil
+	// otherwise): its diagnostics carry the placement suffix.
+	Org *ir.Origin
 	// Rel is the stylesheet's path relative to the document's directory
 	// when the <style> is written in a fragment ("" otherwise): the name
 	// its diagnostics, `tuimark ir`, and `inspect` use for it, so that
@@ -413,13 +416,19 @@ func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, co
 	if org != nil {
 		file = org.File
 		if place && org.Placed != nil {
-			msg += ir.PlacedSuffix(&ir.Node{Org: org})
+			msg += org.PlacedSuffix()
 		}
 	}
 	b.doc.Diags = append(b.doc.Diags, ir.Diagnostic{
 		Severity: sev, Code: code, Msg: msg,
 		File: file, Line: line, Col: col, Path: path, ID: id,
 	})
+}
+
+// diagPlaced is diag for a check that depends on where the element stands:
+// it carries the placement suffix of an element an include placed.
+func (b *builder) diagPlaced(sev, code string, line, col int, path, id, format string, args ...any) {
+	b.diagOrg(b.org, true, sev, code, line, col, path, id, format, args...)
 }
 
 // selfCheck are the codes an element's own attributes and text give: they
@@ -1455,17 +1464,17 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 			// only); a table's <item> is the row template, with no
 			// children.
 			if b.v2 && n.Tag == "column" {
-				b.diag(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<column> holds its cell template as text, with {path} for the row's values; it cannot contain elements (found <%s>)", c.Name)
+				b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<column> holds its cell template as text, with {path} for the row's values; it cannot contain elements (found <%s>)", c.Name)
 				continue
 			}
 			if b.tableItem(n) {
-				b.diag(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "a table's <item> is the row template: it takes class and class:NAME only, no children (found <%s>); the cells come from the <column> elements", c.Name)
+				b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "a table's <item> is the row template: it takes class and class:NAME only, no children (found <%s>); the cells come from the <column> elements", c.Name)
 				continue
 			}
 			if b.v2 && (n.Tag == "sparkline" || n.Tag == "hints") {
 				// SPEC §6.11, §6.12: no children (a hints' items come
 				// from the keymap).
-				b.diag(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<%s> takes no children (found <%s>)", n.Tag, c.Name)
+				b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<%s> takes no children (found <%s>)", n.Tag, c.Name)
 				continue
 			}
 			if leafKinds[n.Tag] {
@@ -1528,13 +1537,13 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 		}
 		switch {
 		case b.v2 && n.Tag == "table":
-			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <table>; a column's cell template is the body of its <column>")
+			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <table>; a column's cell template is the body of its <column>")
 		case b.v2 && n.Tag == "tabs":
-			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <tabs>; put it inside a <tab>, and name the tab with label=")
+			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <tabs>; put it inside a <tab>, and name the tab with label=")
 		case b.v2 && (n.Tag == "sparkline" || n.Tag == "hints"):
-			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "<%s> takes no text", n.Tag)
+			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "<%s> takes no text", n.Tag)
 		case b.tableItem(n):
-			b.diag(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "a table's <item> is the row template and takes no text; the cells come from the <column> elements")
+			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "a table's <item> is the row template and takes no text; the cells come from the <column> elements")
 		case !b.tagKnown(n.Tag):
 			// V001 already names this element; "wrap it in <text>" would
 			// only be noise next to it.
@@ -1556,6 +1565,9 @@ func (b *builder) addStyle(n *ir.Node, body string, textLine, textCol int) {
 		}
 	}
 	ref := StyleRef{Src: n.Attrs["src"], Body: body, Line: n.Line, Col: n.Col, BodyLine: textLine, BodyCol: textCol, File: file}
+	if n.Org != nil && n.Org.Placed != nil {
+		ref.Org = n.Org
+	}
 	if n.Org != nil && b.comp != nil && len(b.comp.chain) > 1 {
 		// Written in a fragment: a relative src resolves against that
 		// file's directory, and the sheet is named by its path relative to

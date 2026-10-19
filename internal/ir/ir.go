@@ -166,6 +166,24 @@ func (n *Node) FileName(def string) string {
 	return n.Org.FileOr(def)
 }
 
+// placer is the include that placed the elements of o, nil for no origin
+// or an origin nothing placed.
+func (o *Origin) placer() *Node {
+	if o == nil {
+		return nil
+	}
+	return o.Placed
+}
+
+// Placer is the innermost include that placed the node, nil if none; the
+// next one out is the Placer of that include.
+func (n *Node) Placer() *Node {
+	if n == nil {
+		return nil
+	}
+	return n.Org.placer()
+}
+
 // FileOr is the file name o says, or def for no origin (an element of the
 // document's own text).
 func (o *Origin) FileOr(def string) string {
@@ -180,10 +198,19 @@ func (o *Origin) FileOr(def string) string {
 // naming the line the author wrote. It is "" for an element nothing
 // placed.
 func PlacedSuffix(n *Node) string {
-	if n == nil || n.Org == nil || n.Org.Placed == nil {
+	if n == nil {
 		return ""
 	}
-	return ", placed by " + n.Org.Placed.describePlacer() + " at " + n.Org.Placed.Loc(true)
+	return n.Org.PlacedSuffix()
+}
+
+// PlacedSuffix is the placement suffix of an element written where o says
+// (see the function of the same name); "" for no origin or none placed.
+func (o *Origin) PlacedSuffix() string {
+	if o == nil || o.Placed == nil {
+		return ""
+	}
+	return ", placed by " + o.Placed.describePlacer() + " at " + o.Placed.Loc(true)
 }
 
 // describePlacer names an <include> (and, in a later phase, a <use>) the

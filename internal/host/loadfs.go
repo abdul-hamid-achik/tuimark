@@ -1,7 +1,9 @@
 package host
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	iofs "io/fs"
 	"os"
 	"path"
@@ -73,7 +75,14 @@ func diskResolver(dir, selfPath string) styleResolver {
 			}
 			return p, false
 		},
-		read:  os.ReadFile,
+		read: os.ReadFile,
+		// An included fragment is read with a bound: nothing but a regular
+		// file, and no more than MaxReadBytes (a FIFO or /dev/zero named by
+		// an include would otherwise hang or exhaust memory).
+		readFile: func(p string) ([]byte, error) {
+			data, err := ReadRegular(p, 0)
+			return data, includeReadErr(err)
+		},
 		canon: func(p string) string { abs, _ := filepath.Abs(p); return abs },
 		base:  filepath.Base,
 		name: func(p string) string {
@@ -110,12 +119,53 @@ func fsResolver(fsys iofs.FS, dir, name string) styleResolver {
 			}
 			return joined, false
 		},
-		read:  func(p string) ([]byte, error) { return iofs.ReadFile(fsys, p) },
+		read: func(p string) ([]byte, error) { return iofs.ReadFile(fsys, p) },
+		readFile: func(p string) ([]byte, error) {
+			data, err := readFSRegular(fsys, p)
+			return data, includeReadErr(err)
+		},
 		canon: path.Clean,
 		base:  path.Base,
 		name:  func(p string) string { return slashRel(dir, p) },
 		self:  path.Clean(name),
 	}
+}
+
+// includeReadErr words a refusal of ReadRegular for an include's V006 "cannot
+// be read": the reason alone, without the path the message already names.
+func includeReadErr(err error) error {
+	switch {
+	case errors.Is(err, ErrNotRegular):
+		return errors.New("not a regular file")
+	case errors.Is(err, ErrTooLarge):
+		return fmt.Errorf("file too large (over %d bytes)", MaxReadBytes)
+	}
+	return err
+}
+
+// readFSRegular is ReadRegular for a file inside an fs.FS: it refuses a file
+// that is not regular, and one of more than MaxReadBytes.
+func readFSRegular(fsys iofs.FS, name string) ([]byte, error) {
+	fi, err := iofs.Stat(fsys, name)
+	if err != nil {
+		return nil, err
+	}
+	if !fi.Mode().IsRegular() {
+		return nil, fmt.Errorf("%s: %w", name, ErrNotRegular)
+	}
+	f, err := fsys.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, MaxReadBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > MaxReadBytes {
+		return nil, fmt.Errorf("%s: %w (over %d bytes)", name, ErrTooLarge, int64(MaxReadBytes))
+	}
+	return data, nil
 }
 
 // slashRel is target relative to base, both cleaned slash-separated paths
