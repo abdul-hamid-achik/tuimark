@@ -5,17 +5,17 @@ import (
 	"testing"
 )
 
-// v0.4.1: the text-level version completion filters by is the parser's: 3
-// without a version attribute, 1 for any value other than 1, 2, or 3 and
-// for the spike root.
+// v0.4.1: the text-level version completion filters by is the parser's: 4
+// (the current language, SPEC v0.4b §15.12) without a version attribute, 1
+// for any value other than 1, 2, or 3 and for the spike root.
 func TestDocVersionOfMatchesTheParser(t *testing.T) {
 	for _, c := range []struct {
 		text string
 		want int
 	}{
-		{"", 3},
-		{"<tui>\n<screen/>\n</tui>", 3},
-		{`<tui theme="auto"><screen/></tui>`, 3},
+		{"", 4},
+		{"<tui>\n<screen/>\n</tui>", 4},
+		{`<tui theme="auto"><screen/></tui>`, 4},
 		{`<tui version="1"><screen/></tui>`, 1},
 		{`<tui theme="dark" version="2">`, 2},
 		{`<tui version="3">`, 3},
@@ -25,7 +25,7 @@ func TestDocVersionOfMatchesTheParser(t *testing.T) {
 		{`<tui version="">`, 1},
 		{`<tui version=`, 1},
 		{`<app width="100%">`, 1},
-		{"<tui>\n<screen><text>version=\"2\"</text></screen>", 3},
+		{"<tui>\n<screen><text>version=\"2\"</text></screen>", 4},
 	} {
 		if got := docVersionOf(c.text); got != c.want {
 			t.Errorf("docVersionOf(%q) = %d, want %d", c.text, got, c.want)
