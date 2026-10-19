@@ -82,10 +82,12 @@ export default defineConfig({
   mdxOptions: {
     rehypeCodeOptions: {
       themes: { light: 'github-light-default', dark: 'github-dark-default' },
-      // xml, css and shellscript are preloaded: an alias (tui, tcss, sh) is
-      // only followed to a loaded language, and the docs and the blog are
-      // compiled side by side, so neither can count on the other loading it.
-      langs: [grid, term, 'xml', 'css', 'shellscript'],
+      // Every language a page uses is preloaded: an alias (tui, tcss, sh,
+      // ts) is only followed to a loaded language, and the docs and the blog
+      // are compiled side by side, so no page can count on another loading
+      // it first (CI failed on ```ts in guide/kit.mdx). A new fence language
+      // goes in this list.
+      langs: [grid, term, 'xml', 'css', 'shellscript', 'typescript', 'go', 'json', 'yaml', 'toml', 'lua'],
       langAlias: { tui: 'xml', tcss: 'css' },
       // Fumadocs' own transformers, plus the language as data-lang on the
       // block, so the stylesheet can set terminal output (grid, term) tight.
