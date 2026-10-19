@@ -109,13 +109,17 @@ func (l *Loader) Load(path string, fn func(ctx context.Context) (any, error)) (*
 			_ = l.app.Set(path+".loading", false)
 			return
 		}
+		msg := ""
+		if ferr != nil {
+			msg = ferr.Error()
+		} else if werr := l.app.Batch(func(b *tuimark.Batch) error {
+			return errors.Join(b.Set(path+".data", v), b.Set(path+".error", ""), b.Set(path+".loading", false))
+		}); werr != nil {
+			msg = werr.Error() // the value is not JSON-shaped (NaN, a channel): a failed Batch applies nothing
+		} else {
+			return
+		}
 		_ = l.app.Batch(func(b *tuimark.Batch) error {
-			msg := ""
-			if ferr != nil {
-				msg = ferr.Error()
-			} else if err := b.Set(path+".data", v); err != nil {
-				msg = err.Error()
-			}
 			return errors.Join(b.Set(path+".error", msg), b.Set(path+".loading", false))
 		})
 	}()

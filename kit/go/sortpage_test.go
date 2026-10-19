@@ -132,8 +132,41 @@ func TestSortPageTitlesCarryTheArrow(t *testing.T) {
 	if title("name") != "SERVICE" || title("state") != "STATE ▲" {
 		t.Errorf("after switching: %q %q", title("name"), title("state"))
 	}
-	if err := sp.Cycle("nope"); err == nil {
-		t.Error("an unknown column should be an error")
+	if err := sp.Cycle("nope"); err != nil {
+		t.Errorf("an unknown column is ignored, not an error: %v", err)
+	}
+	if title("state") != "STATE ▲" {
+		t.Error("an unknown column must not change the sort")
+	}
+}
+
+// The order is cached between writes; it must be redone when what it was
+// computed from changes, and must follow rows that changed in other fields.
+func TestSortCacheFollowsTheSource(t *testing.T) {
+	app, sp := serviceTable(t, 50)
+	_ = sp.Cycle("name")
+	all := mustGet(t, app, "all").([]any)
+	// A change in a field other than the sort key: the order stays, the row updates.
+	all[0].(map[string]any)["state"] = "stopped"
+	_ = app.Set("all", all)
+	if got := order(t, app); !equal(got, []string{"api-gateway", "auth", "billing", "mailer", "search"}) {
+		t.Fatalf("after an unrelated field changed: %v", got)
+	}
+	// A change in the key: sorted again.
+	all[0].(map[string]any)["name"] = "zzz-last"
+	_ = app.Set("all", all)
+	text := screen(t, app)
+	if strings.Index(text, "zzz-last") < strings.Index(text, "search") {
+		t.Errorf("a renamed row should move:\n%s", text)
+	}
+	// A row added.
+	all = append(all, map[string]any{"id": "aaa", "name": "aaa-first", "state": "running", "ok": true, "region": "x", "rps": "1", "p95": "1"})
+	_ = app.Set("all", all)
+	if got := order(t, app); len(got) > 0 && got[0] == "api-gateway" {
+		t.Errorf("an added row sorts in: %v", got)
+	}
+	if total := mustGet(t, app, "svc_meta.total"); total != 6.0 {
+		t.Errorf("total = %v", total)
 	}
 }
 

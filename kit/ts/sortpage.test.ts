@@ -50,7 +50,8 @@ describe("sortpage", () => {
     expect(store.at("svc_meta.titles.name")).toBe("SERVICE ▼");
     await sp.cycle("rps");
     expect([store.at("svc_meta.titles.name"), store.at("svc_meta.titles.rps")]).toEqual(["SERVICE", "REQ/S ▲"]);
-    await expect(sp.cycle("nope")).rejects.toThrow("not a column");
+    await sp.cycle("nope"); // not a column: ignored (a handler that throws ends the session)
+    expect(store.at("svc_meta.titles.rps")).toBe("REQ/S ▲");
   });
 
   test("pages, label and clamping", async () => {

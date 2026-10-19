@@ -42,7 +42,7 @@ func loadSample(t *testing.T, name string) *tuimark.App {
 }
 
 // bareApp is a document that reads nothing, for helpers that need no markup.
-func bareApp(t *testing.T) *tuimark.App {
+func bareApp(t testing.TB) *tuimark.App {
 	t.Helper()
 	app, err := tuimark.Parse(strings.NewReader(`<tui><screen id="s"><text>x</text></screen></tui>`))
 	if err != nil {

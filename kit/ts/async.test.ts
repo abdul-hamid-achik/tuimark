@@ -54,6 +54,18 @@ describe("loader", () => {
     expect(store.at("c.loading")).toBe(false);
   });
 
+  test("a value the store refuses ends the load with the reason in .error, and done does not reject", async () => {
+    const store = new FakeStore();
+    const errors: unknown[] = [];
+    const loader = createLoader(store.host, { onError: (e) => errors.push(e) });
+    const task = await loader.load("x", async () => () => 1); // a function cannot be cloned or sent
+    await task.done; // would throw if done rejected
+    expect(store.at("x.loading")).toBe(false);
+    expect(typeof store.at("x.error")).toBe("string");
+    expect(store.at("x.error")).not.toBe("");
+    expect(errors.length).toBe(1);
+  });
+
   test("different paths do not interfere", async () => {
     const store = new FakeStore();
     const loader = createLoader(store.host);

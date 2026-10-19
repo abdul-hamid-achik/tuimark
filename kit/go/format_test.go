@@ -1,66 +1,103 @@
 package kit
 
 import (
+	"encoding/json"
+	"math"
+	"os"
 	"testing"
 	"time"
 )
 
-func TestBytes(t *testing.T) {
-	for n, want := range map[int64]string{
-		0: "0 B", 999: "999 B", 1023: "1023 B", 1024: "1.0 KiB", 1536: "1.5 KiB",
-		1048576: "1.0 MiB", 5 << 20: "5.0 MiB", 150 << 20: "150 MiB",
-		3 << 30: "3.0 GiB", 1<<20 - 1: "1.0 MiB", -2048: "-2.0 KiB",
-	} {
-		if got := Bytes(n); got != want {
-			t.Errorf("Bytes(%d) = %q, want %q", n, got, want)
-		}
-	}
+// The tables in ../testdata/format.json are shared with the TypeScript tests
+// (kit/ts/format.test.ts): the same input must give the same string.
+type formatFixture struct {
+	Bytes []struct {
+		In  json.Number `json:"in"`
+		Out string      `json:"out"`
+	} `json:"bytes"`
+	DurationMs []struct {
+		In  int64  `json:"in"`
+		Out string `json:"out"`
+	} `json:"durationMs"`
+	RelativeSeconds []struct {
+		In  int64  `json:"in"`
+		Out string `json:"out"`
+	} `json:"relativeSeconds"`
+	Percent []struct {
+		In       float64 `json:"in"`
+		Decimals int     `json:"decimals"`
+		Out      string  `json:"out"`
+	} `json:"percent"`
+	Thousands []struct {
+		In  int64  `json:"in"`
+		Out string `json:"out"`
+	} `json:"thousands"`
 }
 
-func TestDuration(t *testing.T) {
-	for d, want := range map[time.Duration]string{
-		0: "0ms", 450 * time.Millisecond: "450ms", time.Second: "1s", 59 * time.Second: "59s",
-		2*time.Minute + 5*time.Second: "2m 5s", 2 * time.Minute: "2m",
-		time.Hour + 5*time.Minute: "1h 5m", 3 * time.Hour: "3h",
-		76 * time.Hour: "3d 4h", -90 * time.Second: "-1m 30s",
-	} {
-		if got := Duration(d); got != want {
-			t.Errorf("Duration(%v) = %q, want %q", d, got, want)
-		}
+func loadFormatFixture(t *testing.T) formatFixture {
+	t.Helper()
+	raw, err := os.ReadFile("../testdata/format.json")
+	if err != nil {
+		t.Fatal(err)
 	}
+	var fx formatFixture
+	if err := json.Unmarshal(raw, &fx); err != nil {
+		t.Fatal(err)
+	}
+	return fx
 }
 
-func TestRelative(t *testing.T) {
+func TestFormatFixtures(t *testing.T) {
+	fx := loadFormatFixture(t)
+	for _, c := range fx.Bytes {
+		n, err := c.In.Int64()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := Bytes(n); got != c.Out {
+			t.Errorf("Bytes(%d) = %q, want %q", n, got, c.Out)
+		}
+	}
+	for _, c := range fx.DurationMs {
+		if got := Duration(time.Duration(c.In) * time.Millisecond); got != c.Out {
+			t.Errorf("Duration(%dms) = %q, want %q", c.In, got, c.Out)
+		}
+	}
 	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
-	for off, want := range map[time.Duration]string{
-		-3 * time.Second: "just now", 5 * time.Second: "just now",
-		-30 * time.Second: "30 seconds ago", -time.Minute: "1 minute ago", -5 * time.Minute: "5 minutes ago",
-		-time.Hour: "1 hour ago", -23 * time.Hour: "23 hours ago", -48 * time.Hour: "2 days ago",
-		-45 * 24 * time.Hour: "1 month ago", -400 * 24 * time.Hour: "1 year ago",
-		2 * time.Hour: "in 2 hours", 24 * time.Hour: "in 1 day",
-	} {
-		if got := Relative(now.Add(off), now); got != want {
-			t.Errorf("Relative(now%+v) = %q, want %q", off, got, want)
+	for _, c := range fx.RelativeSeconds {
+		if got := Relative(now.Add(time.Duration(c.In)*time.Second), now); got != c.Out {
+			t.Errorf("Relative(now%+ds) = %q, want %q", c.In, got, c.Out)
+		}
+	}
+	for _, c := range fx.Percent {
+		if got := Percent(c.In, c.Decimals); got != c.Out {
+			t.Errorf("Percent(%v, %d) = %q, want %q", c.In, c.Decimals, got, c.Out)
+		}
+	}
+	for _, c := range fx.Thousands {
+		if got := Thousands(c.In); got != c.Out {
+			t.Errorf("Thousands(%d) = %q, want %q", c.In, got, c.Out)
 		}
 	}
 }
 
-func TestPercentAndThousands(t *testing.T) {
-	if got := Percent(0.256, 0); got != "26%" {
-		t.Errorf("Percent(0.256, 0) = %q", got)
+func TestExtremesDoNotOverflowOrLoop(t *testing.T) {
+	if got := Bytes(math.MinInt64); got != "-8.0 EiB" {
+		t.Errorf("Bytes(MinInt64) = %q", got)
 	}
-	if got := Percent(0.256, 1); got != "25.6%" {
-		t.Errorf("Percent(0.256, 1) = %q", got)
+	if got := Bytes(math.MaxInt64); got != "8.0 EiB" {
+		t.Errorf("Bytes(MaxInt64) = %q", got)
 	}
-	if got := Percent(1, -1); got != "100%" {
-		t.Errorf("Percent(1, -1) = %q", got)
+	if got := Duration(math.MinInt64); got == "" || got[0] != '-' {
+		t.Errorf("Duration(MinInt64) = %q", got)
 	}
-	for n, want := range map[int64]string{
-		0: "0", 12: "12", 123: "123", 1234: "1,234", 12345: "12,345", 123456: "123,456",
-		1234567: "1,234,567", -1234567: "-1,234,567", -999: "-999",
-	} {
-		if got := Thousands(n); got != want {
-			t.Errorf("Thousands(%d) = %q, want %q", n, got, want)
-		}
+	if got := Percent(math.NaN(), 0); got != "-" {
+		t.Errorf("Percent(NaN) = %q", got)
+	}
+	if got := Percent(math.Inf(1), 0); got != "-" {
+		t.Errorf("Percent(+Inf) = %q", got)
+	}
+	if got := Thousands(math.MinInt64); got != "-9,223,372,036,854,775,808" {
+		t.Errorf("Thousands(MinInt64) = %q", got)
 	}
 }

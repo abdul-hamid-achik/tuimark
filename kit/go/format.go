@@ -16,16 +16,21 @@ import (
 )
 
 // Bytes formats a byte count with binary units: 0 B, 999 B, 1.0 KiB,
-// 1.5 MiB, 3.2 GiB. One decimal under 100 of a unit, none above.
+// 1.5 MiB, 3.2 GiB. One decimal under 100 of a unit, none above. Halves round
+// up (1280 is "1.3 KiB"), as the TypeScript bytes does.
 func Bytes(n int64) string {
 	if n < 0 {
-		return "-" + Bytes(-n)
+		return "-" + bytesOf(-float64(n)) // float64, so math.MinInt64 is safe
 	}
+	return bytesOf(float64(n))
+}
+
+func bytesOf(n float64) string {
 	if n < 1024 {
-		return fmt.Sprintf("%d B", n)
+		return fmt.Sprintf("%d B", int64(n))
 	}
 	units := []string{"KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}
-	v := float64(n)
+	v := n
 	u := -1
 	for v >= 1024 && u < len(units)-1 {
 		v /= 1024
@@ -35,10 +40,10 @@ func Bytes(n int64) string {
 		v /= 1024
 		u++
 	}
-	if v >= 100 {
-		return fmt.Sprintf("%.0f %s", v, units[u])
+	if v >= 99.95 { // one decimal would print 100.0
+		return toFixed(v, 0) + " " + units[u]
 	}
-	return fmt.Sprintf("%.1f %s", v, units[u])
+	return toFixed(v, 1) + " " + units[u]
 }
 
 // Duration formats a duration with its two largest units: 450ms, 3s, 2m 5s,
@@ -46,7 +51,12 @@ func Bytes(n int64) string {
 // leading "-".
 func Duration(d time.Duration) string {
 	if d < 0 {
-		return "-" + Duration(-d)
+		if d == math.MinInt64 {
+			d = math.MaxInt64 // -MinInt64 overflows
+		} else {
+			d = -d
+		}
+		return "-" + Duration(d)
 	}
 	if d < time.Second {
 		return fmt.Sprintf("%dms", d.Milliseconds())
@@ -71,6 +81,27 @@ func unitPair(a int64, au string, b int64, bu string) string {
 		return fmt.Sprintf("%d%s", a, au)
 	}
 	return fmt.Sprintf("%d%s %d%s", a, au, b, bu)
+}
+
+// toFixed is x with d decimals, a half rounding away from zero, which is what
+// JavaScript's toFixed does (Go's own formatting rounds a half to even). A tie
+// is a value whose exact decimal expansion ends in a 5 right after the digits
+// kept; 1.005 is not one, because the double nearest to it is a little below.
+func toFixed(x float64, d int) string {
+	neg := x < 0
+	if neg {
+		x = -x
+	}
+	const extra = 25
+	digits := strconv.FormatFloat(x, 'f', d+extra, 64)
+	if tail := digits[len(digits)-extra:]; tail[0] == '5' && strings.Trim(tail[1:], "0") == "" {
+		x = math.Nextafter(x, math.Inf(1))
+	}
+	out := strconv.FormatFloat(x, 'f', d, 64)
+	if neg && strings.Trim(out, "0.") != "" {
+		return "-" + out
+	}
+	return out
 }
 
 // Relative formats t relative to now: "just now" (under 10 s), "5 minutes
@@ -119,7 +150,7 @@ func Percent(fraction float64, decimals int) string {
 	if decimals < 0 {
 		decimals = 0
 	}
-	return strconv.FormatFloat(fraction*100, 'f', decimals, 64) + "%"
+	return toFixed(fraction*100, decimals) + "%"
 }
 
 // Thousands formats an integer with comma separators: 1234567 is "1,234,567".

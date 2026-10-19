@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { FakeStore } from "./fake-store.ts";
-import { createFilter, filterItems, match } from "./filter.ts";
+import { readFileSync } from "node:fs";
+import { createFilter, filterItems, match, type FilterMode } from "./filter.ts";
 
 const rows = [
   { id: "deploy", label: "Deploy to production", meta: { team: "ops" }, n: 3 },
@@ -36,6 +37,15 @@ describe("filterItems", () => {
     expect(match("fuzzy", "ac", "abc")).toBe(true);
     expect(match("substring", "BC", "abc")).toBe(true);
   });
+});
+
+// The cases in ../testdata/filter.json are shared with the Go tests (kit/go/filter_test.go).
+test("the shared fixture", () => {
+  const fx = JSON.parse(readFileSync(new URL("../testdata/filter.json", import.meta.url), "utf8")) as {
+    rows: unknown[];
+    cases: { mode: FilterMode; fields: string[]; query: string; ids: string[] }[];
+  };
+  for (const c of fx.cases) expect(ids(filterItems(fx.rows, c.query, c.fields, c.mode))).toEqual(c.ids);
 });
 
 describe("createFilter", () => {

@@ -31,7 +31,7 @@ line.
   snapshot independence, no hang). About an hour of local fuzzing found no
   crash.
 - **Kit host helpers (`kit/go`, `kit/ts`).** The behavior markup cannot
-  express, as files you copy into your project and own (ADR 0030), not a
+  express, as files you copy into your project and own, not a
   public package: `route` (an event's instance and part), `toasts` (a capped
   queue that expires), `filter` (substring or fuzzy, into a store path with
   counts), `sortpage` (column sort cycling with arrows, and pages), `form`

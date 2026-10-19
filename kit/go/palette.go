@@ -83,6 +83,7 @@ func NewPalette(app *tuimark.App, opts PaletteOptions, cmds ...Command) (*Palett
 // command whose ID is already there replaces it.
 func (p *Palette) Add(cmds ...Command) error {
 	p.mu.Lock()
+	defer p.mu.Unlock() // held across the Set, so two Adds reach the store in the order they changed the registry
 	for _, c := range cmds {
 		replaced := false
 		for i := range p.cmds {
@@ -98,7 +99,6 @@ func (p *Palette) Add(cmds ...Command) error {
 	for i, c := range p.cmds {
 		rows[i] = map[string]any{"id": c.ID, "label": c.Title, "hint": c.Key}
 	}
-	p.mu.Unlock()
 	return p.app.Set(p.opts.Path+".commands", rows)
 }
 
@@ -115,7 +115,7 @@ func (p *Palette) first() string {
 func (p *Palette) Register() {
 	p.app.On("palette_open", p.Open)
 	p.app.On("palette_close", p.Close)
-	p.app.On("palette_run", p.RunCurrent)
+	p.app.On("palette_run", p.Run)
 	p.app.On("palette_query", func(tuimark.Event) error { return nil })
 }
 
@@ -132,11 +132,11 @@ func (p *Palette) Open(tuimark.Event) error {
 // Close is the handler of palette_close.
 func (p *Palette) Close(tuimark.Event) error { return p.app.Set(p.opts.Path+".open", false) }
 
-// RunCurrent is the handler of palette_run: it runs the command under the
+// Run is the handler of palette_run: it runs the command under the
 // cursor, or the first match when the cursor's row was filtered away. With no
 // match it does nothing and the palette stays open, where its empty line
 // says why.
-func (p *Palette) RunCurrent(tuimark.Event) error {
+func (p *Palette) Run(tuimark.Event) error {
 	cur, _ := p.app.Get(p.opts.Path + ".cur")
 	curID, _ := cur.(string)
 	items, _ := p.app.Get(p.opts.Found + ".items")

@@ -2,6 +2,7 @@ package kit
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 )
 
@@ -111,6 +112,35 @@ func TestFilterDerivesItemsAnyCountAndTotal(t *testing.T) {
 	_ = app.Set("items", []any{map[string]any{"id": "nope-1", "label": "nope one"}})
 	if got := read(); got["count"] != 1.0 || got["total"] != 1.0 {
 		t.Errorf("new source: %v", got)
+	}
+}
+
+// The cases in ../testdata/filter.json are shared with kit/ts/filter.test.ts.
+func TestFilterFixtures(t *testing.T) {
+	raw, err := os.ReadFile("../testdata/filter.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fx struct {
+		Rows  []any `json:"rows"`
+		Cases []struct {
+			Mode   string   `json:"mode"`
+			Fields []string `json:"fields"`
+			Query  string   `json:"query"`
+			IDs    []string `json:"ids"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(raw, &fx); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range fx.Cases {
+		mode := Substring
+		if c.Mode == "fuzzy" {
+			mode = Fuzzy
+		}
+		if got := ids(FilterItems(fx.Rows, c.Query, c.Fields, mode)); !equal(got, c.IDs) {
+			t.Errorf("%s %v %q = %v, want %v", c.Mode, c.Fields, c.Query, got, c.IDs)
+		}
 	}
 }
 

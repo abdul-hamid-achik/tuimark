@@ -24,6 +24,11 @@ export interface Request {
   onCancel?: () => unknown;
 }
 
+/**
+ * The dialogs of one app. confirm(inst, title, body, onConfirm) opens a k-dialog
+ * instance, register() installs the dialog_confirm and dialog_cancel handlers
+ * (confirmed / cancelled), and the answer is routed by instance.
+ */
 export function createDialogs(ui: Ui) {
   const pending = new Map<string, Request>(); // by instance
 

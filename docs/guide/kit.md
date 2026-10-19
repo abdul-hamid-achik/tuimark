@@ -128,7 +128,7 @@ Markup has no expressions, so a few components lean on the host: the palette's f
 
 A component is markup, and markup has no expressions. Expiring a toast, filtering the palette, validating a form and routing a dialog's answer have to happen in the host. The kit ships that code as **helpers**: small files in Go and in TypeScript that write the store paths the components read. Like the components, you copy them and own them. They are not a package: `kit/go` is a nested module named `tuimarkkit`, with no dot in its name so that `go get` cannot fetch it, and `kit/ts` has no published name.
 
-To use one, copy its file into your project. In Go, change `package kit` to your package; a helper imports only `github.com/abdul-hamid-achik/tuimark`. In TypeScript, copy the `.ts` file next to your parent; it imports only types from `@tuimark/host`. A file that needs another says so in its header: `dialog` and `form` need `route`, and `palette` needs `filter`. Each helper has a test beside it that drives the real component documents.
+To use one, copy its file into your project. In Go, change `package kit` to your package; a helper imports only `github.com/abdul-hamid-achik/tuimark`. In TypeScript, copy the `.ts` file next to your parent; it imports only types from `@tuimark/host`. A file that needs another says so in its header: `dialog` and `form` need `route`, and `palette` needs `filter`. Each helper has a test beside it. The Go tests of `toasts`, `form`, `dialog`, `palette` and `sortpage` load the real component documents and drive them; the others, and the TypeScript tests, run against the store alone.
 
 | Helper | What it does | Writes |
 |---|---|---|

@@ -19,9 +19,9 @@ package kit
 import (
 	"errors"
 	"fmt"
-	"math"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/abdul-hamid-achik/tuimark"
 )
@@ -48,6 +48,9 @@ type SortPageOptions struct {
 type SortPage struct {
 	app  *tuimark.App
 	opts SortPageOptions
+
+	mu    sync.Mutex // guards cache: a Derive function may run from any goroutine
+	cache sortCache
 }
 
 const (
@@ -110,13 +113,17 @@ func (sp *SortPage) view(get func(string) (any, bool)) ([]any, map[string]any) {
 	st := sp.state(get)
 	src, _ := get(sp.opts.Source)
 	all, _ := src.([]any)
-	rows := SortRows(all, st.col, st.desc)
-	total := len(rows)
+	sp.mu.Lock()
+	perm, _ := sortPerm(all, st.col, st.desc, &sp.cache)
+	sp.mu.Unlock()
+	total := len(all)
 	pages := max(1, (total+st.size-1)/st.size)
 	page := min(max(st.page, 1), pages)
 	lo, hi := (page-1)*st.size, min(page*st.size, total)
 	out := make([]any, 0, hi-lo)
-	out = append(out, rows[lo:hi]...)
+	for _, p := range perm[lo:hi] {
+		out = append(out, all[p])
+	}
 	titles := map[string]any{}
 	for _, c := range sp.opts.Columns {
 		titles[c.Key] = c.Title
@@ -150,14 +157,16 @@ func PageLabel(page, size, total int) string {
 
 // Cycle is the click on a column header: a new column sorts ascending, the
 // same column again descending, a third time back to the source order. The
-// page goes back to 1.
+// page goes back to 1. A name that is not one of the columns does nothing and
+// returns nil, so a keymap row or a click on something else can share the
+// handler (an error from a handler would end Run).
 func (sp *SortPage) Cycle(col string) error {
 	known := false
 	for _, c := range sp.opts.Columns {
 		known = known || c.Key == col
 	}
 	if !known {
-		return fmt.Errorf("kit: %q is not a column of %s", col, sp.opts.Out)
+		return nil
 	}
 	st := sp.state(sp.app.Get)
 	switch {
@@ -179,8 +188,10 @@ func (sp *SortPage) SetPage(n int) error {
 	return sp.write(st)
 }
 
-// NextPage and PrevPage move one page, and stop at the ends.
+// NextPage moves one page forward, and stops at the last.
 func (sp *SortPage) NextPage() error { return sp.step(1) }
+
+// PrevPage moves one page back, and stops at the first.
 func (sp *SortPage) PrevPage() error { return sp.step(-1) }
 
 func (sp *SortPage) step(d int) error {
@@ -210,78 +221,113 @@ func (sp *SortPage) write(st sortState) error {
 // put false first, and a row without the field goes last in either direction.
 // An empty key keeps the order.
 func SortRows(rows []any, key string, desc bool) []any {
-	out := append([]any(nil), rows...)
-	if key == "" {
-		return out
+	perm, _ := sortPerm(rows, key, desc, nil)
+	out := make([]any, len(rows))
+	for i, p := range perm {
+		out[i] = rows[p]
 	}
-	sort.SliceStable(out, func(i, j int) bool {
-		a, aok := sortField(out[i], key)
-		b, bok := sortField(out[j], key)
-		switch {
-		case !aok || !bok:
-			return aok && !bok // missing goes last
-		case desc:
-			return compareSort(a, b) > 0
-		}
-		return compareSort(a, b) < 0
-	})
 	return out
 }
 
-func sortField(row any, key string) (any, bool) {
-	cur := row
-	for _, seg := range strings.Split(key, ".") {
-		m, ok := cur.(map[string]any)
-		if !ok {
-			return nil, false
-		}
-		cur = m[seg]
-	}
-	switch v := cur.(type) {
-	case float64, bool:
-		return v, true
-	case string:
-		return strings.ToLower(v), true
-	}
-	return nil, false
+// sortKey is the sortable value of one row, extracted once per sort.
+type sortKey struct {
+	rank int8 // 0 number, 1 boolean, 2 text, 3 missing
+	n    float64
+	s    string
 }
 
-// compareSort orders numbers, then booleans, then text.
-func compareSort(a, b any) int {
-	rank := func(v any) int {
-		switch v.(type) {
-		case float64:
-			return 0
-		case bool:
-			return 1
-		}
-		return 2
-	}
-	if ra, rb := rank(a), rank(b); ra != rb {
-		return ra - rb
-	}
-	switch x := a.(type) {
-	case float64:
-		y := b.(float64)
-		if math.IsNaN(x) || math.IsNaN(y) {
-			return 0
-		}
-		switch {
-		case x < y:
-			return -1
-		case x > y:
-			return 1
-		}
-	case bool:
-		y := b.(bool)
-		if x != y {
-			if !x {
-				return -1
+// sortCache remembers the order the last sort produced. The keys are
+// compared before the cache is trusted, so rows that changed in a way that
+// matters to the order are sorted again, and rows that changed in other fields
+// keep their order for free.
+type sortCache struct {
+	key  string
+	desc bool
+	keys []sortKey
+	perm []int
+}
+
+func extractKeys(rows []any, key string) []sortKey {
+	segs := strings.Split(key, ".")
+	keys := make([]sortKey, len(rows))
+	for i, row := range rows {
+		keys[i] = sortKey{rank: 3}
+		cur := row
+		for _, seg := range segs {
+			m, ok := cur.(map[string]any)
+			if !ok {
+				cur = nil
+				break
 			}
-			return 1
+			cur = m[seg]
 		}
-	case string:
-		return strings.Compare(x, b.(string))
+		switch v := cur.(type) {
+		case float64:
+			keys[i] = sortKey{rank: 0, n: v}
+		case bool:
+			keys[i] = sortKey{rank: 1}
+			if v {
+				keys[i].n = 1
+			}
+		case string:
+			keys[i] = sortKey{rank: 2, s: strings.ToLower(v)}
+		}
+	}
+	return keys
+}
+
+// sortPerm is the order of rows (as indexes) for key, using and updating cache
+// when it is not nil.
+func sortPerm(rows []any, key string, desc bool, cache *sortCache) ([]int, bool) {
+	perm := make([]int, len(rows))
+	for i := range perm {
+		perm[i] = i
+	}
+	if key == "" {
+		return perm, true
+	}
+	keys := extractKeys(rows, key)
+	if cache != nil && cache.key == key && cache.desc == desc && len(cache.keys) == len(keys) {
+		same := true
+		for i := range keys {
+			if keys[i] != cache.keys[i] {
+				same = false
+				break
+			}
+		}
+		if same {
+			return cache.perm, true
+		}
+	}
+	sort.SliceStable(perm, func(i, j int) bool {
+		a, b := keys[perm[i]], keys[perm[j]]
+		if a.rank == 3 || b.rank == 3 {
+			return a.rank != 3 && b.rank == 3 // missing goes last
+		}
+		c := compareKeys(a, b)
+		if desc {
+			return c > 0
+		}
+		return c < 0
+	})
+	if cache != nil {
+		*cache = sortCache{key: key, desc: desc, keys: keys, perm: perm}
+	}
+	return perm, false
+}
+
+func compareKeys(a, b sortKey) int {
+	if a.rank != b.rank {
+		return int(a.rank) - int(b.rank)
+	}
+	if a.rank == 2 {
+		return strings.Compare(a.s, b.s)
+	}
+	switch {
+	case a.n < b.n:
+		return -1
+	case a.n > b.n:
+		return 1
 	}
 	return 0
 }

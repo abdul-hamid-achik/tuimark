@@ -12,6 +12,7 @@ package kit
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -172,8 +173,14 @@ func fieldText(row any, path string) string {
 	switch v := cur.(type) {
 	case string:
 		return v
-	case float64, bool, int, int64:
-		return fmt.Sprint(v)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64) // 1000000, not 1e+06
+	case int:
+		return strconv.Itoa(v)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	case bool:
+		return strconv.FormatBool(v)
 	}
 	return ""
 }

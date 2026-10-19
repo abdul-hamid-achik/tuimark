@@ -11,16 +11,16 @@
 // component, drops the one on screen (register()).
 import type { Host } from "@tuimark/host";
 
-type Ui = Pick<Host, "batch" | "on">;
+type Ui = Pick<Host, "batch" | "get" | "on">;
 
 export type ToastKind = "info" | "ok" | "warn" | "danger";
 
 export interface ToastOptions {
   /** The store object the component reads. Default "toast". */
   path?: string;
-  /** The most toasts held, the one on screen included. Default 5. */
+  /** The most toasts held, the one on screen included. Default 5 (also for 0 or less). */
   max?: number;
-  /** The time to live, in milliseconds, of a toast pushed without one. Default 3000. */
+  /** The time to live, in milliseconds, of a toast pushed without one. Default 3000 (also for 0 or less). */
   ttl?: number;
   /** The clock, for tests. Default Date.now. */
   now?: () => number;
@@ -35,17 +35,21 @@ interface Item {
   deadline: number; // set when it goes on screen
 }
 
+/**
+ * A toast queue for toast.tui. push() shows the first toast at once and queues
+ * the rest, tick() (or start()) expires them, and register() wires
+ * toast_dismiss. Like Go's NewToasts it writes the hidden initial state when
+ * the store has none; `ready` settles once it has, and every method waits for
+ * it.
+ */
 export function createToasts(ui: Ui, options: ToastOptions = {}) {
   const path = options.path ?? "toast";
-  const max = Math.max(1, options.max ?? 5);
-  const defaultTtl = options.ttl ?? 3000;
+  const max = options.max !== undefined && options.max > 0 ? options.max : 5;
+  const defaultTtl = options.ttl !== undefined && options.ttl > 0 ? options.ttl : 3000;
   const now = options.now ?? Date.now;
   const queue: Item[] = []; // queue[0] is on screen
 
-  /** Writes the head of the queue (or hides the row) and starts the head's clock. */
-  async function showHead(): Promise<void> {
-    const head = queue[0];
-    if (head) head.deadline = now() + head.ttl;
+  async function write(head: Item | undefined): Promise<void> {
     await ui.batch([
       { path: `${path}.text`, value: head?.text ?? "" },
       { path: `${path}.is_ok`, value: head?.kind === "ok" },
@@ -54,6 +58,18 @@ export function createToasts(ui: Ui, options: ToastOptions = {}) {
       { path: `${path}.show`, value: head !== undefined },
     ]);
   }
+
+  /** Writes the head of the queue (or hides the row) and starts the head's clock. */
+  async function showHead(): Promise<void> {
+    const head = queue[0];
+    if (head) head.deadline = now() + head.ttl;
+    await write(head);
+  }
+
+  // The hidden state the component reads, unless the store already has it.
+  const ready: Promise<void> = (async () => {
+    if (!(await ui.get(`${path}.show`)).found) await write(undefined);
+  })();
 
   /**
    * Queues a toast. `ttl` (milliseconds) is how long it stays on screen once
@@ -64,6 +80,7 @@ export function createToasts(ui: Ui, options: ToastOptions = {}) {
     if (!["info", "ok", "warn", "danger"].includes(kind)) {
       throw new Error(`kit: toast kind "${String(kind)}" is not info, ok, warn or danger`);
     }
+    await ready;
     const item: Item = { kind, text, ttl: ttl > 0 ? ttl : defaultTtl, deadline: 0 };
     if (queue.length < max) queue.push(item);
     else if (queue.length > 1) {
@@ -75,6 +92,7 @@ export function createToasts(ui: Ui, options: ToastOptions = {}) {
 
   /** Drops the toast on screen; the next one, if any, takes its place. */
   async function dismiss(): Promise<void> {
+    await ready;
     if (queue.length === 0) return;
     queue.shift();
     await showHead();
@@ -82,6 +100,7 @@ export function createToasts(ui: Ui, options: ToastOptions = {}) {
 
   /** Drops the toast on screen when its time is up and shows the next. Writes only when something changes. */
   async function tick(at: number = now()): Promise<void> {
+    await ready;
     const head = queue[0];
     if (!head || at < head.deadline) return;
     queue.shift();
@@ -101,7 +120,7 @@ export function createToasts(ui: Ui, options: ToastOptions = {}) {
     ui.on("toast_dismiss", () => dismiss());
   }
 
-  return { push, dismiss, tick, start, register, size: () => queue.length };
+  return { push, dismiss, tick, start, register, ready, size: () => queue.length };
 }
 
 export type Toasts = ReturnType<typeof createToasts>;

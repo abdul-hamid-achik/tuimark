@@ -1,10 +1,12 @@
 package kit
 
 import (
-	"github.com/abdul-hamid-achik/tuimark"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/abdul-hamid-achik/tuimark"
 )
 
 func newToasts(t *testing.T, name string, o ToastOptions) (*Toasts, *clock) {
@@ -65,8 +67,8 @@ func TestToastsShowOneAtATimeAndExpire(t *testing.T) {
 	c.advance(time.Second)
 	tick()
 	notContains(t, screen(t, ts.app), "second")
-	if getBool(t, ts.app, "toast.show") || ts.Len() != 0 {
-		t.Errorf("show=%v len=%d, want hidden and empty", getBool(t, ts.app, "toast.show"), ts.Len())
+	if getBool(t, ts.app, "toast.show") || ts.Size() != 0 {
+		t.Errorf("show=%v len=%d, want hidden and empty", getBool(t, ts.app, "toast.show"), ts.Size())
 	}
 }
 
@@ -77,8 +79,8 @@ func TestToastsCapDropsTheOldestWaiting(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if ts.Len() != 3 {
-		t.Fatalf("len = %d, want 3", ts.Len())
+	if ts.Size() != 3 {
+		t.Fatalf("len = %d, want 3", ts.Size())
 	}
 	var shown []string
 	for range 4 {
@@ -159,8 +161,57 @@ func TestToastsAreSafeFromManyGoroutines(t *testing.T) {
 	for range 5 {
 		_ = ts.app.Batch(ts.Tick)
 	}
-	if ts.Len() > 4 {
-		t.Errorf("len = %d, want at most 4", ts.Len())
+	if ts.Size() > 4 {
+		t.Errorf("len = %d, want at most 4", ts.Size())
+	}
+}
+
+// The store must show what the queue holds, whatever the interleaving: the
+// queue used to change under the mutex and the store be written after it was
+// released, so a slower writer could overwrite a newer one.
+func TestStoreMatchesTheQueueAfterConcurrentWrites(t *testing.T) {
+	for round := 0; round < 20; round++ {
+		ts, _ := newToasts(t, "toast", ToastOptions{Max: 100})
+		var wg sync.WaitGroup
+		for g := 0; g < 8; g++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for i := 0; i < 10; i++ {
+					_ = ts.Push("info", fmt.Sprintf("g%d-%d", g, i), 0)
+					if i%4 == 3 {
+						_ = ts.Dismiss()
+					}
+				}
+			}()
+		}
+		wg.Wait()
+		ts.mu.Lock()
+		n := len(ts.queue)
+		want := ""
+		if n > 0 {
+			want = ts.queue[0].text
+		}
+		ts.mu.Unlock()
+		if got := getBool(t, ts.app, "toast.show"); got != (n > 0) {
+			t.Fatalf("round %d: show = %v with %d toasts queued", round, got, n)
+		}
+		if got := getStr(t, ts.app, "toast.text"); got != want {
+			t.Fatalf("round %d: store shows %q, queue head is %q", round, got, want)
+		}
+	}
+}
+
+// A Tick repairs a store that another writer's batch overtook.
+func TestTickRepairsAStaleStore(t *testing.T) {
+	ts, _ := newToasts(t, "toast", ToastOptions{})
+	_ = ts.Push("info", "one", 0)
+	_ = ts.app.Set("toast.show", false) // as if a stale batch landed last
+	if err := ts.app.Batch(ts.Tick); err != nil {
+		t.Fatal(err)
+	}
+	if !getBool(t, ts.app, "toast.show") || getStr(t, ts.app, "toast.text") != "one" {
+		t.Error("Tick should write the head of the queue back")
 	}
 }
 

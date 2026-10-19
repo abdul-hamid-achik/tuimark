@@ -87,6 +87,26 @@ describe("toasts", () => {
     await store.emit("toast_dismiss", ""); // nothing left: harmless
   });
 
+  test("writes the hidden initial state, unless the store has it, and 0 means the default", async () => {
+    const empty = new FakeStore();
+    await createToasts(empty.host).ready;
+    expect(empty.at("toast")).toEqual({ show: false, text: "", is_ok: false, is_warn: false, is_danger: false });
+    const taken = new FakeStore({ toast: { show: true, text: "kept", is_ok: false, is_warn: false, is_danger: false } });
+    await createToasts(taken.host).ready;
+    expect(taken.at("toast.text")).toBe("kept");
+
+    // max 0 and ttl 0 are the defaults (5 toasts, 3000 ms), as in Go.
+    const { store, toasts, advance } = setup({ max: 0, ttl: 0 });
+    for (let i = 0; i < 7; i++) await toasts.push("info", `t${i}`);
+    expect(toasts.size()).toBe(5);
+    advance(2999);
+    await toasts.tick();
+    expect(store.at("toast.text")).toBe("t0");
+    advance(1);
+    await toasts.tick();
+    expect(store.at("toast.text")).not.toBe("t0");
+  });
+
   test("an unknown kind is an error", async () => {
     const { toasts } = setup();
     await expect(toasts.push("error" as never, "x")).rejects.toThrow("not info, ok, warn or danger");

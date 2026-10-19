@@ -26,7 +26,17 @@ export interface Task {
   cancel(): void;
 }
 
-export function createLoader(ui: Ui) {
+export interface LoaderOptions {
+  /** Called with an error the final write hit (the store refused the value, or the connection ended). Default: ignore. */
+  onError?: (error: unknown) => void;
+}
+
+/**
+ * A loader for one app: load(path, fn) runs `fn` and keeps <path>.loading,
+ * <path>.error and <path>.data. `task.done` never rejects; failures of the
+ * final write go to options.onError.
+ */
+export function createLoader(ui: Ui, options: LoaderOptions = {}) {
   const current = new Map<string, AbortController>();
 
   /**
@@ -58,14 +68,28 @@ export function createLoader(ui: Ui) {
       if (mine) current.delete(path);
       if (!mine) return; // superseded by a later load, which owns the paths now
       if (ctl.signal.aborted) {
-        await ui.batch([{ path: `${path}.loading`, value: false }]); // canceled while current: stop the spinner, keep the rest
+        // canceled while current: stop the spinner, keep the rest
+        await ui.batch([{ path: `${path}.loading`, value: false }]).catch((error: unknown) => options.onError?.(error));
         return;
       }
-      await ui.batch([
-        ...(message === "" ? [{ path: `${path}.data`, value: value ?? null }] : []),
-        { path: `${path}.error`, value: message },
-        { path: `${path}.loading`, value: false },
-      ]);
+      try {
+        await ui.batch([
+          ...(message === "" ? [{ path: `${path}.data`, value: value ?? null }] : []),
+          { path: `${path}.error`, value: message },
+          { path: `${path}.loading`, value: false },
+        ]);
+      } catch (error) {
+        // The store refused the value: say why, and stop the spinner.
+        options.onError?.(error);
+        try {
+          await ui.batch([
+            { path: `${path}.error`, value: error instanceof Error ? error.message : String(error) },
+            { path: `${path}.loading`, value: false },
+          ]);
+        } catch (second) {
+          options.onError?.(second);
+        }
+      }
     })();
     return { done, cancel: () => ctl.abort() };
   }

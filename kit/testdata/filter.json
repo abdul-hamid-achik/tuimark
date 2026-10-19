@@ -1,0 +1,24 @@
+{
+  "rows": [
+    { "id": "deploy", "label": "Deploy to production", "meta": { "team": "ops" }, "n": 3 },
+    { "id": "rollback", "label": "Roll back the last deploy", "meta": { "team": "ops" }, "n": 12 },
+    { "id": "logs", "label": "Open the logs", "meta": { "team": "dev" }, "n": 7 },
+    { "id": "theme", "label": "Toggle the theme", "meta": { "team": "ui" }, "n": 1 },
+    { "id": "big", "label": "Big number", "meta": { "team": "ops" }, "n": 1000000 },
+    { "id": "frac", "label": "Fraction", "meta": { "team": "ops" }, "n": 0.5 },
+    { "id": "flag", "label": "A flag", "meta": { "team": "ops" }, "n": 0, "on": true }
+  ],
+  "cases": [
+    { "mode": "substring", "fields": ["label", "id"], "query": "", "ids": ["deploy", "rollback", "logs", "theme", "big", "frac", "flag"] },
+    { "mode": "substring", "fields": ["label", "id"], "query": "DEPLOY", "ids": ["deploy", "rollback"] },
+    { "mode": "substring", "fields": ["label", "id"], "query": "back deploy", "ids": ["rollback"] },
+    { "mode": "substring", "fields": ["meta.team"], "query": "dev", "ids": ["logs"] },
+    { "mode": "substring", "fields": ["n"], "query": "12", "ids": ["rollback"] },
+    { "mode": "substring", "fields": ["n"], "query": "1000000", "ids": ["big"] },
+    { "mode": "substring", "fields": ["n"], "query": "1e+06", "ids": [] },
+    { "mode": "substring", "fields": ["n"], "query": "0.5", "ids": ["frac"] },
+    { "mode": "substring", "fields": ["on"], "query": "true", "ids": ["flag"] },
+    { "mode": "fuzzy", "fields": ["label"], "query": "dpl", "ids": ["deploy", "rollback"] },
+    { "mode": "fuzzy", "fields": ["label"], "query": "zq", "ids": [] }
+  ]
+}

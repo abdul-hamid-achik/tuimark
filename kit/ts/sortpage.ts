@@ -97,6 +97,11 @@ function compare(a: SortValue, b: SortValue): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
+/**
+ * Sort-by-column cycling and pagination for a table: cycle(col), setPage(n),
+ * nextPage(), prevPage(), setSize(n), and recompute() after the source
+ * array changes. They write `out` (the sorted rows of the page) and `meta`.
+ */
 export function createSortPage(ui: Ui, o: SortPageOptions) {
   const statePath = o.state ?? `${o.out}_state`;
   const defaultSize = o.size && o.size > 0 ? o.size : 50;
@@ -145,10 +150,12 @@ export function createSortPage(ui: Ui, o: SortPageOptions) {
   /**
    * The click on a column header: a new column sorts ascending, the same
    * column again descending, a third time back to the source order. The page
-   * goes back to 1.
+   * goes back to 1. A name that is not one of the columns does nothing, so a
+   * keymap row or a click on something else can share the handler (one that
+   * throws ends the session).
    */
   async function cycle(col: string): Promise<void> {
-    if (!o.columns.some((c) => c.key === col)) throw new Error(`kit: "${col}" is not a column of ${o.out}`);
+    if (!o.columns.some((c) => c.key === col)) return;
     const st = await readState();
     if (st.col !== col) [st.col, st.desc] = [col, false];
     else if (!st.desc) st.desc = true;

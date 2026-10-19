@@ -161,13 +161,20 @@ func (a *app) handlers() map[string]tuimark.Handler {
 	// The form.
 	on("form_validate", func(ev tuimark.Event) error {
 		v, _ := ev.Value.(string)
+		name, email := str(a.ui.Get, "forms.profile.name.value"), str(a.ui.Get, "forms.profile.email.value")
+		var field, msg string
 		switch partOf(ev) { // profile__name, profile__email
 		case "name":
-			return a.ui.Set("forms.profile.name.error", checkName(v))
+			field, msg, name = "name", checkName(v), v
 		case "email":
-			return a.ui.Set("forms.profile.email.error", checkEmail(v))
+			field, msg, email = "email", checkEmail(v), v
+		default:
+			return nil
 		}
-		return nil
+		return a.ui.Batch(func(b *tuimark.Batch) error {
+			return errors.Join(b.Set("forms.profile."+field+".error", msg),
+				b.Set("forms.profile.valid", checkName(name) == "" && checkEmail(email) == ""))
+		})
 	})
 	on("form_submit", func(tuimark.Event) error { return a.formSubmit() })
 	return hs
@@ -317,7 +324,10 @@ func (a *app) formSubmit() error {
 	nameErr := checkName(str(a.ui.Get, "forms.profile.name.value"))
 	emailErr := checkEmail(str(a.ui.Get, "forms.profile.email.value"))
 	err := a.ui.Batch(func(b *tuimark.Batch) error {
-		errs := []error{b.Set("forms.profile.name.error", nameErr), b.Set("forms.profile.email.error", emailErr)}
+		errs := []error{
+			b.Set("forms.profile.name.error", nameErr), b.Set("forms.profile.email.error", emailErr),
+			b.Set("forms.profile.valid", nameErr == "" && emailErr == ""),
+		}
 		switch {
 		case nameErr != "" || emailErr != "":
 			n := 0

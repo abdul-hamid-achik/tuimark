@@ -59,6 +59,11 @@ interface Entry {
   submit: () => ((values: Record<string, string>) => unknown) | undefined;
 }
 
+/**
+ * The forms of one app. add(name) declares a form (named by the id prefix of
+ * its inputs), register() installs the form_validate and form_submit handlers
+ * for all of them, and validate / submit are those handlers.
+ */
 export function createForms(ui: Ui) {
   const forms = new Map<string, Entry>();
 
@@ -97,7 +102,9 @@ export function createForms(ui: Ui) {
       },
       check,
       async reset(initial = {}) {
-        const vs = await values(initial);
+        // A field the initial values do not mention goes back to "".
+        const vs: Record<string, string> = {};
+        for (const f of fields) vs[f] = initial[f] ?? "";
         await ui.batch([
           ...fields.flatMap((f) => [
             { path: `${path(f)}.value`, value: vs[f] ?? "" },
@@ -111,13 +118,16 @@ export function createForms(ui: Ui) {
     return form;
   }
 
-  /** The form an event belongs to: the one named by the instance of its source, else the only form there is. */
-  function formFor(source: string): Entry & { name: string } {
+  /**
+   * The form an event belongs to: the one named by the instance of its
+   * source, else the only form there is (ctrl+s fires with whatever has focus
+   * as its source), else none.
+   */
+  function formFor(source: string): (Entry & { name: string }) | undefined {
     let name = instance(source);
     let entry = forms.get(name);
-    if (!entry && forms.size === 1) [name, entry] = [...forms][0]!; // ctrl+s fires with whatever has focus as its source
-    if (!entry) throw new Error(`kit: no form for source "${source}"`);
-    return { name, ...entry };
+    if (!entry && forms.size === 1) [name, entry] = [...forms][0]!;
+    return entry && { name, ...entry };
   }
 
   /**
@@ -127,7 +137,9 @@ export function createForms(ui: Ui) {
    * yet does not turn red.
    */
   async function validate(ev: HostEvent): Promise<void> {
-    const { name, form, rules, path, valid, values } = formFor(ev.source);
+    const found = formFor(ev.source);
+    if (!found) return; // not ours: a handler that throws ends the session
+    const { name, form, rules, path, valid, values } = found;
     const field = part(ev.source);
     if (!rules.has(field)) return; // an input of the form that has no rules
     const value = typeof ev.value === "string" ? ev.value : "";
@@ -144,7 +156,9 @@ export function createForms(ui: Ui) {
    * first field that failed (the input <form>__<field>).
    */
   async function submit(ev: HostEvent): Promise<void> {
-    const { name, form, fields, path, values, submit: onSubmit } = formFor(ev.source);
+    const found = formFor(ev.source);
+    if (!found) return; // not ours (ctrl+s with focus outside any form, and several forms)
+    const { name, form, fields, path, values, submit: onSubmit } = found;
     const vs = await values();
     const first = fields.find((f) => form.check(f, vs[f] ?? "") !== "");
     await ui.batch([

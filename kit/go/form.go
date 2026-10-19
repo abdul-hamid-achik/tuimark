@@ -150,11 +150,15 @@ func (f *Form) values(override map[string]string) map[string]string {
 	return out
 }
 
-// Reset writes the form's paths: each field's value (from initial, else ""),
-// no errors, and valid computed from the initial values.
+// Reset writes the form's paths: each field's value (from initial, and "" for
+// a field it does not mention), no errors, and valid computed from those
+// values.
 func (f *Form) Reset(initial map[string]string) error {
+	values := make(map[string]string, len(f.fields))
+	for _, name := range f.fields {
+		values[name] = initial[name]
+	}
 	return f.fs.app.Batch(func(b *tuimark.Batch) error {
-		values := f.values(initial)
 		var errs []error
 		for _, name := range f.fields {
 			errs = append(errs, b.Set(f.path(name)+".value", values[name]), b.Set(f.path(name)+".error", ""))
@@ -196,7 +200,7 @@ func (fs *Forms) formFor(source string) (*Form, error) {
 func (fs *Forms) Validate(ev tuimark.Event) error {
 	f, err := fs.formFor(ev.Source)
 	if err != nil {
-		return err
+		return nil // not ours: an error from a handler would end Run
 	}
 	field := Part(ev.Source)
 	value, _ := ev.Value.(string)
@@ -218,7 +222,7 @@ func (fs *Forms) Validate(ev tuimark.Event) error {
 func (fs *Forms) Submit(ev tuimark.Event) error {
 	f, err := fs.formFor(ev.Source)
 	if err != nil {
-		return err
+		return nil // not ours (ctrl+s with focus outside any form, and several forms): an error would end Run
 	}
 	values := f.values(nil)
 	first := ""

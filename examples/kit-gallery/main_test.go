@@ -496,7 +496,13 @@ func TestFormValidatesAsYouType(t *testing.T) {
 	if strings.Contains(gridOf(res), "We never share it.") {
 		t.Error("the help line should give way to the error")
 	}
+	if getBool(t, a, "forms.profile.valid") {
+		t.Error("forms.profile.valid should be false with a half-typed address")
+	}
 	res = play(t, a, "text:x.io")
+	if !getBool(t, a, "forms.profile.valid") {
+		t.Error("forms.profile.valid should be true once both fields pass")
+	}
 	if got := getStr(t, a, "forms.profile.email.error"); got != "" {
 		t.Errorf("a full address should clear the error, got %q", got)
 	}

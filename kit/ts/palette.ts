@@ -44,6 +44,12 @@ export interface PaletteOptions {
   mode?: FilterMode;
 }
 
+/**
+ * A command palette: registers the commands, writes palette.commands, keeps
+ * found with createFilter, and offers the handlers of palette_open,
+ * palette_close, palette_run and palette_query (register() installs them).
+ * Async because it writes the initial state.
+ */
 export async function createPalette(ui: Ui, options: PaletteOptions = {}, ...commands: Command[]) {
   const path = options.path ?? "palette";
   const foundPath = options.found ?? "found";

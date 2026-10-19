@@ -77,7 +77,20 @@ describe("forms", () => {
     await forms.submit({ seq: 1, action: "form_submit", source: "a__save", keys: {}, value: null });
     expect(store.at("forms.a.f.error")).toBe("a needs f");
     expect(store.at("forms.b.f.error")).toBe("");
-    await expect(forms.submit({ seq: 1, action: "form_submit", source: "elsewhere", keys: {}, value: null })).rejects.toThrow("no form");
+    // Not a form's own event: ignored, because a handler that throws ends the session.
+    await forms.submit({ seq: 1, action: "form_submit", source: "elsewhere", keys: {}, value: null });
+    await forms.validate({ seq: 1, action: "form_validate", source: "elsewhere", keys: {}, value: "x" });
+    expect(store.at("forms.b.f.error")).toBe("");
+  });
+
+  test("reset sends a field the initial values do not mention back to empty", async () => {
+    const { store, form } = await profile({ name: "Ada", email: "ada@example.com" });
+    await store.set("forms.profile.email.error", "stale");
+    await form.reset({ name: "Grace" });
+    expect(store.at("forms.profile.name.value")).toBe("Grace");
+    expect(store.at("forms.profile.email.value")).toBe("");
+    expect(store.at("forms.profile.email.error")).toBe("");
+    expect(store.at("forms.profile.valid")).toBe(false);
   });
 
   test("the rules", () => {

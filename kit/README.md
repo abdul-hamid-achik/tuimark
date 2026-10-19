@@ -390,8 +390,13 @@ no published name.
 (`kit/ts/toasts.ts`) next to your parent; it imports only types from
 `@tuimark/host`. A file that needs another says so in its header: `dialog` and
 `form` need `route`, and `palette` needs `filter`. Each file has its test beside
-it (`go test ./...` in `kit/go`, `bun test` in `kit/ts`), and the Go tests drive
-the real component documents in `components/`.
+it (`go test ./...` in `kit/go`, `bun test` in `kit/ts`). The Go tests for
+`toasts`, `form`, `dialog`, `palette` and `sortpage` load the real component
+documents from `components/` and drive them with `Play` and `Dump`; the others,
+and all the TypeScript tests, run against the store alone (the TypeScript ones
+also check that the paths a helper writes appear in the markup of the component
+that reads them). `kit/testdata/` holds the tables the Go and TypeScript
+formatting and filter tests share, so both give the same strings.
 
 **Go and TypeScript differ in two places**, because the Go API has `Derive` and
 `Every` and the TypeScript host does not. A Go `filter` or `sortpage` is a
@@ -407,10 +412,10 @@ and `Part(source)` is the rest. `confirm__yes` is the part `yes` of the instance
 `confirm`; an id with no `__` is its own instance. `dialog` and `form` use it.
 
 ```go
-inst := kit.Instance(ev.Source) // "confirm"
+inst := kit.Instance("confirm__yes") // "confirm"; in a handler, kit.Instance(ev.Source)
 ```
 ```ts
-const inst = instance(ev.source); // "confirm"
+const inst = instance("confirm__yes"); // "confirm"; in a handler, instance(ev.source)
 ```
 
 ### toasts
@@ -504,7 +509,7 @@ const forms = createForms(ui);
 const profile = forms.add("profile")
   .field("name", required("Name is required."))
   .field("email", required("Email is required."), pattern(emailRE, "Enter a full address."))
-  .onSubmit((v) => save(v.name, v.email));
+  .onSubmit((v) => save(v.name ?? "", v.email ?? ""));
 await profile.reset({ name: "Ada" });
 forms.register();
 ```
@@ -557,7 +562,9 @@ palette.register();
 event's reply, and a slow one delays every key) and keeps `<path>.loading`,
 `<path>.error` and `<path>.data`. A later load of the same path cancels the
 earlier one and drops its result; `data` is kept while a reload runs. A task
-can be canceled, which puts `loading` back to false.
+can be canceled, which puts `loading` back to false. A value the store refuses
+(NaN, a channel) ends the load with the reason in `error`; the TypeScript
+`createLoader` takes an `onError` for failures of the final write.
 
 ```go
 loader := kit.NewLoader(app)

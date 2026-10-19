@@ -2,6 +2,7 @@ package kit
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/abdul-hamid-achik/tuimark"
@@ -136,7 +137,64 @@ func TestEventsRouteByFormAndFallBackToTheOnlyForm(t *testing.T) {
 	if getStr(t, app, "forms.a.f.error") != "a needs f" || getStr(t, app, "forms.b.f.error") != "" {
 		t.Error("only form a is checked")
 	}
-	if err := forms.Submit(tuimark.Event{Source: "elsewhere"}); err == nil {
-		t.Error("with two forms, an unrelated source belongs to none")
+	if err := forms.Submit(tuimark.Event{Source: "elsewhere"}); err != nil {
+		t.Errorf("with two forms, an unrelated source belongs to none and is ignored: %v", err)
+	}
+}
+
+// An error from a handler ends Run, so an event that is not a form's own
+// (ctrl+s with focus on a nav button, several forms) must be a no-op.
+func TestForeignEventsDoNotEndTheSession(t *testing.T) {
+	app, err := tuimark.Parse(strings.NewReader(`<tui>
+  <keymap>
+    <bind keys="ctrl+s" action="form_submit"/>
+    <bind keys="v" action="form_validate"/>
+    <bind keys="s" action="table_sort"/>
+  </keymap>
+  <screen id="s" focus="#nav">
+    <col>
+      <button id="nav" label="Nav" on:click="nav_click"/>
+      <input id="a__f" bind="forms.a.f.value"/>
+      <input id="b__f" bind="forms.b.f.value"/>
+    </col>
+  </screen>
+</tui>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	forms := NewForms(app)
+	forms.Add("a").Field("f", Required("a needs f"))
+	forms.Add("b").Field("f", Required("b needs f"))
+	forms.Register()
+	_ = app.Bind("", map[string]any{"all": []any{map[string]any{"id": "x", "n": 1.0}}})
+	sp, err := NewSortPage(app, SortPageOptions{Source: "all", Out: "rows", Meta: "meta", Columns: []Column{{"n", "N"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	app.On("table_sort", func(ev tuimark.Event) error { return sp.Cycle(Part(ev.Source)) }) // Part("nav") is ""
+	res, _ := play(t, app, "ctrl+s", "v", "s")
+	if res.Quit {
+		t.Error("a foreign event ended the session")
+	}
+	if got := getStr(t, app, "meta.titles.n"); got != "N" {
+		t.Errorf("a click on a non-column must not sort: title %q", got)
+	}
+}
+
+func TestResetClearsAFieldTheInitialValuesDoNotMention(t *testing.T) {
+	app, forms, _ := profileForm(t, map[string]string{"name": "Ada", "email": "ada@example.com"})
+	_ = forms.Submit(tuimark.Event{Source: "profile__save"})
+	_ = app.Set("forms.profile.email.error", "stale")
+	if err := forms.forms["profile"].Reset(map[string]string{"name": "Grace"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := getStr(t, app, "forms.profile.name.value"); got != "Grace" {
+		t.Errorf("name = %q", got)
+	}
+	if getStr(t, app, "forms.profile.email.value") != "" || getStr(t, app, "forms.profile.email.error") != "" {
+		t.Error("a field the initial values do not mention goes back to an empty value and no error")
+	}
+	if getBool(t, app, "forms.profile.valid") {
+		t.Error("valid is computed from the new values: the email is empty")
 	}
 }

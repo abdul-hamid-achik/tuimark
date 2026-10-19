@@ -3,6 +3,7 @@ package kit
 import (
 	"context"
 	"errors"
+	"math"
 	"testing"
 )
 
@@ -72,6 +73,22 @@ func TestALaterLoadDropsTheStaleResult(t *testing.T) {
 	}
 	if getBool(t, app, "q.loading") {
 		t.Error("loading should be false")
+	}
+}
+
+// A value the store cannot hold fails the whole batch; the load must still
+// end, with the reason in .error.
+func TestLoadOfAValueTheStoreRefusesStillEnds(t *testing.T) {
+	for name, v := range map[string]any{"NaN": math.NaN(), "Inf": math.Inf(1), "chan": make(chan int)} {
+		app := bareApp(t)
+		task, _ := NewLoader(app).Load("x", func(context.Context) (any, error) { return v, nil })
+		task.Wait()
+		if getBool(t, app, "x.loading") {
+			t.Errorf("%s: loading stays true", name)
+		}
+		if getStr(t, app, "x.error") == "" {
+			t.Errorf("%s: the error is empty", name)
+		}
 	}
 }
 

@@ -5,8 +5,18 @@
 // Markup has no expressions, so a size or a duration is formatted in the
 // parent and written to the store as text: ui.set("disk.text", bytes(n)).
 
-/** 0 B, 999 B, 1.0 KiB, 1.5 MiB, 3.2 GiB: binary units, one decimal under 100 of a unit. */
+// toFixed with a half rounding up, as the Go helper does, and no "-0.0".
+function fixed(x: number, decimals: number): string {
+  const s = x.toFixed(decimals);
+  return /^-0(\.0*)?$/.test(s) ? s.slice(1) : s;
+}
+
+/**
+ * 0 B, 999 B, 1.0 KiB, 1.5 MiB, 3.2 GiB: binary units, one decimal under 100
+ * of a unit. A value that is not finite is "-".
+ */
 export function bytes(n: number): string {
+  if (!Number.isFinite(n)) return "-";
   if (n < 0) return "-" + bytes(-n);
   if (n < 1024) return `${Math.trunc(n)} B`;
   const units = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB"];
@@ -20,11 +30,13 @@ export function bytes(n: number): string {
     v /= 1024; // rounds up to the next unit
     u++;
   }
-  return v >= 100 ? `${v.toFixed(0)} ${units[u]}` : `${v.toFixed(1)} ${units[u]}`;
+  // One decimal would print 100.0 from 99.95 up.
+  return v >= 99.95 ? `${fixed(v, 0)} ${units[u]}` : `${fixed(v, 1)} ${units[u]}`;
 }
 
-/** A duration in milliseconds with its two largest units: 450ms, 3s, 2m 5s, 1h 5m, 3d 4h. */
+/** A duration in milliseconds with its two largest units: 450ms, 3s, 2m 5s, 1h 5m, 3d 4h. Not finite: "-". */
 export function duration(ms: number): string {
+  if (!Number.isFinite(ms)) return "-";
   if (ms < 0) return "-" + duration(-ms);
   if (ms < 1000) return `${Math.trunc(ms)}ms`;
   let secs = Math.floor(ms / 1000);
@@ -48,6 +60,7 @@ export function duration(ms: number): string {
  */
 export function relative(t: Date | number, now: Date | number = Date.now()): string {
   const d = Number(now) - Number(t);
+  if (!Number.isFinite(d)) return "-";
   const future = d < 0;
   const abs = Math.abs(d);
   const s = 1000;
@@ -70,11 +83,12 @@ export function relative(t: Date | number, now: Date | number = Date.now()): str
 /** A fraction as a percentage: percent(0.256, 0) is "26%", percent(0.256, 1) is "25.6%". */
 export function percent(fraction: number, decimals = 0): string {
   if (!Number.isFinite(fraction)) return "-";
-  return (fraction * 100).toFixed(Math.max(0, decimals)) + "%";
+  return fixed(fraction * 100, Math.max(0, decimals)) + "%";
 }
 
 /** An integer with comma separators: 1234567 is "1,234,567". */
 export function thousands(n: number): string {
+  if (!Number.isFinite(n)) return "-";
   const s = Math.trunc(Math.abs(n)).toString();
   let out = "";
   for (let i = 0; i < s.length; i++) {
