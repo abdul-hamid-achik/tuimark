@@ -1420,3 +1420,59 @@ func TestSelectLiveDump(t *testing.T) {
 		t.Errorf("low, after the dump: %s %q", got, res.Dump.Grid)
 	}
 }
+
+// Decision 66 closes the list in step 7a, after the hints of step 5: the
+// frame is built again with it closed, so the frame of the step that
+// closed it, Play's dump, and Dump() all equal a fresh app's dump, in
+// which the list never opened. The hints row shows q again.
+func TestSelectClosedAt7aMatchesAFreshDump(t *testing.T) {
+	const src = `<tui>
+  <keymap>
+    <bind keys="tab" action="next" label="next"/>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <screen id="main" focus="#tz">
+    <col height="2" style="overflow: hidden">
+      <text if="more">one</text>
+      <text if="more">two</text>
+      <select id="tz" bind="tz" each="zones as z" key="z.id" label="{z.name}"
+              placeholder="zone" on:change="tz_changed"/>
+    </col>
+    <checkbox id="c" label="C"/>
+    <hints/>
+  </screen>
+</tui>`
+	_, data := selectFixture(t)
+	more := strings.Replace(data, "{", `{"more": true, `, 1)
+	fresh, err := btnApp(t, src, more).Dump(20, 8)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fresh.Grid[3] != "tab next  q quit    " {
+		t.Fatalf("fresh hints %q", fresh.Grid[3])
+	}
+	want, _ := json.Marshal(fresh)
+	app := btnApp(t, src, strings.Replace(data, "{", `{"more": false, `, 1))
+	res, err := app.Play(tuimark.PlayOptions{Cols: 20, Rows: 8, NoHandlers: true, Frames: true}, "enter", "set:more=true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasNode(res.Frames[1].Dump, "list") {
+		t.Fatalf("step 1: the list did not open: %q", res.Frames[1].Dump.Grid)
+	}
+	for name, d := range map[string]*tuimark.Dump{"the frame of step 2": res.Frames[2].Dump, "Play's dump": res.Dump} {
+		if got, _ := json.Marshal(d); string(got) != string(want) {
+			t.Errorf("%s differs from a fresh dump:\n%s\nwant\n%s", name, got, want)
+		}
+	}
+	d, err := app.Dump(20, 8)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := json.Marshal(d); string(got) != string(want) {
+		t.Errorf("Dump() differs from a fresh dump:\n%s\nwant\n%s", got, want)
+	}
+	if eventsJSON(t, res.Events) != "[]" {
+		t.Errorf("events %s", eventsJSON(t, res.Events))
+	}
+}

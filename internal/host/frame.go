@@ -332,7 +332,20 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	if len(fb.tables) > 0 || a.noCache {
 		fb.placeTableRows(casc, rootBox) // step 7
 	}
-	f.Options = fb.placeOptions(casc, f) // step 7a (SPEC v0.4b §18)
+	options, closed := fb.placeOptions(casc, f) // step 7a (SPEC v0.4b §18)
+	if closed {
+		// Step 7a closed the option list (its select was not laid out or
+		// shows no cell, §6.17.3), but steps 1-7 built this frame with
+		// it open: the hints of step 5 came from a dispatch in which the
+		// list takes every key. The frame is built again with the list
+		// closed, so it is the frame a build with the list closed from
+		// the start gives. The list stays closed, so this happens at most
+		// once; what the first build already did (an initial on:focus, a
+		// modal's on:open, a focus move) is state the second build starts
+		// from and does not repeat.
+		return a.renderOnce(cols, rows, theme)
+	}
+	f.Options = options
 	f.Root, f.Modals = rootBox, fb.modals
 	f.Grid = paint.PaintFrame(rootBox, fb.modals, f.Options, cols, rows, a.phase) // step 8
 	f.ByID = fb.byID
@@ -878,8 +891,12 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		fb.inflateCheckbox(n, b, sc)
 	case "select":
 		// Inside a list item or a container each template it is V001
-		// (SPEC v0.4b §6.8 item 12): nested.
-		fb.inflateSelect(n, b, sc, inItem || sc != nil)
+		// (SPEC v0.4b §6.8 item 12), and inflateSelect leaves it with its
+		// placeholder alone. inItem is exactly that case: inflateList
+		// inflates a row, and inflateEach a template, with inItem set. A
+		// scope alone is not: a scope that only binds names (an alias a
+		// <use with=…> may bring) leaves a select a working widget.
+		fb.inflateSelect(n, b, sc, inItem)
 	case "input":
 		b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
 		b.Secret = n.Attrs["secret"] == "true"

@@ -17,7 +17,7 @@ import (
 //   - step 7a (placeOptions) generates the open list and the rows its
 //     offset shows, cascades them, and places them above the screen and
 //     every modal, or closes the list when the select's visible rect is
-//     empty;
+//     empty, and then the frame is built again with the list closed;
 //   - step 8 paints the list after the modals (paint.PaintFrame).
 //
 // A select exists only in a <tui> without version: the parser rejects it
@@ -372,28 +372,27 @@ func (fb *builder) closeOptionsIn(root *layout.Box) {
 // offset shows (item nodes, :selected on the cursor row and :checked on
 // the chosen option's, each holding a text with the label), cascades
 // them, and places them above the screen and every modal (§6.17.4). The
-// list closes instead, before it is placed, when the select's visible
-// rect is empty; that frame's hints were built with it open, so it is not
-// kept for the frame skip. It returns the list, or nil. The caller holds
-// a.mu.
-func (fb *builder) placeOptions(casc *css.Cascade, f *Frame) *layout.Box {
+// list closes instead, before it is placed, when the select was not laid
+// out or its visible rect is empty (decision 66); closed is then true,
+// and the caller builds the frame again, since steps 1-7 built it with
+// the list open (its hints above all). It returns the list, or nil. The
+// caller holds a.mu.
+func (fb *builder) placeOptions(casc *css.Cascade, f *Frame) (list *layout.Box, closed bool) {
 	a := fb.a
 	if a.opts.id == "" {
-		return nil
+		return nil, false
 	}
 	sel := fb.byID[a.opts.id]
 	o := fb.open
 	grid := layout.Rect{W: f.Cols, H: f.Rows}
 	if sel == nil || o == nil || !sel.Laid {
 		a.closeOptions()
-		f.settled = false
-		return nil
+		return nil, true
 	}
 	vis := sel.Clip.Intersect(sel.Outer()).Intersect(grid)
 	if vis.W <= 0 || vis.H <= 0 {
 		a.closeOptions()
-		f.settled = false
-		return nil
+		return nil, true
 	}
 	n := len(o.keys)
 	st := a.selects[sel.ID]
@@ -426,5 +425,5 @@ func (fb *builder) placeOptions(casc *css.Cascade, f *Frame) *layout.Box {
 		layout.PlaceOptionRow(l, row, i)
 		l.Children = append(l.Children, row)
 	}
-	return l
+	return l, false
 }
