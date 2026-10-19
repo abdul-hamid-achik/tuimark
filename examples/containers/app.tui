@@ -1,0 +1,274 @@
+<tui theme="auto">
+  <!-- The kit's tokens, then its components, then this app's own sheet last. -->
+  <style src="../../kit/theme.tcss"/>
+  <style src="../../kit/kit.tcss"/>
+  <style src="app.tcss"/>
+
+  <!-- Overlay keys come first: the first matching row in document order
+       wins, and each overlay is scoped to its own component class. -->
+  <keymap when=".k-dialog">
+    <bind keys="y" action="dialog_confirm" label="confirm"/>
+    <bind keys="n" action="dialog_cancel" label="cancel"/>
+  </keymap>
+  <keymap when=".k-palette">
+    <bind keys="down,ctrl+n" action="move-next" to="#palette__list"/>
+    <bind keys="up,ctrl+p" action="move-prev" to="#palette__list"/>
+  </keymap>
+  <keymap when=".k-help">
+    <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
+  </keymap>
+
+  <!-- Global keys, before the per-context ones so their hints come first
+       (a hint bar drops from the right). `when="#app"` holds while focus is
+       anywhere inside the app column, and not inside a modal. None of them
+       is bound by a context below; `esc` is, so its row comes last. -->
+  <keymap when="#app">
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="ctrl+k" action="palette_open" keycap="^K" label="commands"/>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="t" action="theme_toggle"/>
+    <bind keys="1" action="switch-to" to="#containers"/>
+    <bind keys="2" action="switch-to" to="#detail"/>
+    <bind keys="3" action="switch-to" to="#images"/>
+    <bind keys="4" action="switch-to" to="#volumes"/>
+    <bind keys="5" action="switch-to" to="#events"/>
+    <bind keys="]" action="move-next" to="#nav"/>
+    <bind keys="[" action="move-prev" to="#nav"/>
+  </keymap>
+
+  <!-- Per-context keys. `when="#containers"` holds while focus is anywhere
+       inside that tab (the tab is an ancestor of what it holds). -->
+  <keymap when="#containers__q">
+    <bind keys="enter" action="focus" to="#ctrs" label="to the table"/>
+    <bind keys="esc" action="filter_clear" label="clear filter"/>
+  </keymap>
+  <keymap when="#containers">
+    <bind keys="/" action="focus" to="#containers__q" label="filter"/>
+    <bind keys="space" action="check-toggle" to="#ctrs" label="mark"/>
+    <bind keys="s" action="container_stop" label="stop"/>
+    <bind keys="u" action="container_start" label="start"/>
+    <bind keys="r" action="container_restart" label="restart"/>
+    <bind keys="d" action="container_remove" label="remove"/>
+    <bind keys="o" action="container_sort" label="sort"/>
+    <bind keys="enter" action="switch-to" to="#detail" label="detail"/>
+    <bind keys="a" action="check-all" to="#ctrs" label="mark all"/>
+    <bind keys="c" action="check-none" to="#ctrs" label="clear marks"/>
+    <bind keys="j" action="move-next" to="#ctrs"/>
+    <bind keys="k" action="move-prev" to="#ctrs"/>
+  </keymap>
+  <keymap when="#detail">
+    <bind keys="l" action="switch-to" to="#logs" keycap="l/e/p" label="logs · env · ports"/>
+    <bind keys="e" action="switch-to" to="#env"/>
+    <bind keys="p" action="switch-to" to="#ports"/>
+    <bind keys="esc,backspace" action="switch-to" to="#containers" keycap="esc" label="back"/>
+    <bind keys="s" action="container_stop" label="stop"/>
+    <bind keys="u" action="container_start" label="start"/>
+    <bind keys="r" action="container_restart" label="restart"/>
+    <bind keys="d" action="container_remove" label="remove"/>
+    <bind keys="j" action="move-next" keycap="j/k" label="scroll"/>
+    <bind keys="k" action="move-prev"/>
+    <bind keys="G" action="move-last" label="follow"/>
+  </keymap>
+  <keymap when="#images">
+    <bind keys="j" action="move-next" to="#imgs" keycap="j/k" label="move"/>
+    <bind keys="k" action="move-prev" to="#imgs"/>
+    <bind keys="p" action="image_prune" label="prune"/>
+  </keymap>
+  <keymap when="#volumes">
+    <bind keys="j" action="move-next" to="#vols" keycap="j/k" label="move"/>
+    <bind keys="k" action="move-prev" to="#vols"/>
+    <bind keys="p" action="volume_prune" label="prune"/>
+  </keymap>
+  <keymap when="#events">
+    <bind keys="j" action="move-next" to="#evts" keycap="j/k" label="scroll"/>
+    <bind keys="k" action="move-prev" to="#evts"/>
+    <bind keys="G" action="move-last" to="#evts" label="follow"/>
+    <bind keys="g" action="move-first" to="#evts" label="top"/>
+  </keymap>
+
+  <keymap when="#app">
+    <bind keys="esc" action="toast_dismiss"/>
+  </keymap>
+
+  <screen id="engine" focus="#ctrs">
+    <col id="app" width="1fr" height="1fr">
+      <row class="k-appbar">
+        <text class="k-appbar-brand">◆ containers</text>
+        <text class="k-appbar-title">local engine</text>
+        <spacer/>
+        <text class="k-appbar-meta">{clock}</text>
+        <text class="k-badge ok">{counts.up} up</text>
+      </row>
+
+      <tabs id="nav" class="k-tabs" bind="view" mark="▸" focusable="true">
+        <!-- ============================================================ -->
+        <tab id="containers" label="1 containers" short="1 con" focus="#ctrs">
+          <col id="containers__page" width="1fr" height="1fr">
+            <input id="containers__q" class="k-field-input" bind="filter.q" placeholder="/ to filter by name, image or status" on:change="filter_change"/>
+            <table id="ctrs" class="k-table" each="rows as c" key="c.id" bind="cur" checked="sel" mark="✓" title="Containers · {counts.shown} of {counts.total}{counts.sel} · sort {counts.sort}" placeholder="no container matches the filter">
+              <column id="ctrs__name" class="k-table-name" title="NAME" width="1fr">{c.name}</column>
+              <column id="ctrs__image" class="k-table-muted" title="IMAGE" width="24" priority="2">{c.image}</column>
+              <column id="ctrs__state" class="k-table-state" class:ok="c.ok" class:warn="c.warn" class:danger="c.bad" title="STATUS" width="10">{c.state}</column>
+              <column id="ctrs__cpu" class="k-num" title="CPU%" width="5">{c.cpu}</column>
+              <column id="ctrs__mem" class="k-num" title="MEM" width="6" priority="4">{c.mem}</column>
+              <column id="ctrs__up" class="k-num" title="UPTIME" width="7" priority="3">{c.up}</column>
+              <column id="ctrs__ports" class="k-table-muted" title="PORTS" width="13" priority="1">{c.ports}</column>
+            </table>
+          </col>
+        </tab>
+
+        <!-- ============================================================ -->
+        <tab id="detail" label="2 detail" short="2 det" focus="#logs-view">
+          <col id="detail__page" width="1fr" height="1fr">
+            <row id="detail__top" width="1fr" height="auto" gap="1">
+              <box id="detail__overview" class="k-card" title="{detail.name}">
+                <row class="k-card-row">
+                  <text class="k-card-muted" width="8">status</text>
+                  <text class="k-badge" class:ok="detail.ok" class:warn="detail.warn" class:danger="detail.bad">{detail.state}</text>
+                  <text class="k-card-muted">up {detail.up}</text>
+                </row>
+                <row class="k-card-row">
+                  <text class="k-card-muted" width="8">image</text>
+                  <text class="k-card-text" width="1fr">{detail.image}</text>
+                </row>
+                <row class="k-card-row">
+                  <text class="k-card-muted" width="8">id</text>
+                  <text class="k-card-text" width="1fr">{detail.id}</text>
+                </row>
+                <row class="k-card-row">
+                  <text class="k-card-muted" width="8">network</text>
+                  <text class="k-card-text" width="1fr">{detail.network}</text>
+                </row>
+                <row class="k-card-row">
+                  <text class="k-card-muted" width="8">restart</text>
+                  <text class="k-card-text" width="1fr">{detail.restart}</text>
+                </row>
+                <row class="k-card-row">
+                  <text class="k-card-muted" width="8">created</text>
+                  <text class="k-card-text" width="1fr">{detail.created}</text>
+                </row>
+              </box>
+              <col id="detail__stats" width="1fr" height="auto">
+                <box id="detail__cpu" class="k-stat" title="CPU">
+                  <text class="k-stat-value">{detail.cpu_txt}</text>
+                  <row class="k-stat-row">
+                    <text class="k-stat-delta">{detail.cpu_avg}</text>
+                    <sparkline class="k-stat-spark" bind="detail.cpu_hist" min="0"/>
+                  </row>
+                </box>
+                <box id="detail__mem" class="k-stat" title="Memory">
+                  <text class="k-stat-value">{detail.mem_txt}</text>
+                  <row class="k-stat-row">
+                    <text class="k-stat-delta">{detail.mem_avg}</text>
+                    <sparkline class="k-stat-spark" bind="detail.mem_hist" min="0" max="100"/>
+                  </row>
+                </box>
+              </col>
+            </row>
+            <tabs id="dtabs" class="k-tabs" bind="detail_tab" mark="▸" focusable="true">
+              <tab id="logs" label="logs ({detail.nlogs})" short="logs" focus="#logs-view">
+                <scroll id="logs-view" class="k-log" stick="bottom" focusable="true" title="{detail.name} · log">
+                  <col class="k-log-lines" each="detail.logs as l" key="l.n">
+                    <text class="k-log-line" class:muted="l.debug" class:info="l.info" class:warn="l.warn" class:danger="l.err">{l.text}</text>
+                  </col>
+                </scroll>
+              </tab>
+              <tab id="env" label="env ({detail.nenv})" short="env">
+                <table id="envt" class="k-table" each="detail.env as e" key="e.k" title="Environment" placeholder="no environment variables">
+                  <column id="envt__k" class="k-table-muted" title="VARIABLE" width="40%">{e.k}</column>
+                  <column id="envt__v" title="VALUE" width="1fr">{e.v}</column>
+                </table>
+              </tab>
+              <tab id="ports" label="ports ({detail.nports})" short="ports">
+                <table id="portt" class="k-table" each="detail.port_rows as p" key="p.key" title="Published ports" placeholder="no published ports">
+                  <column id="portt__host" class="k-num" title="HOST" width="6">{p.host}</column>
+                  <column id="portt__cont" class="k-num" title="CONTAINER" width="9">{p.cont}</column>
+                  <column id="portt__proto" class="k-table-muted" title="PROTO" width="6">{p.proto}</column>
+                  <column id="portt__addr" title="BIND" width="1fr" priority="1">{p.addr}</column>
+                </table>
+              </tab>
+            </tabs>
+          </col>
+        </tab>
+
+        <!-- ============================================================ -->
+        <tab id="images" label="3 images" short="3 img" focus="#imgs">
+          <table id="imgs" class="k-table" each="images as i" key="i.id" title="Images · {counts.images}" placeholder="no images">
+            <column id="imgs__repo" class="k-table-name" title="REPOSITORY" width="1fr">{i.repo}</column>
+            <column id="imgs__tag" title="TAG" width="10">{i.tag}</column>
+            <column id="imgs__id" class="k-table-muted" title="IMAGE ID" width="12" priority="1">{i.short}</column>
+            <column id="imgs__size" class="k-num" title="SIZE" width="8">{i.size}</column>
+            <column id="imgs__created" class="k-table-muted" title="CREATED" width="13" priority="2">{i.created}</column>
+            <column id="imgs__used" class="k-num" title="USED" width="4" priority="3">{i.used}</column>
+          </table>
+        </tab>
+
+        <!-- ============================================================ -->
+        <tab id="volumes" label="4 volumes" short="4 vol" focus="#vols">
+          <table id="vols" class="k-table" each="volumes as v" key="v.name" title="Volumes · {counts.volumes}" placeholder="no volumes">
+            <column id="vols__name" class="k-table-name" title="NAME" width="1fr">{v.name}</column>
+            <column id="vols__driver" class="k-table-muted" title="DRIVER" width="7" priority="1">{v.driver}</column>
+            <column id="vols__size" class="k-num" title="SIZE" width="8">{v.size}</column>
+            <column id="vols__used" class="k-table-muted" title="USED BY" width="18" priority="2">{v.used}</column>
+          </table>
+        </tab>
+
+        <!-- ============================================================ -->
+        <tab id="events" label="5 events" short="5 evt" focus="#evts">
+          <scroll id="evts" class="k-log" stick="bottom" focusable="true" title="Events · {events.count}">
+            <col class="k-log-lines" each="events.lines as l" key="l.n">
+              <text class="k-log-line" class:muted="l.debug" class:info="l.info" class:warn="l.warn" class:danger="l.err">{l.text}</text>
+            </col>
+          </scroll>
+        </tab>
+      </tabs>
+
+      <hints class="k-hints"/>
+
+      <!-- toast: always one row, so nothing jumps when it appears -->
+      <row class="k-toast-slot">
+        <row class="k-toast" if="toast.show" class:ok="toast.is_ok" class:warn="toast.is_warn" class:danger="toast.is_danger">
+          <text class="k-toast-text">{toast.text}</text>
+          <text class="k-toast-key">esc</text>
+        </row>
+      </row>
+
+      <row class="k-statusbar">
+        <text class="k-statusbar-seg" class:ok="engine.ok" class:warn="engine.warn">{engine.label}</text>
+        <text class="k-statusbar-text">{counts.line}</text>
+        <spacer/>
+        <text class="k-statusbar-text">{status.text}</text>
+        <text class="k-statusbar-muted">{engine.server}</text>
+      </row>
+    </col>
+
+    <!-- modals: always the last children of the screen -->
+    <modal id="confirm__dialog" class="k-dialog" class:danger="confirm.danger" open="confirm.open" title="{confirm.title}" focus="#confirm__no" on:escape="dialog_cancel">
+      <text class="k-dialog-text">{confirm.message}</text>
+      <row class="k-dialog-actions">
+        <spacer/>
+        <button id="confirm__no" class="k-btn secondary" label="Cancel" on:click="dialog_cancel"/>
+        <button id="confirm__yes" class="k-btn" class:primary="!confirm.danger" class:danger="confirm.danger" label="Confirm" on:click="dialog_confirm"/>
+      </row>
+    </modal>
+
+    <modal id="palette__dialog" class="k-palette" open="palette.open" title="Command palette" focus="#palette__q" on:escape="palette_close">
+      <input id="palette__q" class="k-palette-input" bind="palette.query" placeholder="type a command…" on:submit="palette_run"/>
+      <text class="k-palette-empty" if="!found.any">No command matches “{palette.query}”.</text>
+      <list id="palette__list" class="k-palette-list" each="found.items as r" key="r.id" bind="palette.cur" focusable="false">
+        <item>
+          <row class="k-palette-row">
+            <text class="k-palette-label">{r.label}</text>
+            <text class="k-palette-hint">{r.hint}</text>
+          </row>
+        </item>
+      </list>
+    </modal>
+
+    <modal id="help__dialog" class="k-help" open="help.open" title="Keys" on:escape="help_close">
+      <scroll id="help__keys" class="k-page" focusable="true">
+        <hints class="k-hints k-help-keys" scope="all"/>
+      </scroll>
+    </modal>
+  </screen>
+</tui>

@@ -1,0 +1,602 @@
+{
+  "container_remove": [
+    {"path":"confirm.title","value":"Remove 2 containers?"},
+    {
+      "path": "confirm.message",
+      "value": "postgres and redis and its writable layer will be deleted. Volumes are kept. This cannot be undone."
+    },
+    {"path":"confirm.danger","value":true},
+    {"path":"confirm.open","value":true}
+  ],
+  "container_restart": [
+    {"path":"confirm.title","value":"Restart 2 containers?"},
+    {
+      "path": "confirm.message",
+      "value": "postgres and redis will go down for a moment and come back. Open connections are dropped."
+    },
+    {"path":"confirm.danger","value":false},
+    {"path":"confirm.open","value":true}
+  ],
+  "container_sort": [
+    {"path":"sort","value":{"key":"cpu"}},
+    {
+      "path": "counts",
+      "value": {
+        "any": true,
+        "exited": 2,
+        "images": 13,
+        "line": "10 up · 2 exited",
+        "restarting": 0,
+        "sel": " · 2 selected",
+        "shown": 12,
+        "sort": "cpu ↓",
+        "total": 12,
+        "up": 10,
+        "volumes": 6
+      }
+    },
+    {
+      "path": "rows",
+      "value": [
+        {
+          "bad": false,
+          "cpu": "12.0",
+          "id": "5df15f458b35",
+          "image": "acme/billing:1.9.3",
+          "mem": "642M",
+          "name": "billing-api",
+          "ok": true,
+          "ports": "3001→3001",
+          "state": "running",
+          "up": "2d4h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "10.0",
+          "id": "a2780edec237",
+          "image": "acme/gateway:2.14.0",
+          "mem": "210M",
+          "name": "api-gateway",
+          "ok": true,
+          "ports": "3000→3000",
+          "state": "running",
+          "up": "3d2h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "9.3",
+          "id": "4d88c093d8b1",
+          "image": "acme/search:0.8.1",
+          "mem": "143M",
+          "name": "search-api",
+          "ok": true,
+          "ports": "3002→3002",
+          "state": "running",
+          "up": "1d2h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "7.1",
+          "id": "af2249da6d91",
+          "image": "prom/prometheus:v2.53.0",
+          "mem": "227M",
+          "name": "prometheus",
+          "ok": true,
+          "ports": "9090→9090",
+          "state": "running",
+          "up": "2d0h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "6.8",
+          "id": "f0495e12546b",
+          "image": "rabbitmq:3.13-management",
+          "mem": "181M",
+          "name": "rabbitmq",
+          "ok": true,
+          "ports": "5672→5672 +1",
+          "state": "running",
+          "up": "3d23h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "3.4",
+          "id": "0eb164054b53",
+          "image": "grafana/grafana:11.1.0",
+          "mem": "135M",
+          "name": "grafana",
+          "ok": true,
+          "ports": "3030→3000",
+          "state": "running",
+          "up": "1d23h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "2.5",
+          "id": "eedf44068cc1",
+          "image": "nginx:1.27-alpine",
+          "mem": "37M",
+          "name": "edge-proxy",
+          "ok": true,
+          "ports": "8080→80 +1",
+          "state": "running",
+          "up": "3d2h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "2.4",
+          "id": "552aca52e90f",
+          "image": "acme/worker:3.2.0",
+          "mem": "108M",
+          "name": "worker-email",
+          "ok": true,
+          "ports": "-",
+          "state": "running",
+          "up": "19h42m",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "2.3",
+          "id": "519754923c56",
+          "image": "postgres:16.3",
+          "mem": "201M",
+          "name": "postgres",
+          "ok": true,
+          "ports": "5432→5432",
+          "state": "running",
+          "up": "4d0h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "1.8",
+          "id": "bd84eba33133",
+          "image": "redis:7.2-alpine",
+          "mem": "31M",
+          "name": "redis",
+          "ok": true,
+          "ports": "6379→6379",
+          "state": "running",
+          "up": "4d0h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "-",
+          "id": "1752053f9b77",
+          "image": "acme/migrate:1.4.0",
+          "mem": "-",
+          "name": "db-migrate",
+          "ok": false,
+          "ports": "-",
+          "state": "exit 0",
+          "up": "-",
+          "warn": false
+        },
+        {
+          "bad": true,
+          "cpu": "-",
+          "id": "1e79d881a8b6",
+          "image": "acme/worker:3.2.0",
+          "mem": "-",
+          "name": "worker-reports",
+          "ok": false,
+          "ports": "-",
+          "state": "exit 1",
+          "up": "-",
+          "warn": false
+        }
+      ]
+    },
+    {"path":"status","value":{"text":"sorted by cpu ↓"}}
+  ],
+  "container_start": [
+    {
+      "path": "toast",
+      "value": {"is_danger":false,"is_ok":false,"is_warn":false,"show":true,"text":"Already running"}
+    },
+    {"path":"status","value":{"text":"no actions yet"}}
+  ],
+  "container_stop": [
+    {"path":"confirm.title","value":"Stop 2 containers?"},
+    {
+      "path": "confirm.message",
+      "value": "postgres and redis will get SIGTERM and stop. Nothing is removed; start brings it back."
+    },
+    {"path":"confirm.danger","value":false},
+    {"path":"confirm.open","value":true}
+  ],
+  "dialog_cancel": [{"path":"confirm.open","value":false},{"path":"status","value":{"text":"cancelled"}}],
+  "dialog_confirm": [
+    {"path":"confirm.open","value":false},
+    {
+      "path": "toast",
+      "value": {"is_danger":false,"is_ok":true,"is_warn":false,"show":true,"text":"Stopped postgres and redis"}
+    },
+    {"path":"status","value":{"text":"Stopped postgres and redis"}}
+  ],
+  "filter_change": [
+    {"path":"filter","value":{"q":"api"}},
+    {
+      "path": "rows",
+      "value": [
+        {
+          "bad": false,
+          "cpu": "10.0",
+          "id": "a2780edec237",
+          "image": "acme/gateway:2.14.0",
+          "mem": "210M",
+          "name": "api-gateway",
+          "ok": true,
+          "ports": "3000→3000",
+          "state": "running",
+          "up": "3d2h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "12.0",
+          "id": "5df15f458b35",
+          "image": "acme/billing:1.9.3",
+          "mem": "642M",
+          "name": "billing-api",
+          "ok": true,
+          "ports": "3001→3001",
+          "state": "running",
+          "up": "2d4h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "9.3",
+          "id": "4d88c093d8b1",
+          "image": "acme/search:0.8.1",
+          "mem": "143M",
+          "name": "search-api",
+          "ok": true,
+          "ports": "3002→3002",
+          "state": "running",
+          "up": "1d2h",
+          "warn": false
+        }
+      ]
+    },
+    {
+      "path": "counts",
+      "value": {
+        "any": true,
+        "exited": 2,
+        "images": 13,
+        "line": "10 up · 2 exited",
+        "restarting": 0,
+        "sel": " · 2 selected",
+        "shown": 3,
+        "sort": "name ↑",
+        "total": 12,
+        "up": 10,
+        "volumes": 6
+      }
+    },
+    {"path":"cur","value":"a2780edec237"}
+  ],
+  "filter_clear": [
+    {"path":"filter","value":{"q":""}},
+    {
+      "path": "rows",
+      "value": [
+        {
+          "bad": false,
+          "cpu": "10.0",
+          "id": "a2780edec237",
+          "image": "acme/gateway:2.14.0",
+          "mem": "210M",
+          "name": "api-gateway",
+          "ok": true,
+          "ports": "3000→3000",
+          "state": "running",
+          "up": "3d2h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "12.0",
+          "id": "5df15f458b35",
+          "image": "acme/billing:1.9.3",
+          "mem": "642M",
+          "name": "billing-api",
+          "ok": true,
+          "ports": "3001→3001",
+          "state": "running",
+          "up": "2d4h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "-",
+          "id": "1752053f9b77",
+          "image": "acme/migrate:1.4.0",
+          "mem": "-",
+          "name": "db-migrate",
+          "ok": false,
+          "ports": "-",
+          "state": "exit 0",
+          "up": "-",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "2.5",
+          "id": "eedf44068cc1",
+          "image": "nginx:1.27-alpine",
+          "mem": "37M",
+          "name": "edge-proxy",
+          "ok": true,
+          "ports": "8080→80 +1",
+          "state": "running",
+          "up": "3d2h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "3.4",
+          "id": "0eb164054b53",
+          "image": "grafana/grafana:11.1.0",
+          "mem": "135M",
+          "name": "grafana",
+          "ok": true,
+          "ports": "3030→3000",
+          "state": "running",
+          "up": "1d23h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "2.3",
+          "id": "519754923c56",
+          "image": "postgres:16.3",
+          "mem": "201M",
+          "name": "postgres",
+          "ok": true,
+          "ports": "5432→5432",
+          "state": "running",
+          "up": "4d0h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "7.1",
+          "id": "af2249da6d91",
+          "image": "prom/prometheus:v2.53.0",
+          "mem": "227M",
+          "name": "prometheus",
+          "ok": true,
+          "ports": "9090→9090",
+          "state": "running",
+          "up": "2d0h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "6.8",
+          "id": "f0495e12546b",
+          "image": "rabbitmq:3.13-management",
+          "mem": "181M",
+          "name": "rabbitmq",
+          "ok": true,
+          "ports": "5672→5672 +1",
+          "state": "running",
+          "up": "3d23h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "1.8",
+          "id": "bd84eba33133",
+          "image": "redis:7.2-alpine",
+          "mem": "31M",
+          "name": "redis",
+          "ok": true,
+          "ports": "6379→6379",
+          "state": "running",
+          "up": "4d0h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "9.3",
+          "id": "4d88c093d8b1",
+          "image": "acme/search:0.8.1",
+          "mem": "143M",
+          "name": "search-api",
+          "ok": true,
+          "ports": "3002→3002",
+          "state": "running",
+          "up": "1d2h",
+          "warn": false
+        },
+        {
+          "bad": false,
+          "cpu": "2.4",
+          "id": "552aca52e90f",
+          "image": "acme/worker:3.2.0",
+          "mem": "108M",
+          "name": "worker-email",
+          "ok": true,
+          "ports": "-",
+          "state": "running",
+          "up": "19h42m",
+          "warn": false
+        },
+        {
+          "bad": true,
+          "cpu": "-",
+          "id": "1e79d881a8b6",
+          "image": "acme/worker:3.2.0",
+          "mem": "-",
+          "name": "worker-reports",
+          "ok": false,
+          "ports": "-",
+          "state": "exit 1",
+          "up": "-",
+          "warn": false
+        }
+      ]
+    },
+    {
+      "path": "counts",
+      "value": {
+        "any": true,
+        "exited": 2,
+        "images": 13,
+        "line": "10 up · 2 exited",
+        "restarting": 0,
+        "sel": " · 2 selected",
+        "shown": 12,
+        "sort": "name ↑",
+        "total": 12,
+        "up": 10,
+        "volumes": 6
+      }
+    },
+    {"path":"cur","value":"a2780edec237"}
+  ],
+  "help_close": [{"path":"help","value":{"open":false}}],
+  "help_open": [{"path":"help","value":{"open":true}}],
+  "image_prune": [
+    {"path":"confirm.title","value":"Remove 2 unused images?"},
+    {"path":"confirm.message","value":"Frees about 634MB. Images that a container uses are kept."},
+    {"path":"confirm.danger","value":true},
+    {"path":"confirm.open","value":true}
+  ],
+  "palette_close": [
+    {
+      "path": "palette",
+      "value": {
+        "commands": [
+          {"hint":"s","id":"stop","label":"Stop the selected containers…"},
+          {"hint":"u","id":"start","label":"Start the selected containers"},
+          {"hint":"r","id":"restart","label":"Restart the selected containers…"},
+          {"hint":"d","id":"remove","label":"Remove the selected containers…"},
+          {"hint":"enter","id":"detail","label":"Show the container's detail"},
+          {"hint":"/","id":"filter","label":"Filter containers"},
+          {"hint":"o","id":"sort","label":"Cycle the sort order"},
+          {"hint":"1","id":"containers","label":"Go to containers"},
+          {"hint":"3","id":"images","label":"Go to images"},
+          {"hint":"4","id":"volumes","label":"Go to volumes"},
+          {"hint":"5","id":"events","label":"Go to events"},
+          {"hint":"","id":"prune-images","label":"Prune unused images…"},
+          {"hint":"","id":"prune-volumes","label":"Prune unused volumes…"},
+          {"hint":"t","id":"theme","label":"Switch the theme"},
+          {"hint":"?","id":"help","label":"Show the keys"}
+        ],
+        "cur": "stop",
+        "open": false,
+        "query": ""
+      }
+    }
+  ],
+  "palette_open": [
+    {
+      "path": "palette",
+      "value": {
+        "commands": [
+          {"hint":"s","id":"stop","label":"Stop the selected containers…"},
+          {"hint":"u","id":"start","label":"Start the selected containers"},
+          {"hint":"r","id":"restart","label":"Restart the selected containers…"},
+          {"hint":"d","id":"remove","label":"Remove the selected containers…"},
+          {"hint":"enter","id":"detail","label":"Show the container's detail"},
+          {"hint":"/","id":"filter","label":"Filter containers"},
+          {"hint":"o","id":"sort","label":"Cycle the sort order"},
+          {"hint":"1","id":"containers","label":"Go to containers"},
+          {"hint":"3","id":"images","label":"Go to images"},
+          {"hint":"4","id":"volumes","label":"Go to volumes"},
+          {"hint":"5","id":"events","label":"Go to events"},
+          {"hint":"","id":"prune-images","label":"Prune unused images…"},
+          {"hint":"","id":"prune-volumes","label":"Prune unused volumes…"},
+          {"hint":"t","id":"theme","label":"Switch the theme"},
+          {"hint":"?","id":"help","label":"Show the keys"}
+        ],
+        "cur": "stop",
+        "open": true,
+        "query": ""
+      }
+    },
+    {
+      "path": "found",
+      "value": {
+        "any": true,
+        "items": [
+          {"hint":"s","id":"stop","label":"Stop the selected containers…"},
+          {"hint":"u","id":"start","label":"Start the selected containers"},
+          {"hint":"r","id":"restart","label":"Restart the selected containers…"},
+          {"hint":"d","id":"remove","label":"Remove the selected containers…"},
+          {"hint":"enter","id":"detail","label":"Show the container's detail"},
+          {"hint":"/","id":"filter","label":"Filter containers"},
+          {"hint":"o","id":"sort","label":"Cycle the sort order"},
+          {"hint":"1","id":"containers","label":"Go to containers"},
+          {"hint":"3","id":"images","label":"Go to images"},
+          {"hint":"4","id":"volumes","label":"Go to volumes"},
+          {"hint":"5","id":"events","label":"Go to events"},
+          {"hint":"","id":"prune-images","label":"Prune unused images…"},
+          {"hint":"","id":"prune-volumes","label":"Prune unused volumes…"},
+          {"hint":"t","id":"theme","label":"Switch the theme"},
+          {"hint":"?","id":"help","label":"Show the keys"}
+        ]
+      }
+    }
+  ],
+  "palette_run": [
+    {
+      "path": "palette",
+      "value": {
+        "commands": [
+          {"hint":"s","id":"stop","label":"Stop the selected containers…"},
+          {"hint":"u","id":"start","label":"Start the selected containers"},
+          {"hint":"r","id":"restart","label":"Restart the selected containers…"},
+          {"hint":"d","id":"remove","label":"Remove the selected containers…"},
+          {"hint":"enter","id":"detail","label":"Show the container's detail"},
+          {"hint":"/","id":"filter","label":"Filter containers"},
+          {"hint":"o","id":"sort","label":"Cycle the sort order"},
+          {"hint":"1","id":"containers","label":"Go to containers"},
+          {"hint":"3","id":"images","label":"Go to images"},
+          {"hint":"4","id":"volumes","label":"Go to volumes"},
+          {"hint":"5","id":"events","label":"Go to events"},
+          {"hint":"","id":"prune-images","label":"Prune unused images…"},
+          {"hint":"","id":"prune-volumes","label":"Prune unused volumes…"},
+          {"hint":"t","id":"theme","label":"Switch the theme"},
+          {"hint":"?","id":"help","label":"Show the keys"}
+        ],
+        "cur": "stop",
+        "open": false,
+        "query": ""
+      }
+    },
+    {"path":"confirm.title","value":"Stop 2 containers?"},
+    {
+      "path": "confirm.message",
+      "value": "postgres and redis will get SIGTERM and stop. Nothing is removed; start brings it back."
+    },
+    {"path":"confirm.danger","value":false},
+    {"path":"confirm.open","value":true}
+  ],
+  "theme_toggle": [
+    {"path":"theme","value":{"name":"light"}},
+    {"path":"status","value":{"text":"theme: light"}},
+    {"path":"@theme","value":"light"}
+  ],
+  "toast_dismiss": [{"path":"toast","value":{"is_danger":false,"is_ok":false,"is_warn":false,"show":false,"text":""}}],
+  "volume_prune": [
+    {"path":"confirm.title","value":"Remove 1 unused volume?"},
+    {"path":"confirm.message","value":"Deletes their data and frees about 3.2GB. This cannot be undone."},
+    {"path":"confirm.danger","value":true},
+    {"path":"confirm.open","value":true}
+  ]
+}

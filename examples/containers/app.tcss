@@ -1,0 +1,24 @@
+/*
+ * The containers dashboard's own sheet, loaded after the kit. It holds only
+ * what is specific to this app: sizes a page decides, and what to hide on a
+ * narrow terminal. Re-declare a token here (`:root { --accent: ... }`) to
+ * rebrand the whole kit.
+ */
+
+/* Narrow terminals: the stat pair is the first thing to go. */
+@media (max-cols: 70) {
+  #detail__stats { display: none; }
+}
+
+/* Short terminals: the stat pair goes first, then the whole top of the detail
+ * pane, so the log or table below it keeps rows to show. */
+@media (max-rows: 22) {
+  #detail__stats { display: none; }
+}
+@media (max-rows: 17) {
+  #detail__top { display: none; }
+}
+
+/* The help lists every labeled key, more rows than a small terminal has: the
+ * modal takes the screen's height (at most) and its list scrolls. */
+#help__dialog { height: 100%; max-height: 28; }

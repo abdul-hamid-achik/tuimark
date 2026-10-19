@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1084" height="548" viewBox="0 0 1084 548" role="img" aria-label="containers: a table of twelve containers with status colors, CPU, memory, uptime and ports, two rows marked, over the key hints and a status bar that says the engine is degraded">
+<title>containers: a table of twelve containers with status colors, CPU, memory, uptime and ports, two rows marked, over the key hints and a status bar that says the engine is degraded</title>
+<rect width="1084" height="548" rx="6" fill="#f6f8fa"/>
+<path fill="#eef1f4" d="M14 14h979.2v20h-979.2zM1060.4 14h9.6v20h-9.6zM110 514h960v20h-960z"/>
+<path fill="#1a7f37" d="M993.2 14h67.2v20h-67.2z"/>
+<path fill="#ffffff" d="M14 34h1056v20h-1056zM14 474h1056v20h-1056zM14 494h1056v20h-1056z"/>
+<path fill="#0969da" d="M33.2 154h1017.6v20h-1017.6z"/>
+<path fill="#9a6700" d="M14 514h96v20h-96z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#d1d9e0" stroke-width="1.3" d="M23.6 64H23.6Q18.8 64 18.8 68.8V74M23.6 64H33.2M33.2 64H42.8M42.8 64H52.4M52.4 64H62M62 64H71.6M71.6 64H81.2M81.2 64H90.8M90.8 64H100.4M100.4 64H110M110 64H119.6M119.6 64H129.2M129.2 64H138.8M138.8 64H148.4M148.4 64H158M158 64H167.6M167.6 64H177.2M177.2 64H186.8M186.8 64H196.4M196.4 64H206M206 64H215.6M215.6 64H225.2M225.2 64H234.8M234.8 64H244.4M244.4 64H254M254 64H263.6M263.6 64H273.2M273.2 64H282.8M282.8 64H292.4M292.4 64H302M302 64H311.6M311.6 64H321.2M321.2 64H330.8M330.8 64H340.4M340.4 64H350M350 64H359.6M359.6 64H369.2M369.2 64H378.8M378.8 64H388.4M388.4 64H398M398 64H407.6M407.6 64H417.2M417.2 64H426.8M426.8 64H436.4M436.4 64H446M446 64H455.6M455.6 64H465.2M465.2 64H474.8M474.8 64H484.4M484.4 64H494M494 64H503.6M503.6 64H513.2M513.2 64H522.8M522.8 64H532.4M532.4 64H542M542 64H551.6M551.6 64H561.2M561.2 64H570.8M570.8 64H580.4M580.4 64H590M590 64H599.6M599.6 64H609.2M609.2 64H618.8M618.8 64H628.4M628.4 64H638M638 64H647.6M647.6 64H657.2M657.2 64H666.8M666.8 64H676.4M676.4 64H686M686 64H695.6M695.6 64H705.2M705.2 64H714.8M714.8 64H724.4M724.4 64H734M734 64H743.6M743.6 64H753.2M753.2 64H762.8M762.8 64H772.4M772.4 64H782M782 64H791.6M791.6 64H801.2M801.2 64H810.8M810.8 64H820.4M820.4 64H830M830 64H839.6M839.6 64H849.2M849.2 64H858.8M858.8 64H868.4M868.4 64H878M878 64H887.6M887.6 64H897.2M897.2 64H906.8M906.8 64H916.4M916.4 64H926M926 64H935.6M935.6 64H945.2M945.2 64H954.8M954.8 64H964.4M964.4 64H974M974 64H983.6M983.6 64H993.2M993.2 64H1002.8M1002.8 64H1012.4M1012.4 64H1022M1022 64H1031.6M1031.6 64H1041.2M1041.2 64H1050.8M1050.8 64H1060.4M1060.4 64H1060.4Q1065.2 64 1065.2 68.8V74M18.8 74V94M1065.2 74V94M23.6 104H23.6Q18.8 104 18.8 99.2V94M23.6 104H33.2M33.2 104H42.8M42.8 104H52.4M52.4 104H62M62 104H71.6M71.6 104H81.2M81.2 104H90.8M90.8 104H100.4M100.4 104H110M110 104H119.6M119.6 104H129.2M129.2 104H138.8M138.8 104H148.4M148.4 104H158M158 104H167.6M167.6 104H177.2M177.2 104H186.8M186.8 104H196.4M196.4 104H206M206 104H215.6M215.6 104H225.2M225.2 104H234.8M234.8 104H244.4M244.4 104H254M254 104H263.6M263.6 104H273.2M273.2 104H282.8M282.8 104H292.4M292.4 104H302M302 104H311.6M311.6 104H321.2M321.2 104H330.8M330.8 104H340.4M340.4 104H350M350 104H359.6M359.6 104H369.2M369.2 104H378.8M378.8 104H388.4M388.4 104H398M398 104H407.6M407.6 104H417.2M417.2 104H426.8M426.8 104H436.4M436.4 104H446M446 104H455.6M455.6 104H465.2M465.2 104H474.8M474.8 104H484.4M484.4 104H494M494 104H503.6M503.6 104H513.2M513.2 104H522.8M522.8 104H532.4M532.4 104H542M542 104H551.6M551.6 104H561.2M561.2 104H570.8M570.8 104H580.4M580.4 104H590M590 104H599.6M599.6 104H609.2M609.2 104H618.8M618.8 104H628.4M628.4 104H638M638 104H647.6M647.6 104H657.2M657.2 104H666.8M666.8 104H676.4M676.4 104H686M686 104H695.6M695.6 104H705.2M705.2 104H714.8M714.8 104H724.4M724.4 104H734M734 104H743.6M743.6 104H753.2M753.2 104H762.8M762.8 104H772.4M772.4 104H782M782 104H791.6M791.6 104H801.2M801.2 104H810.8M810.8 104H820.4M820.4 104H830M830 104H839.6M839.6 104H849.2M849.2 104H858.8M858.8 104H868.4M868.4 104H878M878 104H887.6M887.6 104H897.2M897.2 104H906.8M906.8 104H916.4M916.4 104H926M926 104H935.6M935.6 104H945.2M945.2 104H954.8M954.8 104H964.4M964.4 104H974M974 104H983.6M983.6 104H993.2M993.2 104H1002.8M1002.8 104H1012.4M1012.4 104H1022M1022 104H1031.6M1031.6 104H1041.2M1041.2 104H1050.8M1050.8 104H1060.4M1060.4 104H1060.4Q1065.2 104 1065.2 99.2V94"/>
+<path stroke="#0969da" stroke-width="1.1" d="M23.6 121.6H16.4V134M23.6 126.4H21.2V134M23.6 121.6H33.2M23.6 126.4H33.2M513.2 121.6H522.8M513.2 126.4H522.8M522.8 121.6H532.4M522.8 126.4H532.4M532.4 121.6H542M532.4 126.4H542M542 121.6H551.6M542 126.4H551.6M551.6 121.6H561.2M551.6 126.4H561.2M561.2 121.6H570.8M561.2 126.4H570.8M570.8 121.6H580.4M570.8 126.4H580.4M580.4 121.6H590M580.4 126.4H590M590 121.6H599.6M590 126.4H599.6M599.6 121.6H609.2M599.6 126.4H609.2M609.2 121.6H618.8M609.2 126.4H618.8M618.8 121.6H628.4M618.8 126.4H628.4M628.4 121.6H638M628.4 126.4H638M638 121.6H647.6M638 126.4H647.6M647.6 121.6H657.2M647.6 126.4H657.2M657.2 121.6H666.8M657.2 126.4H666.8M666.8 121.6H676.4M666.8 126.4H676.4M676.4 121.6H686M676.4 126.4H686M686 121.6H695.6M686 126.4H695.6M695.6 121.6H705.2M695.6 126.4H705.2M705.2 121.6H714.8M705.2 126.4H714.8M714.8 121.6H724.4M714.8 126.4H724.4M724.4 121.6H734M724.4 126.4H734M734 121.6H743.6M734 126.4H743.6M743.6 121.6H753.2M743.6 126.4H753.2M753.2 121.6H762.8M753.2 126.4H762.8M762.8 121.6H772.4M762.8 126.4H772.4M772.4 121.6H782M772.4 126.4H782M782 121.6H791.6M782 126.4H791.6M791.6 121.6H801.2M791.6 126.4H801.2M801.2 121.6H810.8M801.2 126.4H810.8M810.8 121.6H820.4M810.8 126.4H820.4M820.4 121.6H830M820.4 126.4H830M830 121.6H839.6M830 126.4H839.6M839.6 121.6H849.2M839.6 126.4H849.2M849.2 121.6H858.8M849.2 126.4H858.8M858.8 121.6H868.4M858.8 126.4H868.4M868.4 121.6H878M868.4 126.4H878M878 121.6H887.6M878 126.4H887.6M887.6 121.6H897.2M887.6 126.4H897.2M897.2 121.6H906.8M897.2 126.4H906.8M906.8 121.6H916.4M906.8 126.4H916.4M916.4 121.6H926M916.4 126.4H926M926 121.6H935.6M926 126.4H935.6M935.6 121.6H945.2M935.6 126.4H945.2M945.2 121.6H954.8M945.2 126.4H954.8M954.8 121.6H964.4M954.8 126.4H964.4M964.4 121.6H974M964.4 126.4H974M974 121.6H983.6M974 126.4H983.6M983.6 121.6H993.2M983.6 126.4H993.2M993.2 121.6H1002.8M993.2 126.4H1002.8M1002.8 121.6H1012.4M1002.8 126.4H1012.4M1012.4 121.6H1022M1012.4 126.4H1022M1022 121.6H1031.6M1022 126.4H1031.6M1031.6 121.6H1041.2M1031.6 126.4H1041.2M1041.2 121.6H1050.8M1041.2 126.4H1050.8M1050.8 121.6H1060.4M1050.8 126.4H1060.4M1060.4 121.6H1067.6V134M1060.4 126.4H1062.8V134M16.4 134V154M21.2 134V154M1062.8 134V154M1067.6 134V154M16.4 154V174M21.2 154V174M1062.8 154V174M1067.6 154V174M16.4 174V194M21.2 174V194M1062.8 174V194M1067.6 174V194M16.4 194V214M21.2 194V214M1062.8 194V214M1067.6 194V214M16.4 214V234M21.2 214V234M1062.8 214V234M1067.6 214V234M16.4 234V254M21.2 234V254M1062.8 234V254M1067.6 234V254M16.4 254V274M21.2 254V274M1062.8 254V274M1067.6 254V274M16.4 274V294M21.2 274V294M1062.8 274V294M1067.6 274V294M16.4 294V314M21.2 294V314M1062.8 294V314M1067.6 294V314M16.4 314V334M21.2 314V334M1062.8 314V334M1067.6 314V334M16.4 334V354M21.2 334V354M1062.8 334V354M1067.6 334V354M16.4 354V374M21.2 354V374M1062.8 354V374M1067.6 354V374M16.4 374V394M21.2 374V394M1062.8 374V394M1067.6 374V394M16.4 394V414M21.2 394V414M1062.8 394V414M1067.6 394V414M16.4 414V434M21.2 414V434M1062.8 414V434M1067.6 414V434M16.4 434V454M21.2 434V454M1062.8 434V454M1067.6 434V454M23.6 466.4H16.4V454M23.6 461.6H21.2V454M23.6 461.6H33.2M23.6 466.4H33.2M33.2 461.6H42.8M33.2 466.4H42.8M42.8 461.6H52.4M42.8 466.4H52.4M52.4 461.6H62M52.4 466.4H62M62 461.6H71.6M62 466.4H71.6M71.6 461.6H81.2M71.6 466.4H81.2M81.2 461.6H90.8M81.2 466.4H90.8M90.8 461.6H100.4M90.8 466.4H100.4M100.4 461.6H110M100.4 466.4H110M110 461.6H119.6M110 466.4H119.6M119.6 461.6H129.2M119.6 466.4H129.2M129.2 461.6H138.8M129.2 466.4H138.8M138.8 461.6H148.4M138.8 466.4H148.4M148.4 461.6H158M148.4 466.4H158M158 461.6H167.6M158 466.4H167.6M167.6 461.6H177.2M167.6 466.4H177.2M177.2 461.6H186.8M177.2 466.4H186.8M186.8 461.6H196.4M186.8 466.4H196.4M196.4 461.6H206M196.4 466.4H206M206 461.6H215.6M206 466.4H215.6M215.6 461.6H225.2M215.6 466.4H225.2M225.2 461.6H234.8M225.2 466.4H234.8M234.8 461.6H244.4M234.8 466.4H244.4M244.4 461.6H254M244.4 466.4H254M254 461.6H263.6M254 466.4H263.6M263.6 461.6H273.2M263.6 466.4H273.2M273.2 461.6H282.8M273.2 466.4H282.8M282.8 461.6H292.4M282.8 466.4H292.4M292.4 461.6H302M292.4 466.4H302M302 461.6H311.6M302 466.4H311.6M311.6 461.6H321.2M311.6 466.4H321.2M321.2 461.6H330.8M321.2 466.4H330.8M330.8 461.6H340.4M330.8 466.4H340.4M340.4 461.6H350M340.4 466.4H350M350 461.6H359.6M350 466.4H359.6M359.6 461.6H369.2M359.6 466.4H369.2M369.2 461.6H378.8M369.2 466.4H378.8M378.8 461.6H388.4M378.8 466.4H388.4M388.4 461.6H398M388.4 466.4H398M398 461.6H407.6M398 466.4H407.6M407.6 461.6H417.2M407.6 466.4H417.2M417.2 461.6H426.8M417.2 466.4H426.8M426.8 461.6H436.4M426.8 466.4H436.4M436.4 461.6H446M436.4 466.4H446M446 461.6H455.6M446 466.4H455.6M455.6 461.6H465.2M455.6 466.4H465.2M465.2 461.6H474.8M465.2 466.4H474.8M474.8 461.6H484.4M474.8 466.4H484.4M484.4 461.6H494M484.4 466.4H494M494 461.6H503.6M494 466.4H503.6M503.6 461.6H513.2M503.6 466.4H513.2M513.2 461.6H522.8M513.2 466.4H522.8M522.8 461.6H532.4M522.8 466.4H532.4M532.4 461.6H542M532.4 466.4H542M542 461.6H551.6M542 466.4H551.6M551.6 461.6H561.2M551.6 466.4H561.2M561.2 461.6H570.8M561.2 466.4H570.8M570.8 461.6H580.4M570.8 466.4H580.4M580.4 461.6H590M580.4 466.4H590M590 461.6H599.6M590 466.4H599.6M599.6 461.6H609.2M599.6 466.4H609.2M609.2 461.6H618.8M609.2 466.4H618.8M618.8 461.6H628.4M618.8 466.4H628.4M628.4 461.6H638M628.4 466.4H638M638 461.6H647.6M638 466.4H647.6M647.6 461.6H657.2M647.6 466.4H657.2M657.2 461.6H666.8M657.2 466.4H666.8M666.8 461.6H676.4M666.8 466.4H676.4M676.4 461.6H686M676.4 466.4H686M686 461.6H695.6M686 466.4H695.6M695.6 461.6H705.2M695.6 466.4H705.2M705.2 461.6H714.8M705.2 466.4H714.8M714.8 461.6H724.4M714.8 466.4H724.4M724.4 461.6H734M724.4 466.4H734M734 461.6H743.6M734 466.4H743.6M743.6 461.6H753.2M743.6 466.4H753.2M753.2 461.6H762.8M753.2 466.4H762.8M762.8 461.6H772.4M762.8 466.4H772.4M772.4 461.6H782M772.4 466.4H782M782 461.6H791.6M782 466.4H791.6M791.6 461.6H801.2M791.6 466.4H801.2M801.2 461.6H810.8M801.2 466.4H810.8M810.8 461.6H820.4M810.8 466.4H820.4M820.4 461.6H830M820.4 466.4H830M830 461.6H839.6M830 466.4H839.6M839.6 461.6H849.2M839.6 466.4H849.2M849.2 461.6H858.8M849.2 466.4H858.8M858.8 461.6H868.4M858.8 466.4H868.4M868.4 461.6H878M868.4 466.4H878M878 461.6H887.6M878 466.4H887.6M887.6 461.6H897.2M887.6 466.4H897.2M897.2 461.6H906.8M897.2 466.4H906.8M906.8 461.6H916.4M906.8 466.4H916.4M916.4 461.6H926M916.4 466.4H926M926 461.6H935.6M926 466.4H935.6M935.6 461.6H945.2M935.6 466.4H945.2M945.2 461.6H954.8M945.2 466.4H954.8M954.8 461.6H964.4M954.8 466.4H964.4M964.4 461.6H974M964.4 466.4H974M974 461.6H983.6M974 466.4H983.6M983.6 461.6H993.2M983.6 466.4H993.2M993.2 461.6H1002.8M993.2 466.4H1002.8M1002.8 461.6H1012.4M1002.8 466.4H1012.4M1012.4 461.6H1022M1012.4 466.4H1022M1022 461.6H1031.6M1022 466.4H1031.6M1031.6 461.6H1041.2M1031.6 466.4H1041.2M1041.2 461.6H1050.8M1041.2 466.4H1050.8M1050.8 461.6H1060.4M1050.8 466.4H1060.4M1060.4 466.4H1067.6V454M1060.4 461.6H1062.8V454"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="96" lengthAdjust="spacing" fill="#0969da" font-weight="700">containers</text>
+<text x="158" y="29" textLength="48" lengthAdjust="spacing" fill="#1f2328" font-weight="700">local</text>
+<text x="215.6" y="29" textLength="57.6" lengthAdjust="spacing" fill="#1f2328" font-weight="700">engine</text>
+<text x="897.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#59636e">12:00:12</text>
+<text x="1002.8" y="29" textLength="19.2" lengthAdjust="spacing" fill="#ffffff" font-weight="700">10</text>
+<text x="1031.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#ffffff" font-weight="700">up</text>
+<text x="14" y="49" textLength="19.2" lengthAdjust="spacing" fill="#0969da" font-weight="700">▸1</text>
+<rect x="14" y="51" width="19.2" height="1" fill="#0969da"/>
+<text x="42.8" y="49" textLength="96" lengthAdjust="spacing" fill="#0969da" font-weight="700">containers</text>
+<rect x="42.8" y="51" width="96" height="1" fill="#0969da"/>
+<text x="167.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#59636e">2</text>
+<text x="186.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#59636e">detail</text>
+<text x="273.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#59636e">3</text>
+<text x="292.4" y="49" textLength="57.6" lengthAdjust="spacing" fill="#59636e">images</text>
+<text x="378.8" y="49" textLength="9.6" lengthAdjust="spacing" fill="#59636e">4</text>
+<text x="398" y="49" textLength="67.2" lengthAdjust="spacing" fill="#59636e">volumes</text>
+<text x="494" y="49" textLength="9.6" lengthAdjust="spacing" fill="#59636e">5</text>
+<text x="513.2" y="49" textLength="57.6" lengthAdjust="spacing" fill="#59636e">events</text>
+<text x="33.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">/</text>
+<text x="52.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">to</text>
+<text x="81.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">filter</text>
+<text x="148.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">by</text>
+<text x="177.2" y="89" textLength="48" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">name,</text>
+<text x="234.8" y="89" textLength="48" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">image</text>
+<text x="292.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">or</text>
+<text x="321.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">status</text>
+<text x="42.8" y="129" textLength="96" lengthAdjust="spacing" fill="#0969da">Containers</text>
+<text x="148.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0969da">·</text>
+<text x="167.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#0969da">12</text>
+<text x="196.4" y="129" textLength="19.2" lengthAdjust="spacing" fill="#0969da">of</text>
+<text x="225.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#0969da">12</text>
+<text x="254" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0969da">·</text>
+<text x="273.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0969da">2</text>
+<text x="292.4" y="129" textLength="76.8" lengthAdjust="spacing" fill="#0969da">selected</text>
+<text x="378.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0969da">·</text>
+<text x="398" y="129" textLength="38.4" lengthAdjust="spacing" fill="#0969da">sort</text>
+<text x="446" y="129" textLength="38.4" lengthAdjust="spacing" fill="#0969da">name</text>
+<text x="494" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0969da">↑</text>
+<text x="52.4" y="149" textLength="38.4" lengthAdjust="spacing" fill="#59636e" font-weight="700">NAME</text>
+<text x="330.8" y="149" textLength="48" lengthAdjust="spacing" fill="#59636e" font-weight="700">IMAGE</text>
+<text x="580.4" y="149" textLength="57.6" lengthAdjust="spacing" fill="#59636e" font-weight="700">STATUS</text>
+<text x="705.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#59636e" font-weight="700">CPU%</text>
+<text x="791.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#59636e" font-weight="700">MEM</text>
+<text x="849.2" y="149" textLength="57.6" lengthAdjust="spacing" fill="#59636e" font-weight="700">UPTIME</text>
+<text x="926" y="149" textLength="48" lengthAdjust="spacing" fill="#59636e" font-weight="700">PORTS</text>
+<text x="52.4" y="169" textLength="105.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">api-gateway</text>
+<text x="330.8" y="169" textLength="182.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">acme/gateway:2.14.0</text>
+<text x="580.4" y="169" textLength="67.2" lengthAdjust="spacing" fill="#ffffff" font-weight="700">running</text>
+<text x="705.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">10.0</text>
+<text x="782" y="169" textLength="38.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">210M</text>
+<text x="868.4" y="169" textLength="38.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3d2h</text>
+<text x="926" y="169" textLength="86.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3000→3000</text>
+<text x="52.4" y="189" textLength="105.6" lengthAdjust="spacing" fill="#1f2328">billing-api</text>
+<text x="330.8" y="189" textLength="172.8" lengthAdjust="spacing" fill="#59636e">acme/billing:1.9.3</text>
+<text x="580.4" y="189" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="705.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">12.0</text>
+<text x="782" y="189" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">642M</text>
+<text x="868.4" y="189" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">2d4h</text>
+<text x="926" y="189" textLength="86.4" lengthAdjust="spacing" fill="#59636e">3001→3001</text>
+<text x="52.4" y="209" textLength="96" lengthAdjust="spacing" fill="#1f2328">db-migrate</text>
+<text x="330.8" y="209" textLength="172.8" lengthAdjust="spacing" fill="#59636e">acme/migrate:1.4.0</text>
+<text x="580.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">exit</text>
+<text x="628.4" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">0</text>
+<text x="734" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">-</text>
+<text x="810.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">-</text>
+<text x="897.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">-</text>
+<text x="926" y="209" textLength="9.6" lengthAdjust="spacing" fill="#59636e">-</text>
+<text x="52.4" y="229" textLength="96" lengthAdjust="spacing" fill="#1f2328">edge-proxy</text>
+<text x="330.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#59636e">nginx:1.27-alpine</text>
+<text x="580.4" y="229" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="714.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">2.5</text>
+<text x="791.6" y="229" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">37M</text>
+<text x="868.4" y="229" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">3d2h</text>
+<text x="926" y="229" textLength="67.2" lengthAdjust="spacing" fill="#59636e">8080→80</text>
+<text x="1002.8" y="229" textLength="19.2" lengthAdjust="spacing" fill="#59636e">+1</text>
+<text x="52.4" y="249" textLength="67.2" lengthAdjust="spacing" fill="#1f2328">grafana</text>
+<text x="330.8" y="249" textLength="211.2" lengthAdjust="spacing" fill="#59636e">grafana/grafana:11.1.0</text>
+<text x="580.4" y="249" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="714.8" y="249" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">3.4</text>
+<text x="782" y="249" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">135M</text>
+<text x="858.8" y="249" textLength="48" lengthAdjust="spacing" fill="#1f2328">1d23h</text>
+<text x="926" y="249" textLength="86.4" lengthAdjust="spacing" fill="#59636e">3030→3000</text>
+<text x="33.2" y="269" textLength="9.6" lengthAdjust="spacing" fill="#0969da">✓</text>
+<text x="52.4" y="269" textLength="76.8" lengthAdjust="spacing" fill="#0969da">postgres</text>
+<text x="330.8" y="269" textLength="124.8" lengthAdjust="spacing" fill="#59636e">postgres:16.3</text>
+<text x="580.4" y="269" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="714.8" y="269" textLength="28.8" lengthAdjust="spacing" fill="#0969da">2.3</text>
+<text x="782" y="269" textLength="38.4" lengthAdjust="spacing" fill="#0969da">201M</text>
+<text x="868.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#0969da">4d0h</text>
+<text x="926" y="269" textLength="86.4" lengthAdjust="spacing" fill="#59636e">5432→5432</text>
+<text x="52.4" y="289" textLength="96" lengthAdjust="spacing" fill="#1f2328">prometheus</text>
+<text x="330.8" y="289" textLength="220.8" lengthAdjust="spacing" fill="#59636e">prom/prometheus:v2.53.0</text>
+<text x="580.4" y="289" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="714.8" y="289" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">7.1</text>
+<text x="782" y="289" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">227M</text>
+<text x="868.4" y="289" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">2d0h</text>
+<text x="926" y="289" textLength="86.4" lengthAdjust="spacing" fill="#59636e">9090→9090</text>
+<text x="52.4" y="309" textLength="76.8" lengthAdjust="spacing" fill="#1f2328">rabbitmq</text>
+<text x="330.8" y="309" textLength="230.4" lengthAdjust="spacing" fill="#59636e">rabbitmq:3.13-management</text>
+<text x="580.4" y="309" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="714.8" y="309" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">6.8</text>
+<text x="782" y="309" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">181M</text>
+<text x="858.8" y="309" textLength="48" lengthAdjust="spacing" fill="#1f2328">3d23h</text>
+<text x="926" y="309" textLength="86.4" lengthAdjust="spacing" fill="#59636e">5672→5672</text>
+<text x="1022" y="309" textLength="19.2" lengthAdjust="spacing" fill="#59636e">+1</text>
+<text x="33.2" y="329" textLength="9.6" lengthAdjust="spacing" fill="#0969da">✓</text>
+<text x="52.4" y="329" textLength="48" lengthAdjust="spacing" fill="#0969da">redis</text>
+<text x="330.8" y="329" textLength="153.6" lengthAdjust="spacing" fill="#59636e">redis:7.2-alpine</text>
+<text x="580.4" y="329" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="714.8" y="329" textLength="28.8" lengthAdjust="spacing" fill="#0969da">1.8</text>
+<text x="791.6" y="329" textLength="28.8" lengthAdjust="spacing" fill="#0969da">31M</text>
+<text x="868.4" y="329" textLength="38.4" lengthAdjust="spacing" fill="#0969da">4d0h</text>
+<text x="926" y="329" textLength="86.4" lengthAdjust="spacing" fill="#59636e">6379→6379</text>
+<text x="52.4" y="349" textLength="96" lengthAdjust="spacing" fill="#1f2328">search-api</text>
+<text x="330.8" y="349" textLength="163.2" lengthAdjust="spacing" fill="#59636e">acme/search:0.8.1</text>
+<text x="580.4" y="349" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="714.8" y="349" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">9.3</text>
+<text x="782" y="349" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">143M</text>
+<text x="868.4" y="349" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">1d2h</text>
+<text x="926" y="349" textLength="86.4" lengthAdjust="spacing" fill="#59636e">3002→3002</text>
+<text x="52.4" y="369" textLength="115.2" lengthAdjust="spacing" fill="#1f2328">worker-email</text>
+<text x="330.8" y="369" textLength="163.2" lengthAdjust="spacing" fill="#59636e">acme/worker:3.2.0</text>
+<text x="580.4" y="369" textLength="67.2" lengthAdjust="spacing" fill="#1a7f37">running</text>
+<text x="714.8" y="369" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">2.4</text>
+<text x="782" y="369" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">108M</text>
+<text x="849.2" y="369" textLength="57.6" lengthAdjust="spacing" fill="#1f2328">19h42m</text>
+<text x="926" y="369" textLength="9.6" lengthAdjust="spacing" fill="#59636e">-</text>
+<text x="52.4" y="389" textLength="134.4" lengthAdjust="spacing" fill="#1f2328">worker-reports</text>
+<text x="330.8" y="389" textLength="163.2" lengthAdjust="spacing" fill="#59636e">acme/worker:3.2.0</text>
+<text x="580.4" y="389" textLength="38.4" lengthAdjust="spacing" fill="#d1242f">exit</text>
+<text x="628.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#d1242f">1</text>
+<text x="734" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">-</text>
+<text x="810.8" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">-</text>
+<text x="897.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">-</text>
+<text x="926" y="389" textLength="9.6" lengthAdjust="spacing" fill="#59636e">-</text>
+<text x="23.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">?</text>
+<text x="42.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">help</text>
+<text x="100.4" y="489" textLength="19.2" lengthAdjust="spacing" fill="#0969da" font-weight="700">^K</text>
+<text x="129.2" y="489" textLength="76.8" lengthAdjust="spacing" fill="#59636e">commands</text>
+<text x="225.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">q</text>
+<text x="244.4" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">quit</text>
+<text x="302" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">/</text>
+<text x="321.2" y="489" textLength="57.6" lengthAdjust="spacing" fill="#59636e">filter</text>
+<text x="398" y="489" textLength="48" lengthAdjust="spacing" fill="#0969da" font-weight="700">space</text>
+<text x="455.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">mark</text>
+<text x="513.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">s</text>
+<text x="532.4" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">stop</text>
+<text x="590" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">u</text>
+<text x="609.2" y="489" textLength="48" lengthAdjust="spacing" fill="#59636e">start</text>
+<text x="676.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">r</text>
+<text x="695.6" y="489" textLength="67.2" lengthAdjust="spacing" fill="#59636e">restart</text>
+<text x="782" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">d</text>
+<text x="801.2" y="489" textLength="57.6" lengthAdjust="spacing" fill="#59636e">remove</text>
+<text x="878" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">o</text>
+<text x="897.2" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">sort</text>
+<text x="23.6" y="529" textLength="76.8" lengthAdjust="spacing" fill="#ffffff" font-weight="700">DEGRADED</text>
+<text x="119.6" y="529" textLength="19.2" lengthAdjust="spacing" fill="#1f2328">10</text>
+<text x="148.4" y="529" textLength="19.2" lengthAdjust="spacing" fill="#1f2328">up</text>
+<text x="177.2" y="529" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">·</text>
+<text x="196.4" y="529" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">2</text>
+<text x="215.6" y="529" textLength="57.6" lengthAdjust="spacing" fill="#1f2328">exited</text>
+<text x="666.8" y="529" textLength="19.2" lengthAdjust="spacing" fill="#1f2328">no</text>
+<text x="695.6" y="529" textLength="67.2" lengthAdjust="spacing" fill="#1f2328">actions</text>
+<text x="772.4" y="529" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">yet</text>
+<text x="820.4" y="529" textLength="57.6" lengthAdjust="spacing" fill="#59636e">docker</text>
+<text x="887.6" y="529" textLength="57.6" lengthAdjust="spacing" fill="#59636e">27.1.1</text>
+<text x="954.8" y="529" textLength="9.6" lengthAdjust="spacing" fill="#59636e">·</text>
+<text x="974" y="529" textLength="86.4" lengthAdjust="spacing" fill="#59636e">simulated</text>
+</g>
+</svg>
