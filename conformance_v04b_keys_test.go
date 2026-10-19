@@ -340,7 +340,6 @@ func TestHintsUnderTrap(t *testing.T) {
 	})
 
 	t.Run("geometry", func(t *testing.T) {
-		t.Skip("waits for F5: a modal sized by its content (#dlg 8x5)")
 		d, err := loadWithData(t, escTUI, escJSON).Dump(30, 10)
 		if err != nil {
 			t.Fatal(err)
