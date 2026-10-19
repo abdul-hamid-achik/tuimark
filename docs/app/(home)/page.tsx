@@ -137,11 +137,13 @@ const loop = [
   },
 ];
 
-// The gallery: every example app, in the order of the examples page's
-// most visual first. Animated demos start paused, so the page loads only
-// their still frames.
+// The gallery: the example apps, most visual first (the kit gallery has its
+// own section, and the hero already shows a deploy dashboard). Eighteen keep
+// the grid even at three columns and at two. Animated demos start paused, so
+// the page loads only their still frames.
 const gallery: { shot: string; title: string; anchor: string; text: string }[] = [
   { shot: 'monitor-processes', title: 'monitor studio', anchor: 'monitor-studio', text: 'Nine tabs, a sortable process table with multi-select, gauges and sparklines.' },
+  { shot: 'containers-demo', title: 'containers', anchor: 'containers', text: 'A container dashboard built on the kit: a filterable table, a detail pane, dialogs, and a palette.' },
   { shot: 'agent', title: 'agent', anchor: 'agent', text: 'A coding-agent chat: transcript, composer, tool activity, and approvals.' },
   { shot: 'gitui-status', title: 'gitui', anchor: 'gitui', text: 'Staged and unstaged files beside a colored diff, a log, and commit details.' },
   { shot: 'http-client', title: 'http', anchor: 'http', text: 'A request collection, an editor, and the response with its headers.' },
@@ -150,7 +152,6 @@ const gallery: { shot: string; title: string; anchor: string; text: string }[] =
   { shot: 'pipeline-demo', title: 'pipeline', anchor: 'pipeline', text: 'CI jobs in parallel with spinners and progress, a failure, and a retry.' },
   { shot: 'music-demo', title: 'music', anchor: 'music', text: 'A player with a spectrum visualizer, a position bar, and a queue.' },
   { shot: 'inbox', title: 'inbox', anchor: 'inbox', text: 'Search, a ticket list, and a detail pane that stacks on narrow terminals.' },
-  { shot: 'dashboard', title: 'dashboard', anchor: 'dashboard', text: 'Deploy pipeline steps, a progress bar, buttons, and a log panel.' },
   { shot: 'snake-demo', title: 'snake', anchor: 'snake', text: 'The classic, on an autopilot, with the score and speed climbing.' },
   { shot: 'tetris-demo', title: 'tetris', anchor: 'tetris', text: 'Falling pieces, line clears, and a next-piece preview.' },
   { shot: 'chess-demo', title: 'chess', anchor: 'chess', text: 'A famous game replayed move by move, with the move list.' },
@@ -476,7 +477,8 @@ export default async function HomePage() {
           <>
             Buttons, cards, alerts, a data table, a command palette, dialogs, toasts, and more, as small documents and two
             stylesheets. Like shadcn, you copy what you need into your project: no package, no new tags, every color a
-            token you can rebrand.
+            token you can rebrand. Small helpers in Go and TypeScript do the host’s part: toasts that expire, form
+            validation, dialog routing, the palette’s filter.
           </>
         }
       >
@@ -486,6 +488,7 @@ export default async function HomePage() {
         <More
           links={[
             ['/guide/kit', 'The kit'],
+            ['/guide/kit#helpers', 'Helpers'],
             [`/examples#kit-gallery`, 'The gallery app'],
           ]}
         />

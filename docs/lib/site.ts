@@ -40,11 +40,12 @@ export const INSTALL = {
 };
 
 /**
- * Whether @thelacanians/tuimark is on npm. Set it to false to mark the npm
- * install tab "coming soon": it then shows the commands without a copy
- * button.
+ * Whether @thelacanians/tuimark is on npm. While it is false, the npm install
+ * tab says "coming soon" and shows its commands without a copy button, and
+ * /llms.txt lists only Homebrew and Go. Its first publish comes with a
+ * release tag; flip this to true then.
  */
-export const NPM_PUBLISHED = true;
+export const NPM_PUBLISHED = false;
 
 /** An absolute URL on the canonical origin. */
 export function absoluteUrl(path: string): string {

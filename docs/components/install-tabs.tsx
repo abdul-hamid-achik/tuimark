@@ -47,11 +47,11 @@ function Panel({ method, Heading }: { method: Method; Heading: 'h2' | 'h3' }) {
         <Body heading={NPM_PUBLISHED ? 'Start a TypeScript project' : 'npm: coming soon'} Heading={Heading}>
           <p>
             <code>{INSTALL.npmPackage}</code> is the TypeScript client and the CLI in one package: its{' '}
-            <code>tuimark</code> command fetches the matching release binary and checks it against the release
-            checksums.{' '}
+            <code>tuimark</code> command downloads the binary of its own release and checks it against a checksum
+            built into the package.{' '}
             {NPM_PUBLISHED
               ? 'Scaffold a project with a Bun parent, or add it to an existing one.'
-              : 'It is not published yet; until it is, install the CLI with Homebrew or Go.'}
+              : 'Its first publish comes with the next release; until then, install the CLI with Homebrew or Go.'}
           </p>
           <CommandCopy command={INSTALL.npmNew} copyable={NPM_PUBLISHED} />
           <CommandCopy command={INSTALL.npmInstall} copyable={NPM_PUBLISHED} />
