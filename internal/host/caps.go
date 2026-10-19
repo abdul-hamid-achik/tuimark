@@ -267,6 +267,17 @@ type termSession struct {
 	// onError is RunOptions.OnError: nil ends the session on any handler
 	// error that is not a quit, as Run always has.
 	onError func(ev *Event, err error) error
+	// clk is the session's own clock (runclock.go); nil is the default.
+	clk runClock
+	// idle, when non-nil, is called by the loop each time it is about to
+	// block waiting for something: the runtime's tests use it as a
+	// barrier. Production leaves it nil.
+	idle func()
+	// fed, when non-nil, is called when the loop takes a read of the
+	// terminal's input (tests only).
+	fed func()
+	// noPoll switches the 250 ms size poll off (tests only).
+	noPoll bool
 
 	mu       sync.Mutex
 	grapheme bool // mode 2027 was turned on: leaving turns it off

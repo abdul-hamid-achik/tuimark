@@ -230,7 +230,10 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 	if ctx.Err() != nil {
 		return cancelled(ctx), false, false
 	}
-	start := time.Now()
+	// The session's clock (SPEC v0.4b §26.13): the log's t, the spinner
+	// phase, and the Every deadlines all read it.
+	clk := defaultRunClock()
+	start := clk.Now()
 	cfg, err := readRunConfig(os.Getenv)
 	if err != nil {
 		return err, false, false
@@ -245,7 +248,8 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 	if err != nil {
 		return err, false, false
 	}
-	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg, ctx: ctx, onError: opts.OnError}
+	lg.useClock(clk)
+	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg, ctx: ctx, onError: opts.OnError, clk: clk}
 	defer func() { lg.end(endReason(err, sess)) }()
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
@@ -578,9 +582,17 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	if lg != nil {
 		lg.begin(size())
 	}
+	// The session reads one clock (SPEC v0.4b §26.13): start is the
+	// origin of the spinner phase P(t) = floor(t / 100 ms), and of the
+	// Every deadlines. A reload (swap) hands the clock to the new app and
+	// never moves start, so the spinners keep their phase (§15.9).
+	clk := sess.clock()
+	start := clk.Now()
+	a.setClock(clk)
+	defer func() { orig.setClock(nil); a.setClock(nil) }()
 	// Every registration's first tick falls due d after the session
 	// starts (SPEC v0.4a §18.2).
-	a.everyBegin(time.Now())
+	a.everyBegin(start)
 
 	reads := make(chan chunk, 16)
 	done := make(chan struct{})
@@ -733,6 +745,44 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 
 	var prev *paint.Grid
 	lastCols, lastRows := -1, -1
+	// The spinner state of the last frame written (SPEC v0.4b §26.13):
+	// base is its grid as the frame holds it (braille glyphs, no
+	// overlay), spinPhase the phase it was drawn at, and spinWanted
+	// whether it holds a visible spinner, which is what arms the timer.
+	// ascii is the 16 profile's glyph set (§26.3).
+	var base *paint.Grid
+	spinPhase, spinWanted := 0, false
+	ascii := sess.profile == paint.ANSI16
+	// phaseNow is P(t) for the moment of the call: the session's elapsed
+	// time on its clock. A document without a spinner paints phase 0 and
+	// so keeps the frame skip (the phase is an input of the frame).
+	phaseNow := func() int { return PhaseOf(clk.Now().Sub(start)) }
+	// emit diffs g, the frame's grid at phase p, with the previous one
+	// and writes it in one write, wrapped in synchronized output when it
+	// is on (§26.6). tuimark run's panel and strip are painted over a
+	// copy, after the frame is built (SPEC v0.4a §15.9); the frame itself
+	// never holds them.
+	emit := func(g *paint.Grid, p int) (int, error) {
+		cols, rows := g.W, g.H
+		base, spinPhase, spinWanted = g, p, len(g.Spinners) > 0
+		if ascii && spinWanted {
+			g = g.SpinnerGlyphs(p, true)
+		}
+		if hooks.Overlay != nil {
+			if top, bottom := hooks.Overlay(cols, rows); len(top) > 0 || len(bottom) > 0 {
+				g = overlay(g, top, bottom)
+			}
+		}
+		s := paint.DiffWith(prev, g, opts)
+		if syncFrames {
+			s = syncBegin + s + syncEnd
+		}
+		if _, err := io.WriteString(out, s); err != nil {
+			return 0, err
+		}
+		prev = g
+		return len(s), nil
+	}
 	// draw writes one frame in one write, wrapped in synchronized output
 	// when it is on (§26.6).
 	draw := func() error {
@@ -747,7 +797,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			prev = nil
 			lastCols, lastRows = cols, rows
 		}
-		f := a.Frame(cols, rows)
+		// Every frame uses the phase of the moment it is built (§26.13).
+		phase := 0
+		if a.HasSpinner() {
+			phase = phaseNow()
+		}
+		f := a.FrameAt(cols, rows, phase)
 		// The mouse modes follow the frame's mouse value: a change is
 		// written in one write before the frame's bytes, outside the
 		// synchronized output wrapper (SPEC v0.2b §26.11).
@@ -757,25 +812,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			}
 			lg.write("mode", member{"mouse", f.Mouse})
 		}
-		// tuimark run's panel and strip are painted over a copy of the
-		// frame's grid, after the frame is built, and diffed with it
-		// (SPEC v0.4a §15.9); the frame itself never holds them.
-		g := f.Grid
-		if hooks.Overlay != nil {
-			if top, bottom := hooks.Overlay(cols, rows); len(top) > 0 || len(bottom) > 0 {
-				g = overlay(f.Grid, top, bottom)
-			}
-		}
-		s := paint.DiffWith(prev, g, opts)
-		if syncFrames {
-			s = syncBegin + s + syncEnd
-		}
-		if _, err := io.WriteString(out, s); err != nil {
+		n, err := emit(f.Grid, phase)
+		if err != nil {
 			return err
 		}
-		prev = g
 		if lg != nil {
-			lg.write("frame", member{"us", time.Since(t0).Microseconds()}, member{"bytes", len(s)})
+			lg.write("frame", member{"us", time.Since(t0).Microseconds()}, member{"bytes", n})
 		}
 		return nil
 	}
@@ -851,6 +893,28 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			return true, err
 		}
 		return false, nil
+	}
+	// spinTick is the redraw of a spinner's timer (SPEC v0.4b §26.13). It
+	// is paint only, not an input and not a settle: it dispatches no
+	// event, fires no Every function, builds no frame, takes no app lock,
+	// writes no log record, and changes no state. It draws the last
+	// frame's grid again with the glyph of the phase of this moment, which
+	// is the frame a fresh build would produce: only the glyph cells of
+	// the spinners depend on the phase, and the layout is the last
+	// frame's. A phase boundary that fell while the loop was busy is not
+	// queued: this draws once, with the current phase. A new size is not a
+	// spinner's business, and takes the normal settle.
+	spinTick := func() (stop bool, err error) {
+		if c, r := size(); c != lastCols || r != lastRows {
+			return settle()
+		}
+		p := phaseNow()
+		if !spinWanted || p == spinPhase {
+			return false, nil
+		}
+		g := base.SpinnerGlyphs(p, false)
+		_, err = emit(g, p)
+		return err != nil, err
 	}
 	// dispatch runs the events of one key, paste, or mouse event. A frame
 	// is drawn when they fired something, focus moved, or (version="2")
@@ -979,6 +1043,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	}
 	var escWait <-chan time.Time
 	onChunk := func(c chunk) (stop bool, err error) {
+		if sess.fed != nil {
+			sess.fed()
+		}
 		// Replies that arrive after the probe (or without one) are
 		// swallowed without effect.
 		ins, _ := dec.feed(c.data, c.err != nil)
@@ -1039,7 +1106,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// settle. An error that is not a quit goes to handlerErr with no event,
 	// and the stop checks run after each function, as after an event.
 	ticks := func() (stop bool, err error) {
-		for _, r := range a.takeDue(time.Now()) {
+		for _, r := range a.takeDue(clk.Now()) {
 			started := false
 			err := a.Batch(func(b *Batch) error {
 				// The check is the call's start (startTick): it runs
@@ -1075,21 +1142,62 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// tickTimer fires when the earliest Every registration falls due; it
 	// is armed again before each wait, so a registration made or stopped
 	// meanwhile (everyKick) and a tick that just ran move it.
-	tickTimer := time.NewTimer(time.Hour)
+	tickTimer := clk.NewTimer(time.Hour)
+	tickTimer.Stop()
 	defer tickTimer.Stop()
-	armTick := func() <-chan time.Time {
-		if !tickTimer.Stop() {
+	// The timer is touched only when its deadline changes: a turn of the
+	// loop that changed nothing (a size poll, a kick that moved no
+	// deadline) leaves it armed.
+	var tickDue time.Time
+	tickArmed := false
+	disarm := func(t runTimer, armed *bool) {
+		if !t.Stop() {
 			select {
-			case <-tickTimer.C:
+			case <-t.C():
 			default:
 			}
 		}
+		*armed = false
+	}
+	armTick := func() <-chan time.Time {
 		due, ok := a.everyDue()
 		if !ok {
+			disarm(tickTimer, &tickArmed)
 			return nil
 		}
-		tickTimer.Reset(max(0, time.Until(due)))
-		return tickTimer.C
+		if tickArmed && due.Equal(tickDue) {
+			return tickTimer.C()
+		}
+		disarm(tickTimer, &tickArmed)
+		tickTimer.Reset(max(0, due.Sub(clk.Now())))
+		tickArmed, tickDue = true, due
+		return tickTimer.C()
+	}
+	// spinTimer fires at the next phase boundary after the phase of the
+	// last frame written, while that frame holds a visible spinner (SPEC
+	// v0.4b §26.13); a frame without one arms nothing, and the loop wakes
+	// for nothing. The deadline is a function of the frame's phase and of
+	// the session's start alone, so a boundary that passed while the loop
+	// was busy fires at once, once, and an unchanged deadline is left
+	// armed.
+	spinTimer := clk.NewTimer(time.Hour)
+	spinTimer.Stop()
+	defer spinTimer.Stop()
+	var spinDue time.Time
+	spinArmed := false
+	armSpin := func() <-chan time.Time {
+		if !spinWanted {
+			disarm(spinTimer, &spinArmed)
+			return nil
+		}
+		due := start.Add(time.Duration(spinPhase+1) * SpinnerPeriod)
+		if spinArmed && due.Equal(spinDue) {
+			return spinTimer.C()
+		}
+		disarm(spinTimer, &spinArmed)
+		spinTimer.Reset(max(0, due.Sub(clk.Now())))
+		spinArmed, spinDue = true, due
+		return spinTimer.C()
 	}
 	// swap applies one reload of `tuimark run` (hooks.Swap, SPEC v0.4a
 	// §15.9) between inputs, like a settle: the session moves into the new
@@ -1111,7 +1219,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			a.mu.Lock()
 			quitReq = a.quitReq
 			a.mu.Unlock()
-			a.everyBegin(time.Now())
+			// The clock is the session's: the new app reads it, and start
+			// stays, so a reload does not restart the spinners (SPEC v0.4b
+			// §15.9, decision 85).
+			a.setClock(clk)
+			old.setClock(nil)
+			a.everyBegin(clk.Now())
 			old.leaveSession()
 		}
 		if s.Applied != nil {
@@ -1121,6 +1234,16 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	}
 	for {
 		tick := armTick()
+		spin := armSpin()
+		// The size poll (below); the clock tests switch it off, so no
+		// turn of the loop they did not cause can pass for a barrier.
+		var poll <-chan time.Time
+		if !sess.noPoll {
+			poll = time.After(250 * time.Millisecond)
+		}
+		if sess.idle != nil {
+			sess.idle()
+		}
 		select {
 		case c := <-reads:
 			if stop, err := onChunk(c); stop {
@@ -1131,7 +1254,13 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				return err
 			}
 		case <-tick:
+			tickArmed = false
 			if stop, err := ticks(); stop {
+				return err
+			}
+		case <-spin:
+			spinArmed = false
+			if stop, err := spinTick(); stop {
 				return err
 			}
 		case <-a.everyKick:
@@ -1171,7 +1300,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			if stop, err := settle(); stop {
 				return err
 			}
-		case <-time.After(250 * time.Millisecond):
+		case <-poll:
 			// Poll for size changes where no resize signal exists.
 			if c, r := size(); c != lastCols || r != lastRows {
 				if stop, err := settle(); stop {

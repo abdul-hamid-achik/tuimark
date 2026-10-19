@@ -17,9 +17,12 @@ import (
 // from any goroutine. A write error stops the logging and never stops
 // Run.
 type runLog struct {
-	mu      sync.Mutex
-	f       *os.File
-	start   time.Time
+	mu    sync.Mutex
+	f     *os.File
+	start time.Time
+	// now reads the clock t is counted on (the session's, runclock.go);
+	// nil is the real one.
+	now     func() time.Time
 	started bool // the start record was written: a session began
 	dead    bool // a write failed, or the log was closed
 }
@@ -94,6 +97,27 @@ func isTerminalFile(f *os.File) bool {
 	return tty
 }
 
+// useClock counts t on the session's clock (SPEC v0.4b §26.13: the
+// spinner clock and the log's t are one clock). The caller took start
+// from the same clock.
+func (l *runLog) useClock(c runClock) {
+	if l == nil {
+		return
+	}
+	l.mu.Lock()
+	l.now = c.Now
+	l.mu.Unlock()
+}
+
+// since is the time since Run started, on the log's clock. The caller
+// holds l.mu.
+func (l *runLog) since() time.Duration {
+	if l.now != nil {
+		return l.now().Sub(l.start)
+	}
+	return time.Since(l.start)
+}
+
 // member is one "name": value pair of a log record, in record order.
 type member struct {
 	name  string
@@ -116,7 +140,7 @@ func (l *runLog) write(ev string, members ...member) {
 	b.WriteString(`{"ev":`)
 	writeJSON(&b, ev)
 	b.WriteString(`,"t":`)
-	writeJSON(&b, time.Since(l.start).Milliseconds())
+	writeJSON(&b, l.since().Milliseconds())
 	for _, m := range members {
 		b.WriteByte(',')
 		writeJSON(&b, m.name)
