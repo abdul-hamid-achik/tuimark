@@ -5,6 +5,10 @@
     <bind keys="?" action="help_toggle" label="help"/>
     <bind keys="q,ctrl+c" action="quit" keycap="q" label="quit"/>
   </keymap>
+  <keymap when="modal">
+    <bind keys="?" action="help_toggle" label="help"/>
+    <bind keys="q,ctrl+c" action="quit" keycap="q" label="quit"/>
+  </keymap>
   <keymap when="#board">
     <bind keys="up,k" action="cur_up" keycap="↑↓←→" label="move"/>
     <bind keys="down,j" action="cur_down"/>

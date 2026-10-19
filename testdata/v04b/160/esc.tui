@@ -1,0 +1,19 @@
+<tui>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="o" action="open_dialog" label="open"/>
+    <bind keys="esc" action="esc_row" label="back"/>
+    <bind keys="y" action="confirm" when="#dlg" label="yes"/>
+    <bind keys="x" action="screen_row" when="#main"/>
+    <bind keys="ctrl+c" action="copy"/>
+  </keymap>
+  <screen id="main" focus="#list">
+    <list id="list" each="xs as x" key="x"><item><text>{x}</text></item></list>
+    <hints id="keys"/>
+    <modal id="dlg" open="ui.dlg" on:open="opened" on:close="closed">
+      <text>sure?</text>
+      <button id="ok" label="ok" on:click="ok"/>
+      <hints id="mkeys"/>
+    </modal>
+  </screen>
+</tui>
