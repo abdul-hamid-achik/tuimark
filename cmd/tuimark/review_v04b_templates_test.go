@@ -236,3 +236,49 @@ func TestV04bTemplateGuardedUseInATable(t *testing.T) {
 	sameLines(t, "row template after set:false", items, []string{"0:"})
 	sameLines(t, "diagnostics after set:false", errs, nil)
 }
+
+// `tuimark ir` at the expansion depth limit (the F2 review): a chain of
+// element-less uses whose text lands at level 256 prints its IR, 256
+// levels deep; a chain of 6000 is one V021 (exit 2), where the IR used to
+// nest past what encoding/json reads back and the command failed (exit 1).
+func TestV04bIRAtTheExpansionDepthLimit(t *testing.T) {
+	chain := func(n int) string {
+		var b strings.Builder
+		b.WriteString("<tui>\n")
+		for i := 0; i < n; i++ {
+			b.WriteString(`<template id="t` + strconv.Itoa(i) + `"><use template="t` + strconv.Itoa(i+1) + `"/></template>` + "\n")
+		}
+		b.WriteString(`<template id="t` + strconv.Itoa(n) + `"><text>x</text></template>` + "\n")
+		b.WriteString(`<screen><use template="t0"/></screen>` + "\n</tui>")
+		return b.String()
+	}
+	code, out, errw := runCLI("ir", writeTemp(t, "app.tui", chain(252)))
+	if code != 0 {
+		t.Fatalf("ir at the limit: exit %d %s", code, errw)
+	}
+	type node struct {
+		Kind     string `json:"kind"`
+		Children []node `json:"children"`
+	}
+	var doc struct {
+		Root node `json:"root"`
+	}
+	if err := json.Unmarshal([]byte(out), &doc); err != nil {
+		t.Fatal(err)
+	}
+	var depth func(n node) int
+	depth = func(n node) int {
+		d := 0
+		for _, c := range n.Children {
+			d = max(d, depth(c))
+		}
+		return d + 1
+	}
+	if d := depth(doc.Root); d != 256 {
+		t.Errorf("ir at the limit nests %d levels, want 256", d)
+	}
+	code, out, errw = runCLI("ir", writeTemp(t, "app.tui", chain(6000)))
+	if code != 2 || !strings.Contains(out+errw, `error V021 app.tui:254:21 /screen/use use template="t253" exceeds the expansion depth limit of 256 levels`) {
+		t.Errorf("ir past the limit: exit %d\n%s%s", code, out, errw)
+	}
+}

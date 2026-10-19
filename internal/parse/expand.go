@@ -85,6 +85,8 @@ type templating struct {
 	// templates.
 	copies []*copyFrame
 	stack  []*tmpl
+	// usedLog holds the templates a copy made used, in order (markUsed).
+	usedLog []*tmpl
 	// cyclic holds the raw <use> elements that close a cycle of templates:
 	// reported once (V019), they never expand.
 	cyclic map[*RawNode]bool
@@ -108,6 +110,9 @@ type tmpl struct {
 	// copy reports them itself, at the copy's place).
 	self ir.Diags
 	used bool
+	// onStack counts its copies being built (a copy inside one of them is
+	// a cycle).
+	onStack int
 	// firstID is the first id of its body in document order (V012 of a
 	// use without id), found once.
 	firstID string
@@ -122,6 +127,10 @@ type useInfo struct {
 	// bad is set by a V011 on the use itself (its with, or its if): it
 	// inserts nothing (decision 15).
 	bad bool
+	// depth is the use's own level in the tree `tuimark ir` prints, where
+	// it holds its copy: the copy's elements stand one level below it
+	// (checkDepth).
+	depth int
 }
 
 // alias is an alias in scope in a copy: a with alias (use is its <use>,
@@ -272,9 +281,11 @@ func (b *builder) templateBody(t *ir.Node, c *RawNode) {
 	saved := cp.selfCheck
 	cp.selfCheck = true
 	cp.inTmpl++
+	b.depth++ // the template's own level, in the tree as written
 	defer func() {
 		cp.selfCheck = saved
 		cp.inTmpl--
+		b.depth--
 	}()
 	for _, cc := range c.Children {
 		if cc.Type != RawElement {
@@ -296,6 +307,7 @@ func (b *builder) use(n *ir.Node, c *RawNode, outer *ir.Node) {
 		b.diag(ir.Error, "V001", c.Line, c.Col, childPath(n, "use"), "", "a <template> holds no <bind> rows; share keymap rows with <include>")
 		return
 	}
+	b.checkDepth(b.depth + 1) // its own level, in the tree as composed
 	q := b.useNode(n, c, outer)
 	if cp.selfOnly || cp.selfCheck {
 		return // a template's body as written, or a fragment on its own
@@ -328,7 +340,7 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 		q.ID = cp.prefix + id
 	}
 	writeInto(n, outer, q)
-	info := &useInfo{raw: c}
+	info := &useInfo{raw: c, depth: b.depth + 1}
 	allowed := TagAttrsCurrent["use"]
 	for _, a := range c.Attrs {
 		if !allowed[a.Name] {
@@ -507,7 +519,7 @@ func (b *builder) expandIn(n *ir.Node) {
 func (b *builder) expandUse(n, q *ir.Node) {
 	cp := b.comp
 	info := cp.useOf[q]
-	if info == nil || info.bad || cp.dead {
+	if info == nil || info.bad || cp.doc.dead {
 		return
 	}
 	name, ok := q.Attrs["template"]
@@ -527,12 +539,10 @@ func (b *builder) expandUse(n, q *ir.Node) {
 		b.errUse(q, "V019", "<use template=%q> names no <template>%s", name, hint)
 		return
 	}
-	for _, s := range cp.stack {
-		if s == t {
-			// A cycle checkCycles reports at the use that closes it: never
-			// expanded, whatever the path.
-			return
-		}
+	if t.onStack > 0 {
+		// A cycle checkCycles reports at the use that closes it: never
+		// expanded, whatever the path.
+		return
 	}
 	if q.ID == "" && b.eachContainer(q) == nil {
 		if x := b.firstID(t); x != "" {
@@ -581,20 +591,25 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	cp.used = true
 	savedOrg, savedChain, savedPrefix := b.org, cp.chain, cp.prefix
 	nChildren, nDroppedIn, nDropped := len(n.Children), len(b.droppedIn[n]), len(b.doc.dropped)
-	nDiags, count, bytes := len(b.doc.Diags), cp.count, cp.bytes
+	fr := &expFrame{bg: cp.active()}
+	nDiags, count, bytes := len(b.doc.Diags), fr.bg.count, fr.bg.bytes
 	nScope, nStack, nCopies, inTmpl := len(cp.scope), len(cp.stack), len(cp.copies), cp.inTmpl
-	fr := &expFrame{}
+	nUsed, savedDepth := len(cp.usedLog), b.depth
 	cp.frames = append(cp.frames, fr)
 	defer func() {
 		cp.frames = cp.frames[:len(cp.frames)-1]
-		b.org, cp.chain, cp.prefix = savedOrg, savedChain, savedPrefix
+		b.org, cp.chain, cp.prefix, b.depth = savedOrg, savedChain, savedPrefix, savedDepth
 		cp.popTo(nScope)
+		for _, s := range cp.stack[nStack:] {
+			s.onStack--
+		}
 		cp.stack, cp.copies, cp.inTmpl = cp.stack[:nStack], cp.copies[:nCopies], inTmpl
 		r := recover()
 		if r == nil {
 			return
 		}
-		if o, ok := r.(*expansionOverflow); !ok || o.frame != fr {
+		o, ok := r.(*expansionOverflow)
+		if !ok || o.frame != fr {
 			panic(r)
 		}
 		n.Children = n.Children[:nChildren]
@@ -604,12 +619,16 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 			b.droppedIn[n] = b.droppedIn[n][:nDroppedIn]
 		}
 		b.doc.Diags = b.doc.Diags[:nDiags]
-		cp.count, cp.bytes = count, bytes
-		cp.dead = true
-		b.errUse(q, "V021", "use template=%q exceeds the expansion limit (%d elements or %d MiB of placed source): it inserts nothing, and no later include or use expands", q.Attrs["template"], ExpansionLimit, ExpansionByteLimit>>20)
+		cp.unuse(nUsed) // a discarded copy makes no template used
+		fr.bg.count, fr.bg.bytes = count, bytes
+		fr.bg.dead = true
+		b.errUse(q, "V021", "%s", overflowMsg(fmt.Sprintf("use template=%q", q.Attrs["template"]), o))
 	}()
 	b.chargeBytes(t.raw.Span) // before anything is built
 	b.countElement()          // the use itself, so it is the one that reports
+	// Step 3 may build a copy outside the recursion that built n: its
+	// elements stand one level below the use, wherever it is built.
+	b.depth = cp.useOf[q].depth
 	b.org = &ir.Origin{File: t.file, Placed: q}
 	cp.chain = t.chain
 	prefix := cp.prefix
@@ -621,6 +640,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 		cp.push(alias{name: cl.Alias, path: cl.Path, use: q})
 	}
 	cp.stack = append(cp.stack, t)
+	t.onStack++
 	frame := &copyFrame{}
 	cp.copies = append(cp.copies, frame)
 	cp.inTmpl++
@@ -652,7 +672,23 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 		outer := cp.copies[nCopies-1]
 		outer.refs = append(outer.refs, left...)
 	}
-	t.used = true
+	cp.markUsed(t)
+}
+
+// markUsed records that a use copied t; unuse(n) takes back what was
+// recorded after the first n, for the copies a V021 discards.
+func (cp *composer) markUsed(t *tmpl) {
+	if !t.used {
+		t.used = true
+		cp.usedLog = append(cp.usedLog, t)
+	}
+}
+
+func (cp *composer) unuse(n int) {
+	for _, t := range cp.usedLog[n:] {
+		t.used = false
+	}
+	cp.usedLog = cp.usedLog[:n]
 }
 
 // resolveRefs resolves the #x references of a copy, made by the use q

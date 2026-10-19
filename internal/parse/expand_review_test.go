@@ -74,3 +74,76 @@ func TestWithScopeLookupDoesNotGrowWithTheScope(t *testing.T) {
 		t.Errorf("text %q", got)
 	}
 }
+
+// A template is charged to the document's budget once per copy (ADR 0034,
+// the F2 review): building its body as written, for its own checks, is
+// charged to the definitions' budget instead. A template that includes a
+// 9 MiB fragment (or 60 000 elements) and is used once is not V021 (review
+// probes cap/t9, cap/t60: the definition and the copy used to add up past
+// the limit).
+func TestTemplateDefinitionIsNotChargedToTheDocument(t *testing.T) {
+	files := map[string]string{
+		"frag9.tui":   "<fragment><text>" + strings.Repeat("x", 9<<20) + "</text></fragment>",
+		"frag60k.tui": "<fragment>" + strings.Repeat("<text>x</text>", 60000) + "</fragment>",
+	}
+	for _, c := range []struct {
+		name, frag string
+		texts      int
+	}{{"9 MiB", "frag9.tui", 2}, {"60 000 elements", "frag60k.tui", 60001}} {
+		t.Run(c.name, func(t *testing.T) {
+			app := fmt.Sprintf("<tui>\n<template id=\"T\"><include src=%q/></template>\n<screen id=\"main\">\n<scroll><use template=\"T\"/></scroll>\n<text>after</text></screen>\n</tui>", c.frag)
+			var doc *parse.Document
+			within(t, 60*time.Second, func() {
+				doc = parse.ParseWith([]byte(app), "app.tui", memLoader(files, "app.tui", nil))
+			})
+			if got := v021(doc); len(got) != 0 {
+				t.Errorf("V021 %v", got)
+			}
+			if n := len(strings.Fields(screenTexts(doc))); n != c.texts {
+				t.Errorf("%d texts, want %d", n, c.texts)
+			}
+		})
+	}
+}
+
+// The definitions share one budget, so every body built as written stays
+// bounded: two unused templates that include 9 MiB each pass it, and the
+// second include reports V021 (review probe cap/t9d). That V021 stops
+// nothing in the document: an include and a use after it still expand.
+func TestDefinitionsBudgetNeverStopsThePlacements(t *testing.T) {
+	files := map[string]string{
+		"frag9.tui": "<fragment><text>" + strings.Repeat("x", 9<<20) + "</text></fragment>",
+		"one.tui":   "<fragment><text>included</text></fragment>",
+	}
+	const app = "<tui>\n<template id=\"T\"><include src=\"frag9.tui\"/></template>\n<template id=\"U\"><include src=\"frag9.tui\"/></template>\n<template id=\"S\"><text>copied</text></template>\n<screen id=\"main\">\n<include src=\"one.tui\"/><use template=\"S\"/>\n</screen>\n</tui>"
+	var doc *parse.Document
+	within(t, 60*time.Second, func() {
+		doc = parse.ParseWith([]byte(app), "app.tui", memLoader(files, "app.tui", nil))
+	})
+	want := `app.tui:3:18 include src="frag9.tui" exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands`
+	if got := v021(doc); len(got) != 1 || got[0] != want {
+		t.Errorf("V021 %q, want %q", got, want)
+	}
+	if got := screenTexts(doc); got != "included copied" {
+		t.Errorf("screen texts %q, want the include's and the copy's", got)
+	}
+}
+
+// A copy that a V021 discards makes no template used: a template copied
+// only inside it reports its own diagnostics, as an unused template does
+// (the F2 review: used stayed set after the copy was undone, and the
+// template's own V002 was never reported).
+func TestDiscardedCopyLeavesItsTemplatesUnused(t *testing.T) {
+	app := "<tui>\n<template id=\"A\"><text bogus=\"1\">a</text></template>\n<template id=\"X\"><use template=\"A\"/>" +
+		strings.Repeat("<rule/>", parse.ExpansionLimit) + "</template>\n<screen id=\"main\"><use template=\"X\"/></screen>\n</tui>"
+	var doc *parse.Document
+	within(t, 60*time.Second, func() { doc = parse.Parse([]byte(app), "app.tui") })
+	var got []string
+	for _, d := range doc.Diags {
+		got = append(got, fmt.Sprintf("%s %d:%d", d.Code, d.Line, d.Col))
+	}
+	want := []string{"V002 2:24", "V021 4:19"}
+	if strings.Join(got, ", ") != strings.Join(want, ", ") {
+		t.Errorf("diagnostics %q, want %q", got, want)
+	}
+}

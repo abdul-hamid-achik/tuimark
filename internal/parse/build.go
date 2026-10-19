@@ -354,6 +354,9 @@ type builder struct {
 	// elements while one is (SPEC v0.4b §6.18.6). Every diagnostic made
 	// while building an element names its file.
 	org *ir.Origin
+	// depth is the depth of the element being built in the tree being
+	// built, the root's 1 (checkDepth bounds what an expansion nests).
+	depth int
 	// attrNames and attrCands cache what attrSuggestion looks up: the
 	// names every tag takes, and the sorted attributes of each tag.
 	// styleSeen holds the places of the <style> elements recorded in
@@ -584,6 +587,8 @@ func childPath(parent *ir.Node, tag string) string {
 // node converts a raw element (recursively) into an IR node.
 func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 	b.countElement()
+	b.depth++
+	b.checkDepth(b.depth)
 	n := &ir.Node{
 		Tag: r.Name, Kind: r.Name, Parent: parent,
 		Attrs: map[string]string{}, On: map[string]string{},
@@ -609,9 +614,10 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 	}
 	if b.comp != nil && len(b.comp.copies) > 0 {
 		b.copyContent(n, r) // an element of a copy (expand.go)
-		return n
+	} else {
+		b.content(n, r)
 	}
-	b.content(n, r)
+	b.depth--
 	return n
 }
 
