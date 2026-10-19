@@ -189,14 +189,36 @@ func (a *app) say(s setter, msg string) error {
 	return s.Set("status.text", msg)
 }
 
-// toast shows a toast of a level (info, success, warning, danger) and
+// instanceOf is the instance a kit event belongs to: the id of its source
+// before the last "__" (confirm__yes: confirm). A source with no "__" is its
+// own instance.
+func instanceOf(ev tuimark.Event) string {
+	inst, _ := splitID(ev.Source)
+	return inst
+}
+
+// partOf is the part of the event's source after the last "__" (confirm__yes:
+// yes), or "" when the source has none.
+func partOf(ev tuimark.Event) string {
+	_, part := splitID(ev.Source)
+	return part
+}
+
+func splitID(id string) (instance, part string) {
+	if i := strings.LastIndex(id, "__"); i >= 0 {
+		return id[:i], id[i+2:]
+	}
+	return id, ""
+}
+
+// toast shows a toast of a level (info, ok, warn, danger) and
 // starts its clock; tick clears it.
 func (a *app) toast(s setter, level, msg string) error {
 	a.toastLeft = toastTTL
 	return errors.Join(
 		s.Set("toast.text", msg),
-		s.Set("toast.is_success", level == "success"),
-		s.Set("toast.is_warning", level == "warning"),
+		s.Set("toast.is_ok", level == "ok"),
+		s.Set("toast.is_warn", level == "warn"),
 		s.Set("toast.is_danger", level == "danger"),
 		s.Set("toast.show", true),
 	)

@@ -2,247 +2,272 @@
  * kit/kit.tcss: the component classes. Load it right after theme.tcss.
  *
  * Conventions
- *   - A component is a root class (.card) plus parts that carry the root's
- *     name as a prefix (.card-title). TCSS has no descendant combinator, so
- *     every part gets its own class; copy the markup and you copy the names.
- *   - A variant is a second class on the same node (.badge.success). A
- *     compound selector outranks a single class, so a variant wins over its
- *     base wherever it sits in the file.
+ *   - Every kit class starts with `k-`. A component is a root class
+ *     (.k-card) plus parts that carry the root's name as a prefix
+ *     (.k-card-title). TCSS has no descendant combinator, so every part
+ *     gets its own class; copy the markup and you copy the names.
+ *   - A modifier is a second, short class on the same node (`.k-badge.ok`:
+ *     primary, secondary, danger, ghost, ok, warn, info, accent, good, bad,
+ *     invalid, current, muted). It is ONLY ever written compound with the
+ *     component class, never alone; a compound selector outranks a single
+ *     class, so a modifier wins over its base wherever it sits in the file.
  *   - Components that must fill a space say so with an explicit width or
  *     height, so they do not depend on what a bare row or col defaults to.
  *   - Colors are always tokens from theme.tcss ($accent, ...); nothing here
  *     holds a literal color.
+ *   - Selection and focus use bold, a border style, or a filled bar as well
+ *     as color, so they read under 16 colors.
  */
 
 /* ---------------------------------------------------------------- badge */
 
-.badge { width: auto; height: 1; padding: 0 1; color: $fg; background: $surface-2; bold: true; }
-.badge.accent { color: $accent-fg; background: $accent; }
-.badge.success { color: $accent-fg; background: $success; }
-.badge.warning { color: $accent-fg; background: $warning; }
-.badge.danger { color: $accent-fg; background: $danger; }
-.badge.info { color: $accent-fg; background: $info; }
+.k-badge { width: auto; height: 1; padding: 0 1; color: $fg; background: $raised; bold: true; }
+.k-badge.accent { color: $on-accent; background: $accent; }
+.k-badge.ok { color: $on-ok; background: $ok; }
+.k-badge.warn { color: $on-warn; background: $warn; }
+.k-badge.danger { color: $on-danger; background: $danger; }
+.k-badge.info { color: $on-accent; background: $info; }
 
 /* --------------------------------------------------------------- button */
 
-.btn { width: auto; height: 1; padding: 0; color: $fg; }
-.btn.primary { color: $accent-fg; background: $accent; bold: true; }
-.btn.secondary { color: $fg; background: $surface-2; }
-.btn.danger { color: $accent-fg; background: $danger; bold: true; }
+.k-btn { width: auto; height: 1; padding: 0; color: $fg; }
+.k-btn.primary { color: $on-accent; background: $accent; bold: true; }
+.k-btn.secondary { color: $fg; background: $raised; }
+.k-btn.danger { color: $on-danger; background: $danger; bold: true; }
 /* Ghost sets no background: there is no "transparent" value to undo a base
- * background with, so the base `.btn` has none and each filled variant adds
- * its own. */
-.btn.ghost { color: $muted; }
-/* Focus: an inverted label that no variant shares with its idle look. */
-.btn:focus { color: $accent-fg; background: $focus; bold: true; underline: true; }
-.btn.primary:focus { color: $bg; background: $fg; }
-.btn.danger:focus { color: $bg; background: $fg; }
-.btn.ghost:focus { color: $fg; background: $selected; }
-.btn:disabled { color: $muted; dim: true; }
+ * background with, so the base `.k-btn` has none and each filled modifier
+ * adds its own. */
+.k-btn.ghost { color: $muted; }
+/* Focus: an inverted, bold, underlined label that no modifier shares with
+ * its idle look. */
+.k-btn:focus { color: $on-accent; background: $focus; bold: true; underline: true; }
+.k-btn.primary:focus { color: $bg; background: $fg; }
+.k-btn.danger:focus { color: $bg; background: $fg; }
+.k-btn.ghost:focus { color: $fg; background: $sel; }
+.k-btn:disabled { color: $muted; dim: true; }
 
 /* ----------------------------------------------------------- card/panel */
 
-.card { width: 1fr; height: auto; border: rounded; border-color: $border; title-color: $muted; background: $surface; padding: 0 1; }
-.card:focus-within { border-color: $focus; title-color: $accent; }
-.card-title { bold: true; color: $fg; }
-.card-text { color: $fg; }
-.card-muted { color: $muted; }
-.card-actions { width: 1fr; height: 1; gap: 2; }
+.k-card { width: 1fr; height: auto; border: rounded; border-color: $border; title-color: $muted; background: $panel; padding: 0 1; }
+.k-card:focus-within { border-color: $focus; title-color: $accent; }
+.k-card-title { bold: true; color: $fg; }
+.k-card-text { color: $fg; }
+.k-card-muted { color: $muted; }
+.k-card-row { width: 1fr; height: 1; gap: 1; }
+.k-card-actions { width: 1fr; height: 1; gap: 2; }
 
 /* ---------------------------------------------------------------- alert */
 
-.alert { width: 1fr; height: auto; border: rounded; border-color: $border; background: $surface; padding: 0 1; }
-.alert.info { border-color: $info; title-color: $info; }
-.alert.success { border-color: $success; title-color: $success; }
-.alert.warning { border-color: $warning; title-color: $warning; }
-.alert.danger { border-color: $danger; title-color: $danger; }
-.alert-row { width: 1fr; height: auto; gap: 1; }
-.alert-icon { width: 1; bold: true; }
-.alert-icon.info { color: $info; }
-.alert-icon.success { color: $success; }
-.alert-icon.warning { color: $warning; }
-.alert-icon.danger { color: $danger; }
-.alert-text { width: 1fr; color: $fg; wrap: wrap; }
+.k-alert { width: 1fr; height: auto; border: rounded; border-color: $border; background: $panel; padding: 0 1; }
+.k-alert.info { border-color: $info; title-color: $info; }
+.k-alert.ok { border-color: $ok; title-color: $ok; }
+.k-alert.warn { border-color: $warn; title-color: $warn; }
+.k-alert.danger { border-color: $danger; title-color: $danger; }
+.k-alert-row { width: 1fr; height: auto; gap: 1; }
+.k-alert-icon { width: 1; bold: true; }
+.k-alert-icon.info { color: $info; }
+.k-alert-icon.ok { color: $ok; }
+.k-alert-icon.warn { color: $warn; }
+.k-alert-icon.danger { color: $danger; }
+.k-alert-text { width: 1fr; color: $fg; wrap: wrap; }
 
 /* ----------------------------------------------- app bar and status bar */
 
-.appbar { dock: top; width: 1fr; height: 1; gap: 2; padding: 0 1; overflow: hidden; background: $surface-2; color: $fg; }
-.appbar-brand { width: auto; bold: true; color: $accent; }
-.appbar-title { width: auto; bold: true; }
-.appbar-meta { width: auto; color: $muted; }
+.k-appbar { dock: top; width: 1fr; height: 1; gap: 2; padding: 0 1; overflow: hidden; background: $raised; color: $fg; }
+.k-appbar-brand { width: auto; bold: true; color: $accent; }
+.k-appbar-title { width: auto; bold: true; }
+.k-appbar-meta { width: auto; color: $muted; }
 
-.statusbar { dock: bottom; width: 1fr; height: 1; gap: 1; overflow: hidden; background: $surface-2; color: $fg; }
-.statusbar-seg { width: auto; padding: 0 1; bold: true; color: $accent-fg; background: $accent; }
-.statusbar-seg.success { background: $success; }
-.statusbar-seg.warning { background: $warning; }
-.statusbar-seg.danger { background: $danger; }
-.statusbar-text { width: auto; color: $fg; }
-.statusbar-muted { width: auto; padding: 0 1; color: $muted; }
+.k-statusbar { dock: bottom; width: 1fr; height: 1; gap: 1; overflow: hidden; background: $raised; color: $fg; }
+.k-statusbar-seg { width: auto; padding: 0 1; bold: true; color: $on-accent; background: $accent; }
+.k-statusbar-seg.ok { color: $on-ok; background: $ok; }
+.k-statusbar-seg.warn { color: $on-warn; background: $warn; }
+.k-statusbar-seg.danger { color: $on-danger; background: $danger; }
+.k-statusbar-text { width: auto; color: $fg; }
+.k-statusbar-muted { width: auto; padding: 0 1; color: $muted; }
 /* Narrow terminals: drop the least important parts before anything clips. */
 @media (max-cols: 60) {
-  .appbar-meta, .statusbar-muted { display: none; }
+  .k-appbar-meta, .k-statusbar-muted { display: none; }
 }
 
 /* ------------------------------------------------------------- key hints */
 
-.hintbar { width: 1fr; height: 1; gap: 2; padding: 0 1; }
-.hint-key { color: $accent; bold: true; }
-.hint-label { color: $muted; }
+/* `<hints class="k-hints"/>` generates one `row` per hint with a
+ * `.hint-key` and a `.hint-label` text; the runtime owns those two names,
+ * so they are only styled here, under the component. */
+.k-hints { width: 1fr; height: 1; gap: 2; padding: 0 1; }
+.k-hints > row > .hint-key { color: $accent; bold: true; }
+.k-hints > row > .hint-label { color: $muted; }
 
 /* --------------------------------------------------------------- dialogs */
 
-.dialog { width: 52; max-width: 100%; height: auto; padding: 1 2; border: rounded; background: $surface; border-color: $accent; title-color: $accent; }
-.dialog.danger { border-color: $danger; title-color: $danger; }
-.dialog-text { width: 1fr; color: $fg; wrap: wrap; }
-.dialog-actions { width: 1fr; height: 1; gap: 2; margin: 1 0 0 0; }
+.k-dialog { width: 52; max-width: 100%; height: auto; padding: 1 2; border: rounded; background: $panel; border-color: $accent; title-color: $accent; }
+.k-dialog.danger { border-color: $danger; title-color: $danger; }
+.k-dialog-text { width: 1fr; color: $fg; wrap: wrap; }
+.k-dialog-actions { width: 1fr; height: 1; gap: 2; margin: 1 0 0 0; }
 
 /* ----------------------------------------------------------- form field */
 
-.field { width: 1fr; height: auto; }
-.field-label { width: 1fr; height: 1; bold: true; color: $fg; }
-.field-label.invalid { color: $danger; }
-.field-input { width: 1fr; height: 3; border: rounded; border-color: $border; background: $surface; color: $fg; padding: 0 1; }
-.field-input:focus { border-color: $focus; background: $surface-2; }
-.field-input.invalid { border-color: $danger; }
-.field-input.invalid:focus { border-color: $danger; background: $surface-2; }
-.field-help { width: 1fr; height: 1; color: $muted; }
-.field-error { width: 1fr; height: 1; color: $danger; bold: true; }
+.k-field { width: 1fr; height: auto; }
+.k-field-label { width: 1fr; height: 1; bold: true; color: $fg; }
+.k-field-label.invalid { color: $danger; }
+.k-field-input { width: 1fr; height: 3; border: rounded; border-color: $border; background: $panel; color: $fg; padding: 0 1; }
+/* Focus: a double border in the focus color. */
+.k-field-input:focus { border: double; border-color: $focus; background: $raised; }
+.k-field-input.invalid { border-color: $danger; }
+.k-field-input.invalid:focus { border: double; border-color: $danger; background: $raised; }
+.k-field-help { width: 1fr; height: 1; color: $muted; }
+.k-field-error { width: 1fr; height: 1; color: $danger; bold: true; }
 
 /* ----------------------------------------------------------- empty state */
 
-.empty { width: 1fr; height: 1fr; align: center; justify: center; gap: 1; }
-.empty-icon { width: auto; color: $muted; bold: true; }
-.empty-title { width: auto; bold: true; color: $fg; }
-.empty-text { width: auto; color: $muted; }
+.k-empty { width: 1fr; height: 1fr; align: center; justify: center; gap: 1; }
+.k-empty-icon { width: auto; color: $muted; bold: true; }
+.k-empty-title { width: auto; bold: true; color: $fg; }
+.k-empty-text { width: auto; color: $muted; }
 
 /* ------------------------------------------------------------ data table */
 
-.dtable { width: 1fr; height: 1fr; border: rounded; border-color: $border; title-color: $muted; background: $surface; padding: 0 1; gap: 2; scrollbar: auto; }
-.dtable:focus { border-color: $focus; title-color: $accent; }
-.dtable > column { bold: true; color: $muted; }
-.dtable > item:selected { reverse: false; background: $selected; }
-.dtable:focus > item:selected { reverse: false; background: $selected; bold: true; }
-.dtable > item:checked { color: $accent; }
-.num { content-align: end; }
-.cell-name { min-width: 14; }
-.cell-muted { color: $muted; }
-.cell-success { color: $success; }
-.cell-warning { color: $warning; }
-.cell-danger { color: $danger; }
+.k-table { width: 1fr; height: 1fr; border: rounded; border-color: $border; title-color: $muted; background: $panel; padding: 0 1; gap: 2; scrollbar: auto; }
+.k-table:focus { border: double; border-color: $focus; title-color: $accent; }
+.k-table > column { bold: true; color: $muted; }
+/* The cursor row is bold with a quiet fill while the table is idle, and a
+ * solid accent bar while it has focus. */
+.k-table > item:selected { reverse: false; background: $sel; bold: true; }
+.k-table:focus > item:selected { reverse: false; background: $accent; color: $on-accent; bold: true; }
+.k-table > item:checked { color: $accent; }
+/* On the accent bar every cell takes the bar's text color, whatever class
+ * colors it when idle. */
+.k-table:focus > item:selected > text { color: $on-accent; }
+.k-table-name { min-width: 14; }
+.k-table-muted { color: $muted; }
+.k-table-state.ok { color: $ok; }
+.k-table-state.warn { color: $warn; }
+.k-table-state.danger { color: $danger; }
 
 /* ------------------------------------------------------------ menu / nav */
 
-.menu { width: 1fr; height: auto; border: rounded; border-color: $border; background: $surface; padding: 0 1; title-color: $muted; }
-.menu:focus { border-color: $focus; title-color: $accent; }
-.menu > item { height: 1; }
-.menu > item:selected { reverse: false; background: $selected; }
-.menu:focus > item:selected { reverse: false; background: $accent; color: $accent-fg; bold: true; }
-.menu > item:checked { color: $accent; }
-.menu-row { width: 1fr; height: 1; gap: 1; }
-.menu-icon { width: 1; }
-.menu-label { width: 1fr; }
-.menu-key { width: auto; color: $muted; }
+.k-menu { width: 1fr; height: auto; border: rounded; border-color: $border; background: $panel; padding: 0 1; title-color: $muted; }
+.k-menu:focus { border: double; border-color: $focus; title-color: $accent; }
+.k-menu > item { height: 1; }
+.k-menu > item:selected { reverse: false; background: $sel; bold: true; }
+.k-menu:focus > item:selected { reverse: false; background: $accent; color: $on-accent; bold: true; }
+.k-menu > item:checked { color: $accent; }
+.k-menu:focus > item:selected > row > text { color: $on-accent; }
+.k-menu-row { width: 1fr; height: 1; gap: 1; }
+.k-menu-icon { width: 1; }
+.k-menu-label { width: 1fr; }
+.k-menu-key { width: auto; color: $subtle; }
 
 /* ------------------------------------------------------------------ tabs */
 
-.tabs { width: 1fr; height: 1fr; gap: 2; }
-.tab-label { color: $muted; }
-.tab-label:selected { color: $accent; bold: true; underline: true; }
+/* The tab labels are generated `text` nodes with the runtime's `.tab-label`
+ * class; they are styled here, under the component. */
+.k-tabs { width: 1fr; height: 1fr; gap: 2; }
+.k-tabs > .tab-label { color: $muted; }
+.k-tabs > .tab-label:selected { color: $accent; bold: true; underline: true; }
 
 /* ------------------------------------------------------ labeled progress */
 
-.meter { width: 1fr; height: auto; }
-.meter-head { width: 1fr; height: 1; gap: 1; }
-.meter-label { width: auto; color: $fg; }
-.meter-value { width: auto; color: $muted; }
-.meter-bar { width: 1fr; height: 1; color: $accent; background: $surface-2; bar: eighths; }
-.meter-bar.success { color: $success; }
-.meter-bar.warning { color: $warning; }
-.meter-bar.danger { color: $danger; }
+.k-meter { width: 1fr; height: auto; }
+.k-meter-head { width: 1fr; height: 1; gap: 1; }
+.k-meter-label { width: auto; color: $fg; }
+.k-meter-value { width: auto; color: $muted; }
+.k-meter-bar { width: 1fr; height: 1; color: $accent; background: $raised; bar: eighths; }
+.k-meter-bar.ok { color: $ok; }
+.k-meter-bar.warn { color: $warn; }
+.k-meter-bar.danger { color: $danger; }
 
 /* ------------------------------------------------------------- stat / KPI */
 
-.stat { width: 1fr; height: auto; border: rounded; border-color: $border; title-color: $muted; background: $surface; padding: 0 1; }
-.stat-value { width: 1fr; height: 1; bold: true; color: $fg; }
-.stat-row { width: 1fr; height: 1; gap: 1; }
-.stat-delta { width: auto; color: $muted; }
-.stat-delta.good { color: $success; }
-.stat-delta.bad { color: $danger; }
-.stat-spark { width: 1fr; height: 1; color: $accent; }
+.k-stat { width: 1fr; height: auto; border: rounded; border-color: $border; title-color: $muted; background: $panel; padding: 0 1; }
+.k-stat-value { width: 1fr; height: 1; bold: true; color: $fg; }
+.k-stat-row { width: 1fr; height: 1; gap: 1; }
+.k-stat-delta { width: auto; color: $muted; }
+.k-stat-delta.good { color: $ok; }
+.k-stat-delta.bad { color: $danger; }
+.k-stat-spark { width: 1fr; height: 1; color: $accent; }
 
 /* ----------------------------------------------------------------- toast */
 
-.toast-slot { width: 1fr; height: 1; }
-.toast { width: 1fr; height: 1; padding: 0 1; gap: 1; color: $accent-fg; background: $info; bold: true; }
-.toast.success { background: $success; }
-.toast.warning { background: $warning; }
-.toast.danger { background: $danger; }
-.toast-text { width: 1fr; color: $accent-fg; }
-.toast-key { width: auto; color: $accent-fg; dim: true; }
+.k-toast-slot { width: 1fr; height: 1; }
+.k-toast { width: 1fr; height: 1; padding: 0 1; gap: 1; color: $on-accent; background: $info; bold: true; }
+.k-toast.ok { color: $on-ok; background: $ok; }
+.k-toast.warn { color: $on-warn; background: $warn; }
+.k-toast.danger { color: $on-danger; background: $danger; }
+/* The text parts inherit the color of the toast row, so a modifier on the
+ * row recolors them. */
+.k-toast-text { width: 1fr; }
+.k-toast-key { width: auto; dim: true; }
 
 /* ------------------------------------------------------ command palette */
 
-.palette { width: 60; max-width: 100%; height: 16; max-height: 100%; padding: 0 1; border: rounded; background: $surface; border-color: $accent; title-color: $accent; }
-.palette-input { width: 1fr; height: 3; border: rounded; border-color: $border; background: $surface; padding: 0 1; }
-.palette-input:focus { border-color: $focus; }
-.palette-list { width: 1fr; height: 1fr; }
-.palette-list > item { height: 1; }
-.palette-list > item:selected { reverse: false; background: $selected; }
-.palette-row { width: 1fr; height: 1; gap: 1; }
-.palette-label { width: 1fr; }
-.palette-hint { width: auto; color: $muted; }
+.k-palette { width: 60; max-width: 100%; height: 16; max-height: 100%; padding: 0 1; border: rounded; background: $panel; border-color: $accent; title-color: $accent; }
+.k-palette-input { width: 1fr; height: 3; border: rounded; border-color: $border; background: $panel; padding: 0 1; }
+.k-palette-input:focus { border: double; border-color: $focus; }
+.k-palette-list { width: 1fr; height: 1fr; }
+.k-palette-list > item { height: 1; }
+/* The list never takes focus (the input does), so its cursor row is always
+ * drawn as the active bar. */
+.k-palette-list > item:selected { reverse: false; background: $accent; color: $on-accent; bold: true; }
+.k-palette-list > item:selected > row > text { color: $on-accent; }
+.k-palette-row { width: 1fr; height: 1; gap: 1; }
+.k-palette-label { width: 1fr; }
+.k-palette-hint { width: auto; color: $subtle; }
+.k-palette-empty { width: auto; color: $muted; }
 
 /* ---------------------------------------------------------- help overlay */
 
-.help { width: 56; max-width: 100%; height: auto; max-height: 100%; padding: 1 2; border: rounded; background: $surface; border-color: $accent; title-color: $accent; }
-.help-keys { layout: column; gap: 0; width: 1fr; height: auto; }
+.k-help { width: 56; max-width: 100%; height: auto; max-height: 100%; padding: 1 2; border: rounded; background: $panel; border-color: $accent; title-color: $accent; }
+/* The keys list is a `<hints>` too: it carries both classes, and this rule
+ * comes later, so it wins where the two differ. */
+.k-help-keys { layout: column; gap: 0; width: 1fr; height: auto; padding: 0; }
 
 /* ------------------------------------------------------- split / master */
 
-.split { width: 1fr; height: 1fr; gap: 1; }
-.split-master { width: 34%; min-width: 24; max-width: 40; height: 1fr; }
-.split-detail { width: 1fr; height: 1fr; }
-.split-title { width: 1fr; bold: true; color: $fg; }
+.k-split { width: 1fr; height: 1fr; gap: 1; }
+.k-split-master { width: 34%; min-width: 24; max-width: 40; height: 1fr; }
+.k-split-detail { width: 1fr; height: 1fr; }
 /* Narrow terminals: stack the panes instead of squeezing the detail. */
 @media (max-cols: 70) {
-  .split { layout: column; gap: 0; }
-  .split-master { width: 1fr; min-width: 0; max-width: 100%; height: 40%; }
-  .split-detail { width: 1fr; height: 1fr; }
+  .k-split { layout: column; gap: 0; }
+  .k-split-master { width: 1fr; min-width: 0; max-width: 100%; height: 40%; }
+  .k-split-detail { width: 1fr; height: 1fr; }
 }
 
 /* -------------------------------------------------------------- log panel */
 
-.logpanel { width: 1fr; height: 1fr; border: rounded; border-color: $border; title-color: $muted; background: $surface; padding: 0 1; scrollbar: auto; }
-.logpanel:focus { border-color: $focus; title-color: $accent; }
-.log-lines { width: 1fr; height: auto; }
-.log-line { width: 1fr; color: $fg; wrap: nowrap; }
-.log-line.muted { color: $muted; }
-.log-line.info { color: $info; }
-.log-line.warning { color: $warning; }
-.log-line.danger { color: $danger; }
+.k-log { width: 1fr; height: 1fr; border: rounded; border-color: $border; title-color: $muted; background: $panel; padding: 0 1; scrollbar: auto; }
+.k-log:focus { border: double; border-color: $focus; title-color: $accent; }
+.k-log-lines { width: 1fr; height: auto; }
+.k-log-line { width: 1fr; color: $fg; wrap: nowrap; }
+.k-log-line.muted { color: $muted; }
+.k-log-line.info { color: $info; }
+.k-log-line.warn { color: $warn; }
+.k-log-line.danger { color: $danger; }
 
 /* ------------------------------------------------------------ breadcrumb */
 
-.crumbs { width: 1fr; height: 1; gap: 1; padding: 0 1; overflow: hidden; }
-.crumb { width: auto; color: $muted; }
-.crumb.current { color: $fg; bold: true; }
-.crumb-sep { width: auto; color: $border; }
+.k-breadcrumb { width: 1fr; height: 1; gap: 1; padding: 0 1; overflow: hidden; }
+.k-breadcrumb-item { width: auto; color: $muted; }
+.k-breadcrumb-item.current { color: $fg; bold: true; }
+.k-breadcrumb-sep { width: auto; color: $subtle; }
 /* Narrow terminals: only the current page. */
 @media (max-cols: 60) {
-  .crumb, .crumb-sep { display: none; }
-  .crumb.current { display: flex; }
+  .k-breadcrumb-item, .k-breadcrumb-sep { display: none; }
+  .k-breadcrumb-item.current { display: flex; }
 }
 
 /* --------------------------------------------------------- layout helpers */
 
-/* A scrolling page: put one in each tab. `page-body` is the column inside it,
- * as tall as its content, which is what the scroll measures. */
-.page { width: 1fr; height: 1fr; padding: 0 1; scrollbar: auto; }
-.page-body { width: 1fr; height: auto; gap: 1; }
-.section { width: 1fr; height: 1; bold: true; color: $accent; }
+/* A scrolling page: put one in each tab. `k-page-body` is the column inside
+ * it, as tall as its content, which is what the scroll measures. */
+.k-page { width: 1fr; height: 1fr; padding: 0 1; scrollbar: auto; }
+.k-page-body { width: 1fr; height: auto; gap: 1; }
+.k-section { width: 1fr; height: 1; bold: true; color: $accent; }
 
-/* `cols` is a row of panels that stacks into a column on narrow terminals. */
-.cols { width: 1fr; height: auto; gap: 1; }
+/* `k-cols` is a row of panels that stacks into a column on narrow terminals. */
+.k-cols { width: 1fr; height: auto; gap: 1; }
 @media (max-cols: 90) {
-  .cols { layout: column; }
+  .k-cols { layout: column; }
 }

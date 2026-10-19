@@ -47,10 +47,16 @@ actions and keep two derived values:
 - `Derive("detail", …)`: the selected incident of the split pane.
 - `Every(time.Second, tick)`: counts a toast (3 s) and the status line (5 s)
   down and clears them.
-- handlers: dialogs open and close by flipping `confirm.open` / `palette.open` /
-  `help.open`; the form validates into `form.name_error` / `form.email_error`
-  and moves focus to the first invalid field on submit; `log_append` adds a line
-  and the panel follows it.
+- handlers: dialogs open and close by flipping `<instance>.open`; the form
+  validates into `form.name_error` / `form.email_error` and moves focus to the
+  first invalid field on submit; `log_append` adds a line and the panel follows
+  it.
+
+The kit's actions are generic (`dialog_confirm`, `toast_show`, `form_validate`);
+the instance is the prefix of the event's `source` before the last `__`
+(`confirm__yes` is the instance `confirm`; `toast__warn` is the level `warn` of
+the toast). `instanceOf` and `partOf` in `main.go` are the two small helpers
+that do it; they are meant to be copied into a host, not imported.
 
 `sample.json` holds a literal snapshot of `found` and `detail` so `validate`,
 `dump` and `run --mock` work with no Go; a test keeps the snapshot from drifting
@@ -65,7 +71,16 @@ values).
   included) at 40, 80 and 120 columns under both themes, with every tab visited
   and every modal and toast open (an inactive tab or a closed modal is not laid
   out, so a clean first screen proves little);
-- every class a document writes has a rule, so a typo is not silent;
+- every class a document writes has a rule, so a typo is not silent, and every
+  kit class has a use, so a rename leaves no dead rule;
+- the conventions hold in every document and sheet (`kit_test.go`): classes are
+  `k-` plus short modifiers used only next to a `k-` class, ids are
+  `instance__part`, actions are `component_verb`, tokens used are defined for
+  both themes (and the runtime's ten required ones are kept), no sheet outside
+  `theme.tcss` holds a literal color, every overlay has `on:escape`, a size and a
+  keymap scoped to its own class that comes first, every container writes its
+  size, every `tabs` writes `focusable`, no document writes a `version`, and
+  every component starts with its contract comment;
 - every action has a handler and a `mock.json` entry, and the mock's writes apply;
 - keys do what they should with `Play`: tabs switch, the dialog opens and closes,
   the palette filters and runs, the form validates as you type, the log follows,

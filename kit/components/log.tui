@@ -1,4 +1,5 @@
-<tui version="3" theme="auto">
+<!-- k-log · Contract: reads log.count, log.lines[] {n, text, debug, info, warn, err}; the host appends lines · Actions: log_append (the host's key) · Keys: j and k scroll, g top, G follow · Requires: k-hints -->
+<tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
   <keymap when="#log">
@@ -9,22 +10,22 @@
   </keymap>
   <screen id="demo" focus="#log">
     <col width="1fr" height="1fr" gap="0">
-      <!-- COPY: a log panel is a `scroll` with class `logpanel` and
+      <!-- COPY: a log panel is a `scroll` with class `k-log` and
            `stick="bottom"`: it follows the end of its content as lines are
            appended, until you scroll up to read; `move-last` (or scrolling
            to the end) makes it follow again. It needs an `id` and must be
            focusable to take the keys. The lines are a `col` with
-           `each` and a `key`; `height="auto"` (the class) lets the column
+           `each` and a `key`; `height: auto` (the class) lets the column
            be as tall as its lines, which is what the scroll measures.
            Color a line with class:NAME guards: every line carries all the
-           flags (a missing path is B002), `false` for the ones it is not. The host appends lines to
-           the array (see examples/kit-gallery). -->
-      <scroll id="log" class="logpanel" stick="bottom" focusable="true" title="build log · {log.count} lines">
-        <col class="log-lines" each="log.lines as l" key="l.n">
-          <text class="log-line" class:muted="l.debug" class:info="l.info" class:warning="l.warn" class:danger="l.err">{l.text}</text>
+           flags (a missing path is B002), `false` for the ones it is not.
+           The host appends lines to the array (see examples/kit-gallery). -->
+      <scroll id="log" class="k-log" stick="bottom" focusable="true" title="build log · {log.count} lines">
+        <col class="k-log-lines" each="log.lines as l" key="l.n">
+          <text class="k-log-line" class:muted="l.debug" class:info="l.info" class:warn="l.warn" class:danger="l.err">{l.text}</text>
         </col>
       </scroll>
-      <hints class="hintbar"/>
+      <hints class="k-hints"/>
     </col>
   </screen>
 </tui>

@@ -1,26 +1,28 @@
-<tui version="3" theme="auto">
+<!-- k-btn · Contract: reads last · Actions: button_save, button_cancel, button_delete, button_skip · Keys: tab and shift+tab move focus, enter or space presses, q quits · Requires: k-title, k-subtitle, k-muted -->
+<tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
   <keymap>
     <bind keys="ctrl+c,q" action="quit"/>
   </keymap>
-  <screen id="demo" focus="#b-primary">
+  <screen id="demo" focus="#buttons__primary">
     <col width="1fr" height="1fr" gap="1" pad="1">
-      <text class="title">button</text>
-      <text class="subtitle">tab / shift+tab moves focus; enter or space presses</text>
-      <!-- COPY: a button is `btn` plus a variant: primary, secondary, danger,
-           ghost. `on:click` names the action; the host implements it.
-           The focused button is drawn inverted (see `.btn:focus`). -->
+      <text class="k-title">button</text>
+      <text class="k-subtitle">tab / shift+tab moves focus; enter or space presses</text>
+      <!-- COPY: a button is `k-btn` plus a modifier: primary, secondary,
+           danger, ghost. `on:click` names the action (component_verb); the
+           host implements it. The focused button is drawn inverted, bold and
+           underlined (see `.k-btn:focus`). -->
       <row width="1fr" height="1" gap="2">
-        <button id="b-primary" class="btn primary" label="Save" on:click="save"/>
-        <button id="b-secondary" class="btn secondary" label="Cancel" on:click="cancel"/>
+        <button id="buttons__primary" class="k-btn primary" label="Save" on:click="button_save"/>
+        <button id="buttons__secondary" class="k-btn secondary" label="Cancel" on:click="button_cancel"/>
       </row>
       <row width="1fr" height="1" gap="2">
-        <button id="b-danger" class="btn danger" label="Delete" on:click="delete"/>
-        <button id="b-ghost" class="btn ghost" label="Skip" on:click="skip"/>
-        <button id="b-off" class="btn secondary" label="Locked" disabled="true"/>
+        <button id="buttons__danger" class="k-btn danger" label="Delete" on:click="button_delete"/>
+        <button id="buttons__ghost" class="k-btn ghost" label="Skip" on:click="button_skip"/>
+        <button id="buttons__off" class="k-btn secondary" label="Locked" disabled="true"/>
       </row>
-      <text class="muted">last action: {last}</text>
+      <text class="k-muted">last action: {last}</text>
     </col>
   </screen>
 </tui>

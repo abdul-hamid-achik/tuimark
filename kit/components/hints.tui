@@ -1,0 +1,29 @@
+<!-- k-hints · Contract: reads nothing from the store; shows the keymap rows that have a label · Actions: none of its own (the demo names item_new, item_open, item_next, item_prev, item_search) · Keys: whatever the keymap binds · Requires: k-muted -->
+<tui theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <!-- COPY: every keymap row with a `label` becomes a hint. `keycap` is the
+       text shown instead of the key (use it for "j/k" or "^S"). A row
+       without a label is bound but not shown. -->
+  <keymap>
+    <bind keys="n" action="item_new" label="new"/>
+    <bind keys="enter" action="item_open" label="open"/>
+    <bind keys="j" action="item_next" keycap="j/k" label="move"/>
+    <bind keys="k" action="item_prev"/>
+    <bind keys="/" action="item_search" label="search"/>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <screen id="demo">
+    <col id="app" width="1fr" height="1fr">
+      <col width="1fr" height="1fr" pad="1">
+        <text class="k-muted">The page content goes here.</text>
+      </col>
+      <!-- COPY: `<hints/>` with class `k-hints`: one row, the key in the
+           accent color (`.hint-key`), the label muted (`.hint-label`; the
+           class styles both). Hints that do not fit are dropped from the
+           right. `scope="active"` (the default) shows only the keys that
+           would fire right now. -->
+      <hints class="k-hints"/>
+    </col>
+  </screen>
+</tui>

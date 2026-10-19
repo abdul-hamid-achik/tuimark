@@ -77,31 +77,33 @@ func (a *app) handlers() map[string]tuimark.Handler {
 	on := func(name string, h tuimark.Handler) { hs[name] = h }
 
 	// Buttons and rows that only report themselves.
-	on("demo_press", func(ev tuimark.Event) error { return a.say(a.ui, "pressed "+ev.Source) })
-	on("svc_select", func(ev tuimark.Event) error {
+	on("button_press", func(ev tuimark.Event) error { return a.say(a.ui, "pressed "+ev.Source) })
+	on("table_select", func(ev tuimark.Event) error {
 		return a.say(a.ui, "service: "+keyOf(ev, "s"))
 	})
-	on("svc_open", func(tuimark.Event) error {
+	on("table_open", func(tuimark.Event) error {
 		cur := str(a.ui.Get, "svc.cur")
 		return a.ui.Batch(func(b *tuimark.Batch) error { return a.toast(b, "info", "Opening "+cur) })
 	})
-	on("prefs_change", func(ev tuimark.Event) error {
+	on("menu_change", func(ev tuimark.Event) error {
 		on, _ := ev.Value.([]any)
 		return a.say(a.ui, plural(len(on), "channel", "channels")+" on")
 	})
-	on("item_select", func(ev tuimark.Event) error {
+	on("menu_select", func(ev tuimark.Event) error {
 		return a.say(a.ui, "incident: "+keyOf(ev, "it"))
 	})
 	on("empty_create", func(tuimark.Event) error {
-		return a.ui.Batch(func(b *tuimark.Batch) error { return a.toast(b, "success", "Deployment created") })
+		return a.ui.Batch(func(b *tuimark.Batch) error { return a.toast(b, "ok", "Deployment created") })
 	})
 
 	// Toasts.
 	on("toast_show", func(ev tuimark.Event) error {
-		level := strings.TrimPrefix(ev.Source, "t-")
+		// The buttons are toast__info, toast__ok, toast__warn, toast__danger:
+		// the part of the id after "__" is the level.
+		level := partOf(ev)
 		msgs := map[string]string{
-			"info": "Heads up: deploys pause at 09:00", "success": "Settings saved",
-			"warning": "92% of build minutes used", "danger": "Build failed at step 3",
+			"info": "Heads up: deploys pause at 09:00", "ok": "Settings saved",
+			"warn": "92% of build minutes used", "danger": "Build failed at step 3",
 		}
 		msg, ok := msgs[level]
 		if !ok {
@@ -114,16 +116,21 @@ func (a *app) handlers() map[string]tuimark.Handler {
 		return a.ui.Set("toast.show", false)
 	})
 
-	// The confirm dialog.
-	on("confirm_open", func(tuimark.Event) error { return a.ui.Set("confirm.open", true) })
-	on("confirm_cancel", func(tuimark.Event) error {
+	// Dialogs. The actions are generic (dialog_*); the instance is the prefix
+	// of the event's source before the last "__" (confirm__yes, confirm__open,
+	// confirm__dialog), and the instance's state lives under its own name
+	// (confirm.open), so a second dialog would need no new handler.
+	on("dialog_open", func(ev tuimark.Event) error { return a.ui.Set(instanceOf(ev)+".open", true) })
+	on("dialog_cancel", func(ev tuimark.Event) error {
+		inst := instanceOf(ev)
 		return a.ui.Batch(func(b *tuimark.Batch) error {
-			return errors.Join(b.Set("confirm.open", false), a.toast(b, "info", "Kept the project"))
+			return errors.Join(b.Set(inst+".open", false), a.toast(b, "info", "Kept the project"))
 		})
 	})
-	on("confirm_accept", func(tuimark.Event) error {
+	on("dialog_confirm", func(ev tuimark.Event) error {
+		inst := instanceOf(ev)
 		return a.ui.Batch(func(b *tuimark.Batch) error {
-			return errors.Join(b.Set("confirm.open", false), a.toast(b, "success", "Project deleted"))
+			return errors.Join(b.Set(inst+".open", false), a.toast(b, "ok", "Project deleted"))
 		})
 	})
 
@@ -143,7 +150,7 @@ func (a *app) handlers() map[string]tuimark.Handler {
 
 	// Look and navigation.
 	on("theme_toggle", func(tuimark.Event) error { return a.toggleTheme() })
-	on("crumb_up", func(tuimark.Event) error { return a.crumbUp() })
+	on("breadcrumb_up", func(tuimark.Event) error { return a.crumbUp() })
 
 	// The log panel.
 	on("log_append", func(tuimark.Event) error { return a.logAppend() })
@@ -151,10 +158,10 @@ func (a *app) handlers() map[string]tuimark.Handler {
 	// The form.
 	on("form_validate", func(ev tuimark.Event) error {
 		v, _ := ev.Value.(string)
-		switch ev.Source {
-		case "f-name":
+		switch partOf(ev) { // field__name, field__email
+		case "name":
 			return a.ui.Set("form.name_error", checkName(v))
-		case "f-email":
+		case "email":
 			return a.ui.Set("form.email_error", checkEmail(v))
 		}
 		return nil
@@ -200,9 +207,9 @@ func (a *app) paletteRun() error {
 		errs := []error{b.Set("palette.open", false)}
 		switch id {
 		case "deploy":
-			errs = append(errs, a.toast(b, "success", "Deploying to production…"))
+			errs = append(errs, a.toast(b, "ok", "Deploying to production…"))
 		case "rollback":
-			errs = append(errs, a.toast(b, "warning", "Rolling back the last deploy"))
+			errs = append(errs, a.toast(b, "warn", "Rolling back the last deploy"))
 		case "logs":
 			errs = append(errs, b.Set("view", "data"), a.say(b, "opened the logs"))
 		case "theme":
@@ -318,7 +325,7 @@ func (a *app) formSubmit() error {
 			}
 			errs = append(errs, a.toast(b, "danger", plural(n, "field needs", "fields need")+" attention"))
 		default:
-			errs = append(errs, a.toast(b, "success", "Profile saved"))
+			errs = append(errs, a.toast(b, "ok", "Profile saved"))
 		}
 		return errors.Join(errs...)
 	})
@@ -327,9 +334,9 @@ func (a *app) formSubmit() error {
 	}
 	switch {
 	case nameErr != "":
-		return a.ui.Set("@focus", "#f-name")
+		return a.ui.Set("@focus", "#field__name")
 	case emailErr != "":
-		return a.ui.Set("@focus", "#f-email")
+		return a.ui.Set("@focus", "#field__email")
 	}
 	return nil
 }

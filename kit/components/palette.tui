@@ -1,37 +1,41 @@
-<tui version="3" theme="auto">
+<!-- k-palette · Contract: reads palette.commands[], palette.query, found.items[] and found.any (the host keeps found with a Derive over palette.query and palette.commands); reads and writes palette.open, palette.query, palette.cur; reads palette.last · Actions: palette_open, palette_run, palette_close · Keys: ctrl+k opens, up and down (or ctrl+p and ctrl+n) move, enter runs, esc closes · Requires: k-hints, k-title, k-muted -->
+<tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
+  <!-- The overlay's own keys come first (the first matching row in document
+       order wins). While the palette is open, up / down (and ctrl+n /
+       ctrl+p) move the cursor of the list although focus stays in the
+       input: the input does not consume them, so they reach the keymap, and
+       the built-ins act on the list named by `to`. Enter is the input's
+       `on:submit`; esc is the modal's `on:escape`. -->
+  <keymap when=".k-palette">
+    <bind keys="down,ctrl+n" action="move-next" to="#palette__list"/>
+    <bind keys="up,ctrl+p" action="move-prev" to="#palette__list"/>
+  </keymap>
   <keymap>
     <bind keys="ctrl+k" action="palette_open" keycap="^K" label="commands"/>
   </keymap>
-  <!-- COPY: while the palette is open, up / down (and ctrl+n / ctrl+p) move
-       the cursor of the list although focus stays in the input: the input
-       does not consume them, so they reach the keymap, and the built-ins
-       act on the list named by `to`. Enter is the input's `on:submit`. -->
-  <keymap when="#palette">
-    <bind keys="down,ctrl+n" action="move-next" to="#palette-list"/>
-    <bind keys="up,ctrl+p" action="move-prev" to="#palette-list"/>
-  </keymap>
   <screen id="demo">
     <col width="1fr" height="1fr" gap="1" pad="1">
-      <text class="title">command palette</text>
-      <text class="muted">ctrl+k opens it; type, up / down, enter, esc.</text>
-      <text class="muted">last command: {palette.last}</text>
-      <hints class="hintbar"/>
+      <text class="k-title">command palette</text>
+      <text class="k-muted">ctrl+k opens it; type, up / down, enter, esc.</text>
+      <text class="k-muted">last command: {palette.last}</text>
+      <hints class="k-hints"/>
     </col>
-    <!-- COPY: a modal with class `palette`: an input bound to the query, and
-         a list over the filtered commands. The filtering is the HOST's job
-         (no expressions in the markup): keep `found` with a Derive over
+    <!-- COPY: a modal with class `k-palette`: an input bound to the query,
+         and a list over the filtered commands. The filtering is the HOST's
+         job (no expressions in the markup): keep `found` with a Derive over
          `palette.query` and `palette.commands`, so the list always reads the
-         result. The list `bind` is the cursor row's id. -->
-    <modal id="palette" class="palette" open="palette.open" title="Command palette" focus="#palette-input" on:escape="palette_close">
-      <input id="palette-input" class="palette-input" bind="palette.query" placeholder="type a command…" on:submit="palette_run"/>
-      <text class="empty-text" if="!found.any">No command matches “{palette.query}”.</text>
-      <list id="palette-list" class="palette-list" each="found.items as r" key="r.id" bind="palette.cur" focusable="false">
+         result. The list `bind` is the cursor row's id. The class writes the
+         modal's size (60 by 16, at most the screen). -->
+    <modal id="palette__dialog" class="k-palette" open="palette.open" title="Command palette" focus="#palette__q" on:escape="palette_close">
+      <input id="palette__q" class="k-palette-input" bind="palette.query" placeholder="type a command…" on:submit="palette_run"/>
+      <text class="k-palette-empty" if="!found.any">No command matches “{palette.query}”.</text>
+      <list id="palette__list" class="k-palette-list" each="found.items as r" key="r.id" bind="palette.cur" focusable="false">
         <item>
-          <row class="palette-row">
-            <text class="palette-label">{r.label}</text>
-            <text class="palette-hint">{r.hint}</text>
+          <row class="k-palette-row">
+            <text class="k-palette-label">{r.label}</text>
+            <text class="k-palette-hint">{r.hint}</text>
           </row>
         </item>
       </list>

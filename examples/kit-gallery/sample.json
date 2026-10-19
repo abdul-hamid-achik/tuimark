@@ -2,7 +2,7 @@
   "view": "basics",
   "theme": { "name": "dark" },
   "status": { "text": "ready", "right": "kit v0" },
-  "toast": { "show": false, "text": "", "is_success": false, "is_warning": false, "is_danger": false },
+  "toast": { "show": false, "text": "", "is_ok": false, "is_warn": false, "is_danger": false },
   "crumbs": [
     { "id": "prod", "label": "Production", "last": false },
     { "id": "svc", "label": "Services", "last": false },

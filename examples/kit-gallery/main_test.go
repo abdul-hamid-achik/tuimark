@@ -383,11 +383,11 @@ func TestTabsSwitchByKeyAndByNumber(t *testing.T) {
 
 func TestConfirmDialogOpensAndCloses(t *testing.T) {
 	a := newApp(t)
-	res := play(t, a, "4", "focus:#o-confirm", "enter")
-	if !has(actions(res), "confirm_open") || !getBool(t, a, "confirm.open") {
+	res := play(t, a, "4", "focus:#confirm__open", "enter")
+	if !has(actions(res), "dialog_open") || !getBool(t, a, "confirm.open") {
 		t.Fatalf("enter on the button should open the dialog; events %v", actions(res))
 	}
-	if focusOf(res) != "confirm-no" {
+	if focusOf(res) != "confirm__no" {
 		t.Errorf("focus should start on the safe button, got %q", focusOf(res))
 	}
 	if !strings.Contains(gridOf(res), "permanently deletes") {
@@ -395,19 +395,19 @@ func TestConfirmDialogOpensAndCloses(t *testing.T) {
 	}
 	// Enter on the focused Cancel keeps the project.
 	res = play(t, a, "enter")
-	if !has(actions(res), "confirm_cancel") || getBool(t, a, "confirm.open") {
+	if !has(actions(res), "dialog_cancel") || getBool(t, a, "confirm.open") {
 		t.Errorf("enter on Cancel should close the dialog; events %v", actions(res))
 	}
 	if getStr(t, a, "toast.text") != "Kept the project" {
 		t.Errorf("toast = %q", getStr(t, a, "toast.text"))
 	}
 	// y deletes; esc cancels.
-	play(t, a, "focus:#o-confirm", "enter", "y")
-	if getBool(t, a, "confirm.open") || getStr(t, a, "toast.text") != "Project deleted" || !getBool(t, a, "toast.is_success") {
+	play(t, a, "focus:#confirm__open", "enter", "y")
+	if getBool(t, a, "confirm.open") || getStr(t, a, "toast.text") != "Project deleted" || !getBool(t, a, "toast.is_ok") {
 		t.Errorf("y should confirm: open=%v toast=%q", getBool(t, a, "confirm.open"), getStr(t, a, "toast.text"))
 	}
-	res = play(t, a, "focus:#o-confirm", "enter", "esc")
-	if getBool(t, a, "confirm.open") || !has(actions(res), "confirm_cancel") {
+	res = play(t, a, "focus:#confirm__open", "enter", "esc")
+	if getBool(t, a, "confirm.open") || !has(actions(res), "dialog_cancel") {
 		t.Errorf("esc should cancel; events %v", actions(res))
 	}
 }
@@ -415,7 +415,7 @@ func TestConfirmDialogOpensAndCloses(t *testing.T) {
 func TestPaletteFiltersAndRuns(t *testing.T) {
 	a := newApp(t)
 	res := play(t, a, "ctrl+k")
-	if !getBool(t, a, "palette.open") || focusOf(res) != "palette-input" {
+	if !getBool(t, a, "palette.open") || focusOf(res) != "palette__q" {
 		t.Fatalf("ctrl+k should open the palette on its input; open=%v focus=%q", getBool(t, a, "palette.open"), focusOf(res))
 	}
 	if !strings.Contains(gridOf(res), "Deploy to production") || !strings.Contains(gridOf(res), "Show the keys") {
@@ -434,8 +434,8 @@ func TestPaletteFiltersAndRuns(t *testing.T) {
 	if getBool(t, a, "palette.open") || !has(actions(res), "palette_run") {
 		t.Errorf("enter should run and close; events %v", actions(res))
 	}
-	if !getBool(t, a, "toast.is_warning") || getStr(t, a, "toast.text") != "Rolling back the last deploy" {
-		t.Errorf("toast = %q warning=%v", getStr(t, a, "toast.text"), getBool(t, a, "toast.is_warning"))
+	if !getBool(t, a, "toast.is_warn") || getStr(t, a, "toast.text") != "Rolling back the last deploy" {
+		t.Errorf("toast = %q warning=%v", getStr(t, a, "toast.text"), getBool(t, a, "toast.is_warn"))
 	}
 }
 
@@ -486,7 +486,7 @@ func TestHelpOverlayListsTheKeys(t *testing.T) {
 
 func TestFormValidatesAsYouType(t *testing.T) {
 	a := newApp(t)
-	res := play(t, a, "2", "focus:#f-email", "ctrl+u", "text:ada@")
+	res := play(t, a, "2", "focus:#field__email", "ctrl+u", "text:ada@")
 	if got := getStr(t, a, "form.email_error"); got == "" {
 		t.Fatalf("a half-typed address should be invalid; events %v", actions(res))
 	}
@@ -512,12 +512,12 @@ func TestFormValidatesAsYouType(t *testing.T) {
 
 func TestSubmitFocusesTheFirstInvalidField(t *testing.T) {
 	a := newApp(t)
-	res := play(t, a, "2", "focus:#f-name", "ctrl+u", "focus:#f-save", "enter")
+	res := play(t, a, "2", "focus:#field__name", "ctrl+u", "focus:#field__save", "enter")
 	if getStr(t, a, "form.name_error") != "Name is required." {
 		t.Fatalf("name_error = %q", getStr(t, a, "form.name_error"))
 	}
-	if focusOf(res) != "f-name" {
-		t.Errorf("focus = %q, want f-name", focusOf(res))
+	if focusOf(res) != "field__name" {
+		t.Errorf("focus = %q, want field__name", focusOf(res))
 	}
 	if !getBool(t, a, "toast.is_danger") || !strings.Contains(getStr(t, a, "toast.text"), "1 field needs attention") {
 		t.Errorf("toast = %q danger=%v", getStr(t, a, "toast.text"), getBool(t, a, "toast.is_danger"))
@@ -602,7 +602,7 @@ func TestFocusChangesTheButtonsCells(t *testing.T) {
 			t.Fatal(err)
 		}
 		opts := tuimark.PlayOptions{Cols: 100, Rows: 30, Styles: true}
-		for _, id := range []string{"b-primary", "b-secondary", "b-danger", "b-ghost"} {
+		for _, id := range []string{"buttons__primary", "buttons__secondary", "buttons__danger", "buttons__ghost"} {
 			idle := playAt(t, a, opts, "focus:#nav")
 			focused := playAt(t, a, opts, "focus:#"+id)
 			ifg, ibg, _ := cellStyle(idle, id)
@@ -633,17 +633,17 @@ func TestInputBorderShowsFocus(t *testing.T) {
 		t.Fatalf("no node %q", id)
 		return ""
 	}
-	idle := playAt(t, a, opts, "2", "focus:#f-save")
-	focused := playAt(t, a, opts, "focus:#f-name")
-	if borderFG(idle, "f-name") == borderFG(focused, "f-name") {
-		t.Errorf("the input border keeps its color when focused: %s", borderFG(idle, "f-name"))
+	idle := playAt(t, a, opts, "2", "focus:#field__save")
+	focused := playAt(t, a, opts, "focus:#field__name")
+	if borderFG(idle, "field__name") == borderFG(focused, "field__name") {
+		t.Errorf("the input border keeps its color when focused: %s", borderFG(idle, "field__name"))
 	}
 	// An invalid input keeps a danger border.
 	if err := a.ui.Set("form.name_error", "Name is required."); err != nil {
 		t.Fatal(err)
 	}
-	invalid := playAt(t, a, opts, "focus:#f-save")
-	if borderFG(invalid, "f-name") == borderFG(idle, "f-name") {
+	invalid := playAt(t, a, opts, "focus:#field__save")
+	if borderFG(invalid, "field__name") == borderFG(idle, "field__name") {
 		t.Errorf("an invalid input should have a different border color")
 	}
 }
@@ -652,7 +652,7 @@ func TestInputBorderShowsFocus(t *testing.T) {
 
 func TestTickClearsTheToastAndTheStatusLine(t *testing.T) {
 	a := newApp(t)
-	play(t, a, "4", "focus:#t-success", "enter", "focus:#b-primary")
+	play(t, a, "4", "focus:#toast__ok", "enter", "focus:#buttons__primary")
 	if !getBool(t, a, "toast.show") {
 		t.Fatal("the toast should show")
 	}
@@ -689,7 +689,7 @@ func TestTickClearsTheToastAndTheStatusLine(t *testing.T) {
 
 func TestEscDismissesTheToast(t *testing.T) {
 	a := newApp(t)
-	play(t, a, "4", "focus:#t-info", "enter", "focus:#b-primary")
+	play(t, a, "4", "focus:#toast__info", "enter", "focus:#buttons__primary")
 	if !getBool(t, a, "toast.show") {
 		t.Fatal("the toast should show")
 	}
@@ -700,13 +700,13 @@ func TestEscDismissesTheToast(t *testing.T) {
 }
 
 func TestEveryToastLevelPaints(t *testing.T) {
-	for _, level := range []string{"info", "success", "warning", "danger"} {
+	for _, level := range []string{"info", "ok", "warn", "danger"} {
 		a := newApp(t)
-		res := play(t, a, "4", "focus:#t-"+level, "enter")
+		res := play(t, a, "4", "focus:#toast__"+level, "enter")
 		if !getBool(t, a, "toast.show") {
 			t.Fatalf("%s: no toast", level)
 		}
-		want := map[string]bool{"success": level == "success", "warning": level == "warning", "danger": level == "danger"}
+		want := map[string]bool{"ok": level == "ok", "warn": level == "warn", "danger": level == "danger"}
 		for k, w := range want {
 			if got := getBool(t, a, "toast.is_"+k); got != w {
 				t.Errorf("%s: toast.is_%s = %v", level, k, got)

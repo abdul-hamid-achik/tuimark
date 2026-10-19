@@ -1,28 +1,29 @@
-<tui version="3" theme="auto">
+<!-- k-card · Contract: reads card.title, card.heading, card.text · Actions: card_open, card_dismiss · Keys: tab, enter · Requires: k-btn, k-title -->
+<tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
-  <screen id="demo" focus="#open">
+  <screen id="demo" focus="#card__open">
     <col width="1fr" height="1fr" gap="1" pad="1">
-      <text class="title">card / panel</text>
-      <!-- COPY: a card is a `box` with class `card` and a `title`. The border
-           turns to the focus color while anything inside holds focus
-           (`.card:focus-within`). Give it `height="auto"` (the class does)
-           to wrap its content, or a number / fr to fix it. -->
-      <box class="card" title="{card.title}">
-        <text class="card-title">{card.heading}</text>
-        <text class="card-muted">{card.text}</text>
-        <row class="card-actions">
-          <button id="open" class="btn primary" label="Open" on:click="open"/>
-          <button id="dismiss" class="btn ghost" label="Dismiss" on:click="dismiss"/>
+      <text class="k-title">card / panel</text>
+      <!-- COPY: a card is a `box` with class `k-card` and a `title`. The
+           border turns to the focus color while anything inside holds focus
+           (`.k-card:focus-within`). The class gives it `height: auto` to
+           wrap its content; write a number or fr on the box to fix it. -->
+      <box class="k-card" title="{card.title}">
+        <text class="k-card-title">{card.heading}</text>
+        <text class="k-card-muted">{card.text}</text>
+        <row class="k-card-actions">
+          <button id="card__open" class="k-btn primary" label="Open" on:click="card_open"/>
+          <button id="card__dismiss" class="k-btn ghost" label="Dismiss" on:click="card_dismiss"/>
         </row>
       </box>
       <!-- COPY: side-by-side cards share the row; each takes `1fr`. -->
       <row width="1fr" height="auto" gap="1">
-        <box class="card" title="Left">
-          <text class="card-text">First card</text>
+        <box class="k-card" title="Left">
+          <text class="k-card-text">First card</text>
         </box>
-        <box class="card" title="Right">
-          <text class="card-text">Second card</text>
+        <box class="k-card" title="Right">
+          <text class="k-card-text">Second card</text>
         </box>
       </row>
     </col>

@@ -1,31 +1,39 @@
-<tui version="3" theme="auto">
+<!-- k-dialog · Contract: reads confirm.open, confirm.title, confirm.message; the host writes confirm.open and confirm.result · Actions: dialog_open, dialog_confirm, dialog_cancel · Keys: y confirms, n and esc cancel · Requires: k-btn, k-title, k-muted -->
+<tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
-  <keymap when="#confirm">
-    <bind keys="y" action="confirm_accept" label="confirm"/>
-    <bind keys="n" action="confirm_cancel" label="cancel"/>
+  <!-- The overlay's own keys come first: the first matching row in document
+       order wins, so they must precede any global row. `when=".k-dialog"`
+       holds while focus is anywhere inside a dialog. The host tells the
+       instance apart by the prefix of the event's source before the last
+       "__" (confirm__yes: the instance is "confirm"). -->
+  <keymap when=".k-dialog">
+    <bind keys="y" action="dialog_confirm" label="confirm"/>
+    <bind keys="n" action="dialog_cancel" label="cancel"/>
   </keymap>
-  <screen id="demo" focus="#ask">
+  <screen id="demo" focus="#confirm__open">
     <col width="1fr" height="1fr" gap="1" pad="1">
-      <text class="title">confirm dialog</text>
+      <text class="k-title">confirm dialog</text>
       <row width="1fr" height="1" gap="2">
-        <button id="ask" class="btn danger" label="Delete project" on:click="confirm_open"/>
+        <button id="confirm__open" class="k-btn danger" label="Delete project" on:click="dialog_open"/>
       </row>
-      <text class="muted">result: {confirm.result}</text>
+      <text class="k-muted">result: {confirm.result}</text>
     </col>
-    <!-- COPY: a confirm dialog is a `modal` with class `dialog` (add `danger`
-         for a destructive one), the message, and an action row of
-         `dialog-actions` (height 1). The modal must be the LAST child of the
-         screen (L004). `open` is a path the host flips; `focus` puts the
+    <!-- COPY: a confirm dialog is a `modal` with class `k-dialog` (add
+         `danger` for a destructive one), the message, and an action row of
+         `k-dialog-actions` (height 1). The modal must be the LAST child of
+         the screen (L004). `open` is a path the host flips; `focus` puts the
          cursor on the SAFE button, so a stray enter cancels. `on:escape`
-         cancels. y / n work too (the keymap above). Keep the button labels
-         short: the action row must fit a 40-column terminal. -->
-    <modal id="confirm" class="dialog danger" open="confirm.open" title="{confirm.title}" focus="#confirm-no" on:escape="confirm_cancel">
-      <text class="dialog-text">{confirm.message}</text>
-      <row class="dialog-actions">
+         cancels. y / n work too (the keymap above). The class writes the
+         modal's size (52 columns, as tall as its content, at most the
+         screen). Keep the button labels short: the action row must fit a
+         40-column terminal. -->
+    <modal id="confirm__dialog" class="k-dialog danger" open="confirm.open" title="{confirm.title}" focus="#confirm__no" on:escape="dialog_cancel">
+      <text class="k-dialog-text">{confirm.message}</text>
+      <row class="k-dialog-actions">
         <spacer/>
-        <button id="confirm-no" class="btn secondary" label="Cancel" on:click="confirm_cancel"/>
-        <button id="confirm-yes" class="btn danger" label="Delete" on:click="confirm_accept"/>
+        <button id="confirm__no" class="k-btn secondary" label="Cancel" on:click="dialog_cancel"/>
+        <button id="confirm__yes" class="k-btn danger" label="Delete" on:click="dialog_confirm"/>
       </row>
     </modal>
   </screen>

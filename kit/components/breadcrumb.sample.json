@@ -1,6 +1,6 @@
 {
   "where": "Production / Services / billing / Settings",
-  "path": [
+  "crumbs": [
     { "id": "prod", "label": "Production", "last": false },
     { "id": "svc", "label": "Services", "last": false },
     { "id": "billing", "label": "billing", "last": false },

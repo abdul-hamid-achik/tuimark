@@ -1,28 +1,30 @@
-<tui version="3" theme="auto">
+<!-- k-toast · Contract: reads toast.show, toast.text, toast.is_ok, toast.is_warn, toast.is_danger; the host clears toast.show after a few seconds · Actions: toast_show, toast_dismiss · Keys: esc dismisses · Requires: k-btn, k-title -->
+<tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
   <keymap>
     <bind keys="esc" action="toast_dismiss" label="dismiss"/>
   </keymap>
-  <screen id="demo" focus="#save">
+  <screen id="demo" focus="#toast__show">
     <col width="1fr" height="1fr" gap="1" pad="1">
-      <text class="title">toast</text>
+      <text class="k-title">toast</text>
       <row width="1fr" height="1" gap="2">
-        <button id="save" class="btn primary" label="Save" on:click="toast_show"/>
+        <button id="toast__show" class="k-btn primary" label="Save" on:click="toast_show"/>
       </row>
       <spacer/>
-      <!-- COPY: a toast is a one-row strip. `toast-slot` is a row that is
+      <!-- COPY: a toast is a one-row strip. `k-toast-slot` is a row that is
            always one row high, so the page never jumps when the toast
-           appears; the `toast` row inside shows only while `toast.show` is
-           true. Info is the default; guard `success`, `warning`, `danger`
-           with class:NAME. The HOST clears it: set `toast.show` back to
-           false from an `Every` tick (see examples/kit-gallery/main.go).
-           The slot is not docked, so it can sit above a docked status bar
-           (only one bottom-docked bar per container, L005). -->
-      <row class="toast-slot">
-        <row class="toast" if="toast.show" class:success="toast.is_success" class:warning="toast.is_warning" class:danger="toast.is_danger">
-          <text class="toast-text">{toast.text}</text>
-          <text class="toast-key">esc</text>
+           appears; the `k-toast` row inside shows only while `toast.show`
+           is true. Info is the default; guard the modifiers `ok`, `warn`,
+           `danger` with class:NAME. The HOST clears it: set `toast.show`
+           back to false from an `Every` tick (see
+           examples/kit-gallery/main.go). The slot is not docked, so it can
+           sit above a docked status bar (only one bottom-docked bar per
+           container, L005). -->
+      <row class="k-toast-slot">
+        <row class="k-toast" if="toast.show" class:ok="toast.is_ok" class:warn="toast.is_warn" class:danger="toast.is_danger">
+          <text class="k-toast-text">{toast.text}</text>
+          <text class="k-toast-key">esc</text>
         </row>
       </row>
     </col>

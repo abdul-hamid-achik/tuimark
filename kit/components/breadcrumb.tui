@@ -1,24 +1,26 @@
-<tui version="3" theme="auto">
+<!-- k-breadcrumb · Contract: reads crumbs[] {id, label, last}, where; the host trims crumbs on breadcrumb_up · Actions: breadcrumb_up · Keys: backspace (up) · Requires: k-hints, k-muted -->
+<tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
   <keymap>
-    <bind keys="backspace" action="crumb_up" label="up"/>
+    <bind keys="backspace" action="breadcrumb_up" label="up"/>
   </keymap>
   <screen id="demo">
     <col width="1fr" height="1fr" gap="1">
-      <!-- COPY: a breadcrumb is a `row` with class `crumbs` and `each` over
-           an array of {id, label, last}. Its children are the template,
-           repeated per element: the label (class `crumb`, plus `current`
-           for the last one, by a class:NAME guard) and the separator. The
-           host builds the array from the current path and trims it on
-           `crumb_up`. A template cannot hold anything focusable, so the
-           crumbs are display only; navigate with a keymap row. -->
-      <row class="crumbs" each="path as c" key="c.id">
-        <text class="crumb" class:current="c.last">{c.label}</text>
-        <text class="crumb-sep" if="!c.last">›</text>
+      <!-- COPY: a breadcrumb is a `row` with class `k-breadcrumb` and `each`
+           over an array of {id, label, last}. Its children are the template,
+           repeated per element: the label (class `k-breadcrumb-item`, plus
+           `current` for the last one, by a class:NAME guard) and the
+           separator. The host builds the array from the current path and
+           trims it on `breadcrumb_up`. A template cannot hold anything
+           focusable, so the crumbs are display only; navigate with a keymap
+           row. -->
+      <row class="k-breadcrumb" each="crumbs as c" key="c.id">
+        <text class="k-breadcrumb-item" class:current="c.last">{c.label}</text>
+        <text class="k-breadcrumb-sep" if="!c.last">›</text>
       </row>
-      <text class="muted" pad="1">You are in {where}.</text>
-      <hints class="hintbar"/>
+      <text class="k-muted" pad="1">You are in {where}.</text>
+      <hints class="k-hints"/>
     </col>
   </screen>
 </tui>
