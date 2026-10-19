@@ -7,6 +7,12 @@ line.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-18
+
+A patch on 0.4a. `version` on `<tui>` becomes optional, and `examples/`
+grows by thirteen apps: four tools, four animated apps (Snake among them),
+and five more games, with animated demos of nine of them on the docs site.
+
 ### Changed
 
 - **`version` on `<tui>` is optional.** A `<tui>` without it is the
@@ -498,7 +504,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.1
 [0.4.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.0
 [0.3.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.2
 [0.3.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.1
