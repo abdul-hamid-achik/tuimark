@@ -1,5 +1,6 @@
 import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
 import lastModified from 'fumadocs-mdx/plugins/last-modified';
+import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
 import { metaSchema, pageSchema } from 'fumadocs-core/source/schema';
 import type { LanguageRegistration } from 'shiki';
 import { z } from 'zod';
@@ -66,6 +67,17 @@ export default defineConfig({
       // xml and css are preloaded: an alias is only followed to a loaded language.
       langs: [grid, term, 'xml', 'css'],
       langAlias: { tui: 'xml', tcss: 'css' },
+      // Fumadocs' own transformers, plus the language as data-lang on the
+      // block, so the stylesheet can set terminal output (grid, term) tight.
+      transformers: [
+        ...(rehypeCodeDefaultOptions.transformers ?? []),
+        {
+          name: 'tuimark:data-lang',
+          pre(node) {
+            node.properties['data-lang'] = this.options.lang;
+          },
+        },
+      ],
     },
   },
 });

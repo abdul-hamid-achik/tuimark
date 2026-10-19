@@ -7,7 +7,7 @@ const columns: { title: string; links: { text: string; href: string; external?: 
     title: 'learn',
     links: [
       { text: 'Getting started', href: '/guide/getting-started' },
-      { text: 'Working with agents', href: '/guide/agents' },
+      { text: 'Use with AI agents', href: '/guide/agents' },
       { text: 'The .tui language', href: '/guide/language' },
       { text: 'Widgets', href: '/guide/widgets' },
       { text: 'The kit', href: '/guide/kit' },

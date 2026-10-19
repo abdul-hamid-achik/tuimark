@@ -9,7 +9,13 @@ If your agent already has a shell, the [CLI](/guide/tools) and this server do th
 
 ## Registering it
 
-Point your MCP client at the `tuimark` binary with the `mcp` subcommand and no other arguments:
+In Claude Code, one command adds it (`--scope project` shares it with the repository in `.mcp.json`):
+
+```sh
+claude mcp add tuimark -- tuimark mcp
+```
+
+Other clients, Cursor's `.cursor/mcp.json` among them, take the `tuimark` binary with the `mcp` subcommand and no other arguments:
 
 ```json
 {
@@ -22,7 +28,7 @@ Point your MCP client at the `tuimark` binary with the `mcp` subcommand and no o
 }
 ```
 
-The exact place this JSON goes depends on your client (a project config file, a global settings file, or a CLI flag); consult its docs for "MCP server" or "stdio server" configuration. The server reads no environment variable and needs no other setup — just a `tuimark` binary on `PATH` (or an absolute `command`).
+The exact place this JSON goes depends on your client (a project config file, a global settings file, or a CLI flag); [Use Tuimark with AI agents](/guide/agents#connect-the-mcp-server) shows it for Claude Code and Cursor, and your client's docs cover "MCP server" or "stdio server" configuration. The server reads no environment variable and needs no other setup — just a `tuimark` binary on `PATH` (or an absolute `command`).
 
 ## The tools
 
@@ -56,6 +62,6 @@ An agent following the [authoring loop](/guide/agents#the-loop) reads these the 
 
 ## See also
 
-- [Working with agents](/guide/agents) — the authoring loop this server exposes as tools, and how to read a dump.
+- [Use Tuimark with AI agents](/guide/agents) — the authoring loop this server exposes as tools, and how to read a dump.
 - [Dumps and tools](/guide/tools) — the same commands from a shell.
 - [Host protocol](/guide/host-protocol) — for driving a *live* session, not the authoring loop.
