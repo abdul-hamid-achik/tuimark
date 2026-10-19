@@ -60,6 +60,18 @@ line.
   the kit's conventions and the `Play` flows, and a `-demo COLSxROWS` mode that
   the docs site turns into an animated SVG. `loadfs_test.go` now gives any
   example that loads `../../kit` the repository root as its file system.
+- **A js/wasm build target, for the website's playground.** The core packages
+  (the root package and `internal/**`) now build and pass their tests for
+  `GOOS=js GOARCH=wasm`; the one blocker was `syscall.SIGWINCH` in
+  `internal/host/resize_unix.go`, now retagged `unix` (with `resize_other.go`
+  for everything else). `cmd/tuimark-wasm` is the entry that compiles to
+  `tuimark.wasm` (about 1.2 MB with brotli): a private, unversioned JS API
+  (`open`, `render`, `step`, `validate`, `reload`, `close`) over the same
+  runtime, whose frames are the CLI's dumps (tests compare them byte for byte
+  for every example and kit component). It is not a command, is not published,
+  and promises no compatibility. `task wasm` builds it, `task wasm-test` runs
+  the core tests under js with Node, and `task verify` checks its size budget
+  and a Node smoke test. The CLI and `Run` are not part of the js target.
 
 ## [0.4.1] - 2026-10-18
 
