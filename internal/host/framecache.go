@@ -34,11 +34,11 @@ type nodeDecls struct {
 // style sharing keys on its identity (css.DeclKey). The caller holds a.mu.
 func (a *App) declsOf(n *ir.Node) *nodeDecls {
 	if a.noCache {
-		return &nodeDecls{a.toDecls(n.Hints), a.toDecls(n.Inline)}
+		return &nodeDecls{a.toDecls(n, n.Hints), a.toDecls(n, n.Inline)}
 	}
 	d := a.decls[n]
 	if d == nil {
-		d = &nodeDecls{a.toDecls(n.Hints), a.toDecls(n.Inline)}
+		d = &nodeDecls{a.toDecls(n, n.Hints), a.toDecls(n, n.Inline)}
 		a.decls[n] = d
 	}
 	return d

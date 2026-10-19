@@ -70,6 +70,13 @@ func analyze(sn *snapshot, path, text string) *analysis {
 		}
 	}
 	diags := app.Validate()
+	if doc := app.Document(); doc.FragmentRoot {
+		// A file whose root is <fragment> is no document: it is checked
+		// on its own, as `tuimark validate` checks it, with no V005 (SPEC
+		// v0.4b §6.18.2, §15.12). Routing its diagnostics through the
+		// documents that include it is F4's.
+		diags = parse.FragmentDiags(doc)
+	}
 	if !a.hasData {
 		// Without data every bind path is "missing": keep the data-free
 		// checks, as validate does (B007 is static).
@@ -92,6 +99,9 @@ func analyze(sn *snapshot, path, text string) *analysis {
 // 2 for those documents, else 1 (any other version is read as 1).
 func docVersion(d *parse.Document) int {
 	switch {
+	case d.FragmentRoot:
+		// A fragment is always the current language (SPEC v0.4b §6.18.2).
+		return int(ir.LangCurrent)
 	case d.Lang.V4():
 		return int(ir.LangCurrent)
 	case d.V3:

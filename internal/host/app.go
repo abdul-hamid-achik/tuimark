@@ -247,9 +247,10 @@ func newApp(src []byte, path, dir string) *App {
 	if path == "" {
 		a.file = ""
 	}
-	a.doc = parse.Parse(src, path)
+	res := diskResolver(dir, path)
+	a.doc = parse.ParseWith(src, path, res.loader())
 	a.static = append(a.static, a.doc.Diags...)
-	a.loadStyles(diskResolver(dir, path))
+	a.loadStyles(res)
 	return a
 }
 
@@ -262,14 +263,17 @@ func (a *App) loadStyles(res styleResolver) {
 	// loads it (SPEC §5.1, v0.3b, v0.4b).
 	lang := a.doc.Lang
 	for _, s := range a.doc.Styles {
+		// A <style> is reported in the file it is written in, which is a
+		// fragment's when an include brought it (SPEC v0.4b §6.18.6).
+		file := s.File
 		if s.Src == "" {
-			sh, diags := css.ParseInlineSheetLang(s.Body, a.file, s.BodyLine, s.BodyCol, lang)
+			sh, diags := css.ParseInlineSheetLang(s.Body, file, s.BodyLine, s.BodyCol, lang)
 			a.static = append(a.static, diags...)
 			a.sheets = append(a.sheets, sh)
 			continue
 		}
-		d := ir.Diagnostic{Severity: ir.Error, Code: "V006", File: a.file, Line: s.Line, Col: s.Col, Path: "/style"}
-		resolved, outside := res.resolve(s.Src)
+		d := ir.Diagnostic{Severity: ir.Error, Code: "V006", File: file, Line: s.Line, Col: s.Col, Path: "/style"}
+		resolved, outside := res.resolve(s.From, s.Src)
 		if outside {
 			d.Msg = fmt.Sprintf("style src=%q is outside the file system", s.Src)
 			a.static = append(a.static, d)
@@ -293,7 +297,14 @@ func (a *App) loadStyles(res styleResolver) {
 			a.static = append(a.static, d)
 			continue
 		}
-		sh, diags := css.ParseSheetLang(string(body), res.base(resolved), lang)
+		// A stylesheet is named by its base name, but one a fragment loads
+		// by its path relative to the document's directory: two kits'
+		// theme.tcss stay apart (SPEC v0.4b §6.18.6).
+		name := res.base(resolved)
+		if s.From != "" {
+			name = res.name(resolved)
+		}
+		sh, diags := css.ParseSheetLang(string(body), name, lang)
 		a.static = append(a.static, diags...)
 		a.sheets = append(a.sheets, sh)
 	}
@@ -337,11 +348,18 @@ func (a *App) Files() []string {
 	if a.path != "" {
 		out = append(out, a.path)
 	}
+	for _, f := range a.doc.Fragments {
+		out = append(out, f.Path)
+	}
 	for _, s := range a.doc.Styles {
 		if s.Src != "" {
 			p := s.Src
 			if !filepath.IsAbs(p) {
-				p = filepath.Join(a.dir, p)
+				d := a.dir
+				if s.From != "" {
+					d = filepath.Dir(s.From)
+				}
+				p = filepath.Join(d, p)
 			}
 			out = append(out, p)
 		}
@@ -621,7 +639,7 @@ func (a *App) CheckCatalog(known map[string]bool) ir.Diags {
 	}
 	for _, k := range a.doc.Keymap {
 		if k.Action != "" && !a.isBuiltin(k.Action) && !known[k.Action] {
-			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw), File: a.file, Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
+			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw), File: k.Org.FileOr(a.file), Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
 		}
 	}
 	walkIR(a.doc.Root, func(n *ir.Node) {

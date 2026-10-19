@@ -2,6 +2,7 @@ package parse
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -21,6 +22,18 @@ type StyleRef struct {
 	Line, Col int // position of the element
 	BodyLine  int // position of the inline body (for diagnostics)
 	BodyCol   int
+	// File is the display name of the file the <style> is written in: the
+	// document's own name, or a fragment's (SPEC v0.4b §6.18.6).
+	File string
+	// From is the loader path of that file when it is a fragment (""
+	// for the document): a relative src resolves against its directory
+	// (SPEC v0.4b §6.18.2).
+	From string
+	// Rel is the stylesheet's path relative to the document's directory
+	// when the <style> is written in a fragment ("" otherwise): the name
+	// its diagnostics, `tuimark ir`, and `inspect` use for it, so that
+	// two kits' theme.tcss stay apart (SPEC v0.4b §6.18.6).
+	Rel string
 }
 
 // KeyBind is one <bind> row of the keymap.
@@ -51,6 +64,9 @@ type KeyBind struct {
 	HasLabel  bool
 	HasKeycap bool
 	Line, Col int
+	// Org is where the row is written when that is not the document
+	// itself (SPEC v0.4b §6.18.6): nil for a row of the document.
+	Org *ir.Origin
 }
 
 // Document is a parsed and validated .tui file.
@@ -87,9 +103,25 @@ type Document struct {
 	Raw            *RawNode
 	Prolog, Epilog []*RawNode
 
+	// FragmentRoot is true when the file's root is <fragment>: not a
+	// document (V005), but a file `tuimark validate` checks on its own
+	// (FragmentDiags; SPEC v0.4b §6.18.2, §15.1).
+	FragmentRoot bool
+	// Fragments are the files the document's <include> elements read, at
+	// any depth, in the order they were read, each once (SPEC v0.4b
+	// §6.18.2): what run and preview --watch watch.
+	Fragments []FragmentRef
+
 	// dropped holds the subtrees rooted at an unknown tag: validated, kept
 	// out of Root (see builder.tagKnown), in document order.
 	dropped []*ir.Node
+}
+
+// FragmentRef is a file an <include> read: its path in the loader's file
+// system and the name diagnostics give it.
+type FragmentRef struct {
+	Path string
+	Name string
 }
 
 // InlineDecls returns the style="" declarations of every node of the
@@ -108,7 +140,7 @@ func (d *Document) InlineDecls() []css.Decl {
 	var walk func(n *ir.Node)
 	walk = func(n *ir.Node) {
 		for _, p := range n.Inline {
-			out = append(out, css.Decl{Prop: p.Name, Value: p.Value, Line: p.Line, Col: p.Col, File: file})
+			out = append(out, css.Decl{Prop: p.Name, Value: p.Value, Line: p.Line, Col: p.Col, File: n.FileName(file)})
 		}
 		for _, c := range n.Children {
 			walk(c)
@@ -226,14 +258,17 @@ var TagAttrsV3 = map[string]map[string]bool{
 // ir.VersionHintCurrent. Each 0.4b phase adds its attributes here, and
 // the rows of its tags, when it implements them; none is declared ahead
 // of its phase.
-var TagAttrsCurrent = map[string]map[string]bool{}
+var TagAttrsCurrent = map[string]map[string]bool{
+	"include":  only("src"),
+	"fragment": only(),
+}
 
 // tableItemAttrs are the attributes of a table's row template <item>
 // (SPEC §6.9.1, §6.15), besides class:NAME.
 var tableItemAttrs = only("class")
 
 // noClassGuard are the tags that take no class:NAME (SPEC §6.13).
-var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true}
+var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true}
 
 // ClassGuardPrefix starts every class:NAME attribute (SPEC §6.13).
 const ClassGuardPrefix = "class:"
@@ -295,11 +330,28 @@ type builder struct {
 	// lang.V3().
 	lang ir.Lang
 	// droppedIn maps a node to the unknown-tag children content() kept
-	// out of its Children, in document order.
-	droppedIn map[*ir.Node][]*ir.Node
+	// out of its Children, in document order, each with the number of
+	// Children that precede it (walkAll merges by that index: a position
+	// means nothing across the files an include reads).
+	droppedIn map[*ir.Node][]droppedAt
 	// addressable holds the ids of tree nodes outside any list <item>:
 	// the ones screen focus= and keymap to=/when= can name.
 	addressable map[string]bool
+	// org is the origin of the elements being built: nil while the
+	// document's own text is read, and the include that placed a fragment's
+	// elements while one is (SPEC v0.4b §6.18.6). Every diagnostic made
+	// while building an element names its file.
+	org *ir.Origin
+	// comp holds the state of composition (<include>); nil in a document
+	// that is not the current language.
+	comp *composer
+}
+
+// droppedAt is an unknown-tag child content() kept out of its parent's
+// Children, with the number of Children before it.
+type droppedAt struct {
+	at   int
+	node *ir.Node
 }
 
 // listItem returns the list <item> that n is or is inside (the nearest
@@ -344,24 +396,71 @@ func listHint(item *ir.Node) string {
 	return fmt.Sprintf(`list rows are navigated by their list; handle the row with the list's on:select, or a keymap <bind keys="..." action="..." when="%s:focus"/> (its event identifies the selected row)`, sel)
 }
 
+// diag reports a diagnostic in the file being built (b.org).
 func (b *builder) diag(sev, code string, line, col int, path, id, format string, args ...any) {
+	b.diagOrg(b.org, false, sev, code, line, col, path, id, format, args...)
+}
+
+// diagOrg reports a diagnostic in the file org says (the document's when
+// nil). place appends the placement suffix of an element an include placed
+// (SPEC v0.4b §6.18.6): a diagnostic that depends on where the element
+// stands gets it, a self-check (what the element's own attributes and text
+// say) does not, since it holds wherever the element is placed.
+func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, col int, path, id, format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	file := b.file
+	if org != nil {
+		file = org.File
+		if place && org.Placed != nil {
+			msg += ir.PlacedSuffix(&ir.Node{Org: org})
+		}
+	}
 	b.doc.Diags = append(b.doc.Diags, ir.Diagnostic{
-		Severity: sev, Code: code, Msg: fmt.Sprintf(format, args...),
-		File: b.file, Line: line, Col: col, Path: path, ID: id,
+		Severity: sev, Code: code, Msg: msg,
+		File: file, Line: line, Col: col, Path: path, ID: id,
 	})
 }
 
+// selfCheck are the codes an element's own attributes and text give: they
+// hold wherever the element is placed, so they carry no placement suffix
+// (SPEC v0.4b §6.18.6). Every other code about an element depends on its
+// place, its ids, or the data.
+var selfCheck = map[string]bool{"V002": true, "V003": true, "V007": true, "V013": true, "V015": true, "V018": true}
+
+// errN reports an error about n, in the file n is written in.
 func (b *builder) errN(n *ir.Node, code, format string, args ...any) {
-	b.diag(ir.Error, code, n.Line, n.Col, n.Path, n.ID, format, args...)
+	b.diagOrg(n.Org, !selfCheck[code], ir.Error, code, n.Line, n.Col, n.Path, n.ID, format, args...)
+}
+
+// errSelf reports an error about n that holds wherever n is placed (an
+// unknown tag): no placement suffix.
+func (b *builder) errSelf(n *ir.Node, code, format string, args ...any) {
+	b.diagOrg(n.Org, false, ir.Error, code, n.Line, n.Col, n.Path, n.ID, format, args...)
+}
+
+// errKB reports an error about a keymap row, in the file the row is
+// written in.
+func (b *builder) errKB(k *KeyBind, code, path, format string, args ...any) {
+	b.diagOrg(k.Org, !selfCheck[code], ir.Error, code, k.Line, k.Col, path, "", format, args...)
 }
 
 func (b *builder) warnN(n *ir.Node, code, format string, args ...any) {
-	b.diag(ir.Warning, code, n.Line, n.Col, n.Path, n.ID, format, args...)
+	b.diagOrg(n.Org, !selfCheck[code], ir.Warning, code, n.Line, n.Col, n.Path, n.ID, format, args...)
 }
 
 // Parse parses and validates a .tui document. file is used in diagnostics
-// and to resolve relative style src paths (it may be empty).
+// and to resolve relative style src paths (it may be empty). It reads no
+// file: an <include> of the current language is V006 "cannot be read"
+// (ParseWith gives it a file system).
 func Parse(src []byte, file string) *Document {
+	return ParseWith(src, file, nil)
+}
+
+// ParseWith is Parse for a document that may include other files (SPEC
+// v0.4b §6.18.2): the loader resolves and reads the files its <include>
+// elements name, and the document is expanded while it is built. A nil
+// loader reads nothing.
+func ParseWith(src []byte, file string, ld *Loader) *Document {
 	doc := &Document{File: file, IDs: map[string]*ir.Node{}, Lang: ir.Lang1}
 	b := &builder{doc: doc, file: filepath.Base(file), lang: ir.Lang1}
 	if file == "" {
@@ -376,6 +475,12 @@ func Parse(src []byte, file string) *Document {
 	switch raw.Name {
 	case "app":
 		doc.Spike = true
+	case "fragment":
+		// SPEC v0.4b §6.18.2: a fragment is not a document. The tools that
+		// check a fragment on their own read doc.Raw (FragmentDiags).
+		doc.FragmentRoot = true
+		b.diag(ir.Error, "V005", raw.Line, raw.Col, "/", "", "a <fragment> is not a document: check it through the document that includes it")
+		return doc
 	case "tui":
 		// The version decides every check below (SPEC §5.1), whatever the
 		// attribute order: <tui theme="auto" version="2"> is valid. A
@@ -402,6 +507,15 @@ func Parse(src []byte, file string) *Document {
 		}
 		b.v2, b.v3 = b.lang.V2(), b.lang.V3()
 		doc.V2, doc.V3, doc.Lang = b.v2, b.v3, b.lang
+		if b.lang.V4() {
+			// Only the current language has composition; a pinned document
+			// never reads the file an <include> names (decision 23).
+			self := ""
+			if ld != nil {
+				self = ld.Self
+			}
+			b.comp = &composer{ld: ld, chain: []chainFile{{canon: self, name: b.docName()}}}
+		}
 	default:
 		b.diag(ir.Error, "V005", raw.Line, raw.Col, "/", "", "document root must be <tui> (or the phase-0 alias <app>), got <%s>", raw.Name)
 		return doc
@@ -410,6 +524,11 @@ func Parse(src []byte, file string) *Document {
 	b.checkStructure()
 	b.checkIDs(doc.Root)
 	b.checkKeymap()
+	if b.comp != nil && b.comp.used {
+		// One written element placed more than once reports once (SPEC
+		// v0.4b §6.18.6).
+		doc.Diags = dedupeDiags(doc.Diags)
+	}
 	sort.SliceStable(doc.Diags, func(i, j int) bool {
 		if doc.Diags[i].Line != doc.Diags[j].Line {
 			return doc.Diags[i].Line < doc.Diags[j].Line
@@ -435,6 +554,7 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 		Tag: r.Name, Kind: r.Name, Parent: parent,
 		Attrs: map[string]string{}, On: map[string]string{},
 		Line: r.Line, Col: r.Col, Path: childPath(parent, r.Name),
+		Org: b.org,
 	}
 	if r.Name == "app" {
 		n.Kind = "col"
@@ -477,7 +597,6 @@ var htmlTagHints = map[string]string{
 	"option":    "a <list> with on:select picks one row",
 	"radio":     "a <list> with on:select picks one row",
 	"textarea":  "not in the vocabulary yet; use <input>",
-	"include":   "Tuimark has no components or includes; only <style src> loads another file",
 	"template":  "Tuimark has no components or includes; only <style src> loads another file",
 	"slot":      "Tuimark has no components or includes; only <style src> loads another file",
 	"component": "Tuimark has no components or includes; only <style src> loads another file",
@@ -603,11 +722,11 @@ func hasUpper(s string) bool {
 func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 	tag := n.Tag
 	if hasUpper(tag) {
-		b.errN(n, "V001", "unknown tag <%s> (tags are lowercase)", tag)
+		b.errSelf(n, "V001", "unknown tag <%s> (tags are lowercase)", tag)
 		return
 	}
 	if strings.Contains(tag, ":") {
-		b.errN(n, "V001", "unknown tag <%s> (namespaces are not allowed)", tag)
+		b.errSelf(n, "V001", "unknown tag <%s> (namespaces are not allowed)", tag)
 		return
 	}
 	if b.doc.Spike {
@@ -619,19 +738,19 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 		}
 		if !ok {
 			if ir.IsKind(tag) {
-				b.errN(n, "V001", "<%s> is not in the phase-0 vocabulary (app col row box text); use a <tui> root for v1 tags", tag)
+				b.errSelf(n, "V001", "<%s> is not in the phase-0 vocabulary (app col row box text); use a <tui> root for v1 tags", tag)
 			} else {
-				b.errN(n, "V001", "unknown tag <%s>%s", tag, spikeTagSuggestion(tag))
+				b.errSelf(n, "V001", "unknown tag <%s>%s", tag, spikeTagSuggestion(tag))
 			}
 			return
 		}
 		if tag == "app" && parent != nil {
-			b.errN(n, "V001", "<app> is only valid as the document root")
+			b.errSelf(n, "V001", "<app> is only valid as the document root")
 		}
 		return
 	}
 	if tag == "app" {
-		b.errN(n, "V001", "<app> is the phase-0 root alias; inside <tui> use <screen>")
+		b.errSelf(n, "V001", "<app> is the phase-0 root alias; inside <tui> use <screen>")
 		return
 	}
 	if ir.IsKindV2(tag) && !b.v2 {
@@ -644,8 +763,18 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 		b.currentHint(n.Line, n.Col, n, "V001", "tag <%s>", tag)
 		return
 	}
+	if tag == "fragment" {
+		b.errSelf(n, "V001", "<fragment> is only valid as the root of an included file")
+		return
+	}
 	if !ir.IsKindLang(tag, b.lang) {
-		b.errN(n, "V001", "unknown tag <%s>%s", tag, b.tagSuggestion(tag))
+		b.errSelf(n, "V001", "unknown tag <%s>%s", tag, b.tagSuggestion(tag))
+		return
+	}
+	if b.comp != nil && b.comp.selfOnly {
+		// A fragment checked on its own: where an element stands is not
+		// known, so only the checks an element gets from itself (SPEC
+		// v0.4b §6.18.3, "An unused template").
 		return
 	}
 	ptag := ""
@@ -779,6 +908,11 @@ var statefulV2 = map[string]bool{"table": true, "tabs": true, "tab": true}
 // still built and validated so its diagnostics are reported.
 func (b *builder) tagKnown(tag string) bool {
 	if hasUpper(tag) || strings.Contains(tag, ":") {
+		return false
+	}
+	if tag == "fragment" {
+		// Only ever the root of an included file (SPEC v0.4b §6.18.2):
+		// never a node, where it stands it is V001 and dropped.
 		return false
 	}
 	if b.doc.Spike {
@@ -1308,28 +1442,28 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<%s> cannot contain elements (found <%s>)", n.Tag, c.Name)
 				continue
 			}
-			child := b.node(c, n)
+			if c.Name == "include" && b.comp != nil {
+				// SPEC v0.4b §6.18.1: the elements of the fragment take the
+				// include's place, built here as if written here. This
+				// comes after the rules above: in an element that takes no
+				// element children, an include is reported by that rule and
+				// its file is not read (§6.18.2).
+				b.include(n, c, nil)
+				continue
+			}
 			// An unknown kind still gets its subtree validated (V001 plus
 			// whatever its own children report), but it is dropped here so
 			// it never reaches layout, paint, dump nodes, or `tuimark ir`.
 			// The tree-level checks (V004, V012, V013, B006) still visit
 			// it through walkAll.
-			if b.tagKnown(c.Name) {
-				n.Children = append(n.Children, child)
-			} else {
-				b.doc.dropped = append(b.doc.dropped, child)
-				if b.droppedIn == nil {
-					b.droppedIn = map[*ir.Node][]*ir.Node{}
-				}
-				b.droppedIn[n] = append(b.droppedIn[n], child)
-			}
+			b.attach(n, nil, b.node(c, n))
 		}
 	}
 	body := text.String()
 	switch n.Tag {
 	case "style":
 		n.Text = body
-		b.doc.Styles = append(b.doc.Styles, StyleRef{Src: n.Attrs["src"], Body: body, Line: n.Line, Col: n.Col, BodyLine: textLine, BodyCol: textCol})
+		b.addStyle(n, body, textLine, textCol)
 		if n.Attrs["src"] != "" && !isXMLWhitespaceOnly(body) {
 			b.errN(n, "V013", "<style> takes either src or an inline body, not both")
 		}
@@ -1370,6 +1504,47 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 	}
 }
 
+// addStyle records a <style> element. A <style> placed more than once (a
+// fragment included twice) is applied once, at its first place in document
+// order (SPEC v0.4b §6.18.2): the elements written at the same place of the
+// same file are one.
+func (b *builder) addStyle(n *ir.Node, body string, textLine, textCol int) {
+	file := n.FileName(b.file)
+	for _, s := range b.doc.Styles {
+		if s.File == file && s.Line == n.Line && s.Col == n.Col {
+			return
+		}
+	}
+	ref := StyleRef{Src: n.Attrs["src"], Body: body, Line: n.Line, Col: n.Col, BodyLine: textLine, BodyCol: textCol, File: file}
+	if n.Org != nil && b.comp != nil && len(b.comp.chain) > 1 {
+		// Written in a fragment: a relative src resolves against that
+		// file's directory, and the sheet is named by its path relative to
+		// the document's directory (SPEC v0.4b §6.18.6).
+		cur := b.comp.chain[len(b.comp.chain)-1]
+		ref.From = cur.path
+		if ref.Src != "" {
+			ref.Rel = relFrom(cur.name, ref.Src)
+		}
+	}
+	b.doc.Styles = append(b.doc.Styles, ref)
+}
+
+// relFrom joins src, written in the file called name (a path relative to
+// the document's directory), to that file's directory: the name of a
+// stylesheet a fragment loads. An absolute src stays as it is.
+func relFrom(name, src string) string {
+	if strings.HasPrefix(src, "/") || filepath.IsAbs(src) {
+		return src
+	}
+	d := name
+	if i := strings.LastIndexByte(d, '/'); i >= 0 {
+		d = d[:i]
+	} else {
+		d = "."
+	}
+	return path.Join(d, src)
+}
+
 // tableItem reports whether n is the row template <item> of a table (a
 // version="2" document; SPEC §6.9.1).
 func (b *builder) tableItem(n *ir.Node) bool {
@@ -1401,7 +1576,7 @@ func (b *builder) checkStructure() {
 					kb := KeyBind{
 						KeysRaw: k.Attrs["keys"], Action: k.Attrs["action"], When: rowWhen,
 						HasOwnWhen: hasOwnWhen, KeymapNode: c, EffectiveWhen: rowWhen,
-						To: k.Attrs["to"], Line: k.Line, Col: k.Col,
+						To: k.Attrs["to"], Line: k.Line, Col: k.Col, Org: k.Org,
 					}
 					if !hasOwnWhen {
 						kb.EffectiveWhen = kmWhen
@@ -1446,29 +1621,23 @@ func (b *builder) walkAll(n *ir.Node, dropped bool, fn func(n *ir.Node, dropped 
 	}
 	kids := n.Children
 	if extra := b.droppedIn[n]; len(extra) > 0 {
+		// Merge by the index content() recorded: a source position says
+		// nothing about the order of nodes read from different files.
 		kids = make([]*ir.Node, 0, len(n.Children)+len(extra))
-		i, j := 0, 0
-		for i < len(n.Children) || j < len(extra) {
-			if j == len(extra) || (i < len(n.Children) && before(n.Children[i], extra[j])) {
-				kids = append(kids, n.Children[i])
-				i++
-			} else {
-				kids = append(kids, extra[j])
+		j := 0
+		for i := 0; i <= len(n.Children); i++ {
+			for j < len(extra) && extra[j].at == i {
+				kids = append(kids, extra[j].node)
 				j++
+			}
+			if i < len(n.Children) {
+				kids = append(kids, n.Children[i])
 			}
 		}
 	}
 	for _, c := range kids {
 		b.walkAll(c, dropped || !b.tagKnown(c.Tag), fn)
 	}
-}
-
-// before reports whether a starts before b in the source.
-func before(a, b *ir.Node) bool {
-	if a.Line != b.Line {
-		return a.Line < b.Line
-	}
-	return a.Col < b.Col
 }
 
 func (b *builder) checkNode(n *ir.Node) {
@@ -1746,7 +1915,7 @@ func (b *builder) checkIDs(root *ir.Node) {
 		}
 		inTemplate := b.eachContainer(n) != nil
 		if prev, ok := seen[n.ID]; ok {
-			b.errN(n, "V004", "duplicate id %q (first defined at %d:%d)", n.ID, prev.Line, prev.Col)
+			b.dupID(n, prev)
 		} else {
 			seen[n.ID] = n
 			if inTemplate {
@@ -1798,7 +1967,7 @@ func (b *builder) idTarget(id string) string {
 // fixes the focused node. toOK reports that to= names an addressable node.
 func (b *builder) checkBuiltinRow(k *KeyBind, path string, toOK bool) {
 	if k.Action == "switch-to" && k.To == "" {
-		b.diag(ir.Error, "V003", k.Line, k.Col, path, "", `action="switch-to" needs to="#tab" or to="#screen"`)
+		b.errKB(k, "V003", path, `action="switch-to" needs to="#tab" or to="#screen"`)
 		return
 	}
 	target, how := "", ""
@@ -1821,7 +1990,7 @@ func (b *builder) checkBuiltinRow(k *KeyBind, path string, toOK bool) {
 		return
 	}
 	if why := BuiltinIncompatible(k.Action, n.Kind, hasAttr(n, "checked")); why != "" {
-		b.diag(ir.Error, "B007", k.Line, k.Col, path, "", "action=%q: its target #%s (from %s) is a <%s>, %s", k.Action, target, how, n.Tag, why)
+		b.errKB(k, "B007", path, "action=%q: its target #%s (from %s) is a <%s>, %s", k.Action, target, how, n.Tag, why)
 	}
 }
 
@@ -1868,12 +2037,12 @@ func (b *builder) checkKeymap() {
 		k := &b.doc.Keymap[i]
 		path := "/keymap/bind"
 		if strings.TrimSpace(k.KeysRaw) == "" {
-			b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "<bind> needs keys=")
+			b.errKB(k, "V003", path, "<bind> needs keys=")
 		}
 		k.Keys = ir.SplitKeys(k.KeysRaw)
 		for _, tok := range k.Keys {
 			if !ir.ValidKey(tok) {
-				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "unknown key %q (see the key token list: a-z 0-9 enter esc tab backspace space arrows home end pgup pgdn ctrl+x shift+tab)", tok)
+				b.errKB(k, "V003", path, "unknown key %q (see the key token list: a-z 0-9 enter esc tab backspace space arrows home end pgup pgdn ctrl+x shift+tab)", tok)
 				continue
 			}
 			// SPEC v0.4b §8.1: in the current language a token that never
@@ -1882,20 +2051,20 @@ func (b *builder) checkKeymap() {
 			// stay. A pinned document accepts it, never matching, as in
 			// 0.4.1.
 			if as, never := ir.ArrivesAs(tok); never && b.lang >= ir.KeysRejectedSince {
-				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "key %q never reaches a keymap: it arrives as %s (write %s)", tok, as, as)
+				b.errKB(k, "V003", path, "key %q never reaches a keymap: it arrives as %s (write %s)", tok, as, as)
 			}
 		}
 		switch {
 		case k.Action == "":
-			b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "<bind> needs action=")
+			b.errKB(k, "V003", path, "<bind> needs action=")
 		case ir.IsBuiltinActionV2(k.Action):
 			// SPEC §8.4: the hyphenated built-ins are version="2" keymap
 			// actions (ADR 0006).
 			if !b.v2 {
-				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "action=%q: built-in action%s", k.Action, ir.VersionHint)
+				b.errKB(k, "V003", path, "action=%q: built-in action%s", k.Action, ir.VersionHint)
 			}
 		case !ir.IsIdent(k.Action):
-			b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "action=%q: an action is a plain name", k.Action)
+			b.errKB(k, "V003", path, "action=%q: an action is a plain name", k.Action)
 		}
 		switch {
 		case k.HasOwnWhen:
@@ -1905,13 +2074,13 @@ func (b *builder) checkKeymap() {
 					err = fmt.Errorf(":root is not a node selector")
 				}
 				if err != nil {
-					b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "when=%q: %v", k.When, err)
+					b.errKB(k, "V003", path, "when=%q: %v", k.When, err)
 				} else {
 					k.WhenSel = &sel
 					for _, part := range sel.Parts {
 						if part.ID != "" {
 							if why := b.idTarget(part.ID); why != "" {
-								b.diag(ir.Error, "B005", k.Line, k.Col, path, "", "when=%q refers to #%s, which %s", k.When, part.ID, why)
+								b.errKB(k, "B005", path, "when=%q refers to #%s, which %s", k.When, part.ID, why)
 							}
 						}
 					}
@@ -1923,20 +2092,20 @@ func (b *builder) checkKeymap() {
 		toOK := false
 		if k.To != "" {
 			if !strings.HasPrefix(k.To, "#") || !isIDName(k.To[1:]) {
-				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "to=%q: want #id", k.To)
+				b.errKB(k, "V003", path, "to=%q: want #id", k.To)
 			} else {
 				k.To = k.To[1:]
 				if why := b.idTarget(k.To); why == idMissing {
-					b.diag(ir.Error, "B005", k.Line, k.Col, path, "", "to=\"#%s\" refers to an id that does not exist", k.To)
+					b.errKB(k, "B005", path, "to=\"#%s\" refers to an id that does not exist", k.To)
 				} else if why != "" {
-					b.diag(ir.Error, "B005", k.Line, k.Col, path, "", "to=\"#%s\" %s", k.To, why)
+					b.errKB(k, "B005", path, "to=\"#%s\" %s", k.To, why)
 				} else {
 					toOK = true
 				}
 			}
 		}
 		if k.Action == "focus" && k.To == "" {
-			b.diag(ir.Error, "V003", k.Line, k.Col, path, "", `action="focus" needs to="#id"`)
+			b.errKB(k, "V003", path, `action="focus" needs to="#id"`)
 		}
 		if b.v2 && ir.IsBuiltinActionV2(k.Action) {
 			b.checkBuiltinRow(k, path, toOK)

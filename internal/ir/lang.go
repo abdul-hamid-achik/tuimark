@@ -51,8 +51,11 @@ const VersionHintCurrent = ` (requires a <tui> without version)`
 // KindsCurrent are the tags only the current language accepts (SPEC
 // v0.4b §5.1, §6): in a pinned document each is V001 with
 // VersionHintCurrent. Each 0.4b phase adds its tags here when it lays
-// them out and paints them; none is declared ahead of its phase.
-var KindsCurrent = []string{}
+// them out and paints them; none is declared ahead of its phase. include
+// and fragment (SPEC v0.4b §6.18.2) are never laid out: an include is
+// replaced by its fragment's elements while the document is built, and a
+// fragment is only ever the root of an included file.
+var KindsCurrent = []string{"include", "fragment"}
 
 // IsKindCurrent reports whether tag is one of the current-language tags.
 func IsKindCurrent(tag string) bool {

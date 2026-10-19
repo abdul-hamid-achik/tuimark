@@ -150,10 +150,16 @@ func resolveModal(e *Engine, m *Box, horizontal bool, full, cross int) int {
 func (e *Engine) report(b *Box, sev, code, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	path, id, line, col := "", "", 0, 0
+	file := e.File
 	if b != nil {
 		id = b.ID
 		if b.Src != nil {
 			path, line, col = b.Src.Path, b.Src.Line, b.Src.Col
+			// An element written in a fragment is reported in its file,
+			// and one an include placed names the include (SPEC v0.4b
+			// §6.18.6).
+			file = b.Src.FileName(e.File)
+			msg += ir.PlacedSuffix(b.Src)
 		}
 		switch code {
 		case "L003":
@@ -173,7 +179,7 @@ func (e *Engine) report(b *Box, sev, code, format string, args ...any) {
 		return
 	}
 	e.seen[key] = true
-	e.Diags = append(e.Diags, ir.Diagnostic{Severity: sev, Code: code, Msg: msg, File: e.File, Line: line, Col: col, Path: path, ID: id})
+	e.Diags = append(e.Diags, ir.Diagnostic{Severity: sev, Code: code, Msg: msg, File: file, Line: line, Col: col, Path: path, ID: id})
 }
 
 func (e *Engine) place(b *Box, r Rect, clip Rect) {
@@ -1252,11 +1258,11 @@ func (e *Engine) reportClip(n, c *Box, axis string, shown, total int) {
 // still gets Clipped. report's own dedup keys on the message, which
 // differs from row to row, so it cannot do this.
 func (e *Engine) clipFirst(n *Box, kind string) bool {
-	path, line, col := "", 0, 0
+	path, line, col, file := "", 0, 0, ""
 	if n.Src != nil {
-		path, line, col = n.Src.Path, n.Src.Line, n.Src.Col
+		path, line, col, file = n.Src.Path, n.Src.Line, n.Src.Col, n.Src.FileName("")
 	}
-	key := fmt.Sprintf("clip|%s|%s|%d|%d|%s", kind, path, line, col, n.ID)
+	key := fmt.Sprintf("clip|%s|%s|%d|%d|%s|%s", kind, path, line, col, n.ID, file)
 	if e.seen[key] {
 		return false
 	}

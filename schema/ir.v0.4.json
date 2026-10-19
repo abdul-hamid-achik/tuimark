@@ -46,7 +46,8 @@
         "text", "rule",
         "list", "item", "input", "button", "progress",
         "modal",
-        "table", "column", "tabs", "tab", "sparkline", "hints"
+        "table", "column", "tabs", "tab", "sparkline", "hints",
+        "include"
       ]
     },
     "node": {
@@ -64,7 +65,8 @@
         "on": { "type": "object", "additionalProperties": { "type": "string" } },
         "style": { "type": "object" },
         "text": { "type": "string" },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "from": { "type": "string", "pattern": "^.+:[1-9][0-9]*$" }
       }
     }
   }

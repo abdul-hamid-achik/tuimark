@@ -1,6 +1,9 @@
 package ir
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // SPEC v0.4b §5.1: the four languages and what each holds. Lang 0 (a
 // Document built without Parse) reads as version="1".
@@ -27,11 +30,22 @@ func TestLangFlags(t *testing.T) {
 	}
 }
 
-// IsKindLang adds KindsCurrent only in the current language. F0 leaves
-// KindsCurrent empty; a test-only entry shows the gate.
+// IsKindLang adds KindsCurrent only in the current language. F1 declares
+// the composition tags include and fragment; a test-only entry shows the
+// gate.
 func TestIsKindLang(t *testing.T) {
-	if len(KindsCurrent) != 0 {
-		t.Fatalf("KindsCurrent = %v: F0 declares no current-language tag", KindsCurrent)
+	if got := strings.Join(KindsCurrent, " "); got != "include fragment" {
+		t.Fatalf("KindsCurrent = %v: F1 declares include and fragment", KindsCurrent)
+	}
+	for _, k := range KindsCurrent {
+		for _, l := range []Lang{Lang1, Lang2, Lang3} {
+			if IsKindLang(k, l) {
+				t.Errorf("%s is a kind of the pinned Lang(%d)", k, l)
+			}
+		}
+		if !IsKindLang(k, Lang4) {
+			t.Errorf("%s is not a kind of the current language", k)
+		}
 	}
 	for _, k := range append(append([]string(nil), Kinds...), KindsV2...) {
 		for _, l := range []Lang{Lang1, Lang2, Lang3, Lang4} {
