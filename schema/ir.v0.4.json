@@ -47,7 +47,7 @@
         "list", "item", "input", "button", "progress",
         "modal",
         "table", "column", "tabs", "tab", "sparkline", "hints",
-        "include"
+        "include", "checkbox"
       ]
     },
     "node": {

@@ -193,7 +193,9 @@ func TestCatalogEqualsTheTables(t *testing.T) {
 			}
 		}
 		if parse.TakesClassGuard(name) {
-			want[catalog.ClassGuardAttr] = 2
+			// version="2" vocabulary, as new as a current-language tag
+			// (SPEC v0.4b §15.10).
+			want[catalog.ClassGuardAttr] = max(2, since)
 		}
 		got := map[string]int{}
 		var anames []string
@@ -438,8 +440,10 @@ func compareToAgents(c catalog.Catalog, md string) (problems []string) {
 		got[tg.Name] = map[string]int{}
 		for _, a := range tg.Attrs {
 			if a.Name == catalog.ClassGuardAttr {
-				if a.Since != 2 {
-					errorf("%s: class:NAME since %d, AGENTS.md says 2", tg.Name, a.Since)
+				// AGENTS.md's class:NAME bullet is version="2"; on a tag of
+				// the current language it is as new as the tag.
+				if want := max(2, tg.Since); a.Since != want {
+					errorf("%s: class:NAME since %d, AGENTS.md says %d", tg.Name, a.Since, want)
 				}
 				continue
 			}

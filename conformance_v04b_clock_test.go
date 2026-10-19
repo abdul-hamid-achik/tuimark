@@ -14,7 +14,8 @@ import (
 // tick:DUR (phase F10): the parts the Go API observes. The CLI parts
 // (dump and play output, exit codes, the golden manifest) are
 // cmd/tuimark's conformance_v04b_clock_test.go; the Run side of the
-// spinner (tests 194-196) is F11's.
+// spinner (tests 194-196) is F11's: internal/host's runclock_*_test.go,
+// which drive Run on a fake clock the public API cannot reach.
 
 // clockS is the document S.tui of tests 190-192, 196, 204, and 208.
 const clockSFile = "testdata/v04b/spinner/S.tui"

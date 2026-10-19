@@ -265,6 +265,9 @@ var TagAttrsCurrent = map[string]map[string]bool{
 	"include":  only("src"),
 	"fragment": only(),
 	"progress": only("indeterminate"), // SPEC v0.4b §6.4.1: the spinner
+	"checkbox": checkboxAttrs(),       // SPEC v0.4b §6.16 (forms.go)
+	"list":     only("single"),        // SPEC v0.4b §6.14.1
+	"table":    only("single"),        // SPEC v0.4b §6.14.1
 }
 
 // tableItemAttrs are the attributes of a table's row template <item>
@@ -313,7 +316,7 @@ func attrAllowed(tag, parent, name string) (ok bool, need int) {
 }
 
 // Focusable-by-default kinds that therefore need an id (V012).
-var needsID = map[string]bool{"list": true, "input": true, "button": true, "modal": true}
+var needsID = map[string]bool{"list": true, "input": true, "button": true, "modal": true, "checkbox": true}
 
 // Kinds that may not contain element children.
 var leafKinds = map[string]bool{"text": true, "input": true, "button": true, "progress": true, "rule": true, "spacer": true, "style": true, "bind": true}
@@ -614,7 +617,6 @@ var htmlTagHints = map[string]string{
 	"ol":        "use <list>",
 	"li":        "use <item> inside a <list>",
 	"dialog":    "use <modal>",
-	"checkbox":  `a multi-select is a <list> with checked= (version="2")`,
 	"select":    "a <list> with on:select picks one row",
 	"option":    "a <list> with on:select picks one row",
 	"radio":     "a <list> with on:select picks one row",
@@ -651,7 +653,7 @@ func spikeTagSuggestion(tag string) string {
 // pinned document keeps 0.4.1's suggestion, or its lack of one, for a
 // name it misspells (SPEC v0.4b §5.1).
 func (b *builder) tagSuggestion(tag string) string {
-	if h, ok := htmlTagHints[tag]; ok {
+	if h, ok := b.htmlHint(tag); ok {
 		return "; " + h
 	}
 	cands := make([]string, 0, len(ir.Kinds)+len(ir.KindsV2)+len(ir.KindsCurrent))
@@ -1227,6 +1229,8 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if val != "true" && val != "false" {
 			b.attrErr(n, a, "V003", "%s=%q: want true or false", name, val)
 		}
+	case "single":
+		b.singleAttr(n, a)
 	case "indeterminate":
 		// SPEC v0.4b §6.4.1 (only the current language gets here, the
 		// version gate above comes first): literal true or false. true
@@ -1291,6 +1295,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			}
 		case tabTemplate && ir.HasInterp(clean):
 			b.v3Hint(a.Line, a.Col, n, "V003", "%s: {path} is only allowed in <text>, title, and placeholder", name)
+		case tag == "checkbox" && name == "label":
+			// A checkbox's label is a template (SPEC v0.4b §6.16.1); the
+			// tag exists only in the current language.
+			b.checkboxLabel(n, a, clean)
 		case tag == "button" && name == "label" && b.lang.V4():
 			// A button's label is a template in the current language (SPEC
 			// v0.4b §6.4.2, §7): checked like a <text> body.
@@ -1520,9 +1528,9 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "a table's <item> is the row template: it takes class and class:NAME only, no children (found <%s>); the cells come from the <column> elements", c.Name)
 				continue
 			}
-			if b.v2 && (n.Tag == "sparkline" || n.Tag == "hints") {
+			if (b.v2 && (n.Tag == "sparkline" || n.Tag == "hints")) || b.formNoContent(n) {
 				// SPEC §6.11, §6.12: no children (a hints' items come
-				// from the keymap).
+				// from the keymap); a form control neither (v0.4b §6.16.1).
 				b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<%s> takes no children (found <%s>)", n.Tag, c.Name)
 				continue
 			}
@@ -1589,7 +1597,7 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <table>; a column's cell template is the body of its <column>")
 		case b.v2 && n.Tag == "tabs":
 			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <tabs>; put it inside a <tab>, and name the tab with label=")
-		case b.v2 && (n.Tag == "sparkline" || n.Tag == "hints"):
+		case (b.v2 && (n.Tag == "sparkline" || n.Tag == "hints")) || b.formNoContent(n):
 			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "<%s> takes no text", n.Tag)
 		case b.tableItem(n):
 			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "a table's <item> is the row template and takes no text; the cells come from the <column> elements")
@@ -1984,6 +1992,7 @@ func (b *builder) checkMultiSelect(n *ir.Node) {
 		return
 	}
 	_, hasChecked := n.Attr("checked")
+	b.checkSingle(n, hasChecked)
 	if hasChecked && n.Tag != "tabs" {
 		_, hasEach := n.Attr("each")
 		_, hasKey := n.Attr("key")
@@ -2098,7 +2107,7 @@ func (b *builder) checkBuiltinRow(k *KeyBind, path string, toOK bool) {
 	if n == nil {
 		return
 	}
-	if why := BuiltinIncompatible(k.Action, n.Kind, hasAttr(n, "checked")); why != "" {
+	if why := BuiltinIncompatible(k.Action, n.Kind, hasAttr(n, "checked"), n.Single); why != "" {
 		b.errKB(k, "B007", path, "action=%q: its target #%s (from %s) is a <%s>, %s", k.Action, target, how, n.Tag, why)
 	}
 }
@@ -2111,12 +2120,13 @@ func hasAttr(n *ir.Node, name string) bool {
 // BuiltinIncompatible returns why a node of the given kind can never be
 // the target of the hyphenated built-in action (SPEC §8.4 "Static
 // checks"), or "" when data or state may make it compatible. checked
-// tells whether the node has a checked= attribute.
-func BuiltinIncompatible(action, kind string, checked bool) string {
+// tells whether the node has a checked= attribute, and single whether it
+// is a single-choice widget (single="true", SPEC v0.4b §6.14.1).
+func BuiltinIncompatible(action, kind string, checked, single bool) string {
 	switch action {
 	case "move-next", "move-prev", "move-first", "move-last", "move-page-down", "move-page-up":
 		switch kind {
-		case "text", "rule", "spacer", "input", "button", "progress", "sparkline", "hints", "column", "tab", "item":
+		case "text", "rule", "spacer", "input", "button", "progress", "sparkline", "hints", "column", "tab", "item", "checkbox":
 			return "which has no cursor, no tabs, and no scroll offset to move (want a list, a table, a tabs, or a viewport)"
 		case "tabs":
 			if action == "move-page-down" || action == "move-page-up" {
@@ -2127,6 +2137,11 @@ func BuiltinIncompatible(action, kind string, checked bool) string {
 		if (kind != "list" && kind != "table") || !checked {
 			return "not a list or table with checked= (the array of checked row keys)"
 		}
+		if action == "check-all" && single {
+			// SPEC v0.4b §6.14.1, §8.4.
+			return `which has single="true": it holds one checked row, so check-all never applies`
+		}
+
 	case "switch-to":
 		if kind != "tab" && kind != "screen" {
 			return "not a tab or a screen"

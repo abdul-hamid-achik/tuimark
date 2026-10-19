@@ -134,6 +134,13 @@ type Node struct {
 	// document's indeterminate included, the progress is a bar.
 	Spinner bool
 
+	// Single is set by the parser on a <list> or <table> of the current
+	// language that writes single="true" (SPEC v0.4b §6.14.1): its checked
+	// path then holds one row key, or null, instead of an array. In every
+	// other case, a pinned document's single included, the widget is a
+	// multi-select as in 0.4.1.
+	Single bool
+
 	Line, Col int
 	Path      string
 	// Org says where an element of an expanded document was written and

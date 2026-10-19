@@ -296,12 +296,12 @@ func (c *cli) cmdValidate(args []string) int {
 	diags := app.Validate()
 	if *data == "" {
 		// Without data every bind path is "missing"; report only data-free
-		// checks: B001-B003 and B008-B010 depend on the data, B007 is
+		// checks: B001-B003 and B008-B011 depend on the data, B007 is
 		// static (SPEC §14).
 		var kept ir.Diags
 		for _, d := range diags {
 			switch d.Code {
-			case "B001", "B002", "B003", "B008", "B009", "B010":
+			case "B001", "B002", "B003", "B008", "B009", "B010", "B011":
 				continue
 			}
 			kept = append(kept, d)
@@ -332,7 +332,7 @@ func (c *cli) cmdValidate(args []string) int {
 			fmt.Fprintln(c.stdout, d.String())
 		}
 		if ok {
-			// Without --data, B001-B003 and B008-B010 were not checked
+			// Without --data, B001-B003 and B008-B011 were not checked
 			// (SPEC v0.4a §15.1).
 			if *data == "" {
 				fmt.Fprintln(c.stdout, "ok (bindings not checked: no --data)")

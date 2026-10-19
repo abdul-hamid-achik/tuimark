@@ -55,7 +55,10 @@ const VersionHintCurrent = ` (requires a <tui> without version)`
 // and fragment (SPEC v0.4b §6.18.2) are never laid out: an include is
 // replaced by its fragment's elements while the document is built, and a
 // fragment is only ever the root of an included file.
-var KindsCurrent = []string{"include", "fragment"}
+var KindsCurrent = []string{
+	"include", "fragment",
+	"checkbox", // SPEC v0.4b §6.16 (F8)
+}
 
 // IsKindCurrent reports whether tag is one of the current-language tags.
 func IsKindCurrent(tag string) bool {

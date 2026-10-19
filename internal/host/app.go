@@ -143,7 +143,11 @@ type App struct {
 	focusInit bool
 	lists     map[string]*listState
 	inputs    map[string]*inputState
-	scrolls   map[string][2]int
+	// checks is the value of each checkbox without bind, by its id (SPEC
+	// v0.4b §6.16.2): kept across frames, screens, and tab switches, as an
+	// input's text without bind is; a missing id is unchecked.
+	checks  map[string]bool
+	scrolls map[string][2]int
 	// stickMax is, per id of a scroll with stick="bottom" (version="3",
 	// SPEC v0.3b §11.4), the maximum y offset its last live layout
 	// computed (EXTENT - viewport): "that frame's maximum" the stick rule
@@ -192,6 +196,9 @@ type App struct {
 	// 0 when the app is created, advanced only by tick steps. Guarded by
 	// everyMu, with the registrations' virtual deadlines (everyReg.vnext).
 	vnow time.Duration
+	// clk is the clock of the Run session that drives the app (SPEC
+	// v0.4b §26.13), nil outside one; guarded by everyMu (runclock.go).
+	clk runClock
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity
@@ -239,7 +246,7 @@ func Parse(r io.Reader) (*App, error) {
 func blankApp() *App {
 	return &App{
 		store: map[string]any{}, handlers: map[string]Handler{},
-		lists: map[string]*listState{}, inputs: map[string]*inputState{},
+		lists: map[string]*listState{}, inputs: map[string]*inputState{}, checks: map[string]bool{},
 		scrolls: map[string][2]int{}, stickMax: map[string]int{}, wake: make(chan struct{}, 1),
 		everyKick:  make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
@@ -725,6 +732,7 @@ type savedState struct {
 	stickMax   map[string]int
 	lists      map[string]*listState
 	inputs     map[string]*inputState
+	checks     map[string]bool
 	tabMem     map[string]string
 	tabPrev    map[string]string
 }
@@ -754,18 +762,22 @@ func (a *App) saveState() savedState {
 		c := *v
 		in[k] = &c
 	}
+	ck := make(map[string]bool, len(a.checks))
+	for k, v := range a.checks {
+		ck[k] = v
+	}
 	var req *focusRequest
 	if a.focusReq != nil {
 		r := *a.focusReq
 		req = &r
 	}
-	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, sm, ls, in, copyStrings(a.tabMem), copyStrings(a.tabPrev)}
+	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, sm, ls, in, ck, copyStrings(a.tabMem), copyStrings(a.tabPrev)}
 }
 
 func (a *App) restoreState(s savedState) {
 	a.screen, a.focus, a.focusInit, a.focusReq = s.screen, s.focus, s.focusInit, s.focusReq
 	a.openModals, a.modalStack, a.pending, a.last = s.openModals, s.modalStack, s.pending, s.last
-	a.scrolls, a.stickMax, a.lists, a.inputs = s.scrolls, s.stickMax, s.lists, s.inputs
+	a.scrolls, a.stickMax, a.lists, a.inputs, a.checks = s.scrolls, s.stickMax, s.lists, s.inputs, s.checks
 	a.tabMem, a.tabPrev = s.tabMem, s.tabPrev
 }
 

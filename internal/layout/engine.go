@@ -1429,6 +1429,13 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 		} else {
 			v = 1
 		}
+	case "checkbox":
+		// SPEC v0.4b §6.16.3: one row, as wide as its glyph and label.
+		if horizontal {
+			v = CheckboxWidth(b.Text)
+		} else {
+			v = 1
+		}
 	case "progress":
 		if horizontal {
 			v = 10

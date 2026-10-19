@@ -1,0 +1,44 @@
+{
+  "cols": 20,
+  "rows": 3,
+  "ok": true,
+  "focus": "beta",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 3
+    },
+    {
+      "id": "dark",
+      "tag": "checkbox",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 1,
+      "text": "Dark mode",
+      "checked": true
+    },
+    {
+      "id": "beta",
+      "tag": "checkbox",
+      "x": 0,
+      "y": 1,
+      "w": 20,
+      "h": 1,
+      "text": "Beta",
+      "focused": true,
+      "checked": true
+    }
+  ],
+  "grid": [
+    "[x] Dark mode       ",
+    "[x] Beta            ",
+    "                    "
+  ],
+  "events": []
+}

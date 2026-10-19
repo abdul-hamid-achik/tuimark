@@ -864,6 +864,8 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		b.Text = fb.interp(n, n.Text, sc)
 	case "button":
 		b.Text = fb.buttonText(n, sc)
+	case "checkbox":
+		fb.inflateCheckbox(n, b, sc)
 	case "input":
 		b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
 		b.Secret = n.Attrs["secret"] == "true"
@@ -1039,12 +1041,25 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 // checkedKeys reads the checked= array of a list or table (SPEC §6.14): a
 // missing path counts as [] and reports B003; a value that is not an array
 // is B008 (an error), counts as [] for display, and ok is false, so the
-// check-* actions never overwrite it.
+// check-* actions never overwrite it. With single="true" (SPEC v0.4b
+// §6.14.1) the path holds one key: a missing path or null checks no row
+// (a missing one reports B003), an array or an object is B008, and any
+// other value is the one checked key.
 func (fb *builder) checkedKeys(n *ir.Node, path string, sc *scope) (keys []any, ok bool) {
 	v, found := sc.resolve(fb.a.store, path)
 	if !found {
 		fb.missingBind(n, path)
 		return nil, true
+	}
+	if n.Single {
+		switch v.(type) {
+		case nil:
+			return nil, true
+		case []any, map[string]any:
+			fb.report(n, ir.Error, "B008", "checked=%q: %q is %s, not a row key or null (single=\"true\": shown as none checked; check-toggle and check-none leave it alone)", path, path, typeName(v))
+			return nil, false
+		}
+		return []any{v}, true
 	}
 	arr, isArr := v.([]any)
 	if !isArr {

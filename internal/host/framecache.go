@@ -97,8 +97,9 @@ func (a *App) renderLive(cols, rows int, theme string) *Frame {
 // effective theme, --strict, the store (by its write counters: every
 // write goes through wrote), the screen, focus, the modals and their
 // stack, the active and remembered tabs, every viewport offset and stick
-// maximum, every list's and table's cursor state, and every input's
-// state. The caller holds a.mu.
+// maximum, every list's and table's cursor state, every input's
+// state, and the value of every checkbox without bind (SPEC v0.4b
+// decision 106). The caller holds a.mu.
 func (a *App) frameInputs(cols, rows int, theme string) string {
 	b := make([]byte, 0, 256)
 	num := func(n int64) { b = strconv.AppendInt(b, n, 10); b = append(b, ',') }
@@ -167,6 +168,11 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 		num(int64(st.cursor))
 		flag(st.init)
 	}
+	b = append(b, "|c"...)
+	for _, k := range sortedKeys(a.checks) {
+		str(k)
+		flag(a.checks[k])
+	}
 	return string(b)
 }
 
@@ -204,13 +210,18 @@ type docKinds struct {
 	tabs  bool
 	hints bool
 	scale bool
+	// spinner is set when the document holds a spinner (SPEC v0.4b
+	// §6.4.1): only then does the spinner phase take part in a Run frame
+	// (App.HasSpinner), so a document without one keeps the frame skip
+	// as the phase moves.
+	spinner bool
 }
 
 // kinds returns the docKinds of the current document, computed once per
 // document. With noCache every step runs. The caller holds a.mu.
 func (a *App) kinds() docKinds {
 	if a.noCache {
-		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true}
+		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true, spinner: true}
 	}
 	if a.docKinds.doc == a.doc {
 		return a.docKinds
@@ -223,6 +234,10 @@ func (a *App) kinds() docKinds {
 			k.tabs = true
 		case "hints":
 			k.hints = true
+		case "progress":
+			if n.Spinner {
+				k.spinner = true
+			}
 		case "sparkline":
 			if _, ok := n.Attr("scale"); ok {
 				k.scale = true

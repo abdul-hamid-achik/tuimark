@@ -1,0 +1,17 @@
+=== grid 20x3 ===
+● Small             
+  Medium            
+  Large             
+=== nodes ===
+main  screen  20x3 @(0,0)
+size  list    20x3 @(0,0) focus
+-     item    20x1 @(0,0) selected checked
+-     text    18x1 @(2,0)
+-     item    20x1 @(0,1)
+-     text    18x1 @(2,1)
+-     item    20x1 @(0,2)
+-     text    18x1 @(2,2)
+=== errors ===
+ok
+=== events ===
+1 size_changed size {"it":"s"} "s"

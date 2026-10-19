@@ -214,7 +214,14 @@ func attrs(tag string) []Attr {
 	if parse.TakesClassGuard(tag) {
 		// class:NAME sorts after "class" and before "disabled" ('c' < 'd'),
 		// so it goes in order.
-		out = append(out, Attr{Name: ClassGuardAttr, Since: 2, Pattern: ClassGuardPattern, Keywords: []Item{}})
+		// It is version="2" vocabulary, so on a tag of the current
+		// language (checkbox) it is as new as the tag (SPEC v0.4b §15.10:
+		// every attribute of a 0.4b tag has since 4).
+		guardSince := 2
+		if ir.IsKindCurrent(tag) {
+			guardSince = Current
+		}
+		out = append(out, Attr{Name: ClassGuardAttr, Since: guardSince, Pattern: ClassGuardPattern, Keywords: []Item{}})
 		sort.SliceStable(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	}
 	return out
