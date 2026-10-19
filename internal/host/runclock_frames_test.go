@@ -97,6 +97,25 @@ func TestRunClockFrameSkipKeptWithoutSpinner(t *testing.T) {
 	}
 }
 
+// The hook: Run, RunHost, and Loop take their clock from testRunClock
+// when a test sets it, from the real clock otherwise (the clock a
+// session's own termSession.clk overrides).
+func TestRunClockHook(t *testing.T) {
+	if _, ok := defaultRunClock().(realClock); !ok {
+		t.Fatalf("the default clock is %T, want the real one", defaultRunClock())
+	}
+	fake := newFakeClock()
+	testRunClock = fake
+	defer func() { testRunClock = nil }()
+	if defaultRunClock() != runClock(fake) || (&termSession{}).clock() != runClock(fake) {
+		t.Error("the hook is not the session's clock")
+	}
+	own := newFakeClock()
+	if (&termSession{clk: own}).clock() != runClock(own) {
+		t.Error("a session's own clock does not win over the hook")
+	}
+}
+
 // A spinner redraw builds no frame: the live frame is the same object
 // after ten redraws.
 func TestRunClockRedrawBuildsNoFrame(t *testing.T) {

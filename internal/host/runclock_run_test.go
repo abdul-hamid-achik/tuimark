@@ -374,7 +374,11 @@ func TestRunClock195RunIgnoresVirtualClock(t *testing.T) {
 // with a visible spinner, it always paints phase 0, whatever the session's
 // clock says, and the live frame is not touched by it.
 func TestRunClock196DumpStaysAtPhase0(t *testing.T) {
-	r := startClockRig(t, spinDoc("", ""), rigOpts{})
+	app, err := Load("../../testdata/v04b/spinner/S.tui") // the S.tui of §21
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := startClockRigApp(t, app, rigOpts{})
 	// Another goroutine Dumps all the while (the race detector's food).
 	stop := make(chan struct{})
 	bad := make(chan string, 1)
@@ -414,8 +418,14 @@ func TestRunClock196DumpStaysAtPhase0(t *testing.T) {
 	// The next redraw is still the next phase of the session's clock.
 	r.since()
 	runs, _ := r.advance100(1)
-	if len(runs[0]) != 1 || runs[0][0].text != braille[1] {
-		t.Errorf("the redraw after the Dumps wrote %v, want %s", runs[0], braille[1])
+	// S.tui has four visible spinners: four glyph writes, all of phase 11.
+	if len(runs[0]) != 4 {
+		t.Fatalf("the redraw after the Dumps wrote %v, want four glyphs", runs[0])
+	}
+	for _, w := range runs[0] {
+		if w.text != braille[1] {
+			t.Errorf("the redraw after the Dumps wrote %v, want %s", runs[0], braille[1])
+		}
 	}
 	if err := r.quit(); err != nil {
 		t.Fatal(err)
