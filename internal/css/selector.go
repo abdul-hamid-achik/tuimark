@@ -45,7 +45,7 @@ var nonRenderedTags = map[string]bool{"tui": true, "style": true, "keymap": true
 // unknown type of 0.4.1, with no hint (§10.1, decision 94). Each tag
 // enters with the phase that adds it to ir.KindsCurrent (SPEC v0.4b F1,
 // F2); none is declared ahead of it.
-var notANodeTags = map[string]bool{}
+var notANodeTags = map[string]bool{"include": true, "fragment": true}
 
 // Specificity: type=1, class=10, id=100, pseudo=+10 (SPEC §10.1).
 func (s Selector) Specificity() int {

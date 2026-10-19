@@ -1,0 +1,8 @@
+<tui>
+  <screen id="main">
+    <text>top</text>
+    <include src="parts/body.tui"/>
+    <text>bottom</text>
+    <include src="../shared/foot.tui"/>
+  </screen>
+</tui>

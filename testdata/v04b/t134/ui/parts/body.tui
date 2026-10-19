@@ -1,0 +1,4 @@
+<fragment>
+  <text id="a">alpha</text>
+  <text id="b" bogus="1">beta</text>
+</fragment>

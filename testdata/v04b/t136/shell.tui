@@ -1,0 +1,10 @@
+<fragment>
+  <style>#t { bold: true; }</style>
+  <keymap>
+    <bind keys="q" action="quit"/>
+    <include src="rows.tui"/>
+  </keymap>
+  <screen id="main">
+    <text id="t">hi</text>
+  </screen>
+</fragment>

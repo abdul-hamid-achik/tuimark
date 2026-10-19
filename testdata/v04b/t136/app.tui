@@ -1,0 +1,3 @@
+<tui>
+  <include src="shell.tui"/>
+</tui>
