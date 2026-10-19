@@ -58,6 +58,7 @@ function Panel({ method, Heading }: { method: Method; Heading: 'h2' | 'h3' }) {
           </p>
           <CommandCopy command={INSTALL.npmNew} />
           <CommandCopy command={INSTALL.npmInstall} />
+          <CommandCopy command={INSTALL.npmImport} prompt="" />
         </Body>
       ) : (
         <Body heading="npm: coming soon" Heading={Heading}>

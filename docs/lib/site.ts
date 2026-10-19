@@ -41,6 +41,7 @@ export const INSTALL = {
   npx: 'npx @thelacanians/tuimark version',
   npmNew: 'bunx @thelacanians/tuimark new my-app --ts',
   npmInstall: 'npm i @thelacanians/tuimark',
+  npmImport: 'import { spawnHost } from "@thelacanians/tuimark";',
 };
 
 /**

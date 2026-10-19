@@ -2,7 +2,7 @@
 title: tuimark.dev is live, and Tuimark is on npm
 description: Tuimark has a home at tuimark.dev, and @thelacanians/tuimark puts the tuimark command and the TypeScript client in one npm package. What is on the site, and what the package does when you run it.
 author: Abdul Hamid Achik
-date: 2026-10-19T16:00:00Z
+date: 2026-10-19T11:00:00Z
 ---
 
 Tuimark is a view language for terminals. You write a screen as `.tui` markup, `.tcss` styles, and JSON data, and a small Go runtime lays it out on a cell grid, paints it, and can dump any frame as JSON. Two things are new: the project has a website, [tuimark.dev](/), and the CLI installs from npm.
@@ -29,7 +29,7 @@ Two environment variables change where the binary comes from:
 - `TUIMARK_BINARY` points at a binary you installed yourself, and the launcher runs that one.
 - `TUIMARK_RELEASE_URL` downloads from a mirror, checked against the mirror's own `checksums.txt` and cached apart.
 
-The package is published by the release workflow with npm trusted publishing and provenance, right after the release binaries it points at are uploaded.
+Each version of the package belongs to one Tuimark release: its version is the release's version, and the checksums it carries are that release's.
 
 ## The TypeScript client is in the same package
 
