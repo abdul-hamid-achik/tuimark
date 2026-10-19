@@ -291,13 +291,14 @@ jobs:
       - name: Build the site (fails on dead links)
         run: cd docs && npm ci && npm run build
 
-  # @tuimark/host (sdk/ts, SPEC §19.2): Bun tests against a fake child, and a
-  # type-check. It needs neither Go nor the tuimark binary; the real child is
-  # driven by examples/host-ts in the specs job above. kit/ts (the kit's
-  # copyable TypeScript helpers) is typed against it and tested the same way,
-  # against an in-memory store.
+  # @thelacanians/tuimark (sdk/ts, SPEC §19.2): Bun tests against a fake child, a
+  # type-check, and the `tuimark` launcher under Node. It needs neither Go nor the
+  # tuimark binary (downloads are tested against a local server); the real child is
+  # driven by examples/host-ts in the specs job above. kit/ts (the kit's copyable
+  # TypeScript helpers) is typed against it and tested the same way, against an
+  # in-memory store.
   sdk-ts:
-    name: "sdk/ts (@tuimark/host) and kit/ts (test and type-check)"
+    name: "sdk/ts (@thelacanians/tuimark) and kit/ts (test and type-check)"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -322,6 +323,17 @@ jobs:
 
       - name: Type-check the tuimark new --ts template
         run: bunx tsc -p tsconfig.template.json
+
+      # dist/ makes the launcher tests run bin/tuimark.js under Node as well
+      # as Bun (the tests pick `node` up from PATH).
+      - name: Build
+        run: bun run build
+
+      - name: Launcher under Bun and Node
+        run: bun test test/launcher.test.ts
+
+      - name: Package contents
+        run: npm pack --dry-run --ignore-scripts
 
       # kit/ts depends on sdk/ts through a file: dependency, which bun copies,
       # so it is always installed fresh.

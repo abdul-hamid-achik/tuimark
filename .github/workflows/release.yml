@@ -1,9 +1,30 @@
 name: Release
 
+# A `v*` tag runs the behavioral specs, publishes the GitHub release with
+# GoReleaser (archives for Homebrew, raw binaries for npm, checksums.txt), and
+# then publishes the npm package @thelacanians/tuimark (sdk/ts), whose version
+# is the tag's and whose `tuimark` command downloads those raw binaries.
+#
+# npm trusted publishing: the trusted publisher of @thelacanians/tuimark on
+# npmjs.com names THIS file (release.yml), the repository
+# abdul-hamid-achik/tuimark, and no environment. npm checks the workflow
+# filename, so do not rename it or move the npm-publish job to another file.
+# (A separate workflow on `release: published` would never fire: releases
+# created with GITHUB_TOKEN do not trigger other workflows.)
+#
+# Run by hand ("Run workflow", input `tag`), it only publishes the npm package
+# of an existing tag, for example after the npm-publish job of that tag failed.
+
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "An existing release tag (vX.Y.Z) whose GitHub release already has its binaries: publishes only the npm package"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -11,6 +32,7 @@ permissions:
 jobs:
   specs:
     name: release behavioral specs
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -54,6 +76,7 @@ jobs:
 
   release:
     needs: specs
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -113,3 +136,153 @@ jobs:
           # is not set the release still publishes; only the cask update is
           # skipped (see skip_upload in .goreleaser.yaml).
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+  # The npm package is built here, in a job that cannot mint an OIDC token:
+  # install, test, type-check, build, and pack all run project code. Only the
+  # small npm-publish job below holds `id-token: write`, and it publishes the
+  # tarball this job made without checking out or installing anything.
+  npm-pack:
+    name: npm package (build)
+    needs: release
+    # After a pushed tag's release succeeded, or by hand (the release job is
+    # skipped then). Never after a failed release or specs job.
+    if: ${{ !cancelled() && (needs.release.result == 'success' || (github.event_name == 'workflow_dispatch' && needs.release.result == 'skipped')) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check the tag
+        id: version
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::'$TAG' is not a release tag like v1.2.3"
+            exit 1
+          fi
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          persist-credentials: false
+
+      # The package downloads these files, by these names, from the release.
+      # Check that GoReleaser published them before the package that needs
+      # them is published (this also catches a naming drift between
+      # .goreleaser.yaml and sdk/ts/src/binary.ts).
+      - name: Check the release has the binaries the package downloads
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 5 \
+            --output "$RUNNER_TEMP/checksums.txt" "$url/checksums.txt"
+          missing=0
+          for target in darwin_amd64 darwin_arm64 linux_amd64 linux_arm64 windows_amd64.exe windows_arm64.exe; do
+            name="tuimark_${VERSION}_${target}"
+            if ! grep -Eq "^[0-9a-f]{64}  ${name//./\\.}\$" "$RUNNER_TEMP/checksums.txt"; then
+              echo "::error::checksums.txt of $TAG does not list $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.2"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Install, test, and type-check
+        working-directory: sdk/ts
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile
+          bun test
+          bunx tsc --noEmit
+
+      # The package version is the release version: the launcher downloads
+      # the binaries of the release with the same number.
+      - name: Set the version from the tag
+        working-directory: sdk/ts
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Build and pack
+        working-directory: sdk/ts
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          bun run build
+          mkdir -p "$RUNNER_TEMP/pack"
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/pack"
+          tarball="$RUNNER_TEMP/pack/thelacanians-tuimark-${VERSION}.tgz"
+          test -f "$tarball"
+          tar -tzf "$tarball" | sort
+          # the launcher, the compiled client, and the TypeScript source Bun runs
+          for f in package/bin/tuimark.js package/dist/index.js package/dist/binary.js package/src/index.ts package/package.json; do
+            tar -tzf "$tarball" | grep -qx "$f" || { echo "::error::$f is not in the package"; exit 1; }
+          done
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tuimark-npm-package
+          path: ${{ runner.temp }}/pack/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  # Trusted publishing (GitHub Actions OIDC): no npm token is stored. It needs
+  # Node >= 22.14 and npm >= 11.5.1, both pinned below. The package must
+  # already exist on npm with this workflow registered as its trusted
+  # publisher, so the very first version is published by hand (see the
+  # owner's PUBLISHING.md); this job then fails loudly until that is done.
+  npm-publish:
+    name: npm package (publish)
+    needs: npm-pack
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.npm-pack.outputs.version }}
+    steps:
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+
+      - name: Use an OIDC-capable npm
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: tuimark-npm-package
+          path: pack
+
+      - name: Publish to npm
+        run: |
+          set -euo pipefail
+          # A re-run after a successful publish has nothing to do.
+          if npm view "@thelacanians/tuimark@${VERSION}" version > /dev/null 2>&1; then
+            echo "::notice::@thelacanians/tuimark@${VERSION} is already on npm"
+            exit 0
+          fi
+          # npm 11 refuses a prerelease version without a dist-tag.
+          tag=latest
+          case "$VERSION" in *-*) tag=next ;; esac
+          npm publish ./pack/thelacanians-tuimark-"${VERSION}".tgz --access public --provenance --tag "$tag"
