@@ -334,7 +334,7 @@ function cliPage() {
       '| `fmt` | The canonical formatter. `--check` exits 2 when a file is not formatted. | [Dumps and tools](/guide/tools#fmt) |',
       '| `ir` | Prints the parsed document as JSON, before the stylesheet cascade. | [Dumps and tools](/guide/tools#ir) |',
       '| `test` | Compares dumps with the goldens a manifest lists; `--update` rewrites them. | [Testing](/guide/testing#golden-dumps) |',
-      '| `agents` | Prints the `AGENTS.md` briefing, generated from the runtime\'s own catalogs. `--project` prints the briefing `new` writes into a project. | [Working with agents](/guide/agents) |',
+      '| `agents` | Prints the `AGENTS.md` briefing, generated from the runtime\'s own catalogs. `--project` prints the briefing `new` writes into a project. | [Use Tuimark with AI agents](/guide/agents) |',
       '| `catalog` | Prints the closed vocabulary (tags, attributes, properties, keys, actions, diagnostic codes) as JSON, each item with the document version that accepts it. | [Dumps and tools](/guide/tools#catalog) |',
       '| `new` | Creates a project: `app.tui`, `theme.tcss`, `sample.json`, and `AGENTS.md`; `--go` or `--ts` adds the program that hosts it. | [Dumps and tools](/guide/tools#new) |',
       '| `run` | Runs a document in the terminal with no host program: an event strip (`F12`), an `--events` log, `--mock` store writes, and reload on save. | [Running a document](/guide/run) |',
@@ -562,9 +562,9 @@ for (const d of DEMOS) {
 //
 // snippets/hero is a plain document with no host, so its animation is a
 // scripted `tuimark play --frames` session: keys move the list, and `set`
-// steps stand in for the host answering `show` and `deploy` (the steps a Go
-// or TypeScript host would make with Set). Each frame is held for the time
-// next to its step.
+// steps stand in for the host answering `show` and `deploy` (what a Go or
+// TypeScript host does with Set). The script is also written next to the
+// document as hero.ndjson, so the command on the shot can be run as shown.
 
 /** A deterministic latency series: n values around base, with a seeded jitter. */
 function latency(seed, n, base, jitter) {
@@ -579,6 +579,10 @@ function latency(seed, n, base, jitter) {
   return Array.from({ length: n }, (_, i) => Math.round(base + Math.sin(i / 5) * jitter * 0.6 + (rand() - 0.5) * jitter))
 }
 
+// How long the first frame (before any step) is held.
+const HERO_FIRST_HOLD = 1700
+
+/** The steps, each with how long the frame it produces is held (ms). */
 function heroSteps() {
   const detail = (name, status, version, region, lat, extra = {}) => ({ name, status, version, region, rollout: 100, down: false, busy: false, latency: lat, ...extra })
   const auth = detail('auth', '● healthy', 'v1.9.3', 'eu-west-1', latency(3, 56, 24, 8))
@@ -586,55 +590,60 @@ function heroSteps() {
   const bad = latency(5, 56, 60, 14).map((v, i) => (i < 36 ? v : v * 2 + i * 3))
   const billing = detail('billing', '● failing · 5xx 23%', 'v3.2.0', 'us-east-1', bad, { down: true })
   const steps = [
-    [1700, { key: 'down' }],
-    [140, { set: { path: 'current', value: auth } }],
-    [1300, { key: 'down' }],
-    [140, { set: { path: 'current', value: billing } }],
-    [2100, { key: 'enter' }],
+    [{ key: 'down' }, 140], // the cursor moves; on:select fires show
+    [{ set: { path: 'current', value: auth } }, 1300], // the host answers show
+    [{ key: 'down' }, 140],
+    [{ set: { path: 'current', value: billing } }, 2100],
+    [{ key: 'enter' }, 160], // the keymap row fires deploy
   ]
-  // `deploy` answered: the rollout climbs and latency comes back down.
+  // The host answers deploy: the rollout climbs and latency comes back down.
   let lat = bad
-  steps.push([160, { set: { path: 'current', value: { ...billing, status: '◐ deploying v3.2.1', busy: true, rollout: 0 } } }])
+  const deploying = { ...billing, status: '◐ deploying v3.2.1', busy: true }
+  steps.push([{ set: { path: 'current', value: { ...deploying, rollout: 0 } } }, 300])
   for (const pct of [12, 27, 41, 58, 73, 86, 100]) {
     lat = [...lat.slice(4), ...latency(pct, 4, 90 - pct / 3, 10)]
-    steps.push([300, { set: { path: 'current', value: { ...billing, status: '◐ deploying v3.2.1', busy: true, rollout: pct, latency: lat } } }])
+    steps.push([{ set: { path: 'current', value: { ...deploying, rollout: pct, latency: lat } } }, pct === 100 ? 500 : 300])
   }
-  steps.push([140, { set: { path: 'current', value: { ...billing, status: '● healthy', version: 'v3.2.1', down: false, latency: lat } } }])
-  steps.push([3200, { set: { path: 'services.2.down', value: false } }])
+  steps.push([{ set: { path: 'current', value: { ...billing, status: '● healthy', version: 'v3.2.1', down: false, latency: lat } } }, 120])
+  steps.push([{ set: { path: 'services.2.down', value: false } }, 3400])
   return steps
 }
 
 const HERO = { name: 'hero', cols: 72, rows: 16, alt: 'a service list and a detail pane: the cursor moves to a failing service, enter fires deploy, and the rollout bar fills as its latency comes back down' }
 {
-  // A frame is held for the duration on the step that follows it, so the
-  // first frame (before any step) gets the first duration, and the last
-  // frame the duration of a final, empty hold.
   const steps = heroSteps()
+  const ndjson = steps.map(([step]) => JSON.stringify(step)).join('\n') + '\n'
+  emit('snippets/hero/hero.ndjson', ndjson)
+  const durations = [HERO_FIRST_HOLD, ...steps.map(([, ms]) => ms)]
   const tmp = mkdtempSync(join(tmpdir(), 'tuimark-hero-'))
   const script = join(tmp, 'hero.ndjson')
-  writeFileSync(script, steps.map(([, step]) => JSON.stringify(step)).join('\n') + '\n')
+  writeFileSync(script, ndjson)
   try {
     for (const theme of ['dark', 'light']) {
       const args = ['play', 'app.tui', '--data', 'sample.json', '--cols', String(HERO.cols), '--rows', String(HERO.rows), '--script', script, '--frames', '--styles', '--cells', '--format', 'json']
       if (theme === 'light') args.push('--theme', 'light')
       const run = JSON.parse(tuimark(args, { cwd: join(SNIPPETS, 'hero') }).out)
-      const durations = [...steps.map(([ms]) => ms), steps[steps.length - 1][0]]
+      if (run.frames.length !== durations.length) throw new Error(`generate: hero has ${run.frames.length} frames for ${steps.length} steps`)
       const frames = run.frames.map((f, i) => {
         if (!f.dump.ok || f.dump.errors.length) throw new Error(`generate: hero frame ${i} has diagnostics: ${JSON.stringify(f.dump.errors)}`)
         return { ms: durations[i], dump: f.dump }
       })
-      if (frames.length !== steps.length + 1) throw new Error(`generate: hero has ${frames.length} frames for ${steps.length} steps`)
       const fired = run.events.map((e) => e.action).join(' ')
       if (fired !== 'show show deploy') throw new Error(`generate: hero fired "${fired}", want "show show deploy"`)
       const sfx = theme === 'light' ? '-light' : ''
       emit(`public/shots/${HERO.name}${sfx}.svg`, renderAnimatedSVG(frames, { title: HERO.alt }))
       emit(`public/shots/${HERO.name}-still${sfx}.svg`, renderSVG(frames[frames.length - 1].dump, { title: HERO.alt }))
     }
+    // The events the session fired, as `play` prints them: what a host receives.
+    const text = tuimark(['play', 'app.tui', '--data', 'sample.json', '--cols', String(HERO.cols), '--rows', String(HERO.rows), '--script', script], { cwd: join(SNIPPETS, 'hero') }).out
+    emit('snippets/out/hero-events.txt', text.split('=== events ===\n')[1] ?? '')
+    // The first frame as data, for the landing page's dump excerpt.
+    emit('snippets/out/hero-dump.json', tuimark(['dump', 'app.tui', '--data', 'sample.json', '--cols', String(HERO.cols), '--rows', String(HERO.rows), '--format', 'json'], { cwd: join(SNIPPETS, 'hero') }).out)
   } finally {
     rmSync(tmp, { recursive: true, force: true })
   }
-  const ms = steps.reduce((t, [d]) => t + d, 0) + steps[steps.length - 1][0]
-  shotIndex.push({ name: HERO.name, light: true, cols: HERO.cols, rows: HERO.rows, alt: HERO.alt, cmd: 'tuimark play app.tui --data sample.json --script hero.ndjson --frames', animated: true, ms })
+  const ms = durations.reduce((t, d) => t + d, 0)
+  shotIndex.push({ name: HERO.name, light: true, cols: HERO.cols, rows: HERO.rows, alt: HERO.alt, cmd: `tuimark play app.tui --data sample.json --cols ${HERO.cols} --rows ${HERO.rows} --script hero.ndjson --frames`, animated: true, ms })
 }
 
 emit('lib/generated/shots.json', JSON.stringify(shotIndex, null, 2))

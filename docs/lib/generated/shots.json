@@ -345,8 +345,8 @@
     "cols": 72,
     "rows": 16,
     "alt": "a service list and a detail pane: the cursor moves to a failing service, enter fires deploy, and the rollout bar fills as its latency comes back down",
-    "cmd": "tuimark play app.tui --data sample.json --script hero.ndjson --frames",
+    "cmd": "tuimark play app.tui --data sample.json --cols 72 --rows 16 --script hero.ndjson --frames",
     "animated": true,
-    "ms": 14180
+    "ms": 11660
   }
 ]

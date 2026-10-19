@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, JetBrains_Mono } from 'next/font/google';
 import { RootProvider } from 'fumadocs-ui/provider/next';
-import { Analytics } from '@vercel/analytics/next';
-import { SearchDialog } from '@/components/search';
+import { SearchDialog } from '@/components/search-lazy';
 import { AUTHOR, DESCRIPTION, KEYWORDS, SITE_NAME, SITE_URL, TAGLINE } from '@/lib/site';
 import './global.css';
 
@@ -29,7 +28,6 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    creator: '@abdulachik',
   },
   icons: { icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }] },
   formatDetection: { telephone: false, email: false, address: false },
@@ -54,7 +52,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
             SearchDialog,
             links: [
               ['Getting started', '/guide/getting-started'],
-              ['Working with agents', '/guide/agents'],
+              ['Use Tuimark with AI agents', '/guide/agents'],
               ['Widgets', '/guide/widgets'],
               ['Tags and attributes', '/reference/tags'],
               ['Examples', '/examples'],
@@ -63,7 +61,6 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         >
           {children}
         </RootProvider>
-        <Analytics />
       </body>
     </html>
   );

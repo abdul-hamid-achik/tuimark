@@ -7,7 +7,9 @@ import { PlayToggle } from './term-shot-toggle';
 // theme is shown (CSS picks it; a hidden lazy image is never fetched). An
 // animated shot (an example's -demo, or the hero's scripted session) plays
 // in a loop, with a button that swaps it for its still last frame; a reader
-// who prefers reduced motion starts on the still frame.
+// who prefers reduced motion starts on the still frame. A `paused` shot
+// starts on the still frame for everyone and fetches the animation only
+// when the reader presses play (for pages that show many of them).
 
 export type Shot = {
   name: string;
@@ -56,8 +58,9 @@ function Images({ shot, eager }: { shot: Shot; eager: boolean }) {
           alt={shot.alt}
           width={width}
           height={height}
+          // No fetchPriority: React would turn it into a preload hint that
+          // every page linking here (and so prefetching it) would follow.
           loading={v.eager ? 'eager' : 'lazy'}
-          fetchPriority={v.eager ? 'high' : undefined}
           decoding="async"
         />
       ))}
@@ -69,22 +72,26 @@ export function TermShot({
   name,
   eager = false,
   bare = false,
+  paused = false,
   children,
   className = '',
 }: {
   name: string;
   eager?: boolean;
   bare?: boolean;
+  paused?: boolean;
   children?: ReactNode;
   className?: string;
 }) {
   const shot = getShot(name);
+  const startPaused = paused && !!shot.animated;
   const { width } = shotSize(shot);
   return (
     <figure
       className={`term-shot not-prose ${bare ? 'is-bare' : ''} ${className}`}
       style={bare ? undefined : { maxWidth: `${Math.round(width * 1.2)}px` }}
       data-animated={shot.animated ? '' : undefined}
+      data-state={startPaused ? 'paused' : undefined}
     >
       {!bare && (
         <div className="ts-bar">
@@ -99,14 +106,14 @@ export function TermShot({
           <span className="ts-size">
             {shot.cols}×{shot.rows}
           </span>
-          {shot.animated && <PlayToggle />}
+          {shot.animated && <PlayToggle paused={startPaused} />}
         </div>
       )}
       <div className="ts-body">
-        <Images shot={shot} eager={eager} />
+        <Images shot={shot} eager={eager && !startPaused} />
         {bare && shot.animated && (
           <div className="ts-floating">
-            <PlayToggle />
+            <PlayToggle paused={startPaused} />
           </div>
         )}
       </div>

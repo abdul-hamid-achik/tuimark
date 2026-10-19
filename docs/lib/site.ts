@@ -40,9 +40,9 @@ export const INSTALL = {
 };
 
 /**
- * Whether @thelacanians/tuimark is on npm. While it is false, the npm
- * install tab says "coming soon" and shows the commands without a copy
- * button; flip it once the first version is published.
+ * Whether @thelacanians/tuimark is on npm. Set it to false to mark the npm
+ * install tab "coming soon": it then shows the commands without a copy
+ * button.
  */
 export const NPM_PUBLISHED = true;
 

@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 // The pause button of an animated TermShot. It sets data-state on the
 // figure; CSS shows the moving or the still image from it. Until the reader
 // chooses, their motion preference decides (see global.css), and the
-// button's icon follows it once the page is hydrated.
-export function PlayToggle() {
-  const [choice, setChoice] = useState<boolean | null>(null);
+// button's icon follows it once the page is hydrated. A shot rendered
+// paused starts with the choice already made.
+export function PlayToggle({ paused: initial = false }: { paused?: boolean }) {
+  const [choice, setChoice] = useState<boolean | null>(initial ? true : null);
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
     setReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
