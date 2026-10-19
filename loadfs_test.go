@@ -158,12 +158,6 @@ var exampleDoc = map[string]string{
 	"spike":   "inbox.tui",
 }
 
-// outsideExample names the examples that load files from outside their own
-// directory, which an fs.FS rooted there cannot reach, with the reason.
-var outsideExample = map[string]string{
-	"kit-gallery": "loads ../../kit/theme.tcss and kit.tcss (the kit it shows)",
-}
-
 func TestLoadFSEqualsLoadForEveryExample(t *testing.T) {
 	entries, err := os.ReadDir("examples")
 	if err != nil {
@@ -175,9 +169,6 @@ func TestLoadFSEqualsLoadForEveryExample(t *testing.T) {
 			continue
 		}
 		dir := e.Name()
-		if _, ok := outsideExample[dir]; ok {
-			continue
-		}
 		base := exampleDoc[dir]
 		if base == "" {
 			base = "app.tui"
@@ -192,9 +183,16 @@ func TestLoadFSEqualsLoadForEveryExample(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Load(%q): %v", path, err)
 			}
-			viaFS, err := tuimark.LoadFS(os.DirFS(filepath.Join("examples", dir)), base)
+			// Each example is rooted at its own directory, except the kit
+			// gallery, which loads the kit's sheets from ../../kit and so
+			// needs the repository root as its file system.
+			fsys, name := fs.FS(os.DirFS(filepath.Join("examples", dir))), base
+			if dir == "kit-gallery" {
+				fsys, name = os.DirFS("."), "examples/kit-gallery/app.tui"
+			}
+			viaFS, err := tuimark.LoadFS(fsys, name)
 			if err != nil {
-				t.Fatalf("LoadFS(%q, %q): %v", dir, base, err)
+				t.Fatalf("LoadFS(%q, %q): %v", dir, name, err)
 			}
 			dataPath := filepath.Join("examples", dir, "sample.json")
 			if raw, err := os.ReadFile(dataPath); err == nil {
