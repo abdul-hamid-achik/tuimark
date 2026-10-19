@@ -30,7 +30,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repo_root" || exit 1
 
 if ! command -v "$GLYPH" >/dev/null 2>&1; then
-  echo "glyph-specs: '$GLYPH' not found on PATH (go install github.com/abdul-hamid-achik/glyphrun/cmd/glyph@v0.20.0)" >&2
+  echo "glyph-specs: '$GLYPH' not found on PATH (go install github.com/abdul-hamid-achik/glyphrun/cmd/glyph@v0.22.0)" >&2
   exit 1
 fi
 

@@ -73,4 +73,81 @@ outcomes:
       verify:
         screen:
             contains: "中文测试"
-contractHash: sha256:b206762139648dde775985b377cdd00a410da39c0d44a17e4579bd4802adf34b
+    - id: header_row_wide_cells_hold_their_columns
+      description: "the header row reads exactly `中文 emoji café \U0001F525` across its first 18 cells: 中 and 文 take two cells each, the space and `emoji` follow at columns 4-9 with nothing shifted, `café` (precomposed é, one cell) ends at column 14, and the wide fire emoji sits on cells 16-17"
+      verify:
+        region:
+            x: 0
+            y: 0
+            width: 18
+            height: 1
+            equals: "中文 emoji café \U0001F525"
+    - id: title_row_text_after_wide_cjk_is_not_shifted
+      description: "the panel title `配置 \U0001F389` (y=2) reads `│配置 \U0001F389` across its first 8 cells: the space after the two-cell 置 is at column 5 and the wide \U0001F389 occupies cells 6-7, so text after a wide character is not captured one column off"
+      verify:
+        region:
+            x: 0
+            y: 2
+            width: 8
+            height: 1
+            equals: "│配置 \U0001F389"
+    - id: list_cjk_row_has_two_cells_per_character
+      description: "the list row `1 中文测试` (y=3) reads `│1中文测试` across its first 10 cells: each of the four CJK characters takes two cells (character first, empty continuation second), filling columns 2-9 with no padding between them"
+      verify:
+        region:
+            x: 0
+            y: 3
+            width: 10
+            height: 1
+            equals: "│1中文测试"
+    - id: list_combining_row_joins_marks_into_one_cell
+      description: "the row `2 café latte` (y=4), where é is e plus U+0301, reads `│2café latte` across 12 cells: the combining mark joins its base into one cell (column 5), so `latte` starts at column 7 and not one column later"
+      verify:
+        region:
+            x: 0
+            y: 4
+            width: 12
+            height: 1
+            equals: "│2café latte"
+    - id: list_emoji_row_text_after_wide_emoji
+      description: "the row `3emoji \U0001F525\U0001F389` (y=5) reads `│3emoji \U0001F525\U0001F389` across its first 12 cells: \U0001F525 takes cells 8-9 and \U0001F389 cells 10-11 with no blank cell between them (a one-cell emoji would leave one)"
+      verify:
+        region:
+            x: 0
+            y: 5
+            width: 12
+            height: 1
+            equals: "│3emoji \U0001F525\U0001F389"
+    - id: list_diaeresis_cell_holds_base_and_mark
+      description: "on the row `4 naïve` (y=6), ï is i plus U+0308 joined in one cell (column 4): the cell's character is the whole cluster, not a bare `i` with the accent lost, and the `v` after it sits at column 5"
+      verify:
+        cell:
+            x: 4
+            y: 6
+            char: "ï"
+    - id: list_mixed_row_text_after_wide_glyphs
+      description: "the row `5 中文\U0001F4E6mix` (y=7) reads `│5中文\U0001F4E6mix` across its first 11 cells: three wide glyphs on cells 2-7, so `mix` starts at column 8 right after the wide \U0001F4E6"
+      verify:
+        region:
+            x: 0
+            y: 7
+            width: 11
+            height: 1
+            equals: "│5中文\U0001F4E6mix"
+    - id: list_double_combining_cell_holds_all_marks
+      description: "on the row `6 é́ double` (y=8), e with two stacked U+0301 accents is a single cell (column 2) holding all three code points, so ` double` starts at column 3"
+      verify:
+        cell:
+            x: 2
+            y: 8
+            char: "é́"
+    - id: detail_pane_cjk_line_two_cells_per_character
+      description: "in the detail pane (it starts at column 26, border first) the wrapped line `中文测试` (y=7) reads `│中文测试` across the first 9 cells of the pane, again two cells per CJK character"
+      verify:
+        region:
+            x: 26
+            y: 7
+            width: 9
+            height: 1
+            equals: "│中文测试"
+contractHash: sha256:2af3d694de50fe848d8a10042c24bf3e9fc7f5cbf4e8c33137aad28e54518c5d

@@ -134,4 +134,22 @@ outcomes:
                 else
                   echo '{"ok": false, "evidence": "the click on the label did not activate the processes tab or focus the table"}'
                 fi
-contractHash: sha256:2a797128f9e42d3594177def0b4820931312c701b8f7704ecbf16d83465e6254
+    - id: process_table_wide_cjk_name_has_two_cells_per_character
+      description: "the 4242 row of the process table (y=7), whose name is the two wide CJK characters 微信, reads `微信` across cells 11-14 (two cells per character, no blank cell between them)"
+      verify:
+        region:
+            x: 11
+            y: 7
+            width: 4
+            height: 1
+            equals: "微信"
+    - id: process_table_wide_emoji_name_has_two_cells
+      description: "the 3377 row (y=9), named `\U0001F98A firefox`, reads `\U0001F98A firefox` across cells 11-20: the fox takes two cells, then one space, then firefox from column 14"
+      verify:
+        region:
+            x: 11
+            y: 9
+            width: 10
+            height: 1
+            equals: "\U0001F98A firefox"
+contractHash: sha256:0654c52a271592cede00a3922bd9eca07548bd4e634674513df889d5937dfe1a
