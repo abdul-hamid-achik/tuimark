@@ -1,5 +1,5 @@
 // A stand-in for `tuimark host FILE` that speaks the SPEC §19.1 protocol on
-// fd 3 (read) and fd 4 (write), so @tuimark/host can be tested without a
+// fd 3 (read) and fd 4 (write), so @thelacanians/tuimark can be tested without a
 // terminal or the Go binary. Behavior comes from FAKE_SCENARIO (JSON); every
 // argument and every line received on fd 3 is appended to FAKE_LOG (NDJSON).
 //

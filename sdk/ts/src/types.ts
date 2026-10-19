@@ -14,7 +14,7 @@ export interface CatalogEntry {
 /** The `ready` message: the first thing the child writes on fd 4. */
 export interface Ready {
   type: "ready";
-  /** The protocol version. This package's 1.x speaks `1`. */
+  /** The protocol version. This package speaks `1`. */
   protocol: number;
   /** The bare runtime version, e.g. `0.4.0`. */
   version: string;
@@ -105,7 +105,12 @@ export interface SpawnHostOptions {
    * number of milliseconds.
    */
   replyTimeout?: string | number;
-  /** The `tuimark` executable. Defaults to `tuimark`, found on `PATH`. */
+  /**
+   * The `tuimark` executable. By default the one for this package's release:
+   * `TUIMARK_BINARY`, else the cached copy, else a checked download (see
+   * `resolveBinary`). Pass a path to use your own build; a bare name such as
+   * `"tuimark"` is looked up on `PATH`.
+   */
   bin?: string;
   /** Handlers to register before the first event can be delivered. */
   handlers?: Record<string, HostHandler>;

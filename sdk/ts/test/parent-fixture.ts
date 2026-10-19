@@ -1,4 +1,4 @@
-// A minimal parent built on @tuimark/host, run as its own process by
+// A minimal parent built on @thelacanians/tuimark, run as its own process by
 // process.test.ts so that signals and process.exit can be observed from
 // outside. FAKE_BIN is the fake child; FIXTURE_MODE picks what the parent does.
 import { setForwardGraceMs } from "../src/host.ts";
