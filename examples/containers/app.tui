@@ -120,7 +120,7 @@
         <!-- ============================================================ -->
         <tab id="detail" label="2 detail" short="2 det" focus="#logs-view">
           <col id="detail__page" width="1fr" height="1fr">
-            <row id="detail__top" width="1fr" height="8" gap="1">
+            <row id="detail__top" width="1fr" height="auto" gap="1">
               <box id="detail__overview" class="k-card" title="{detail.name}">
                 <row class="k-card-row">
                   <text class="k-card-muted" width="8">status</text>
@@ -148,7 +148,7 @@
                   <text class="k-card-text" width="1fr">{detail.created}</text>
                 </row>
               </box>
-              <col id="detail__stats" width="1fr" height="8">
+              <col id="detail__stats" width="1fr" height="auto">
                 <box id="detail__cpu" class="k-stat" title="CPU">
                   <text class="k-stat-value">{detail.cpu_txt}</text>
                   <row class="k-stat-row">

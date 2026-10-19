@@ -5,15 +5,18 @@
  * rebrand the whole kit.
  */
 
-/* The detail pane: the overview card and the stat pair take the top eight
- * rows (a card's six lines plus its border), the log or table below them
- * takes the rest. */
-#detail__top { height: 8; }
-#detail__stats { height: 8; }
-
 /* Narrow terminals: the stat pair is the first thing to go. */
 @media (max-cols: 70) {
   #detail__stats { display: none; }
+}
+
+/* Short terminals: the stat pair goes first, then the whole top of the detail
+ * pane, so the log or table below it keeps rows to show. */
+@media (max-rows: 22) {
+  #detail__stats { display: none; }
+}
+@media (max-rows: 17) {
+  #detail__top { display: none; }
 }
 
 /* The help lists every labeled key, more rows than a small terminal has: the

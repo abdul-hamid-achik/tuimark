@@ -11,7 +11,9 @@ import (
 
 // ---- the view: no diagnostics, at every size, in both themes ----
 
-var sizes = [][2]int{{40, 24}, {80, 24}, {120, 40}}
+// The kit promises 40, 80 and 120 columns; this app also holds a short
+// terminal (14 rows), which the detail pane needs @media (max-rows) for.
+var sizes = [][2]int{{40, 24}, {80, 24}, {120, 40}, {60, 14}}
 
 // cleanAt asserts that the app, as it stands, has no diagnostic (warnings
 // included) at every size under both themes.
