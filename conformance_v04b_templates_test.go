@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/abdul-hamid-achik/tuimark"
@@ -92,5 +93,77 @@ func TestTemplateCopiesKeepTheirOwnState(t *testing.T) {
 		if got, _ := app.Get(path); got != want {
 			t.Errorf("Get(%q) = %v, want %q", path, got, want)
 		}
+	}
+}
+
+// parseApp parses src and binds data at the root.
+func parseApp(t *testing.T, src string, data map[string]any) *tuimark.App {
+	t.Helper()
+	app, err := tuimark.Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := app.Bind("", data); err != nil {
+		t.Fatal(err)
+	}
+	return app
+}
+
+// 141, the use-site aliases bullet (decision 12): a copy reads an alias in
+// scope where its use stands, a list row's included, which it was not
+// given.
+func TestTemplateCopyReadsUseSiteAliases(t *testing.T) {
+	app := parseApp(t, `<tui><template id="t"><text>{r.name}</text></template><screen id="main"><list id="l" each="rows as r" key="r.id"><item><use template="t"/></item></list></screen></tui>`,
+		map[string]any{"rows": []any{map[string]any{"id": "a", "name": "A"}, map[string]any{"id": "b", "name": "B"}}})
+	if ds := app.Validate(); len(ds) != 0 {
+		t.Errorf("Validate: %v", diagTexts(ds))
+	}
+	d, err := app.Dump(20, 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var texts []string
+	for _, n := range d.Nodes {
+		if n.Tag == "text" {
+			texts = append(texts, n.Text)
+		}
+	}
+	if !reflect.DeepEqual(texts, []string{"A", "B"}) {
+		t.Errorf("texts %v, want A B", texts)
+	}
+}
+
+// 144. A use's if and hidden decide whether its copy is in the frame,
+// evaluated where the use stands (its own with is not in scope); a
+// missing path is one B002 at the use.
+func TestTemplateUseIf(t *testing.T) {
+	const doc = "<tui>\n  <template id=\"banner\">\n    <text id=\"msg\">{b.text}</text>\n  </template>\n  <screen id=\"main\">\n    <use id=\"top\" template=\"banner\" with=\"note as b\" IF/>\n    <text>after</text>\n  </screen>\n</tui>"
+	data := map[string]any{"show": false, "note": map[string]any{"text": "hi"}}
+	app := parseApp(t, strings.Replace(doc, "IF", `if="show"`, 1), data)
+	d, err := app.Dump(10, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d.Nodes) != 2 || d.Nodes[1].Text != "after" || d.Nodes[1].Y != 0 {
+		t.Errorf("hidden: %+v", d.Nodes)
+	}
+	res, err := app.Play(tuimark.PlayOptions{Cols: 10, Rows: 3}, "set:show=true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n := res.Dump.Nodes; len(n) != 3 || n[1].ID != "top__msg" || n[1].Text != "hi" || n[1].Y != 0 || n[2].Text != "after" || n[2].Y != 1 {
+		t.Errorf("shown: %+v", n)
+	}
+	app = parseApp(t, strings.Replace(doc, "IF", `if="b.text"`, 1), data)
+	ds := app.Validate()
+	if len(ds) != 1 || ds[0].Code != "B002" || ds[0].Line != 6 || ds[0].Col != 5 {
+		t.Errorf("if=b.text: %v", diagTexts(ds))
+	}
+	if d, _ := app.Dump(10, 3); len(d.Nodes) != 2 {
+		t.Errorf("if=b.text: the copy is in the frame: %+v", d.Nodes)
+	}
+	app = parseApp(t, strings.Replace(doc, "IF", `hidden="!show"`, 1), data)
+	if d, _ := app.Dump(10, 3); len(d.Nodes) != 2 {
+		t.Errorf("hidden=!show: the copy is in the frame: %+v", d.Nodes)
 	}
 }
