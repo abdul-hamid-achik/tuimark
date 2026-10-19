@@ -7,6 +7,23 @@ line.
 
 ## [Unreleased]
 
+### Added
+
+- **The Tuimark kit (v0).** `kit/` is a copy-paste component kit in the
+  spirit of shadcn: two stylesheets (`theme.tcss`, the dark and light design
+  tokens on top of the runtime's ten required ones; `kit.tcss`, the `k-`
+  component classes) and 21 small documents under `kit/components/` (badge,
+  button, card, alert, app bar, status bar, key hints, confirm dialog, form
+  field, empty state, data table, menu, tabs, labeled progress, stat, toast,
+  command palette, help overlay, split pane, log panel, breadcrumb), each with
+  a contract comment, markup to copy, and a sample. Classes are `k-<component>`
+  and `k-<component>-<part>` with short modifiers used only next to them, ids
+  are `instance__part`, and actions are `component_verb`. It adds no tag,
+  attribute, or property.
+- **`examples/kit-gallery`**: every component in one app on five tabs, with a
+  Go host that routes by the prefix of an event's source, a `mock.json`, and
+  tests that hold the kit's conventions to every document.
+
 ## [0.4.1] - 2026-10-18
 
 A patch on 0.4a. `version` on `<tui>` becomes optional, and `examples/`

@@ -147,4 +147,5 @@ go run .
 - [Working with agents](/guide/agents): the loop above, as an agent runs it.
 - [The .tui language](/guide/language), [TCSS](/guide/tcss), and [Layout](/guide/layout): what you can write.
 - [Widgets](/guide/widgets): lists, tables, tabs, inputs, modals, and the rest.
+- [The kit](/guide/kit): ready-made components to copy into your project.
 - [Examples](/examples): complete apps from the repository.

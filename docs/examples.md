@@ -252,6 +252,26 @@ go build -o bin/http ./examples/http
 ./bin/http -base https://api.example.com
 ```
 
+## kit-gallery
+
+[`examples/kit-gallery`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/kit-gallery) shows every component of the [kit](/guide/kit) on five tabs: badges, buttons, alerts, cards, stats and progress; a form and a menu; a data table, a log panel and an empty state; a confirm dialog, a command palette, a help overlay and toasts; and a split pane.
+
+<TermShot name="kit-gallery">
+The basics tab under the kit's two stylesheets and a short <code>app.tcss</code>. Every color is a token, so the same document follows the site's light or dark mode.
+</TermShot>
+
+<TermShot name="kit-gallery-data">
+The data tab after <code>3 focus:#svc down</code>: the cursor row of the focused table is a solid accent bar, and the log panel below follows its end.
+</TermShot>
+
+The kit's actions are generic (<code>dialog_confirm</code>, <code>toast_show</code>), and the Go host routes them by the prefix of the event's <code>source</code> before the last <code>__</code>. <code>Derive</code> filters the palette's commands and picks the split pane's detail, and an <code>Every</code> tick clears the toast.
+
+```sh
+go run ./examples/kit-gallery
+go run ./examples/kit-gallery -theme light
+tuimark run examples/kit-gallery/app.tui --data examples/kit-gallery/sample.json --mock examples/kit-gallery/mock.json
+```
+
 ## inbox
 
 [`examples/inbox`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/inbox) is a ticket inbox: a search input, a list bound to an array, and a detail pane that shows the selected ticket, in a `version="1"` document.

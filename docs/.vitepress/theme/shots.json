@@ -160,6 +160,22 @@
     "cmd": "tuimark play examples/http/app.tui --data examples/http/sample.json --cols 110 --rows 22 --input h"
   },
   {
+    "name": "kit-gallery",
+    "light": true,
+    "cols": 110,
+    "rows": 30,
+    "alt": "kit gallery: the basics tab with a breadcrumb, badges, buttons, alerts and stat cards in the kit components, under the tab strip and the key hints",
+    "cmd": "tuimark play examples/kit-gallery/app.tui --data examples/kit-gallery/sample.json --cols 110 --rows 30"
+  },
+  {
+    "name": "kit-gallery-data",
+    "light": true,
+    "cols": 100,
+    "rows": 28,
+    "alt": "kit gallery: the data tab, a focused table with its cursor row as an accent bar and a build log below",
+    "cmd": "tuimark play examples/kit-gallery/app.tui --data examples/kit-gallery/sample.json --cols 100 --rows 28 --input \"3 focus:#svc down\""
+  },
+  {
     "name": "inbox",
     "light": false,
     "cols": 100,
