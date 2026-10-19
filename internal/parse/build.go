@@ -270,6 +270,7 @@ var TagAttrsCurrent = map[string]map[string]bool{
 
 	"progress": only("indeterminate"), // SPEC v0.4b §6.4.1: the spinner
 	"checkbox": checkboxAttrs(),       // SPEC v0.4b §6.16 (forms.go)
+	"select":   selectAttrs(),         // SPEC v0.4b §6.17 (forms.go)
 	"list":     only("single"),        // SPEC v0.4b §6.14.1
 	"table":    only("single"),        // SPEC v0.4b §6.14.1
 }
@@ -320,7 +321,7 @@ func attrAllowed(tag, parent, name string) (ok bool, need int) {
 }
 
 // Focusable-by-default kinds that therefore need an id (V012).
-var needsID = map[string]bool{"list": true, "input": true, "button": true, "modal": true, "checkbox": true}
+var needsID = map[string]bool{"list": true, "input": true, "button": true, "modal": true, "checkbox": true, "select": true}
 
 // Kinds that may not contain element children.
 var leafKinds = map[string]bool{"text": true, "input": true, "button": true, "progress": true, "rule": true, "spacer": true, "style": true, "bind": true}
@@ -632,7 +633,6 @@ var htmlTagHints = map[string]string{
 	"ol":        "use <list>",
 	"li":        "use <item> inside a <list>",
 	"dialog":    "use <modal>",
-	"select":    "a <list> with on:select picks one row",
 	"option":    "a <list> with on:select picks one row",
 	"radio":     "a <list> with on:select picks one row",
 	"textarea":  "not in the vocabulary yet; use <input>",
@@ -1310,9 +1310,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			}
 		case tabTemplate && ir.HasInterp(clean):
 			b.v3Hint(a.Line, a.Col, n, "V003", "%s: {path} is only allowed in <text>, title, and placeholder", name)
-		case tag == "checkbox" && name == "label":
-			// A checkbox's label is a template (SPEC v0.4b §6.16.1); the
-			// tag exists only in the current language.
+		case (tag == "checkbox" || tag == "select") && name == "label":
+			// A checkbox's label, and a select's, are templates (SPEC
+			// v0.4b §6.16.1, §6.17.1); the tags exist only in the current
+			// language.
 			b.checkboxLabel(n, a, clean)
 		case tag == "button" && name == "label" && b.lang.V4():
 			// A button's label is a template in the current language (SPEC
@@ -1815,6 +1816,8 @@ func (b *builder) checkNode(n *ir.Node) {
 			b.checkTable(n)
 		case "tabs", "tab":
 			b.checkTabs(n)
+		case "select":
+			b.checkSelect(n)
 		case "sparkline":
 			// SPEC §6.11: bind is required.
 			if _, ok := n.Attr("bind"); !ok {
@@ -2168,7 +2171,7 @@ func BuiltinIncompatible(action, kind string, checked, single bool) string {
 	switch action {
 	case "move-next", "move-prev", "move-first", "move-last", "move-page-down", "move-page-up":
 		switch kind {
-		case "text", "rule", "spacer", "input", "button", "progress", "sparkline", "hints", "column", "tab", "item", "checkbox":
+		case "text", "rule", "spacer", "input", "button", "progress", "sparkline", "hints", "column", "tab", "item", "checkbox", "select":
 			return "which has no cursor, no tabs, and no scroll offset to move (want a list, a table, a tabs, or a viewport)"
 		case "tabs":
 			if action == "move-page-down" || action == "move-page-up" {

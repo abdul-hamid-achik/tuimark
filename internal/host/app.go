@@ -146,7 +146,13 @@ type App struct {
 	// checks is the value of each checkbox without bind, by its id (SPEC
 	// v0.4b §6.16.2): kept across frames, screens, and tab switches, as an
 	// input's text without bind is; a missing id is unchecked.
-	checks  map[string]bool
+	checks map[string]bool
+	// selects is the state of each select, by its id (SPEC v0.4b §6.17.2):
+	// the key chosen without bind, kept across frames, screens, and tab
+	// switches, and what the last render resolved. opts is the open
+	// option list, at most one (§6.17.3).
+	selects map[string]*selectState
+	opts    optionList
 	scrolls map[string][2]int
 	// stickMax is, per id of a scroll with stick="bottom" (version="3",
 	// SPEC v0.3b §11.4), the maximum y offset its last live layout
@@ -246,7 +252,7 @@ func Parse(r io.Reader) (*App, error) {
 func blankApp() *App {
 	return &App{
 		store: map[string]any{}, handlers: map[string]Handler{},
-		lists: map[string]*listState{}, inputs: map[string]*inputState{}, checks: map[string]bool{},
+		lists: map[string]*listState{}, inputs: map[string]*inputState{}, checks: map[string]bool{}, selects: map[string]*selectState{},
 		scrolls: map[string][2]int{}, stickMax: map[string]int{}, wake: make(chan struct{}, 1),
 		everyKick:  make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
@@ -735,6 +741,8 @@ type savedState struct {
 	checks     map[string]bool
 	tabMem     map[string]string
 	tabPrev    map[string]string
+	selects    map[string]*selectState
+	opts       optionList
 }
 
 func (a *App) saveState() savedState {
@@ -771,7 +779,14 @@ func (a *App) saveState() savedState {
 		r := *a.focusReq
 		req = &r
 	}
-	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, sm, ls, in, ck, copyStrings(a.tabMem), copyStrings(a.tabPrev)}
+	// Rendering fills a select's keys and chosen index: keep copies.
+	sl := make(map[string]*selectState, len(a.selects))
+	for k, v := range a.selects {
+		c := *v
+		c.keys = append([]any(nil), v.keys...)
+		sl[k] = &c
+	}
+	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, sm, ls, in, ck, copyStrings(a.tabMem), copyStrings(a.tabPrev), sl, a.opts}
 }
 
 func (a *App) restoreState(s savedState) {
@@ -779,6 +794,7 @@ func (a *App) restoreState(s savedState) {
 	a.openModals, a.modalStack, a.pending, a.last = s.openModals, s.modalStack, s.pending, s.last
 	a.scrolls, a.stickMax, a.lists, a.inputs, a.checks = s.scrolls, s.stickMax, s.lists, s.inputs, s.checks
 	a.tabMem, a.tabPrev = s.tabMem, s.tabPrev
+	a.selects, a.opts = s.selects, s.opts
 }
 
 func copyStrings(m map[string]string) map[string]string {

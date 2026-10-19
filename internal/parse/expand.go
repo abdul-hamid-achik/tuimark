@@ -670,7 +670,7 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 		n.Attrs["checked"] = cp.subst(v)
 	}
 	for _, k := range [...]string{"title", "placeholder", "label", "short"} {
-		if v, ok := n.Attrs[k]; ok {
+		if v, ok := n.Attrs[k]; ok && !(k == "label" && n.Tag == "select") {
 			n.Attrs[k] = cp.substText(v)
 		}
 	}
@@ -691,8 +691,12 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 			cp.scope = append(cp.scope, alias{name: e.Alias})
 		}
 	}
+	// Per row, inside the each alias: a key, and a select's option label.
 	if v, ok := n.Attrs["key"]; ok {
-		n.Attrs["key"] = cp.subst(v) // per row: inside the each alias
+		n.Attrs["key"] = cp.subst(v)
+	}
+	if v, ok := n.Attrs["label"]; ok && n.Tag == "select" {
+		n.Attrs["label"] = cp.substText(v)
 	}
 	if f, ok := n.Attrs["focus"]; ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
 		fr := cp.copies[len(cp.copies)-1]

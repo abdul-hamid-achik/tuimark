@@ -471,5 +471,40 @@
     "sizes": ["20x3"],
     "json": ["20x3"],
     "frozen": false
+  },
+  {
+    "name": "t179-select",
+    "file": "testdata/v04b/179/select.tui",
+    "data": "testdata/v04b/179/select.json",
+    "sizes": ["20x6"],
+    "json": ["20x6"],
+    "frozen": false
+  },
+  {
+    "name": "t180-select-open",
+    "file": "testdata/v04b/179/select.tui",
+    "data": "testdata/v04b/179/select.json",
+    "input": "enter",
+    "sizes": ["20x6"],
+    "json": ["20x6"],
+    "frozen": false
+  },
+  {
+    "name": "t181-select-up",
+    "file": "testdata/v04b/181/select-up.tui",
+    "data": "testdata/v04b/179/select.json",
+    "input": "enter",
+    "sizes": ["20x6", "20x4"],
+    "json": ["20x6", "20x4"],
+    "frozen": false
+  },
+  {
+    "name": "t182-select-modal",
+    "file": "testdata/v04b/182/modal.tui",
+    "data": "testdata/v04b/179/select.json",
+    "input": "enter",
+    "sizes": ["30x10"],
+    "json": ["30x10"],
+    "frozen": false
   }
 ]

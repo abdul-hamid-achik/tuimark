@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/catalog"
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 )
 
 // hoverResult is the result of textDocument/hover.
@@ -97,8 +98,11 @@ func (s *Server) hoverTUI(doc *document, word string, start, end int) []string {
 }
 
 func sinceSuffix(since int) string {
-	if since <= 1 {
+	switch {
+	case since <= 1:
 		return ""
+	case since >= int(ir.LangCurrent):
+		return " (" + currentDetail + ")"
 	}
 	return fmt.Sprintf(" (version %d)", since)
 }

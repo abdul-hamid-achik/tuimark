@@ -1436,6 +1436,15 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 		} else {
 			v = 1
 		}
+	case "select":
+		// SPEC v0.4b §11.5.2: one row, 2 + the widest of the placeholder
+		// and every option's label (Measure, set by the host), so the
+		// width does not change with the chosen option.
+		if horizontal {
+			v = 2 + b.Measure
+		} else {
+			v = 1
+		}
 	case "progress":
 		if horizontal {
 			v = 10

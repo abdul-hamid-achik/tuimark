@@ -1,0 +1,8 @@
+<tui>
+  <screen id="main">
+    <text>bg</text>
+    <modal id="m" open="true" on:escape="m_escape" width="20" height="6">
+      <select id="tz" bind="tz" each="zones as z" key="z.id" label="{z.name}"/>
+    </modal>
+  </screen>
+</tui>
