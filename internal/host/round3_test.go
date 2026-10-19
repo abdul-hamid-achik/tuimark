@@ -480,6 +480,7 @@ func TestHandleKeyRunTypesARunAsOneEdit(t *testing.T) {
 // long list on screen (it used to take seconds: a full frame per key),
 // and typing into the inbox search is linear in the paste.
 func TestLoopPasteIsFast(t *testing.T) {
+	skipOnJS(t, "pasting 100 KB is slower than the budget")
 	rows := make([]any, 200)
 	for i := range rows {
 		rows[i] = fmt.Sprintf("row %d", i)

@@ -269,6 +269,7 @@ func TestDumpClampsNegativeSizes(t *testing.T) {
 // Finding 22: when Loop returns, nothing keeps reading the input: the next
 // read by the host, or the next Loop, sees every byte.
 func TestLoopLeavesNoReaderBehind(t *testing.T) {
+	skipOnJS(t, "os.Pipe is not implemented")
 	if runtime.GOOS == "windows" {
 		t.Skip("inputs are read with plain blocking reads on Windows")
 	}
@@ -311,6 +312,7 @@ func TestLoopLeavesNoReaderBehind(t *testing.T) {
 // Finding 25: a signal stops the loop, which restores the screen and
 // cursor on the way out and reports the signal.
 func TestLoopStopsOnSignal(t *testing.T) {
+	skipOnJS(t, "no real signals")
 	a := doc(t, loopDoc)
 	pr, pw := io.Pipe()
 	defer pw.Close()
