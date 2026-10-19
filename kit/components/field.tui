@@ -1,4 +1,4 @@
-<!-- k-field · Contract: reads and writes forms.profile.{name,email}.value; reads forms.profile.{name,email}.error ("" when fine; the host writes them) and forms.profile.valid · Actions: form_validate, form_submit · Keys: ctrl+s saves, enter in an input submits · Requires: k-btn, k-hints, k-title -->
+<!-- k-field · Contract: reads and writes forms.profile.{name,email}.value; reads forms.profile.{name,email}.error ("" when fine; the host writes them); the host also writes forms.profile.valid, which the markup does not read · Actions: form_validate, form_submit · Keys: ctrl+s saves, enter in an input submits · Requires: k-btn, k-hints, k-title -->
 <tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
