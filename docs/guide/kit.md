@@ -81,7 +81,7 @@ Selection and focus never rely on a background color alone. A cursor row is also
 
 **Classes.** Every kit class starts with `k-`: `k-card` for a component and `k-card-title` for a part of it. (TCSS has no descendant combinator, only `>`, so a part cannot be styled as "text inside a card"; each part carries its own class.) A **modifier** is a second, short class on the same node, such as `primary`, `ok`, `warn`, `danger`, and it is only ever used next to its component class: `k-btn danger`, `k-badge ok`, `k-alert warn`. Pick a modifier from your data with `class:NAME="path"` guards.
 
-**Ids** are `instance__part`, with two underscores: `confirm__dialog`, `confirm__yes`, `confirm__no`, `field__email`. A node that is the whole component keeps the instance name (`svc` for a table), and so do the singletons of your app (`app`, `status`, `nav`).
+**Ids** are `instance__part`, with two underscores: `confirm__dialog`, `confirm__yes`, `confirm__no`, `profile__email`. A node that is the whole component keeps the instance name (`svc` for a table), and so do the singletons of your app (`app`, `status`, `nav`).
 
 **Actions** are `component_verb`, a plain identifier: `dialog_confirm`, `palette_run`, `toast_show`, `form_submit`, `table_select`. Generic names such as `cancel` or `save` are avoided. An action does not say which instance fired it; a host routes by the prefix of the event's `source` before the last `__`, so `confirm__yes` belongs to the instance `confirm`, and one handler serves every dialog.
 

@@ -102,7 +102,7 @@ Typography and layout utilities are `k-title`, `k-subtitle`, `k-muted`,
 **Ids** are `instance` for the node that is the component (`svc`, `prefs`) or
 `instance__part` (two underscores) for a part, the overlay node itself
 included: `confirm__dialog`, `confirm__yes`, `confirm__no`, `palette__dialog`,
-`palette__q`, `palette__list`, `help__dialog`, `field__email`. Only app-level
+`palette__q`, `palette__list`, `help__dialog`, `profile__email`. Only app-level
 singletons keep a plain id (`app`, `status`, `nav`), and so do the ids of your
 own `tab` elements, which are the values of the path the tabs bind to.
 
@@ -240,12 +240,17 @@ host sets `confirm.open`. Keys: `y` confirms and `n` cancels (the keymap
 A `col` with class `k-field`: `k-field-label`, an `input` with class
 `k-field-input`, `k-field-help`, `k-field-error`. The input has its own border
 and `height: 3`, which is what lets `:focus` change `border-color`.
-`class:invalid="form.x_error"` on the label and the input turns them red while
-the path is non-empty; the help line shows `if="!form.x_error"` and the error
-`if="form.x_error"`.
+`class:invalid="forms.profile.email.error"` on the label and the input turns
+them red while the path is non-empty; the help line shows
+`if="!forms.profile.email.error"` and the error `if="forms.profile.email.error"`.
 
-Ids: `field__name`, `field__email`, `field__save`. Actions: `on:change`
-(`form_validate`: the host checks the value and writes `form.x_error`),
+A form is named by the id prefix of its inputs, and its state lives under that
+name: the inputs `profile__name` and `profile__email` bind
+`forms.profile.name.value` and `forms.profile.email.value`, the host writes
+`forms.profile.<field>.error` ("" when fine) and `forms.profile.valid`.
+
+Ids: `profile__name`, `profile__email`, `profile__save`. Actions: `on:change`
+(`form_validate`: the host checks the value and writes the field's `.error`),
 `on:submit` / the Save button (`form_submit`). Keys: type; `enter` submits;
 `ctrl+s`.
 
@@ -330,7 +335,9 @@ move the cursor. Enter is the input's `on:submit`.
 
 Ids: `palette__dialog`, `palette__q`, `palette__list`. Actions: `palette_open`
 (`ctrl+k`), `palette_close` (`esc`), `palette_run` (the host does the command
-whose id is `palette.cur`, or the first match).
+whose id is `palette.cur`, or the first match) and `palette_query` (the input's
+`on:change`: a Go host that keeps `found` with `Derive` has nothing to do for it;
+a TypeScript parent, which has no `Derive`, recomputes `found` there).
 
 ### help overlay (`components/help.tui`)
 

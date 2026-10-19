@@ -48,7 +48,7 @@ actions and keep two derived values:
 - `Every(time.Second, tick)`: counts a toast (3 s) and the status line (5 s)
   down and clears them.
 - handlers: dialogs open and close by flipping `<instance>.open`; the form
-  validates into `form.name_error` / `form.email_error` and moves focus to the
+  validates into `forms.profile.name.error` / `forms.profile.email.error` and moves focus to the
   first invalid field on submit; `log_append` adds a line and the panel follows
   it.
 

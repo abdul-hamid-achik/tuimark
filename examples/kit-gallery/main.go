@@ -16,7 +16,7 @@
 //     in the palette or moving the cursor updates them with no handler;
 //   - Every: a once-a-second tick clears the toast and the status line;
 //   - handlers: dialogs open and close by flipping a path, a form validates
-//     into `form.*_error` paths, the log panel appends lines.
+//     into `forms.profile.*.error` paths, the log panel appends lines.
 package main
 
 import (

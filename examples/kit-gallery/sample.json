@@ -18,11 +18,12 @@
     "disk": { "pct": 91, "text": "91% of 500 GB", "warn": false, "crit": true },
     "tests": { "pct": 100, "text": "212 / 212" }
   },
-  "form": {
-    "name": "Ada Lovelace",
-    "name_error": "",
-    "email": "ada@example.com",
-    "email_error": ""
+  "forms": {
+    "profile": {
+      "name": { "value": "Ada Lovelace", "error": "" },
+      "email": { "value": "ada@example.com", "error": "" },
+      "valid": true
+    }
   },
   "prefs_cur": "email",
   "prefs_on": ["email"],
