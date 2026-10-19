@@ -113,6 +113,24 @@ tasks:
     cmds:
       - go test ./internal/play -run '^$' -bench . -benchmem -count 1
 
+  fuzz:
+    desc: Run every Go fuzz target for a short time (FUZZTIME, default 20s each). Not part of verify or CI; a crash writes its input under testdata/fuzz/ next to the target, to be committed as a regression case.
+    vars:
+      FUZZTIME: '{{.FUZZTIME | default "20s"}}'
+    cmds:
+      - go test -run '^$' -fuzz '^FuzzParse$' -fuzztime {{.FUZZTIME}} ./internal/parse
+      - go test -run '^$' -fuzz '^FuzzFormat$' -fuzztime {{.FUZZTIME}} ./internal/parse
+      - go test -run '^$' -fuzz '^FuzzParseSheet$' -fuzztime {{.FUZZTIME}} ./internal/css
+      - go test -run '^$' -fuzz '^FuzzSheetCascade$' -fuzztime {{.FUZZTIME}} ./internal/css
+      - go test -run '^$' -fuzz '^FuzzSelectorAndValues$' -fuzztime {{.FUZZTIME}} ./internal/css
+      - go test -run '^$' -fuzz '^FuzzBindingGrammar$' -fuzztime {{.FUZZTIME}} ./internal/ir
+      - go test -run '^$' -fuzz '^FuzzKeyTokens$' -fuzztime {{.FUZZTIME}} ./internal/ir
+      - go test -run '^$' -fuzz '^FuzzScalar$' -fuzztime {{.FUZZTIME}} ./internal/ir
+      - go test -run '^$' -fuzz '^FuzzParseSteps$' -fuzztime {{.FUZZTIME}} ./internal/play
+      - go test -run '^$' -fuzz '^FuzzRender$' -fuzztime {{.FUZZTIME}} ./internal/host
+      - go test -run '^$' -fuzz '^FuzzDocument$' -fuzztime {{.FUZZTIME}} .
+      - go test -run '^$' -fuzz '^FuzzStylesheet$' -fuzztime {{.FUZZTIME}} .
+
   docs:
     desc: Serve the VitePress documentation site in docs/ locally.
     dir: docs
