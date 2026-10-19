@@ -453,6 +453,26 @@ func TestStrayKeysDoNotRestartAFinishedGame(t *testing.T) {
 	}
 }
 
+// esc puts the game over modal away, as its first button does: its
+// on:escape is over_hide, so the runtime never writes over_modal itself
+// (a <tui> without version would close a modal without on:escape on esc,
+// and the next publish would bring it back).
+func TestEscPutsGameOverAway(t *testing.T) {
+	r := newRig(t)
+	r.gameOver()
+	res := r.play("esc")
+	if len(res.Events) != 1 || res.Events[0].Action != "over_hide" {
+		t.Fatalf("esc in the game over modal: events %+v", res.Events)
+	}
+	if r.get("over_modal") != false || r.get("over") != true || !r.a.g.over {
+		t.Errorf("after esc: over_modal=%v over=%v", r.get("over_modal"), r.get("over"))
+	}
+	r.play("r")
+	if r.a.g.over {
+		t.Error("r did not restart after esc put the modal away")
+	}
+}
+
 // ? in the game over modal stacks the help on top of it; esc takes the help
 // away, and the game over modal is still there to restart from.
 func TestHelpOverGameOver(t *testing.T) {

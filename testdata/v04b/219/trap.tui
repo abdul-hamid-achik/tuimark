@@ -1,0 +1,17 @@
+<tui>
+  <keymap>
+    <bind keys="?" action="help" label="help"/>
+    <bind keys="ctrl+c" action="copy"/>
+  </keymap>
+  <keymap when="modal">
+    <bind keys="?" action="help" label="help"/>
+    <bind keys="ctrl+c" action="copy"/>
+  </keymap>
+  <screen id="main">
+    <text>body</text>
+    <hints id="h"/>
+    <modal id="m" open="dlg">
+      <button id="ok" label="ok" on:click="ok"/>
+    </modal>
+  </screen>
+</tui>

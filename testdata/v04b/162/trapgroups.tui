@@ -1,0 +1,11 @@
+<tui>
+  <keymap when="#dlg">
+    <bind keys="a" action="in_group"/>
+    <bind keys="b" action="empty_when" when=""/>
+  </keymap>
+  <keymap when="#main">
+    <bind keys="c" action="own_when" when="#dlg"/>
+    <bind keys="d" action="group_main"/>
+  </keymap>
+  <screen id="main"><text>bg</text><modal id="dlg" open="true"><button id="ok" label="ok"/></modal></screen>
+</tui>
