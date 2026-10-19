@@ -1,6 +1,9 @@
 package parse
 
-import "github.com/abdul-hamid-achik/tuimark/internal/css"
+import (
+	"github.com/abdul-hamid-achik/tuimark/internal/css"
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
+)
 
 // AttrKeyword is one literal value of an enumerated attribute, with the
 // lowest document version that accepts it there.
@@ -16,20 +19,21 @@ type AttrKeyword struct {
 // attribute that takes paths, text, numbers, sizes, or an action name has
 // none, and so a flag attribute such as hidden lists true and false only.
 var attrKeywords = map[string][]AttrKeyword{
-	"border":      append([]AttrKeyword{{"0", 1}, {"1", 1}}, cssKeywords("border")...),
-	"wrap":        cssKeywords("wrap"),
-	"hidden":      flagKeywords(1),
-	"disabled":    flagKeywords(1),
-	"focusable":   flagKeywords(1),
-	"secret":      flagKeywords(1),
-	"open":        flagKeywords(1),
-	"mouse":       flagKeywords(2),
-	"scroll.axis": {{"both", 1}, {"x", 1}, {"y", 1}},
-	"rule.axis":   {{"x", 1}, {"y", 1}},
-	"theme":       {{"dark", 1}, {"light", 1}, {"auto", 2}},
-	"version":     {{"1", 1}, {"2", 2}, {"3", 3}},
-	"scope":       {{"active", 2}, {"all", 2}},
-	"stick":       {{"bottom", 3}},
+	"border":        append([]AttrKeyword{{"0", 1}, {"1", 1}}, cssKeywords("border")...),
+	"wrap":          cssKeywords("wrap"),
+	"hidden":        flagKeywords(1),
+	"disabled":      flagKeywords(1),
+	"focusable":     flagKeywords(1),
+	"secret":        flagKeywords(1),
+	"indeterminate": flagKeywords(int(ir.Lang4)),
+	"open":          flagKeywords(1),
+	"mouse":         flagKeywords(2),
+	"scroll.axis":   {{"both", 1}, {"x", 1}, {"y", 1}},
+	"rule.axis":     {{"x", 1}, {"y", 1}},
+	"theme":         {{"dark", 1}, {"light", 1}, {"auto", 2}},
+	"version":       {{"1", 1}, {"2", 2}, {"3", 3}},
+	"scope":         {{"active", 2}, {"all", 2}},
+	"stick":         {{"bottom", 3}},
 }
 
 func cssKeywords(prop string) []AttrKeyword {

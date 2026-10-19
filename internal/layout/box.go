@@ -207,6 +207,12 @@ type memoSlot struct {
 	avail, v int32
 }
 
+// IsSpinner reports whether b is a <progress indeterminate="true"> of the
+// current language, a spinner (SPEC v0.4b §6.4.1): the parser decides
+// (ir.Node.Spinner), and a box of a list row, cached or not, keeps its
+// source node.
+func (b *Box) IsSpinner() bool { return b.Kind == "progress" && b.Src != nil && b.Src.Spinner }
+
 // Outer returns the outer rectangle.
 func (b *Box) Outer() Rect { return Rect{b.X, b.Y, b.W, b.H} }
 

@@ -81,12 +81,9 @@ func injectCurrent(t *testing.T) {
 // SPEC v0.4b §5.1: in a pinned document a current-only tag is V001 and a
 // current-only attribute V002, each with a message that names the item
 // without calling it unknown and ends with the hint; the current
-// language accepts both. The machinery is F0's; the tables stay empty
-// until each phase fills them.
+// language accepts both. The machinery is F0's; injectCurrent replaces the
+// tables the phases fill, so the test does not depend on them.
 func TestCurrentHintOnPinnedDocuments(t *testing.T) {
-	if len(ir.KindsCurrent) != 0 || len(parse.TagAttrsCurrent) != 0 {
-		t.Fatalf("F0 declares no current-language vocabulary: %v %v", ir.KindsCurrent, parse.TagAttrsCurrent)
-	}
 	injectCurrent(t)
 	const body = `<screen><checkbox id="c" bind="on" label="x"/><list id="l" single="true"><item><text>a</text></item></list></screen></tui>`
 	for _, v := range []string{"1", "2", "3"} {

@@ -63,7 +63,9 @@ func NewSession(app *host.App, cols, rows int, cells, styles, frames, noHandlers
 	}
 }
 
-func (s *Session) draw() { s.Frame = s.App.Frame(s.Cols, s.Rows) }
+// draw builds the live frame at the spinner phase of the app's virtual
+// clock (SPEC v0.4b §12.6, §15.4.1): 0 until a tick step advances it.
+func (s *Session) draw() { s.Frame = s.App.FrameAt(s.Cols, s.Rows, s.App.VPhase()) }
 
 // stopped reports whether the session has ended early: a quit, or a
 // handler error (SPEC v0.3 §18.1 Play rules 5 and 9).
@@ -286,6 +288,11 @@ func (s *Session) Run(steps []Step) {
 				s.UsageErr, s.UsageStep, s.UsageRaw = err, stepNum, st.Raw
 				return
 			}
+		case KindTick:
+			s.tick(stepNum, st)
+			if s.UsageErr != nil {
+				return
+			}
 		case KindResize:
 			s.Cols, s.Rows = st.Cols, st.Rows
 			// A resize drops a pending left press, as in Run (SPEC
@@ -310,10 +317,32 @@ func (s *Session) Run(steps []Step) {
 			}
 			s.handleMouse(stepNum, host.Mouse{Kind: kind, X: st.X, Y: st.Y})
 		}
-		if !s.stopped() {
-			s.settle(stepNum)
+		if !s.stopped() && st.Kind != KindTick {
+			s.settle(stepNum) // (a tick step settles per instant, in tick)
 		}
 		s.snapshot(stepNum, st.Raw)
+	}
+}
+
+// tick applies a tick:DUR step (SPEC v0.4b §15.4.1): the host advances the
+// virtual clock and fires the Every functions that fall due, and this
+// session settles after each instant they fired at and once on arrival,
+// so the step's events are those of its settles, with its number. A limit
+// error is an apply error (UsageErr: no frame entry); an error of an Every
+// function ends the call like a handler's (Quit with ErrQuit, else Err),
+// and the frame stays the one in effect, not settled again.
+func (s *Session) tick(step int, st Step) {
+	fnErr, applyErr := s.App.VirtualTick(st.Dur, s.NoHandlers, func() bool {
+		s.settle(step)
+		return s.stopped()
+	})
+	switch {
+	case applyErr != nil:
+		s.UsageErr, s.UsageStep, s.UsageRaw = applyErr, step, st.Raw
+	case fnErr != nil && errors.Is(fnErr, host.ErrQuit):
+		s.Quit = true
+	case fnErr != nil:
+		s.Err = fnErr
 	}
 }
 

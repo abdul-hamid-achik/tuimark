@@ -150,8 +150,9 @@ func TestPublicRunWithCancelledContext(t *testing.T) {
 	}
 }
 
-// 111, 113: Quit and Every outside Run change nothing, and Play never
-// calls an Every function.
+// 111, 113: Quit and Every outside Run change nothing, and Play without a
+// tick step never calls an Every function (v0.4b: a tick step does, test
+// 206).
 func TestPublicQuitAndEveryOutsideRun(t *testing.T) {
 	app := counterApp(t)
 	var calls atomic.Int32

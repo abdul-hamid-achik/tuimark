@@ -73,8 +73,9 @@ func (f *Frame) Dump(cells bool) *dump.Dump {
 func (a *App) Dump(cols, rows int, cells bool) *dump.Dump {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	saved := a.saveState()
-	defer a.restoreState(saved)
+	saved, phase := a.saveState(), a.phase
+	defer func() { a.restoreState(saved); a.phase = phase }()
+	a.phase = 0 // SPEC v0.4b §12.6: Dump paints every spinner at phase 0
 	if verifyFrames {
 		return a.verifiedRender(cols, rows, a.toolTheme()).Dump(cells)
 	}
@@ -85,9 +86,18 @@ func (a *App) Dump(cols, rows int, cells bool) *dump.Dump {
 // tests). Its theme is frameTheme: while Run runs, TUIMARK_THEME and the
 // theme Run resolved for auto take part.
 func (a *App) Frame(cols, rows int) *Frame {
+	return a.FrameAt(cols, rows, 0)
+}
+
+// FrameAt is Frame with the phase of the frame's spinners (SPEC v0.4b
+// §12.6, §26.13): the caller's clock decides it, Run's while running and
+// play's virtual clock in a Play. Frame is FrameAt at phase 0, which is
+// what dump, inspect, and preview paint.
+func (a *App) FrameAt(cols, rows, phase int) *Frame {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.dirty = false // the live frame is fresh again (TakeDirty)
+	a.phase = max(phase, 0)
 	theme := a.frameTheme()
 	if verifyFrames {
 		return a.verifiedFrame(cols, rows, theme)
@@ -314,7 +324,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		fb.placeTableRows(casc, rootBox) // step 7
 	}
 	f.Root, f.Modals = rootBox, fb.modals
-	f.Grid = paint.Paint(rootBox, fb.modals, cols, rows) // step 8
+	f.Grid = paint.PaintPhase(rootBox, fb.modals, cols, rows, a.phase) // step 8
 	f.ByID = fb.byID
 	f.Focus = a.focus
 	// Remember scroll offsets clamped by layout.

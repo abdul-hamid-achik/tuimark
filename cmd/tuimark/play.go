@@ -161,7 +161,7 @@ func parseScriptSteps(path string) ([]play.Step, error) {
 
 // scriptMembers names the step members of a --script line (SPEC v0.2b
 // §15.4), for error messages.
-const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme"
+const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme, tick"
 
 // parseScriptCell decodes the [X,Y] of a click or wheel script step: a
 // JSON array of exactly two integers (SPEC v0.2b §15.4).
@@ -282,6 +282,14 @@ func parseScriptLine(line string) (play.Step, error) {
 			return play.Step{}, err
 		}
 		return play.Step{Kind: play.KindClick, Raw: line, X: x, Y: y}, nil
+	case "tick":
+		// SPEC v0.4b §15.4: {"tick": "DUR"} is tick:DUR (§15.4.1); the
+		// member holds a JSON string and the object holds it alone.
+		s, err := decodeStringMember("tick", raw)
+		if err != nil {
+			return play.Step{}, err
+		}
+		return play.TickStep(line, s)
 	case "theme":
 		// SPEC v0.2b §15.4: {"theme": "dark" | "light" | "auto"} is
 		// Set("@theme", value); play never probes, so auto is dark.

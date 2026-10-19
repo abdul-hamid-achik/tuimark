@@ -1,0 +1,11 @@
+<tui>
+  <screen id="main">
+    <row height="1" gap="1">
+      <progress id="sp" indeterminate="true"/>
+      <text>loading</text>
+    </row>
+    <progress id="mid" indeterminate="true" width="5" style="content-align: center"/>
+    <progress id="end" indeterminate="true" width="5" style="content-align: end"/>
+    <progress id="start" indeterminate="true" width="5"/>
+  </screen>
+</tui>
