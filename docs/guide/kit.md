@@ -122,7 +122,63 @@ Selection and focus never rely on a background color alone. A cursor row is also
 | log panel | `k-log` | a scrolling log that follows its end |
 | breadcrumb | `k-breadcrumb` | the current path, down to the last crumb on a narrow terminal |
 
-Markup has no expressions, so a few components lean on the host: the palette's filtered list and the split pane's detail are computed with `Derive`, and a toast is cleared by an `Every` tick. The contract comment of each file says which.
+Markup has no expressions, so a few components lean on the host: the palette's filtered list and the split pane's detail are computed with `Derive`, and a toast is cleared by an `Every` tick. The contract comment of each file says which, and the [helpers](#helpers) below do the common ones for you.
+
+## Helpers
+
+A component is markup, and markup has no expressions. Expiring a toast, filtering the palette, validating a form and routing a dialog's answer have to happen in the host. The kit ships that code as **helpers**: small files in Go and in TypeScript that write the store paths the components read. Like the components, you copy them and own them. They are not a package: `kit/go` is a nested module named `tuimarkkit`, with no dot in its name so that `go get` cannot fetch it, and `kit/ts` has no published name.
+
+To use one, copy its file into your project. In Go, change `package kit` to your package; a helper imports only `github.com/abdul-hamid-achik/tuimark`. In TypeScript, copy the `.ts` file next to your parent; it imports only types from `@tuimark/host`. A file that needs another says so in its header: `dialog` and `form` need `route`, and `palette` needs `filter`. Each helper has a test beside it that drives the real component documents.
+
+| Helper | What it does | Writes |
+|---|---|---|
+| `route` | `Instance(source)` and `Part(source)`: the two halves of an `instance__part` id | nothing |
+| `toasts` | `Push(kind, text, ttl)` into a capped queue that shows one toast at a time and expires them | `toast.show`, `.text`, `.is_ok`, `.is_warn`, `.is_danger` |
+| `filter` | substring or fuzzy match over an array of objects, by named fields | `{items, any, count, total}` at a path you choose |
+| `sortpage` | cycle the sort of a column (with an arrow in its title) and paginate (`1–50 of 340`) | the sorted rows of the page, and a meta object |
+| `form` | per-field rules (required, pattern, length, your own function) on change and on submit | `forms.<form>.<field>.error`, `forms.<form>.valid` |
+| `dialog` | `Confirm(instance, title, body, onConfirm)` opens a `k-dialog` and routes `dialog_confirm` / `dialog_cancel` by instance | `<instance>.open`, `.title`, `.message`, `.result` |
+| `palette` | a registry of commands (title, key hint, function) behind the palette | `palette.commands`, `found`, `palette.open`, `.cur`, `.last` |
+| `async` | `Load(path, fn)` runs slow work off the handler | `<path>.loading`, `.error`, `.data` |
+| `format` | `Bytes`, `Duration`, `Relative`, `Percent`, `Thousands` | strings ready for `{path}` |
+
+The Go API has `Derive` and `Every` and the TypeScript host does not, so two things differ. In Go, `filter` and `sortpage` are derived values that follow every store write, and a toast expires on an `Every` tick. In TypeScript you call `recompute()` after a write, the palette's input fires `palette_query` on every change so the parent can, and `toasts.start()` runs the tick on a timer.
+
+A toast queue, in Go:
+
+```go
+ts, _ := kit.NewToasts(app, kit.ToastOptions{Max: 5, TTL: 3 * time.Second})
+ts.Register()                       // toast_dismiss (esc)
+stop := ts.Start(time.Second)       // app.Every(time.Second, ts.Tick)
+defer stop()
+
+ts.Push("ok", "Settings saved", 0)  // info, ok, warn or danger; 0 is the default time to live
+```
+
+The same, in TypeScript:
+
+```ts
+const toasts = createToasts(ui, { max: 5, ttl: 3000 });
+toasts.register();
+const stop = toasts.start(500);
+await toasts.push("ok", "Settings saved");
+```
+
+A form named by the id prefix of its inputs (`profile__name`, `profile__email`), in Go:
+
+```go
+forms := kit.NewForms(app)
+forms.Add("profile").
+    Field("name", kit.Required("Name is required.")).
+    Field("email", kit.Required("Email is required."), kit.Pattern(emailRE, "Enter a full address.")).
+    OnSubmit(func(v map[string]string) error { return save(v) }).
+    Reset(nil)                      // creates forms.profile.* in the store
+forms.Register()                    // form_validate, form_submit
+```
+
+A rule is a function from the value to the message to show (`""` when it is fine), so a custom rule is a plain function. Submitting shows every error and moves focus to the first invalid input.
+
+Sorting by clicking a column header (`<column on:click="table_sort">`, with `title="{svc_meta.titles.name}"` so the arrow shows) needs the mouse on (`<tui mouse="…">`); for the keyboard, bind keymap rows to your own action that cycles the column.
 
 ## The gallery
 

@@ -18,6 +18,9 @@ install it, you copy what you need into your project and own it.
 
 - `examples/kit-gallery`: every component in one app, on five tabs, with a Go
   host. Start there to see them together.
+- `go/` and `ts/`: host helpers (toasts, filter, sort and pages, forms, dialogs,
+  a palette, async loads, formatting) to copy the same way. See
+  [Helpers](#helpers).
 
 The kit is a vocabulary of **classes**, not a new language. Nothing here adds a
 tag, an attribute, or a CSS property; a component is ordinary markup plus
@@ -371,6 +374,214 @@ by guard) and a `k-breadcrumb-sep`. Under 60 columns only the current crumb
 shows. Display only (a template cannot hold anything focusable); `backspace`
 fires `breadcrumb_up`, and the host trims the array.
 
+## Helpers
+
+Markup has no expressions, so some behavior has to live in the host: expiring a
+toast, filtering the palette, validating a form, routing a dialog's answer. The
+helpers are small host-side files, in Go and in TypeScript, that do those jobs
+against the store paths the components read. Like the components, you **copy
+them and own them**; they are not a package. `kit/go` is a nested module named
+`tuimarkkit` (no dot in the name, so `go get` cannot fetch it) and `kit/ts` has
+no published name.
+
+**Copy.** In Go, copy the file (`kit/go/toasts.go`) into your project and change
+`package kit` to your package; it imports only
+`github.com/abdul-hamid-achik/tuimark`. In TypeScript, copy the file
+(`kit/ts/toasts.ts`) next to your parent; it imports only types from
+`@tuimark/host`. A file that needs another says so in its header: `dialog` and
+`form` need `route`, and `palette` needs `filter`. Each file has its test beside
+it (`go test ./...` in `kit/go`, `bun test` in `kit/ts`), and the Go tests drive
+the real component documents in `components/`.
+
+**Go and TypeScript differ in two places**, because the Go API has `Derive` and
+`Every` and the TypeScript host does not. A Go `filter` or `sortpage` is a
+`Derive`, so it follows every store write with no handler; in TypeScript you call
+`recompute()` after a write, and the palette's input fires `palette_query` on
+every change so the parent can. A Go toast expires from an `Every` tick; in
+TypeScript `start()` runs the tick on a timer.
+
+### route
+
+`Instance(source)` is everything before the last `__` of an event's `source`,
+and `Part(source)` is the rest. `confirm__yes` is the part `yes` of the instance
+`confirm`; an id with no `__` is its own instance. `dialog` and `form` use it.
+
+```go
+inst := kit.Instance(ev.Source) // "confirm"
+```
+```ts
+const inst = instance(ev.source); // "confirm"
+```
+
+### toasts
+
+A queue behind `toast.tui`, which is one row: the first toast shows at once, the
+next wait their turn, each shows for its time to live, and the queue is capped
+(the oldest waiting toast is dropped). It writes `toast.show`, `.text`, `.is_ok`,
+`.is_warn` and `.is_danger`, and `Register` installs `toast_dismiss` (esc).
+
+```go
+ts, _ := kit.NewToasts(app, kit.ToastOptions{Max: 5, TTL: 3 * time.Second})
+ts.Register()
+stop := ts.Start(time.Second)         // app.Every(time.Second, ts.Tick)
+defer stop()
+ts.Push("ok", "Settings saved", 0)    // kind: info, ok, warn or danger; ttl 0 = the default
+ts.PushTo(batch, "warn", "92% used", 0) // inside a Batch you are already writing
+```
+```ts
+const toasts = createToasts(ui, { max: 5, ttl: 3000 });
+toasts.register();
+const stop = toasts.start(500);       // setInterval(tick); stop() clears it
+await toasts.push("ok", "Settings saved");
+```
+
+### filter
+
+Keeps a filtered copy of an array in the store: `{items, any, count, total}`.
+`Substring` matches every word of the query in any order; `Fuzzy` matches the
+query's letters in order and puts tighter matches first. Fields are keys or
+dotted paths. `FilterItems` is the pure function behind it.
+
+```go
+kit.Filter(app, kit.FilterOptions{
+    Source: "palette.commands", Query: "palette.query", Out: "found",
+    Fields: []string{"label", "id"}, Mode: kit.Fuzzy,
+})
+```
+```ts
+const filter = createFilter(ui, { source: "palette.commands", query: "palette.query", out: "found", fields: ["label", "id"], mode: "fuzzy" });
+await filter.recompute(); // after the source or the query changed
+```
+
+### sortpage
+
+Sort-by-column cycling and pagination for a table. It derives the sorted rows of
+the current page (`Out`) and a `Meta` object: `page`, `pages`, `size`, `total`,
+`label` (`1–50 of 340`), `has_prev`, `has_next`, and `titles`, where the sorted
+column's title carries an arrow (`SERVICE ▲`). The table reads `Out`, its column
+titles read `Meta.titles.NAME` (`title="{svc_meta.titles.name}"` on a `column`),
+and a column's `on:click` calls `Cycle` with the column id's part (`svc__name`:
+`name`). A column's `on:click` fires only with the mouse on (`<tui mouse="…">`);
+for the keyboard, bind keymap rows to your own action (say `s` for the focused
+column) that call `Cycle` too.
+
+```go
+sp, _ := kit.NewSortPage(app, kit.SortPageOptions{
+    Source: "all", Out: "services", Meta: "svc_meta", Size: 50,
+    Columns: []kit.Column{{Key: "name", Title: "SERVICE"}, {Key: "rps", Title: "REQ/S"}},
+})
+app.On("table_sort", func(ev tuimark.Event) error { return sp.Cycle(kit.Part(ev.Source)) })
+sp.NextPage(); sp.SetSize(25)
+```
+```ts
+const sp = createSortPage(ui, { source: "all", out: "services", meta: "svc_meta", columns: [{ key: "name", title: "SERVICE" }] });
+ui.on("table_sort", (ev) => sp.cycle(part(ev.source)));
+await sp.recompute(); // after "all" changes
+```
+
+### form
+
+Per-field rules for `field.tui`. A form is named by the id prefix of its inputs
+(`profile__name`), and writes `forms.profile.<field>.error` and
+`forms.profile.valid`; the inputs bind `forms.profile.<field>.value`. Rules are
+functions from the value to a message (`""` is fine): `Required`, `Pattern`,
+`MinLen`, `MaxLen`, or your own. `form_validate` checks the field that changed,
+and does not turn red a field the user has not reached; `form_submit` checks
+every field, focuses the first invalid input, and otherwise calls your
+`OnSubmit`.
+
+```go
+forms := kit.NewForms(app)
+forms.Add("profile").
+    Field("name", kit.Required("Name is required.")).
+    Field("email", kit.Required("Email is required."), kit.Pattern(emailRE, "Enter a full address.")).
+    OnSubmit(func(v map[string]string) error { return save(v["name"], v["email"]) }).
+    Reset(map[string]string{"name": "Ada"}) // creates the paths
+forms.Register()                           // form_validate, form_submit
+```
+```ts
+const forms = createForms(ui);
+const profile = forms.add("profile")
+  .field("name", required("Name is required."))
+  .field("email", required("Email is required."), pattern(emailRE, "Enter a full address."))
+  .onSubmit((v) => save(v.name, v.email));
+await profile.reset({ name: "Ada" });
+forms.register();
+```
+
+### dialog
+
+`Confirm(inst, title, body, onConfirm)` opens a `k-dialog` instance (it writes
+`<inst>.title`, `.message`, `.open` and `.result`) and routes `dialog_confirm`
+and `dialog_cancel` by instance, so one pair of handlers serves every dialog.
+The result is `confirmed` or `cancelled`. `Open` takes a `Request` with an
+`OnCancel` too. You open the dialog from your own action (the trigger button's).
+
+```go
+d := kit.NewDialogs(app)
+d.Register() // dialog_confirm, dialog_cancel
+app.On("dialog_open", func(ev tuimark.Event) error {
+    return d.Confirm(kit.Instance(ev.Source), "Delete project", "This cannot be undone.", func() error { return deleteProject() })
+})
+```
+```ts
+const dialogs = createDialogs(ui);
+dialogs.register();
+ui.on("dialog_open", (ev) => dialogs.confirm(instance(ev.source), "Delete project", "This cannot be undone.", () => deleteProject()));
+```
+
+### palette
+
+A command registry behind `palette.tui`: commands have an id, a title, a key hint
+and a function. It writes `palette.commands`, keeps `found` with `filter`, and
+implements `palette_open` (resets the query and cursor), `palette_close`,
+`palette_run` (runs the command under the cursor, or the first match, and writes
+`palette.last`) and `palette_query`.
+
+```go
+p, _ := kit.NewPalette(app, kit.PaletteOptions{Mode: kit.Fuzzy},
+    kit.Command{ID: "deploy", Title: "Deploy to production", Key: "d", Run: deploy},
+    kit.Command{ID: "logs", Title: "Open the logs", Key: "l", Run: openLogs})
+p.Register()
+```
+```ts
+const palette = await createPalette(ui, { mode: "fuzzy" },
+  { id: "deploy", title: "Deploy to production", key: "d", run: deploy },
+  { id: "logs", title: "Open the logs", key: "l", run: openLogs });
+palette.register();
+```
+
+### async
+
+`Load(path, fn)` runs slow work off the handler (a handler's return is the
+event's reply, and a slow one delays every key) and keeps `<path>.loading`,
+`<path>.error` and `<path>.data`. A later load of the same path cancels the
+earlier one and drops its result; `data` is kept while a reload runs. A task
+can be canceled, which puts `loading` back to false.
+
+```go
+loader := kit.NewLoader(app)
+loader.Load("repos", func(ctx context.Context) (any, error) { return fetchRepos(ctx) })
+```
+```ts
+const loader = createLoader(ui);
+await loader.load("repos", (signal) => fetchRepos(signal));
+```
+
+### format
+
+Strings ready for `{path}`: `Bytes` (`1.5 MiB`), `Duration` (`2m 5s`),
+`Relative` (`5 minutes ago`, `in 2 days`), `Percent` (`26%`) and `Thousands`
+(`1,234,567`). TypeScript spells them `bytes`, `duration` (milliseconds),
+`relative`, `percent` and `thousands`.
+
+```go
+app.Set("disk.text", kit.Bytes(used)+" of "+kit.Bytes(total))
+```
+```ts
+await ui.set("disk.text", `${bytes(used)} of ${bytes(total)}`);
+```
+
 ---
 
 ## Next
@@ -384,9 +595,8 @@ These are plans, not promises.
   conventions above are chosen for that: a `use id="confirm"` would generate the
   ids `confirm__dialog`, `confirm__yes`, `confirm__no`, so hosts written today
   would not change. The class vocabulary and both stylesheets stay as they are.
-- **Host helpers.** A host today writes its own small helpers (see
-  `instanceOf` and the toast, dialog and palette handlers in
-  `examples/kit-gallery`). They are meant to ship as files you copy, in Go and
-  in TypeScript, not as a public package.
+- **Helpers as Tuimark Script.** The helpers above are host code in Go and
+  TypeScript. When the language gains scripting, the same API (`on`, `set`,
+  `derive`, `every`) can ship as scripts.
 - **`tuimark add`.** A command that copies a component, with the sheets it
   needs, into your project.

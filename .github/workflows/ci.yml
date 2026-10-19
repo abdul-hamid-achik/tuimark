@@ -57,6 +57,15 @@ jobs:
       - name: go test -race
         run: go test -race -count=1 ./...
 
+      # kit/go is its own module (the kit's copyable host helpers, ADR 0030),
+      # so ./... above does not reach it. It declares go.mod's Go floor too,
+      # so the 1.22 leg keeps it compatible with that.
+      - name: kit/go vet and test -race
+        working-directory: kit/go
+        run: |
+          go vet ./...
+          go test -race -count=1 ./...
+
       - name: build
         run: |
           go build -o bin/tuimark ./cmd/tuimark
@@ -239,9 +248,11 @@ jobs:
 
   # @tuimark/host (sdk/ts, SPEC §19.2): Bun tests against a fake child, and a
   # type-check. It needs neither Go nor the tuimark binary; the real child is
-  # driven by examples/host-ts in the specs job above.
+  # driven by examples/host-ts in the specs job above. kit/ts (the kit's
+  # copyable TypeScript helpers) is typed against it and tested the same way,
+  # against an in-memory store.
   sdk-ts:
-    name: "sdk/ts (@tuimark/host, test and type-check)"
+    name: "sdk/ts (@tuimark/host) and kit/ts (test and type-check)"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -266,3 +277,17 @@ jobs:
 
       - name: Type-check the tuimark new --ts template
         run: bunx tsc -p tsconfig.template.json
+
+      # kit/ts depends on sdk/ts through a file: dependency, which bun copies,
+      # so it is always installed fresh.
+      - name: kit/ts install (frozen lockfile)
+        working-directory: kit/ts
+        run: rm -rf node_modules && bun install --frozen-lockfile
+
+      - name: kit/ts test
+        working-directory: kit/ts
+        run: bun test
+
+      - name: kit/ts type-check
+        working-directory: kit/ts
+        run: bunx tsc --noEmit
