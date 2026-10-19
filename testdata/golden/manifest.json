@@ -223,5 +223,28 @@
     "sizes": ["100x30"],
     "json": [],
     "frozen": false
+  },
+  {
+    "name": "inbox-041",
+    "file": "examples/inbox/app.tui",
+    "data": "examples/inbox/sample.json",
+    "sizes": ["80x24", "120x40"],
+    "json": ["80x24", "120x40"],
+    "frozen": true
+  },
+  {
+    "name": "monitor-041",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "sizes": ["80x24", "120x40"],
+    "json": ["80x24", "120x40"],
+    "frozen": true
+  },
+  {
+    "name": "colrow-041",
+    "file": "specs/fixtures/v04b/twins/colrow.tui",
+    "sizes": ["20x3", "80x24"],
+    "json": ["20x3", "80x24"],
+    "frozen": true
   }
 ]
