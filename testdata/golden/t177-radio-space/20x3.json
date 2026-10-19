@@ -1,0 +1,96 @@
+{
+  "cols": 20,
+  "rows": 3,
+  "ok": true,
+  "focus": "size",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 3
+    },
+    {
+      "id": "size",
+      "tag": "list",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 3,
+      "focused": true,
+      "scroll": {
+        "y": 0,
+        "h": 3
+      }
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 1,
+      "key": "s",
+      "selected": true,
+      "checked": true
+    },
+    {
+      "tag": "text",
+      "x": 2,
+      "y": 0,
+      "w": 18,
+      "h": 1,
+      "text": "Small"
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 1,
+      "w": 20,
+      "h": 1,
+      "key": "m"
+    },
+    {
+      "tag": "text",
+      "x": 2,
+      "y": 1,
+      "w": 18,
+      "h": 1,
+      "text": "Medium"
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 2,
+      "w": 20,
+      "h": 1,
+      "key": "l"
+    },
+    {
+      "tag": "text",
+      "x": 2,
+      "y": 2,
+      "w": 18,
+      "h": 1,
+      "text": "Large"
+    }
+  ],
+  "grid": [
+    "● Small             ",
+    "  Medium            ",
+    "  Large             "
+  ],
+  "events": [
+    {
+      "step": 1,
+      "action": "size_changed",
+      "source": "size",
+      "keys": {
+        "it": "s"
+      },
+      "value": "s"
+    }
+  ]
+}

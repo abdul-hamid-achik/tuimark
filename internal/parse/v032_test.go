@@ -109,7 +109,7 @@ func TestDidYouMeanHints(t *testing.T) {
 		{"html ul", "1", `<ul/>`, "V001", "; use <list>", false},
 		{"html li", "1", `<li/>`, "V001", "; use <item> inside a <list>", false},
 		{"html dialog", "1", `<dialog/>`, "V001", "; use <modal>", false},
-		{"html checkbox", "1", `<checkbox/>`, "V001", `checked= (version="2")`, false},
+		{"html checkbox", "1", `<checkbox/>`, "V001", `tag <checkbox> (requires a <tui> without version)`, false},
 		{"html select", "1", `<select/>`, "V001", "on:select picks one row", false},
 		{"html textarea", "1", `<textarea/>`, "V001", "use <input>", false},
 		{"html template", "1", `<template/>`, "V001", "only <style src> loads another file", false},

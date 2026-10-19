@@ -218,7 +218,8 @@ func (a *App) whenMatches(sel *css.Selector, v keyView) bool {
 //     ctrl+h, ctrl+u, left, right, home, end, ctrl+a, ctrl+e, and enter
 //     when it has on:submit;
 //   - a list or a table with at least one row: up, down, home, end, pgup,
-//     pgdn;
+//     pgdn, and, with single="true", space (SPEC v0.4b §6.14.1);
+//   - a checkbox: space, which toggles it (SPEC v0.4b §6.16.2);
 //   - a (focusable) tabs with at least one enabled visible tab: left and
 //     right;
 //   - any other viewport: up, down, left, right, pgup, pgdn, home, end;
@@ -245,11 +246,20 @@ func (a *App) consumes(b *layout.Box, k Key) bool {
 			switch k.Name {
 			case "up", "down", "home", "end", "pgup", "pgdn":
 				return true
+			case "space":
+				// A single widget applies check-toggle to its cursor
+				// row, and consumes space even when it cannot act (SPEC
+				// v0.4b §6.14.1, §8.6 step 2, decision 98).
+				return isSingle(b)
 			}
 		}
 		// A list never fires on:click from the keyboard (v1), nor does a
 		// table (SPEC §8.6).
 		return false
+	case "checkbox":
+		// space toggles it; enter goes on to the keymap (SPEC v0.4b
+		// §6.16.2, decision 97). It takes no on:click (decision 45).
+		return k.Name == "space"
 	case "tabs":
 		// A focused (so focusable) tabs with an enabled visible tab
 		// consumes left and right (SPEC §6.10.4 item 8).
@@ -388,8 +398,14 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 			return a.moveList(b, func(i, _, p int) int { return i - p })
 		case "pgdn":
 			return a.moveList(b, func(i, _, p int) int { return i + p })
+		case "space":
+			// Only a single widget consumes it (consumes): check-toggle
+			// on the cursor row (SPEC v0.4b §6.14.1).
+			return a.check(b, "check-toggle")
 		}
 		return nil
+	case "checkbox":
+		return a.toggleCheckbox(b)
 	case "tabs":
 		// left and right act as move-prev and move-next on it.
 		switch k.Name {
@@ -527,7 +543,9 @@ func isMove(action string) bool {
 // enabled visible tab (not for move-page-*), or a viewport that is none of
 // them; check-* a list or a table that has checked=, whose value is an
 // array or missing and writable (never B008; checkedArray), with at least
-// one row. The caller holds a.mu.
+// one row, or, with single="true", whose value is a key or null, or
+// missing and writable, never for check-all (singleCompatible). The
+// caller holds a.mu.
 func (a *App) compatible(action string, t *layout.Box) bool {
 	switch {
 	case isMove(action):
@@ -544,6 +562,9 @@ func (a *App) compatible(action string, t *layout.Box) bool {
 	case action == "check-toggle" || action == "check-all" || action == "check-none":
 		if (t.Kind != "list" && t.Kind != "table") || a.rows(t) == 0 {
 			return false
+		}
+		if isSingle(t) {
+			return a.singleCompatible(action, t)
 		}
 		arr, ok := a.checkedArray(t)
 		return ok && !a.derivedBlocked(t.Src.Attrs["checked"], append([]any{}, arr...))
@@ -726,6 +747,10 @@ func (a *App) moveViewport(b *layout.Box, action string) {
 // the path and on:change fires with the new array as its value; otherwise
 // nothing is written and nothing fires. The caller holds a.mu.
 func (a *App) check(b *layout.Box, action string) []Event {
+	if isSingle(b) {
+		// One key instead of an array (SPEC v0.4b §6.14.1).
+		return a.checkSingle(b, action)
+	}
 	ls := a.lists[b.ID]
 	old, ok := a.checkedArray(b)
 	if ls == nil || len(ls.keys) == 0 || !ok {

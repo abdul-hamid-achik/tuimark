@@ -148,6 +148,10 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 		}
 	case "input":
 		ev.Value = a.inputValue(b)
+	case "checkbox":
+		// A keymap row fired while a checkbox has focus carries its value
+		// (SPEC v0.4b §8.2, decision 65), keys {}.
+		ev.Value = a.checkboxValue(b)
 	}
 	return ev
 }

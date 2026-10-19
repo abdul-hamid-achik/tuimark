@@ -1,0 +1,6 @@
+<tui>
+  <screen id="main" focus="#dark">
+    <checkbox id="dark" bind="settings.dark" label="Dark mode" on:change="dark_changed"/>
+    <checkbox id="beta" label="Beta"/>
+  </screen>
+</tui>

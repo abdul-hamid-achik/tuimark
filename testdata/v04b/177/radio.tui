@@ -1,0 +1,12 @@
+<tui>
+  <keymap>
+    <bind keys="x" action="check-none" when="#size:focus"/>
+    <bind keys="a" action="check-all"/>
+    <bind keys="a" action="all_fallback"/>
+  </keymap>
+  <screen id="main" focus="#size">
+    <list id="size" each="sizes as it" key="it.id" checked="size" single="true" mark="●" on:change="size_changed">
+      <item><text>{it.label}</text></item>
+    </list>
+  </screen>
+</tui>

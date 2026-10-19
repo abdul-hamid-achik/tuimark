@@ -455,6 +455,43 @@ func TestSwapKeepsATableCursor(t *testing.T) {
 	}
 }
 
+const checkboxDoc = `<tui>
+<keymap><bind keys="ctrl+r" action="probe"/></keymap>
+<screen id="s" focus="#c">
+  <text>MARK</text>
+  <checkbox id="c" label="C"/>
+  <checkbox id="gone" label="G"/>
+</screen>
+</tui>`
+
+// A checkbox without bind keeps its value by id and tag across a reload
+// (SPEC v0.4b §15.9, decision 46); one that changed tag starts unchecked.
+func TestSwapKeepsACheckboxValue(t *testing.T) {
+	a := doc(t, strings.Replace(checkboxDoc, "MARK", "ONE", 1))
+	swaps := make(chan HostSwap)
+	r := startTool(t, a, 30, 8, HostHooks{Swap: swaps}, nil)
+	r.recordAll(a, "probe")
+	r.waitOut(t, "ONE")
+	r.send(t, " \t \x12") // check c, move to gone, check it
+	r.waitFor(t, "probe")
+	next := doc(t, strings.Replace(strings.Replace(checkboxDoc, "MARK", "TWO", 1), `<checkbox id="gone" label="G"/>`, `<text id="gone">G</text>`, 1))
+	r.recordAll(next, "probe")
+	swaps <- HostSwap{App: next, KeepStore: true}
+	r.send(t, "\x12")
+	r.waitFor(t, "probe", "probe")
+	r.waitOut(t, "[x] C")
+	next.mu.Lock()
+	c, gone := next.checks["c"], next.checks["gone"]
+	next.mu.Unlock()
+	if !c || gone {
+		t.Errorf("kept: c %v, gone %v; want true and false", c, gone)
+	}
+	r.in.Close()
+	if err := r.wait(t); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // What is not kept by id and tag starts as on a first frame; without
 // KeepStore the new app keeps its own store.
 func TestSwapDropsWhatChangedTag(t *testing.T) {

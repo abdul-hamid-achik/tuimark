@@ -268,6 +268,8 @@ func rowWidget(b *layout.Box) *layout.Box {
 //  2. a row of a list or a table: the widget takes focus when it is in the
 //     focus cycle and not focused (its on:focus), then its cursor moves to
 //     that row as a user move (on:select when it changed);
+//     2a. a checkbox (SPEC v0.4b): it takes focus when it is in the focus
+//     cycle and not focused (its on:focus), then it toggles;
 //  3. a column with on:click: that action fires; focus does not move;
 //  4. a node with on:click: it takes focus when it is in the focus cycle
 //     and not focused (on:focus), then its on:click fires;
@@ -289,6 +291,14 @@ func (a *App) click(f *Frame, h, root *layout.Box) []Event {
 				evs = append(evs, a.focusTo(w.ID)...)
 			}
 			return append(evs, a.moveList(w, func(_, _, _ int) int { return b.Index })...)
+		case b.Kind == "checkbox":
+			// Rule 2a (SPEC v0.4b §8.5): focus it when it is in the focus
+			// cycle and not focused, then toggle it.
+			var evs []Event
+			if inCycle(f, b) && a.focus != b.ID {
+				evs = append(evs, a.focusTo(b.ID)...)
+			}
+			return append(evs, a.toggleCheckbox(b)...)
 		case b.Kind == "column":
 			if act, ok := b.Src.On["click"]; ok {
 				return []Event{{Action: act, Source: b.ID, Keys: map[string]any{}}}

@@ -130,7 +130,9 @@ func trapMatches(sel *css.Selector, v keyView) bool {
 // table from version="2" on; and tabs in a <tui> without version (SPEC
 // v0.4b §6.10.1, §8.3), where focusable="false" takes it out.
 func focusableIn(kind string, l ir.Lang) bool {
-	if kind == "tabs" {
+	if kind == "tabs" || kind == "checkbox" {
+		// SPEC v0.4b §8.3: in the current language tabs and the form
+		// controls are focusable by default (a checkbox exists only there).
 		return l.V4()
 	}
 	return focusableByDefault(kind)
