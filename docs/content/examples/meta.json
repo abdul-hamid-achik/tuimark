@@ -1,0 +1,13 @@
+{
+  "title": "Examples",
+  "description": "Complete apps from the repository",
+  "root": true,
+  "pages": [
+    "index",
+    "---Guide---",
+    "[Getting started](/guide/getting-started)",
+    "[Widgets](/guide/widgets)",
+    "[The kit](/guide/kit)",
+    "[Go API](/guide/go-api)"
+  ]
+}

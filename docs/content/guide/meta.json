@@ -1,0 +1,27 @@
+{
+  "title": "Guide",
+  "description": "The language and the tools",
+  "root": true,
+  "pages": [
+    "---Start---",
+    "getting-started",
+    "agents",
+    "---The language---",
+    "language",
+    "tcss",
+    "layout",
+    "bindings",
+    "interaction",
+    "widgets",
+    "kit",
+    "---Tools and hosts---",
+    "tools",
+    "run",
+    "go-api",
+    "testing",
+    "host-protocol",
+    "typescript",
+    "mcp",
+    "editors"
+  ]
+}
