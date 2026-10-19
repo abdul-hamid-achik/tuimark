@@ -113,6 +113,49 @@ func TestV019LongCycleIsShortenedAndFast(t *testing.T) {
 	}
 }
 
+// V019 stays near-linear where the shortest cycles are long and the
+// component is not a ring (the F2 review, follow-up): a ring of 10 000
+// with a chord (11.6 s and 746 MB of output before, 1.25 s with a full
+// search per use), and 9 layers of 100 templates, each using every
+// template of the next layer (every shortest cycle has 9 templates, so
+// each use's capped search explores 7 layers until the budget runs out).
+// Each use is named by a simple cycle through it.
+func TestV019FallbackIsFast(t *testing.T) {
+	chord := strings.Replace(ring(10000), `<template id="t0"><use template="t1"/>`, `<template id="t0"><use template="t1"/><use template="t5000"/>`, 1)
+	var layered strings.Builder
+	layered.WriteString("<tui>\n")
+	for l := 0; l < 9; l++ {
+		for k := 0; k < 100; k++ {
+			fmt.Fprintf(&layered, `<template id="l%d_%d">`, l, k)
+			for j := 0; j < 100; j++ {
+				fmt.Fprintf(&layered, `<use template="l%d_%d"/>`, (l+1)%9, j)
+			}
+			layered.WriteString("</template>\n")
+		}
+	}
+	layered.WriteString("<screen id=\"main\"><text>x</text></screen>\n</tui>")
+	for _, c := range []struct {
+		name, src string
+		uses      int
+		first     string
+	}{
+		{"ring with a chord", chord, 10001, `V019 2:19 <use template="t1"> in <template id="t0"> makes a cycle of templates: t0 → t1 → t2 → t3 → t4 → t5 → t6 → t7 → … (9992 more) → t0`},
+		{"dense layers", layered.String(), 90000, `V019 2:21 <use template="l1_0"> in <template id="l0_0"> makes a cycle of templates: l0_0 → l1_0 → l2_0 → l3_0 → l4_0 → l5_0 → l6_0 → l7_0 → … (1 more) → l0_0`},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			var doc *parse.Document
+			el := within(t, 60*time.Second, func() { doc = parse.Parse([]byte(c.src), "app.tui") })
+			if el > time.Second {
+				t.Errorf("took %v", el)
+			}
+			got := useDiags(doc)
+			if len(got) != c.uses || got[0] != c.first {
+				t.Errorf("%d diagnostics, the first %q; want %d, the first %q", len(got), got[0], c.uses, c.first)
+			}
+		})
+	}
+}
+
 // A cycle of 8 templates is named whole, as before; one of 9 names 8 and
 // "(1 more)".
 func TestV019CycleOfEightAndNine(t *testing.T) {

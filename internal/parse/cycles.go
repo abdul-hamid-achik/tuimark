@@ -11,17 +11,19 @@ import (
 // cycleShown templates and the count of the others.
 const cycleShown = 8
 
+// cycleSearchBudget is how many uses the searches for a shortest cycle may
+// follow in one document, all of them together, in the document order of
+// the uses that close the cycles (the F2 review). A use whose search finds
+// a cycle of at most cycleShown templates within it is named by that
+// cycle, the shortest; a use whose search finds none, or is cut off, is
+// named by its component's simple cycle (cycleGraph.fallback). A million
+// steps costs a few milliseconds.
+const cycleSearchBudget = 1000000
+
 // checkCycles reports each <use> of a template's body that closes a cycle
 // of templates (SPEC v0.4b §6.18.3): it is written in a template A and
 // names a template that is A, or holds a use of A through the uses of its
 // body at any depth. Each is one V019, used or not, and never expands.
-//
-// The cycle a V019 names is the shortest one through its use, the uses
-// taken in document order (pathFrom). Finding it for every use of a long
-// cycle is quadratic (ring10000 took 12 s), so the search for each use
-// stops at cycleShown templates, which is all a message names whole; past
-// that, a component that is a single ring has one cycle, read off the
-// ring, and any other component pays a full search for that use.
 func (b *builder) checkCycles() {
 	cp := b.comp
 	n := len(cp.order)
@@ -42,23 +44,18 @@ func (b *builder) checkCycles() {
 			}
 		}
 	}
-	g := newCycleGraph(adj)
+	res := newCycleGraph(adj, cycleSearchBudget).cycles()
 	for i, t := range cp.order {
 		for j, u := range t.uses {
-			s := adj[i][j]
-			if s < 0 || g.comp[s] != g.comp[i] {
+			c := res[i][j]
+			if c == nil {
 				continue
 			}
-			ids, more := g.cycle(i, s)
-			names := make([]string, len(ids), len(ids)+2)
-			for k, x := range ids {
+			names := make([]string, len(c.ids))
+			for k, x := range c.ids {
 				names[k] = cp.order[x].node.ID
 			}
-			if more > 0 {
-				names = append(names, fmt.Sprintf("… (%d more)", more))
-			}
-			names = append(names, t.node.ID)
-			b.errUse(u, "V019", "<use template=%q> in <template id=%q> makes a cycle of templates: %s", u.Attrs["template"], t.node.ID, strings.Join(names, " → "))
+			b.errUse(u, "V019", "<use template=%q> in <template id=%q> makes a cycle of templates: %s", u.Attrs["template"], t.node.ID, cycleText(names, c.more))
 			if cp.cyclic == nil {
 				cp.cyclic = map[*RawNode]bool{}
 			}
@@ -67,93 +64,118 @@ func (b *builder) checkCycles() {
 	}
 }
 
+// cycleText is how a V019 names a cycle: its templates from the one that
+// holds the use (names, at most cycleShown), "… (N more)" when more
+// remain, and the first again.
+func cycleText(names []string, more int) string {
+	out := append([]string{}, names...)
+	if more > 0 {
+		out = append(out, fmt.Sprintf("… (%d more)", more))
+	}
+	return strings.Join(append(out, names[0]), " → ")
+}
+
+// cycleResult is the cycle a V019 names: its first templates, from the one
+// that holds the use (ids, at most cycleShown), and how many more it holds.
+// all is the whole cycle, kept only for the tests (cycleGraph.full).
+type cycleResult struct {
+	ids  []int
+	more int
+	all  []int
+}
+
 // cycleGraph is the graph of templates (adj, by index) with its strongly
 // connected components (comp): a use from A to B closes a cycle exactly
 // when A and B are in one component.
 type cycleGraph struct {
 	adj  [][]int
 	comp []int
-	// ring[c] is set when component c is a single ring: each of its
-	// templates names exactly one template of c (succ), through one use or
-	// several.
-	ring []bool
-	succ []int
-	size []int
-	// The search's state, reused: seen[x] == epoch marks x reached, from
-	// is the template it was reached from.
+	// budget is what is left of cycleSearchBudget.
+	budget int
+	// full keeps each cycle whole in cycleResult.all (tests only).
+	full bool
+	// The shortest search's state, reused: seen[x] == epoch marks x
+	// reached, from is the template it was reached from.
 	seen  []int
 	from  []int
 	epoch int
-	queue []int
 }
 
-func newCycleGraph(adj [][]int) *cycleGraph {
+func newCycleGraph(adj [][]int, budget int) *cycleGraph {
 	n := len(adj)
-	g := &cycleGraph{adj: adj, comp: components(adj), succ: make([]int, n), seen: make([]int, n), from: make([]int, n)}
-	nc := 0
-	for _, c := range g.comp {
-		nc = max(nc, c+1)
-	}
-	g.ring, g.size = make([]bool, nc), make([]int, nc)
-	for c := range g.ring {
-		g.ring[c] = true
-	}
-	for i := range adj {
-		c := g.comp[i]
-		g.size[c]++
-		g.succ[i] = -1
-		for _, s := range adj[i] {
-			if s < 0 || g.comp[s] != c || s == g.succ[i] {
+	return &cycleGraph{adj: adj, comp: components(adj), budget: budget, seen: make([]int, n), from: make([]int, n)}
+}
+
+// cycles finds the cycle of each use that closes one: res[i][j] for the
+// use j of template i, nil for a use that closes none.
+func (g *cycleGraph) cycles() [][]*cycleResult {
+	n := len(g.adj)
+	res := make([][]*cycleResult, n)
+	// later[i] holds the uses of template i the fallback names; byComp
+	// the templates of each component that has one, in document order.
+	later := make([][]int, n)
+	byComp := map[int][]int{}
+	var comps []int
+	for i := range g.adj {
+		res[i] = make([]*cycleResult, len(g.adj[i]))
+		for j, s := range g.adj[i] {
+			if s < 0 || g.comp[s] != g.comp[i] {
 				continue
 			}
-			if g.succ[i] >= 0 {
-				g.ring[c] = false // a second template of c
+			if p := g.shortest(s, i); p != nil {
+				ids := append([]int{i}, p[:len(p)-1]...)
+				r := &cycleResult{ids: ids}
+				if g.full {
+					r.all = ids
+				}
+				res[i][j] = r
+				continue
 			}
-			g.succ[i] = s
-		}
-		if g.succ[i] < 0 {
-			g.ring[c] = false // no use inside c: a template alone
+			c := g.comp[i]
+			if _, ok := byComp[c]; !ok {
+				byComp[c] = nil
+				comps = append(comps, c)
+			}
+			later[i] = append(later[i], j)
 		}
 	}
-	return g
+	if len(comps) == 0 {
+		return res
+	}
+	for i := range g.adj {
+		if _, ok := byComp[g.comp[i]]; ok {
+			byComp[g.comp[i]] = append(byComp[g.comp[i]], i)
+		}
+	}
+	f := newFallback(n)
+	for _, c := range comps {
+		f.run(g, byComp[c], later, res)
+	}
+	return res
 }
 
-// cycle is the cycle the use from t to s closes, from t: the templates it
-// names, at most cycleShown of them, and how many more it holds (0 when it
-// is named whole). The message closes it with t again.
-func (g *cycleGraph) cycle(t, s int) (ids []int, more int) {
-	if p := g.pathFrom(s, t, cycleShown-1); p != nil {
-		return append([]int{t}, p[:len(p)-1]...), 0
-	}
-	c := g.comp[t]
-	if g.ring[c] {
-		ids = []int{t}
-		for x := s; len(ids) < cycleShown; x = g.succ[x] {
-			ids = append(ids, x)
-		}
-		return ids, g.size[c] - cycleShown
-	}
-	p := g.pathFrom(s, t, -1)
-	return append([]int{t}, p[:cycleShown-1]...), len(p) - cycleShown
-}
-
-// pathFrom is the shortest path of templates from s to t, both included,
-// the uses taken in document order, or nil when it is longer than limit
-// uses (limit < 0: no limit). It searches t's component only, which holds
-// every path from s to t.
-func (g *cycleGraph) pathFrom(s, t, limit int) []int {
+// shortest is the shortest path of templates from s to t, both included,
+// the uses taken in document order, when it holds at most cycleShown-1
+// uses and the search for it stays within the budget; else nil. It
+// searches t's component only, which holds every path from s to t.
+func (g *cycleGraph) shortest(s, t int) []int {
 	if s == t {
 		return []int{t}
+	}
+	if g.budget <= 0 {
+		return nil
 	}
 	c := g.comp[t]
 	g.epoch++
 	g.seen[s], g.from[s] = g.epoch, -1
-	g.queue = append(g.queue[:0], s)
-	for depth := 0; len(g.queue) > 0 && (limit < 0 || depth < limit); depth++ {
-		level := g.queue
-		g.queue = nil
+	level := []int{s}
+	for depth := 0; len(level) > 0 && depth < cycleShown-1; depth++ {
+		var next []int
 		for _, x := range level {
 			for _, y := range g.adj[x] {
+				if g.budget--; g.budget < 0 {
+					return nil // cut off
+				}
 				if y < 0 || g.comp[y] != c || g.seen[y] == g.epoch {
 					continue
 				}
@@ -168,11 +190,187 @@ func (g *cycleGraph) pathFrom(s, t, limit int) []int {
 					}
 					return path
 				}
-				g.queue = append(g.queue, y)
+				next = append(next, y)
+			}
+		}
+		level = next
+	}
+	return nil
+}
+
+// fallback names, in time linear in a component (up to a logarithm), one
+// simple cycle through each of its uses (the F2 review). With r the
+// component's first template, an out-tree of shortest paths from r and an
+// in-tree of shortest paths to r, the cycle of the use from A to B is
+// A → B, up the in-tree from B to x, then down the out-tree from x to A,
+// where x is the deepest template on the out-tree path from r to A that is
+// an in-tree ancestor of B (r always is). It is simple: the in-tree part
+// holds in-tree ancestors of B only, and the out-tree part after x none.
+// x is found offline: a walk of the out-tree keeps its path in a segment
+// tree over the in-tree's Euler intervals, each node holding the path's
+// templates whose interval covers it, deepest on top.
+type fallback struct {
+	parentIn, depthIn, tin, tout []int
+	depthOut                     []int
+	kidsIn, kidsOut, radj        [][]int
+	mark                         []int
+	epoch                        int
+}
+
+func newFallback(n int) *fallback {
+	f := &fallback{
+		parentIn: make([]int, n), depthIn: make([]int, n), tin: make([]int, n), tout: make([]int, n),
+		depthOut: make([]int, n), kidsIn: make([][]int, n), kidsOut: make([][]int, n), radj: make([][]int, n),
+		mark: make([]int, n),
+	}
+	return f
+}
+
+// run names the uses later[A] of the templates of one component, members
+// in document order.
+func (f *fallback) run(g *cycleGraph, members []int, later [][]int, res [][]*cycleResult) {
+	c := g.comp[members[0]]
+	r := members[0]
+	for _, v := range members {
+		f.kidsIn[v], f.kidsOut[v], f.radj[v] = f.kidsIn[v][:0], f.kidsOut[v][:0], f.radj[v][:0]
+	}
+	for _, u := range members {
+		for _, y := range g.adj[u] {
+			if y >= 0 && g.comp[y] == c {
+				f.radj[y] = append(f.radj[y], u)
 			}
 		}
 	}
-	return nil
+	// The out-tree: shortest paths from r, the uses in document order.
+	f.epoch++
+	f.mark[r], f.depthOut[r] = f.epoch, 0
+	queue := []int{r}
+	for k := 0; k < len(queue); k++ {
+		x := queue[k]
+		for _, y := range g.adj[x] {
+			if y < 0 || g.comp[y] != c || f.mark[y] == f.epoch {
+				continue
+			}
+			f.mark[y], f.depthOut[y] = f.epoch, f.depthOut[x]+1
+			f.kidsOut[x] = append(f.kidsOut[x], y)
+			queue = append(queue, y)
+		}
+	}
+	// The in-tree: shortest paths to r, and its Euler intervals.
+	f.epoch++
+	f.mark[r], f.depthIn[r], f.parentIn[r] = f.epoch, 0, -1
+	queue = append(queue[:0], r)
+	for k := 0; k < len(queue); k++ {
+		x := queue[k]
+		for _, u := range f.radj[x] {
+			if f.mark[u] == f.epoch {
+				continue
+			}
+			f.mark[u], f.depthIn[u], f.parentIn[u] = f.epoch, f.depthIn[x]+1, x
+			f.kidsIn[x] = append(f.kidsIn[x], u)
+			queue = append(queue, u)
+		}
+	}
+	type frame struct{ v, next int }
+	counter := 0
+	walk := []frame{{v: r}}
+	f.tin[r] = counter
+	counter++
+	for len(walk) > 0 {
+		top := &walk[len(walk)-1]
+		if top.next < len(f.kidsIn[top.v]) {
+			u := f.kidsIn[top.v][top.next]
+			top.next++
+			f.tin[u] = counter
+			counter++
+			walk = append(walk, frame{v: u})
+			continue
+		}
+		f.tout[top.v] = counter
+		walk = walk[:len(walk)-1]
+	}
+	// The walk of the out-tree, its path in the segment tree.
+	m := len(members)
+	seg := make([][]int, 2*m)
+	cover := func(v int, push bool) {
+		for l, h := f.tin[v]+m, f.tout[v]+m; l < h; l, h = l>>1, h>>1 {
+			if l&1 == 1 {
+				if push {
+					seg[l] = append(seg[l], v)
+				} else {
+					seg[l] = seg[l][:len(seg[l])-1]
+				}
+				l++
+			}
+			if h&1 == 1 {
+				h--
+				if push {
+					seg[h] = append(seg[h], v)
+				} else {
+					seg[h] = seg[h][:len(seg[h])-1]
+				}
+			}
+		}
+	}
+	var path []int
+	walk = append(walk[:0], frame{v: r})
+	path = append(path, r)
+	cover(r, true)
+	f.name(g, r, path, seg, later, res)
+	for len(walk) > 0 {
+		top := &walk[len(walk)-1]
+		if top.next < len(f.kidsOut[top.v]) {
+			u := f.kidsOut[top.v][top.next]
+			top.next++
+			walk = append(walk, frame{v: u})
+			path = append(path, u)
+			cover(u, true)
+			f.name(g, u, path, seg, later, res)
+			continue
+		}
+		cover(top.v, false)
+		path = path[:len(path)-1]
+		walk = walk[:len(walk)-1]
+	}
+}
+
+// name names the uses later[a] of a, the walk of the out-tree at a (path
+// is r … a).
+func (f *fallback) name(g *cycleGraph, a int, path []int, seg [][]int, later [][]int, res [][]*cycleResult) {
+	m := len(seg) / 2
+	for _, j := range later[a] {
+		b := g.adj[a][j]
+		x := -1
+		for i := f.tin[b] + m; i >= 1; i >>= 1 {
+			if s := seg[i]; len(s) > 0 {
+				if top := s[len(s)-1]; x < 0 || f.depthOut[top] > f.depthOut[x] {
+					x = top
+				}
+			}
+		}
+		length := 1 + (f.depthIn[b] - f.depthIn[x]) + (f.depthOut[a] - f.depthOut[x])
+		limit := cycleShown
+		if g.full {
+			limit = length
+		}
+		ids := []int{a}
+		for y := b; len(ids) < limit && y != a; y = f.parentIn[y] {
+			ids = append(ids, y)
+			if y == x {
+				break
+			}
+		}
+		if x != a {
+			for d := f.depthOut[x] + 1; d < f.depthOut[a] && len(ids) < limit; d++ {
+				ids = append(ids, path[d])
+			}
+		}
+		r := &cycleResult{ids: ids[:min(len(ids), cycleShown)], more: max(0, length-cycleShown)}
+		if g.full {
+			r.all = ids
+		}
+		res[a][j] = r
+	}
 }
 
 // components numbers the strongly connected components of adj (Tarjan's
