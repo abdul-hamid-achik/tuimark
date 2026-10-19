@@ -1,0 +1,10 @@
+<tui>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="/" action="find" label="find"/>
+  </keymap>
+  <screen id="main">
+    <col id="body"><text>body</text></col>
+    <hints id="keys"/>
+  </screen>
+</tui>

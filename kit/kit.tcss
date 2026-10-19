@@ -39,8 +39,9 @@
  * adds its own. */
 .k-btn.ghost { color: $muted; }
 /* Focus: an inverted, bold, underlined label that no modifier shares with
- * its idle look. */
-.k-btn:focus { color: $on-accent; background: $focus; bold: true; underline: true; }
+ * its idle look. Its colors are already inverted, so it turns off the
+ * built-in focus look of a <tui> without version (button:focus reverses). */
+.k-btn:focus { reverse: false; color: $on-accent; background: $focus; bold: true; underline: true; }
 .k-btn.primary:focus { color: $bg; background: $fg; }
 .k-btn.danger:focus { color: $bg; background: $fg; }
 .k-btn.ghost:focus { color: $fg; background: $sel; }

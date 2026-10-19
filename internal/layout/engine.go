@@ -124,7 +124,9 @@ func resolveRoot(s ir.Scalar, full int) int {
 }
 
 // resolveModal sizes a modal on one axis: cells, % of the root, auto
-// (intrinsic; cross is the size on the other axis), or 80% when unsized.
+// (intrinsic; cross is the size on the other axis), or, when unsized, 80%
+// in a pinned document and its content size capped in the current
+// language (modalContentSize).
 func resolveModal(e *Engine, m *Box, horizontal bool, full, cross int) int {
 	s := m.Style.Height
 	if horizontal {
@@ -143,6 +145,10 @@ func resolveModal(e *Engine, m *Box, horizontal bool, full, cross int) int {
 			m.autoH = true
 		}
 		return e.intrinsic(m, horizontal, cross)
+	}
+	if e.Lang.V4() {
+		// Sized by its content, capped (SPEC v0.4b §11.3).
+		return e.modalContentSize(m, horizontal, full, cross)
 	}
 	return percent(full, ir.Scalar{Kind: ir.Pct, N: 80})
 }
@@ -559,7 +565,7 @@ func (e *Engine) crossSize(parent, k *Box, row bool, cross, mainSize int, fit, r
 	case ir.Pct:
 		if parentAuto {
 			if report {
-				e.report(k, ir.Error, "L002", "%s: %s is a percent of a parent sized by its content (auto); give the parent a size", axisName(horizontal), s)
+				e.reportPctOfAuto(parent, k, horizontal, s)
 			}
 			v = e.intrinsic(k, horizontal, max(mainSize, 0))
 		} else {
@@ -635,10 +641,15 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 	}
 	for i := range specs {
 		if specs[i].Kind == ir.Unset {
-			if anyFr {
+			if anyFr && e.siblingFr(kids[i]) {
 				specs[i] = ir.Scalar{Kind: ir.Fr, N: 1}
 			} else {
 				specs[i] = ir.Scalar{Kind: ir.Auto}
+				if report {
+					// Sized by its content by §11.2: L009 names the cause
+					// when it cuts this child (cutCause).
+					kids[i].markUnsized(horizontal)
+				}
 			}
 		}
 	}
@@ -664,7 +675,7 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 		}
 		if s.Kind == ir.Pct && parentAuto {
 			if report {
-				e.report(k, ir.Error, "L002", "%s: %s is a percent of a parent sized by its content (auto); give the parent a size", axisName(horizontal), s)
+				e.reportPctOfAuto(b, k, horizontal, s)
 			}
 			s = ir.Scalar{Kind: ir.Auto}
 		}
@@ -736,11 +747,18 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 				ws = append(ws, weights[i])
 			}
 		}
-		for j, take := range frSplit(remain, ws) {
-			k := kids[frs[j]]
-			ms, me := margins(k, horizontal)
-			inner := clampAxis(k, horizontal, max(0, take-ms-me), main)
-			sizes[frs[j]] = inner + ms + me
+		if e.Lang.V4() {
+			// min and max take part in the split (SPEC v0.4b §11.4).
+			frResolve(kids, frs, weights, sizes, remain, horizontal, main)
+		} else {
+			// A pinned document clamps each share after one split, and
+			// nothing is shared again (SPEC v0.4b §11.4, §29 item 23).
+			for j, take := range frSplit(remain, ws) {
+				k := kids[frs[j]]
+				ms, me := margins(k, horizontal)
+				inner := clampAxis(k, horizontal, max(0, take-ms-me), main)
+				sizes[frs[j]] = inner + ms + me
+			}
 		}
 	}
 	for i := range sizes {
@@ -1031,9 +1049,13 @@ func (b *Box) scrollsOn(horizontal bool) bool {
 // its other axes, holding a child that is (in flow or docked; modals are
 // never children). Leaves never are. Computed bottom-up once per frame.
 func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
-	if !b.IsContainer() || b.Kind == "hints" {
-		// A hints is a leaf for shrinking: its items never shrink (SPEC
-		// §6.12).
+	if b.Kind == "hints" {
+		// A hints is a leaf for shrinking in a pinned document (its items
+		// never shrink, SPEC §6.12), and shrinkable along its items' axis
+		// in the current language (v0.4b).
+		return e.hintsShrinkable(b, horizontal)
+	}
+	if !b.IsContainer() {
 		return false
 	}
 	if b.scrollsOn(horizontal) {
@@ -1240,7 +1262,7 @@ func (e *Engine) checkChildrenClip(n *Box) {
 // shown of total cells, and marks n Clipped "children".
 func (e *Engine) reportClip(n, c *Box, axis string, shown, total int) {
 	if e.clipFirst(n, "L009") {
-		e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; give it room, or write overflow: hidden to keep the cut", clipRef(c), axis, shown, total)
+		e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; %s, or write overflow: hidden to keep the cut", clipRef(c), axis, shown, total, e.cutCause(c, axis == "x"))
 	}
 	n.Clipped = "children"
 }
@@ -1391,7 +1413,7 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 		}
 	case "input":
 		if horizontal {
-			v = max(Width(InputShown(b)), Width(b.Placeholder)) + 1
+			v = e.inputWidth(b)
 		} else {
 			v = 1
 		}
@@ -1439,6 +1461,11 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 			}
 			v = e.contentIntrinsic(b, horizontal, max(0, inner))
 		}
+	}
+	if horizontal {
+		// A modal's title counts in the current language (SPEC v0.4b
+		// §11.3 item 2): 0 otherwise.
+		return max(v+frame, e.modalTitleWidth(b))
 	}
 	return v + frame
 }
