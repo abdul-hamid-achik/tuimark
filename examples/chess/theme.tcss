@@ -1,0 +1,181 @@
+:root {
+  --bg: #14171c;
+  --fg: #d7dce2;
+  --muted: #7d8590;
+  --accent: #58a6ff;
+  --ok: #56b870;
+  --warn: #e3b341;
+  --danger: #f2615c;
+  --border: #30363d;
+  --panel: #1b1f26;
+  /* The board is a physical object: the same in both themes. Every square
+     state keeps at least 3:1 against both piece colours (a test checks). */
+  --sq-light: #7f93ab;
+  --sq-dark: #4f6482;
+  --pw: #ffffff;
+  --pb: #06080b;
+  --last-light: #928f3c;
+  --last-dark: #747227;
+  --sel: #b97d14;
+  --cursor: #3a7fd0;
+  --cap: #c0443f;
+  --chk: #d4302a;
+  --hint-light: #2f9a73;
+  --hint-dark: #1f7b59;
+  --tgt-light: #0b3d27;
+  --tgt-dark: #c4f7dc;
+  /* The evaluation bar: white's share is light on a dark track, as on a
+     board, whatever the theme. */
+  --bar-white: #f1f3f6;
+  --bar-track: #2a2f38;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --fg: #1f2328;
+    --muted: #6a737d;
+    --accent: #0b64c0;
+    --ok: #1f7a3a;
+    --warn: #8a5a00;
+    --danger: #c3261f;
+    --border: #d0d7de;
+    --panel: #eef1f4;
+    /* A white share in pure white would vanish into this background. */
+    --bar-white: #cdd5de;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+.muted { color: $muted; }
+
+#top { height: 1; gap: 2; background: $panel; padding: 0 1; }
+.brand { color: $accent; bold: true; }
+.mode { color: $muted; }
+.notice { color: $danger; bold: true; wrap: truncate; width: 1fr; }
+.think { color: $warn; bold: true; }
+.compact { display: none; wrap: truncate; width: 1fr; }
+.cclk { display: none; bold: true; wrap: truncate; }
+.compact.check { color: $warn; }
+.compact.over { color: $danger; bold: true; }
+
+#stage { height: 1fr; gap: 2; padding: 0 1; }
+
+/* The board: 8 x 8 cells, a rank label to the left, files below. The
+   compact board (cells of 3 x 1) is the default; see the media queries. */
+#boardbox { width: 26; height: auto; }
+#board { height: auto; }
+.rank { height: 1; }
+.rl { width: 2; color: $muted; content-align: end; }
+.sq { width: 3; height: 1; content-align: center; bold: true; }
+.sq.light { background: $sq-light; }
+.sq.dark { background: $sq-dark; }
+.sq.white { color: $pw; }
+.sq.black { color: $pb; }
+.sq.light.tgt { color: $tgt-light; }
+.sq.dark.tgt { color: $tgt-dark; }
+/* The states paint over the square in this order, the last rule winning at
+   equal specificity: last move, hint, capture, selection, check, cursor. */
+.sq.light.last { background: $last-light; }
+.sq.dark.last { background: $last-dark; }
+.sq.light.hint { background: $hint-light; }
+.sq.dark.hint { background: $hint-dark; }
+.sq.light.cap, .sq.dark.cap { background: $cap; }
+.sq.light.sel, .sq.dark.sel { background: $sel; }
+.sq.light.chk, .sq.dark.chk { background: $chk; }
+.sq.light.cur, .sq.dark.cur { background: $cursor; }
+#files { height: 1; }
+.fl { width: 3; color: $muted; content-align: center; }
+#boardbox:focus-within > #files > .fl { color: $accent; }
+
+#side { width: 1fr; }
+.player { height: 2; padding: 0 1; }
+.player.turn { background: $panel; }
+.pl { height: 1; gap: 1; }
+.mark { width: 1; color: $accent; bold: true; }
+.glyph { width: 1; }
+.glyph.white { color: $pw; background: $sq-dark; bold: true; }
+.glyph.black { color: $pb; background: $sq-light; bold: true; }
+.name { bold: true; wrap: truncate; }
+.clk { bold: true; }
+.clk.run { color: $ok; }
+.clk.low { color: $danger; }
+.takenrow { height: 1; gap: 1; padding: 0 3; }
+.taken { wrap: truncate; bold: true; }
+.taken.white { color: $pw; background: $sq-dark; }
+.taken.black { color: $pb; background: $sq-light; }
+.lead { color: $muted; bold: true; }
+
+#moves { height: 1fr; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+.mv { height: 1; gap: 1; }
+.mn { width: 4; color: $muted; }
+.mw, .mb { width: 8; }
+.now { color: $accent; bold: true; }
+list > item:selected { reverse: false; }
+
+#status { height: 2; padding: 0 1; }
+.st { bold: true; wrap: truncate; }
+.sub { color: $muted; wrap: truncate; }
+#status.check > .st { color: $warn; }
+#status.over > .st { color: $danger; }
+#status.review > .st { color: $accent; }
+
+#evalrow { height: 1; gap: 1; padding: 0 1; }
+#evalbar { width: 1fr; color: $bar-white; background: $bar-track; }
+.evl { width: 6; bold: true; content-align: end; }
+
+#engine { height: 4; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+.eng { wrap: truncate; }
+.pv { color: $muted; wrap: truncate; }
+
+#cmdbar { height: 1; gap: 1; padding: 0 1; }
+.prompt { color: $muted; }
+#cmd { width: 1fr; }
+#cmdbar:focus-within > .prompt { color: $accent; bold: true; }
+
+#keys { height: 1; background: $panel; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#help { width: 90%; max-width: 72; height: auto; max-height: 90%; }
+#help-scroll { height: auto; max-height: 14; }
+#help-scroll > text { wrap: wrap; }
+#newgame { width: 44; height: auto; }
+#resign { width: 36; height: auto; }
+#promo { width: 40; height: auto; }
+#pgn { width: 90%; max-width: 80; height: 80%; }
+#pgn-scroll { height: 1fr; }
+#pgn-scroll > text { wrap: wrap; }
+.actions { height: auto; gap: 2; justify: center; }
+.opt { height: 1; gap: 1; }
+.opt:focus { reverse: true; }
+.opt > .k { width: 1; color: $accent; bold: true; }
+.opt > .lbl { width: 9; color: $muted; }
+.opt > .v { bold: true; }
+
+/* Room for the big board: cells of 5 x 2, 42 columns and 17 rows. */
+@media (min-cols: 80) {
+  #boardbox { width: 42; }
+  .rank { height: 2; }
+  .sq { width: 5; height: 2; }
+  .fl { width: 5; }
+}
+
+/* Too short for it, whatever the width. */
+@media (max-rows: 19) {
+  #boardbox { width: 26; }
+  .rank { height: 1; }
+  .sq { width: 3; height: 1; }
+  .fl { width: 3; }
+  #engine { display: none; }
+}
+
+/* No room for the side panel: the top line carries the status. */
+@media (max-cols: 59) {
+  #side { display: none; }
+  .mode, .brand, #topgap { display: none; }
+  .compact { display: flex; }
+  .cclk { display: flex; color: $muted; }
+}

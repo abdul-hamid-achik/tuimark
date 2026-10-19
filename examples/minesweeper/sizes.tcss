@@ -1,0 +1,288 @@
+/* Written by gen_test.go (UPDATE_TUI=1 go test ./examples/minesweeper -run TestGenerated); do not edit by hand.
+   #app carries ncN for the columns the current board needs (the board in its frame, at least 36) and nhN for the rows (the board, the status line, the key hints). */
+
+/* 36 columns: the side panel (30 columns more) fits from 66. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 65) {
+  #app.nc36 > #stage > #side { display: none; }
+  #app.nc36 > #top > #compact { display: flex; }
+  #app.nc36 > #top > .brand { display: none; }
+}
+@media (max-cols: 65) {
+  #app.nc36 > #top > .level { display: none; }
+}
+@media (max-cols: 35) {
+  #app.nc36 > #stage { display: none; }
+  #app.nc36 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc36 > #top > #compact { display: none; }
+}
+
+/* 38 columns: the side panel (30 columns more) fits from 68. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 67) {
+  #app.nc38 > #stage > #side { display: none; }
+  #app.nc38 > #top > #compact { display: flex; }
+  #app.nc38 > #top > .brand { display: none; }
+}
+@media (max-cols: 67) {
+  #app.nc38 > #top > .level { display: none; }
+}
+@media (max-cols: 37) {
+  #app.nc38 > #stage { display: none; }
+  #app.nc38 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc38 > #top > #compact { display: none; }
+}
+
+/* 40 columns: the side panel (30 columns more) fits from 70. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 69) {
+  #app.nc40 > #stage > #side { display: none; }
+  #app.nc40 > #top > #compact { display: flex; }
+  #app.nc40 > #top > .brand { display: none; }
+}
+@media (max-cols: 69) {
+  #app.nc40 > #top > .level { display: none; }
+}
+@media (max-cols: 39) {
+  #app.nc40 > #stage { display: none; }
+  #app.nc40 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc40 > #top > #compact { display: none; }
+}
+
+/* 42 columns: the side panel (30 columns more) fits from 72. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 71) {
+  #app.nc42 > #stage > #side { display: none; }
+  #app.nc42 > #top > #compact { display: flex; }
+  #app.nc42 > #top > .brand { display: none; }
+}
+@media (max-cols: 71) {
+  #app.nc42 > #top > .level { display: none; }
+}
+@media (max-cols: 41) {
+  #app.nc42 > #stage { display: none; }
+  #app.nc42 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc42 > #top > #compact { display: none; }
+}
+
+/* 44 columns: the side panel (30 columns more) fits from 74. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 73) {
+  #app.nc44 > #stage > #side { display: none; }
+  #app.nc44 > #top > #compact { display: flex; }
+  #app.nc44 > #top > .brand { display: none; }
+}
+@media (max-cols: 73) {
+  #app.nc44 > #top > .level { display: none; }
+}
+@media (max-cols: 43) {
+  #app.nc44 > #stage { display: none; }
+  #app.nc44 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc44 > #top > #compact { display: none; }
+}
+
+/* 46 columns: the side panel (30 columns more) fits from 76. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 75) {
+  #app.nc46 > #stage > #side { display: none; }
+  #app.nc46 > #top > #compact { display: flex; }
+  #app.nc46 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc46 > #top > .level { display: none; }
+}
+@media (max-cols: 45) {
+  #app.nc46 > #stage { display: none; }
+  #app.nc46 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc46 > #top > #compact { display: none; }
+}
+
+/* 48 columns: the side panel (30 columns more) fits from 78. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 77) {
+  #app.nc48 > #stage > #side { display: none; }
+  #app.nc48 > #top > #compact { display: flex; }
+  #app.nc48 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc48 > #top > .level { display: none; }
+}
+@media (max-cols: 47) {
+  #app.nc48 > #stage { display: none; }
+  #app.nc48 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc48 > #top > #compact { display: none; }
+}
+
+/* 50 columns: the side panel (30 columns more) fits from 80. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 79) {
+  #app.nc50 > #stage > #side { display: none; }
+  #app.nc50 > #top > #compact { display: flex; }
+  #app.nc50 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc50 > #top > .level { display: none; }
+}
+@media (max-cols: 49) {
+  #app.nc50 > #stage { display: none; }
+  #app.nc50 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc50 > #top > #compact { display: none; }
+}
+
+/* 52 columns: the side panel (30 columns more) fits from 82. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 81) {
+  #app.nc52 > #stage > #side { display: none; }
+  #app.nc52 > #top > #compact { display: flex; }
+  #app.nc52 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc52 > #top > .level { display: none; }
+}
+@media (max-cols: 51) {
+  #app.nc52 > #stage { display: none; }
+  #app.nc52 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc52 > #top > #compact { display: none; }
+}
+
+/* 54 columns: the side panel (30 columns more) fits from 84. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 83) {
+  #app.nc54 > #stage > #side { display: none; }
+  #app.nc54 > #top > #compact { display: flex; }
+  #app.nc54 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc54 > #top > .level { display: none; }
+}
+@media (max-cols: 53) {
+  #app.nc54 > #stage { display: none; }
+  #app.nc54 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc54 > #top > #compact { display: none; }
+}
+
+/* 56 columns: the side panel (30 columns more) fits from 86. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 85) {
+  #app.nc56 > #stage > #side { display: none; }
+  #app.nc56 > #top > #compact { display: flex; }
+  #app.nc56 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc56 > #top > .level { display: none; }
+}
+@media (max-cols: 55) {
+  #app.nc56 > #stage { display: none; }
+  #app.nc56 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc56 > #top > #compact { display: none; }
+}
+
+/* 58 columns: the side panel (30 columns more) fits from 88. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 87) {
+  #app.nc58 > #stage > #side { display: none; }
+  #app.nc58 > #top > #compact { display: flex; }
+  #app.nc58 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc58 > #top > .level { display: none; }
+}
+@media (max-cols: 57) {
+  #app.nc58 > #stage { display: none; }
+  #app.nc58 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc58 > #top > #compact { display: none; }
+}
+
+/* 60 columns: the side panel (30 columns more) fits from 90. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 89) {
+  #app.nc60 > #stage > #side { display: none; }
+  #app.nc60 > #top > #compact { display: flex; }
+  #app.nc60 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc60 > #top > .level { display: none; }
+}
+@media (max-cols: 59) {
+  #app.nc60 > #stage { display: none; }
+  #app.nc60 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc60 > #top > #compact { display: none; }
+}
+
+/* 62 columns: the side panel (30 columns more) fits from 92. Below that the counters move into the status line, which drops the brand and, up to 75 columns, the level label. */
+@media (max-cols: 91) {
+  #app.nc62 > #stage > #side { display: none; }
+  #app.nc62 > #top > #compact { display: flex; }
+  #app.nc62 > #top > .brand { display: none; }
+}
+@media (max-cols: 75) {
+  #app.nc62 > #top > .level { display: none; }
+}
+@media (max-cols: 61) {
+  #app.nc62 > #stage { display: none; }
+  #app.nc62 > #toosmall { display: flex; }
+}
+@media (max-cols: 35) {
+  #app.nc62 > #top > #compact { display: none; }
+}
+
+/* 13 rows. */
+@media (max-rows: 12) {
+  #app.nh13 > #stage { display: none; }
+  #app.nh13 > #toosmall { display: flex; }
+}
+
+/* 14 rows. */
+@media (max-rows: 13) {
+  #app.nh14 > #stage { display: none; }
+  #app.nh14 > #toosmall { display: flex; }
+}
+
+/* 15 rows. */
+@media (max-rows: 14) {
+  #app.nh15 > #stage { display: none; }
+  #app.nh15 > #toosmall { display: flex; }
+}
+
+/* 16 rows. */
+@media (max-rows: 15) {
+  #app.nh16 > #stage { display: none; }
+  #app.nh16 > #toosmall { display: flex; }
+}
+
+/* 17 rows. */
+@media (max-rows: 16) {
+  #app.nh17 > #stage { display: none; }
+  #app.nh17 > #toosmall { display: flex; }
+}
+
+/* 18 rows. */
+@media (max-rows: 17) {
+  #app.nh18 > #stage { display: none; }
+  #app.nh18 > #toosmall { display: flex; }
+}
+
+/* 19 rows. */
+@media (max-rows: 18) {
+  #app.nh19 > #stage { display: none; }
+  #app.nh19 > #toosmall { display: flex; }
+}
+
+/* 20 rows. */
+@media (max-rows: 19) {
+  #app.nh20 > #stage { display: none; }
+  #app.nh20 > #toosmall { display: flex; }
+}

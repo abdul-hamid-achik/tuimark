@@ -38,7 +38,23 @@ line.
 
   Each has a `-demo COLSxROWS` flag that replays a scripted session on a
   fake clock and prints its frames as JSON lines.
-- The docs site's Examples page shows those four as animations: the
+- **Five more games**, built the same way and with the same `-demo` flag:
+  - `chess`: legal move generation checked by perft, SAN, UCI, FEN and PGN,
+    an alpha-beta engine with six levels that thinks in a goroutine, four
+    modes (against the computer, two players, computer against computer,
+    review), clocks, undo and redo, hints, promotion, resign and draw
+    claims, and a board of 64 static clickable cells.
+  - `tetris`: SRS rotation with wall kicks, a 7-bag, hold, a ghost piece,
+    lock delay, a line-clear flash, T-spins, combos, and an autopilot.
+  - `minesweeper`: beginner, intermediate, expert and custom boards, a safe
+    first reveal, flood fill, chording, flags and question marks, and a
+    flag mode for the mouse.
+  - `2048`: a 3×3 to 6×6 board, undo, win and game-over modals, highlights
+    for merged and new tiles, and an expectimax autopilot.
+  - `sudoku`: a generator whose puzzles have one solution and are graded by
+    the solving techniques they need, notes, hints, a check, conflicts,
+    undo and redo, and a clickable number pad.
+- The docs site's Examples page shows those nine as animations: the
   generator renders the `-demo` frames as one CSS-animated SVG per theme
   (only the cells that change are stored per frame), and each has a pause
   button. Readers who prefer reduced motion start on the last frame.

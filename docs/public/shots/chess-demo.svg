@@ -1,0 +1,1045 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="988" height="508" viewBox="0 0 988 508" role="img" aria-label="chess: Morphy's Opera Game replayed move by move, the last move highlighted on the board and the move list growing, ending on 17.Rd8 checkmate">
+<title>chess: Morphy's Opera Game replayed move by move, the last move highlighted on the board and the move list growing, ending on 17.Rd8 checkmate</title>
+<style>@keyframes ka0{0%{visibility:visible}64.825%{visibility:hidden}67.403%{visibility:visible}}.a0{animation:ka0 10.86s step-end infinite}@keyframes ka1{0%{visibility:visible}59.669%{visibility:hidden}62.247%{visibility:visible}82.873%{visibility:hidden}88.029%{visibility:visible}}.a1{animation:ka1 10.86s step-end infinite}@keyframes ka2{0%{visibility:visible}18.416%{visibility:hidden}20.994%{visibility:visible}}.a2{animation:ka2 10.86s step-end infinite}@keyframes ka3{0%{visibility:visible}39.042%{visibility:hidden}41.621%{visibility:visible}64.825%{visibility:hidden}67.403%{visibility:visible}69.982%{visibility:hidden}72.56%{visibility:visible}88.029%{visibility:hidden}}.a3{animation:ka3 10.86s step-end infinite}@keyframes ka4{0%{visibility:visible}57.09%{visibility:hidden}59.669%{visibility:visible}77.716%{visibility:hidden}80.295%{visibility:visible}82.873%{visibility:hidden}85.451%{visibility:visible}88.029%{visibility:hidden}}.a4{animation:ka4 10.86s step-end infinite}@keyframes ka5{0%{visibility:visible}33.886%{visibility:hidden}36.464%{visibility:visible}}.a5{animation:ka5 10.86s step-end infinite}@keyframes ka6{0%{visibility:visible}49.355%{visibility:hidden}51.934%{visibility:visible}}.a6{animation:ka6 10.86s step-end infinite}@keyframes ka7{0%{visibility:visible}44.199%{visibility:hidden}46.777%{visibility:visible}}.a7{animation:ka7 10.86s step-end infinite}@keyframes ka8{0%{visibility:visible}13.26%{visibility:hidden}15.838%{visibility:visible}59.669%{visibility:hidden}62.247%{visibility:visible}67.403%{visibility:hidden}72.56%{visibility:visible}77.716%{visibility:hidden}82.873%{visibility:visible}85.451%{visibility:hidden}88.029%{visibility:visible}}.a8{animation:ka8 10.86s step-end infinite}@keyframes ka9{0%{visibility:visible}8.103%{visibility:hidden}10.681%{visibility:visible}39.042%{visibility:hidden}41.621%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}}.a9{animation:ka9 10.86s step-end infinite}@keyframes ka10{0%{visibility:visible}44.199%{visibility:hidden}46.777%{visibility:visible}54.512%{visibility:hidden}57.09%{visibility:visible}}.a10{animation:ka10 10.86s step-end infinite}@keyframes ka11{0%{visibility:visible}13.26%{visibility:hidden}15.838%{visibility:visible}28.729%{visibility:hidden}31.308%{visibility:visible}}.a11{animation:ka11 10.86s step-end infinite}@keyframes ka12{0%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}}.a12{animation:ka12 10.86s step-end infinite}@keyframes ka13{0%{visibility:visible}33.886%{visibility:hidden}36.464%{visibility:visible}80.295%{visibility:hidden}82.873%{visibility:visible}}.a13{animation:ka13 10.86s step-end infinite}@keyframes ka14{0%{visibility:visible}49.355%{visibility:hidden}59.669%{visibility:visible}77.716%{visibility:hidden}80.295%{visibility:visible}}.a14{animation:ka14 10.86s step-end infinite}@keyframes ka15{0%{visibility:visible}8.103%{visibility:hidden}10.681%{visibility:visible}20.994%{visibility:hidden}23.573%{visibility:visible}28.729%{visibility:hidden}31.308%{visibility:visible}}.a15{animation:ka15 10.86s step-end infinite}@keyframes ka16{0%{visibility:visible}46.777%{visibility:hidden}49.355%{visibility:visible}}.a16{animation:ka16 10.86s step-end infinite}@keyframes ka17{0%{visibility:visible}31.308%{visibility:hidden}33.886%{visibility:visible}57.09%{visibility:hidden}59.669%{visibility:visible}}.a17{animation:ka17 10.86s step-end infinite}@keyframes ka18{0%{visibility:visible}15.838%{visibility:hidden}18.416%{visibility:visible}20.994%{visibility:hidden}23.573%{visibility:visible}}.a18{animation:ka18 10.86s step-end infinite}@keyframes ka19{0%{visibility:visible}5.525%{visibility:hidden}8.103%{visibility:visible}}.a19{animation:ka19 10.86s step-end infinite}@keyframes ka20{0%{visibility:visible}18.416%{visibility:hidden}20.994%{visibility:visible}23.573%{visibility:hidden}26.151%{visibility:visible}}.a20{animation:ka20 10.86s step-end infinite}@keyframes ka21{0%{visibility:visible}36.464%{visibility:hidden}39.042%{visibility:visible}82.873%{visibility:hidden}85.451%{visibility:visible}}.a21{animation:ka21 10.86s step-end infinite}@keyframes ka22{0%{visibility:visible}41.621%{visibility:hidden}44.199%{visibility:visible}51.934%{visibility:hidden}54.512%{visibility:visible}}.a22{animation:ka22 10.86s step-end infinite}@keyframes ka23{0%{visibility:visible}10.681%{visibility:hidden}13.26%{visibility:visible}23.573%{visibility:hidden}28.729%{visibility:visible}36.464%{visibility:hidden}39.042%{visibility:visible}}.a23{animation:ka23 10.86s step-end infinite}@keyframes ka24{0%{visibility:visible}15.838%{visibility:hidden}18.416%{visibility:visible}}.a24{animation:ka24 10.86s step-end infinite}@keyframes ka25{0%{visibility:visible}5.525%{visibility:hidden}8.103%{visibility:visible}10.681%{visibility:hidden}13.26%{visibility:visible}15.838%{visibility:hidden}18.416%{visibility:visible}20.994%{visibility:hidden}23.573%{visibility:visible}26.151%{visibility:hidden}28.729%{visibility:visible}31.308%{visibility:hidden}33.886%{visibility:visible}36.464%{visibility:hidden}39.042%{visibility:visible}41.621%{visibility:hidden}44.199%{visibility:visible}46.777%{visibility:hidden}49.355%{visibility:visible}51.934%{visibility:hidden}54.512%{visibility:visible}57.09%{visibility:hidden}59.669%{visibility:visible}62.247%{visibility:hidden}64.825%{visibility:visible}67.403%{visibility:hidden}69.982%{visibility:visible}72.56%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}80.295%{visibility:visible}82.873%{visibility:hidden}85.451%{visibility:visible}88.029%{visibility:hidden}}.a25{animation:ka25 10.86s step-end infinite}@keyframes ka26{0%{visibility:visible}5.525%{visibility:hidden}8.103%{visibility:visible}10.681%{visibility:hidden}13.26%{visibility:visible}15.838%{visibility:hidden}18.416%{visibility:visible}20.994%{visibility:hidden}}.a26{animation:ka26 10.86s step-end infinite}@keyframes ka27{0%{visibility:visible}41.621%{visibility:hidden}44.199%{visibility:visible}}.a27{animation:ka27 10.86s step-end infinite}@keyframes ka28{0%{visibility:visible}46.777%{visibility:hidden}49.355%{visibility:visible}62.247%{visibility:hidden}64.825%{visibility:visible}}.a28{animation:ka28 10.86s step-end infinite}@keyframes ka29{0%{visibility:visible}26.151%{visibility:hidden}28.729%{visibility:visible}67.403%{visibility:hidden}69.982%{visibility:visible}72.56%{visibility:hidden}75.138%{visibility:visible}88.029%{visibility:hidden}}.a29{animation:ka29 10.86s step-end infinite}@keyframes ka30{0%{visibility:visible}62.247%{visibility:hidden}64.825%{visibility:visible}}.a30{animation:ka30 10.86s step-end infinite}@keyframes ka31{0%{visibility:visible}31.308%{visibility:hidden}33.886%{visibility:visible}}.a31{animation:ka31 10.86s step-end infinite}@keyframes ka32{0%{visibility:visible}10.681%{visibility:hidden}13.26%{visibility:visible}}.a32{animation:ka32 10.86s step-end infinite}@keyframes ka33{0%{visibility:visible}72.56%{visibility:hidden}75.138%{visibility:visible}}.a33{animation:ka33 10.86s step-end infinite}@keyframes ka34{0%{visibility:visible}82.873%{visibility:hidden}88.029%{visibility:visible}}.a34{animation:ka34 10.86s step-end infinite}@keyframes ka35{0%{visibility:visible}72.56%{visibility:hidden}75.138%{visibility:visible}82.873%{visibility:hidden}88.029%{visibility:visible}}.a35{animation:ka35 10.86s step-end infinite}@keyframes ka36{0%{visibility:visible}59.669%{visibility:hidden}62.247%{visibility:visible}67.403%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}88.029%{visibility:visible}}.a36{animation:ka36 10.86s step-end infinite}@keyframes ka37{0%{visibility:visible}59.669%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}88.029%{visibility:visible}}.a37{animation:ka37 10.86s step-end infinite}@keyframes ka38{0%{visibility:visible}5.525%{visibility:hidden}8.103%{visibility:visible}10.681%{visibility:hidden}51.934%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}88.029%{visibility:hidden}}.a38{animation:ka38 10.86s step-end infinite}@keyframes ka39{0%{visibility:visible}10.681%{visibility:hidden}13.26%{visibility:visible}15.838%{visibility:hidden}36.464%{visibility:visible}39.042%{visibility:hidden}51.934%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}88.029%{visibility:hidden}}.a39{animation:ka39 10.86s step-end infinite}@keyframes ka40{0%{visibility:visible}31.308%{visibility:hidden}33.886%{visibility:visible}39.042%{visibility:hidden}51.934%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}88.029%{visibility:hidden}}.a40{animation:ka40 10.86s step-end infinite}@keyframes ka41{0%{visibility:visible}39.042%{visibility:hidden}41.621%{visibility:visible}44.199%{visibility:hidden}51.934%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}88.029%{visibility:hidden}}.a41{animation:ka41 10.86s step-end infinite}@keyframes ka42{0%{visibility:visible}39.042%{visibility:hidden}41.621%{visibility:visible}88.029%{visibility:hidden}}.a42{animation:ka42 10.86s step-end infinite}@keyframes ka43{0%{visibility:visible}88.029%{visibility:hidden}}.a43{animation:ka43 10.86s step-end infinite}@keyframes ka44{0%{visibility:visible}64.825%{visibility:hidden}}.a44{animation:ka44 10.86s step-end infinite}@keyframes ka45{0%{visibility:visible}59.669%{visibility:hidden}85.451%{visibility:visible}}.a45{animation:ka45 10.86s step-end infinite}@keyframes ka46{0%{visibility:visible}18.416%{visibility:hidden}}.a46{animation:ka46 10.86s step-end infinite}@keyframes ka47{0%{visibility:visible}39.042%{visibility:hidden}}.a47{animation:ka47 10.86s step-end infinite}@keyframes ka48{0%{visibility:visible}33.886%{visibility:hidden}}.a48{animation:ka48 10.86s step-end infinite}@keyframes ka49{0%{visibility:visible}49.355%{visibility:hidden}}.a49{animation:ka49 10.86s step-end infinite}@keyframes ka50{0%{visibility:visible}44.199%{visibility:hidden}}.a50{animation:ka50 10.86s step-end infinite}@keyframes ka51{0%{visibility:visible}13.26%{visibility:hidden}}.a51{animation:ka51 10.86s step-end infinite}@keyframes ka52{0%{visibility:visible}8.103%{visibility:hidden}}.a52{animation:ka52 10.86s step-end infinite}@keyframes ka53{0%{visibility:visible}15.838%{visibility:hidden}}.a53{animation:ka53 10.86s step-end infinite}@keyframes ka54{0%{visibility:visible}5.525%{visibility:hidden}}.a54{animation:ka54 10.86s step-end infinite}@keyframes ka55{0%{visibility:visible}62.247%{visibility:hidden}}.a55{animation:ka55 10.86s step-end infinite}@keyframes ka56{0%{visibility:visible}41.621%{visibility:hidden}}.a56{animation:ka56 10.86s step-end infinite}@keyframes ka57{0%{visibility:visible}46.777%{visibility:hidden}}.a57{animation:ka57 10.86s step-end infinite}@keyframes ka58{0%{visibility:visible}26.151%{visibility:hidden}}.a58{animation:ka58 10.86s step-end infinite}@keyframes ka59{0%{visibility:visible}31.308%{visibility:hidden}}.a59{animation:ka59 10.86s step-end infinite}@keyframes ka60{0%{visibility:visible}10.681%{visibility:hidden}}.a60{animation:ka60 10.86s step-end infinite}@keyframes ka61{0%{visibility:visible}72.56%{visibility:hidden}}.a61{animation:ka61 10.86s step-end infinite}@keyframes ka62{0%{visibility:visible}5.525%{visibility:hidden}8.103%{visibility:visible}10.681%{visibility:hidden}}.a62{animation:ka62 10.86s step-end infinite}@keyframes ka63{0%{visibility:hidden}5.525%{visibility:visible}8.103%{visibility:hidden}10.681%{visibility:visible}13.26%{visibility:hidden}15.838%{visibility:visible}18.416%{visibility:hidden}20.994%{visibility:visible}23.573%{visibility:hidden}26.151%{visibility:visible}28.729%{visibility:hidden}31.308%{visibility:visible}33.886%{visibility:hidden}36.464%{visibility:visible}39.042%{visibility:hidden}41.621%{visibility:visible}44.199%{visibility:hidden}46.777%{visibility:visible}49.355%{visibility:hidden}51.934%{visibility:visible}54.512%{visibility:hidden}57.09%{visibility:visible}59.669%{visibility:hidden}62.247%{visibility:visible}64.825%{visibility:hidden}67.403%{visibility:visible}69.982%{visibility:hidden}72.56%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}80.295%{visibility:hidden}82.873%{visibility:visible}85.451%{visibility:hidden}}.a63{animation:ka63 10.86s step-end infinite}@keyframes ka64{0%{visibility:hidden}5.525%{visibility:visible}8.103%{visibility:hidden}10.681%{visibility:visible}13.26%{visibility:hidden}15.838%{visibility:visible}18.416%{visibility:hidden}20.994%{visibility:visible}23.573%{visibility:hidden}}.a64{animation:ka64 10.86s step-end infinite}@keyframes ka65{0%{visibility:hidden}5.525%{visibility:visible}8.103%{visibility:hidden}}.a65{animation:ka65 10.86s step-end infinite}@keyframes ka66{0%{visibility:hidden}5.525%{visibility:visible}8.103%{visibility:hidden}10.681%{visibility:visible}51.934%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}88.029%{visibility:visible}}.a66{animation:ka66 10.86s step-end infinite}@keyframes ka67{0%{visibility:hidden}5.525%{visibility:visible}46.777%{visibility:hidden}}.a67{animation:ka67 10.86s step-end infinite}@keyframes ka68{0%{visibility:hidden}5.525%{visibility:visible}}.a68{animation:ka68 10.86s step-end infinite}@keyframes ka69{0%{visibility:hidden}5.525%{visibility:visible}8.103%{visibility:hidden}10.681%{visibility:visible}13.26%{visibility:hidden}15.838%{visibility:visible}18.416%{visibility:hidden}20.994%{visibility:visible}23.573%{visibility:hidden}26.151%{visibility:visible}28.729%{visibility:hidden}31.308%{visibility:visible}33.886%{visibility:hidden}36.464%{visibility:visible}39.042%{visibility:hidden}41.621%{visibility:visible}44.199%{visibility:hidden}46.777%{visibility:visible}49.355%{visibility:hidden}51.934%{visibility:visible}54.512%{visibility:hidden}62.247%{visibility:visible}64.825%{visibility:hidden}67.403%{visibility:visible}69.982%{visibility:hidden}72.56%{visibility:visible}75.138%{visibility:hidden}}.a69{animation:ka69 10.86s step-end infinite}@keyframes ka70{0%{visibility:hidden}8.103%{visibility:visible}10.681%{visibility:hidden}39.042%{visibility:visible}41.621%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}}.a70{animation:ka70 10.86s step-end infinite}@keyframes ka71{0%{visibility:hidden}8.103%{visibility:visible}10.681%{visibility:hidden}20.994%{visibility:visible}23.573%{visibility:hidden}28.729%{visibility:visible}31.308%{visibility:hidden}}.a71{animation:ka71 10.86s step-end infinite}@keyframes ka72{0%{visibility:hidden}8.103%{visibility:visible}46.777%{visibility:hidden}}.a72{animation:ka72 10.86s step-end infinite}@keyframes ka73{0%{visibility:hidden}8.103%{visibility:visible}10.681%{visibility:hidden}}.a73{animation:ka73 10.86s step-end infinite}@keyframes ka74{0%{visibility:hidden}8.103%{visibility:visible}20.994%{visibility:hidden}28.729%{visibility:visible}}.a74{animation:ka74 10.86s step-end infinite}@keyframes ka75{0%{visibility:hidden}10.681%{visibility:visible}13.26%{visibility:hidden}23.573%{visibility:visible}28.729%{visibility:hidden}36.464%{visibility:visible}39.042%{visibility:hidden}}.a75{animation:ka75 10.86s step-end infinite}@keyframes ka76{0%{visibility:hidden}10.681%{visibility:visible}13.26%{visibility:hidden}}.a76{animation:ka76 10.86s step-end infinite}@keyframes ka77{0%{visibility:hidden}10.681%{visibility:visible}13.26%{visibility:hidden}15.838%{visibility:visible}36.464%{visibility:hidden}39.042%{visibility:visible}51.934%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}88.029%{visibility:visible}}.a77{animation:ka77 10.86s step-end infinite}@keyframes ka78{0%{visibility:hidden}10.681%{visibility:visible}46.777%{visibility:hidden}}.a78{animation:ka78 10.86s step-end infinite}@keyframes ka79{0%{visibility:hidden}10.681%{visibility:visible}23.573%{visibility:hidden}}.a79{animation:ka79 10.86s step-end infinite}@keyframes ka80{0%{visibility:hidden}10.681%{visibility:visible}13.26%{visibility:hidden}33.886%{visibility:visible}36.464%{visibility:hidden}}.a80{animation:ka80 10.86s step-end infinite}@keyframes ka81{0%{visibility:hidden}13.26%{visibility:visible}15.838%{visibility:hidden}59.669%{visibility:visible}62.247%{visibility:hidden}67.403%{visibility:visible}72.56%{visibility:hidden}77.716%{visibility:visible}82.873%{visibility:hidden}85.451%{visibility:visible}88.029%{visibility:hidden}}.a81{animation:ka81 10.86s step-end infinite}@keyframes ka82{0%{visibility:hidden}13.26%{visibility:visible}15.838%{visibility:hidden}28.729%{visibility:visible}31.308%{visibility:hidden}}.a82{animation:ka82 10.86s step-end infinite}@keyframes ka83{0%{visibility:hidden}13.26%{visibility:visible}28.729%{visibility:hidden}}.a83{animation:ka83 10.86s step-end infinite}@keyframes ka84{0%{visibility:hidden}13.26%{visibility:visible}46.777%{visibility:hidden}}.a84{animation:ka84 10.86s step-end infinite}@keyframes ka85{0%{visibility:hidden}13.26%{visibility:visible}15.838%{visibility:hidden}}.a85{animation:ka85 10.86s step-end infinite}@keyframes ka86{0%{visibility:hidden}15.838%{visibility:visible}18.416%{visibility:hidden}20.994%{visibility:visible}23.573%{visibility:hidden}}.a86{animation:ka86 10.86s step-end infinite}@keyframes ka87{0%{visibility:hidden}15.838%{visibility:visible}18.416%{visibility:hidden}}.a87{animation:ka87 10.86s step-end infinite}@keyframes ka88{0%{visibility:hidden}15.838%{visibility:visible}46.777%{visibility:hidden}}.a88{animation:ka88 10.86s step-end infinite}@keyframes ka89{0%{visibility:hidden}15.838%{visibility:visible}20.994%{visibility:hidden}}.a89{animation:ka89 10.86s step-end infinite}@keyframes ka90{0%{visibility:hidden}18.416%{visibility:visible}20.994%{visibility:hidden}}.a90{animation:ka90 10.86s step-end infinite}@keyframes ka91{0%{visibility:hidden}18.416%{visibility:visible}20.994%{visibility:hidden}23.573%{visibility:visible}26.151%{visibility:hidden}}.a91{animation:ka91 10.86s step-end infinite}@keyframes ka92{0%{visibility:hidden}18.416%{visibility:visible}46.777%{visibility:hidden}}.a92{animation:ka92 10.86s step-end infinite}@keyframes ka93{0%{visibility:hidden}18.416%{visibility:visible}23.573%{visibility:hidden}}.a93{animation:ka93 10.86s step-end infinite}@keyframes ka94{0%{visibility:hidden}18.416%{visibility:visible}31.308%{visibility:hidden}}.a94{animation:ka94 10.86s step-end infinite}@keyframes ka95{0%{visibility:hidden}20.994%{visibility:visible}26.151%{visibility:hidden}}.a95{animation:ka95 10.86s step-end infinite}@keyframes ka96{0%{visibility:hidden}20.994%{visibility:visible}46.777%{visibility:hidden}}.a96{animation:ka96 10.86s step-end infinite}@keyframes ka97{0%{visibility:hidden}20.994%{visibility:visible}28.729%{visibility:hidden}}.a97{animation:ka97 10.86s step-end infinite}@keyframes ka98{0%{visibility:hidden}20.994%{visibility:visible}23.573%{visibility:hidden}}.a98{animation:ka98 10.86s step-end infinite}@keyframes ka99{0%{visibility:hidden}23.573%{visibility:visible}28.729%{visibility:hidden}}.a99{animation:ka99 10.86s step-end infinite}@keyframes ka100{0%{visibility:hidden}23.573%{visibility:visible}26.151%{visibility:hidden}28.729%{visibility:visible}31.308%{visibility:hidden}33.886%{visibility:visible}36.464%{visibility:hidden}39.042%{visibility:visible}41.621%{visibility:hidden}44.199%{visibility:visible}46.777%{visibility:hidden}49.355%{visibility:visible}51.934%{visibility:hidden}54.512%{visibility:visible}57.09%{visibility:hidden}59.669%{visibility:visible}62.247%{visibility:hidden}64.825%{visibility:visible}67.403%{visibility:hidden}69.982%{visibility:visible}72.56%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}80.295%{visibility:visible}82.873%{visibility:hidden}85.451%{visibility:visible}88.029%{visibility:hidden}}.a100{animation:ka100 10.86s step-end infinite}@keyframes ka101{0%{visibility:hidden}23.573%{visibility:visible}26.151%{visibility:hidden}}.a101{animation:ka101 10.86s step-end infinite}@keyframes ka102{0%{visibility:hidden}23.573%{visibility:visible}46.777%{visibility:hidden}}.a102{animation:ka102 10.86s step-end infinite}@keyframes ka103{0%{visibility:hidden}26.151%{visibility:visible}28.729%{visibility:hidden}31.308%{visibility:visible}33.886%{visibility:hidden}36.464%{visibility:visible}39.042%{visibility:hidden}41.621%{visibility:visible}44.199%{visibility:hidden}46.777%{visibility:visible}49.355%{visibility:hidden}51.934%{visibility:visible}54.512%{visibility:hidden}57.09%{visibility:visible}59.669%{visibility:hidden}62.247%{visibility:visible}64.825%{visibility:hidden}67.403%{visibility:visible}69.982%{visibility:hidden}72.56%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}80.295%{visibility:hidden}82.873%{visibility:visible}85.451%{visibility:hidden}}.a103{animation:ka103 10.86s step-end infinite}@keyframes ka104{0%{visibility:hidden}26.151%{visibility:visible}28.729%{visibility:hidden}}.a104{animation:ka104 10.86s step-end infinite}@keyframes ka105{0%{visibility:hidden}26.151%{visibility:visible}51.934%{visibility:hidden}}.a105{animation:ka105 10.86s step-end infinite}@keyframes ka106{0%{visibility:hidden}26.151%{visibility:visible}28.729%{visibility:hidden}67.403%{visibility:visible}69.982%{visibility:hidden}72.56%{visibility:visible}75.138%{visibility:hidden}88.029%{visibility:visible}}.a106{animation:ka106 10.86s step-end infinite}@keyframes ka107{0%{visibility:hidden}26.151%{visibility:visible}46.777%{visibility:hidden}}.a107{animation:ka107 10.86s step-end infinite}@keyframes ka108{0%{visibility:hidden}26.151%{visibility:visible}36.464%{visibility:hidden}}.a108{animation:ka108 10.86s step-end infinite}@keyframes ka109{0%{visibility:hidden}28.729%{visibility:visible}54.512%{visibility:hidden}}.a109{animation:ka109 10.86s step-end infinite}@keyframes ka110{0%{visibility:hidden}28.729%{visibility:visible}31.308%{visibility:hidden}33.886%{visibility:visible}36.464%{visibility:hidden}39.042%{visibility:visible}41.621%{visibility:hidden}44.199%{visibility:visible}46.777%{visibility:hidden}49.355%{visibility:visible}51.934%{visibility:hidden}}.a110{animation:ka110 10.86s step-end infinite}@keyframes ka111{0%{visibility:hidden}28.729%{visibility:visible}46.777%{visibility:hidden}}.a111{animation:ka111 10.86s step-end infinite}@keyframes ka112{0%{visibility:hidden}28.729%{visibility:visible}31.308%{visibility:hidden}}.a112{animation:ka112 10.86s step-end infinite}@keyframes ka113{0%{visibility:hidden}31.308%{visibility:visible}33.886%{visibility:hidden}36.464%{visibility:visible}39.042%{visibility:hidden}41.621%{visibility:visible}44.199%{visibility:hidden}46.777%{visibility:visible}49.355%{visibility:hidden}51.934%{visibility:visible}54.512%{visibility:hidden}}.a113{animation:ka113 10.86s step-end infinite}@keyframes ka114{0%{visibility:hidden}31.308%{visibility:visible}33.886%{visibility:hidden}57.09%{visibility:visible}59.669%{visibility:hidden}}.a114{animation:ka114 10.86s step-end infinite}@keyframes ka115{0%{visibility:hidden}31.308%{visibility:visible}33.886%{visibility:hidden}}.a115{animation:ka115 10.86s step-end infinite}@keyframes ka116{0%{visibility:hidden}31.308%{visibility:visible}33.886%{visibility:hidden}39.042%{visibility:visible}51.934%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}88.029%{visibility:visible}}.a116{animation:ka116 10.86s step-end infinite}@keyframes ka117{0%{visibility:hidden}31.308%{visibility:visible}46.777%{visibility:hidden}}.a117{animation:ka117 10.86s step-end infinite}@keyframes ka118{0%{visibility:hidden}31.308%{visibility:visible}57.09%{visibility:hidden}}.a118{animation:ka118 10.86s step-end infinite}@keyframes ka119{0%{visibility:hidden}33.886%{visibility:visible}36.464%{visibility:hidden}}.a119{animation:ka119 10.86s step-end infinite}@keyframes ka120{0%{visibility:hidden}33.886%{visibility:visible}36.464%{visibility:hidden}80.295%{visibility:visible}82.873%{visibility:hidden}}.a120{animation:ka120 10.86s step-end infinite}@keyframes ka121{0%{visibility:hidden}33.886%{visibility:visible}80.295%{visibility:hidden}}.a121{animation:ka121 10.86s step-end infinite}@keyframes ka122{0%{visibility:hidden}33.886%{visibility:visible}46.777%{visibility:hidden}}.a122{animation:ka122 10.86s step-end infinite}@keyframes ka123{0%{visibility:hidden}36.464%{visibility:visible}39.042%{visibility:hidden}82.873%{visibility:visible}85.451%{visibility:hidden}}.a123{animation:ka123 10.86s step-end infinite}@keyframes ka124{0%{visibility:hidden}36.464%{visibility:visible}46.777%{visibility:hidden}}.a124{animation:ka124 10.86s step-end infinite}@keyframes ka125{0%{visibility:hidden}36.464%{visibility:visible}39.042%{visibility:hidden}}.a125{animation:ka125 10.86s step-end infinite}@keyframes ka126{0%{visibility:hidden}36.464%{visibility:visible}82.873%{visibility:hidden}}.a126{animation:ka126 10.86s step-end infinite}@keyframes ka127{0%{visibility:hidden}39.042%{visibility:visible}41.621%{visibility:hidden}64.825%{visibility:visible}67.403%{visibility:hidden}69.982%{visibility:visible}72.56%{visibility:hidden}88.029%{visibility:visible}}.a127{animation:ka127 10.86s step-end infinite}@keyframes ka128{0%{visibility:hidden}39.042%{visibility:visible}41.621%{visibility:hidden}44.199%{visibility:visible}51.934%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}88.029%{visibility:visible}}.a128{animation:ka128 10.86s step-end infinite}@keyframes ka129{0%{visibility:hidden}39.042%{visibility:visible}41.621%{visibility:hidden}88.029%{visibility:visible}}.a129{animation:ka129 10.86s step-end infinite}@keyframes ka130{0%{visibility:hidden}39.042%{visibility:visible}75.138%{visibility:hidden}}.a130{animation:ka130 10.86s step-end infinite}@keyframes ka131{0%{visibility:hidden}39.042%{visibility:visible}46.777%{visibility:hidden}}.a131{animation:ka131 10.86s step-end infinite}@keyframes ka132{0%{visibility:hidden}39.042%{visibility:visible}41.621%{visibility:hidden}}.a132{animation:ka132 10.86s step-end infinite}@keyframes ka133{0%{visibility:hidden}41.621%{visibility:visible}44.199%{visibility:hidden}51.934%{visibility:visible}54.512%{visibility:hidden}}.a133{animation:ka133 10.86s step-end infinite}@keyframes ka134{0%{visibility:hidden}41.621%{visibility:visible}44.199%{visibility:hidden}}.a134{animation:ka134 10.86s step-end infinite}@keyframes ka135{0%{visibility:hidden}41.621%{visibility:visible}46.777%{visibility:hidden}}.a135{animation:ka135 10.86s step-end infinite}@keyframes ka136{0%{visibility:hidden}41.621%{visibility:visible}51.934%{visibility:hidden}}.a136{animation:ka136 10.86s step-end infinite}@keyframes ka137{0%{visibility:hidden}44.199%{visibility:visible}46.777%{visibility:hidden}}.a137{animation:ka137 10.86s step-end infinite}@keyframes ka138{0%{visibility:hidden}44.199%{visibility:visible}46.777%{visibility:hidden}54.512%{visibility:visible}57.09%{visibility:hidden}}.a138{animation:ka138 10.86s step-end infinite}@keyframes ka139{0%{visibility:hidden}44.199%{visibility:visible}54.512%{visibility:hidden}}.a139{animation:ka139 10.86s step-end infinite}@keyframes ka140{0%{visibility:hidden}46.777%{visibility:visible}49.355%{visibility:hidden}}.a140{animation:ka140 10.86s step-end infinite}@keyframes ka141{0%{visibility:hidden}46.777%{visibility:visible}49.355%{visibility:hidden}62.247%{visibility:visible}64.825%{visibility:hidden}}.a141{animation:ka141 10.86s step-end infinite}@keyframes ka142{0%{visibility:hidden}46.777%{visibility:visible}51.934%{visibility:hidden}}.a142{animation:ka142 10.86s step-end infinite}@keyframes ka143{0%{visibility:hidden}46.777%{visibility:visible}}.a143{animation:ka143 10.86s step-end infinite}@keyframes ka144{0%{visibility:hidden}49.355%{visibility:visible}51.934%{visibility:hidden}}.a144{animation:ka144 10.86s step-end infinite}@keyframes ka145{0%{visibility:hidden}49.355%{visibility:visible}59.669%{visibility:hidden}77.716%{visibility:visible}80.295%{visibility:hidden}}.a145{animation:ka145 10.86s step-end infinite}@keyframes ka146{0%{visibility:hidden}49.355%{visibility:visible}51.934%{visibility:hidden}54.512%{visibility:visible}57.09%{visibility:hidden}}.a146{animation:ka146 10.86s step-end infinite}@keyframes ka147{0%{visibility:hidden}51.934%{visibility:visible}57.09%{visibility:hidden}}.a147{animation:ka147 10.86s step-end infinite}@keyframes ka148{0%{visibility:hidden}51.934%{visibility:visible}54.512%{visibility:hidden}}.a148{animation:ka148 10.86s step-end infinite}@keyframes ka149{0%{visibility:hidden}51.934%{visibility:visible}59.669%{visibility:hidden}}.a149{animation:ka149 10.86s step-end infinite}@keyframes ka150{0%{visibility:hidden}54.512%{visibility:visible}69.982%{visibility:hidden}}.a150{animation:ka150 10.86s step-end infinite}@keyframes ka151{0%{visibility:hidden}54.512%{visibility:visible}57.09%{visibility:hidden}}.a151{animation:ka151 10.86s step-end infinite}@keyframes ka152{0%{visibility:hidden}57.09%{visibility:visible}59.669%{visibility:hidden}77.716%{visibility:visible}80.295%{visibility:hidden}82.873%{visibility:visible}85.451%{visibility:hidden}88.029%{visibility:visible}}.a152{animation:ka152 10.86s step-end infinite}@keyframes ka153{0%{visibility:hidden}57.09%{visibility:visible}59.669%{visibility:hidden}62.247%{visibility:visible}64.825%{visibility:hidden}67.403%{visibility:visible}69.982%{visibility:hidden}}.a153{animation:ka153 10.86s step-end infinite}@keyframes ka154{0%{visibility:hidden}57.09%{visibility:visible}67.403%{visibility:hidden}}.a154{animation:ka154 10.86s step-end infinite}@keyframes ka155{0%{visibility:hidden}57.09%{visibility:visible}62.247%{visibility:hidden}}.a155{animation:ka155 10.86s step-end infinite}@keyframes ka156{0%{visibility:hidden}57.09%{visibility:visible}77.716%{visibility:hidden}}.a156{animation:ka156 10.86s step-end infinite}@keyframes ka157{0%{visibility:hidden}57.09%{visibility:visible}59.669%{visibility:hidden}}.a157{animation:ka157 10.86s step-end infinite}@keyframes ka158{0%{visibility:hidden}57.09%{visibility:visible}59.669%{visibility:hidden}77.716%{visibility:visible}80.295%{visibility:hidden}82.873%{visibility:visible}85.451%{visibility:hidden}}.a158{animation:ka158 10.86s step-end infinite}@keyframes ka159{0%{visibility:hidden}59.669%{visibility:visible}62.247%{visibility:hidden}82.873%{visibility:visible}88.029%{visibility:hidden}}.a159{animation:ka159 10.86s step-end infinite}@keyframes ka160{0%{visibility:hidden}59.669%{visibility:visible}62.247%{visibility:hidden}64.825%{visibility:visible}67.403%{visibility:hidden}}.a160{animation:ka160 10.86s step-end infinite}@keyframes ka161{0%{visibility:hidden}59.669%{visibility:visible}62.247%{visibility:hidden}67.403%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}88.029%{visibility:hidden}}.a161{animation:ka161 10.86s step-end infinite}@keyframes ka162{0%{visibility:hidden}59.669%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}88.029%{visibility:hidden}}.a162{animation:ka162 10.86s step-end infinite}@keyframes ka163{0%{visibility:hidden}59.669%{visibility:visible}67.403%{visibility:hidden}80.295%{visibility:visible}85.451%{visibility:hidden}}.a163{animation:ka163 10.86s step-end infinite}@keyframes ka164{0%{visibility:hidden}59.669%{visibility:visible}62.247%{visibility:hidden}}.a164{animation:ka164 10.86s step-end infinite}@keyframes ka165{0%{visibility:hidden}62.247%{visibility:visible}64.825%{visibility:hidden}}.a165{animation:ka165 10.86s step-end infinite}@keyframes ka166{0%{visibility:hidden}62.247%{visibility:visible}67.403%{visibility:hidden}}.a166{animation:ka166 10.86s step-end infinite}@keyframes ka167{0%{visibility:hidden}62.247%{visibility:visible}}.a167{animation:ka167 10.86s step-end infinite}@keyframes ka168{0%{visibility:hidden}62.247%{visibility:visible}67.403%{visibility:hidden}72.56%{visibility:visible}88.029%{visibility:hidden}}.a168{animation:ka168 10.86s step-end infinite}@keyframes ka169{0%{visibility:hidden}64.825%{visibility:visible}67.403%{visibility:hidden}}.a169{animation:ka169 10.86s step-end infinite}@keyframes ka170{0%{visibility:hidden}64.825%{visibility:visible}69.982%{visibility:hidden}}.a170{animation:ka170 10.86s step-end infinite}@keyframes ka171{0%{visibility:hidden}67.403%{visibility:visible}77.716%{visibility:hidden}}.a171{animation:ka171 10.86s step-end infinite}@keyframes ka172{0%{visibility:hidden}67.403%{visibility:visible}69.982%{visibility:hidden}}.a172{animation:ka172 10.86s step-end infinite}@keyframes ka173{0%{visibility:hidden}67.403%{visibility:visible}72.56%{visibility:hidden}}.a173{animation:ka173 10.86s step-end infinite}@keyframes ka174{0%{visibility:hidden}69.982%{visibility:visible}80.295%{visibility:hidden}}.a174{animation:ka174 10.86s step-end infinite}@keyframes ka175{0%{visibility:hidden}69.982%{visibility:visible}72.56%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}}.a175{animation:ka175 10.86s step-end infinite}@keyframes ka176{0%{visibility:hidden}69.982%{visibility:visible}77.716%{visibility:hidden}}.a176{animation:ka176 10.86s step-end infinite}@keyframes ka177{0%{visibility:hidden}69.982%{visibility:visible}72.56%{visibility:hidden}}.a177{animation:ka177 10.86s step-end infinite}@keyframes ka178{0%{visibility:hidden}72.56%{visibility:visible}75.138%{visibility:hidden}77.716%{visibility:visible}80.295%{visibility:hidden}}.a178{animation:ka178 10.86s step-end infinite}@keyframes ka179{0%{visibility:hidden}72.56%{visibility:visible}75.138%{visibility:hidden}}.a179{animation:ka179 10.86s step-end infinite}@keyframes ka180{0%{visibility:hidden}72.56%{visibility:visible}75.138%{visibility:hidden}82.873%{visibility:visible}88.029%{visibility:hidden}}.a180{animation:ka180 10.86s step-end infinite}@keyframes ka181{0%{visibility:hidden}72.56%{visibility:visible}77.716%{visibility:hidden}}.a181{animation:ka181 10.86s step-end infinite}@keyframes ka182{0%{visibility:hidden}75.138%{visibility:visible}77.716%{visibility:hidden}}.a182{animation:ka182 10.86s step-end infinite}@keyframes ka183{0%{visibility:hidden}75.138%{visibility:visible}}.a183{animation:ka183 10.86s step-end infinite}@keyframes ka184{0%{visibility:hidden}77.716%{visibility:visible}}.a184{animation:ka184 10.86s step-end infinite}@keyframes ka185{0%{visibility:hidden}77.716%{visibility:visible}80.295%{visibility:hidden}}.a185{animation:ka185 10.86s step-end infinite}@keyframes ka186{0%{visibility:hidden}77.716%{visibility:visible}82.873%{visibility:hidden}}.a186{animation:ka186 10.86s step-end infinite}@keyframes ka187{0%{visibility:hidden}80.295%{visibility:visible}85.451%{visibility:hidden}}.a187{animation:ka187 10.86s step-end infinite}@keyframes ka188{0%{visibility:hidden}80.295%{visibility:visible}82.873%{visibility:hidden}85.451%{visibility:visible}88.029%{visibility:hidden}}.a188{animation:ka188 10.86s step-end infinite}@keyframes ka189{0%{visibility:hidden}80.295%{visibility:visible}82.873%{visibility:hidden}}.a189{animation:ka189 10.86s step-end infinite}@keyframes ka190{0%{visibility:hidden}82.873%{visibility:visible}85.451%{visibility:hidden}}.a190{animation:ka190 10.86s step-end infinite}@keyframes ka191{0%{visibility:hidden}82.873%{visibility:visible}88.029%{visibility:hidden}}.a191{animation:ka191 10.86s step-end infinite}@keyframes ka192{0%{visibility:hidden}85.451%{visibility:visible}}.a192{animation:ka192 10.86s step-end infinite}@keyframes ka193{0%{visibility:hidden}85.451%{visibility:visible}88.029%{visibility:hidden}}.a193{animation:ka193 10.86s step-end infinite}@keyframes ka194{0%{visibility:hidden}88.029%{visibility:visible}}.a194{animation:ka194 10.86s step-end infinite}@media (prefers-reduced-motion:reduce){.a{animation:none}}</style>
+<rect width="988" height="508" rx="6" fill="#14171c"/>
+<path fill="#1b1f26" d="M13.5 14h961v20h-961zM13.5 474h961v20h-961z"/>
+<path fill="#4f6482" d="M282.3 34h49v20h-49zM378.3 34h49v20h-49zM282.3 54h49v20h-49zM378.3 54h49v20h-49zM42.3 74h49v20h-49zM330.3 74h49v20h-49zM42.3 94h49v20h-49zM330.3 94h49v20h-49zM90.3 114h49v20h-49zM378.3 114h49v20h-49zM90.3 134h49v20h-49zM378.3 134h49v20h-49zM42.3 154h49v20h-49zM138.3 154h49v20h-49zM42.3 174h49v20h-49zM138.3 174h49v20h-49zM90.3 194h49v20h-49zM282.3 194h49v20h-49zM378.3 194h49v20h-49zM90.3 214h49v20h-49zM282.3 214h49v20h-49zM378.3 214h49v20h-49zM42.3 234h49v20h-49zM234.3 234h49v20h-49zM330.3 234h49v20h-49zM42.3 254h49v20h-49zM234.3 254h49v20h-49zM330.3 254h49v20h-49zM90.3 274h49v20h-49zM282.3 274h49v20h-49zM378.3 274h49v20h-49zM474.3 274h10.6v20h-10.6zM90.3 294h49v20h-49zM282.3 294h49v20h-49zM378.3 294h49v20h-49zM42.3 314h49v20h-49zM42.3 334h49v20h-49z"/>
+<path fill="#7f93ab" d="M474.3 34h10.6v20h-10.6zM282.3 74h49v20h-49zM378.3 74h49v20h-49zM282.3 94h49v20h-49zM378.3 94h49v20h-49zM42.3 114h49v20h-49zM330.3 114h49v20h-49zM42.3 134h49v20h-49zM330.3 134h49v20h-49zM186.3 154h49v20h-49zM282.3 154h49v20h-49zM378.3 154h49v20h-49zM186.3 174h49v20h-49zM282.3 174h49v20h-49zM378.3 174h49v20h-49zM42.3 194h49v20h-49zM42.3 214h49v20h-49zM186.3 234h49v20h-49zM378.3 234h49v20h-49zM186.3 254h49v20h-49zM378.3 254h49v20h-49zM42.3 274h49v20h-49zM138.3 274h49v20h-49zM330.3 274h49v20h-49zM42.3 294h49v20h-49zM138.3 294h49v20h-49zM330.3 294h49v20h-49z"/>
+<path fill="#2a2f38" d="M503.1 354h385v20h-385z"/>
+<g class="a a0">
+<path fill="#7f93ab" d="M42.3 34h49v20h-49zM42.3 54h49v20h-49z"/>
+</g>
+<g class="a a1">
+<path fill="#4f6482" d="M90.3 34h49v20h-49zM90.3 54h49v20h-49z"/>
+</g>
+<g class="a a2">
+<path fill="#7f93ab" d="M138.3 34h49v20h-49zM138.3 54h49v20h-49z"/>
+</g>
+<g class="a a3" visibility="hidden">
+<path fill="#4f6482" d="M186.3 34h49v20h-49zM186.3 54h49v20h-49z"/>
+</g>
+<g class="a a4" visibility="hidden">
+<path fill="#7f93ab" d="M234.3 34h49v20h-49zM234.3 54h49v20h-49z"/>
+</g>
+<g class="a a5">
+<path fill="#7f93ab" d="M330.3 34h49v20h-49zM330.3 54h49v20h-49z"/>
+</g>
+<g class="a a6">
+<path fill="#7f93ab" d="M90.3 74h49v20h-49zM90.3 94h49v20h-49z"/>
+</g>
+<g class="a a7">
+<path fill="#4f6482" d="M138.3 74h49v20h-49zM138.3 94h49v20h-49z"/>
+</g>
+<g class="a a8">
+<path fill="#7f93ab" d="M186.3 74h49v20h-49zM186.3 94h49v20h-49z"/>
+</g>
+<g class="a a9">
+<path fill="#4f6482" d="M234.3 74h49v20h-49zM234.3 94h49v20h-49z"/>
+</g>
+<g class="a a10">
+<path fill="#7f93ab" d="M138.3 114h49v20h-49zM138.3 134h49v20h-49z"/>
+</g>
+<g class="a a11">
+<path fill="#4f6482" d="M186.3 114h49v20h-49zM186.3 134h49v20h-49z"/>
+</g>
+<g class="a a12">
+<path fill="#7f93ab" d="M234.3 114h49v20h-49zM234.3 134h49v20h-49z"/>
+</g>
+<g class="a a13">
+<path fill="#4f6482" d="M282.3 114h49v20h-49zM282.3 134h49v20h-49z"/>
+</g>
+<g class="a a14">
+<path fill="#7f93ab" d="M90.3 154h49v20h-49zM90.3 174h49v20h-49z"/>
+</g>
+<g class="a a15">
+<path fill="#4f6482" d="M234.3 154h49v20h-49zM234.3 174h49v20h-49z"/>
+</g>
+<g class="a a16">
+<path fill="#4f6482" d="M330.3 154h49v20h-49zM330.3 174h49v20h-49z"/>
+</g>
+<g class="a a17">
+<path fill="#7f93ab" d="M138.3 194h49v20h-49zM138.3 214h49v20h-49z"/>
+</g>
+<g class="a a18">
+<path fill="#4f6482" d="M186.3 194h49v20h-49zM186.3 214h49v20h-49z"/>
+</g>
+<g class="a a19">
+<path fill="#7f93ab" d="M234.3 194h49v20h-49zM234.3 214h49v20h-49zM234.3 274h49v20h-49zM234.3 294h49v20h-49z"/>
+</g>
+<g class="a a20">
+<path fill="#7f93ab" d="M330.3 194h49v20h-49zM330.3 214h49v20h-49z"/>
+</g>
+<g class="a a21">
+<path fill="#7f93ab" d="M90.3 234h49v20h-49zM90.3 254h49v20h-49z"/>
+</g>
+<g class="a a22">
+<path fill="#4f6482" d="M138.3 234h49v20h-49zM138.3 254h49v20h-49z"/>
+</g>
+<g class="a a23">
+<path fill="#7f93ab" d="M282.3 234h49v20h-49zM282.3 254h49v20h-49z"/>
+</g>
+<g class="a a24">
+<path fill="#4f6482" d="M186.3 274h49v20h-49zM186.3 294h49v20h-49z"/>
+</g>
+<g class="a a25" visibility="hidden">
+<path fill="#1b1f26" d="M445.5 274h29.8v20h-29.8zM483.9 274h481v20h-481z"/>
+</g>
+<g class="a a26" visibility="hidden">
+<path fill="#1b1f26" d="M445.5 294h519.4v20h-519.4z"/>
+</g>
+<g class="a a27">
+<path fill="#7f93ab" d="M90.3 314h49v20h-49zM90.3 334h49v20h-49z"/>
+</g>
+<g class="a a28">
+<path fill="#4f6482" d="M138.3 314h49v20h-49zM138.3 334h49v20h-49z"/>
+</g>
+<g class="a a29" visibility="hidden">
+<path fill="#7f93ab" d="M186.3 314h49v20h-49zM186.3 334h49v20h-49z"/>
+</g>
+<g class="a a30">
+<path fill="#4f6482" d="M234.3 314h49v20h-49zM234.3 334h49v20h-49z"/>
+</g>
+<g class="a a31">
+<path fill="#7f93ab" d="M282.3 314h49v20h-49zM282.3 334h49v20h-49z"/>
+</g>
+<g class="a a32">
+<path fill="#4f6482" d="M330.3 314h49v20h-49zM330.3 334h49v20h-49z"/>
+</g>
+<g class="a a33">
+<path fill="#7f93ab" d="M378.3 314h49v20h-49zM378.3 334h49v20h-49z"/>
+</g>
+<g class="a a63" visibility="hidden">
+<path fill="#1b1f26" d="M445.5 34h29.8v20h-29.8zM483.9 34h481v20h-481z"/>
+</g>
+<g class="a a64" visibility="hidden">
+<path fill="#1b1f26" d="M445.5 54h519.4v20h-519.4z"/>
+</g>
+<g class="a a65" visibility="hidden">
+<path fill="#928f3c" d="M234.3 194h49v20h-49zM234.3 214h49v20h-49zM234.3 274h49v20h-49zM234.3 294h49v20h-49z"/>
+</g>
+<g class="a a70" visibility="hidden">
+<path fill="#747227" d="M234.3 74h49v20h-49zM234.3 94h49v20h-49z"/>
+</g>
+<g class="a a71" visibility="hidden">
+<path fill="#747227" d="M234.3 154h49v20h-49zM234.3 174h49v20h-49z"/>
+</g>
+<g class="a a75" visibility="hidden">
+<path fill="#928f3c" d="M282.3 234h49v20h-49zM282.3 254h49v20h-49z"/>
+</g>
+<g class="a a76" visibility="hidden">
+<path fill="#747227" d="M330.3 314h49v20h-49zM330.3 334h49v20h-49z"/>
+</g>
+<g class="a a81" visibility="hidden">
+<path fill="#928f3c" d="M186.3 74h49v20h-49zM186.3 94h49v20h-49z"/>
+</g>
+<g class="a a82" visibility="hidden">
+<path fill="#747227" d="M186.3 114h49v20h-49zM186.3 134h49v20h-49z"/>
+</g>
+<g class="a a86" visibility="hidden">
+<path fill="#747227" d="M186.3 194h49v20h-49zM186.3 214h49v20h-49z"/>
+</g>
+<g class="a a87" visibility="hidden">
+<path fill="#747227" d="M186.3 274h49v20h-49zM186.3 294h49v20h-49z"/>
+</g>
+<g class="a a90" visibility="hidden">
+<path fill="#928f3c" d="M138.3 34h49v20h-49zM138.3 54h49v20h-49z"/>
+</g>
+<g class="a a91" visibility="hidden">
+<path fill="#928f3c" d="M330.3 194h49v20h-49zM330.3 214h49v20h-49z"/>
+</g>
+<g class="a a95" visibility="hidden">
+<path fill="#7f93ab" d="M483.9 294h10.6v20h-10.6z"/>
+</g>
+<g class="a a99" visibility="hidden">
+<path fill="#4f6482" d="M483.9 54h10.6v20h-10.6z"/>
+</g>
+<g class="a a100" visibility="hidden">
+<path fill="#1b1f26" d="M445.5 294h39.4v20h-39.4z"/>
+</g>
+<g class="a a101" visibility="hidden">
+<path fill="#1b1f26" d="M493.5 294h471.4v20h-471.4z"/>
+</g>
+<g class="a a103" visibility="hidden">
+<path fill="#1b1f26" d="M445.5 54h39.4v20h-39.4z"/>
+</g>
+<g class="a a104" visibility="hidden">
+<path fill="#1b1f26" d="M493.5 54h471.4v20h-471.4z"/>
+</g>
+<g class="a a105" visibility="hidden">
+<path fill="#7f93ab" d="M483.9 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a106">
+<path fill="#928f3c" d="M186.3 314h49v20h-49zM186.3 334h49v20h-49z"/>
+</g>
+<g class="a a109" visibility="hidden">
+<path fill="#4f6482" d="M483.9 54h20.2v20h-20.2z"/>
+</g>
+<g class="a a110" visibility="hidden">
+<path fill="#1b1f26" d="M503.1 294h461.8v20h-461.8z"/>
+</g>
+<g class="a a113" visibility="hidden">
+<path fill="#1b1f26" d="M503.1 54h461.8v20h-461.8z"/>
+</g>
+<g class="a a114" visibility="hidden">
+<path fill="#928f3c" d="M138.3 194h49v20h-49zM138.3 214h49v20h-49z"/>
+</g>
+<g class="a a115" visibility="hidden">
+<path fill="#928f3c" d="M282.3 314h49v20h-49zM282.3 334h49v20h-49z"/>
+</g>
+<g class="a a119" visibility="hidden">
+<path fill="#928f3c" d="M330.3 34h49v20h-49zM330.3 54h49v20h-49z"/>
+</g>
+<g class="a a120" visibility="hidden">
+<path fill="#747227" d="M282.3 114h49v20h-49zM282.3 134h49v20h-49z"/>
+</g>
+<g class="a a123" visibility="hidden">
+<path fill="#928f3c" d="M90.3 234h49v20h-49zM90.3 254h49v20h-49z"/>
+</g>
+<g class="a a127">
+<path fill="#747227" d="M186.3 34h49v20h-49zM186.3 54h49v20h-49z"/>
+</g>
+<g class="a a133" visibility="hidden">
+<path fill="#747227" d="M138.3 234h49v20h-49zM138.3 254h49v20h-49z"/>
+</g>
+<g class="a a134" visibility="hidden">
+<path fill="#928f3c" d="M90.3 314h49v20h-49zM90.3 334h49v20h-49z"/>
+</g>
+<g class="a a137" visibility="hidden">
+<path fill="#747227" d="M138.3 74h49v20h-49zM138.3 94h49v20h-49z"/>
+</g>
+<g class="a a138" visibility="hidden">
+<path fill="#928f3c" d="M138.3 114h49v20h-49zM138.3 134h49v20h-49z"/>
+</g>
+<g class="a a140" visibility="hidden">
+<path fill="#747227" d="M330.3 154h49v20h-49zM330.3 174h49v20h-49z"/>
+</g>
+<g class="a a141" visibility="hidden">
+<path fill="#747227" d="M138.3 314h49v20h-49zM138.3 334h49v20h-49z"/>
+</g>
+<g class="a a144" visibility="hidden">
+<path fill="#928f3c" d="M90.3 74h49v20h-49zM90.3 94h49v20h-49z"/>
+</g>
+<g class="a a145" visibility="hidden">
+<path fill="#928f3c" d="M90.3 154h49v20h-49zM90.3 174h49v20h-49z"/>
+</g>
+<g class="a a147" visibility="hidden">
+<path fill="#7f93ab" d="M483.9 294h29.8v20h-29.8z"/>
+</g>
+<g class="a a150" visibility="hidden">
+<path fill="#4f6482" d="M483.9 54h29.8v20h-29.8z"/>
+</g>
+<g class="a a151" visibility="hidden">
+<path fill="#1b1f26" d="M512.7 294h452.2v20h-452.2z"/>
+</g>
+<g class="a a152">
+<path fill="#d4302a" d="M234.3 34h49v20h-49zM234.3 54h49v20h-49z"/>
+</g>
+<g class="a a153" visibility="hidden">
+<path fill="#1b1f26" d="M512.7 54h452.2v20h-452.2z"/>
+</g>
+<g class="a a154" visibility="hidden">
+<path fill="#7f93ab" d="M483.9 294h39.4v20h-39.4z"/>
+</g>
+<g class="a a159" visibility="hidden">
+<path fill="#747227" d="M90.3 34h49v20h-49zM90.3 54h49v20h-49z"/>
+</g>
+<g class="a a160" visibility="hidden">
+<path fill="#1b1f26" d="M522.3 294h442.6v20h-442.6z"/>
+</g>
+<g class="a a165" visibility="hidden">
+<path fill="#747227" d="M234.3 314h49v20h-49zM234.3 334h49v20h-49z"/>
+</g>
+<g class="a a169" visibility="hidden">
+<path fill="#928f3c" d="M42.3 34h49v20h-49zM42.3 54h49v20h-49z"/>
+</g>
+<g class="a a171" visibility="hidden">
+<path fill="#7f93ab" d="M483.9 294h49v20h-49z"/>
+</g>
+<g class="a a174" visibility="hidden">
+<path fill="#4f6482" d="M483.9 54h39.4v20h-39.4z"/>
+</g>
+<g class="a a175" visibility="hidden">
+<path fill="#1b1f26" d="M531.9 294h433v20h-433z"/>
+</g>
+<g class="a a178" visibility="hidden">
+<path fill="#1b1f26" d="M522.3 54h442.6v20h-442.6z"/>
+</g>
+<g class="a a179" visibility="hidden">
+<path fill="#928f3c" d="M378.3 314h49v20h-49zM378.3 334h49v20h-49z"/>
+</g>
+<g class="a a182" visibility="hidden">
+<path fill="#928f3c" d="M234.3 114h49v20h-49zM234.3 134h49v20h-49z"/>
+</g>
+<g class="a a184">
+<path fill="#7f93ab" d="M483.9 294h58.6v20h-58.6z"/>
+</g>
+<g class="a a187" visibility="hidden">
+<path fill="#4f6482" d="M483.9 54h49v20h-49z"/>
+</g>
+<g class="a a188" visibility="hidden">
+<path fill="#1b1f26" d="M541.5 294h423.4v20h-423.4z"/>
+</g>
+<g class="a a190" visibility="hidden">
+<path fill="#1b1f26" d="M531.9 54h433v20h-433z"/>
+</g>
+<g class="a a192">
+<path fill="#4f6482" d="M483.9 54h58.6v20h-58.6z"/>
+</g>
+<g class="a a34">
+<path fill="#f1f3f6" d="M503.1 354h10.6v20h-10.6zM512.7 354h10.6v20h-10.6zM522.3 354h10.6v20h-10.6zM531.9 354h10.6v20h-10.6zM541.5 354h10.6v20h-10.6zM551.1 354h10.6v20h-10.6zM560.7 354h10.6v20h-10.6zM570.3 354h10.6v20h-10.6zM579.9 354h10.6v20h-10.6zM589.5 354h10.6v20h-10.6zM599.1 354h10.6v20h-10.6zM608.7 354h10.6v20h-10.6zM618.3 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a35">
+<path fill="#f1f3f6" d="M627.9 354h10.6v20h-10.6zM637.5 354h10.6v20h-10.6zM647.1 354h10.6v20h-10.6zM656.7 354h10.6v20h-10.6zM666.3 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a36">
+<path fill="#f1f3f6" d="M675.9 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a37">
+<path fill="#f1f3f6" d="M685.5 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a38" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M695.6 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a39" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M705.2 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a40" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M714.8 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a41" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M724.4 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a42" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M734 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a43" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M743.6 354h9.6v20h-9.6zM753.2 354h9.6v20h-9.6zM762.8 354h9.6v20h-9.6zM772.4 354h9.6v20h-9.6zM782 354h9.6v20h-9.6zM791.6 354h9.6v20h-9.6zM801.2 354h9.6v20h-9.6zM810.8 354h9.6v20h-9.6zM820.4 354h9.6v20h-9.6zM830 354h9.6v20h-9.6zM839.6 354h9.6v20h-9.6zM849.2 354h9.6v20h-9.6zM858.8 354h9.6v20h-9.6zM868.4 354h9.6v20h-9.6zM878 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a66">
+<path fill="#f1f3f6" d="M695.1 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a77">
+<path fill="#f1f3f6" d="M704.7 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a116">
+<path fill="#f1f3f6" d="M714.3 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a128">
+<path fill="#f1f3f6" d="M723.9 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a129">
+<path fill="#f1f3f6" d="M733.5 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a161" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M676.4 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a162" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M686 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a180" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M628.4 354h9.6v20h-9.6zM638 354h9.6v20h-9.6zM647.6 354h9.6v20h-9.6zM657.2 354h9.6v20h-9.6zM666.8 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a191" visibility="hidden">
+<path fill="#f1f3f6" fill-opacity="0.12100000000000001" d="M503.6 354h9.6v20h-9.6zM513.2 354h9.6v20h-9.6zM522.8 354h9.6v20h-9.6zM532.4 354h9.6v20h-9.6zM542 354h9.6v20h-9.6zM551.6 354h9.6v20h-9.6zM561.2 354h9.6v20h-9.6zM570.8 354h9.6v20h-9.6zM580.4 354h9.6v20h-9.6zM590 354h9.6v20h-9.6zM599.6 354h9.6v20h-9.6zM609.2 354h9.6v20h-9.6zM618.8 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a194">
+<path fill="#f1f3f6" d="M743.1 354h10.6v20h-10.6zM752.7 354h10.6v20h-10.6zM762.3 354h10.6v20h-10.6zM771.9 354h10.6v20h-10.6zM781.5 354h10.6v20h-10.6zM791.1 354h10.6v20h-10.6zM800.7 354h10.6v20h-10.6zM810.3 354h10.6v20h-10.6zM819.9 354h10.6v20h-10.6zM829.5 354h10.6v20h-10.6zM839.1 354h10.6v20h-10.6zM848.7 354h10.6v20h-10.6zM858.3 354h10.6v20h-10.6zM867.9 354h10.6v20h-10.6zM877.5 354h10.6v20h-10.6z"/>
+</g>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#30363d" stroke-width="1.3" d="M455.6 84H455.6Q450.8 84 450.8 88.8V94M455.6 84H465.2M532.4 84H542M542 84H551.6M551.6 84H561.2M561.2 84H570.8M570.8 84H580.4M580.4 84H590M590 84H599.6M599.6 84H609.2M609.2 84H618.8M618.8 84H628.4M628.4 84H638M638 84H647.6M647.6 84H657.2M657.2 84H666.8M666.8 84H676.4M676.4 84H686M686 84H695.6M695.6 84H705.2M705.2 84H714.8M714.8 84H724.4M724.4 84H734M734 84H743.6M743.6 84H753.2M753.2 84H762.8M762.8 84H772.4M772.4 84H782M782 84H791.6M791.6 84H801.2M801.2 84H810.8M810.8 84H820.4M820.4 84H830M830 84H839.6M839.6 84H849.2M849.2 84H858.8M858.8 84H868.4M868.4 84H878M878 84H887.6M887.6 84H897.2M897.2 84H906.8M906.8 84H916.4M916.4 84H926M926 84H935.6M935.6 84H945.2M945.2 84H954.8M954.8 84H954.8Q959.6 84 959.6 88.8V94M450.8 94V114M959.6 94V114M450.8 114V134M959.6 114V134M450.8 134V154M959.6 134V154M450.8 154V174M959.6 154V174M450.8 174V194M959.6 174V194M450.8 194V214M959.6 194V214M450.8 214V234M959.6 214V234M450.8 234V254M959.6 234V254M455.6 264H455.6Q450.8 264 450.8 259.2V254M455.6 264H465.2M465.2 264H474.8M474.8 264H484.4M484.4 264H494M494 264H503.6M503.6 264H513.2M513.2 264H522.8M522.8 264H532.4M532.4 264H542M542 264H551.6M551.6 264H561.2M561.2 264H570.8M570.8 264H580.4M580.4 264H590M590 264H599.6M599.6 264H609.2M609.2 264H618.8M618.8 264H628.4M628.4 264H638M638 264H647.6M647.6 264H657.2M657.2 264H666.8M666.8 264H676.4M676.4 264H686M686 264H695.6M695.6 264H705.2M705.2 264H714.8M714.8 264H724.4M724.4 264H734M734 264H743.6M743.6 264H753.2M753.2 264H762.8M762.8 264H772.4M772.4 264H782M782 264H791.6M791.6 264H801.2M801.2 264H810.8M810.8 264H820.4M820.4 264H830M830 264H839.6M839.6 264H849.2M849.2 264H858.8M858.8 264H868.4M868.4 264H878M878 264H887.6M887.6 264H897.2M897.2 264H906.8M906.8 264H916.4M916.4 264H926M926 264H935.6M935.6 264H945.2M945.2 264H954.8M954.8 264H954.8Q959.6 264 959.6 259.2V254M455.6 384H455.6Q450.8 384 450.8 388.8V394M455.6 384H465.2M542 384H551.6M551.6 384H561.2M561.2 384H570.8M570.8 384H580.4M580.4 384H590M590 384H599.6M599.6 384H609.2M609.2 384H618.8M618.8 384H628.4M628.4 384H638M638 384H647.6M647.6 384H657.2M657.2 384H666.8M666.8 384H676.4M676.4 384H686M686 384H695.6M695.6 384H705.2M705.2 384H714.8M714.8 384H724.4M724.4 384H734M734 384H743.6M743.6 384H753.2M753.2 384H762.8M762.8 384H772.4M772.4 384H782M782 384H791.6M791.6 384H801.2M801.2 384H810.8M810.8 384H820.4M820.4 384H830M830 384H839.6M839.6 384H849.2M849.2 384H858.8M858.8 384H868.4M868.4 384H878M878 384H887.6M887.6 384H897.2M897.2 384H906.8M906.8 384H916.4M916.4 384H926M926 384H935.6M935.6 384H945.2M945.2 384H954.8M954.8 384H954.8Q959.6 384 959.6 388.8V394M450.8 394V414M959.6 394V414M450.8 414V434M959.6 414V434M455.6 444H455.6Q450.8 444 450.8 439.2V434M455.6 444H465.2M465.2 444H474.8M474.8 444H484.4M484.4 444H494M494 444H503.6M503.6 444H513.2M513.2 444H522.8M522.8 444H532.4M532.4 444H542M542 444H551.6M551.6 444H561.2M561.2 444H570.8M570.8 444H580.4M580.4 444H590M590 444H599.6M599.6 444H609.2M609.2 444H618.8M618.8 444H628.4M628.4 444H638M638 444H647.6M647.6 444H657.2M657.2 444H666.8M666.8 444H676.4M676.4 444H686M686 444H695.6M695.6 444H705.2M705.2 444H714.8M714.8 444H724.4M724.4 444H734M734 444H743.6M743.6 444H753.2M753.2 444H762.8M762.8 444H772.4M772.4 444H782M782 444H791.6M791.6 444H801.2M801.2 444H810.8M810.8 444H820.4M820.4 444H830M830 444H839.6M839.6 444H849.2M849.2 444H858.8M858.8 444H868.4M868.4 444H878M878 444H887.6M887.6 444H897.2M897.2 444H906.8M906.8 444H916.4M916.4 444H926M926 444H935.6M935.6 444H945.2M945.2 444H954.8M954.8 444H954.8Q959.6 444 959.6 439.2V434"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">chess</text>
+<text x="110" y="29" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">two</text>
+<text x="148.4" y="29" textLength="67.2" lengthAdjust="spacing" fill="#7d8590">players</text>
+<text x="33.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">8</text>
+<text x="254" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♚</text>
+<text x="302" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♝</text>
+<text x="398" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♜</text>
+<text x="474.8" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♚</text>
+<text x="494" y="49" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">Duke</text>
+<text x="542" y="49" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">&amp;</text>
+<text x="561.2" y="49" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">Count</text>
+<text x="945.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">–</text>
+<text x="33.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">7</text>
+<text x="62" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+<text x="302" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+<text x="350" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+<text x="398" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+<text x="474.8" y="89" textLength="48" lengthAdjust="spacing" fill="#7d8590">moves</text>
+<text x="33.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">6</text>
+<text x="33.2" y="169" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">5</text>
+<text x="33.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">4</text>
+<text x="33.2" y="249" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">3</text>
+<text x="33.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">2</text>
+<text x="62" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+<text x="110" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+<text x="158" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+<text x="302" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+<text x="350" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+<text x="398" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+<text x="474.8" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♚</text>
+<text x="494" y="289" textLength="57.6" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">Morphy</text>
+<text x="945.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">–</text>
+<text x="33.2" y="329" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">1</text>
+<text x="62" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">a</text>
+<text x="110" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">b</text>
+<text x="158" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">c</text>
+<text x="206" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">d</text>
+<text x="254" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">e</text>
+<text x="302" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">f</text>
+<text x="350" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">g</text>
+<text x="398" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">h</text>
+<text x="455.6" y="369" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">eval</text>
+<text x="474.8" y="389" textLength="57.6" lengthAdjust="spacing" fill="#7d8590">engine</text>
+<text x="23.6" y="469" textLength="9.6" lengthAdjust="spacing" fill="#7d8590">:</text>
+<text x="42.8" y="469" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2" fill-opacity="0.55">type</text>
+<text x="90.8" y="469" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2" fill-opacity="0.55">a</text>
+<text x="110" y="469" textLength="48" lengthAdjust="spacing" fill="#d7dce2" fill-opacity="0.55">move:</text>
+<text x="167.6" y="469" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2" fill-opacity="0.55">Nf3</text>
+<text x="215.6" y="469" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2" fill-opacity="0.55">exd5</text>
+<text x="273.2" y="469" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2" fill-opacity="0.55">O-O</text>
+<text x="321.2" y="469" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2" fill-opacity="0.55">e2e4</text>
+<text x="14" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
+<text x="33.2" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">help</text>
+<text x="90.8" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
+<text x="110" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">quit</text>
+<text x="167.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">↑↓←→</text>
+<text x="215.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">move</text>
+<text x="273.2" y="489" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">enter</text>
+<text x="330.8" y="489" textLength="57.6" lengthAdjust="spacing" fill="#7d8590">select</text>
+<text x="407.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">:</text>
+<text x="426.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">type</text>
+<text x="484.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">u</text>
+<text x="503.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">undo</text>
+<text x="561.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">U</text>
+<text x="580.4" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">redo</text>
+<text x="638" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">n</text>
+<text x="657.2" y="489" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">new</text>
+<text x="705.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">f</text>
+<text x="724.4" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">flip</text>
+<text x="782" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">H</text>
+<text x="801.2" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">hint</text>
+<text x="858.8" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">r</text>
+<text x="878" y="489" textLength="57.6" lengthAdjust="spacing" fill="#7d8590">resign</text>
+<g class="a a4" visibility="hidden">
+<text x="513.2" y="329" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">to</text>
+<text x="542" y="329" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">move</text>
+</g>
+<g class="a a25" visibility="hidden">
+<text x="455.6" y="289" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">▶</text>
+<text x="455.6" y="329" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">White</text>
+</g>
+<g class="a a43" visibility="hidden">
+<text x="465.2" y="409" textLength="48" lengthAdjust="spacing" fill="#d7dce2">idle:</text>
+<text x="522.8" y="409" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2">H</text>
+<text x="542" y="409" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">asks</text>
+<text x="590" y="409" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">for</text>
+<text x="628.4" y="409" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2">a</text>
+<text x="647.6" y="409" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">hint</text>
+</g>
+<g class="a a44" visibility="hidden">
+<text x="62" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♜</text>
+</g>
+<g class="a a45">
+<text x="110" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♞</text>
+</g>
+<g class="a a46" visibility="hidden">
+<text x="158" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♝</text>
+</g>
+<g class="a a47" visibility="hidden">
+<text x="206" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♛</text>
+</g>
+<g class="a a48" visibility="hidden">
+<text x="350" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♞</text>
+</g>
+<g class="a a49" visibility="hidden">
+<text x="110" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a50" visibility="hidden">
+<text x="158" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a51" visibility="hidden">
+<text x="206" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a52" visibility="hidden">
+<text x="254" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a53" visibility="hidden">
+<text x="206" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+</g>
+<g class="a a54" visibility="hidden">
+<text x="254" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+</g>
+<g class="a a55" visibility="hidden">
+<text x="62" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♜</text>
+<text x="254" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♚</text>
+</g>
+<g class="a a56" visibility="hidden">
+<text x="110" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♞</text>
+</g>
+<g class="a a57" visibility="hidden">
+<text x="158" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♝</text>
+</g>
+<g class="a a58" visibility="hidden">
+<text x="206" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♛</text>
+</g>
+<g class="a a59" visibility="hidden">
+<text x="302" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♝</text>
+</g>
+<g class="a a60" visibility="hidden">
+<text x="350" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♞</text>
+</g>
+<g class="a a61" visibility="hidden">
+<text x="398" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♜</text>
+</g>
+<g class="a a62" visibility="hidden">
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+0.00</text>
+</g>
+<g class="a a63" visibility="hidden">
+<text x="455.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">▶</text>
+</g>
+<g class="a a65" visibility="hidden">
+<text x="513.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">e4</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+0.40</text>
+</g>
+<g class="a a67" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">1.</text>
+</g>
+<g class="a a68">
+<text x="254" y="209" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+</g>
+<g class="a a69" visibility="hidden">
+<text x="455.6" y="329" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">Black</text>
+</g>
+<g class="a a72" visibility="hidden">
+<text x="513.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">e4</text>
+</g>
+<g class="a a73" visibility="hidden">
+<text x="599.6" y="109" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">e5</text>
+</g>
+<g class="a a74">
+<text x="254" y="169" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a76" visibility="hidden">
+<text x="513.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Nf3</text>
+</g>
+<g class="a a78" visibility="hidden">
+<text x="599.6" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">e5</text>
+<text x="465.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">2.</text>
+</g>
+<g class="a a79" visibility="hidden">
+<text x="302" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♞</text>
+</g>
+<g class="a a80" visibility="hidden">
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+0.50</text>
+</g>
+<g class="a a83" visibility="hidden">
+<text x="206" y="129" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a84" visibility="hidden">
+<text x="513.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nf3</text>
+</g>
+<g class="a a85" visibility="hidden">
+<text x="599.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">d6</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+0.30</text>
+</g>
+<g class="a a87" visibility="hidden">
+<text x="513.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">d4</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+0.70</text>
+</g>
+<g class="a a88" visibility="hidden">
+<text x="599.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">d6</text>
+<text x="465.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">3.</text>
+</g>
+<g class="a a89" visibility="hidden">
+<text x="206" y="209" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+</g>
+<g class="a a90" visibility="hidden">
+<text x="599.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Bg4</text>
+</g>
+<g class="a a92" visibility="hidden">
+<text x="513.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">d4</text>
+</g>
+<g class="a a93" visibility="hidden">
+<text x="350" y="209" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♝</text>
+</g>
+<g class="a a94" visibility="hidden">
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+0.80</text>
+</g>
+<g class="a a95" visibility="hidden">
+<text x="484.4" y="309" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a96" visibility="hidden">
+<text x="599.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg4</text>
+<text x="465.2" y="169" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">4.</text>
+</g>
+<g class="a a97" visibility="hidden">
+<text x="254" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♟</text>
+</g>
+<g class="a a98" visibility="hidden">
+<text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">dxe5</text>
+<text x="503.6" y="309" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+1</text>
+</g>
+<g class="a a99" visibility="hidden">
+<text x="484.4" y="69" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♞</text>
+</g>
+<g class="a a101" visibility="hidden">
+<text x="503.6" y="69" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+2</text>
+<text x="599.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Bxf3</text>
+<text x="302" y="249" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♝</text>
+</g>
+<g class="a a102" visibility="hidden">
+<text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+</g>
+<g class="a a104" visibility="hidden">
+<text x="513.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Qxf3</text>
+<text x="513.2" y="309" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+1</text>
+</g>
+<g class="a a105" visibility="hidden">
+<text x="484.4" y="309" textLength="19.2" lengthAdjust="spacing" fill="#06080b" font-weight="700">♝♟</text>
+</g>
+<g class="a a107" visibility="hidden">
+<text x="599.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Bxf3</text>
+<text x="465.2" y="189" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">5.</text>
+</g>
+<g class="a a108" visibility="hidden">
+<text x="302" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♛</text>
+</g>
+<g class="a a109" visibility="hidden">
+<text x="484.4" y="69" textLength="19.2" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♞♟</text>
+</g>
+<g class="a a111" visibility="hidden">
+<text x="513.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Qxf3</text>
+</g>
+<g class="a a112" visibility="hidden">
+<text x="599.6" y="189" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">dxe5</text>
+</g>
+<g class="a a115" visibility="hidden">
+<text x="513.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Bc4</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+1.00</text>
+</g>
+<g class="a a117" visibility="hidden">
+<text x="599.6" y="189" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+<text x="465.2" y="209" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">6.</text>
+</g>
+<g class="a a118" visibility="hidden">
+<text x="158" y="209" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♝</text>
+</g>
+<g class="a a119" visibility="hidden">
+<text x="599.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Nf6</text>
+</g>
+<g class="a a121" visibility="hidden">
+<text x="302" y="129" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♞</text>
+</g>
+<g class="a a122" visibility="hidden">
+<text x="513.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bc4</text>
+</g>
+<g class="a a124" visibility="hidden">
+<text x="599.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nf6</text>
+<text x="465.2" y="229" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">7.</text>
+</g>
+<g class="a a125" visibility="hidden">
+<text x="513.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Qb3</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+0.25</text>
+</g>
+<g class="a a126" visibility="hidden">
+<text x="110" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♛</text>
+</g>
+<g class="a a130" visibility="hidden">
+<text x="254" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♛</text>
+</g>
+<g class="a a131" visibility="hidden">
+<text x="513.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qb3</text>
+</g>
+<g class="a a132" visibility="hidden">
+<text x="599.6" y="229" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Qe7</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+1.50</text>
+</g>
+<g class="a a134" visibility="hidden">
+<text x="513.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Nc3</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+0.95</text>
+</g>
+<g class="a a135" visibility="hidden">
+<text x="599.6" y="229" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe7</text>
+<text x="465.2" y="249" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">8.</text>
+</g>
+<g class="a a136" visibility="hidden">
+<text x="158" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♞</text>
+</g>
+<g class="a a137" visibility="hidden">
+<text x="513.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nc3</text>
+<text x="599.6" y="249" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">c6</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+1.15</text>
+</g>
+<g class="a a139" visibility="hidden">
+<text x="158" y="129" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a140" visibility="hidden">
+<text x="513.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Bg5</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+1.30</text>
+</g>
+<g class="a a142" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">2.</text>
+<text x="513.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nf3</text>
+<text x="599.6" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">d6</text>
+<text x="465.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">3.</text>
+<text x="513.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">d4</text>
+<text x="599.6" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg4</text>
+<text x="465.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">4.</text>
+<text x="513.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+<text x="599.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Bxf3</text>
+<text x="465.2" y="169" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">5.</text>
+<text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Qxf3</text>
+<text x="599.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+<text x="465.2" y="189" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">6.</text>
+<text x="513.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bc4</text>
+<text x="599.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nf6</text>
+<text x="465.2" y="209" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">7.</text>
+<text x="513.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qb3</text>
+<text x="599.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe7</text>
+<text x="465.2" y="229" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">8.</text>
+<text x="513.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nc3</text>
+<text x="599.6" y="229" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">c6</text>
+<text x="465.2" y="249" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">9.</text>
+</g>
+<g class="a a143">
+<text x="350" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♝</text>
+</g>
+<g class="a a144" visibility="hidden">
+<text x="513.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg5</text>
+<text x="599.6" y="249" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">b5</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+1.40</text>
+</g>
+<g class="a a146" visibility="hidden">
+<text x="110" y="169" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♟</text>
+</g>
+<g class="a a147" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">3.</text>
+<text x="513.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">d4</text>
+<text x="599.6" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg4</text>
+<text x="465.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">4.</text>
+<text x="513.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+<text x="599.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Bxf3</text>
+<text x="465.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">5.</text>
+<text x="513.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Qxf3</text>
+<text x="599.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+<text x="465.2" y="169" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">6.</text>
+<text x="513.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bc4</text>
+<text x="599.6" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nf6</text>
+<text x="465.2" y="189" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">7.</text>
+<text x="513.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qb3</text>
+<text x="599.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe7</text>
+<text x="465.2" y="209" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">8.</text>
+<text x="513.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nc3</text>
+<text x="599.6" y="209" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">c6</text>
+<text x="465.2" y="229" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">9.</text>
+<text x="513.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg5</text>
+<text x="599.6" y="229" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">b5</text>
+<text x="465.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">10.</text>
+<text x="484.4" y="309" textLength="28.8" lengthAdjust="spacing" fill="#06080b" font-weight="700">♝♟♟</text>
+</g>
+<g class="a a148" visibility="hidden">
+<text x="110" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♞</text>
+<text x="513.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Nxb5</text>
+<text x="522.8" y="309" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+1</text>
+</g>
+<g class="a a149" visibility="hidden">
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">-0.05</text>
+</g>
+<g class="a a150" visibility="hidden">
+<text x="484.4" y="69" textLength="28.8" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♞♞♟</text>
+</g>
+<g class="a a151" visibility="hidden">
+<text x="522.8" y="69" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+2</text>
+<text x="513.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb5</text>
+<text x="599.6" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">cxb5</text>
+</g>
+<g class="a a154" visibility="hidden">
+<text x="522.8" y="69" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+1</text>
+<text x="484.4" y="309" textLength="38.4" lengthAdjust="spacing" fill="#06080b" font-weight="700">♝♟♟♟</text>
+</g>
+<g class="a a155" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">4.</text>
+<text x="513.2" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+<text x="599.6" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Bxf3</text>
+<text x="465.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">5.</text>
+<text x="513.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Qxf3</text>
+<text x="599.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+<text x="465.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">6.</text>
+<text x="513.2" y="149" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bc4</text>
+<text x="599.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nf6</text>
+<text x="465.2" y="169" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">7.</text>
+<text x="513.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qb3</text>
+<text x="599.6" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe7</text>
+<text x="465.2" y="189" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">8.</text>
+<text x="513.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nc3</text>
+<text x="599.6" y="189" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">c6</text>
+<text x="465.2" y="209" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">9.</text>
+<text x="513.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg5</text>
+<text x="599.6" y="209" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">b5</text>
+<text x="465.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">10.</text>
+<text x="513.2" y="229" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb5</text>
+<text x="599.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">cxb5</text>
+<text x="465.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">11.</text>
+</g>
+<g class="a a156" visibility="hidden">
+<text x="110" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♝</text>
+</g>
+<g class="a a157" visibility="hidden">
+<text x="513.2" y="249" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Bxb5+</text>
+</g>
+<g class="a a158" visibility="hidden">
+<text x="455.6" y="329" textLength="48" lengthAdjust="spacing" fill="#e3b341" font-weight="700">Check</text>
+<text x="513.2" y="329" textLength="9.6" lengthAdjust="spacing" fill="#e3b341" font-weight="700">·</text>
+<text x="532.4" y="329" textLength="48" lengthAdjust="spacing" fill="#e3b341" font-weight="700">Black</text>
+<text x="590" y="329" textLength="19.2" lengthAdjust="spacing" fill="#e3b341" font-weight="700">to</text>
+<text x="618.8" y="329" textLength="38.4" lengthAdjust="spacing" fill="#e3b341" font-weight="700">move</text>
+</g>
+<g class="a a163" visibility="hidden">
+<text x="206" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♞</text>
+</g>
+<g class="a a164" visibility="hidden">
+<text x="513.2" y="249" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxb5+</text>
+<text x="599.6" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Nbd7</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">-0.50</text>
+</g>
+<g class="a a165" visibility="hidden">
+<text x="513.2" y="249" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">O-O-O</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">-0.35</text>
+</g>
+<g class="a a166" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">5.</text>
+<text x="513.2" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Qxf3</text>
+<text x="599.6" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">dxe5</text>
+<text x="465.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">6.</text>
+<text x="513.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bc4</text>
+<text x="599.6" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nf6</text>
+<text x="465.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">7.</text>
+<text x="513.2" y="149" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qb3</text>
+<text x="599.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe7</text>
+<text x="465.2" y="169" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">8.</text>
+<text x="513.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nc3</text>
+<text x="599.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">c6</text>
+<text x="465.2" y="189" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">9.</text>
+<text x="513.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg5</text>
+<text x="599.6" y="189" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">b5</text>
+<text x="465.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">10.</text>
+<text x="513.2" y="209" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb5</text>
+<text x="599.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">cxb5</text>
+<text x="465.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">11.</text>
+<text x="513.2" y="229" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxb5+</text>
+<text x="599.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nbd7</text>
+<text x="465.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">12.</text>
+</g>
+<g class="a a167">
+<text x="158" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♚</text>
+</g>
+<g class="a a168" visibility="hidden">
+<text x="206" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♜</text>
+</g>
+<g class="a a169" visibility="hidden">
+<text x="513.2" y="249" textLength="48" lengthAdjust="spacing" fill="#d7dce2">O-O-O</text>
+<text x="599.6" y="249" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Rd8</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">-0.40</text>
+</g>
+<g class="a a170" visibility="hidden">
+<text x="206" y="49" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♜</text>
+</g>
+<g class="a a171" visibility="hidden">
+<text x="484.4" y="309" textLength="48" lengthAdjust="spacing" fill="#06080b" font-weight="700">♝♞♟♟♟</text>
+</g>
+<g class="a a172" visibility="hidden">
+<text x="206" y="89" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♜</text>
+<text x="513.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Rxd7</text>
+<text x="542" y="309" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+2</text>
+</g>
+<g class="a a173" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">6.</text>
+<text x="513.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bc4</text>
+<text x="599.6" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nf6</text>
+<text x="465.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">7.</text>
+<text x="513.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qb3</text>
+<text x="599.6" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe7</text>
+<text x="465.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">8.</text>
+<text x="513.2" y="149" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nc3</text>
+<text x="599.6" y="149" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">c6</text>
+<text x="465.2" y="169" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">9.</text>
+<text x="513.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg5</text>
+<text x="599.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">b5</text>
+<text x="465.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">10.</text>
+<text x="513.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb5</text>
+<text x="599.6" y="189" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">cxb5</text>
+<text x="465.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">11.</text>
+<text x="513.2" y="209" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxb5+</text>
+<text x="599.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nbd7</text>
+<text x="465.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">12.</text>
+<text x="513.2" y="229" textLength="48" lengthAdjust="spacing" fill="#d7dce2">O-O-O</text>
+<text x="599.6" y="229" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd8</text>
+<text x="465.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">13.</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">-0.80</text>
+</g>
+<g class="a a174" visibility="hidden">
+<text x="484.4" y="69" textLength="38.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♜♞♞♟</text>
+</g>
+<g class="a a176" visibility="hidden">
+<text x="532.4" y="69" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+3</text>
+<text x="206" y="89" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♜</text>
+</g>
+<g class="a a177" visibility="hidden">
+<text x="513.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="599.6" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Rxd7</text>
+</g>
+<g class="a a179" visibility="hidden">
+<text x="513.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Rd1</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">-2.10</text>
+</g>
+<g class="a a181" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">7.</text>
+<text x="513.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qb3</text>
+<text x="599.6" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe7</text>
+<text x="465.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">8.</text>
+<text x="513.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nc3</text>
+<text x="599.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">c6</text>
+<text x="465.2" y="149" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">9.</text>
+<text x="513.2" y="149" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg5</text>
+<text x="599.6" y="149" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">b5</text>
+<text x="465.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">10.</text>
+<text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb5</text>
+<text x="599.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">cxb5</text>
+<text x="465.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">11.</text>
+<text x="513.2" y="189" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxb5+</text>
+<text x="599.6" y="189" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nbd7</text>
+<text x="465.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">12.</text>
+<text x="513.2" y="209" textLength="48" lengthAdjust="spacing" fill="#d7dce2">O-O-O</text>
+<text x="599.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd8</text>
+<text x="465.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">13.</text>
+<text x="513.2" y="229" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="599.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="465.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">14.</text>
+</g>
+<g class="a a182" visibility="hidden">
+<text x="513.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd1</text>
+<text x="599.6" y="249" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Qe6</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">+1.25</text>
+</g>
+<g class="a a183">
+<text x="254" y="129" textLength="9.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♛</text>
+</g>
+<g class="a a184">
+<text x="484.4" y="309" textLength="57.6" lengthAdjust="spacing" fill="#06080b" font-weight="700">♜♝♞♟♟♟</text>
+</g>
+<g class="a a185" visibility="hidden">
+<text x="206" y="89" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♝</text>
+<text x="513.2" y="249" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Bxd7+</text>
+<text x="551.6" y="309" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+2</text>
+</g>
+<g class="a a186" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">8.</text>
+<text x="513.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Nc3</text>
+<text x="599.6" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">c6</text>
+<text x="465.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">9.</text>
+<text x="513.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg5</text>
+<text x="599.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">b5</text>
+<text x="465.2" y="149" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">10.</text>
+<text x="513.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb5</text>
+<text x="599.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">cxb5</text>
+<text x="465.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">11.</text>
+<text x="513.2" y="169" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxb5+</text>
+<text x="599.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nbd7</text>
+<text x="465.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">12.</text>
+<text x="513.2" y="189" textLength="48" lengthAdjust="spacing" fill="#d7dce2">O-O-O</text>
+<text x="599.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd8</text>
+<text x="465.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">13.</text>
+<text x="513.2" y="209" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="599.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="465.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">14.</text>
+<text x="513.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd1</text>
+<text x="599.6" y="229" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe6</text>
+<text x="465.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">15.</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">-0.75</text>
+</g>
+<g class="a a187" visibility="hidden">
+<text x="484.4" y="69" textLength="48" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♜♝♞♞♟</text>
+<text x="542" y="69" textLength="19.2" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+1</text>
+</g>
+<g class="a a189" visibility="hidden">
+<text x="513.2" y="249" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxd7+</text>
+<text x="599.6" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Nxd7</text>
+</g>
+<g class="a a190" visibility="hidden">
+<text x="110" y="49" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♛</text>
+<text x="513.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Qb8+</text>
+</g>
+<g class="a a191" visibility="hidden">
+<text x="465.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#7d8590">9.</text>
+<text x="513.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Bg5</text>
+<text x="599.6" y="109" textLength="19.2" lengthAdjust="spacing" fill="#d7dce2">b5</text>
+<text x="465.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">10.</text>
+<text x="513.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb5</text>
+<text x="599.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">cxb5</text>
+<text x="465.2" y="149" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">11.</text>
+<text x="513.2" y="149" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxb5+</text>
+<text x="599.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nbd7</text>
+<text x="465.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">12.</text>
+<text x="513.2" y="169" textLength="48" lengthAdjust="spacing" fill="#d7dce2">O-O-O</text>
+<text x="599.6" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd8</text>
+<text x="465.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">13.</text>
+<text x="513.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="599.6" y="189" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="465.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">14.</text>
+<text x="513.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd1</text>
+<text x="599.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe6</text>
+<text x="465.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">15.</text>
+<text x="513.2" y="229" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxd7+</text>
+<text x="599.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxd7</text>
+<text x="465.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">16.</text>
+<text x="906.8" y="369" textLength="48" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">-9.35</text>
+</g>
+<g class="a a192">
+<text x="484.4" y="69" textLength="57.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♛♜♝♞♞♟</text>
+<text x="551.6" y="69" textLength="28.8" lengthAdjust="spacing" fill="#7d8590" font-weight="700">+10</text>
+</g>
+<g class="a a193" visibility="hidden">
+<text x="513.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Qb8+</text>
+<text x="599.6" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Nxb8</text>
+</g>
+<g class="a a194">
+<text x="206" y="49" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">♜</text>
+<text x="465.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">10.</text>
+<text x="513.2" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb5</text>
+<text x="599.6" y="109" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">cxb5</text>
+<text x="465.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">11.</text>
+<text x="513.2" y="129" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxb5+</text>
+<text x="599.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nbd7</text>
+<text x="465.2" y="149" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">12.</text>
+<text x="513.2" y="149" textLength="48" lengthAdjust="spacing" fill="#d7dce2">O-O-O</text>
+<text x="599.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd8</text>
+<text x="465.2" y="169" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">13.</text>
+<text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="599.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Rxd7</text>
+<text x="465.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">14.</text>
+<text x="513.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Rd1</text>
+<text x="599.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">Qe6</text>
+<text x="465.2" y="209" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">15.</text>
+<text x="513.2" y="209" textLength="48" lengthAdjust="spacing" fill="#d7dce2">Bxd7+</text>
+<text x="599.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxd7</text>
+<text x="465.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">16.</text>
+<text x="513.2" y="229" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Qb8+</text>
+<text x="599.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">Nxb8</text>
+<text x="465.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#7d8590">17.</text>
+<text x="513.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">Rd8#</text>
+<text x="455.6" y="329" textLength="86.4" lengthAdjust="spacing" fill="#f2615c" font-weight="700">Checkmate</text>
+<text x="551.6" y="329" textLength="9.6" lengthAdjust="spacing" fill="#f2615c" font-weight="700">·</text>
+<text x="570.8" y="329" textLength="28.8" lengthAdjust="spacing" fill="#f2615c" font-weight="700">1–0</text>
+<text x="455.6" y="349" textLength="48" lengthAdjust="spacing" fill="#7d8590">White</text>
+<text x="513.2" y="349" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">wins</text>
+<text x="926" y="369" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2" font-weight="700">1–0</text>
+<text x="465.2" y="409" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">game</text>
+<text x="513.2" y="409" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">over</text>
+<text x="561.2" y="409" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2">·</text>
+<text x="580.4" y="409" textLength="28.8" lengthAdjust="spacing" fill="#d7dce2">1–0</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,154 @@
+:root {
+  --bg: #0f1318;
+  --fg: #d7dce2;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --ok: #56d364;
+  --warn: #e3b341;
+  --danger: #ff7b72;
+  --panel: #1b2027;
+  --border: #3d4650;
+  --cover: #2f3a47;
+  --cover-alt: #3d4a5a;
+  --cursor: #58a6ff;
+  --cursor-fg: #0b0f14;
+  --flag: #ffa198;
+  --q: #e3b341;
+  --cover-mark: #4b5a6c;
+  --open: #151a21;
+  --mine-bg: #3a2326;
+  --boom: #da3633;
+  --boom-fg: #ffffff;
+  --wrong-bg: #3a2326;
+  --n1: #5aa2ff;
+  --n2: #4fc96b;
+  --n3: #ff6b6b;
+  --n4: #a595ff;
+  --n5: #d9905f;
+  --n6: #3cc7c0;
+  --n7: #f0f3f6;
+  --n8: #9aa4ae;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --fg: #1f2328;
+    --muted: #59636e;
+    --accent: #0b64c0;
+    --ok: #197a35;
+    --warn: #8a5a00;
+    --danger: #b0221b;
+    --panel: #eef1f4;
+    --border: #aeb7c1;
+    --cover: #bcc6d2;
+    --cover-alt: #d6dde6;
+    --cover-mark: #a3b0bf;
+    --cursor: #0b64c0;
+    --cursor-fg: #ffffff;
+    --flag: #9a1d17;
+    --q: #6f4600;
+    --open: #f6f8fa;
+    --mine-bg: #f4d3d3;
+    --boom: #cf222e;
+    --boom-fg: #ffffff;
+    --wrong-bg: #f8dcdc;
+    --n1: #1f4fd8;
+    --n2: #1a7f37;
+    --n3: #cf222e;
+    --n4: #1b1f8a;
+    --n5: #8a1c1c;
+    --n6: #0b6e78;
+    --n7: #1f2328;
+    --n8: #59636e;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+.muted { color: $muted; }
+
+#app { gap: 0; }
+
+/* The status line. The counters move into it when the side panel does not
+   fit (sizes.tcss shows #compact then). */
+#top { height: 1; gap: 2; background: $panel; padding: 0 1; }
+.brand { color: $accent; bold: true; }
+.level { color: $muted; }
+.notice { color: $danger; bold: true; wrap: truncate; width: 1fr; }
+#compact { display: none; width: auto; height: 1; gap: 1; }
+.face { bold: true; }
+.face.lost { color: $danger; }
+.face.won { color: $ok; }
+.state { bold: true; }
+.state.lost { color: $danger; }
+.state.won { color: $ok; }
+.state.paused { color: $warn; }
+.k { color: $muted; }
+.v { color: $fg; bold: true; }
+.flagmode { color: $warn; bold: true; }
+.v.flagmode { color: $warn; }
+
+#stage { height: 1fr; justify: center; align: center; gap: 2; }
+
+/* The board: one clickable cell, two columns wide, for each position. */
+#board { width: auto; height: auto; layout: column; gap: 0; border: single; border-color: $border; background: $open; }
+#board.lost { border-color: $danger; }
+#board.won { border-color: $ok; }
+#board.paused > .mrow > .cell { visibility: hidden; }
+.mrow { width: auto; height: 1; gap: 0; }
+.cell { width: 2; height: 1; color: $fg; background: $open; }
+.cell.hid { color: $cover-mark; background: $cover; }
+.cell.alt.hid { background: $cover-alt; }
+.cell.flag { color: $flag; bold: true; }
+.cell.q { color: $q; bold: true; }
+.cell.n1 { color: $n1; bold: true; }
+.cell.n2 { color: $n2; bold: true; }
+.cell.n3 { color: $n3; bold: true; }
+.cell.n4 { color: $n4; bold: true; }
+.cell.n5 { color: $n5; bold: true; }
+.cell.n6 { color: $n6; bold: true; }
+.cell.n7 { color: $n7; bold: true; }
+.cell.n8 { color: $n8; bold: true; }
+.cell.mine { color: $fg; background: $mine-bg; bold: true; }
+.cell.wrong { color: $danger; background: $wrong-bg; bold: true; }
+.cell.boom { color: $boom-fg; background: $boom; bold: true; }
+/* The cursor is a blue cell, whatever is under it, and last so it wins. */
+.cell.cur { color: $cursor-fg; background: $cursor; bold: true; }
+/* Covered cells have three classes with the alternate shade, so the cursor
+   needs as many to win (and comes later). */
+.cell.hid.cur { color: $cursor-fg; background: $cursor; bold: true; }
+
+#side { width: 28; height: auto; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+.stat { height: 1; gap: 1; }
+.stat.here > .k { color: $accent; bold: true; }
+.sep { color: $border; }
+
+#toosmall { display: none; color: $warn; wrap: wrap; height: 1fr; overflow: hidden; padding: 0 1; }
+
+#keys { height: 1; background: $panel; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#help { width: 60; max-width: 100%; height: auto; padding: 0 1; }
+#help-body { height: auto; }
+#help-body > .muted { wrap: wrap; height: auto; }
+.kv { height: auto; gap: 1; }
+.hk { width: 12; height: auto; color: $accent; bold: true; }
+.hd { width: 1fr; height: auto; wrap: wrap; }
+button { color: $fg; }
+button:focus { reverse: true; }
+
+/* The compact counters give up the best time below 44 columns (sizes.tcss
+   takes the brand and then the level out of the status line before that). */
+@media (max-cols: 43) {
+  .best { display: none; }
+}
+
+/* On a short terminal the help fills the screen and its lines scroll, so
+   the close button stays on it. */
+@media (max-rows: 18) {
+  #help { height: 100%; }
+  #help-body { height: 1fr; }
+}

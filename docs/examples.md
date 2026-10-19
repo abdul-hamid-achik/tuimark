@@ -1,6 +1,6 @@
 ---
 title: Examples
-description: Complete Tuimark apps from the repository - a Snake game, a CI pipeline runner, a music player, a Pomodoro timer, a system monitor studio, a live log viewer, a kanban board, a git client, an HTTP client, an inbox, a deploy dashboard, a coding-agent chat, Unicode text and the phase-0 spike - with screenshots rendered from tuimark play.
+description: Complete Tuimark apps from the repository - six games (Snake, chess, Tetris, Minesweeper, Sudoku, 2048), a CI pipeline runner, a music player, a Pomodoro timer, a system monitor studio, a live log viewer, a kanban board, a git client, an HTTP client, an inbox, a deploy dashboard, a coding-agent chat, Unicode text and the phase-0 spike - with screenshots rendered from tuimark play.
 ---
 
 # Examples
@@ -9,7 +9,7 @@ Every example lives in the repository's [`examples/`](https://github.com/abdul-h
 
 `tuimark play` runs no host program, so these pictures show the sample data and what the built-in keys do. The apps' own actions, such as sending a request or moving a card, need the Go host.
 
-The first four examples move on their own, so their pictures are animations: each Go app has a `-demo` flag that replays a scripted session on a fake clock with a fixed seed and prints every frame, and the site turns those frames into an animated SVG. Use the button in the title bar to pause one; with reduced motion turned on in your system settings, they start paused.
+The first nine examples move on their own, so their pictures are animations: each Go app has a `-demo` flag that replays a scripted session on a fake clock with a fixed seed and prints every frame, and the site turns those frames into an animated SVG. Use the button in the title bar to pause one; with reduced motion turned on in your system settings, they start paused.
 
 To run them, clone the repository and build:
 
@@ -33,6 +33,78 @@ The autopilot playing from a fresh game. The board is a nested <code>each</code>
 go build -o bin/snake ./examples/snake
 ./bin/snake                      # arrows, hjkl or wasd steer; space pauses
 ./bin/snake -autopilot           # watch it play
+```
+
+## chess
+
+[`examples/chess`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/chess) is chess with a real engine behind it. Move generation is checked against the published perft counts, moves go in by mouse, by cursor, or typed as SAN or UCI, and games load and save as FEN and PGN. The engine is a small alpha-beta search with six levels; it thinks in a goroutine and hands its move back through `Batch`, so the board never freezes while it searches. You can play it, give it a friend's seat, let it play itself, or step through a game in review.
+
+<TermShot name="chess-demo">
+Morphy's Opera Game (Paris, 1858) typed into the app's own move box. The 64 squares are static elements with ids, so a click names its square; the selection, the legal targets, the last move, and the king in check are <code>class:</code> guards on them.
+</TermShot>
+
+```sh
+go build -o bin/chess ./examples/chess
+./bin/chess                      # you play White against level 3
+./bin/chess -mode 2p -clock 5+0  # two players, five minutes each
+./bin/chess -pgn game.pgn        # step through a game
+```
+
+## tetris
+
+[`examples/tetris`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/tetris) is a falling-blocks game with the modern rules: SRS rotation with wall kicks, a 7-bag, a hold slot, a ghost piece, lock delay, T-spins, and combos. One fixed `Every` tick drives gravity, the lock delay, and the line-clear flash on a game clock, so a level change takes effect on the next tick. `a` hands the game to an autopilot that weighs every placement.
+
+<TermShot name="tetris-demo">
+The autopilot playing from a fixed seed, with a four-line clear that flashes before it collapses. The board, the hold slot, and the next queue are nested <code>each</code> runs of same-kind cells, colored by <code>class:</code> guards.
+</TermShot>
+
+```sh
+go build -o bin/tetris ./examples/tetris
+./bin/tetris                     # arrows or hjkl move, space drops, x/z rotate, c holds
+./bin/tetris -autopilot          # watch it play
+```
+
+## minesweeper
+
+[`examples/minesweeper`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/minesweeper) is Minesweeper on the three classic boards or a custom one. The first reveal always opens a region, a revealed number chords its neighbors, and `f` switches the left click to flagging, since only the left button reaches the document. The 480 cells of the largest board are static elements generated into `app.tui`, so a click names its cell, and `if` shows the ones the current board uses.
+
+<TermShot name="minesweeper-demo">
+A solver clearing an intermediate board: it flags the cells it can prove are mines, chords the numbers they complete, and guesses only when it has to.
+</TermShot>
+
+```sh
+go build -o bin/minesweeper ./examples/minesweeper
+./bin/minesweeper                       # beginner; 1, 2, 3 switch boards
+./bin/minesweeper -level expert
+./bin/minesweeper -cols 20 -rows 12 -mines 30
+```
+
+## sudoku
+
+[`examples/sudoku`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/sudoku) generates puzzles with exactly one solution and grades them by the techniques they need, from singles to X-wings. It has notes, hints, a check, undo and redo, and a number pad you can click. The notes of the cell under the cursor show as a 3×3 grid in the side panel, since a one-row cell has no room for them.
+
+<TermShot name="sudoku-demo">
+The logic solver filling an easy puzzle through the app's own clicks and keys, then the solved board and the win dialog. The same-digit, conflict, and peer highlights are <code>class:</code> guards computed by <code>Derive</code>.
+</TermShot>
+
+```sh
+go build -o bin/sudoku ./examples/sudoku
+./bin/sudoku -difficulty hard
+./bin/sudoku -puzzle 53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79
+```
+
+## 2048
+
+[`examples/2048`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/2048) is the sliding-tiles game on a 3×3 to 6×6 board, with undo, a win dialog that lets you keep going, and an autopilot that searches a couple of moves ahead. Merged tiles pop and the new tile lights up for a moment: the move sets the highlight, and an `Every` tick clears it.
+
+<TermShot name="2048-demo">
+The autopilot playing from a fixed seed until a 512 tile, the score and its sparkline climbing.
+</TermShot>
+
+```sh
+go build -o bin/2048 ./examples/2048
+./bin/2048                       # arrows, hjkl or wasd slide; u undoes
+./bin/2048 -size 5 -autopilot
 ```
 
 ## pipeline

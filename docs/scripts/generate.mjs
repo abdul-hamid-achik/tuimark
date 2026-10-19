@@ -482,6 +482,11 @@ for (const s of SHOTS) {
 
 const DEMOS = [
   { name: 'snake-demo', example: 'snake', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'snake: the autopilot steering the snake to the food, the score, level and speed climbing in the stats panel' },
+  { name: 'chess-demo', example: 'chess', cols: 100, rows: 24, themes: ['dark', 'light'], alt: "chess: Morphy's Opera Game replayed move by move, the last move highlighted on the board and the move list growing, ending on 17.Rd8 checkmate" },
+  { name: 'tetris-demo', example: 'tetris', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'tetris: the autopilot rotating and dropping pieces, a four-line clear flashing before it collapses, the score and lines rising' },
+  { name: 'minesweeper-demo', example: 'minesweeper', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'minesweeper: a solver clearing an intermediate board, flagging proven mines and opening safe cells until the board is cleared' },
+  { name: 'sudoku-demo', example: 'sudoku', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'sudoku: the logic solver filling an easy puzzle digit by digit, then the solved board and the win dialog' },
+  { name: '2048-demo', example: '2048', cols: 90, rows: 24, themes: ['dark', 'light'], alt: '2048: the autopilot sliding tiles, merged tiles popping and new tiles lit up, the score climbing to a 512 tile' },
   { name: 'pipeline-demo', example: 'pipeline', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'pipeline: CI jobs running in parallel with spinners and progress bars, the integration log streaming in, a failure, a retry, and the run ending green' },
   { name: 'music-demo', example: 'music', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'music: a track playing with a bouncing spectrum visualizer and a moving position bar, a skip to the queued track, then a pause that lets the bars fall' },
   { name: 'pomodoro-demo', example: 'pomodoro', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'pomodoro: big block digits counting down the last seconds of a work session, the colon blinking, a flash at zero, then the short break starting in green' },

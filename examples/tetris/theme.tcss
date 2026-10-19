@@ -1,0 +1,178 @@
+:root {
+  --bg: #12151a;
+  --fg: #d7dce2;
+  --muted: #7d8590;
+  --accent: #58a6ff;
+  --ok: #56d364;
+  --warn: #e3b341;
+  --danger: #f85149;
+  --panel: #1b2027;
+  --border: #30363d;
+  --board: #171b22;
+  --wall: #4a5260;
+  --grid: #2a303a;
+  --ghost: #6a7380;
+  --flash: #f4f7fb;
+  --used: #3a414c;
+  --pi: #3fc8e0;
+  --po: #f2cc4a;
+  --pt: #b370ee;
+  --ps: #5bd16f;
+  --pz: #f0626a;
+  --pj: #5b8cf0;
+  --pl: #f09a4b;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --fg: #1f2328;
+    --muted: #6a737d;
+    --accent: #0b64c0;
+    --ok: #1f7a3a;
+    --warn: #8a5a00;
+    --danger: #c3261f;
+    --panel: #eef1f4;
+    --border: #d0d7de;
+    --board: #e4e9ee;
+    --wall: #8c959f;
+    --grid: #cbd3dc;
+    --ghost: #7a8592;
+    --flash: #1f2328;
+    --used: #bcc4cd;
+    --pi: #0e8ea3;
+    --po: #c49a06;
+    --pt: #8a46cf;
+    --ps: #2a9a43;
+    --pz: #cf3540;
+    --pj: #2f5fd0;
+    --pl: #d0701a;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+.muted { color: $muted; }
+
+#app { gap: 0; }
+
+#top { height: 1; gap: 2; background: $panel; padding: 0 1; }
+.brand { color: $accent; bold: true; }
+.mode { color: $muted; }
+.mode.on { color: $accent; bold: true; }
+.c { display: none; color: $fg; }
+.notice { color: $danger; bold: true; wrap: truncate; width: 1fr; }
+.state { bold: true; }
+.playing { color: $ok; }
+.paused { color: $warn; }
+.over { color: $danger; }
+
+#stage { height: 1fr; justify: center; align: center; gap: 2; }
+
+/* The field: 10 x 20 cells, two columns each, inside a wall. */
+#field { width: 22; height: 22; border: thick; border-color: $wall; background: $board; }
+#field.dead { border-color: $danger; }
+.line { height: 1; }
+.cell { height: 1; color: $grid; background: $board; }
+.cell.ghost { color: $ghost; }
+.cell.flash { color: $flash; background: $flash; }
+.cell.note { color: $warn; background: $board; bold: true; }
+.cell.ki { color: $pi; background: $pi; }
+.cell.ko { color: $po; background: $po; }
+.cell.kt { color: $pt; background: $pt; }
+.cell.ks { color: $ps; background: $ps; }
+.cell.kz { color: $pz; background: $pz; }
+.cell.kj { color: $pj; background: $pj; }
+.cell.kl { color: $pl; background: $pl; }
+
+/* The previews: the same pieces, 4 cells wide, on the panel's colour. */
+.pline { height: 1; width: auto; }
+.pcell { height: 1; background: $panel; }
+.pcell.ki { color: $pi; background: $pi; }
+.pcell.ko { color: $po; background: $po; }
+.pcell.kt { color: $pt; background: $pt; }
+.pcell.ks { color: $ps; background: $ps; }
+.pcell.kz { color: $pz; background: $pz; }
+.pcell.kj { color: $pj; background: $pj; }
+.pcell.kl { color: $pl; background: $pl; }
+.pcell.dim { color: $used; background: $used; }
+
+#left { width: 24; height: 22; gap: 0; }
+#stats { height: 1fr; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+#trend { height: 4; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+#side { width: 24; height: 22; gap: 0; }
+#hold { width: 24; height: 4; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; align: center; }
+#next { width: 24; height: 16; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; align: center; }
+
+.stat { height: 1; }
+.k { color: $muted; }
+.v { color: $fg; bold: true; }
+.v.score { color: $accent; }
+.last { color: $warn; bold: true; wrap: truncate; }
+.sep { color: $border; }
+#height { width: auto; color: $accent; }
+
+#toosmall { display: none; color: $warn; wrap: wrap; }
+
+#keys { height: 1; background: $panel; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#over { width: 40; height: auto; border-color: $danger; }
+.big { color: $fg; bold: true; wrap: truncate; }
+#over-actions { height: 1; gap: 2; justify: center; }
+#help { width: 50; height: auto; }
+.help { layout: column; gap: 0; }
+#help > .note { wrap: wrap; }
+
+/* Without room for the stats panel, the status line carries the numbers. The
+   widths are for the longest numbers the tests use: an 8-digit score, 5-digit
+   lines, a 3-digit level. */
+@media (max-cols: 73) {
+  #left { display: none; }
+  .brand { display: none; }
+  .c { display: flex; }
+}
+
+@media (max-cols: 69) {
+  .c-lines { display: none; }
+  .c-level { display: none; }
+}
+
+/* Without room for the previews either, only the field and the score. */
+@media (max-cols: 47) {
+  #side { display: none; }
+}
+
+@media (max-cols: 39) {
+  .mode { display: none; }
+}
+
+@media (max-cols: 31) {
+  .c-score { display: none; }
+}
+
+/* Too small for the board: say so, once. */
+@media (max-cols: 23) {
+  #stage { display: none; }
+  #toosmall { display: flex; }
+}
+
+@media (max-rows: 23) {
+  #stage { display: none; }
+  #toosmall { display: flex; }
+}
+
+/* The help is 11 key rows, the button, and a border: 14 rows. The note about
+   the other keys needs more room than that. */
+@media (max-rows: 15) {
+  #help > .note { display: none; }
+}
+
+/* And below 40 columns it wraps to three lines or more; the game over
+   buttons, which are 31 columns side by side, stand in a column. */
+@media (max-cols: 39) {
+  #help > .note { display: none; }
+  #over-actions { layout: column; height: 3; gap: 0; }
+}
