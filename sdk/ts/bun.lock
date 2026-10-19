@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@tuimark/host",
+      "name": "@thelacanians/tuimark",
       "devDependencies": {
         "@types/bun": "^1.4.3",
         "typescript": "^7.0.2",

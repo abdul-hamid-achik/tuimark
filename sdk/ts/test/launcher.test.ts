@@ -155,4 +155,14 @@ describe.skipIf(!posix).each(runtimes)("launcher under %s", (_name, runtime) => 
     expect(r.stdout.trim()).toBe("closed");
     expect(r.fd4).toBe("");
   });
+
+  test("`host` with no parent descriptors still runs the program", async () => {
+    // Node and Bun hold descriptors of their own at 3 and 4: passing them on may be
+    // refused, and the program must run anyway.
+    const bin = script("hostnofds-" + _name, "echo hosted");
+    const r = await run(runtime, ["host", "app.tui"], { TUIMARK_BINARY: bin });
+    expect(r.stderr).toBe("");
+    expect(r.stdout.trim()).toBe("hosted");
+    expect(r.code).toBe(0);
+  });
 });

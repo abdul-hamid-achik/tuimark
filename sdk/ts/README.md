@@ -10,15 +10,19 @@ npm install -g @thelacanians/tuimark      # the `tuimark` command everywhere
 
 ## The `tuimark` command
 
-The package has a `bin` named `tuimark`. It runs the Go binary of the Tuimark release that has the same version as this package (`@thelacanians/tuimark@0.4.2` runs `v0.4.2`), with your arguments, your terminal, and your signals, and exits with its exit code. It needs Node 18 or later, or Bun, and no `postinstall` script (bun and pnpm 10 block those).
+The package has a `bin` named `tuimark`. It runs the Go binary of the Tuimark release that has the same version as this package (`@thelacanians/tuimark@0.4.2` runs `v0.4.2`), with your arguments, your terminal, and your signals, and exits with its exit code. It needs Node 18 or later, or Bun, and no `postinstall` script (bun and pnpm 10 block those). `tuimark host` also works through it when a parent starts the installed command directly (a global install, or `node_modules/.bin/tuimark`) with its pipes on fd 3 and fd 4; through `npx` or `bunx` the runtime owns those descriptors, so a parent should start `tuimark host` itself, or, from TypeScript, use `spawnHost`, which runs the binary directly.
 
 The binary is found in this order:
 
 1. `TUIMARK_BINARY`, a path to a `tuimark` you installed yourself. It must exist.
-2. The cache: `<cache>/tuimark/<version>/tuimark` (`.exe` on Windows), where `<cache>` is `$XDG_CACHE_HOME` or `~/.cache` on Linux, `~/Library/Caches` on macOS, and `%LOCALAPPDATA%` on Windows.
-3. A download of `tuimark_<version>_<os>_<arch>` (`.exe` on Windows; `os` is `darwin`, `linux`, or `windows`, `arch` is `amd64` or `arm64`) from the GitHub release `v<version>` of `abdul-hamid-achik/tuimark`. Its SHA-256 must match the release's `checksums.txt`, or the file is thrown away and never run. A verified binary is written to the cache with an atomic rename, so the download happens once per version.
+2. The cache: `<cache>/tuimark/<version>/<os>_<arch>/tuimark` (`.exe` on Windows), where `<cache>` is `$XDG_CACHE_HOME` or `~/.cache` on Linux, `~/Library/Caches` on macOS, and `%LOCALAPPDATA%` on Windows.
+3. A download of `tuimark_<version>_<os>_<arch>` (`.exe` on Windows; `os` is `darwin`, `linux`, or `windows`, `arch` is `amd64` or `arm64`) from the GitHub release `v<version>` of `abdul-hamid-achik/tuimark`. Its SHA-256 must match the table built into this package, or the file is thrown away and never run. A verified binary is written to the cache with an atomic rename, so the download happens once per version, and a cached binary is checked against the same hash on every run.
 
-`TUIMARK_RELEASE_URL` replaces `https://github.com/abdul-hamid-achik/tuimark/releases/download` for mirrors; `<url>/v<version>/checksums.txt` and the binary are read from it. The checksum comes from the same place as the binary, so it catches a corrupt or half-served download, not a compromised release.
+**Security.** The hashes of the six binaries are written into the package when it is built, from the release's `checksums.txt` (`src/embedded.ts`, see `scripts/embed-checksums.mjs`), so they reach you through npm and not through the GitHub release the binary comes from: a swapped or corrupted release asset is rejected. They are as trustworthy as the package you installed. In a clone of the repository there is no such table, and the release's own `checksums.txt` is used, which only catches corruption.
+
+`TUIMARK_RELEASE_URL` replaces `https://github.com/abdul-hamid-achik/tuimark/releases/download` for mirrors. Then the table is not used: `<url>/v<version>/checksums.txt` and the binary are both read from the mirror, so the checksum only catches a corrupt download, and the binary is cached in a directory of its own (`<os>_<arch>-mirror-<hash of the URL>`), never the one a normal run reads.
+
+Downloads use Node's `fetch`, which ignores `HTTPS_PROXY` unless you set `NODE_USE_ENV_PROXY=1` (Node 24 and later). Behind a proxy that does not work, fetch the binary yourself and set `TUIMARK_BINARY`.
 
 Releases before the one that first shipped raw binaries (0.4.1 and older) only have archives, so this package has no version for them. Offline, or on a platform without a release binary, install `tuimark` another way (`brew install --cask abdul-hamid-achik/tap/tuimark`, or `go install github.com/abdul-hamid-achik/tuimark/cmd/tuimark@latest`) and set `TUIMARK_BINARY`.
 
@@ -63,7 +67,7 @@ It rejects with `HostError` when the child cannot be started, or exits before it
 | `data` | `string \| object` | The document's data, bound at the root, as `--data`. A string is the path of a JSON file. An object is written to a temporary file (mode 0600) that is removed as soon as the child is up. |
 | `theme` | `"dark" \| "light"` | `--theme`. `TUIMARK_THEME` still beats it. |
 | `replyTimeout` | `string \| number` | `--reply-timeout`: a Go duration from `100ms` to `1m` (`"5s"`), or milliseconds. The child's default is `5s`. |
-| `bin` | `string` | The executable. Defaults to `tuimark`, found on `PATH`. |
+| `bin` | `string` | The executable. Defaults to the binary of this package's release: `TUIMARK_BINARY` (also read from `env`), the cache, or a checked download. A bare name such as `"tuimark"` is looked up on `PATH`. |
 | `handlers` | `Record<string, handler>` | Handlers registered before the first event can arrive. |
 | `onError` | `(ev, err) => unknown` | See [Replies](#replies). |
 | `onProtocolError` | `(msg) => void` | Called with each `error` message that belongs to no pending request: `{error, id?, seq?}`. These are reply timeouts, late or unknown replies, and failed writes sent without an `id`. |

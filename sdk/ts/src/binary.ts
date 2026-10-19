@@ -6,19 +6,27 @@
 // which bun and pnpm 10 block):
 //
 //   1. the TUIMARK_BINARY environment variable (a path; it must exist),
-//   2. the cache: <cache>/tuimark/<version>/tuimark[.exe],
+//   2. the cache: <cache>/tuimark/<version>/<os>_<arch>/tuimark[.exe],
 //   3. the release's raw binary tuimark_<version>_<os>_<arch>[.exe], downloaded
-//      from GitHub, checked against the release's checksums.txt, and cached.
+//      from GitHub, checked, and cached.
+//
+// "Checked" means: against the SHA-256 table embedded in this package
+// (src/embedded.ts, written from the release's checksums.txt when the package
+// is built, so the hashes travel through npm and not through GitHub). Only
+// when there is no embedded table (a clone) or a mirror is in use
+// (TUIMARK_RELEASE_URL) is the release's own checksums.txt fetched and used.
+// A cached binary is checked against the embedded hash on every run. A binary
+// that fails its check is never written to the cache and never run.
 //
 // Only Node APIs are used, so this runs under Node >= 18 (the `tuimark`
-// launcher in bin/) as well as under Bun (the SDK). A binary that fails its
-// checksum is never written to the cache and never run.
+// launcher in bin/) as well as under Bun (the SDK).
 
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { chmod, mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { embedded as bundled, type Embedded } from "./embedded.ts";
 
 /** The GitHub repository whose releases carry the binaries. */
 export const REPOSITORY = "abdul-hamid-achik/tuimark";
@@ -106,6 +114,11 @@ export interface ResolveOptions {
    * Defaults to `TUIMARK_RELEASE_URL`, then GitHub. For a mirror, or a test.
    */
   releaseUrl?: string;
+  /**
+   * The SHA-256 table of this release's binaries. Defaults to the one built
+   * into the package (`undefined` in a clone); `null` means none, for tests.
+   */
+  embedded?: Embedded | null;
   /** Called with one line of progress before a download. */
   log?: (line: string) => void;
   /** A `fetch` implementation, for tests. Defaults to the global `fetch`. */
@@ -126,14 +139,29 @@ export function cacheRoot(options: ResolveOptions = {}): string {
   return nonEmpty(env.XDG_CACHE_HOME) ?? join(home, ".cache");
 }
 
-/** Where the verified binary of `version` is kept: `<cache>/tuimark/<version>/tuimark[.exe]`. */
+/**
+ * Where the verified binary of `version` is kept:
+ * `<cache>/tuimark/<version>/<os>_<arch>/tuimark[.exe]`. A binary fetched from
+ * a mirror (`TUIMARK_RELEASE_URL`) gets its own directory, keyed by the mirror's
+ * URL, so a normal run never picks up a mirror's download.
+ */
 export function cachedBinaryPath(version: string, options: ResolveOptions = {}): string {
   const target = platformTarget(options.platform, options.arch);
-  return join(cacheRoot(options), "tuimark", version, `tuimark${target.ext}`);
+  const mirror = mirrorOf(options);
+  const key = `${target.os}_${target.arch}${mirror === undefined ? "" : `-mirror-${createHash("sha256").update(mirror).digest("hex").slice(0, 8)}`}`;
+  return join(cacheRoot(options), "tuimark", version, key, `tuimark${target.ext}`);
 }
 
-/** This package's own version, read from its package.json. */
+function mirrorOf(options: ResolveOptions): string | undefined {
+  return options.releaseUrl ?? nonEmpty((options.env ?? process.env).TUIMARK_RELEASE_URL);
+}
+
+/**
+ * This package's own version: the one built into it, else (in a clone) the
+ * `version` of its package.json.
+ */
 export function packageVersion(): string {
+  if (bundled !== undefined) return bundled.version;
   const text = readFileSync(new URL("../package.json", import.meta.url), "utf8");
   const version = (JSON.parse(text) as { version?: unknown }).version;
   if (typeof version !== "string" || version === "") {
@@ -165,13 +193,22 @@ export function verifyChecksum(data: Uint8Array, checksums: string, name: string
       `checksums.txt does not list ${name}; this release has no such binary, so nothing was run`,
     );
   }
-  const got = createHash("sha256").update(data).digest("hex");
-  if (got !== want) {
+  verifySha256(data, want, name, "checksums.txt");
+}
+
+/** Checks `data` against one expected SHA-256 (hex); `source` names where `want` came from. */
+export function verifySha256(data: Uint8Array, want: string, name: string, source: string): void {
+  const got = sha256(data);
+  if (got !== want.toLowerCase()) {
     throw new BinaryError(
       "checksum",
-      `the downloaded ${name} does not match checksums.txt (expected sha256 ${want}, got ${got}); it was discarded and not run`,
+      `${name} does not match ${source} (expected sha256 ${want}, got ${got}); it was discarded and not run`,
     );
   }
+}
+
+function sha256(data: Uint8Array): string {
+  return createHash("sha256").update(data).digest("hex");
 }
 
 /**
@@ -190,16 +227,40 @@ export async function resolveBinary(options: ResolveOptions = {}): Promise<strin
     return override;
   }
 
-  const version = options.version ?? packageVersion();
+  const table = options.embedded === undefined ? bundled : (options.embedded ?? undefined);
+  const version = options.version ?? table?.version ?? packageVersion();
   const target = platformTarget(options.platform, options.arch);
-  const cached = cachedBinaryPath(version, options);
-  if (await isFile(cached)) return cached;
-
   const name = assetName(version, target);
-  const base = (options.releaseUrl ?? nonEmpty(env.TUIMARK_RELEASE_URL) ?? DEFAULT_RELEASE_URL).replace(/\/+$/, "");
+  const mirror = mirrorOf(options);
+
+  // The hash this package vouches for. A mirror's binary is checked against
+  // the mirror's own checksums.txt instead, and so is a clone's (no table).
+  let pinned: string | undefined;
+  if (mirror === undefined && table !== undefined && table.version === version) {
+    pinned = table.sha256[name];
+    if (pinned === undefined) {
+      throw new BinaryError("not-found", `this package lists no checksum for ${name}, so nothing was run`);
+    }
+  }
+
+  const cached = cachedBinaryPath(version, options);
+  if (await isFile(cached)) {
+    if (pinned === undefined) return cached;
+    if (sha256(await readFile(cached)) === pinned) return cached;
+    options.log?.(`tuimark: the cached ${cached} does not match this package's checksum; fetching it again`);
+    await rm(cached, { force: true });
+  }
+
+  const base = (mirror ?? DEFAULT_RELEASE_URL).replace(/\/+$/, "");
   const url = `${base}/v${version}`;
   options.log?.(`tuimark: downloading ${name} from release v${version} (first run, cached afterwards)`);
 
+  if (pinned !== undefined) {
+    const data = await download(`${url}/${name}`, version, options, name);
+    verifySha256(data, pinned, name, "the checksum built into this package");
+    await store(cached, data);
+    return cached;
+  }
   const checksums = new TextDecoder().decode(await download(`${url}/checksums.txt`, version, options));
   const data = await download(`${url}/${name}`, version, options, name);
   verifyChecksum(data, checksums, name);

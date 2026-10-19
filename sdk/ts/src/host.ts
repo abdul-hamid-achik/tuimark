@@ -213,7 +213,7 @@ export class Host {
     let bin = options.bin;
     if (bin === undefined) {
       try {
-        bin = await resolveBinary({ log: (line) => process.stderr.write(`${line}\n`) });
+        bin = await resolveBinary({ env: options.env, log: (line) => process.stderr.write(`${line}\n`) });
       } catch (error) {
         const reason = error instanceof BinaryError ? error.message : messageOf(error);
         throw new HostError(`cannot find the tuimark binary: ${reason}`, { cause: error });

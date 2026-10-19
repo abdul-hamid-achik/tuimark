@@ -80,6 +80,13 @@ describe("handshake", () => {
     }
   });
 
+  test("without `bin`, TUIMARK_BINARY from options.env is honored", async () => {
+    expect(process.env.TUIMARK_BINARY).toBeUndefined();
+    const { env } = fakeEnv({});
+    const host = await spawnHost("app.tui", { env: { ...env, TUIMARK_BINARY: fakeBin } });
+    await host.close();
+  });
+
   test("without `bin`, a TUIMARK_BINARY that is not a file rejects spawnHost", async () => {
     const saved = process.env.TUIMARK_BINARY;
     process.env.TUIMARK_BINARY = "/nonexistent/tuimark";
