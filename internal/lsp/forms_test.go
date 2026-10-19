@@ -6,10 +6,11 @@ import (
 	"testing"
 )
 
-// SPEC v0.4b §6.14.1, §6.16, §15.12 (tests 131 and 188): the checkbox and
-// single are current-language vocabulary, so the language server offers
-// them, and single's values true and false, in a <tui> without version
-// and in no pinned document.
+// SPEC v0.4b §6.14.1, §6.16, §6.17, §15.12 (tests 131 and 188): the
+// checkbox, the select, and single are current-language vocabulary, so
+// the language server offers them, and single's values true and false, in
+// a <tui> without version and in no pinned document; with an invalid
+// version, and under the spike root <app>, only the version 1 tags.
 func TestCompletionOffersTheFormControlsInTheCurrentLanguage(t *testing.T) {
 	dir := writeTree(t, nil)
 	app := filepath.Join(dir, "app.tui")
@@ -19,11 +20,19 @@ func TestCompletionOffersTheFormControlsInTheCurrentLanguage(t *testing.T) {
 		{name: "tag", path: app, lang: "tuimark", text: `<tui><screen id="s"><che|`,
 			want: []string{"checkbox"}},
 		{name: "tag after <", path: app, lang: "tuimark", text: `<tui><screen id="s"><|`,
-			want: []string{"checkbox", "button"}},
+			want: []string{"checkbox", "select", "button", "table"}},
 		{name: "tag in version 3", path: app, lang: "tuimark", text: `<tui version="3"><screen id="s"><che|`,
 			absent: []string{"checkbox"}},
+		{name: "tags in version 3", path: app, lang: "tuimark", text: `<tui version="3"><screen id="s"><|`,
+			want: []string{"button", "table"}, absent: []string{"checkbox", "select"}},
 		{name: "tag in version 1", path: app, lang: "tuimark", text: `<tui version="1"><screen id="s"><|`,
 			want: []string{"button"}, absent: []string{"checkbox"}},
+		{name: "tags in version abc", path: app, lang: "tuimark", text: `<tui version="abc"><screen id="s"><|`,
+			want: []string{"button", "list"}, absent: []string{"checkbox", "select", "table", "tabs"}},
+		{name: "tags under app", path: app, lang: "tuimark", text: `<app><|`,
+			want: []string{"button", "list"}, absent: []string{"checkbox", "select", "table", "tabs"}},
+		{name: "select attributes", path: app, lang: "tuimark", text: `<tui><screen id="s"><select |`,
+			want: []string{"bind", "each", "key", "label", "placeholder", "on:change", "id"}, absent: []string{"on:click", "checked"}},
 		{name: "checkbox attributes", path: app, lang: "tuimark", text: `<tui><screen id="s"><checkbox |`,
 			want: []string{"bind", "label", "on:change", "id"}, absent: []string{"on:click", "each"}},
 		{name: "single on list", path: app, lang: "tuimark", text: `<tui><screen id="s"><list |`,

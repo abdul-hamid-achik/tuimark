@@ -381,10 +381,23 @@ func Paint(root *layout.Box, modals []*layout.Box, cols, rows int) *Grid {
 // so the same layout paints a new frame at each phase without being built
 // again.
 func PaintPhase(root *layout.Box, modals []*layout.Box, cols, rows, phase int) *Grid {
+	return PaintFrame(root, modals, nil, cols, rows, phase)
+}
+
+// PaintFrame is PaintPhase with the open option list of a select (SPEC
+// v0.4b §12.5), nil when none is open: it is painted after every modal,
+// last of all, and its cells belong to its select's id (§6.17.6), the
+// nearest id-bearing node that painted them. Being Modal, it first fills
+// its outer rect with spaces in its own style, as a modal clears what is
+// under it; with visibility: hidden it paints nothing.
+func PaintFrame(root *layout.Box, modals []*layout.Box, options *layout.Box, cols, rows, phase int) *Grid {
 	p := &painter{g: NewGrid(cols, rows), phase: max(phase, 0)}
 	p.box(root, "")
 	for _, m := range modals {
 		p.box(m, "")
+	}
+	if options != nil && options.Parent != nil {
+		p.box(options, options.Parent.ID)
 	}
 	p.settle()
 	p.unjoin()
@@ -653,6 +666,8 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		p.text(clip, x, c.Y, label, st)
 	case "checkbox":
 		p.checkbox(b, clip, st)
+	case "select":
+		p.selectBox(b, clip, st)
 	case "input":
 		p.input(b, clip, st)
 	case "sparkline":

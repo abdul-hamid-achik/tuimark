@@ -152,6 +152,10 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 		// A keymap row fired while a checkbox has focus carries its value
 		// (SPEC v0.4b §8.2, decision 65), keys {}.
 		ev.Value = a.checkboxValue(b)
+	case "select":
+		// Its chosen option's key, or null with none chosen (SPEC v0.4b
+		// §8.2), keys {}.
+		ev.Value = a.selectValue(b)
 	}
 	return ev
 }

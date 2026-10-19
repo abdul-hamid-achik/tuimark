@@ -448,6 +448,20 @@ func CheckboxShown(b *Box, w int) string {
 	return glyph + " " + CutByWrap(b.Text, max(0, w-4), b.Style.Wrap)
 }
 
+// SelectShown is what a select paints from its content origin in a
+// content box w columns wide (SPEC v0.4b §12.5), without its ▾: the shown
+// text cut to max(0, w − 2) columns by its computed wrap. The host puts
+// the chosen option's label in Text and leaves Placeholder empty, or,
+// with no chosen option, leaves Text empty and puts the placeholder in
+// Placeholder, which is painted dim (dim reports it).
+func SelectShown(b *Box, w int) (s string, dim bool) {
+	s = b.Text
+	if s == "" && b.Placeholder != "" {
+		s, dim = b.Placeholder, true
+	}
+	return CutByWrap(s, max(0, w-2), b.Style.Wrap), dim
+}
+
 // CutByWrap cuts s to n columns by a computed wrap, as a table cell is cut
 // (SPEC §6.9.4, v0.4b §12.5): truncate, truncate-start, and
 // truncate-middle cut that way, wrap is painted as truncate, and nowrap

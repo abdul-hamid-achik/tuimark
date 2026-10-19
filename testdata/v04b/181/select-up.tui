@@ -1,0 +1,6 @@
+<tui>
+  <screen id="main">
+    <spacer/>
+    <select id="tz" bind="tz" each="zones as z" key="z.id" label="{z.name}" on:change="tz_changed"/>
+  </screen>
+</tui>

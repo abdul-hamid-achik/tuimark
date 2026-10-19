@@ -1,0 +1,27 @@
+=== grid 30x10 ===
+bg                            
+                              
+     ┌──────────────────┐     
+     │Lisbon           ▾│     
+     │┌────────────────┐│     
+     ││UTC             ││     
+     ││Lisbon          ││     
+     └│Tokyo           │┘     
+      └────────────────┘      
+                              
+=== nodes ===
+main  screen  30x10 @(0,0)
+-     text    30x1 @(0,0)
+m     modal   20x6 @(5,2)
+tz    select  18x1 @(6,3) focus
+-     list    18x5 @(6,4)
+-     item    16x1 @(7,5)
+-     text    16x1 @(7,5)
+-     item    16x1 @(7,6) selected checked
+-     text    16x1 @(7,6)
+-     item    16x1 @(7,7)
+-     text    16x1 @(7,7)
+=== errors ===
+ok
+=== events ===
+none

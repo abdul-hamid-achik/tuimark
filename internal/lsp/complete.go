@@ -7,6 +7,7 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/catalog"
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 )
 
 // CompletionItemKind values the server uses.
@@ -91,11 +92,20 @@ func (c *completer) list() *completionList {
 }
 
 func sinceDetail(since int) string {
-	if since <= 1 {
+	switch {
+	case since <= 1:
 		return ""
+	case since >= int(ir.LangCurrent):
+		// There is no version="4" (SPEC v0.4b §5.1): an item since the
+		// current language exists only in a <tui> without version.
+		return currentDetail
 	}
 	return "version " + strconv.Itoa(since)
 }
+
+// currentDetail names the current language, a <tui> without version, in
+// a completion's detail and a hover (sinceSuffix).
+const currentDetail = "a <tui> without version"
 
 // complete answers textDocument/completion (SPEC §15.12 "Completion").
 func (s *Server) complete(sn *snapshot, doc *document, pos Position) *completionList {

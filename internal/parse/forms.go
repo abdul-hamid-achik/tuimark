@@ -4,10 +4,11 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 )
 
-// The form controls of SPEC v0.4b (phase F8): single="true" on a list or
-// a table (§6.14.1) and the <checkbox> (§6.16). Both are current-language
-// vocabulary only: in a document that writes version they are V001 and
-// V002 with ir.VersionHintCurrent (checkTag, attr), checked no further.
+// The form controls of SPEC v0.4b: single="true" on a list or a table
+// (§6.14.1) and the <checkbox> (§6.16) (phase F8), and the <select>
+// (§6.17) (phase F9). All are current-language vocabulary only: in a
+// document that writes version they are V001 and V002 with
+// ir.VersionHintCurrent (checkTag, attr), checked no further.
 
 // checkboxAttrs is the attribute row of <checkbox> (SPEC v0.4b §6.15):
 // the common set without on:click, plus bind, label, and on:change. A
@@ -18,13 +19,24 @@ func checkboxAttrs() map[string]bool {
 	return without(with("bind", "label", "on:change"), "on:click")
 }
 
+// selectAttrs is the attribute row of <select> (SPEC v0.4b §6.15): the
+// common set without on:click, plus bind, each, key, label, placeholder,
+// and on:change. A focused select takes enter and space to open its
+// option list (§8.6 step 2), so an on:click would never fire from the
+// keyboard.
+func selectAttrs() map[string]bool {
+	return without(with("bind", "each", "key", "label", "placeholder", "on:change"), "on:click")
+}
+
 // htmlTagHintsCurrent are the HTML-name hints of the current language
 // (SPEC v0.4b decision 67): they replace htmlTagHints' entry for the same
 // name in a <tui> without version. A document that writes version keeps
-// 0.4.1's hint. <checkbox> is a tag of the current language, and the §5.1
-// hint names it in a pinned document, so it has no HTML hint any more.
+// 0.4.1's hint. <checkbox> and <select> are tags of the current language,
+// and the §5.1 hint names them in a pinned document, so they have no HTML
+// hint any more.
 var htmlTagHintsCurrent = map[string]string{
-	"radio": `a radio group is a <list> with checked= and single="true"`,
+	"radio":  `a radio group is a <list> with checked= and single="true"`,
+	"option": `use <select each=… key=… label=…>`,
 }
 
 // htmlHint returns the HTML-name hint of tag in this document's language,
@@ -46,7 +58,7 @@ func (b *builder) htmlHint(tag string) (string, bool) {
 // unknown (V001) and checked no further, so its content is read as in
 // 0.4.1.
 func (b *builder) formNoContent(n *ir.Node) bool {
-	return b.lang.V4() && n.Tag == "checkbox"
+	return b.lang.V4() && (n.Tag == "checkbox" || n.Tag == "select")
 }
 
 // singleAttr checks single= on a list or a table (SPEC v0.4b §6.14.1):
@@ -63,9 +75,9 @@ func (b *builder) singleAttr(n *ir.Node, a RawAttr) {
 	}
 }
 
-// checkboxLabel checks a checkbox's label, a template like a <text> body
-// (SPEC v0.4b §6.16.1, §7): a {…} pair that does not hold exactly a path
-// is V003 at the attribute.
+// checkboxLabel checks a checkbox's label, or a select's, a template like
+// a <text> body (SPEC v0.4b §6.16.1, §6.17.1, §7): a {…} pair that does
+// not hold exactly a path is V003 at the attribute.
 func (b *builder) checkboxLabel(n *ir.Node, a RawAttr, clean string) {
 	if _, err := ir.ParseInterp(clean); err != nil {
 		b.attrErr(n, a, "V003", "%s: %v", a.Name, err)
@@ -78,5 +90,24 @@ func (b *builder) checkboxLabel(n *ir.Node, a RawAttr, clean string) {
 func (b *builder) checkSingle(n *ir.Node, hasChecked bool) {
 	if n.Single && !hasChecked {
 		b.errN(n, "V018", "single on <%s> needs checked=: it makes checked hold one row key instead of an array", n.Tag)
+	}
+}
+
+// checkSelect applies the structure rules of SPEC v0.4b §6.17.1 to a
+// select: it needs each= and key= (V017 for each one that is absent; a
+// malformed each is V011 at the attribute, not absent). A select has no
+// B006: its bind holds the chosen option's key, which an index would not
+// keep when the array changes (decision 50). Inside a list <item> or a
+// container each template it is already V001 as a whole, so it gets no
+// V017 there (nor V012, checkNode).
+func (b *builder) checkSelect(n *ir.Node) {
+	if listItem(n.Parent) != nil || b.eachContainer(n) != nil {
+		return
+	}
+	if _, ok := n.Attr("each"); !ok {
+		b.errN(n, "V017", "<select> needs each=\"path as alias\": its options are the elements of an array")
+	}
+	if _, ok := n.Attr("key"); !ok {
+		b.errN(n, "V017", "<select> needs key=\"path\": bind holds the chosen option's key, which an index would not keep when the array changes")
 	}
 }

@@ -1,0 +1,8 @@
+<tui>
+  <screen id="main" focus="#b">
+    <button id="b" label="Save"/>
+    <checkbox id="c" label="News"/>
+    <select id="s" bind="size" each="sizes as o" key="o.id" label="{o.label}" placeholder="size"/>
+    <input id="i" placeholder="name"/>
+  </screen>
+</tui>
