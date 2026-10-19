@@ -1,0 +1,9 @@
+{
+  "where": "Production / Services / billing / Settings",
+  "path": [
+    { "id": "prod", "label": "Production", "last": false },
+    { "id": "svc", "label": "Services", "last": false },
+    { "id": "billing", "label": "billing", "last": false },
+    { "id": "settings", "label": "Settings", "last": true }
+  ]
+}

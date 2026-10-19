@@ -1,0 +1,40 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <keymap>
+    <bind keys="]" action="move-next" to="#nav" keycap="]/[" label="tab"/>
+    <bind keys="[" action="move-prev" to="#nav"/>
+    <bind keys="1" action="switch-to" to="#overview"/>
+    <bind keys="2" action="switch-to" to="#activity"/>
+    <bind keys="3" action="switch-to" to="#settings"/>
+  </keymap>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="0">
+      <!-- COPY: tabs are a `tabs` with class `tabs` bound to a path that
+           holds the active tab's id (the host or `switch-to` writes it).
+           Each `tab` needs an `id` and a `label`; `short` is the label used
+           when the strip does not fit. The generated labels are styled
+           with `.tab-label` and `.tab-label:selected`. Only the active
+           tab's content is laid out. `mark` is the glyph before the active
+           label. -->
+      <tabs id="nav" class="tabs" bind="view" mark="▸">
+        <tab id="overview" label="1 overview" short="1 ovr">
+          <box class="card" title="Overview">
+            <text class="card-text">{tabs.overview}</text>
+          </box>
+        </tab>
+        <tab id="activity" label="2 activity ({tabs.count})" short="2 act">
+          <box class="card" title="Activity">
+            <text class="card-text">{tabs.activity}</text>
+          </box>
+        </tab>
+        <tab id="settings" label="3 settings" short="3 set">
+          <box class="card" title="Settings">
+            <text class="card-text">{tabs.settings}</text>
+          </box>
+        </tab>
+      </tabs>
+      <hints class="hintbar"/>
+    </col>
+  </screen>
+</tui>

@@ -1,0 +1,35 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <keymap when="#items">
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+  </keymap>
+  <screen id="demo" focus="#items">
+    <!-- COPY: master / detail is a `row` with class `split`: a list on the
+         left (`split-master`, 34% wide, 24 to 40 columns) and a card on
+         the right (`split-detail`, the rest). The list `bind` is the
+         selected id; the host keeps `detail` (a Derive over `items` and the
+         cursor) so the right side follows the cursor with no handler.
+         The detail card shows the badge for the status through class:NAME
+         guards. -->
+    <row class="split">
+      <list id="items" class="menu split-master" each="items as it" key="it.id" bind="cur" title="Incidents" on:select="item_select">
+        <item>
+          <row class="menu-row">
+            <text class="menu-label">{it.title}</text>
+            <text class="menu-key">{it.age}</text>
+          </row>
+        </item>
+      </list>
+      <box class="card split-detail" title="{detail.title}">
+        <row height="1" width="1fr" gap="1">
+          <text class="badge" class:danger="detail.open" class:success="!detail.open">{detail.status}</text>
+          <text class="muted">{detail.age} ago</text>
+        </row>
+        <text class="card-text" wrap="wrap">{detail.summary}</text>
+        <text class="card-muted">owner: {detail.owner}</text>
+      </box>
+    </row>
+  </screen>
+</tui>

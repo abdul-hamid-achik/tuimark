@@ -1,0 +1,30 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo" focus="#open">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <text class="title">card / panel</text>
+      <!-- COPY: a card is a `box` with class `card` and a `title`. The border
+           turns to the focus color while anything inside holds focus
+           (`.card:focus-within`). Give it `height="auto"` (the class does)
+           to wrap its content, or a number / fr to fix it. -->
+      <box class="card" title="{card.title}">
+        <text class="card-title">{card.heading}</text>
+        <text class="card-muted">{card.text}</text>
+        <row class="card-actions">
+          <button id="open" class="btn primary" label="Open" on:click="open"/>
+          <button id="dismiss" class="btn ghost" label="Dismiss" on:click="dismiss"/>
+        </row>
+      </box>
+      <!-- COPY: side-by-side cards share the row; each takes `1fr`. -->
+      <row width="1fr" height="auto" gap="1">
+        <box class="card" title="Left">
+          <text class="card-text">First card</text>
+        </box>
+        <box class="card" title="Right">
+          <text class="card-text">Second card</text>
+        </box>
+      </row>
+    </col>
+  </screen>
+</tui>

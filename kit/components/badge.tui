@@ -1,0 +1,28 @@
+<tui version="3" theme="auto">
+  <!-- Every kit document loads both sheets, tokens first. -->
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <text class="title">badge</text>
+      <!-- COPY: a badge is one text with two classes: `badge` and a variant.
+           Variants: accent, success, warning, danger, info (none = neutral).
+           The label is literal text or a {path}. -->
+      <row width="1fr" height="1" gap="1">
+        <text class="badge">draft</text>
+        <text class="badge accent">new</text>
+        <text class="badge success">passing</text>
+      </row>
+      <row width="1fr" height="1" gap="1">
+        <text class="badge warning">flaky</text>
+        <text class="badge danger">failed</text>
+        <text class="badge info">{build.number}</text>
+      </row>
+      <!-- COPY: choose the variant from data with class:NAME guards on the
+           same node (the guards are paths the host keeps true or false). -->
+      <row width="1fr" height="1" gap="1">
+        <text class="badge" class:success="build.ok" class:danger="!build.ok">{build.status}</text>
+      </row>
+    </col>
+  </screen>
+</tui>

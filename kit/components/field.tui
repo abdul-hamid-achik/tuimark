@@ -1,0 +1,35 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <keymap>
+    <bind keys="ctrl+s" action="form_submit" keycap="^S" label="save"/>
+  </keymap>
+  <screen id="demo" focus="#f-name">
+    <col width="1fr" height="1fr" gap="0" pad="1">
+      <text class="title">form field</text>
+      <!-- COPY: a field is a `col` with class `field`: a label, an `input`
+           with class `field-input`, help text, and an error line. The input
+           has its own border (and height 3), which is what lets `:focus`
+           change `border-color`; an input without `border` cannot show
+           focus that way. The host writes `form.name_error` ("" when fine):
+           `class:invalid` turns the label and the border red, and the error
+           line shows only while the path is non-empty. -->
+      <col class="field">
+        <text class="field-label" class:invalid="form.name_error">Name</text>
+        <input id="f-name" class="field-input" class:invalid="form.name_error" bind="form.name" placeholder="your name" on:change="form_validate" on:submit="form_submit"/>
+        <text class="field-help" if="!form.name_error">Shown on your profile.</text>
+        <text class="field-error" if="form.name_error">{form.name_error}</text>
+      </col>
+      <col class="field">
+        <text class="field-label" class:invalid="form.email_error">Email</text>
+        <input id="f-email" class="field-input" class:invalid="form.email_error" bind="form.email" placeholder="you@example.com" on:change="form_validate" on:submit="form_submit"/>
+        <text class="field-help" if="!form.email_error">We never share it.</text>
+        <text class="field-error" if="form.email_error">{form.email_error}</text>
+      </col>
+      <row width="1fr" height="1" gap="2">
+        <button id="f-save" class="btn primary" label="Save" on:click="form_submit"/>
+        <hints class="hintbar"/>
+      </row>
+    </col>
+  </screen>
+</tui>

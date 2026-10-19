@@ -1,0 +1,91 @@
+/*
+ * kit/theme.tcss: the design tokens and the base rules.
+ *
+ * Every kit document loads two sheets, in this order:
+ *
+ *   <style src="theme.tcss"/>   tokens + base typography (this file)
+ *   <style src="kit.tcss"/>     the component classes
+ *
+ * There is no @import in TCSS, so a document lists both <style src> lines.
+ * Both sheets are cascaded together; where two rules tie, the later one
+ * wins, so kit.tcss may refine anything here. Your own sheet goes last.
+ *
+ * Tokens are CSS custom properties on :root, read as $name (or
+ * var(--name)). Change the look of the whole kit by editing the values
+ * below; nothing else in the kit holds a color.
+ *
+ *   bg         the screen
+ *   surface    cards, panels, modals, inputs
+ *   surface-2  raised or inset things on a surface: buttons, kbd, badges
+ *   selected   the cursor row of a list or table
+ *   fg         body text
+ *   muted      secondary text, labels, borders of things that are idle
+ *   border     idle borders and rules
+ *   accent     the brand color: primary actions, the active tab, focus titles
+ *   accent-fg  text drawn ON accent, success, warning, danger, info
+ *   success warning danger info   status colors
+ *   focus      the border or highlight of the focused thing
+ */
+
+:root {
+  --bg: #0f1115;
+  --surface: #171a21;
+  --surface-2: #232834;
+  --selected: #2a3550;
+  --fg: #e6e8ee;
+  --muted: #8b93a7;
+  --border: #343b4b;
+  --accent: #7aa2f7;
+  --accent-fg: #0f1115;
+  --success: #7ccf8a;
+  --warning: #e5b567;
+  --danger: #f2777a;
+  --info: #6cc4e8;
+  --focus: #7aa2f7;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #f5f6f9;
+    --surface: #ffffff;
+    --surface-2: #e8ebf2;
+    --selected: #d9e3fb;
+    --fg: #1c2030;
+    --muted: #596178;
+    --border: #bcc3d2;
+    --accent: #2f5bd8;
+    --accent-fg: #ffffff;
+    --success: #1f7a3a;
+    --warning: #8a5a00;
+    --danger: #bf2830;
+    --info: #0b6a8a;
+    --focus: #2f5bd8;
+  }
+}
+
+/* The screen. `wrap: truncate` is inherited: text that does not fit ends
+ * in an ellipsis instead of being cut silently (which would be L008). */
+screen { color: $fg; background: $bg; wrap: truncate; }
+
+/* Modals draw over the page, so they need a background of their own. */
+modal { background: $surface; border-color: $accent; title-color: $accent; }
+
+/* Typography */
+.title { bold: true; color: $fg; }
+.subtitle { color: $muted; }
+.muted { color: $muted; }
+.strong { bold: true; }
+.kbd { color: $fg; background: $surface-2; bold: true; padding: 0 1; }
+.code { color: $info; background: $surface-2; padding: 0 1; }
+
+/* Text colors by meaning */
+.text-accent { color: $accent; }
+.text-success { color: $success; }
+.text-warning { color: $warning; }
+.text-danger { color: $danger; }
+.text-info { color: $info; }
+
+/* States. Focus is shown with color, never with the border alone: only
+ * elements that set their own `border` can change `border-color`. */
+button:disabled, input:disabled { dim: true; }
+list:disabled, table:disabled { dim: true; }

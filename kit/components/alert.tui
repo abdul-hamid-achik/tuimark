@@ -1,0 +1,36 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="0" pad="1">
+      <text class="title">alert / callout</text>
+      <!-- COPY: an alert is a `box` with class `alert` plus a variant (info,
+           success, warning, danger). The title is the box title; the body
+           wraps. `alert-icon` takes the same variant so it matches. -->
+      <box class="alert info" title="Heads up">
+        <row class="alert-row">
+          <text class="alert-icon info">i</text>
+          <text class="alert-text">Deploys are paused until 09:00 UTC.</text>
+        </row>
+      </box>
+      <box class="alert success" title="Saved">
+        <row class="alert-row">
+          <text class="alert-icon success">✓</text>
+          <text class="alert-text">Your changes are live in every region.</text>
+        </row>
+      </box>
+      <box class="alert warning" title="Quota">
+        <row class="alert-row">
+          <text class="alert-icon warning">!</text>
+          <text class="alert-text">You have used 92% of this month's build minutes.</text>
+        </row>
+      </box>
+      <box class="alert danger" title="Build failed">
+        <row class="alert-row">
+          <text class="alert-icon danger">✗</text>
+          <text class="alert-text">{alert.message}</text>
+        </row>
+      </box>
+    </col>
+  </screen>
+</tui>

@@ -1,0 +1,31 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <text class="title">stat / KPI card</text>
+      <!-- COPY: a stat is a `box` with class `stat`: the label as the box
+           title, the value in bold, and a row with the change (`stat-delta`, plus `good`
+           or `bad` for green or red; guard it with class:good / class:bad:
+           whether a rise is good depends on the metric)
+           and a `sparkline` (class `stat-spark`) bound to an array of
+           numbers. Put stats in a row; each takes `1fr` of the width. -->
+      <row width="1fr" height="auto" gap="1">
+        <box class="stat" title="Requests">
+          <text class="stat-value">{stats.req.value}</text>
+          <row class="stat-row">
+            <text class="stat-delta" class:good="stats.req.good" class:bad="!stats.req.good">{stats.req.delta}</text>
+            <sparkline class="stat-spark" bind="stats.req.hist"/>
+          </row>
+        </box>
+        <box class="stat" title="Errors">
+          <text class="stat-value">{stats.err.value}</text>
+          <row class="stat-row">
+            <text class="stat-delta" class:good="stats.err.good" class:bad="!stats.err.good">{stats.err.delta}</text>
+            <sparkline class="stat-spark" bind="stats.err.hist"/>
+          </row>
+        </box>
+      </row>
+    </col>
+  </screen>
+</tui>

@@ -1,0 +1,19 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo" focus="#create">
+    <col width="1fr" height="1fr" pad="1">
+      <text class="title">empty state</text>
+      <!-- COPY: an empty state is a `col` with class `empty` (it fills the
+           space left and centers its children), an icon, a title, one line
+           of help, and the call to action (a button label is literal text). Show it with `if="!items.any"`
+           next to the list it replaces. -->
+      <col class="empty">
+        <text class="empty-icon">◌</text>
+        <text class="empty-title">{empty.title}</text>
+        <text class="empty-text">{empty.text}</text>
+        <button id="create" class="btn primary" label="New deployment" on:click="empty_create"/>
+      </col>
+    </col>
+  </screen>
+</tui>

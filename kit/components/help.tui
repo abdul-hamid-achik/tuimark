@@ -1,0 +1,31 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <!-- COPY: the help overlay lists every keymap row that has a `label`. Give
+       rows a `keycap` to show "j/k" or "^S" instead of the raw key. -->
+  <keymap>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="n" action="item_new" label="new item"/>
+    <bind keys="d" action="item_delete" label="delete item"/>
+    <bind keys="j" action="item_next" keycap="j/k" label="move"/>
+    <bind keys="k" action="item_prev"/>
+    <bind keys="ctrl+s" action="save" keycap="^S" label="save"/>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <keymap when="#help">
+    <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
+  </keymap>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <text class="title">help overlay</text>
+      <text class="muted">press ? for the keys</text>
+      <hints class="hintbar"/>
+    </col>
+    <!-- COPY: a modal with class `help` that holds `<hints scope="all">`.
+         `scope="all"` lists every labeled row, not only the ones that would
+         fire right now. `help-keys` stacks them in a column. -->
+    <modal id="help" class="help" open="help.open" title="Keys" on:escape="help_close">
+      <hints class="help-keys" scope="all"/>
+    </modal>
+  </screen>
+</tui>

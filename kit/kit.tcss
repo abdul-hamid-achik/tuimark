@@ -1,0 +1,245 @@
+/*
+ * kit/kit.tcss: the component classes. Load it right after theme.tcss.
+ *
+ * Conventions
+ *   - A component is a root class (.card) plus parts that carry the root's
+ *     name as a prefix (.card-title). TCSS has no descendant combinator, so
+ *     every part gets its own class; copy the markup and you copy the names.
+ *   - A variant is a second class on the same node (.badge.success). A
+ *     compound selector outranks a single class, so a variant wins over its
+ *     base wherever it sits in the file.
+ *   - Components that must fill a space say so with an explicit width or
+ *     height, so they do not depend on what a bare row or col defaults to.
+ *   - Colors are always tokens from theme.tcss ($accent, ...); nothing here
+ *     holds a literal color.
+ */
+
+/* ---------------------------------------------------------------- badge */
+
+.badge { width: auto; height: 1; padding: 0 1; color: $fg; background: $surface-2; bold: true; }
+.badge.accent { color: $accent-fg; background: $accent; }
+.badge.success { color: $accent-fg; background: $success; }
+.badge.warning { color: $accent-fg; background: $warning; }
+.badge.danger { color: $accent-fg; background: $danger; }
+.badge.info { color: $accent-fg; background: $info; }
+
+/* --------------------------------------------------------------- button */
+
+.btn { width: auto; height: 1; padding: 0; color: $fg; background: $surface-2; }
+.btn.primary { color: $accent-fg; background: $accent; bold: true; }
+.btn.secondary { color: $fg; background: $surface-2; }
+.btn.danger { color: $accent-fg; background: $danger; bold: true; }
+.btn.ghost { color: $muted; background: default; }
+/* Focus: an inverted label that no variant shares with its idle look. */
+.btn:focus { color: $accent-fg; background: $focus; bold: true; underline: true; }
+.btn.primary:focus { color: $bg; background: $fg; }
+.btn.danger:focus { color: $bg; background: $fg; }
+.btn.ghost:focus { color: $fg; background: $selected; }
+.btn:disabled { color: $muted; background: $surface-2; dim: true; }
+
+/* ----------------------------------------------------------- card/panel */
+
+.card { width: 1fr; height: auto; border: rounded; border-color: $border; title-color: $muted; background: $surface; padding: 0 1; }
+.card:focus-within { border-color: $focus; title-color: $accent; }
+.card-title { bold: true; color: $fg; }
+.card-text { color: $fg; }
+.card-muted { color: $muted; }
+.card-actions { width: 1fr; height: 1; gap: 2; }
+
+/* ---------------------------------------------------------------- alert */
+
+.alert { width: 1fr; height: auto; border: rounded; border-color: $border; background: $surface; padding: 0 1; }
+.alert.info { border-color: $info; title-color: $info; }
+.alert.success { border-color: $success; title-color: $success; }
+.alert.warning { border-color: $warning; title-color: $warning; }
+.alert.danger { border-color: $danger; title-color: $danger; }
+.alert-row { width: 1fr; height: auto; gap: 1; }
+.alert-icon { width: 1; bold: true; }
+.alert-icon.info { color: $info; }
+.alert-icon.success { color: $success; }
+.alert-icon.warning { color: $warning; }
+.alert-icon.danger { color: $danger; }
+.alert-text { width: 1fr; color: $fg; wrap: wrap; }
+
+/* ----------------------------------------------- app bar and status bar */
+
+.appbar { dock: top; width: 1fr; height: 1; gap: 2; padding: 0 1; overflow: hidden; background: $surface-2; color: $fg; }
+.appbar-brand { width: auto; bold: true; color: $accent; }
+.appbar-title { width: auto; bold: true; }
+.appbar-meta { width: auto; color: $muted; }
+
+.statusbar { dock: bottom; width: 1fr; height: 1; gap: 1; overflow: hidden; background: $surface-2; color: $fg; }
+.statusbar-seg { width: auto; padding: 0 1; bold: true; color: $accent-fg; background: $accent; }
+.statusbar-seg.success { background: $success; }
+.statusbar-seg.warning { background: $warning; }
+.statusbar-seg.danger { background: $danger; }
+.statusbar-text { width: auto; color: $fg; }
+.statusbar-muted { width: auto; padding: 0 1; color: $muted; }
+/* Narrow terminals: drop the least important parts before anything clips. */
+@media (max-cols: 60) {
+  .appbar-meta, .statusbar-muted { display: none; }
+}
+
+/* ------------------------------------------------------------- key hints */
+
+.hintbar { width: 1fr; height: 1; gap: 2; padding: 0 1; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* --------------------------------------------------------------- dialogs */
+
+.dialog { width: 52; max-width: 100%; height: auto; padding: 1 2; border: rounded; background: $surface; border-color: $accent; title-color: $accent; }
+.dialog.danger { border-color: $danger; title-color: $danger; }
+.dialog-text { width: 1fr; color: $fg; wrap: wrap; }
+.dialog-actions { width: 1fr; height: 1; gap: 2; margin: 1 0 0 0; }
+
+/* ----------------------------------------------------------- form field */
+
+.field { width: 1fr; height: auto; }
+.field-label { width: 1fr; height: 1; bold: true; color: $fg; }
+.field-label.invalid { color: $danger; }
+.field-input { width: 1fr; height: 3; border: rounded; border-color: $border; background: $surface; color: $fg; padding: 0 1; }
+.field-input:focus { border-color: $focus; background: $surface-2; }
+.field-input.invalid { border-color: $danger; }
+.field-input.invalid:focus { border-color: $danger; background: $surface-2; }
+.field-help { width: 1fr; height: 1; color: $muted; }
+.field-error { width: 1fr; height: 1; color: $danger; bold: true; }
+
+/* ----------------------------------------------------------- empty state */
+
+.empty { width: 1fr; height: 1fr; align: center; justify: center; gap: 1; }
+.empty-icon { width: auto; color: $muted; bold: true; }
+.empty-title { width: auto; bold: true; color: $fg; }
+.empty-text { width: auto; color: $muted; }
+
+/* ------------------------------------------------------------ data table */
+
+.dtable { width: 1fr; height: 1fr; border: rounded; border-color: $border; title-color: $muted; background: $surface; padding: 0 1; gap: 2; scrollbar: auto; }
+.dtable:focus { border-color: $focus; title-color: $accent; }
+.dtable > column { bold: true; color: $muted; }
+.dtable > item:selected { reverse: false; background: $selected; }
+.dtable:focus > item:selected { reverse: false; background: $selected; bold: true; }
+.dtable > item:checked { color: $accent; }
+.num { content-align: end; }
+.cell-name { min-width: 14; }
+.cell-muted { color: $muted; }
+.cell-success { color: $success; }
+.cell-warning { color: $warning; }
+.cell-danger { color: $danger; }
+
+/* ------------------------------------------------------------ menu / nav */
+
+.menu { width: 1fr; height: auto; border: rounded; border-color: $border; background: $surface; padding: 0 1; title-color: $muted; }
+.menu:focus { border-color: $focus; title-color: $accent; }
+.menu > item { height: 1; }
+.menu > item:selected { reverse: false; background: $selected; }
+.menu:focus > item:selected { reverse: false; background: $accent; color: $accent-fg; bold: true; }
+.menu > item:checked { color: $accent; }
+.menu-row { width: 1fr; height: 1; gap: 1; }
+.menu-icon { width: 1; }
+.menu-label { width: 1fr; }
+.menu-key { width: auto; color: $muted; }
+
+/* ------------------------------------------------------------------ tabs */
+
+.tabs { width: 1fr; height: 1fr; gap: 2; }
+.tab-label { color: $muted; }
+.tab-label:selected { color: $accent; bold: true; underline: true; }
+
+/* ------------------------------------------------------ labeled progress */
+
+.meter { width: 1fr; height: auto; }
+.meter-head { width: 1fr; height: 1; gap: 1; }
+.meter-label { width: auto; color: $fg; }
+.meter-value { width: auto; color: $muted; }
+.meter-bar { width: 1fr; height: 1; color: $accent; background: $surface-2; bar: eighths; }
+.meter-bar.success { color: $success; }
+.meter-bar.warning { color: $warning; }
+.meter-bar.danger { color: $danger; }
+
+/* ------------------------------------------------------------- stat / KPI */
+
+.stat { width: 1fr; height: auto; border: rounded; border-color: $border; title-color: $muted; background: $surface; padding: 0 1; }
+.stat-value { width: 1fr; height: 1; bold: true; color: $fg; }
+.stat-row { width: 1fr; height: 1; gap: 1; }
+.stat-delta { width: auto; color: $muted; }
+.stat-delta.good { color: $success; }
+.stat-delta.bad { color: $danger; }
+.stat-spark { width: 1fr; height: 1; color: $accent; }
+
+/* ----------------------------------------------------------------- toast */
+
+.toast-slot { width: 1fr; height: 1; }
+.toast { width: 1fr; height: 1; padding: 0 1; gap: 1; color: $accent-fg; background: $info; bold: true; }
+.toast.success { background: $success; }
+.toast.warning { background: $warning; }
+.toast.danger { background: $danger; }
+.toast-text { width: 1fr; color: $accent-fg; }
+.toast-key { width: auto; color: $accent-fg; dim: true; }
+
+/* ------------------------------------------------------ command palette */
+
+.palette { width: 60; max-width: 100%; height: 16; max-height: 100%; padding: 0 1; border: rounded; background: $surface; border-color: $accent; title-color: $accent; }
+.palette-input { width: 1fr; height: 3; border: rounded; border-color: $border; background: $surface; padding: 0 1; }
+.palette-input:focus { border-color: $focus; }
+.palette-list { width: 1fr; height: 1fr; }
+.palette-list > item { height: 1; }
+.palette-list > item:selected { reverse: false; background: $selected; }
+.palette-row { width: 1fr; height: 1; gap: 1; }
+.palette-label { width: 1fr; }
+.palette-hint { width: auto; color: $muted; }
+
+/* ---------------------------------------------------------- help overlay */
+
+.help { width: 56; max-width: 100%; height: auto; max-height: 100%; padding: 1 2; border: rounded; background: $surface; border-color: $accent; title-color: $accent; }
+.help-keys { layout: column; gap: 0; width: 1fr; height: auto; }
+
+/* ------------------------------------------------------- split / master */
+
+.split { width: 1fr; height: 1fr; gap: 1; }
+.split-master { width: 34%; min-width: 24; max-width: 40; height: 1fr; }
+.split-detail { width: 1fr; height: 1fr; }
+.split-title { width: 1fr; bold: true; color: $fg; }
+/* Narrow terminals: stack the panes instead of squeezing the detail. */
+@media (max-cols: 70) {
+  .split { layout: column; gap: 0; }
+  .split-master { width: 1fr; min-width: 0; max-width: 100%; height: 40%; }
+  .split-detail { width: 1fr; height: 1fr; }
+}
+
+/* -------------------------------------------------------------- log panel */
+
+.logpanel { width: 1fr; height: 1fr; border: rounded; border-color: $border; title-color: $muted; background: $surface; padding: 0 1; scrollbar: auto; }
+.logpanel:focus { border-color: $focus; title-color: $accent; }
+.log-lines { width: 1fr; height: auto; }
+.log-line { width: 1fr; color: $fg; wrap: nowrap; }
+.log-line.muted { color: $muted; }
+.log-line.info { color: $info; }
+.log-line.warning { color: $warning; }
+.log-line.danger { color: $danger; }
+
+/* ------------------------------------------------------------ breadcrumb */
+
+.crumbs { width: 1fr; height: 1; gap: 1; padding: 0 1; overflow: hidden; }
+.crumb { width: auto; color: $muted; }
+.crumb.current { color: $fg; bold: true; }
+.crumb-sep { width: auto; color: $border; }
+/* Narrow terminals: only the current page. */
+@media (max-cols: 60) {
+  .crumb, .crumb-sep { display: none; }
+  .crumb.current { display: flex; }
+}
+
+/* --------------------------------------------------------- layout helpers */
+
+/* A scrolling page: put one in each tab. `page-body` is the column inside it,
+ * as tall as its content, which is what the scroll measures. */
+.page { width: 1fr; height: 1fr; padding: 0 1; scrollbar: auto; }
+.page-body { width: 1fr; height: auto; gap: 1; }
+.section { width: 1fr; height: 1; bold: true; color: $accent; }
+
+/* `cols` is a row of panels that stacks into a column on narrow terminals. */
+.cols { width: 1fr; height: auto; gap: 1; }
+@media (max-cols: 90) {
+  .cols { layout: column; }
+}

@@ -1,0 +1,24 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <keymap>
+    <bind keys="backspace" action="crumb_up" label="up"/>
+  </keymap>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="1">
+      <!-- COPY: a breadcrumb is a `row` with class `crumbs` and `each` over
+           an array of {id, label, last}. Its children are the template,
+           repeated per element: the label (class `crumb`, plus `current`
+           for the last one, by a class:NAME guard) and the separator. The
+           host builds the array from the current path and trims it on
+           `crumb_up`. A template cannot hold anything focusable, so the
+           crumbs are display only; navigate with a keymap row. -->
+      <row class="crumbs" each="path as c" key="c.id">
+        <text class="crumb" class:current="c.last">{c.label}</text>
+        <text class="crumb-sep" if="!c.last">›</text>
+      </row>
+      <text class="muted" pad="1">You are in {where}.</text>
+      <hints class="hintbar"/>
+    </col>
+  </screen>
+</tui>

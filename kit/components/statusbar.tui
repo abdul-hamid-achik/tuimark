@@ -1,0 +1,25 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo">
+    <col id="app" width="1fr" height="1fr">
+      <col width="1fr" height="1fr" pad="1">
+        <text class="muted">The page content goes here.</text>
+      </col>
+      <!-- COPY: the status bar is a one-row `row` with class `statusbar`,
+           docked to the bottom of its parent. Left segments first, a
+           `spacer`, then right segments. `statusbar-seg` is a filled chip
+           (variants: success, warning, danger); `statusbar-text` and
+           `statusbar-muted` are plain. Only one bottom-docked bar per
+           container (L005): put the key hints above it, not docked. -->
+      <row class="statusbar">
+        <text class="statusbar-seg">{status.mode}</text>
+        <text class="statusbar-text">{status.file}</text>
+        <spacer/>
+        <text class="statusbar-seg success" if="status.synced">synced</text>
+        <text class="statusbar-seg warning" if="!status.synced">unsynced</text>
+        <text class="statusbar-muted">{status.position}</text>
+      </row>
+    </col>
+  </screen>
+</tui>

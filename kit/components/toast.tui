@@ -1,0 +1,30 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <keymap>
+    <bind keys="esc" action="toast_dismiss" label="dismiss"/>
+  </keymap>
+  <screen id="demo" focus="#save">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <text class="title">toast</text>
+      <row width="1fr" height="1" gap="2">
+        <button id="save" class="btn primary" label="Save" on:click="toast_show"/>
+      </row>
+      <spacer/>
+      <!-- COPY: a toast is a one-row strip. `toast-slot` is a row that is
+           always one row high, so the page never jumps when the toast
+           appears; the `toast` row inside shows only while `toast.show` is
+           true. Info is the default; guard `success`, `warning`, `danger`
+           with class:NAME. The HOST clears it: set `toast.show` back to
+           false from an `Every` tick (see examples/kit-gallery/main.go).
+           The slot is not docked, so it can sit above a docked status bar
+           (only one bottom-docked bar per container, L005). -->
+      <row class="toast-slot">
+        <row class="toast" if="toast.show" class:success="toast.is_success" class:warning="toast.is_warning" class:danger="toast.is_danger">
+          <text class="toast-text">{toast.text}</text>
+          <text class="toast-key">esc</text>
+        </row>
+      </row>
+    </col>
+  </screen>
+</tui>

@@ -1,0 +1,39 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <text class="title">labeled progress</text>
+      <!-- COPY: a meter is a `col` with class `meter`: a head row (label on
+           the left, the value text on the right) over a `progress` with
+           class `meter-bar`. `bind` is a number from 0 to 100. Add a status
+           color to the bar with `success`, `warning`, or `danger`, or pick
+           it from data with class:NAME guards. The host updates the number
+           (and the text) as the work advances. -->
+      <col class="meter">
+        <row class="meter-head">
+          <text class="meter-label">{meters.upload.label}</text>
+          <spacer/>
+          <text class="meter-value">{meters.upload.text}</text>
+        </row>
+        <progress class="meter-bar" bind="meters.upload.pct"/>
+      </col>
+      <col class="meter">
+        <row class="meter-head">
+          <text class="meter-label">Disk</text>
+          <spacer/>
+          <text class="meter-value">{meters.disk.text}</text>
+        </row>
+        <progress class="meter-bar" class:warning="meters.disk.warn" class:danger="meters.disk.crit" bind="meters.disk.pct"/>
+      </col>
+      <col class="meter">
+        <row class="meter-head">
+          <text class="meter-label">Tests</text>
+          <spacer/>
+          <text class="meter-value">{meters.tests.text}</text>
+        </row>
+        <progress class="meter-bar success" bind="meters.tests.pct"/>
+      </col>
+    </col>
+  </screen>
+</tui>

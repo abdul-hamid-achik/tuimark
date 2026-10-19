@@ -1,0 +1,22 @@
+<tui version="3" theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo">
+    <col id="app" width="1fr" height="1fr">
+      <!-- COPY: the app bar is a one-row `row` with class `appbar`. The class
+           docks it to the top of its parent (`dock: top`), so the content
+           below it keeps all the remaining space whatever it is. Put at most
+           one top-docked bar in a container. -->
+      <row class="appbar">
+        <text class="appbar-brand">◆ {app.name}</text>
+        <text class="appbar-title">{app.page}</text>
+        <spacer/>
+        <text class="appbar-meta">{app.user}</text>
+        <text class="badge success">{app.env}</text>
+      </row>
+      <col width="1fr" height="1fr" pad="1">
+        <text class="muted">The page content goes here.</text>
+      </col>
+    </col>
+  </screen>
+</tui>
