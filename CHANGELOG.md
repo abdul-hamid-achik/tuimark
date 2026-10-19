@@ -47,6 +47,19 @@ line.
   error}`, and the palette's input fires a `palette_query` action as the query
   changes (a host without `Derive`, such as a TypeScript parent, recomputes
   `found` there).
+- **`examples/containers`**: a container-engine dashboard built only from the
+  kit, over a simulated engine (a seeded state machine on an injected clock; no
+  Docker). A filterable, sortable, multi-select table with `<column priority>`,
+  a detail pane (overview card, CPU and memory `sparkline` pair, nested tabs for
+  a `stick="bottom"` log, the environment and the ports), images, volumes and an
+  events log; stop, restart and remove (a danger dialog) and the prunes through
+  the kit's confirm dialog, a command palette filtered by `Derive`, a help
+  overlay, toasts, a status bar and key hints. It ships `sample.json` and
+  `mock.json` (generated snapshots, kept in step by a test), tests for the
+  view at 40, 80 and 120 columns in both themes with every tab and modal open,
+  the kit's conventions and the `Play` flows, and a `-demo COLSxROWS` mode that
+  the docs site turns into an animated SVG. `loadfs_test.go` now gives any
+  example that loads `../../kit` the repository root as its file system.
 
 ## [0.4.1] - 2026-10-18
 

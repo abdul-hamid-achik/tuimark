@@ -176,6 +176,22 @@
     "cmd": "tuimark play examples/kit-gallery/app.tui --data examples/kit-gallery/sample.json --cols 100 --rows 28 --input \"3 focus:#svc down\""
   },
   {
+    "name": "containers",
+    "light": true,
+    "cols": 110,
+    "rows": 26,
+    "alt": "containers: a table of twelve containers with status colors, CPU, memory, uptime and ports, two rows marked, over the key hints and a status bar that says the engine is degraded",
+    "cmd": "tuimark play examples/containers/app.tui --data examples/containers/sample.json --cols 110 --rows 26"
+  },
+  {
+    "name": "containers-detail",
+    "light": true,
+    "cols": 110,
+    "rows": 28,
+    "alt": "containers: the detail of one container, an overview card beside CPU and memory sparklines, and its log in a tab strip with environment and ports",
+    "cmd": "tuimark play examples/containers/app.tui --data examples/containers/sample.json --cols 110 --rows 28 --input 2"
+  },
+  {
     "name": "inbox",
     "light": false,
     "cols": 100,
@@ -292,6 +308,16 @@
     "cmd": "go run ./examples/pipeline",
     "animated": true,
     "ms": 10220
+  },
+  {
+    "name": "containers-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "containers: filtering the table, marking and stopping two containers through the confirm dialog, starting them again, sorting, the detail and its tabs, a restart from the command palette, a scripted crash in the events, and the help overlay",
+    "cmd": "go run ./examples/containers",
+    "animated": true,
+    "ms": 14780
   },
   {
     "name": "music-demo",

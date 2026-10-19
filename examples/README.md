@@ -28,6 +28,7 @@ go build -o bin/logs ./examples/logs && ./bin/logs
 | [`music`](music) | A music player with no audio: library, queue, albums, now playing | a six-row `<sparkline>` spectrum visualizer, `bar: eighths` position and volume, `<tabs>` with live counts in their labels, tables with `<column priority>` |
 | [`pomodoro`](pomodoro) | A Pomodoro timer and a clock in big block digits | a derived multi-line `<text>` for the digits and their blinking colon, phase colors from `class:` guards, a task `<input>`, a world-clock table |
 | [`kit-gallery`](kit-gallery) | Every component of the [copy-paste kit](../kit/README.md) on five tabs: badges, buttons, alerts, forms, a table, a log, dialogs, a command palette, toasts, a split pane | the kit's `k-` classes and tokens over two stylesheets plus your own, `instance__part` ids and `component_verb` actions, a host that routes by the prefix of the event's source, `Derive` for the palette filter, a light and a dark theme |
+| [`containers`](containers) | A container-engine dashboard on a simulated engine, built from the kit: containers, detail, images, volumes, events | a filterable, sortable, multi-select `<table>` with `<column priority>`, nested `<tabs>` with a `stick="bottom"` log and `sparkline` stats, stop/restart/remove through the kit's confirm dialog, a palette filtered by `Derive`, `Every` driving a seeded simulation |
 | [`monitor`](monitor) | A system monitor's studio view | nine tabs, a panel grid with gauges and sparklines, a process table with sorting and multi-select, settings that switch the mouse and the theme |
 | [`agent`](agent) | A coding-agent chat on a scripted provider or a local Ollama model | a transcript, a composer, approval modals, a headless mode |
 | [`dashboard`](dashboard) | A deploy dashboard | two screens, a progress bar, buttons, a confirm modal |
@@ -35,8 +36,8 @@ go build -o bin/logs ./examples/logs && ./bin/logs
 | [`host-ts`](host-ts) | A minimal counter driven by a Bun parent through `@tuimark/host` | `tuimark host` and its fd 3/fd 4 protocol, from TypeScript |
 
 `logs`, `tasks`, `gitui`, `http`, the six games (`snake`, `chess`, `tetris`,
-`minesweeper`, `2048`, `sudoku`), `pipeline`, `music`, `pomodoro`, and
-`kit-gallery` also ship a `mock.json`, so you can try the view with no Go at all (the mock
+`minesweeper`, `2048`, `sudoku`), `pipeline`, `music`, `pomodoro`,
+`kit-gallery`, and `containers` also ship a `mock.json`, so you can try the view with no Go at all (the mock
 answers each action with fixed writes; the Go host is the real app, and
 nothing moves on its own without it):
 
@@ -44,7 +45,7 @@ nothing moves on its own without it):
 tuimark run examples/tasks/app.tui --data examples/tasks/sample.json --mock examples/tasks/mock.json
 ```
 
-The six games, `pipeline`, `music`, and `pomodoro` also have a
+The six games, `pipeline`, `music`, `pomodoro`, and `containers` also have a
 `-demo COLSxROWS` flag: the app replays a scripted session on a fake clock
 with a fixed seed and prints each frame as a JSON line. The docs site turns
 those frames into the animations on its Examples page.

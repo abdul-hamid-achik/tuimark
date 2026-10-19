@@ -1,6 +1,6 @@
 ---
 title: Examples
-description: Complete Tuimark apps from the repository - six games (Snake, chess, Tetris, Minesweeper, Sudoku, 2048), a CI pipeline runner, a music player, a Pomodoro timer, a system monitor studio, a live log viewer, a kanban board, a git client, an HTTP client, an inbox, a deploy dashboard, a coding-agent chat, Unicode text and the phase-0 spike - with screenshots rendered from tuimark play.
+description: Complete Tuimark apps from the repository - six games (Snake, chess, Tetris, Minesweeper, Sudoku, 2048), a CI pipeline runner, a music player, a Pomodoro timer, a container-engine dashboard, a system monitor studio, a live log viewer, a kanban board, a git client, an HTTP client, an inbox, a deploy dashboard, a coding-agent chat, Unicode text and the phase-0 spike - with screenshots rendered from tuimark play.
 ---
 
 # Examples
@@ -272,6 +272,30 @@ go run ./examples/kit-gallery -theme light
 tuimark run examples/kit-gallery/app.tui --data examples/kit-gallery/sample.json --mock examples/kit-gallery/mock.json
 ```
 
+## containers
+
+[`examples/containers`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/containers) is a container-engine dashboard in the spirit of Docker Desktop or k9s, built only from the [kit](/guide/kit) over a simulated engine (no Docker is touched). A filterable, sortable, multi-select table of containers with `<column priority>`; a detail pane with an overview card, a CPU and a memory `sparkline`, and nested tabs for the log (`<scroll stick="bottom">`), the environment and the ports; images, volumes, and an events log.
+
+<TermShot name="containers">
+The containers tab: two marked rows (<code>space</code>), the sort in the table title, and the status bar showing the engine degraded because one container exited with a failure.
+</TermShot>
+
+<TermShot name="containers-detail">
+The detail tab after <code>2</code>: the overview card, the CPU and memory sparklines, and the log below them, which keeps following its end as lines arrive.
+</TermShot>
+
+<TermShot name="containers-demo">
+A session: filter the table with <code>/</code>, mark two rows and stop them through the confirm dialog, start them again, sort by CPU, open the detail and flip through its tabs, restart from the command palette, then watch a scripted crash and its restart in the events before the help opens.
+</TermShot>
+
+The kit's actions are generic (<code>dialog_confirm</code>, <code>palette_run</code>) and the host routes them by the prefix of the event's <code>source</code>. <code>Every</code> advances a seeded simulation once a second; <code>Derive</code> keeps the visible rows (the filter and the sort), the counts, the container under the cursor with its log, and the palette's matches, so typing in the filter updates every pane with no handler.
+
+```sh
+go run ./examples/containers
+go run ./examples/containers -theme light
+tuimark run examples/containers/app.tui --data examples/containers/sample.json --mock examples/containers/mock.json
+```
+
 ## inbox
 
 [`examples/inbox`](https://github.com/abdul-hamid-achik/tuimark/tree/main/examples/inbox) is a ticket inbox: a search input, a list bound to an array, and a detail pane that shows the selected ticket, in a `version="1"` document.
@@ -325,7 +349,7 @@ Widths are measured by grapheme cluster, a cluster is never split when text wrap
 
 Start from [getting started](/guide/getting-started), borrow freely from these files, and keep the [widgets](/guide/widgets) page open.
 
-`logs`, `tasks`, `gitui`, `http`, `snake`, `pipeline`, `music`, and `pomodoro` also ship a `mock.json`, so you can try their views in the terminal with no Go at all through [`tuimark run`](/guide/run):
+`logs`, `tasks`, `gitui`, `http`, `snake`, `pipeline`, `music`, `pomodoro`, and `containers` also ship a `mock.json`, so you can try their views in the terminal with no Go at all through [`tuimark run`](/guide/run):
 
 ```sh
 tuimark run examples/tasks/app.tui --data examples/tasks/sample.json --mock examples/tasks/mock.json

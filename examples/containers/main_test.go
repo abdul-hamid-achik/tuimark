@@ -665,6 +665,36 @@ func TestTickClearsTheToast(t *testing.T) {
 	}
 }
 
+// ---- focus ----
+
+// Closing an overlay gives the keys back to the table, whichever way it ended.
+func TestFocusReturnsToTheTableAfterOverlays(t *testing.T) {
+	r := newRig(t)
+	r.advance(sampleSecs)
+	for _, steps := range [][]string{
+		{"s", "y"}, {"s", "n"}, {"s", "esc"}, {"ctrl+k", "esc"}, {"?", "q"}, {"?", "esc"},
+	} {
+		res := r.play(100, 24, steps...)
+		if focusOf(res) != "ctrs" {
+			t.Errorf("after %v focus = %q, want ctrs", steps, focusOf(res))
+		}
+	}
+}
+
+// Typing in the filter is typing: q does not quit, digits do not switch tabs,
+// t does not switch the theme.
+func TestTypingInTheFilterIsNotACommand(t *testing.T) {
+	r := newRig(t)
+	r.advance(sampleSecs)
+	res := r.play(100, 24, "/", "text:q1t?s")
+	if has(actions(res), "quit") || r.str("view") != "containers" || r.str("theme.name") != "dark" || r.boolean("help.open") || r.boolean("confirm.open") {
+		t.Errorf("the keys should have been typed: view=%q events %v", r.str("view"), actions(res))
+	}
+	if r.str("filter.q") != "q1t?s" {
+		t.Errorf("filter.q = %q", r.str("filter.q"))
+	}
+}
+
 func TestTheSimulationIsDeterministic(t *testing.T) {
 	a, b := newRig(t), newRig(t)
 	a.advance(40)

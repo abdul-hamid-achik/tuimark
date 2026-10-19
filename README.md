@@ -1219,6 +1219,9 @@ module; the only supported entry points are the functions above.
 - `kit/` and `examples/kit-gallery` — a copy-paste component kit (design tokens,
   `k-` component classes, and one small document per component) and an app that
   shows every component on five tabs. See [`kit/README.md`](kit/README.md).
+  `examples/containers` is a larger app built on the kit: a container-engine
+  dashboard over a simulated engine, with a table, a detail pane, dialogs, a
+  command palette and an animated `-demo`.
 
 - `examples/stacked/{app.tui,theme.tcss}` — the phase-1 media fixture (SPEC
   §4, §21 test 10): the inbox layout with static text, where `@media

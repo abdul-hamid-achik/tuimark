@@ -136,11 +136,22 @@ func visibleRows(get getter) []any {
 		return field(a, "name") < field(b, "name")
 	}
 	sort.SliceStable(rows, less)
-	if rows == nil {
-		rows = []any{}
+	// The table needs only its cells, not the samples and the variables of
+	// the container, which would be copied again on every write.
+	out := make([]any, len(rows))
+	for i, r := range rows {
+		m, _ := r.(map[string]any)
+		row := make(map[string]any, len(rowFields))
+		for _, f := range rowFields {
+			row[f] = m[f]
+		}
+		out[i] = row
 	}
-	return rows
+	return out
 }
+
+// rowFields are the members of a container that a table row reads.
+var rowFields = []string{"id", "name", "image", "state", "ok", "warn", "bad", "cpu", "mem", "up", "ports"}
 
 func countsOf(get getter) map[string]any {
 	all := listAt(get, "all")
