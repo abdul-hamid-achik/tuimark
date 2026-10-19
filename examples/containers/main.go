@@ -18,7 +18,8 @@
 //   - Derive: the visible rows (filter and sort), the counts, the container
 //     under the cursor with its log, and the palette's matches are recomputed
 //     inside every store write, so typing in the filter or moving the cursor
-//     updates every pane with no handler;
+//     updates every pane, and no handler recomputes the views (one only keeps
+//     the cursor on a visible row);
 //   - handlers: stop, restart, remove and the prunes open the kit's confirm
 //     dialog; the dialog's answer does the work and raises a toast;
 //   - RunWith: a handler that fails lands in a danger toast and the session

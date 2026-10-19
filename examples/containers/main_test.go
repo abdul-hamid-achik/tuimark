@@ -397,6 +397,28 @@ func TestMarkedRowsAreTheTargets(t *testing.T) {
 	}
 }
 
+// Marks on rows the filter hides are kept but never acted on.
+func TestHiddenMarksAreNotTargets(t *testing.T) {
+	r := newRig(t)
+	r.advance(sampleSecs)
+	r.play(120, 40, "space", "down", "space") // api-gateway, billing-api
+	r.play(120, 40, "/", "text:edge", "enter")
+	if n := len(listAt(r.a.ui.Get, "sel")); n != 2 {
+		t.Fatalf("the filter should keep the marks, %d left", n)
+	}
+	res := r.play(120, 40, "s")
+	if !strings.Contains(gridOf(res), "Stop edge-proxy?") {
+		t.Errorf("only the visible row is a target:\n%s", gridOf(res))
+	}
+	r.play(120, 40, "y")
+	if r.a.sim.byID(r.idOf("api-gateway")).state != stRunning || r.a.sim.byID(r.idOf("billing-api")).state != stRunning {
+		t.Error("hidden marked containers must not be stopped")
+	}
+	if n := len(listAt(r.a.ui.Get, "sel")); n != 2 {
+		t.Errorf("the hidden marks should stay, %d left", n)
+	}
+}
+
 func TestRemoveIsDangerousAndMovesTheCursor(t *testing.T) {
 	r := newRig(t)
 	r.advance(sampleSecs)

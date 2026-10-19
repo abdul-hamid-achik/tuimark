@@ -288,7 +288,7 @@ The detail tab after <code>2</code>: the overview card, the CPU and memory spark
 A session: filter the table with <code>/</code>, mark two rows and stop them through the confirm dialog, start them again, sort by CPU, open the detail and flip through its tabs, restart from the command palette, then watch a scripted crash and its restart in the events before the help opens.
 </TermShot>
 
-The kit's actions are generic (<code>dialog_confirm</code>, <code>palette_run</code>) and the host routes them by the prefix of the event's <code>source</code>. <code>Every</code> advances a seeded simulation once a second; <code>Derive</code> keeps the visible rows (the filter and the sort), the counts, the container under the cursor with its log, and the palette's matches, so typing in the filter updates every pane with no handler.
+The kit's actions are generic (<code>dialog_confirm</code>, <code>palette_run</code>) and the host routes them by the prefix of the event's <code>source</code>. <code>Every</code> advances a seeded simulation once a second; <code>Derive</code> keeps the visible rows (the filter and the sort), the counts, the container under the cursor with its log, and the palette's matches, so typing in the filter updates every pane; no handler recomputes the views (one only keeps the cursor on a visible row).
 
 ```sh
 go run ./examples/containers

@@ -31,18 +31,7 @@ func (a *app) handlers() map[string]tuimark.Handler {
 		}
 		return errors.Join(a.repairCursor(0), a.ui.Set("@focus", "#ctrs"))
 	})
-	on("container_sort", func(tuimark.Event) error {
-		cur := str(a.ui.Get, "sort.key")
-		next := sortKeys[0]
-		for i, k := range sortKeys {
-			if k.key == cur {
-				next = sortKeys[(i+1)%len(sortKeys)]
-			}
-		}
-		return a.ui.Batch(func(b *tuimark.Batch) error {
-			return errors.Join(b.Set("sort.key", next.key), a.say(b, "sorted by "+next.label))
-		})
-	})
+	on("container_sort", func(tuimark.Event) error { return a.sortNext() })
 
 	// Containers: stop, restart and remove ask first; start just starts.
 	on("container_stop", func(tuimark.Event) error { return a.ask("stop") })
@@ -90,6 +79,20 @@ func (a *app) handlers() map[string]tuimark.Handler {
 	return hs
 }
 
+// sortNext moves to the next sort order of the `o` cycle.
+func (a *app) sortNext() error {
+	cur := str(a.ui.Get, "sort.key")
+	next := sortKeys[0]
+	for i, k := range sortKeys {
+		if k.key == cur {
+			next = sortKeys[(i+1)%len(sortKeys)]
+		}
+	}
+	return a.ui.Batch(func(b *tuimark.Batch) error {
+		return errors.Join(b.Set("sort.key", next.key), a.say(b, "sorted by "+next.label))
+	})
+}
+
 // ---- the cursor and the selection ----
 
 // rowIDs are the ids of the visible rows, in order.
@@ -124,13 +127,18 @@ func (a *app) repairCursor(hint int) error {
 }
 
 // targets are the containers an action works on: on the containers tab the
-// marked rows, else the one under the cursor; elsewhere the cursor's.
+// marked rows that the filter shows (marks on hidden rows are kept but never
+// acted on), else the one under the cursor; elsewhere the cursor's.
 func (a *app) targets() []*container {
 	if str(a.ui.Get, "view") == "containers" {
 		var out []*container
+		visible := map[string]bool{}
+		for _, id := range a.rowIDs() {
+			visible[id] = true
+		}
 		for _, id := range listAt(a.ui.Get, "sel") {
 			s, _ := id.(string)
-			if c := a.sim.byID(s); c != nil {
+			if c := a.sim.byID(s); c != nil && visible[s] {
 				out = append(out, c)
 			}
 		}
@@ -337,7 +345,7 @@ func (a *app) paletteRun() error {
 	case "filter":
 		return errors.Join(a.ui.Set("view", "containers"), a.ui.Set("@focus", "#containers__q"))
 	case "sort":
-		return a.handlers()["container_sort"](tuimark.Event{})
+		return a.sortNext()
 	case "containers", "images", "volumes", "events":
 		return a.ui.Set("view", id)
 	case "theme":

@@ -21,12 +21,6 @@ func listAt(get getter, path string) []any {
 	return l
 }
 
-func mapAt(get getter, path string) map[string]any {
-	v, _ := get(path)
-	m, _ := v.(map[string]any)
-	return m
-}
-
 func field(v any, key string) string {
 	m, _ := v.(map[string]any)
 	s, _ := m[key].(string)
@@ -166,7 +160,7 @@ func countsOf(get getter) map[string]any {
 			exited++
 		}
 	}
-	shown := len(visibleRows(get))
+	shown := len(listAt(get, "rows")) // rows is derived first: one filter and sort per write
 	line := fmt.Sprintf("%d up", up)
 	if restarting > 0 {
 		line += fmt.Sprintf(" · %d restarting", restarting)
@@ -214,7 +208,9 @@ func detailOf(get getter) map[string]any {
 	for k, v := range pick {
 		out[k] = v
 	}
-	lines, _ := mapAt(get, "logs")[cur].([]any)
+	// Only this container's lines are read: get copies what it returns.
+	v, _ := get("logs." + cur)
+	lines, _ := v.([]any)
 	if lines == nil {
 		lines = []any{}
 	}

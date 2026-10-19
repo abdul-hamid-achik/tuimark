@@ -160,7 +160,7 @@
                   <text class="k-stat-value">{detail.mem_txt}</text>
                   <row class="k-stat-row">
                     <text class="k-stat-delta">{detail.mem_avg}</text>
-                    <sparkline class="k-stat-spark" bind="detail.mem_hist"/>
+                    <sparkline class="k-stat-spark" bind="detail.mem_hist" min="0" max="100"/>
                   </row>
                 </box>
               </col>

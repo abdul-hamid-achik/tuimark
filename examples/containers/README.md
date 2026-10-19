@@ -12,7 +12,7 @@ go run ./examples/containers                   # from the repo root
 go run ./examples/containers -theme light
 go run ./examples/containers -seed 3           # other CPU, memory and log noise
 go run ./examples/containers -dump 120x40      # Dump() as JSON, no terminal
-go run ./examples/containers -demo 100x24      # scripted frames as JSON lines
+go run ./examples/containers -demo 100x24      # scripted frames as JSON lines (ignores -seed)
 
 # the view alone, with no Go: a mock answers every action with fixed writes
 tuimark run examples/containers/app.tui --data examples/containers/sample.json --mock examples/containers/mock.json
@@ -56,8 +56,8 @@ code.
   their logs, the events, the images and the volumes in one `Batch`.
 - `Derive` keeps `rows` (the filter and the sort), `counts`, `detail` (the
   container under the cursor, with its log) and `found` (the palette's
-  matches), so typing in the filter or moving the cursor updates every pane
-  with no handler.
+  matches), so typing in the filter or moving the cursor updates every pane;
+  no handler recomputes the views (one only keeps the cursor on a visible row).
 - The kit's actions are generic (`dialog_confirm`, `palette_run`); the dialog's
   instance is the prefix of the event's `source` before the last `__`.
 
