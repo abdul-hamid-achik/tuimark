@@ -63,8 +63,8 @@ func TestEveryTabAndModalIsCleanAtEverySize(t *testing.T) {
 		"help":             {"help.open=true"},
 		"toast-info":       {"toast.show=true", "toast.text=hello"},
 		"toast-danger":     {"toast.show=true", "toast.text=hello", "toast.is_danger=true"},
-		"form-invalid": {"view=forms", "form.name_error=Name is required.",
-			"form.email_error=Enter a full address like name@host.example."},
+		"form-invalid": {"view=forms", "forms.profile.name.error=Name is required.",
+			"forms.profile.email.error=Enter a full address like name@host.example."},
 	}
 	names := make([]string, 0, len(states))
 	for n := range states {
@@ -486,8 +486,8 @@ func TestHelpOverlayListsTheKeys(t *testing.T) {
 
 func TestFormValidatesAsYouType(t *testing.T) {
 	a := newApp(t)
-	res := play(t, a, "2", "focus:#field__email", "ctrl+u", "text:ada@")
-	if got := getStr(t, a, "form.email_error"); got == "" {
+	res := play(t, a, "2", "focus:#profile__email", "ctrl+u", "text:ada@")
+	if got := getStr(t, a, "forms.profile.email.error"); got == "" {
 		t.Fatalf("a half-typed address should be invalid; events %v", actions(res))
 	}
 	if !strings.Contains(gridOf(res), "Enter a full address") {
@@ -496,8 +496,14 @@ func TestFormValidatesAsYouType(t *testing.T) {
 	if strings.Contains(gridOf(res), "We never share it.") {
 		t.Error("the help line should give way to the error")
 	}
+	if getBool(t, a, "forms.profile.valid") {
+		t.Error("forms.profile.valid should be false with a half-typed address")
+	}
 	res = play(t, a, "text:x.io")
-	if got := getStr(t, a, "form.email_error"); got != "" {
+	if !getBool(t, a, "forms.profile.valid") {
+		t.Error("forms.profile.valid should be true once both fields pass")
+	}
+	if got := getStr(t, a, "forms.profile.email.error"); got != "" {
 		t.Errorf("a full address should clear the error, got %q", got)
 	}
 	if !strings.Contains(gridOf(res), "We never share it.") {
@@ -512,12 +518,12 @@ func TestFormValidatesAsYouType(t *testing.T) {
 
 func TestSubmitFocusesTheFirstInvalidField(t *testing.T) {
 	a := newApp(t)
-	res := play(t, a, "2", "focus:#field__name", "ctrl+u", "focus:#field__save", "enter")
-	if getStr(t, a, "form.name_error") != "Name is required." {
-		t.Fatalf("name_error = %q", getStr(t, a, "form.name_error"))
+	res := play(t, a, "2", "focus:#profile__name", "ctrl+u", "focus:#profile__save", "enter")
+	if getStr(t, a, "forms.profile.name.error") != "Name is required." {
+		t.Fatalf("name_error = %q", getStr(t, a, "forms.profile.name.error"))
 	}
-	if focusOf(res) != "field__name" {
-		t.Errorf("focus = %q, want field__name", focusOf(res))
+	if focusOf(res) != "profile__name" {
+		t.Errorf("focus = %q, want profile__name", focusOf(res))
 	}
 	if !getBool(t, a, "toast.is_danger") || !strings.Contains(getStr(t, a, "toast.text"), "1 field needs attention") {
 		t.Errorf("toast = %q danger=%v", getStr(t, a, "toast.text"), getBool(t, a, "toast.is_danger"))
@@ -633,17 +639,17 @@ func TestInputBorderShowsFocus(t *testing.T) {
 		t.Fatalf("no node %q", id)
 		return ""
 	}
-	idle := playAt(t, a, opts, "2", "focus:#field__save")
-	focused := playAt(t, a, opts, "focus:#field__name")
-	if borderFG(idle, "field__name") == borderFG(focused, "field__name") {
-		t.Errorf("the input border keeps its color when focused: %s", borderFG(idle, "field__name"))
+	idle := playAt(t, a, opts, "2", "focus:#profile__save")
+	focused := playAt(t, a, opts, "focus:#profile__name")
+	if borderFG(idle, "profile__name") == borderFG(focused, "profile__name") {
+		t.Errorf("the input border keeps its color when focused: %s", borderFG(idle, "profile__name"))
 	}
 	// An invalid input keeps a danger border.
-	if err := a.ui.Set("form.name_error", "Name is required."); err != nil {
+	if err := a.ui.Set("forms.profile.name.error", "Name is required."); err != nil {
 		t.Fatal(err)
 	}
-	invalid := playAt(t, a, opts, "focus:#field__save")
-	if borderFG(invalid, "field__name") == borderFG(idle, "field__name") {
+	invalid := playAt(t, a, opts, "focus:#profile__save")
+	if borderFG(invalid, "profile__name") == borderFG(idle, "profile__name") {
 		t.Errorf("an invalid input should have a different border color")
 	}
 }

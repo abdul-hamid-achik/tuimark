@@ -63,6 +63,29 @@ tasks:
     cmds:
       - ./bin/tuimark test
 
+  kit-go:
+    desc: Vet and test kit/go (the kit's copyable Go helpers, a nested module), with the race detector.
+    dir: kit/go
+    cmds:
+      - go vet ./...
+      - go test -count=1 ./...
+      - go test -race -count=1 ./...
+
+  kit-ts:
+    desc: Install fresh, test, and type-check kit/ts (the kit's copyable TypeScript helpers; a file
+      dependency on sdk/ts, which bun copies). Skipped without `bun`.
+    dir: kit/ts
+    cmds:
+      - |
+        if command -v bun >/dev/null 2>&1; then
+          rm -rf node_modules
+          bun install --frozen-lockfile
+          bun test
+          bunx tsc --noEmit
+        else
+          echo "skipping kit/ts: bun not found"
+        fi
+
   host-ts-deps:
     desc: Install examples/host-ts's dependencies (@tuimark/host, a file dependency on
       sdk/ts), fresh, because bun copies a file directory. Skipped without `bun`.
@@ -167,11 +190,13 @@ tasks:
       - bunx @vscode/vsce package
 
   verify:
-    desc: fmt + vet + test + build + golden + glyph, in that order.
+    desc: fmt + vet + test + kit-go + kit-ts + build + golden + glyph, in that order.
     cmds:
       - task: fmt
       - task: vet
       - task: test
+      - task: kit-go
+      - task: kit-ts
       - task: build
       - task: golden
       - task: glyph

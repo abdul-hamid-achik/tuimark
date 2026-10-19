@@ -30,6 +30,23 @@ line.
   whole-runtime render of any document or any stylesheet (grid shape,
   snapshot independence, no hang). About an hour of local fuzzing found no
   crash.
+- **Kit host helpers (`kit/go`, `kit/ts`).** The behavior markup cannot
+  express, as files you copy into your project and own, not a
+  public package: `route` (an event's instance and part), `toasts` (a capped
+  queue that expires), `filter` (substring or fuzzy, into a store path with
+  counts), `sortpage` (column sort cycling with arrows, and pages), `form`
+  (per-field rules writing `forms.<form>.<field>.error` and
+  `forms.<form>.valid`), `dialog` (`Confirm`, routed by instance), `palette`
+  (a command registry), `async` (`<path>.loading`, `.error`, `.data`) and
+  `format` (bytes, durations, relative time, percentages, thousands). `kit/go`
+  is a nested module named `tuimarkkit` (no dot, so `go get` cannot fetch it)
+  whose tests drive the real kit components; `kit/ts` is typed against
+  `@tuimark/host`. Both run in CI and in `task verify`. For the helpers to be
+  sound, two kit contracts moved: a form is named by the id prefix of its
+  inputs (`profile__name`) with its state at `forms.<form>.<field>.{value,
+  error}`, and the palette's input fires a `palette_query` action as the query
+  changes (a host without `Derive`, such as a TypeScript parent, recomputes
+  `found` there).
 
 ## [0.4.1] - 2026-10-18
 

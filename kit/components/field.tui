@@ -1,34 +1,38 @@
-<!-- k-field · Contract: reads and writes form.name, form.email; reads form.name_error, form.email_error ("" when fine; the host writes them) · Actions: form_validate, form_submit · Keys: ctrl+s saves, enter in an input submits · Requires: k-btn, k-hints, k-title -->
+<!-- k-field · Contract: reads and writes forms.profile.{name,email}.value; reads forms.profile.{name,email}.error ("" when fine; the host writes them); the host also writes forms.profile.valid, which the markup does not read · Actions: form_validate, form_submit · Keys: ctrl+s saves, enter in an input submits · Requires: k-btn, k-hints, k-title -->
 <tui theme="auto">
   <style src="../theme.tcss"/>
   <style src="../kit.tcss"/>
   <keymap>
     <bind keys="ctrl+s" action="form_submit" keycap="^S" label="save"/>
   </keymap>
-  <screen id="demo" focus="#field__name">
+  <screen id="demo" focus="#profile__name">
     <col width="1fr" height="1fr" gap="0" pad="1">
       <text class="k-title">form field</text>
       <!-- COPY: a field is a `col` with class `k-field`: a label, an `input`
            with class `k-field-input`, help text, and an error line. The
            input has its own border (and height 3), which is what lets
            `:focus` change `border-color`; an input without `border` cannot
-           show focus that way. The host writes `form.name_error` ("" when
-           fine): `class:invalid` turns the label and the border red, and the
-           error line shows only while the path is non-empty. -->
+           show focus that way. The form is named by the id prefix: the
+           inputs are `profile__name` and `profile__email`, and the store
+           holds `forms.profile.<field>.value` and `.error`. The host writes
+           the error ("" when fine): `class:invalid` turns the label and the
+           border red, and the error line shows only while the path is
+           non-empty. `forms.profile.valid` (true when no rule fails) is the
+           host's too; the markup does not need it. -->
       <col class="k-field">
-        <text class="k-field-label" class:invalid="form.name_error">Name</text>
-        <input id="field__name" class="k-field-input" class:invalid="form.name_error" bind="form.name" placeholder="your name" on:change="form_validate" on:submit="form_submit"/>
-        <text class="k-field-help" if="!form.name_error">Shown on your profile.</text>
-        <text class="k-field-error" if="form.name_error">{form.name_error}</text>
+        <text class="k-field-label" class:invalid="forms.profile.name.error">Name</text>
+        <input id="profile__name" class="k-field-input" class:invalid="forms.profile.name.error" bind="forms.profile.name.value" placeholder="your name" on:change="form_validate" on:submit="form_submit"/>
+        <text class="k-field-help" if="!forms.profile.name.error">Shown on your profile.</text>
+        <text class="k-field-error" if="forms.profile.name.error">{forms.profile.name.error}</text>
       </col>
       <col class="k-field">
-        <text class="k-field-label" class:invalid="form.email_error">Email</text>
-        <input id="field__email" class="k-field-input" class:invalid="form.email_error" bind="form.email" placeholder="you@example.com" on:change="form_validate" on:submit="form_submit"/>
-        <text class="k-field-help" if="!form.email_error">We never share it.</text>
-        <text class="k-field-error" if="form.email_error">{form.email_error}</text>
+        <text class="k-field-label" class:invalid="forms.profile.email.error">Email</text>
+        <input id="profile__email" class="k-field-input" class:invalid="forms.profile.email.error" bind="forms.profile.email.value" placeholder="you@example.com" on:change="form_validate" on:submit="form_submit"/>
+        <text class="k-field-help" if="!forms.profile.email.error">We never share it.</text>
+        <text class="k-field-error" if="forms.profile.email.error">{forms.profile.email.error}</text>
       </col>
       <row width="1fr" height="1" gap="2">
-        <button id="field__save" class="k-btn primary" label="Save" on:click="form_submit"/>
+        <button id="profile__save" class="k-btn primary" label="Save" on:click="form_submit"/>
         <hints class="k-hints"/>
       </row>
     </col>

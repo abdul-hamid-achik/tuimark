@@ -185,20 +185,20 @@
               <row class="k-cols">
                 <box class="k-card" title="Profile">
                   <col class="k-field">
-                    <text class="k-field-label" class:invalid="form.name_error">Name</text>
-                    <input id="field__name" class="k-field-input" class:invalid="form.name_error" bind="form.name" placeholder="your name" on:change="form_validate" on:submit="form_submit"/>
-                    <text class="k-field-help" if="!form.name_error">Shown on your profile.</text>
-                    <text class="k-field-error" if="form.name_error">{form.name_error}</text>
+                    <text class="k-field-label" class:invalid="forms.profile.name.error">Name</text>
+                    <input id="profile__name" class="k-field-input" class:invalid="forms.profile.name.error" bind="forms.profile.name.value" placeholder="your name" on:change="form_validate" on:submit="form_submit"/>
+                    <text class="k-field-help" if="!forms.profile.name.error">Shown on your profile.</text>
+                    <text class="k-field-error" if="forms.profile.name.error">{forms.profile.name.error}</text>
                   </col>
                   <col class="k-field">
-                    <text class="k-field-label" class:invalid="form.email_error">Email</text>
-                    <input id="field__email" class="k-field-input" class:invalid="form.email_error" bind="form.email" placeholder="you@example.com" on:change="form_validate" on:submit="form_submit"/>
-                    <text class="k-field-help" if="!form.email_error">We never share it.</text>
-                    <text class="k-field-error" if="form.email_error">{form.email_error}</text>
+                    <text class="k-field-label" class:invalid="forms.profile.email.error">Email</text>
+                    <input id="profile__email" class="k-field-input" class:invalid="forms.profile.email.error" bind="forms.profile.email.value" placeholder="you@example.com" on:change="form_validate" on:submit="form_submit"/>
+                    <text class="k-field-help" if="!forms.profile.email.error">We never share it.</text>
+                    <text class="k-field-error" if="forms.profile.email.error">{forms.profile.email.error}</text>
                   </col>
                   <row class="k-card-actions">
-                    <button id="field__save" class="k-btn primary" label="Save" on:click="form_submit"/>
-                    <button id="field__reset" class="k-btn ghost" label="Reset" on:click="button_press"/>
+                    <button id="profile__save" class="k-btn primary" label="Save" on:click="form_submit"/>
+                    <button id="profile__reset" class="k-btn ghost" label="Reset" on:click="button_press"/>
                   </row>
                 </box>
                 <list id="prefs" class="k-menu" each="prefs as p" key="p.id" bind="prefs_cur" checked="prefs_on" mark="✓" title="Notify me by" on:change="menu_change">
@@ -329,7 +329,7 @@
     </modal>
 
     <modal id="palette__dialog" class="k-palette" open="palette.open" title="Command palette" focus="#palette__q" on:escape="palette_close">
-      <input id="palette__q" class="k-palette-input" bind="palette.query" placeholder="type a command…" on:submit="palette_run"/>
+      <input id="palette__q" class="k-palette-input" bind="palette.query" placeholder="type a command…" on:change="palette_query" on:submit="palette_run"/>
       <text class="k-palette-empty" if="!found.any">No command matches “{palette.query}”.</text>
       <list id="palette__list" class="k-palette-list" each="found.items as r" key="r.id" bind="palette.cur" focusable="false">
         <item>

@@ -147,6 +147,9 @@ func (a *app) handlers() map[string]tuimark.Handler {
 	})
 	on("palette_close", func(tuimark.Event) error { return a.ui.Set("palette.open", false) })
 	on("palette_run", func(tuimark.Event) error { return a.paletteRun() })
+	// palette_query fires as the query changes. `found` is a Derive, which
+	// the runtime recomputes on that write, so there is nothing to do.
+	on("palette_query", func(tuimark.Event) error { return nil })
 
 	// Look and navigation.
 	on("theme_toggle", func(tuimark.Event) error { return a.toggleTheme() })
@@ -158,13 +161,20 @@ func (a *app) handlers() map[string]tuimark.Handler {
 	// The form.
 	on("form_validate", func(ev tuimark.Event) error {
 		v, _ := ev.Value.(string)
-		switch partOf(ev) { // field__name, field__email
+		name, email := str(a.ui.Get, "forms.profile.name.value"), str(a.ui.Get, "forms.profile.email.value")
+		var field, msg string
+		switch partOf(ev) { // profile__name, profile__email
 		case "name":
-			return a.ui.Set("form.name_error", checkName(v))
+			field, msg, name = "name", checkName(v), v
 		case "email":
-			return a.ui.Set("form.email_error", checkEmail(v))
+			field, msg, email = "email", checkEmail(v), v
+		default:
+			return nil
 		}
-		return nil
+		return a.ui.Batch(func(b *tuimark.Batch) error {
+			return errors.Join(b.Set("forms.profile."+field+".error", msg),
+				b.Set("forms.profile.valid", checkName(name) == "" && checkEmail(email) == ""))
+		})
 	})
 	on("form_submit", func(tuimark.Event) error { return a.formSubmit() })
 	return hs
@@ -311,10 +321,13 @@ func checkEmail(s string) string {
 // formSubmit validates both fields, shows what is wrong, and moves focus to
 // the first invalid one; with nothing wrong it toasts success.
 func (a *app) formSubmit() error {
-	nameErr := checkName(str(a.ui.Get, "form.name"))
-	emailErr := checkEmail(str(a.ui.Get, "form.email"))
+	nameErr := checkName(str(a.ui.Get, "forms.profile.name.value"))
+	emailErr := checkEmail(str(a.ui.Get, "forms.profile.email.value"))
 	err := a.ui.Batch(func(b *tuimark.Batch) error {
-		errs := []error{b.Set("form.name_error", nameErr), b.Set("form.email_error", emailErr)}
+		errs := []error{
+			b.Set("forms.profile.name.error", nameErr), b.Set("forms.profile.email.error", emailErr),
+			b.Set("forms.profile.valid", nameErr == "" && emailErr == ""),
+		}
 		switch {
 		case nameErr != "" || emailErr != "":
 			n := 0
@@ -334,9 +347,9 @@ func (a *app) formSubmit() error {
 	}
 	switch {
 	case nameErr != "":
-		return a.ui.Set("@focus", "#field__name")
+		return a.ui.Set("@focus", "#profile__name")
 	case emailErr != "":
-		return a.ui.Set("@focus", "#field__email")
+		return a.ui.Set("@focus", "#profile__email")
 	}
 	return nil
 }
