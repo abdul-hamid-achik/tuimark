@@ -3,6 +3,7 @@ package parse
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 )
 
 // cycleShown is how many templates a V019 names before it shortens a cycle
@@ -10,6 +11,24 @@ import (
 // templates is named whole, as before, and a longer one by its first
 // cycleShown templates and the count of the others.
 const cycleShown = 8
+
+// maxShownID is the longest template id a V019 shows whole (the owner's
+// decision in the F2 re-review): a longer one is shown as its first
+// maxShownID bytes, cut at a rune boundary, then "…" (shownID), so that
+// the messages of many uses of a long id stay linear in the document.
+const maxShownID = 64
+
+// shownID is the template id id as a V019 shows it (maxShownID).
+func shownID(id string) string {
+	if len(id) <= maxShownID {
+		return id
+	}
+	cut := maxShownID
+	for cut > 0 && !utf8.RuneStart(id[cut]) {
+		cut--
+	}
+	return id[:cut] + "…"
+}
 
 // cycleSearchBudget is how many uses the searches for a shortest cycle may
 // follow in one document, all of them together, in the document order of
@@ -55,7 +74,7 @@ func (b *builder) checkCycles() {
 			for k, x := range c.ids {
 				names[k] = cp.order[x].node.ID
 			}
-			b.errUse(u, "V019", "<use template=%q> in <template id=%q> makes a cycle of templates: %s", u.Attrs["template"], t.node.ID, cycleText(names, c.more))
+			b.errUse(u, "V019", "<use template=%q> in <template id=%q> makes a cycle of templates: %s", shownID(u.Attrs["template"]), shownID(t.node.ID), cycleText(names, c.more))
 			if cp.cyclic == nil {
 				cp.cyclic = map[*RawNode]bool{}
 			}
@@ -64,15 +83,19 @@ func (b *builder) checkCycles() {
 	}
 }
 
-// cycleText is how a V019 names a cycle: its templates from the one that
+// cycleText is how a V019 names a cycle (each id as shownID shows it): its
+// templates from the one that
 // holds the use (names, at most cycleShown), "… (N more)" when more
 // remain, and the first again.
 func cycleText(names []string, more int) string {
-	out := append([]string{}, names...)
+	out := make([]string, 0, len(names)+2)
+	for _, n := range names {
+		out = append(out, shownID(n))
+	}
 	if more > 0 {
 		out = append(out, fmt.Sprintf("… (%d more)", more))
 	}
-	return strings.Join(append(out, names[0]), " → ")
+	return strings.Join(append(out, out[0]), " → ")
 }
 
 // cycleResult is the cycle a V019 names: its first templates, from the one

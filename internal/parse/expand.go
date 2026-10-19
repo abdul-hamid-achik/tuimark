@@ -82,6 +82,9 @@ type templating struct {
 	heads  map[string]int
 	// renamed counts the each aliases renamed so far (ir.MarkAlias).
 	renamed int
+	// charge charges the expansion under way the bytes a substitution
+	// adds (builder.chargeBytes; nil charges nothing).
+	charge func(n int)
 	// copies are the copies being built, outermost first; stack their
 	// templates.
 	copies []*copyFrame
@@ -91,6 +94,10 @@ type templating struct {
 	// cyclic holds the raw <use> elements that close a cycle of templates:
 	// reported once (V019), they never expand.
 	cyclic map[*RawNode]bool
+	// metCycle holds the raw <use> elements a copy met closing a cycle
+	// that cyclic missed (expandUse): each is reported once, however many
+	// copies meet it (the F2 re-review), and never expands.
+	metCycle map[*RawNode]bool
 	// useIDs and tmplIDs hold the first <use> and <template> of each id in
 	// the id space (checkIDs); written maps an id an element of a template
 	// writes to its first scoped id in document order (notANode).
@@ -262,8 +269,21 @@ func (b *builder) template(n *ir.Node, c *RawNode, outer *ir.Node) {
 	if cp.selfOnly || !collect {
 		return // never copied: its body's checks stand
 	}
-	self := slices.Clone(b.doc.Diags[nDiags:])
-	b.doc.Diags = b.doc.Diags[:nDiags]
+	// The definitions' V021 (an include of the body as written, which the
+	// definitions' budget stopped) is reported whether or not a use copies
+	// the template (the F2 re-review): what it stopped is every later
+	// definition's checks, so a document whose definitions ran out never
+	// validates clean. The other checks wait for step 3 (expandUses).
+	var self ir.Diags
+	kept := b.doc.Diags[:nDiags]
+	for _, d := range b.doc.Diags[nDiags:] {
+		if d.Code == "V021" {
+			kept = append(kept, d)
+		} else {
+			self = append(self, d)
+		}
+	}
+	b.doc.Diags = kept
 	if cp.tmplOf == nil {
 		cp.tmplOf = map[*ir.Node]*tmpl{}
 	}
@@ -337,6 +357,7 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 		q.Attrs[a.Name] = a.Value
 		q.Order = append(q.Order, a.Name)
 	}
+	b.chargeBytes(len(cp.prefix)) // as for any element a copy places (node)
 	if id, ok := q.Attrs["id"]; ok {
 		q.ID = cp.prefix + id
 	}
@@ -541,9 +562,9 @@ func (b *builder) expandUse(n, q *ir.Node) {
 	if t == nil {
 		hint := ""
 		if strings.HasPrefix(name, "#") {
-			hint = fmt.Sprintf("; write template=%q, without #", name[1:])
+			hint = fmt.Sprintf("; write template=%q, without #", shownID(name[1:]))
 		}
-		b.errUse(q, "V019", "<use template=%q> names no <template>%s", name, hint)
+		b.errUse(q, "V019", "<use template=%q> names no <template>%s", shownID(name), hint)
 		return
 	}
 	if t.onStack > 0 {
@@ -551,8 +572,16 @@ func (b *builder) expandUse(n, q *ir.Node) {
 		// template's body as written left unexpanded (the definitions'
 		// budget ran out): reported here, never stopped silently (the F2
 		// review). The copies being built name it, from the template
-		// whose copy holds q back to t; it never expands.
-		b.errUse(q, "V019", "<use template=%q> in <template id=%q> makes a cycle of templates: %s", name, cp.stack[len(cp.stack)-1].node.ID, cp.stackCycle(t))
+		// whose copy holds q back to t; it never expands. A written use
+		// (one raw element, its fragment parsed once) is reported once,
+		// by the first copy that meets it.
+		if !cp.metCycle[info.raw] {
+			if cp.metCycle == nil {
+				cp.metCycle = map[*RawNode]bool{}
+			}
+			cp.metCycle[info.raw] = true
+			b.errUse(q, "V019", "<use template=%q> in <template id=%q> makes a cycle of templates: %s", shownID(name), shownID(cp.stack[len(cp.stack)-1].node.ID), cp.stackCycle(t))
+		}
 		return
 	}
 	if q.ID == "" && b.eachContainer(q) == nil {
@@ -670,10 +699,22 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	// (decision 101), and its if and hidden decide whether they are in
 	// the frame.
 	tops := n.Children[nChildren:]
+	classes := len(q.Attrs["class"])
 	for _, e := range tops {
-		for _, c := range q.Classes {
-			if !slices.Contains(e.Classes, c) {
-				e.Classes = append(e.Classes, c)
+		// Charged the use's class list on each element it lands on (the
+		// F2 re-review), and merged through a set, so the merge is linear
+		// in what the element ends up with.
+		if len(q.Classes) > 0 {
+			b.chargeBytes(classes)
+			has := make(map[string]bool, len(e.Classes)+len(q.Classes))
+			for _, c := range e.Classes {
+				has[c] = true
+			}
+			for _, c := range q.Classes {
+				if !has[c] {
+					has[c] = true
+					e.Classes = append(e.Classes, c)
+				}
 			}
 		}
 		e.CopiedBy = append(e.CopiedBy, q)
@@ -799,7 +840,8 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 				cp.renamed++
 				name = ir.MarkAlias(e.Alias, cp.renamed)
 			}
-			n.Each = cp.subst(e.Path) + " as " + name
+			cp.grow(cp.growth(e.Path) + len(name) - len(e.Alias))
+			n.Each = cp.substed(e.Path) + " as " + name
 			n.Attrs["each"] = n.Each
 			if a := cp.lookup(e.Alias); a != nil && a.use != nil {
 				// Reported at the element; the copy is still inserted,
@@ -850,8 +892,15 @@ func (t *templating) lookup(name string) *alias {
 // subst is the path p as it resolves in the copies being built: a path
 // whose first segment is a with alias in scope (not shadowed by an each
 // alias) stands for the alias's path followed by the other segments, and
-// one whose first segment is a renamed each alias takes its new name.
+// one whose first segment is a renamed each alias takes its new name. The
+// bytes it adds are charged to the expansion under way (grow).
 func (t *templating) subst(p string) string {
+	t.grow(t.growth(p))
+	return t.substed(p)
+}
+
+// substed is subst, charging nothing.
+func (t *templating) substed(p string) string {
 	if len(t.scope) == 0 {
 		return p
 	}
@@ -864,6 +913,29 @@ func (t *templating) subst(p string) string {
 		return a.path
 	}
 	return a.path + "." + rest
+}
+
+// growth is len(subst(p)) - len(p), computed without building it.
+func (t *templating) growth(p string) int {
+	if len(t.scope) == 0 {
+		return 0
+	}
+	head, _, _ := strings.Cut(p, ".")
+	a := t.lookup(head)
+	if a == nil || a.path == "" {
+		return 0
+	}
+	return len(a.path) - len(head)
+}
+
+// grow charges the expansion under way the n bytes a substitution added
+// to a value, when it added any (ADR 0034, the F2 re-review): a with
+// alias standing for a long path makes every value that names it longer,
+// once per copy, which the template's span does not account for.
+func (t *templating) grow(n int) {
+	if n > 0 && t.charge != nil {
+		t.charge(n)
+	}
 }
 
 // substGuard is subst for path or !path.
@@ -883,7 +955,8 @@ func (t *templating) substFlag(f string) string {
 }
 
 // substText is subst for each {path} of a template string. A string that
-// is not a valid template (V003) is left as written.
+// is not a valid template (V003) is left as written. What the whole string
+// grows by is charged before it is built (grow).
 func (t *templating) substText(s string) string {
 	if len(t.scope) == 0 || !strings.Contains(s, "{") {
 		return s
@@ -892,13 +965,20 @@ func (t *templating) substText(s string) string {
 	if err != nil {
 		return s
 	}
+	n := 0
+	for _, sg := range segs {
+		if sg.Path != "" {
+			n += t.growth(sg.Path)
+		}
+	}
+	t.grow(n)
 	var out strings.Builder
 	for _, sg := range segs {
 		if sg.Path == "" {
 			out.WriteString(sg.Lit)
 			continue
 		}
-		out.WriteString("{" + t.subst(sg.Path) + "}")
+		out.WriteString("{" + t.substed(sg.Path) + "}")
 	}
 	return out.String()
 }

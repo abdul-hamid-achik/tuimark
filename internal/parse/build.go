@@ -550,6 +550,7 @@ func ParseWith(src []byte, file string, ld *Loader) *Document {
 				selfPath = ld.SelfPath
 			}
 			b.comp = &composer{ld: ld, chain: []chainFile{{canon: self, name: b.docName(), real: selfPath}}}
+			b.comp.charge = b.chargeBytes
 		}
 	default:
 		b.diag(ir.Error, "V005", raw.Line, raw.Col, "/", "", "document root must be <tui> (or the phase-0 alias <app>), got <%s>", raw.Name)
@@ -601,6 +602,12 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 	for _, a := range r.Attrs {
 		n.Attrs[a.Name] = a.Value
 		n.Order = append(n.Order, a.Name)
+	}
+	if b.comp != nil && b.comp.prefix != "" {
+		// Every element a copy places is charged its scoped-id prefix, id
+		// or not (the F2 re-review): it bounds the ids of a use with a
+		// long id, nested ones included, and the placement suffixes.
+		b.chargeBytes(len(b.comp.prefix))
 	}
 	if id, ok := n.Attrs["id"]; ok {
 		n.ID = id
