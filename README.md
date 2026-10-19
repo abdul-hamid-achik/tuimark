@@ -1194,6 +1194,26 @@ module; the only supported entry points are the functions above.
   go build -o bin/pomodoro ./examples/pomodoro && ./bin/pomodoro -start
   ```
 
+- `examples/chess`, `examples/tetris`, `examples/minesweeper`,
+  `examples/2048`, `examples/sudoku` — five more games, built the same way
+  and with the same `-demo` flag. `chess` plays against an alpha-beta
+  engine (six levels), a second player, or itself, with clocks, undo,
+  hints, SAN or UCI move entry, PGN and FEN import and export, and move
+  generation checked by perft; `tetris` has SRS rotation, hold, a ghost
+  piece, and an autopilot; `minesweeper` has three boards plus custom
+  sizes, chording, and flags, by mouse or keyboard; `2048` slides tiles on
+  a 3×3 to 6×6 board with undo and an autopilot; `sudoku` generates
+  puzzles with a single solution, graded by the techniques they need, with
+  notes, hints, and a clickable number pad.
+
+  ```sh
+  go build -o bin/chess ./examples/chess && ./bin/chess
+  go build -o bin/tetris ./examples/tetris && ./bin/tetris
+  go build -o bin/minesweeper ./examples/minesweeper && ./bin/minesweeper
+  go build -o bin/2048 ./examples/2048 && ./bin/2048
+  go build -o bin/sudoku ./examples/sudoku && ./bin/sudoku
+  ```
+
 - `examples/stacked/{app.tui,theme.tcss}` — the phase-1 media fixture (SPEC
   §4, §21 test 10): the inbox layout with static text, where `@media
   (max-cols: 80)` stacks `#sidebar` above `#detail`. It only feeds the

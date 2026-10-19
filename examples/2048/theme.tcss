@@ -1,0 +1,229 @@
+:root {
+  --bg: #12151a;
+  --fg: #d7dce2;
+  --muted: #8b949e;
+  --accent: #f2b84b;
+  --ok: #56d364;
+  --warn: #e3b341;
+  --danger: #f85149;
+  --panel: #1b2027;
+  --border: #30363d;
+  --board: #20252d;
+  --empty: #2a303a;
+  --fresh: #58a6ff;
+  --freshfg: #05121f;
+  --t2: #3a4352;
+  --t2f: #e6e9ee;
+  --t4: #4a5b73;
+  --t4f: #f2f5f9;
+  --t8: #d98236;
+  --t8f: #1c1208;
+  --t16: #e56f2e;
+  --t16f: #1c0f06;
+  --t32: #ee5a3c;
+  --t32f: #1c0600;
+  --t64: #f0413c;
+  --t64f: #1c0600;
+  --t128: #e3c04a;
+  --t128f: #1d1700;
+  --t256: #e8c93a;
+  --t256f: #1d1700;
+  --t512: #edd12d;
+  --t512f: #1d1700;
+  --t1024: #9bd957;
+  --t1024f: #0f1d05;
+  --t2048: #36d6a4;
+  --t2048f: #04201a;
+  --tbig: #a77bff;
+  --tbigf: #0e0524;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfaf8;
+    --fg: #1f2328;
+    --muted: #586069;
+    --accent: #9a5b00;
+    --ok: #1f7a3a;
+    --warn: #8a5a00;
+    --danger: #c3261f;
+    --panel: #eee8e0;
+    --border: #d0c8be;
+    --board: #bbada0;
+    --empty: #cdc1b4;
+    --fresh: #2169b8;
+    --freshfg: #ffffff;
+    --t2: #eee4da;
+    --t2f: #6b625a;
+    --t4: #ede0c8;
+    --t4f: #6b625a;
+    --t8: #f2b179;
+    --t8f: #2b1d10;
+    --t16: #f59563;
+    --t16f: #2b1d10;
+    --t32: #f67c5f;
+    --t32f: #2b1d10;
+    --t64: #f65e3b;
+    --t64f: #2b1d10;
+    --t128: #edcf72;
+    --t128f: #2b1d10;
+    --t256: #edcc61;
+    --t256f: #2b1d10;
+    --t512: #edc850;
+    --t512f: #2b1d10;
+    --t1024: #edc53f;
+    --t1024f: #2b1d10;
+    --t2048: #edc22e;
+    --t2048f: #2b1d10;
+    --tbig: #3c3a32;
+    --tbigf: #f9f6f2;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+.muted { color: $muted; }
+
+#app { gap: 0; }
+
+#top { height: 1; gap: 2; background: $panel; padding: 0 1; }
+.brand { color: $accent; bold: true; }
+.mode { color: $muted; }
+.mode.on { color: $accent; bold: true; }
+.compact { display: none; color: $fg; width: 1fr; wrap: truncate; content-align: end; }
+.notice { color: $danger; bold: true; wrap: truncate; width: 1fr; }
+.state { bold: true; }
+.playing { color: $ok; }
+.won { color: $accent; }
+.over { color: $danger; }
+
+#stage { height: 1fr; justify: center; align: center; gap: 2; }
+
+/* The board: n x n tiles of 7 x 3 cells, two columns and one row apart. */
+#board { width: auto; height: auto; border: rounded; border-color: $border; background: $board; row-gap: 1; }
+#board.dead { border-color: $danger; }
+.line { width: auto; height: auto; column-gap: 2; }
+.tile { width: 7; height: 3; align: center; justify: center; background: $empty; color: $fg; }
+.num { width: auto; height: 1; }
+.tile.v2 { background: $t2; color: $t2f; bold: true; }
+.tile.v4 { background: $t4; color: $t4f; bold: true; }
+.tile.v8 { background: $t8; color: $t8f; bold: true; }
+.tile.v16 { background: $t16; color: $t16f; bold: true; }
+.tile.v32 { background: $t32; color: $t32f; bold: true; }
+.tile.v64 { background: $t64; color: $t64f; bold: true; }
+.tile.v128 { background: $t128; color: $t128f; bold: true; }
+.tile.v256 { background: $t256; color: $t256f; bold: true; }
+.tile.v512 { background: $t512; color: $t512f; bold: true; }
+.tile.v1024 { background: $t1024; color: $t1024f; bold: true; }
+.tile.v2048 { background: $t2048; color: $t2048f; bold: true; }
+.tile.vbig { background: $tbig; color: $tbigf; bold: true; }
+
+/* The highlights of a move come after the values so they win. */
+.tile.fresh { background: $fresh; color: $freshfg; bold: true; }
+.tile.pop { reverse: true; bold: true; }
+
+#side { width: 28; height: auto; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; overflow: hidden; }
+.stat { height: 1; }
+.k { color: $muted; }
+.v { color: $fg; bold: true; }
+.v.score { color: $accent; }
+.v.gain { color: $ok; }
+.sep { color: $border; }
+#trend { width: auto; color: $accent; }
+.legend { height: 1; gap: 1; }
+.sw.pop { color: $fg; }
+.sw.fresh { color: $fresh; }
+
+#toosmall { display: none; color: $warn; wrap: truncate; width: 1fr; }
+
+#keys { height: 1; background: $panel; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+#help { width: 40; height: auto; overflow: hidden; }
+#help > .muted { wrap: wrap; }
+.help { layout: column; gap: 0; }
+#win { width: 36; height: auto; border-color: $accent; overflow: hidden; }
+#over { width: 36; height: auto; border-color: $danger; overflow: hidden; }
+.big { color: $fg; bold: true; wrap: truncate; }
+.actions { height: 1; gap: 2; justify: center; }
+button:focus { reverse: true; }
+
+/* Without room for the side panel, the status line carries the score. */
+@media (max-cols: 79) {
+  #side { display: none; }
+  .compact { display: flex; }
+  .push { display: none; }
+}
+/* A panel of 13 rows needs 15 rows of terminal. */
+@media (max-rows: 14) {
+  #side { display: none; }
+  .compact { display: flex; }
+  .push { display: none; }
+}
+@media (max-cols: 57) { .brand { display: none; } }
+@media (max-cols: 49) { .mode { display: none; } }
+/* The score is the flexible part of the status line: it truncates before the
+   state label does, and below 39 columns it goes. */
+@media (max-cols: 38) {
+  .compact { display: none; }
+  .push { display: flex; }
+}
+
+/* The tips of the modals are the first to go when rows run short. */
+@media (max-rows: 17) { .tip { display: none; } }
+
+/* Tiles shrink to one row of six columns, touching but for a column, when a
+   board does not fit at full size: rows 4n+2 or fewer, columns 9n-1 or
+   fewer (a 6x6 board needs 84 for the side panel too). */
+@media (max-rows: 14) {
+  #stage.n3 > #board { row-gap: 0; }
+  #stage.n3 > #board > .line { column-gap: 1; }
+  #stage.n3 > #board > .line > .tile { width: 6; height: 1; }
+}
+@media (max-cols: 26) {
+  #stage.n3 > #board { row-gap: 0; }
+  #stage.n3 > #board > .line { column-gap: 1; }
+  #stage.n3 > #board > .line > .tile { width: 6; height: 1; }
+}
+@media (max-rows: 18) {
+  #stage.n4 > #board { row-gap: 0; }
+  #stage.n4 > #board > .line { column-gap: 1; }
+  #stage.n4 > #board > .line > .tile { width: 6; height: 1; }
+}
+@media (max-cols: 35) {
+  #stage.n4 > #board { row-gap: 0; }
+  #stage.n4 > #board > .line { column-gap: 1; }
+  #stage.n4 > #board > .line > .tile { width: 6; height: 1; }
+}
+@media (max-rows: 22) {
+  #stage.n5 > #board { row-gap: 0; }
+  #stage.n5 > #board > .line { column-gap: 1; }
+  #stage.n5 > #board > .line > .tile { width: 6; height: 1; }
+}
+@media (max-cols: 44) {
+  #stage.n5 > #board { row-gap: 0; }
+  #stage.n5 > #board > .line { column-gap: 1; }
+  #stage.n5 > #board > .line > .tile { width: 6; height: 1; }
+}
+@media (max-rows: 26) {
+  #stage.n6 > #board { row-gap: 0; }
+  #stage.n6 > #board > .line { column-gap: 1; }
+  #stage.n6 > #board > .line > .tile { width: 6; height: 1; }
+}
+@media (max-cols: 83) {
+  #stage.n6 > #board { row-gap: 0; }
+  #stage.n6 > #board > .line { column-gap: 1; }
+  #stage.n6 > #board > .line > .tile { width: 6; height: 1; }
+}
+
+/* Too small even for that: say so. */
+@media (max-rows: 6) { #stage.n3 > #board { display: none; } #stage.n3 > #toosmall { display: flex; } }
+@media (max-cols: 21) { #stage.n3 > #board { display: none; } #stage.n3 > #toosmall { display: flex; } }
+@media (max-rows: 7) { #stage.n4 > #board { display: none; } #stage.n4 > #toosmall { display: flex; } }
+@media (max-cols: 28) { #stage.n4 > #board { display: none; } #stage.n4 > #toosmall { display: flex; } }
+@media (max-rows: 8) { #stage.n5 > #board { display: none; } #stage.n5 > #toosmall { display: flex; } }
+@media (max-cols: 35) { #stage.n5 > #board { display: none; } #stage.n5 > #toosmall { display: flex; } }
+@media (max-rows: 9) { #stage.n6 > #board { display: none; } #stage.n6 > #toosmall { display: flex; } }
+@media (max-cols: 42) { #stage.n6 > #board { display: none; } #stage.n6 > #toosmall { display: flex; } }

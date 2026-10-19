@@ -1,0 +1,359 @@
+<tui version="3" theme="auto" mouse="mouse">
+  <style src="theme.tcss"/>
+  <keymap when="#help">
+    <bind keys="enter,q,?" action="help_close"/>
+  </keymap>
+  <keymap>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="ctrl+c" action="quit"/>
+  </keymap>
+  <keymap when="#board">
+    <bind keys="up,k" action="up" keycap="↑↓←→" label="move"/>
+    <bind keys="down,j" action="down"/>
+    <bind keys="left,h" action="left"/>
+    <bind keys="right,l" action="right"/>
+    <bind keys="1" action="put1" keycap="1-9" label="digit"/>
+    <bind keys="2" action="put2"/>
+    <bind keys="3" action="put3"/>
+    <bind keys="4" action="put4"/>
+    <bind keys="5" action="put5"/>
+    <bind keys="6" action="put6"/>
+    <bind keys="7" action="put7"/>
+    <bind keys="8" action="put8"/>
+    <bind keys="9" action="put9"/>
+    <bind keys="0,backspace,x" action="erase" keycap="0" label="erase"/>
+    <bind keys="n" action="notes" label="notes"/>
+    <bind keys="u" action="undo" label="undo"/>
+    <bind keys="U" action="redo" label="redo"/>
+    <bind keys="H" action="hint" label="hint"/>
+    <bind keys="c" action="check" label="check"/>
+    <bind keys="p" action="pause" label="pause"/>
+    <bind keys="N" action="newgame_open" label="new"/>
+    <bind keys="m" action="mouse" label="mouse"/>
+  </keymap>
+  <screen id="main" focus="#board">
+    <col id="app">
+      <row id="top">
+        <text class="brand">◆ sudoku</text>
+        <text class="level">{diff}</text>
+        <text class="notice" if="notice">{notice}</text>
+        <text class="info" if="!notice">{info}</text>
+        <text class="compact">{time} · ✖{mistakes}</text>
+        <text class="state" class:playing="state.playing" class:paused="state.paused" class:won="state.won">{state.label}</text>
+      </row>
+      <row id="stage">
+        <col id="board" focusable="true">
+          <!-- generated: board -->
+          <row class="band">
+            <box id="b0" class="box" class:cur="boxes.b0">
+              <row class="line">
+                <text id="c00" class="cell" class:cur="cells.c00.cur" class:peer="cells.c00.peer" class:same="cells.c00.same" class:given="cells.c00.given" class:bad="cells.c00.bad" class:wrong="cells.c00.wrong" class:note="cells.c00.note" class:done="cells.c00.done" on:click="cell">{cells.c00.t}</text>
+                <text id="c01" class="cell" class:cur="cells.c01.cur" class:peer="cells.c01.peer" class:same="cells.c01.same" class:given="cells.c01.given" class:bad="cells.c01.bad" class:wrong="cells.c01.wrong" class:note="cells.c01.note" class:done="cells.c01.done" on:click="cell">{cells.c01.t}</text>
+                <text id="c02" class="cell" class:cur="cells.c02.cur" class:peer="cells.c02.peer" class:same="cells.c02.same" class:given="cells.c02.given" class:bad="cells.c02.bad" class:wrong="cells.c02.wrong" class:note="cells.c02.note" class:done="cells.c02.done" on:click="cell">{cells.c02.t}</text>
+              </row>
+              <row class="line">
+                <text id="c10" class="cell" class:cur="cells.c10.cur" class:peer="cells.c10.peer" class:same="cells.c10.same" class:given="cells.c10.given" class:bad="cells.c10.bad" class:wrong="cells.c10.wrong" class:note="cells.c10.note" class:done="cells.c10.done" on:click="cell">{cells.c10.t}</text>
+                <text id="c11" class="cell" class:cur="cells.c11.cur" class:peer="cells.c11.peer" class:same="cells.c11.same" class:given="cells.c11.given" class:bad="cells.c11.bad" class:wrong="cells.c11.wrong" class:note="cells.c11.note" class:done="cells.c11.done" on:click="cell">{cells.c11.t}</text>
+                <text id="c12" class="cell" class:cur="cells.c12.cur" class:peer="cells.c12.peer" class:same="cells.c12.same" class:given="cells.c12.given" class:bad="cells.c12.bad" class:wrong="cells.c12.wrong" class:note="cells.c12.note" class:done="cells.c12.done" on:click="cell">{cells.c12.t}</text>
+              </row>
+              <row class="line">
+                <text id="c20" class="cell" class:cur="cells.c20.cur" class:peer="cells.c20.peer" class:same="cells.c20.same" class:given="cells.c20.given" class:bad="cells.c20.bad" class:wrong="cells.c20.wrong" class:note="cells.c20.note" class:done="cells.c20.done" on:click="cell">{cells.c20.t}</text>
+                <text id="c21" class="cell" class:cur="cells.c21.cur" class:peer="cells.c21.peer" class:same="cells.c21.same" class:given="cells.c21.given" class:bad="cells.c21.bad" class:wrong="cells.c21.wrong" class:note="cells.c21.note" class:done="cells.c21.done" on:click="cell">{cells.c21.t}</text>
+                <text id="c22" class="cell" class:cur="cells.c22.cur" class:peer="cells.c22.peer" class:same="cells.c22.same" class:given="cells.c22.given" class:bad="cells.c22.bad" class:wrong="cells.c22.wrong" class:note="cells.c22.note" class:done="cells.c22.done" on:click="cell">{cells.c22.t}</text>
+              </row>
+            </box>
+            <box id="b1" class="box" class:cur="boxes.b1">
+              <row class="line">
+                <text id="c03" class="cell" class:cur="cells.c03.cur" class:peer="cells.c03.peer" class:same="cells.c03.same" class:given="cells.c03.given" class:bad="cells.c03.bad" class:wrong="cells.c03.wrong" class:note="cells.c03.note" class:done="cells.c03.done" on:click="cell">{cells.c03.t}</text>
+                <text id="c04" class="cell" class:cur="cells.c04.cur" class:peer="cells.c04.peer" class:same="cells.c04.same" class:given="cells.c04.given" class:bad="cells.c04.bad" class:wrong="cells.c04.wrong" class:note="cells.c04.note" class:done="cells.c04.done" on:click="cell">{cells.c04.t}</text>
+                <text id="c05" class="cell" class:cur="cells.c05.cur" class:peer="cells.c05.peer" class:same="cells.c05.same" class:given="cells.c05.given" class:bad="cells.c05.bad" class:wrong="cells.c05.wrong" class:note="cells.c05.note" class:done="cells.c05.done" on:click="cell">{cells.c05.t}</text>
+              </row>
+              <row class="line">
+                <text id="c13" class="cell" class:cur="cells.c13.cur" class:peer="cells.c13.peer" class:same="cells.c13.same" class:given="cells.c13.given" class:bad="cells.c13.bad" class:wrong="cells.c13.wrong" class:note="cells.c13.note" class:done="cells.c13.done" on:click="cell">{cells.c13.t}</text>
+                <text id="c14" class="cell" class:cur="cells.c14.cur" class:peer="cells.c14.peer" class:same="cells.c14.same" class:given="cells.c14.given" class:bad="cells.c14.bad" class:wrong="cells.c14.wrong" class:note="cells.c14.note" class:done="cells.c14.done" on:click="cell">{cells.c14.t}</text>
+                <text id="c15" class="cell" class:cur="cells.c15.cur" class:peer="cells.c15.peer" class:same="cells.c15.same" class:given="cells.c15.given" class:bad="cells.c15.bad" class:wrong="cells.c15.wrong" class:note="cells.c15.note" class:done="cells.c15.done" on:click="cell">{cells.c15.t}</text>
+              </row>
+              <row class="line">
+                <text id="c23" class="cell" class:cur="cells.c23.cur" class:peer="cells.c23.peer" class:same="cells.c23.same" class:given="cells.c23.given" class:bad="cells.c23.bad" class:wrong="cells.c23.wrong" class:note="cells.c23.note" class:done="cells.c23.done" on:click="cell">{cells.c23.t}</text>
+                <text id="c24" class="cell" class:cur="cells.c24.cur" class:peer="cells.c24.peer" class:same="cells.c24.same" class:given="cells.c24.given" class:bad="cells.c24.bad" class:wrong="cells.c24.wrong" class:note="cells.c24.note" class:done="cells.c24.done" on:click="cell">{cells.c24.t}</text>
+                <text id="c25" class="cell" class:cur="cells.c25.cur" class:peer="cells.c25.peer" class:same="cells.c25.same" class:given="cells.c25.given" class:bad="cells.c25.bad" class:wrong="cells.c25.wrong" class:note="cells.c25.note" class:done="cells.c25.done" on:click="cell">{cells.c25.t}</text>
+              </row>
+            </box>
+            <box id="b2" class="box" class:cur="boxes.b2">
+              <row class="line">
+                <text id="c06" class="cell" class:cur="cells.c06.cur" class:peer="cells.c06.peer" class:same="cells.c06.same" class:given="cells.c06.given" class:bad="cells.c06.bad" class:wrong="cells.c06.wrong" class:note="cells.c06.note" class:done="cells.c06.done" on:click="cell">{cells.c06.t}</text>
+                <text id="c07" class="cell" class:cur="cells.c07.cur" class:peer="cells.c07.peer" class:same="cells.c07.same" class:given="cells.c07.given" class:bad="cells.c07.bad" class:wrong="cells.c07.wrong" class:note="cells.c07.note" class:done="cells.c07.done" on:click="cell">{cells.c07.t}</text>
+                <text id="c08" class="cell" class:cur="cells.c08.cur" class:peer="cells.c08.peer" class:same="cells.c08.same" class:given="cells.c08.given" class:bad="cells.c08.bad" class:wrong="cells.c08.wrong" class:note="cells.c08.note" class:done="cells.c08.done" on:click="cell">{cells.c08.t}</text>
+              </row>
+              <row class="line">
+                <text id="c16" class="cell" class:cur="cells.c16.cur" class:peer="cells.c16.peer" class:same="cells.c16.same" class:given="cells.c16.given" class:bad="cells.c16.bad" class:wrong="cells.c16.wrong" class:note="cells.c16.note" class:done="cells.c16.done" on:click="cell">{cells.c16.t}</text>
+                <text id="c17" class="cell" class:cur="cells.c17.cur" class:peer="cells.c17.peer" class:same="cells.c17.same" class:given="cells.c17.given" class:bad="cells.c17.bad" class:wrong="cells.c17.wrong" class:note="cells.c17.note" class:done="cells.c17.done" on:click="cell">{cells.c17.t}</text>
+                <text id="c18" class="cell" class:cur="cells.c18.cur" class:peer="cells.c18.peer" class:same="cells.c18.same" class:given="cells.c18.given" class:bad="cells.c18.bad" class:wrong="cells.c18.wrong" class:note="cells.c18.note" class:done="cells.c18.done" on:click="cell">{cells.c18.t}</text>
+              </row>
+              <row class="line">
+                <text id="c26" class="cell" class:cur="cells.c26.cur" class:peer="cells.c26.peer" class:same="cells.c26.same" class:given="cells.c26.given" class:bad="cells.c26.bad" class:wrong="cells.c26.wrong" class:note="cells.c26.note" class:done="cells.c26.done" on:click="cell">{cells.c26.t}</text>
+                <text id="c27" class="cell" class:cur="cells.c27.cur" class:peer="cells.c27.peer" class:same="cells.c27.same" class:given="cells.c27.given" class:bad="cells.c27.bad" class:wrong="cells.c27.wrong" class:note="cells.c27.note" class:done="cells.c27.done" on:click="cell">{cells.c27.t}</text>
+                <text id="c28" class="cell" class:cur="cells.c28.cur" class:peer="cells.c28.peer" class:same="cells.c28.same" class:given="cells.c28.given" class:bad="cells.c28.bad" class:wrong="cells.c28.wrong" class:note="cells.c28.note" class:done="cells.c28.done" on:click="cell">{cells.c28.t}</text>
+              </row>
+            </box>
+          </row>
+          <row class="band">
+            <box id="b3" class="box" class:cur="boxes.b3">
+              <row class="line">
+                <text id="c30" class="cell" class:cur="cells.c30.cur" class:peer="cells.c30.peer" class:same="cells.c30.same" class:given="cells.c30.given" class:bad="cells.c30.bad" class:wrong="cells.c30.wrong" class:note="cells.c30.note" class:done="cells.c30.done" on:click="cell">{cells.c30.t}</text>
+                <text id="c31" class="cell" class:cur="cells.c31.cur" class:peer="cells.c31.peer" class:same="cells.c31.same" class:given="cells.c31.given" class:bad="cells.c31.bad" class:wrong="cells.c31.wrong" class:note="cells.c31.note" class:done="cells.c31.done" on:click="cell">{cells.c31.t}</text>
+                <text id="c32" class="cell" class:cur="cells.c32.cur" class:peer="cells.c32.peer" class:same="cells.c32.same" class:given="cells.c32.given" class:bad="cells.c32.bad" class:wrong="cells.c32.wrong" class:note="cells.c32.note" class:done="cells.c32.done" on:click="cell">{cells.c32.t}</text>
+              </row>
+              <row class="line">
+                <text id="c40" class="cell" class:cur="cells.c40.cur" class:peer="cells.c40.peer" class:same="cells.c40.same" class:given="cells.c40.given" class:bad="cells.c40.bad" class:wrong="cells.c40.wrong" class:note="cells.c40.note" class:done="cells.c40.done" on:click="cell">{cells.c40.t}</text>
+                <text id="c41" class="cell" class:cur="cells.c41.cur" class:peer="cells.c41.peer" class:same="cells.c41.same" class:given="cells.c41.given" class:bad="cells.c41.bad" class:wrong="cells.c41.wrong" class:note="cells.c41.note" class:done="cells.c41.done" on:click="cell">{cells.c41.t}</text>
+                <text id="c42" class="cell" class:cur="cells.c42.cur" class:peer="cells.c42.peer" class:same="cells.c42.same" class:given="cells.c42.given" class:bad="cells.c42.bad" class:wrong="cells.c42.wrong" class:note="cells.c42.note" class:done="cells.c42.done" on:click="cell">{cells.c42.t}</text>
+              </row>
+              <row class="line">
+                <text id="c50" class="cell" class:cur="cells.c50.cur" class:peer="cells.c50.peer" class:same="cells.c50.same" class:given="cells.c50.given" class:bad="cells.c50.bad" class:wrong="cells.c50.wrong" class:note="cells.c50.note" class:done="cells.c50.done" on:click="cell">{cells.c50.t}</text>
+                <text id="c51" class="cell" class:cur="cells.c51.cur" class:peer="cells.c51.peer" class:same="cells.c51.same" class:given="cells.c51.given" class:bad="cells.c51.bad" class:wrong="cells.c51.wrong" class:note="cells.c51.note" class:done="cells.c51.done" on:click="cell">{cells.c51.t}</text>
+                <text id="c52" class="cell" class:cur="cells.c52.cur" class:peer="cells.c52.peer" class:same="cells.c52.same" class:given="cells.c52.given" class:bad="cells.c52.bad" class:wrong="cells.c52.wrong" class:note="cells.c52.note" class:done="cells.c52.done" on:click="cell">{cells.c52.t}</text>
+              </row>
+            </box>
+            <box id="b4" class="box" class:cur="boxes.b4">
+              <row class="line">
+                <text id="c33" class="cell" class:cur="cells.c33.cur" class:peer="cells.c33.peer" class:same="cells.c33.same" class:given="cells.c33.given" class:bad="cells.c33.bad" class:wrong="cells.c33.wrong" class:note="cells.c33.note" class:done="cells.c33.done" on:click="cell">{cells.c33.t}</text>
+                <text id="c34" class="cell" class:cur="cells.c34.cur" class:peer="cells.c34.peer" class:same="cells.c34.same" class:given="cells.c34.given" class:bad="cells.c34.bad" class:wrong="cells.c34.wrong" class:note="cells.c34.note" class:done="cells.c34.done" on:click="cell">{cells.c34.t}</text>
+                <text id="c35" class="cell" class:cur="cells.c35.cur" class:peer="cells.c35.peer" class:same="cells.c35.same" class:given="cells.c35.given" class:bad="cells.c35.bad" class:wrong="cells.c35.wrong" class:note="cells.c35.note" class:done="cells.c35.done" on:click="cell">{cells.c35.t}</text>
+              </row>
+              <row class="line">
+                <text id="c43" class="cell" class:cur="cells.c43.cur" class:peer="cells.c43.peer" class:same="cells.c43.same" class:given="cells.c43.given" class:bad="cells.c43.bad" class:wrong="cells.c43.wrong" class:note="cells.c43.note" class:done="cells.c43.done" on:click="cell">{cells.c43.t}</text>
+                <text id="c44" class="cell" class:cur="cells.c44.cur" class:peer="cells.c44.peer" class:same="cells.c44.same" class:given="cells.c44.given" class:bad="cells.c44.bad" class:wrong="cells.c44.wrong" class:note="cells.c44.note" class:done="cells.c44.done" on:click="cell">{cells.c44.t}</text>
+                <text id="c45" class="cell" class:cur="cells.c45.cur" class:peer="cells.c45.peer" class:same="cells.c45.same" class:given="cells.c45.given" class:bad="cells.c45.bad" class:wrong="cells.c45.wrong" class:note="cells.c45.note" class:done="cells.c45.done" on:click="cell">{cells.c45.t}</text>
+              </row>
+              <row class="line">
+                <text id="c53" class="cell" class:cur="cells.c53.cur" class:peer="cells.c53.peer" class:same="cells.c53.same" class:given="cells.c53.given" class:bad="cells.c53.bad" class:wrong="cells.c53.wrong" class:note="cells.c53.note" class:done="cells.c53.done" on:click="cell">{cells.c53.t}</text>
+                <text id="c54" class="cell" class:cur="cells.c54.cur" class:peer="cells.c54.peer" class:same="cells.c54.same" class:given="cells.c54.given" class:bad="cells.c54.bad" class:wrong="cells.c54.wrong" class:note="cells.c54.note" class:done="cells.c54.done" on:click="cell">{cells.c54.t}</text>
+                <text id="c55" class="cell" class:cur="cells.c55.cur" class:peer="cells.c55.peer" class:same="cells.c55.same" class:given="cells.c55.given" class:bad="cells.c55.bad" class:wrong="cells.c55.wrong" class:note="cells.c55.note" class:done="cells.c55.done" on:click="cell">{cells.c55.t}</text>
+              </row>
+            </box>
+            <box id="b5" class="box" class:cur="boxes.b5">
+              <row class="line">
+                <text id="c36" class="cell" class:cur="cells.c36.cur" class:peer="cells.c36.peer" class:same="cells.c36.same" class:given="cells.c36.given" class:bad="cells.c36.bad" class:wrong="cells.c36.wrong" class:note="cells.c36.note" class:done="cells.c36.done" on:click="cell">{cells.c36.t}</text>
+                <text id="c37" class="cell" class:cur="cells.c37.cur" class:peer="cells.c37.peer" class:same="cells.c37.same" class:given="cells.c37.given" class:bad="cells.c37.bad" class:wrong="cells.c37.wrong" class:note="cells.c37.note" class:done="cells.c37.done" on:click="cell">{cells.c37.t}</text>
+                <text id="c38" class="cell" class:cur="cells.c38.cur" class:peer="cells.c38.peer" class:same="cells.c38.same" class:given="cells.c38.given" class:bad="cells.c38.bad" class:wrong="cells.c38.wrong" class:note="cells.c38.note" class:done="cells.c38.done" on:click="cell">{cells.c38.t}</text>
+              </row>
+              <row class="line">
+                <text id="c46" class="cell" class:cur="cells.c46.cur" class:peer="cells.c46.peer" class:same="cells.c46.same" class:given="cells.c46.given" class:bad="cells.c46.bad" class:wrong="cells.c46.wrong" class:note="cells.c46.note" class:done="cells.c46.done" on:click="cell">{cells.c46.t}</text>
+                <text id="c47" class="cell" class:cur="cells.c47.cur" class:peer="cells.c47.peer" class:same="cells.c47.same" class:given="cells.c47.given" class:bad="cells.c47.bad" class:wrong="cells.c47.wrong" class:note="cells.c47.note" class:done="cells.c47.done" on:click="cell">{cells.c47.t}</text>
+                <text id="c48" class="cell" class:cur="cells.c48.cur" class:peer="cells.c48.peer" class:same="cells.c48.same" class:given="cells.c48.given" class:bad="cells.c48.bad" class:wrong="cells.c48.wrong" class:note="cells.c48.note" class:done="cells.c48.done" on:click="cell">{cells.c48.t}</text>
+              </row>
+              <row class="line">
+                <text id="c56" class="cell" class:cur="cells.c56.cur" class:peer="cells.c56.peer" class:same="cells.c56.same" class:given="cells.c56.given" class:bad="cells.c56.bad" class:wrong="cells.c56.wrong" class:note="cells.c56.note" class:done="cells.c56.done" on:click="cell">{cells.c56.t}</text>
+                <text id="c57" class="cell" class:cur="cells.c57.cur" class:peer="cells.c57.peer" class:same="cells.c57.same" class:given="cells.c57.given" class:bad="cells.c57.bad" class:wrong="cells.c57.wrong" class:note="cells.c57.note" class:done="cells.c57.done" on:click="cell">{cells.c57.t}</text>
+                <text id="c58" class="cell" class:cur="cells.c58.cur" class:peer="cells.c58.peer" class:same="cells.c58.same" class:given="cells.c58.given" class:bad="cells.c58.bad" class:wrong="cells.c58.wrong" class:note="cells.c58.note" class:done="cells.c58.done" on:click="cell">{cells.c58.t}</text>
+              </row>
+            </box>
+          </row>
+          <row class="band">
+            <box id="b6" class="box" class:cur="boxes.b6">
+              <row class="line">
+                <text id="c60" class="cell" class:cur="cells.c60.cur" class:peer="cells.c60.peer" class:same="cells.c60.same" class:given="cells.c60.given" class:bad="cells.c60.bad" class:wrong="cells.c60.wrong" class:note="cells.c60.note" class:done="cells.c60.done" on:click="cell">{cells.c60.t}</text>
+                <text id="c61" class="cell" class:cur="cells.c61.cur" class:peer="cells.c61.peer" class:same="cells.c61.same" class:given="cells.c61.given" class:bad="cells.c61.bad" class:wrong="cells.c61.wrong" class:note="cells.c61.note" class:done="cells.c61.done" on:click="cell">{cells.c61.t}</text>
+                <text id="c62" class="cell" class:cur="cells.c62.cur" class:peer="cells.c62.peer" class:same="cells.c62.same" class:given="cells.c62.given" class:bad="cells.c62.bad" class:wrong="cells.c62.wrong" class:note="cells.c62.note" class:done="cells.c62.done" on:click="cell">{cells.c62.t}</text>
+              </row>
+              <row class="line">
+                <text id="c70" class="cell" class:cur="cells.c70.cur" class:peer="cells.c70.peer" class:same="cells.c70.same" class:given="cells.c70.given" class:bad="cells.c70.bad" class:wrong="cells.c70.wrong" class:note="cells.c70.note" class:done="cells.c70.done" on:click="cell">{cells.c70.t}</text>
+                <text id="c71" class="cell" class:cur="cells.c71.cur" class:peer="cells.c71.peer" class:same="cells.c71.same" class:given="cells.c71.given" class:bad="cells.c71.bad" class:wrong="cells.c71.wrong" class:note="cells.c71.note" class:done="cells.c71.done" on:click="cell">{cells.c71.t}</text>
+                <text id="c72" class="cell" class:cur="cells.c72.cur" class:peer="cells.c72.peer" class:same="cells.c72.same" class:given="cells.c72.given" class:bad="cells.c72.bad" class:wrong="cells.c72.wrong" class:note="cells.c72.note" class:done="cells.c72.done" on:click="cell">{cells.c72.t}</text>
+              </row>
+              <row class="line">
+                <text id="c80" class="cell" class:cur="cells.c80.cur" class:peer="cells.c80.peer" class:same="cells.c80.same" class:given="cells.c80.given" class:bad="cells.c80.bad" class:wrong="cells.c80.wrong" class:note="cells.c80.note" class:done="cells.c80.done" on:click="cell">{cells.c80.t}</text>
+                <text id="c81" class="cell" class:cur="cells.c81.cur" class:peer="cells.c81.peer" class:same="cells.c81.same" class:given="cells.c81.given" class:bad="cells.c81.bad" class:wrong="cells.c81.wrong" class:note="cells.c81.note" class:done="cells.c81.done" on:click="cell">{cells.c81.t}</text>
+                <text id="c82" class="cell" class:cur="cells.c82.cur" class:peer="cells.c82.peer" class:same="cells.c82.same" class:given="cells.c82.given" class:bad="cells.c82.bad" class:wrong="cells.c82.wrong" class:note="cells.c82.note" class:done="cells.c82.done" on:click="cell">{cells.c82.t}</text>
+              </row>
+            </box>
+            <box id="b7" class="box" class:cur="boxes.b7">
+              <row class="line">
+                <text id="c63" class="cell" class:cur="cells.c63.cur" class:peer="cells.c63.peer" class:same="cells.c63.same" class:given="cells.c63.given" class:bad="cells.c63.bad" class:wrong="cells.c63.wrong" class:note="cells.c63.note" class:done="cells.c63.done" on:click="cell">{cells.c63.t}</text>
+                <text id="c64" class="cell" class:cur="cells.c64.cur" class:peer="cells.c64.peer" class:same="cells.c64.same" class:given="cells.c64.given" class:bad="cells.c64.bad" class:wrong="cells.c64.wrong" class:note="cells.c64.note" class:done="cells.c64.done" on:click="cell">{cells.c64.t}</text>
+                <text id="c65" class="cell" class:cur="cells.c65.cur" class:peer="cells.c65.peer" class:same="cells.c65.same" class:given="cells.c65.given" class:bad="cells.c65.bad" class:wrong="cells.c65.wrong" class:note="cells.c65.note" class:done="cells.c65.done" on:click="cell">{cells.c65.t}</text>
+              </row>
+              <row class="line">
+                <text id="c73" class="cell" class:cur="cells.c73.cur" class:peer="cells.c73.peer" class:same="cells.c73.same" class:given="cells.c73.given" class:bad="cells.c73.bad" class:wrong="cells.c73.wrong" class:note="cells.c73.note" class:done="cells.c73.done" on:click="cell">{cells.c73.t}</text>
+                <text id="c74" class="cell" class:cur="cells.c74.cur" class:peer="cells.c74.peer" class:same="cells.c74.same" class:given="cells.c74.given" class:bad="cells.c74.bad" class:wrong="cells.c74.wrong" class:note="cells.c74.note" class:done="cells.c74.done" on:click="cell">{cells.c74.t}</text>
+                <text id="c75" class="cell" class:cur="cells.c75.cur" class:peer="cells.c75.peer" class:same="cells.c75.same" class:given="cells.c75.given" class:bad="cells.c75.bad" class:wrong="cells.c75.wrong" class:note="cells.c75.note" class:done="cells.c75.done" on:click="cell">{cells.c75.t}</text>
+              </row>
+              <row class="line">
+                <text id="c83" class="cell" class:cur="cells.c83.cur" class:peer="cells.c83.peer" class:same="cells.c83.same" class:given="cells.c83.given" class:bad="cells.c83.bad" class:wrong="cells.c83.wrong" class:note="cells.c83.note" class:done="cells.c83.done" on:click="cell">{cells.c83.t}</text>
+                <text id="c84" class="cell" class:cur="cells.c84.cur" class:peer="cells.c84.peer" class:same="cells.c84.same" class:given="cells.c84.given" class:bad="cells.c84.bad" class:wrong="cells.c84.wrong" class:note="cells.c84.note" class:done="cells.c84.done" on:click="cell">{cells.c84.t}</text>
+                <text id="c85" class="cell" class:cur="cells.c85.cur" class:peer="cells.c85.peer" class:same="cells.c85.same" class:given="cells.c85.given" class:bad="cells.c85.bad" class:wrong="cells.c85.wrong" class:note="cells.c85.note" class:done="cells.c85.done" on:click="cell">{cells.c85.t}</text>
+              </row>
+            </box>
+            <box id="b8" class="box" class:cur="boxes.b8">
+              <row class="line">
+                <text id="c66" class="cell" class:cur="cells.c66.cur" class:peer="cells.c66.peer" class:same="cells.c66.same" class:given="cells.c66.given" class:bad="cells.c66.bad" class:wrong="cells.c66.wrong" class:note="cells.c66.note" class:done="cells.c66.done" on:click="cell">{cells.c66.t}</text>
+                <text id="c67" class="cell" class:cur="cells.c67.cur" class:peer="cells.c67.peer" class:same="cells.c67.same" class:given="cells.c67.given" class:bad="cells.c67.bad" class:wrong="cells.c67.wrong" class:note="cells.c67.note" class:done="cells.c67.done" on:click="cell">{cells.c67.t}</text>
+                <text id="c68" class="cell" class:cur="cells.c68.cur" class:peer="cells.c68.peer" class:same="cells.c68.same" class:given="cells.c68.given" class:bad="cells.c68.bad" class:wrong="cells.c68.wrong" class:note="cells.c68.note" class:done="cells.c68.done" on:click="cell">{cells.c68.t}</text>
+              </row>
+              <row class="line">
+                <text id="c76" class="cell" class:cur="cells.c76.cur" class:peer="cells.c76.peer" class:same="cells.c76.same" class:given="cells.c76.given" class:bad="cells.c76.bad" class:wrong="cells.c76.wrong" class:note="cells.c76.note" class:done="cells.c76.done" on:click="cell">{cells.c76.t}</text>
+                <text id="c77" class="cell" class:cur="cells.c77.cur" class:peer="cells.c77.peer" class:same="cells.c77.same" class:given="cells.c77.given" class:bad="cells.c77.bad" class:wrong="cells.c77.wrong" class:note="cells.c77.note" class:done="cells.c77.done" on:click="cell">{cells.c77.t}</text>
+                <text id="c78" class="cell" class:cur="cells.c78.cur" class:peer="cells.c78.peer" class:same="cells.c78.same" class:given="cells.c78.given" class:bad="cells.c78.bad" class:wrong="cells.c78.wrong" class:note="cells.c78.note" class:done="cells.c78.done" on:click="cell">{cells.c78.t}</text>
+              </row>
+              <row class="line">
+                <text id="c86" class="cell" class:cur="cells.c86.cur" class:peer="cells.c86.peer" class:same="cells.c86.same" class:given="cells.c86.given" class:bad="cells.c86.bad" class:wrong="cells.c86.wrong" class:note="cells.c86.note" class:done="cells.c86.done" on:click="cell">{cells.c86.t}</text>
+                <text id="c87" class="cell" class:cur="cells.c87.cur" class:peer="cells.c87.peer" class:same="cells.c87.same" class:given="cells.c87.given" class:bad="cells.c87.bad" class:wrong="cells.c87.wrong" class:note="cells.c87.note" class:done="cells.c87.done" on:click="cell">{cells.c87.t}</text>
+                <text id="c88" class="cell" class:cur="cells.c88.cur" class:peer="cells.c88.peer" class:same="cells.c88.same" class:given="cells.c88.given" class:bad="cells.c88.bad" class:wrong="cells.c88.wrong" class:note="cells.c88.note" class:done="cells.c88.done" on:click="cell">{cells.c88.t}</text>
+              </row>
+            </box>
+          </row>
+          <!-- end generated -->
+        </col>
+        <col id="side" title="{diff_label}">
+          <row class="stat">
+            <text class="k">time</text>
+            <spacer/>
+            <text class="v">{time}</text>
+          </row>
+          <row class="stat">
+            <text class="k">mistakes</text>
+            <spacer/>
+            <text class="v" class:bad="mistakes">{mistakes}</text>
+          </row>
+          <row class="stat">
+            <text class="k">hints</text>
+            <spacer/>
+            <text class="v">{hints}</text>
+          </row>
+          <row class="stat">
+            <text class="k">filled</text>
+            <spacer/>
+            <text class="v">{filled}/81</text>
+          </row>
+          <row class="stat">
+            <text class="k">entering</text>
+            <spacer/>
+            <text class="v" class:on="pencil">{mode_label}</text>
+          </row>
+          <rule class="sep"/>
+          <row class="stat">
+            <text class="k">{sel.label}</text>
+            <spacer/>
+            <text class="v">{sel.kind}</text>
+          </row>
+          <col id="mini">
+            <!-- generated: mini -->
+            <row class="mrow">
+              <text class="m" class:on="mini.on1">{mini.n1}</text>
+              <text class="m" class:on="mini.on2">{mini.n2}</text>
+              <text class="m" class:on="mini.on3">{mini.n3}</text>
+            </row>
+            <row class="mrow">
+              <text class="m" class:on="mini.on4">{mini.n4}</text>
+              <text class="m" class:on="mini.on5">{mini.n5}</text>
+              <text class="m" class:on="mini.on6">{mini.n6}</text>
+            </row>
+            <row class="mrow">
+              <text class="m" class:on="mini.on7">{mini.n7}</text>
+              <text class="m" class:on="mini.on8">{mini.n8}</text>
+              <text class="m" class:on="mini.on9">{mini.n9}</text>
+            </row>
+            <!-- end generated -->
+          </col>
+          <rule class="sep"/>
+          <!-- generated: pad -->
+          <row class="padrow">
+            <text id="p1" class="pad" class:done="pad.p1" on:click="put1">1</text>
+            <text id="p2" class="pad" class:done="pad.p2" on:click="put2">2</text>
+            <text id="p3" class="pad" class:done="pad.p3" on:click="put3">3</text>
+          </row>
+          <row class="padrow">
+            <text id="p4" class="pad" class:done="pad.p4" on:click="put4">4</text>
+            <text id="p5" class="pad" class:done="pad.p5" on:click="put5">5</text>
+            <text id="p6" class="pad" class:done="pad.p6" on:click="put6">6</text>
+          </row>
+          <row class="padrow">
+            <text id="p7" class="pad" class:done="pad.p7" on:click="put7">7</text>
+            <text id="p8" class="pad" class:done="pad.p8" on:click="put8">8</text>
+            <text id="p9" class="pad" class:done="pad.p9" on:click="put9">9</text>
+          </row>
+          <!-- end generated -->
+          <row class="tools">
+            <text id="t-erase" class="tool" on:click="erase">erase</text>
+            <text id="t-notes" class="tool" class:on="pencil" on:click="notes">notes</text>
+            <text id="t-undo" class="tool" class:off="!undo_n" on:click="undo">undo</text>
+          </row>
+          <row class="tools">
+            <text id="t-redo" class="tool" class:off="!redo_n" on:click="redo">redo</text>
+            <text id="t-hint" class="tool" on:click="hint">hint</text>
+            <text id="t-check" class="tool" on:click="check">check</text>
+          </row>
+        </col>
+      </row>
+      <text id="toosmall">terminal too small: sudoku needs 40 columns by 14 rows</text>
+      <text id="tiny">too small</text>
+      <hints id="keys"/>
+    </col>
+    <modal id="help" open="help_open" title="sudoku" focus="#help-ok" on:escape="help_close">
+      <row class="kv">
+        <text class="kk">move</text>
+        <text class="kd">arrows or hjkl</text>
+      </row>
+      <row class="kv">
+        <text class="kk">digit</text>
+        <text class="kd">1-9, or click the pad</text>
+      </row>
+      <row class="kv">
+        <text class="kk">erase</text>
+        <text class="kd">0, x, or backspace</text>
+      </row>
+      <row class="kv">
+        <text class="kk">notes</text>
+        <text class="kd">n</text>
+        <text class="kk">undo</text>
+        <text class="kd">u</text>
+      </row>
+      <row class="kv">
+        <text class="kk">redo</text>
+        <text class="kd">U</text>
+        <text class="kk">hint</text>
+        <text class="kd">H</text>
+      </row>
+      <row class="kv">
+        <text class="kk">check</text>
+        <text class="kd">c</text>
+        <text class="kk">pause</text>
+        <text class="kd">p</text>
+      </row>
+      <row class="kv">
+        <text class="kk">new</text>
+        <text class="kd">N</text>
+        <text class="kk">mouse</text>
+        <text class="kd">m</text>
+      </row>
+      <row class="kv">
+        <text class="kk">quit</text>
+        <text class="kd">q</text>
+        <text class="kk">help</text>
+        <text class="kd">?</text>
+      </row>
+      <text class="muted">A digit clears its peers' notes.</text>
+      <text class="muted">A hint fills one cell and counts.</text>
+      <button id="help-ok" label="close" on:click="help_close"/>
+    </modal>
+    <modal id="won" open="win_open" title="solved" focus="#won-new" on:escape="win_close">
+      <text class="big">solved in {time}</text>
+      <text>hints used {hints}  ·  mistakes {mistakes}</text>
+      <text class="muted">{diff_label}</text>
+      <row class="actions">
+        <button id="won-new" label="new game" on:click="newgame_open"/>
+        <button id="won-close" label="close" on:click="win_close"/>
+      </row>
+    </modal>
+    <modal id="newgame" open="new_open" title="new game" focus="#nd-medium" on:escape="newgame_close">
+      <text class="muted">The grade is the hardest technique a person needs.</text>
+      <button id="nd-easy" label="easy" on:click="new_game"/>
+      <button id="nd-medium" label="medium" on:click="new_game"/>
+      <button id="nd-hard" label="hard" on:click="new_game"/>
+      <button id="nd-expert" label="expert" on:click="new_game"/>
+      <button id="nd-cancel" label="cancel" on:click="newgame_close"/>
+    </modal>
+  </screen>
+</tui>

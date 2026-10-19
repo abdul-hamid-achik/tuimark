@@ -1,0 +1,105 @@
+<tui version="3" theme="auto">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="q,ctrl+c" action="quit" label="quit"/>
+    <bind keys="up,k,w" action="up" keycap="↑↓←→" label="slide"/>
+    <bind keys="down,j,s" action="down"/>
+    <bind keys="left,h,a" action="left"/>
+    <bind keys="right,l,d" action="right"/>
+    <bind keys="u" action="undo" label="undo"/>
+    <bind keys="r" action="restart" label="new"/>
+    <bind keys="A,t" action="autopilot" keycap="A" label="auto"/>
+  </keymap>
+  <screen id="main">
+    <col id="app">
+      <row id="top">
+        <text class="brand">◆ 2048</text>
+        <text class="mode" class:on="auto" if="!notice">{mode_label}</text>
+        <text class="notice" if="notice">{notice}</text>
+        <spacer class="push" if="!notice"/>
+        <text class="compact">score {score} best {best}</text>
+        <text class="state" class:playing="state.playing" class:won="state.won" class:over="state.over">{state.label}</text>
+      </row>
+      <row id="stage" class:n3="dims.n3" class:n4="dims.n4" class:n5="dims.n5" class:n6="dims.n6">
+        <col id="board" class:dead="state.over" each="board as line">
+          <row class="line" each="line.cells as c">
+            <col class="tile" class:empty="c.empty" class:v2="c.v2" class:v4="c.v4" class:v8="c.v8" class:v16="c.v16" class:v32="c.v32" class:v64="c.v64" class:v128="c.v128" class:v256="c.v256" class:v512="c.v512" class:v1024="c.v1024" class:v2048="c.v2048" class:vbig="c.vbig" class:pop="c.pop" class:fresh="c.fresh">
+              <text class="num">{c.t}</text>
+            </col>
+          </row>
+        </col>
+        <col id="side" title="stats">
+          <row class="stat">
+            <text class="k">score</text>
+            <spacer/>
+            <text class="v score">{score}</text>
+          </row>
+          <row class="stat">
+            <text class="k">last gain</text>
+            <spacer/>
+            <text class="v gain" if="gain_label">{gain_label}</text>
+          </row>
+          <row class="stat">
+            <text class="k">best</text>
+            <spacer/>
+            <text class="v">{best}</text>
+          </row>
+          <row class="stat">
+            <text class="k">moves</text>
+            <spacer/>
+            <text class="v">{moves}</text>
+          </row>
+          <row class="stat">
+            <text class="k">largest tile</text>
+            <spacer/>
+            <text class="v">{largest}</text>
+          </row>
+          <row class="stat">
+            <text class="k">board</text>
+            <spacer/>
+            <text class="v">{size_label}</text>
+          </row>
+          <rule class="sep"/>
+          <text class="k">score over moves</text>
+          <sparkline id="trend" bind="hist"/>
+          <spacer/>
+          <row class="legend">
+            <text class="sw pop">██</text>
+            <text class="k">merged</text>
+          </row>
+          <row class="legend">
+            <text class="sw fresh">██</text>
+            <text class="k">new tile</text>
+          </row>
+        </col>
+        <text id="toosmall">too small</text>
+      </row>
+      <hints id="keys"/>
+    </col>
+    <modal id="help" open="help_open" title="2048" on:escape="help_close">
+      <hints id="help-keys" class="help" scope="all"/>
+      <text class="muted tip">Slide: arrows, hjkl or wasd.</text>
+      <text class="muted tip">Equal tiles merge once a move.</text>
+      <text class="muted tip">Sliding by hand stops the autopilot.</text>
+      <text class="muted">esc or ? closes this.</text>
+    </modal>
+    <modal id="win" open="win_open" title="★ 2048" on:escape="keep_going">
+      <text class="big">2048 in {moves} moves</text>
+      <text class="big">score {score} · best {best}</text>
+      <row class="actions">
+        <button id="keep" label="keep going" on:click="keep_going"/>
+        <button id="again" label="new game" on:click="restart"/>
+      </row>
+    </modal>
+    <modal id="over" open="over_open" title="GAME OVER" on:escape="over_close">
+      <text class="big">score {score} · best {best}</text>
+      <text class="big">largest tile {largest} · {moves} moves</text>
+      <row class="actions">
+        <button id="takeback" label="undo" on:click="undo"/>
+        <button id="fresh" label="new game" on:click="restart"/>
+      </row>
+      <text class="muted tip">esc looks at the board.</text>
+    </modal>
+  </screen>
+</tui>

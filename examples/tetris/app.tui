@@ -1,0 +1,119 @@
+<tui version="3" theme="auto">
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="q,ctrl+c" action="quit" label="quit"/>
+    <bind keys="?" action="help_open" label="help"/>
+  </keymap>
+  <keymap when="#app">
+    <bind keys="left,h" action="left" keycap="←→" label="move"/>
+    <bind keys="right,l" action="right"/>
+    <bind keys="down,j" action="soft_drop" keycap="↓" label="soft"/>
+    <bind keys="up,x,k" action="rotate" keycap="↑" label="rotate"/>
+    <bind keys="z" action="rotate_back" keycap="z" label="back"/>
+    <bind keys="space" action="hard_drop" label="drop"/>
+    <bind keys="c" action="hold" label="hold"/>
+    <bind keys="p" action="pause" label="pause"/>
+    <bind keys="r" action="restart" label="restart"/>
+    <bind keys="a" action="autopilot" label="auto"/>
+  </keymap>
+  <keymap when="#over">
+    <bind keys="r" action="restart"/>
+  </keymap>
+  <screen id="main" focus="#app">
+    <col id="app" focusable="true">
+      <row id="top">
+        <text class="brand">◆ tetris</text>
+        <text class="mode" class:on="auto" if="!notice">{mode_label}</text>
+        <text class="notice" if="notice">{notice}</text>
+        <spacer if="!notice"/>
+        <text class="c c-score">score {score}</text>
+        <text class="c c-lines">lines {lines}</text>
+        <text class="c c-level">level {level}</text>
+        <text class="state" class:playing="state.playing" class:paused="state.paused" class:over="state.over">{state.label}</text>
+      </row>
+      <row id="stage">
+        <col id="left">
+          <col id="stats" title="stats">
+            <row class="stat">
+              <text class="k">score</text>
+              <spacer/>
+              <text class="v score">{score}</text>
+            </row>
+            <row class="stat">
+              <text class="k">best</text>
+              <spacer/>
+              <text class="v">{best}</text>
+            </row>
+            <row class="stat">
+              <text class="k">level</text>
+              <spacer/>
+              <text class="v">{level}</text>
+            </row>
+            <row class="stat">
+              <text class="k">lines</text>
+              <spacer/>
+              <text class="v">{lines}</text>
+            </row>
+            <row class="stat">
+              <text class="k">pieces</text>
+              <spacer/>
+              <text class="v">{pieces}</text>
+            </row>
+            <row class="stat">
+              <text class="k">combo</text>
+              <spacer/>
+              <text class="v">{combo}</text>
+            </row>
+            <row class="stat">
+              <text class="k">gravity</text>
+              <spacer/>
+              <text class="v">{speed_label}</text>
+            </row>
+            <rule class="sep"/>
+            <text class="k">last clear</text>
+            <text class="last">{last}</text>
+          </col>
+          <col id="trend" title="stack height">
+            <sparkline id="height" bind="height_hist" min="0" max="20"/>
+            <text class="k">last 20 pieces</text>
+          </col>
+        </col>
+        <col id="field" class:dead="over" each="board as line">
+          <row class="line" each="line.runs as r">
+            <text class="cell" class:empty="r.empty" class:ki="r.ki" class:ko="r.ko" class:kt="r.kt" class:ks="r.ks" class:kz="r.kz" class:kj="r.kj" class:kl="r.kl" class:ghost="r.ghost" class:flash="r.flash" class:note="r.note">{r.t}</text>
+          </row>
+        </col>
+        <col id="side">
+          <col id="hold" title="hold" each="hold_rows as line">
+            <row class="pline" each="line.runs as r">
+              <text class="pcell" class:ki="r.ki" class:ko="r.ko" class:kt="r.kt" class:ks="r.ks" class:kz="r.kz" class:kj="r.kj" class:kl="r.kl" class:dim="r.dim">{r.t}</text>
+            </row>
+          </col>
+          <col id="next" title="next" each="next_rows as line">
+            <row class="pline" each="line.runs as r">
+              <text class="pcell" class:ki="r.ki" class:ko="r.ko" class:kt="r.kt" class:ks="r.ks" class:kz="r.kz" class:kj="r.kj" class:kl="r.kl">{r.t}</text>
+            </row>
+          </col>
+        </col>
+      </row>
+      <text id="toosmall">terminal too small: the board needs 24 columns by 24 rows</text>
+      <hints id="keys"/>
+    </col>
+    <modal id="over" open="over_modal" title="GAME OVER" focus="#over-board">
+      <text class="big">score {score}</text>
+      <text class="big">best {best}</text>
+      <text class="big">lines {lines}</text>
+      <text class="big">level {level}</text>
+      <row id="over-actions">
+        <button id="over-board" label="board" on:click="over_hide"/>
+        <button id="over-restart" label="restart" on:click="restart"/>
+        <button id="over-quit" label="quit" on:click="quit"/>
+      </row>
+    </modal>
+    <modal id="help" open="help_open" title="tetris keys" on:escape="help_close">
+      <hints id="help-keys" class="help" scope="all"/>
+      <text class="muted note">Also x k to rotate, h l to move, j to soft drop.</text>
+      <button id="help-ok" label="close" on:click="help_close"/>
+    </modal>
+  </screen>
+</tui>

@@ -1,0 +1,44 @@
+{
+  "auto": false,
+  "best": 0,
+  "board": [
+    {"cells":[{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":false,"fresh":false,"pop":false,"t":"2","v1024":false,"v128":false,"v16":false,"v2":true,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false}]},
+    {"cells":[{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false}]},
+    {"cells":[{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false}]},
+    {"cells":[{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":false,"fresh":false,"pop":false,"t":"2","v1024":false,"v128":false,"v16":false,"v2":true,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false},{"empty":true,"fresh":false,"pop":false,"t":"","v1024":false,"v128":false,"v16":false,"v2":false,"v2048":false,"v256":false,"v32":false,"v4":false,"v512":false,"v64":false,"v8":false,"vbig":false}]}
+  ],
+  "dims": {"n3":false,"n4":true,"n5":false,"n6":false},
+  "fresh": [
+    [false,false,false,false],
+    [false,false,false,false],
+    [false,false,false,false],
+    [false,false,false,false]
+  ],
+  "gain": 0,
+  "gain_label": "",
+  "help_open": false,
+  "hist": [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,0],
+  "largest": 2,
+  "mode_label": "manual",
+  "moves": 0,
+  "notice": "",
+  "over": false,
+  "over_open": false,
+  "pop": [
+    [false,false,false,false],
+    [false,false,false,false],
+    [false,false,false,false],
+    [false,false,false,false]
+  ],
+  "score": 0,
+  "size": 4,
+  "size_label": "4×4",
+  "state": {"label":"● PLAYING","over":false,"playing":true,"won":false},
+  "tiles": [
+    [0,0,2,0],
+    [0,0,0,0],
+    [0,0,0,0],
+    [0,2,0,0]
+  ],
+  "win_open": false
+}

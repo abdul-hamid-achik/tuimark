@@ -74,13 +74,16 @@ func TestAnalyzeIsValidate(t *testing.T) {
 	// The tracked examples, listed rather than globbed: a checkout may hold
 	// untracked ones.
 	files := []string{
+		"examples/2048/app.tui",
 		"examples/agent/agent.tui",
+		"examples/chess/app.tui",
 		"examples/dashboard/app.tui",
 		"examples/gitui/app.tui",
 		"examples/host-ts/view.tui",
 		"examples/http/app.tui",
 		"examples/inbox/app.tui",
 		"examples/logs/app.tui",
+		"examples/minesweeper/app.tui",
 		"examples/monitor/studio.tui",
 		"examples/music/app.tui",
 		"examples/pipeline/app.tui",
@@ -88,7 +91,9 @@ func TestAnalyzeIsValidate(t *testing.T) {
 		"examples/snake/app.tui",
 		"examples/spike/inbox.tui",
 		"examples/stacked/app.tui",
+		"examples/sudoku/app.tui",
 		"examples/tasks/app.tui",
+		"examples/tetris/app.tui",
 		"examples/unicode/app.tui",
 	}
 	var paths []string

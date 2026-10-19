@@ -1,0 +1,180 @@
+:root {
+  --bg: #12151a;
+  --fg: #d7dce2;
+  --muted: #7d8590;
+  --accent: #58a6ff;
+  --ok: #56d364;
+  --warn: #e3b341;
+  --danger: #f85149;
+  --panel: #1b2027;
+  --chip: #262d36;
+  --border: #30363d;
+  --cell: #181d24;
+  --cell-alt: #1f262f;
+  --peer: #2a3646;
+  --same: #36517a;
+  --cursor: #58a6ff;
+  --on-cursor: #0d1117;
+  --given: #e6edf3;
+  --entry: #79c0ff;
+  --note: #8b949e;
+  --conflict: #ff7b72;
+  --wrong: #5c1f24;
+  --done: #1f4d2b;
+  --on-done: #d7f5dc;
+}
+
+@media (theme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --fg: #1f2328;
+    --muted: #6a737d;
+    --accent: #0b64c0;
+    --ok: #1f7a3a;
+    --warn: #8a5a00;
+    --danger: #c3261f;
+    --panel: #eef1f4;
+    --chip: #e1e6ec;
+    --border: #d0d7de;
+    --cell: #ffffff;
+    --cell-alt: #eceff3;
+    --peer: #d6e2f3;
+    --same: #a9c8ee;
+    --cursor: #0b64c0;
+    --on-cursor: #ffffff;
+    --given: #1f2328;
+    --entry: #0b5cad;
+    --note: #57606a;
+    --conflict: #c3261f;
+    --wrong: #f6caca;
+    --done: #bfe8cd;
+    --on-done: #143d22;
+  }
+}
+
+screen { color: $fg; background: $bg; }
+.muted { color: $muted; }
+.k { color: $muted; }
+.v { color: $fg; bold: true; }
+
+#app { gap: 0; }
+
+#top { height: 1; gap: 2; background: $panel; padding: 0 1; }
+.brand { color: $accent; bold: true; }
+.level { color: $muted; }
+.notice { color: $danger; bold: true; wrap: truncate; width: 1fr; }
+.info { color: $warn; wrap: truncate; width: 1fr; }
+.compact { display: none; color: $fg; }
+.state { bold: true; }
+.playing { color: $ok; }
+.paused { color: $warn; }
+.won { color: $ok; }
+
+#stage { height: 1fr; justify: center; align: center; gap: 2; }
+
+/* The board: nine boxes of three cells by three rows. Each cell is three
+   columns wide and one row tall. */
+#board { width: auto; height: auto; layout: column; gap: 1; }
+.band { width: auto; height: auto; layout: row; gap: 1; }
+.box { width: auto; height: auto; layout: column; background: $cell; border-color: $border; }
+#b1, #b3, #b5, #b7 { background: $cell-alt; }
+.box.cur { border-color: $accent; }
+.line { width: auto; height: 1; layout: row; }
+
+.cell { width: 3; height: 1; color: $entry; }
+.cell.given { color: $given; bold: true; }
+.cell.note { color: $note; }
+.cell.peer { background: $peer; }
+.cell.same { background: $same; }
+.cell.wrong { background: $wrong; }
+.cell.bad { color: $conflict; bold: true; }
+.cell.done { background: $done; color: $on-done; }
+.cell.cur { background: $cursor; color: $on-cursor; bold: true; }
+.cell.cur.bad { color: $on-cursor; background: $danger; }
+.cell.cur.wrong { color: $on-cursor; background: $danger; underline: true; }
+
+/* With the rows to spare, the boxes get their own borders. */
+@media (min-rows: 20) {
+  #board { gap: 0; }
+  .band { gap: 0; }
+  .box { border: single; }
+}
+
+#side { width: 28; height: auto; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+.stat { height: 1; }
+.v.bad { color: $conflict; }
+.v.on { color: $accent; }
+.sep { color: $border; }
+#mini { width: auto; height: auto; align: center; }
+.mrow { width: auto; height: 1; gap: 2; }
+.m { width: 1; color: $note; }
+.m.on { color: $accent; bold: true; }
+.padrow { height: 1; gap: 1; justify: center; }
+.pad { width: 7; height: 1; content-align: center; background: $chip; color: $accent; bold: true; }
+.pad.done { color: $muted; bold: false; }
+.tools { height: 1; gap: 1; justify: center; }
+.tool { width: 7; height: 1; content-align: center; background: $chip; color: $fg; }
+.tool.on { color: $on-cursor; background: $accent; bold: true; }
+.tool.off { color: $muted; }
+
+#toosmall { display: none; color: $warn; wrap: wrap; height: 1fr; overflow: hidden; }
+#tiny { display: none; color: $warn; height: 1fr; overflow: hidden; }
+
+#keys { height: 1; background: $panel; padding: 0 1; }
+.hint-key { color: $accent; bold: true; }
+.hint-label { color: $muted; }
+
+/* A modal with no background keeps the background of what is under it. */
+modal { background: $bg; }
+button { color: $fg; }
+button:focus { reverse: true; }
+#help { width: 60; max-width: 100%; height: auto; overflow: hidden; padding: 0 1; }
+.kv { height: 1; gap: 1; }
+.kk { width: 5; color: $accent; bold: true; }
+.kd { width: 1fr; wrap: truncate; }
+#help > .muted { wrap: wrap; }
+#won { width: 40; max-width: 100%; height: auto; overflow: hidden; border-color: $ok; padding: 0 1; }
+#won > text { wrap: wrap; }
+.big { color: $fg; bold: true; }
+.actions { height: 1; gap: 2; justify: center; }
+#newgame { width: 36; max-width: 100%; height: auto; overflow: hidden; padding: 0 1; }
+#newgame > .muted { wrap: wrap; }
+
+/* Without room for the side panel the status line carries the clock. */
+@media (max-cols: 63) {
+  #side { display: none; }
+  .compact { display: flex; }
+}
+
+@media (max-rows: 19) {
+  #side { display: none; }
+  .compact { display: flex; }
+}
+
+@media (max-cols: 55) {
+  .brand { display: none; }
+}
+
+/* Too small for the board: say so, once. */
+@media (max-cols: 39) {
+  #stage { display: none; }
+  #toosmall { display: flex; }
+  .compact { display: none; }
+  .level { display: none; }
+}
+
+@media (max-rows: 13) {
+  #stage { display: none; }
+  #toosmall { display: flex; }
+}
+
+/* On a screen too narrow for the sentence, a shorter one; and below 20
+   columns the status label goes too, so the top line still fits. */
+@media (max-cols: 29) {
+  #toosmall { display: none; }
+  #tiny { display: flex; }
+}
+
+@media (max-cols: 19) {
+  .state { display: none; }
+}

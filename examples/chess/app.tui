@@ -1,0 +1,288 @@
+<tui version="3" theme="auto" mouse="mouse">
+  <style src="theme.tcss"/>
+  <keymap when="#board">
+    <bind keys="?" action="help_open" label="help"/>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="ctrl+c" action="quit" when=""/>
+    <bind keys="up,k" action="up" keycap="↑↓←→" label="move"/>
+    <bind keys="down,j" action="down"/>
+    <bind keys="left,h" action="left"/>
+    <bind keys="right,l" action="right"/>
+    <bind keys="home" action="first"/>
+    <bind keys="end" action="last"/>
+    <bind keys="enter,space" action="select" keycap="enter" label="select"/>
+    <bind keys=":,/" action="focus" to="#cmd" keycap=":" label="type"/>
+    <bind keys="u" action="undo" label="undo"/>
+    <bind keys="U" action="redo" label="redo"/>
+    <bind keys="n" action="new_open" label="new"/>
+    <bind keys="f" action="flip" label="flip"/>
+    <bind keys="H" action="hint" label="hint"/>
+    <bind keys="r" action="resign_open" label="resign"/>
+    <bind keys="d" action="claim" label="draw"/>
+    <bind keys="v" action="review" label="review"/>
+    <bind keys="p" action="pgn" label="pgn"/>
+    <bind keys="m" action="toggle_mouse" label="mouse"/>
+    <bind keys="L" action="toggle_letters" label="letters"/>
+  </keymap>
+  <keymap when="#cmd">
+    <bind keys="esc" action="cmd_cancel" label="leave"/>
+  </keymap>
+  <keymap when="#help">
+    <bind keys="?,q,enter" action="help_close" label="close"/>
+  </keymap>
+  <keymap when="#newgame">
+    <bind keys="m" action="ng_mode" label="mode"/>
+    <bind keys="s" action="ng_side" label="side"/>
+    <bind keys="l" action="ng_level" label="level"/>
+    <bind keys="c" action="ng_clock" label="clock"/>
+  </keymap>
+  <keymap when="#resign">
+    <bind keys="y" action="resign_yes" label="resign"/>
+    <bind keys="n" action="resign_no" label="keep playing"/>
+  </keymap>
+  <keymap when="#promo">
+    <bind keys="q" action="promo_q" label="queen"/>
+    <bind keys="r" action="promo_r" label="rook"/>
+    <bind keys="b" action="promo_b" label="bishop"/>
+    <bind keys="n" action="promo_n" label="knight"/>
+  </keymap>
+  <keymap when="#pgn">
+    <bind keys="q,p,enter" action="pgn_close" label="close"/>
+  </keymap>
+  <screen id="main" focus="#board">
+    <col id="app">
+      <row id="top">
+        <text class="brand">◆ chess</text>
+        <text class="mode" if="!notice">{mode_label}</text>
+        <text class="notice" if="notice">{notice}</text>
+        <spacer id="topgap"/>
+        <text class="compact" class:over="status.over" class:check="status.check" if="!notice">{status.text}</text>
+        <text class="think" if="thinking">{think_label}</text>
+        <text class="cclk" if="clocks_line">{clocks_line}</text>
+      </row>
+      <row id="stage">
+        <col id="boardbox">
+          <!-- board:begin -->
+          <col id="board" focusable="true">
+            <row class="rank">
+              <text class="rl">{labels.r0}</text>
+              <text id="v00" class="sq light" class:white="cells.v00.w" class:black="cells.v00.b" class:cur="cells.v00.cur" class:sel="cells.v00.sel" class:tgt="cells.v00.tgt" class:cap="cells.v00.cap" class:last="cells.v00.last" class:chk="cells.v00.chk" class:hint="cells.v00.hint" on:click="cell">{cells.v00.t}</text>
+              <text id="v01" class="sq dark" class:white="cells.v01.w" class:black="cells.v01.b" class:cur="cells.v01.cur" class:sel="cells.v01.sel" class:tgt="cells.v01.tgt" class:cap="cells.v01.cap" class:last="cells.v01.last" class:chk="cells.v01.chk" class:hint="cells.v01.hint" on:click="cell">{cells.v01.t}</text>
+              <text id="v02" class="sq light" class:white="cells.v02.w" class:black="cells.v02.b" class:cur="cells.v02.cur" class:sel="cells.v02.sel" class:tgt="cells.v02.tgt" class:cap="cells.v02.cap" class:last="cells.v02.last" class:chk="cells.v02.chk" class:hint="cells.v02.hint" on:click="cell">{cells.v02.t}</text>
+              <text id="v03" class="sq dark" class:white="cells.v03.w" class:black="cells.v03.b" class:cur="cells.v03.cur" class:sel="cells.v03.sel" class:tgt="cells.v03.tgt" class:cap="cells.v03.cap" class:last="cells.v03.last" class:chk="cells.v03.chk" class:hint="cells.v03.hint" on:click="cell">{cells.v03.t}</text>
+              <text id="v04" class="sq light" class:white="cells.v04.w" class:black="cells.v04.b" class:cur="cells.v04.cur" class:sel="cells.v04.sel" class:tgt="cells.v04.tgt" class:cap="cells.v04.cap" class:last="cells.v04.last" class:chk="cells.v04.chk" class:hint="cells.v04.hint" on:click="cell">{cells.v04.t}</text>
+              <text id="v05" class="sq dark" class:white="cells.v05.w" class:black="cells.v05.b" class:cur="cells.v05.cur" class:sel="cells.v05.sel" class:tgt="cells.v05.tgt" class:cap="cells.v05.cap" class:last="cells.v05.last" class:chk="cells.v05.chk" class:hint="cells.v05.hint" on:click="cell">{cells.v05.t}</text>
+              <text id="v06" class="sq light" class:white="cells.v06.w" class:black="cells.v06.b" class:cur="cells.v06.cur" class:sel="cells.v06.sel" class:tgt="cells.v06.tgt" class:cap="cells.v06.cap" class:last="cells.v06.last" class:chk="cells.v06.chk" class:hint="cells.v06.hint" on:click="cell">{cells.v06.t}</text>
+              <text id="v07" class="sq dark" class:white="cells.v07.w" class:black="cells.v07.b" class:cur="cells.v07.cur" class:sel="cells.v07.sel" class:tgt="cells.v07.tgt" class:cap="cells.v07.cap" class:last="cells.v07.last" class:chk="cells.v07.chk" class:hint="cells.v07.hint" on:click="cell">{cells.v07.t}</text>
+            </row>
+            <row class="rank">
+              <text class="rl">{labels.r1}</text>
+              <text id="v10" class="sq dark" class:white="cells.v10.w" class:black="cells.v10.b" class:cur="cells.v10.cur" class:sel="cells.v10.sel" class:tgt="cells.v10.tgt" class:cap="cells.v10.cap" class:last="cells.v10.last" class:chk="cells.v10.chk" class:hint="cells.v10.hint" on:click="cell">{cells.v10.t}</text>
+              <text id="v11" class="sq light" class:white="cells.v11.w" class:black="cells.v11.b" class:cur="cells.v11.cur" class:sel="cells.v11.sel" class:tgt="cells.v11.tgt" class:cap="cells.v11.cap" class:last="cells.v11.last" class:chk="cells.v11.chk" class:hint="cells.v11.hint" on:click="cell">{cells.v11.t}</text>
+              <text id="v12" class="sq dark" class:white="cells.v12.w" class:black="cells.v12.b" class:cur="cells.v12.cur" class:sel="cells.v12.sel" class:tgt="cells.v12.tgt" class:cap="cells.v12.cap" class:last="cells.v12.last" class:chk="cells.v12.chk" class:hint="cells.v12.hint" on:click="cell">{cells.v12.t}</text>
+              <text id="v13" class="sq light" class:white="cells.v13.w" class:black="cells.v13.b" class:cur="cells.v13.cur" class:sel="cells.v13.sel" class:tgt="cells.v13.tgt" class:cap="cells.v13.cap" class:last="cells.v13.last" class:chk="cells.v13.chk" class:hint="cells.v13.hint" on:click="cell">{cells.v13.t}</text>
+              <text id="v14" class="sq dark" class:white="cells.v14.w" class:black="cells.v14.b" class:cur="cells.v14.cur" class:sel="cells.v14.sel" class:tgt="cells.v14.tgt" class:cap="cells.v14.cap" class:last="cells.v14.last" class:chk="cells.v14.chk" class:hint="cells.v14.hint" on:click="cell">{cells.v14.t}</text>
+              <text id="v15" class="sq light" class:white="cells.v15.w" class:black="cells.v15.b" class:cur="cells.v15.cur" class:sel="cells.v15.sel" class:tgt="cells.v15.tgt" class:cap="cells.v15.cap" class:last="cells.v15.last" class:chk="cells.v15.chk" class:hint="cells.v15.hint" on:click="cell">{cells.v15.t}</text>
+              <text id="v16" class="sq dark" class:white="cells.v16.w" class:black="cells.v16.b" class:cur="cells.v16.cur" class:sel="cells.v16.sel" class:tgt="cells.v16.tgt" class:cap="cells.v16.cap" class:last="cells.v16.last" class:chk="cells.v16.chk" class:hint="cells.v16.hint" on:click="cell">{cells.v16.t}</text>
+              <text id="v17" class="sq light" class:white="cells.v17.w" class:black="cells.v17.b" class:cur="cells.v17.cur" class:sel="cells.v17.sel" class:tgt="cells.v17.tgt" class:cap="cells.v17.cap" class:last="cells.v17.last" class:chk="cells.v17.chk" class:hint="cells.v17.hint" on:click="cell">{cells.v17.t}</text>
+            </row>
+            <row class="rank">
+              <text class="rl">{labels.r2}</text>
+              <text id="v20" class="sq light" class:white="cells.v20.w" class:black="cells.v20.b" class:cur="cells.v20.cur" class:sel="cells.v20.sel" class:tgt="cells.v20.tgt" class:cap="cells.v20.cap" class:last="cells.v20.last" class:chk="cells.v20.chk" class:hint="cells.v20.hint" on:click="cell">{cells.v20.t}</text>
+              <text id="v21" class="sq dark" class:white="cells.v21.w" class:black="cells.v21.b" class:cur="cells.v21.cur" class:sel="cells.v21.sel" class:tgt="cells.v21.tgt" class:cap="cells.v21.cap" class:last="cells.v21.last" class:chk="cells.v21.chk" class:hint="cells.v21.hint" on:click="cell">{cells.v21.t}</text>
+              <text id="v22" class="sq light" class:white="cells.v22.w" class:black="cells.v22.b" class:cur="cells.v22.cur" class:sel="cells.v22.sel" class:tgt="cells.v22.tgt" class:cap="cells.v22.cap" class:last="cells.v22.last" class:chk="cells.v22.chk" class:hint="cells.v22.hint" on:click="cell">{cells.v22.t}</text>
+              <text id="v23" class="sq dark" class:white="cells.v23.w" class:black="cells.v23.b" class:cur="cells.v23.cur" class:sel="cells.v23.sel" class:tgt="cells.v23.tgt" class:cap="cells.v23.cap" class:last="cells.v23.last" class:chk="cells.v23.chk" class:hint="cells.v23.hint" on:click="cell">{cells.v23.t}</text>
+              <text id="v24" class="sq light" class:white="cells.v24.w" class:black="cells.v24.b" class:cur="cells.v24.cur" class:sel="cells.v24.sel" class:tgt="cells.v24.tgt" class:cap="cells.v24.cap" class:last="cells.v24.last" class:chk="cells.v24.chk" class:hint="cells.v24.hint" on:click="cell">{cells.v24.t}</text>
+              <text id="v25" class="sq dark" class:white="cells.v25.w" class:black="cells.v25.b" class:cur="cells.v25.cur" class:sel="cells.v25.sel" class:tgt="cells.v25.tgt" class:cap="cells.v25.cap" class:last="cells.v25.last" class:chk="cells.v25.chk" class:hint="cells.v25.hint" on:click="cell">{cells.v25.t}</text>
+              <text id="v26" class="sq light" class:white="cells.v26.w" class:black="cells.v26.b" class:cur="cells.v26.cur" class:sel="cells.v26.sel" class:tgt="cells.v26.tgt" class:cap="cells.v26.cap" class:last="cells.v26.last" class:chk="cells.v26.chk" class:hint="cells.v26.hint" on:click="cell">{cells.v26.t}</text>
+              <text id="v27" class="sq dark" class:white="cells.v27.w" class:black="cells.v27.b" class:cur="cells.v27.cur" class:sel="cells.v27.sel" class:tgt="cells.v27.tgt" class:cap="cells.v27.cap" class:last="cells.v27.last" class:chk="cells.v27.chk" class:hint="cells.v27.hint" on:click="cell">{cells.v27.t}</text>
+            </row>
+            <row class="rank">
+              <text class="rl">{labels.r3}</text>
+              <text id="v30" class="sq dark" class:white="cells.v30.w" class:black="cells.v30.b" class:cur="cells.v30.cur" class:sel="cells.v30.sel" class:tgt="cells.v30.tgt" class:cap="cells.v30.cap" class:last="cells.v30.last" class:chk="cells.v30.chk" class:hint="cells.v30.hint" on:click="cell">{cells.v30.t}</text>
+              <text id="v31" class="sq light" class:white="cells.v31.w" class:black="cells.v31.b" class:cur="cells.v31.cur" class:sel="cells.v31.sel" class:tgt="cells.v31.tgt" class:cap="cells.v31.cap" class:last="cells.v31.last" class:chk="cells.v31.chk" class:hint="cells.v31.hint" on:click="cell">{cells.v31.t}</text>
+              <text id="v32" class="sq dark" class:white="cells.v32.w" class:black="cells.v32.b" class:cur="cells.v32.cur" class:sel="cells.v32.sel" class:tgt="cells.v32.tgt" class:cap="cells.v32.cap" class:last="cells.v32.last" class:chk="cells.v32.chk" class:hint="cells.v32.hint" on:click="cell">{cells.v32.t}</text>
+              <text id="v33" class="sq light" class:white="cells.v33.w" class:black="cells.v33.b" class:cur="cells.v33.cur" class:sel="cells.v33.sel" class:tgt="cells.v33.tgt" class:cap="cells.v33.cap" class:last="cells.v33.last" class:chk="cells.v33.chk" class:hint="cells.v33.hint" on:click="cell">{cells.v33.t}</text>
+              <text id="v34" class="sq dark" class:white="cells.v34.w" class:black="cells.v34.b" class:cur="cells.v34.cur" class:sel="cells.v34.sel" class:tgt="cells.v34.tgt" class:cap="cells.v34.cap" class:last="cells.v34.last" class:chk="cells.v34.chk" class:hint="cells.v34.hint" on:click="cell">{cells.v34.t}</text>
+              <text id="v35" class="sq light" class:white="cells.v35.w" class:black="cells.v35.b" class:cur="cells.v35.cur" class:sel="cells.v35.sel" class:tgt="cells.v35.tgt" class:cap="cells.v35.cap" class:last="cells.v35.last" class:chk="cells.v35.chk" class:hint="cells.v35.hint" on:click="cell">{cells.v35.t}</text>
+              <text id="v36" class="sq dark" class:white="cells.v36.w" class:black="cells.v36.b" class:cur="cells.v36.cur" class:sel="cells.v36.sel" class:tgt="cells.v36.tgt" class:cap="cells.v36.cap" class:last="cells.v36.last" class:chk="cells.v36.chk" class:hint="cells.v36.hint" on:click="cell">{cells.v36.t}</text>
+              <text id="v37" class="sq light" class:white="cells.v37.w" class:black="cells.v37.b" class:cur="cells.v37.cur" class:sel="cells.v37.sel" class:tgt="cells.v37.tgt" class:cap="cells.v37.cap" class:last="cells.v37.last" class:chk="cells.v37.chk" class:hint="cells.v37.hint" on:click="cell">{cells.v37.t}</text>
+            </row>
+            <row class="rank">
+              <text class="rl">{labels.r4}</text>
+              <text id="v40" class="sq light" class:white="cells.v40.w" class:black="cells.v40.b" class:cur="cells.v40.cur" class:sel="cells.v40.sel" class:tgt="cells.v40.tgt" class:cap="cells.v40.cap" class:last="cells.v40.last" class:chk="cells.v40.chk" class:hint="cells.v40.hint" on:click="cell">{cells.v40.t}</text>
+              <text id="v41" class="sq dark" class:white="cells.v41.w" class:black="cells.v41.b" class:cur="cells.v41.cur" class:sel="cells.v41.sel" class:tgt="cells.v41.tgt" class:cap="cells.v41.cap" class:last="cells.v41.last" class:chk="cells.v41.chk" class:hint="cells.v41.hint" on:click="cell">{cells.v41.t}</text>
+              <text id="v42" class="sq light" class:white="cells.v42.w" class:black="cells.v42.b" class:cur="cells.v42.cur" class:sel="cells.v42.sel" class:tgt="cells.v42.tgt" class:cap="cells.v42.cap" class:last="cells.v42.last" class:chk="cells.v42.chk" class:hint="cells.v42.hint" on:click="cell">{cells.v42.t}</text>
+              <text id="v43" class="sq dark" class:white="cells.v43.w" class:black="cells.v43.b" class:cur="cells.v43.cur" class:sel="cells.v43.sel" class:tgt="cells.v43.tgt" class:cap="cells.v43.cap" class:last="cells.v43.last" class:chk="cells.v43.chk" class:hint="cells.v43.hint" on:click="cell">{cells.v43.t}</text>
+              <text id="v44" class="sq light" class:white="cells.v44.w" class:black="cells.v44.b" class:cur="cells.v44.cur" class:sel="cells.v44.sel" class:tgt="cells.v44.tgt" class:cap="cells.v44.cap" class:last="cells.v44.last" class:chk="cells.v44.chk" class:hint="cells.v44.hint" on:click="cell">{cells.v44.t}</text>
+              <text id="v45" class="sq dark" class:white="cells.v45.w" class:black="cells.v45.b" class:cur="cells.v45.cur" class:sel="cells.v45.sel" class:tgt="cells.v45.tgt" class:cap="cells.v45.cap" class:last="cells.v45.last" class:chk="cells.v45.chk" class:hint="cells.v45.hint" on:click="cell">{cells.v45.t}</text>
+              <text id="v46" class="sq light" class:white="cells.v46.w" class:black="cells.v46.b" class:cur="cells.v46.cur" class:sel="cells.v46.sel" class:tgt="cells.v46.tgt" class:cap="cells.v46.cap" class:last="cells.v46.last" class:chk="cells.v46.chk" class:hint="cells.v46.hint" on:click="cell">{cells.v46.t}</text>
+              <text id="v47" class="sq dark" class:white="cells.v47.w" class:black="cells.v47.b" class:cur="cells.v47.cur" class:sel="cells.v47.sel" class:tgt="cells.v47.tgt" class:cap="cells.v47.cap" class:last="cells.v47.last" class:chk="cells.v47.chk" class:hint="cells.v47.hint" on:click="cell">{cells.v47.t}</text>
+            </row>
+            <row class="rank">
+              <text class="rl">{labels.r5}</text>
+              <text id="v50" class="sq dark" class:white="cells.v50.w" class:black="cells.v50.b" class:cur="cells.v50.cur" class:sel="cells.v50.sel" class:tgt="cells.v50.tgt" class:cap="cells.v50.cap" class:last="cells.v50.last" class:chk="cells.v50.chk" class:hint="cells.v50.hint" on:click="cell">{cells.v50.t}</text>
+              <text id="v51" class="sq light" class:white="cells.v51.w" class:black="cells.v51.b" class:cur="cells.v51.cur" class:sel="cells.v51.sel" class:tgt="cells.v51.tgt" class:cap="cells.v51.cap" class:last="cells.v51.last" class:chk="cells.v51.chk" class:hint="cells.v51.hint" on:click="cell">{cells.v51.t}</text>
+              <text id="v52" class="sq dark" class:white="cells.v52.w" class:black="cells.v52.b" class:cur="cells.v52.cur" class:sel="cells.v52.sel" class:tgt="cells.v52.tgt" class:cap="cells.v52.cap" class:last="cells.v52.last" class:chk="cells.v52.chk" class:hint="cells.v52.hint" on:click="cell">{cells.v52.t}</text>
+              <text id="v53" class="sq light" class:white="cells.v53.w" class:black="cells.v53.b" class:cur="cells.v53.cur" class:sel="cells.v53.sel" class:tgt="cells.v53.tgt" class:cap="cells.v53.cap" class:last="cells.v53.last" class:chk="cells.v53.chk" class:hint="cells.v53.hint" on:click="cell">{cells.v53.t}</text>
+              <text id="v54" class="sq dark" class:white="cells.v54.w" class:black="cells.v54.b" class:cur="cells.v54.cur" class:sel="cells.v54.sel" class:tgt="cells.v54.tgt" class:cap="cells.v54.cap" class:last="cells.v54.last" class:chk="cells.v54.chk" class:hint="cells.v54.hint" on:click="cell">{cells.v54.t}</text>
+              <text id="v55" class="sq light" class:white="cells.v55.w" class:black="cells.v55.b" class:cur="cells.v55.cur" class:sel="cells.v55.sel" class:tgt="cells.v55.tgt" class:cap="cells.v55.cap" class:last="cells.v55.last" class:chk="cells.v55.chk" class:hint="cells.v55.hint" on:click="cell">{cells.v55.t}</text>
+              <text id="v56" class="sq dark" class:white="cells.v56.w" class:black="cells.v56.b" class:cur="cells.v56.cur" class:sel="cells.v56.sel" class:tgt="cells.v56.tgt" class:cap="cells.v56.cap" class:last="cells.v56.last" class:chk="cells.v56.chk" class:hint="cells.v56.hint" on:click="cell">{cells.v56.t}</text>
+              <text id="v57" class="sq light" class:white="cells.v57.w" class:black="cells.v57.b" class:cur="cells.v57.cur" class:sel="cells.v57.sel" class:tgt="cells.v57.tgt" class:cap="cells.v57.cap" class:last="cells.v57.last" class:chk="cells.v57.chk" class:hint="cells.v57.hint" on:click="cell">{cells.v57.t}</text>
+            </row>
+            <row class="rank">
+              <text class="rl">{labels.r6}</text>
+              <text id="v60" class="sq light" class:white="cells.v60.w" class:black="cells.v60.b" class:cur="cells.v60.cur" class:sel="cells.v60.sel" class:tgt="cells.v60.tgt" class:cap="cells.v60.cap" class:last="cells.v60.last" class:chk="cells.v60.chk" class:hint="cells.v60.hint" on:click="cell">{cells.v60.t}</text>
+              <text id="v61" class="sq dark" class:white="cells.v61.w" class:black="cells.v61.b" class:cur="cells.v61.cur" class:sel="cells.v61.sel" class:tgt="cells.v61.tgt" class:cap="cells.v61.cap" class:last="cells.v61.last" class:chk="cells.v61.chk" class:hint="cells.v61.hint" on:click="cell">{cells.v61.t}</text>
+              <text id="v62" class="sq light" class:white="cells.v62.w" class:black="cells.v62.b" class:cur="cells.v62.cur" class:sel="cells.v62.sel" class:tgt="cells.v62.tgt" class:cap="cells.v62.cap" class:last="cells.v62.last" class:chk="cells.v62.chk" class:hint="cells.v62.hint" on:click="cell">{cells.v62.t}</text>
+              <text id="v63" class="sq dark" class:white="cells.v63.w" class:black="cells.v63.b" class:cur="cells.v63.cur" class:sel="cells.v63.sel" class:tgt="cells.v63.tgt" class:cap="cells.v63.cap" class:last="cells.v63.last" class:chk="cells.v63.chk" class:hint="cells.v63.hint" on:click="cell">{cells.v63.t}</text>
+              <text id="v64" class="sq light" class:white="cells.v64.w" class:black="cells.v64.b" class:cur="cells.v64.cur" class:sel="cells.v64.sel" class:tgt="cells.v64.tgt" class:cap="cells.v64.cap" class:last="cells.v64.last" class:chk="cells.v64.chk" class:hint="cells.v64.hint" on:click="cell">{cells.v64.t}</text>
+              <text id="v65" class="sq dark" class:white="cells.v65.w" class:black="cells.v65.b" class:cur="cells.v65.cur" class:sel="cells.v65.sel" class:tgt="cells.v65.tgt" class:cap="cells.v65.cap" class:last="cells.v65.last" class:chk="cells.v65.chk" class:hint="cells.v65.hint" on:click="cell">{cells.v65.t}</text>
+              <text id="v66" class="sq light" class:white="cells.v66.w" class:black="cells.v66.b" class:cur="cells.v66.cur" class:sel="cells.v66.sel" class:tgt="cells.v66.tgt" class:cap="cells.v66.cap" class:last="cells.v66.last" class:chk="cells.v66.chk" class:hint="cells.v66.hint" on:click="cell">{cells.v66.t}</text>
+              <text id="v67" class="sq dark" class:white="cells.v67.w" class:black="cells.v67.b" class:cur="cells.v67.cur" class:sel="cells.v67.sel" class:tgt="cells.v67.tgt" class:cap="cells.v67.cap" class:last="cells.v67.last" class:chk="cells.v67.chk" class:hint="cells.v67.hint" on:click="cell">{cells.v67.t}</text>
+            </row>
+            <row class="rank">
+              <text class="rl">{labels.r7}</text>
+              <text id="v70" class="sq dark" class:white="cells.v70.w" class:black="cells.v70.b" class:cur="cells.v70.cur" class:sel="cells.v70.sel" class:tgt="cells.v70.tgt" class:cap="cells.v70.cap" class:last="cells.v70.last" class:chk="cells.v70.chk" class:hint="cells.v70.hint" on:click="cell">{cells.v70.t}</text>
+              <text id="v71" class="sq light" class:white="cells.v71.w" class:black="cells.v71.b" class:cur="cells.v71.cur" class:sel="cells.v71.sel" class:tgt="cells.v71.tgt" class:cap="cells.v71.cap" class:last="cells.v71.last" class:chk="cells.v71.chk" class:hint="cells.v71.hint" on:click="cell">{cells.v71.t}</text>
+              <text id="v72" class="sq dark" class:white="cells.v72.w" class:black="cells.v72.b" class:cur="cells.v72.cur" class:sel="cells.v72.sel" class:tgt="cells.v72.tgt" class:cap="cells.v72.cap" class:last="cells.v72.last" class:chk="cells.v72.chk" class:hint="cells.v72.hint" on:click="cell">{cells.v72.t}</text>
+              <text id="v73" class="sq light" class:white="cells.v73.w" class:black="cells.v73.b" class:cur="cells.v73.cur" class:sel="cells.v73.sel" class:tgt="cells.v73.tgt" class:cap="cells.v73.cap" class:last="cells.v73.last" class:chk="cells.v73.chk" class:hint="cells.v73.hint" on:click="cell">{cells.v73.t}</text>
+              <text id="v74" class="sq dark" class:white="cells.v74.w" class:black="cells.v74.b" class:cur="cells.v74.cur" class:sel="cells.v74.sel" class:tgt="cells.v74.tgt" class:cap="cells.v74.cap" class:last="cells.v74.last" class:chk="cells.v74.chk" class:hint="cells.v74.hint" on:click="cell">{cells.v74.t}</text>
+              <text id="v75" class="sq light" class:white="cells.v75.w" class:black="cells.v75.b" class:cur="cells.v75.cur" class:sel="cells.v75.sel" class:tgt="cells.v75.tgt" class:cap="cells.v75.cap" class:last="cells.v75.last" class:chk="cells.v75.chk" class:hint="cells.v75.hint" on:click="cell">{cells.v75.t}</text>
+              <text id="v76" class="sq dark" class:white="cells.v76.w" class:black="cells.v76.b" class:cur="cells.v76.cur" class:sel="cells.v76.sel" class:tgt="cells.v76.tgt" class:cap="cells.v76.cap" class:last="cells.v76.last" class:chk="cells.v76.chk" class:hint="cells.v76.hint" on:click="cell">{cells.v76.t}</text>
+              <text id="v77" class="sq light" class:white="cells.v77.w" class:black="cells.v77.b" class:cur="cells.v77.cur" class:sel="cells.v77.sel" class:tgt="cells.v77.tgt" class:cap="cells.v77.cap" class:last="cells.v77.last" class:chk="cells.v77.chk" class:hint="cells.v77.hint" on:click="cell">{cells.v77.t}</text>
+            </row>
+          </col>
+          <row id="files">
+            <text class="rl"/>
+            <text class="fl">{labels.f0}</text>
+            <text class="fl">{labels.f1}</text>
+            <text class="fl">{labels.f2}</text>
+            <text class="fl">{labels.f3}</text>
+            <text class="fl">{labels.f4}</text>
+            <text class="fl">{labels.f5}</text>
+            <text class="fl">{labels.f6}</text>
+            <text class="fl">{labels.f7}</text>
+          </row>
+          <!-- board:end -->
+        </col>
+        <col id="side">
+          <col id="p-top" class="player" class:turn="top.turn">
+            <row class="pl">
+              <text class="mark">{top.mark}</text>
+              <text class="glyph" class:white="top.white" class:black="top.black">{top.glyph}</text>
+              <text class="name">{top.name}</text>
+              <spacer/>
+              <text class="clk" class:low="top.low" class:run="top.run">{top.clock}</text>
+            </row>
+            <row class="takenrow">
+              <text class="taken" class:white="top.capwhite" class:black="top.capblack">{top.cap}</text>
+              <text class="lead">{top.lead}</text>
+            </row>
+          </col>
+          <list id="moves" each="mrows as r" key="r.n" bind="mcur" focusable="false" title="moves">
+            <item>
+              <row class="mv">
+                <text class="mn">{r.n}.</text>
+                <text class="mw" class:now="r.cw">{r.w}</text>
+                <text class="mb" class:now="r.cb">{r.b}</text>
+              </row>
+            </item>
+          </list>
+          <col id="p-bot" class="player" class:turn="bot.turn">
+            <row class="pl">
+              <text class="mark">{bot.mark}</text>
+              <text class="glyph" class:white="bot.white" class:black="bot.black">{bot.glyph}</text>
+              <text class="name">{bot.name}</text>
+              <spacer/>
+              <text class="clk" class:low="bot.low" class:run="bot.run">{bot.clock}</text>
+            </row>
+            <row class="takenrow">
+              <text class="taken" class:white="bot.capwhite" class:black="bot.capblack">{bot.cap}</text>
+              <text class="lead">{bot.lead}</text>
+            </row>
+          </col>
+          <col id="status" class:over="status.over" class:check="status.check" class:review="status.review">
+            <text class="st">{status.text}</text>
+            <text class="sub">{status.sub}</text>
+          </col>
+          <row id="evalrow">
+            <text class="muted">eval</text>
+            <progress id="evalbar" bind="evalbar.pct"/>
+            <text class="evl">{evalbar.label}</text>
+          </row>
+          <col id="engine" title="engine">
+            <text class="eng">{engine_view.line}</text>
+            <text class="pv">{engine_view.pv}</text>
+          </col>
+        </col>
+      </row>
+      <row id="cmdbar">
+        <text class="prompt">:</text>
+        <input id="cmd" bind="cmd" placeholder="type a move: Nf3  exd5  O-O  e2e4" on:submit="cmd_submit"/>
+      </row>
+      <hints id="keys"/>
+    </col>
+    <modal id="help" open="help_open" title="chess keys" on:escape="help_close" focus="#help-ok">
+      <scroll id="help-scroll" axis="y" focusable="true">
+        <text class="muted">Click a piece, then a square. Or press : and type a move: Nf3, exd5, O-O, e8=Q, e2e4.</text>
+        <text class="muted">Arrows (and h j k l) move the cursor; enter or space selects, and moves.</text>
+        <text class="muted">u undoes (your move and the reply), U redoes, f flips the board, n starts a new game.</text>
+        <text class="muted">H shows the best move, d claims a draw (fifty moves, threefold), r resigns.</text>
+        <text class="muted">v reviews the game: the arrows, home, and end step through it, and enter plays on from there.</text>
+        <text class="muted">p exports the PGN, m turns the mouse off for text selection, L switches letters.</text>
+        <text class="muted">tab moves between the board and the move box, esc leaves the box or a dialog, q quits.</text>
+      </scroll>
+      <button id="help-ok" label="close" on:click="help_close"/>
+    </modal>
+    <modal id="newgame" open="new_open" title="new game" on:escape="ng_cancel" focus="#ng-start">
+      <row id="ng-mode" class="opt" focusable="true" on:click="ng_mode">
+        <text class="k">m</text>
+        <text class="lbl">mode</text>
+        <text class="v">{ng_view.mode}</text>
+      </row>
+      <row id="ng-side" class="opt" if="ng_view.hvc" focusable="true" on:click="ng_side">
+        <text class="k">s</text>
+        <text class="lbl">you play</text>
+        <text class="v">{ng_view.side}</text>
+      </row>
+      <row id="ng-level" class="opt" if="ng_view.engine" focusable="true" on:click="ng_level">
+        <text class="k">l</text>
+        <text class="lbl">level</text>
+        <text class="v">{ng_view.level}</text>
+      </row>
+      <row id="ng-clock" class="opt" focusable="true" on:click="ng_clock">
+        <text class="k">c</text>
+        <text class="lbl">clock</text>
+        <text class="v">{ng_view.clock}</text>
+      </row>
+      <row class="actions">
+        <button id="ng-start" label="start" on:click="ng_start"/>
+        <button id="ng-cancel" label="cancel" on:click="ng_cancel"/>
+      </row>
+    </modal>
+    <modal id="resign" open="resign_open" title="resign?" on:escape="resign_no" focus="#resign-no">
+      <text class="muted">Resign this game?</text>
+      <row class="actions">
+        <button id="resign-yes" label="resign" on:click="resign_yes"/>
+        <button id="resign-no" label="keep playing" on:click="resign_no"/>
+      </row>
+    </modal>
+    <modal id="promo" open="promo_open" title="promote to" on:escape="promo_cancel" focus="#promo-q">
+      <row class="actions">
+        <button id="promo-q" label="queen" on:click="promo_q"/>
+        <button id="promo-r" label="rook" on:click="promo_r"/>
+      </row>
+      <row class="actions">
+        <button id="promo-b" label="bishop" on:click="promo_b"/>
+        <button id="promo-n" label="knight" on:click="promo_n"/>
+      </row>
+    </modal>
+    <modal id="pgn" open="pgn_open" title="pgn" on:escape="pgn_close" focus="#pgn-ok">
+      <scroll id="pgn-scroll" axis="y" focusable="true">
+        <text>{pgn_text}</text>
+      </scroll>
+      <button id="pgn-ok" label="close" on:click="pgn_close"/>
+    </modal>
+  </screen>
+</tui>
