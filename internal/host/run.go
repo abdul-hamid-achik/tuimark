@@ -1043,6 +1043,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	}
 	var escWait <-chan time.Time
 	onChunk := func(c chunk) (stop bool, err error) {
+		if sess.fed != nil {
+			sess.fed()
+		}
 		// Replies that arrive after the probe (or without one) are
 		// swallowed without effect.
 		ins, _ := dec.feed(c.data, c.err != nil)
@@ -1142,42 +1145,58 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	tickTimer := clk.NewTimer(time.Hour)
 	tickTimer.Stop()
 	defer tickTimer.Stop()
-	armTick := func() <-chan time.Time {
-		if !tickTimer.Stop() {
+	// The timer is touched only when its deadline changes: a turn of the
+	// loop that changed nothing (a size poll, a kick that moved no
+	// deadline) leaves it armed.
+	var tickDue time.Time
+	tickArmed := false
+	disarm := func(t runTimer, armed *bool) {
+		if !t.Stop() {
 			select {
-			case <-tickTimer.C():
+			case <-t.C():
 			default:
 			}
 		}
+		*armed = false
+	}
+	armTick := func() <-chan time.Time {
 		due, ok := a.everyDue()
 		if !ok {
+			disarm(tickTimer, &tickArmed)
 			return nil
 		}
+		if tickArmed && due.Equal(tickDue) {
+			return tickTimer.C()
+		}
+		disarm(tickTimer, &tickArmed)
 		tickTimer.Reset(max(0, due.Sub(clk.Now())))
+		tickArmed, tickDue = true, due
 		return tickTimer.C()
 	}
 	// spinTimer fires at the next phase boundary after the phase of the
 	// last frame written, while that frame holds a visible spinner (SPEC
 	// v0.4b §26.13); a frame without one arms nothing, and the loop wakes
 	// for nothing. The deadline is a function of the frame's phase and of
-	// the session's start alone, so arming it again at every turn of the
-	// loop is harmless, and a boundary that passed while the loop was
-	// busy fires at once, once.
+	// the session's start alone, so a boundary that passed while the loop
+	// was busy fires at once, once, and an unchanged deadline is left
+	// armed.
 	spinTimer := clk.NewTimer(time.Hour)
 	spinTimer.Stop()
 	defer spinTimer.Stop()
+	var spinDue time.Time
+	spinArmed := false
 	armSpin := func() <-chan time.Time {
-		if !spinTimer.Stop() {
-			select {
-			case <-spinTimer.C():
-			default:
-			}
-		}
 		if !spinWanted {
+			disarm(spinTimer, &spinArmed)
 			return nil
 		}
 		due := start.Add(time.Duration(spinPhase+1) * SpinnerPeriod)
+		if spinArmed && due.Equal(spinDue) {
+			return spinTimer.C()
+		}
+		disarm(spinTimer, &spinArmed)
 		spinTimer.Reset(max(0, due.Sub(clk.Now())))
+		spinArmed, spinDue = true, due
 		return spinTimer.C()
 	}
 	// swap applies one reload of `tuimark run` (hooks.Swap, SPEC v0.4a
@@ -1229,10 +1248,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				return err
 			}
 		case <-tick:
+			tickArmed = false
 			if stop, err := ticks(); stop {
 				return err
 			}
 		case <-spin:
+			spinArmed = false
 			if stop, err := spinTick(); stop {
 				return err
 			}

@@ -458,9 +458,9 @@ func TestRunClockEveryRegisteredDuringSession(t *testing.T) {
 		_ = a.Bind("", map[string]any{"n": 0})
 	}})
 	r.clk.Advance(t, 40*time.Millisecond)
-	seq := r.clk.idleSeq()
+	seq := r.clk.quietSeq()
 	r.app.Every(100*time.Millisecond, incr(r.app))
-	r.clk.settled(t, seq) // kickEvery: the loop arms its timer again
+	r.clk.waitQuiet(t, seq) // kickEvery: the loop arms its timer again
 	if n := r.clk.Advance(t, 99*time.Millisecond); n != 0 {
 		t.Errorf("the tick fired %d timers 99 ms after registration", n)
 	}
@@ -487,10 +487,10 @@ func TestRunClock85ReloadKeepsClock(t *testing.T) {
 	_ = next.Bind("", map[string]any{"n": 0})
 	next.Every(300*time.Millisecond, incr(next))
 	applied := make(chan struct{})
-	seq := r.clk.idleSeq()
+	seq := r.clk.quietSeq()
 	swaps <- HostSwap{App: next, Applied: func() { close(applied) }}
 	<-applied
-	r.clk.settled(t, seq)
+	r.clk.waitQuiet(t, seq)
 	r.since()
 	if g := screenOf(next); !strings.HasPrefix(g, braille[3]) {
 		t.Errorf("the new app's first frame = %q, want phase 3 (%s)", g, braille[3])

@@ -273,6 +273,9 @@ type termSession struct {
 	// block waiting for something: the runtime's tests use it as a
 	// barrier. Production leaves it nil.
 	idle func()
+	// fed, when non-nil, is called when the loop takes a read of the
+	// terminal's input (tests only).
+	fed func()
 
 	mu       sync.Mutex
 	grapheme bool // mode 2027 was turned on: leaving turns it off
