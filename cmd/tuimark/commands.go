@@ -18,6 +18,7 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/paint"
+	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
 // parseArgs parses flags that may appear before or after positionals.
@@ -285,6 +286,9 @@ func (c *cli) cmdValidate(args []string) int {
 	if err != nil {
 		return c.fail(err)
 	}
+	if doc := app.Document(); doc.FragmentRoot {
+		return c.validateFragment(file, *data, doc, *asJSON)
+	}
 	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
 		return c.fail(err)
 	}
@@ -335,6 +339,36 @@ func (c *cli) cmdValidate(args []string) int {
 			} else {
 				fmt.Fprintln(c.stdout, "ok")
 			}
+		}
+	}
+	if !ok {
+		return 2
+	}
+	return 0
+}
+
+// validateFragment checks a file whose root is <fragment> on its own (SPEC
+// v0.4b §6.18.2, §15.1): only the checks an element gets from itself, plus
+// the root's own, with its includes' files unread and nothing that depends
+// on a place, an id, or the data. It is what lets an agent that edits a
+// fragment run the Loop on the file it edits.
+func (c *cli) validateFragment(file, data string, doc *parse.Document, asJSON bool) int {
+	diags := parse.FragmentDiags(doc)
+	ok := !diags.HasErrors()
+	if asJSON {
+		var dataArg any
+		if data != "" {
+			dataArg = data
+		}
+		out := map[string]any{"ok": ok, "file": file, "data": dataArg, "diagnostics": diagsOrEmpty(diags), "actions": []host.ActionSpec{}}
+		b, _ := json.MarshalIndent(out, "", "  ")
+		fmt.Fprintln(c.stdout, string(b))
+	} else {
+		for _, d := range diags {
+			fmt.Fprintln(c.stdout, d.String())
+		}
+		if ok {
+			fmt.Fprintln(c.stdout, "ok (fragment checked on its own)")
 		}
 	}
 	if !ok {

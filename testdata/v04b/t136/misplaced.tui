@@ -1,0 +1,5 @@
+<tui>
+  <screen id="x">
+    <include src="shell.tui"/>
+  </screen>
+</tui>

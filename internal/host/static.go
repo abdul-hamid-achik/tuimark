@@ -65,7 +65,7 @@ func (a *App) checkDocks(themes []string) ir.Diags {
 				return
 			}
 			el := &staticEl{n: n, parent: parent}
-			st := casc.Compute(el, ps, a.toDecls(n.Hints), a.toDecls(n.Inline))
+			st := casc.Compute(el, ps, a.toDecls(n, n.Hints), a.toDecls(n, n.Inline))
 			// A table's columns and row template ignore dock (SPEC
 			// §6.9.3), and so does a tab (§6.10.4): their widget
 			// places them.

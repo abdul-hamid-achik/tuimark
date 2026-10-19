@@ -1,0 +1,3 @@
+<fragment>
+  <bind keys="x" action="go"/>
+</fragment>

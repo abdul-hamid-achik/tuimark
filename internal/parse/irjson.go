@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -59,6 +60,10 @@ type IRNode struct {
 	Style    map[string]string `json:"style"`
 	Text     string            `json:"text"`
 	Children []*IRNode         `json:"children"`
+	// From is FILE:LINE of the element a node was built from, for every
+	// node inside an include (IR 0.4, SPEC v0.4b §13.1, §6.18.6); it is
+	// the node's last member and absent outside every include.
+	From string `json:"from,omitempty"`
 }
 
 // structuralAttrs are raw attributes represented by a structured IRNode
@@ -116,7 +121,11 @@ func BuildIR(doc *Document, tokens map[string]string) *IR {
 func stylesheetPaths(styles []StyleRef) []string {
 	out := []string{}
 	for _, s := range styles {
-		if s.Src != "" {
+		switch {
+		case s.Rel != "":
+			// Written in a fragment: joined to the fragment's directory.
+			out = append(out, s.Rel)
+		case s.Src != "":
 			out = append(out, s.Src)
 		}
 	}
@@ -164,15 +173,36 @@ func buildIRNode(n *ir.Node) *IRNode {
 	if on == nil {
 		on = map[string]string{}
 	}
-	children := make([]*IRNode, 0, len(n.Children))
-	for _, c := range n.Children {
+	// The root tree keeps the composition as written (SPEC v0.4b §13.1):
+	// an element with includes lists its children with the include nodes
+	// in their places, each holding the nodes it inserted.
+	kids := n.Children
+	if n.Source != nil {
+		kids = n.Source
+	}
+	children := make([]*IRNode, 0, len(kids))
+	for _, c := range kids {
 		children = append(children, buildIRNode(c))
 	}
 	return &IRNode{
 		ID: n.ID, Kind: n.Kind, Classes: classes, Attrs: nodeAttrs(n),
 		Bind: n.Bind, Each: n.Each, If: n.If, On: on,
 		Style: nodeStyle(n), Text: n.Text, Children: children,
+		From: irFrom(n),
 	}
+}
+
+// irFrom is a node's `from` member: FILE:LINE for a node placed by an
+// include, "" for every other.
+func irFrom(n *ir.Node) string {
+	if n.Org == nil || n.Org.Placed == nil {
+		return ""
+	}
+	f := n.Org.File
+	if f == "" {
+		f = "<input>"
+	}
+	return fmt.Sprintf("%s:%d", f, n.Line)
 }
 
 // nodeAttrs is every attribute as written, minus the ones already

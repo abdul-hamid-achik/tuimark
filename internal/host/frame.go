@@ -744,11 +744,13 @@ func (t tabSubject) HasPseudo(p string) bool {
 	return t.Box.HasPseudo(p)
 }
 
-// toDecls converts a node's hints or style="" declarations for the cascade.
-func (a *App) toDecls(ps []ir.Prop) []css.Decl {
+// toDecls converts a node's hints or style="" declarations for the
+// cascade, each in the file the node is written in (SPEC v0.4b §6.18.6).
+func (a *App) toDecls(n *ir.Node, ps []ir.Prop) []css.Decl {
 	out := make([]css.Decl, len(ps))
+	file := n.FileName(a.file)
 	for i, p := range ps {
-		out[i] = css.Decl{Prop: p.Name, Value: p.Value, Line: p.Line, Col: p.Col, File: a.file, Attr: p.Attr}
+		out[i] = css.Decl{Prop: p.Name, Value: p.Value, Line: p.Line, Col: p.Col, File: file, Attr: p.Attr}
 	}
 	return out
 }

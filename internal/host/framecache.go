@@ -34,11 +34,11 @@ type nodeDecls struct {
 // style sharing keys on its identity (css.DeclKey). The caller holds a.mu.
 func (a *App) declsOf(n *ir.Node) *nodeDecls {
 	if a.noCache {
-		return &nodeDecls{a.toDecls(n.Hints), a.toDecls(n.Inline)}
+		return &nodeDecls{a.toDecls(n, n.Hints), a.toDecls(n, n.Inline)}
 	}
 	d := a.decls[n]
 	if d == nil {
-		d = &nodeDecls{a.toDecls(n.Hints), a.toDecls(n.Inline)}
+		d = &nodeDecls{a.toDecls(n, n.Hints), a.toDecls(n, n.Inline)}
 		a.decls[n] = d
 	}
 	return d
@@ -225,13 +225,18 @@ type docKinds struct {
 	tabs  bool
 	hints bool
 	scale bool
+	// spinner is set when the document holds a spinner (SPEC v0.4b
+	// §6.4.1): only then does the spinner phase take part in a Run frame
+	// (App.HasSpinner), so a document without one keeps the frame skip
+	// as the phase moves.
+	spinner bool
 }
 
 // kinds returns the docKinds of the current document, computed once per
 // document. With noCache every step runs. The caller holds a.mu.
 func (a *App) kinds() docKinds {
 	if a.noCache {
-		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true}
+		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true, spinner: true}
 	}
 	if a.docKinds.doc == a.doc {
 		return a.docKinds
@@ -244,6 +249,10 @@ func (a *App) kinds() docKinds {
 			k.tabs = true
 		case "hints":
 			k.hints = true
+		case "progress":
+			if n.Spinner {
+				k.spinner = true
+			}
 		case "sparkline":
 			if _, ok := n.Attr("scale"); ok {
 				k.scale = true

@@ -23,7 +23,7 @@ func TestLangVariantsMatchTheBoolFunctions(t *testing.T) {
 		{"row-gap", "2"}, {"layout", "grid"}, {"wrap", "truncate-middle"}, {"bar", "eighths"},
 		{"color", "$accent"}, {"bogus", "1"}, {"width", "1fr"},
 	}
-	sels := []string{"table", "tabs > tab", "list:checked", "box:focus-within", "include", "tui", "#a.b", "x y"}
+	sels := []string{"table", "tabs > tab", "list:checked", "box:focus-within", "tui", "#a.b", "x y"}
 	sheet := "@media (theme: light) { :root { --a: #fff; } }\nhints { row-gap: 1; wrap: truncate-start; }\nlist:checked { bold: true; }\n"
 	for _, l := range []ir.Lang{ir.Lang1, ir.Lang2, ir.Lang3, ir.Lang4} {
 		v2, v3 := l.V2(), l.V3()
@@ -59,12 +59,18 @@ func TestLangVariantsMatchTheBoolFunctions(t *testing.T) {
 // SPEC v0.4b §10.1, decision 94. A type selector naming a current-only tag
 // carries the hint in a pinned document; one naming a composition tag
 // (never a node) is the unknown type of 0.4.1 there, with no hint, and in
-// the current language is "not a node". F0 has neither kind of tag yet:
-// the test adds one of each for its duration.
+// the current language is "not a node". F1 adds the composition tags
+// include and fragment; the test adds a current-only node tag for its
+// duration.
 func TestCurrentTagSelectors(t *testing.T) {
-	for _, l := range []ir.Lang{ir.Lang3, ir.Lang4} {
-		if _, err := ParseSelectorLang("include", l); errText(err) != `selector "include": unknown type "include" (not in the tag catalog)` {
-			t.Errorf("F0, Lang(%d): include gives %v", l, err)
+	for _, tag := range []string{"include", "fragment"} {
+		for l, want := range map[ir.Lang]string{
+			ir.Lang3: fmt.Sprintf(`selector %q: unknown type %q (not in the tag catalog)`, tag, tag),
+			ir.Lang4: fmt.Sprintf(`selector %q: <%s> is not a node and never matches`, tag, tag),
+		} {
+			if _, err := ParseSelectorLang(tag, l); errText(err) != want {
+				t.Errorf("Lang(%d): %s gives %v, want %s", l, tag, err, want)
+			}
 		}
 	}
 	kinds, nodes := ir.KindsCurrent, notANodeTags

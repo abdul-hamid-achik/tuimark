@@ -48,6 +48,11 @@ func Suggest(name string, candidates []string) string {
 		if c == name {
 			continue
 		}
+		// The distance is at least the difference of the lengths, so a
+		// candidate that far off cannot beat the best: skip the work.
+		if diff := len(name) - len(c); diff >= bestD || -diff >= bestD {
+			continue
+		}
 		if d := EditDistance(name, c); d < bestD {
 			best, bestD = c, d
 		}

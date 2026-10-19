@@ -119,6 +119,14 @@ type Node struct {
 	Text        string
 	Children    []*Node
 	Parent      *Node
+	// Source is the children of this element as they were written, when
+	// they include composition (SPEC v0.4b §6.18): the elements of
+	// Children plus the <include> nodes (and, later, <template> and
+	// <use> nodes) between them, each include holding the nodes it
+	// inserted in its own Children. nil when the element's children are
+	// exactly Children. Only `tuimark ir` reads it: layout, the cascade,
+	// the host, and the dump see the expanded Children.
+	Source []*Node
 
 	// Spinner is set by the parser on a <progress> of the current
 	// language that is a spinner: indeterminate="true", with neither bind
@@ -135,6 +143,107 @@ type Node struct {
 
 	Line, Col int
 	Path      string
+	// Org says where an element of an expanded document was written and
+	// which <include> placed it (SPEC v0.4b §6.18.6). nil for an element
+	// written in the document itself and placed by nothing, which is every
+	// element of a document without composition.
+	Org *Origin
+}
+
+// Origin is where an element of an expanded document was written (SPEC
+// v0.4b §6.18.6): the file's name as diagnostics name it, and the
+// innermost <include> element that placed it. Every element placed by the
+// same include in the same file shares one Origin.
+type Origin struct {
+	// File is the display name of the file the element is written in.
+	File string
+	// Placed is the node of the innermost <include> that placed the
+	// element, whose own Org says where that include is written. nil
+	// when nothing placed the element (a document element that stands
+	// in its own file, or a node of a fragment checked on its own).
+	Placed *Node
+}
+
+// FileName is the display name of the file n is written in: its origin's,
+// else def (the document's own name).
+func (n *Node) FileName(def string) string {
+	if n == nil {
+		return def
+	}
+	return n.Org.FileOr(def)
+}
+
+// placer is the include that placed the elements of o, nil for no origin
+// or an origin nothing placed.
+func (o *Origin) placer() *Node {
+	if o == nil {
+		return nil
+	}
+	return o.Placed
+}
+
+// Placer is the innermost include that placed the node, nil if none; the
+// next one out is the Placer of that include.
+func (n *Node) Placer() *Node {
+	if n == nil {
+		return nil
+	}
+	return n.Org.placer()
+}
+
+// FileOr is the file name o says, or def for no origin (an element of the
+// document's own text).
+func (o *Origin) FileOr(def string) string {
+	if o != nil {
+		return o.File
+	}
+	return def
+}
+
+// PlacedSuffix is the suffix of a diagnostic about an element placed by an
+// include: `, placed by <include> at FILE:LINE:COL` (SPEC v0.4b §6.18.6),
+// naming the line the author wrote. It is "" for an element nothing
+// placed.
+func PlacedSuffix(n *Node) string {
+	if n == nil {
+		return ""
+	}
+	return n.Org.PlacedSuffix()
+}
+
+// PlacedSuffix is the placement suffix of an element written where o says
+// (see the function of the same name); "" for no origin or none placed.
+func (o *Origin) PlacedSuffix() string {
+	if o == nil || o.Placed == nil {
+		return ""
+	}
+	return ", placed by " + o.Placed.describePlacer() + " at " + o.Placed.Loc(true)
+}
+
+// describePlacer names an <include> (and, in a later phase, a <use>) the
+// way a placement suffix does.
+func (n *Node) describePlacer() string {
+	if n.ID != "" {
+		return fmt.Sprintf("<%s id=%q>", n.Tag, n.ID)
+	}
+	if t, ok := n.Attrs["template"]; ok && n.Tag == "use" {
+		return fmt.Sprintf("<use template=%q>", t)
+	}
+	return "<" + n.Tag + ">"
+}
+
+// Loc is the node's position in the file it is written in as LINE:COL, or
+// FILE:LINE:COL with file (an empty file is written <input>, as a
+// diagnostic's location is).
+func (n *Node) Loc(file bool) string {
+	if !file {
+		return fmt.Sprintf("%d:%d", n.Line, n.Col)
+	}
+	f := n.FileName("")
+	if f == "" {
+		f = "<input>"
+	}
+	return fmt.Sprintf("%s:%d:%d", f, n.Line, n.Col)
 }
 
 // ClassGuard is one class:NAME="guard" attribute: the class NAME is on the
@@ -427,11 +536,15 @@ func (ds Diags) Sorted() Diags {
 	return out
 }
 
-// At builds a diagnostic located at a node.
+// At builds a diagnostic located at a node. file is the document's name;
+// an element written in a fragment is reported in its own file, and one an
+// include placed names the include (SPEC v0.4b §6.18.6).
 func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
 	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, args...), File: file}
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
+		d.File = n.FileName(file)
+		d.Msg += PlacedSuffix(n)
 	}
 	return d
 }

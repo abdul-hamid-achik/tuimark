@@ -202,6 +202,9 @@ type App struct {
 	// 0 when the app is created, advanced only by tick steps. Guarded by
 	// everyMu, with the registrations' virtual deadlines (everyReg.vnext).
 	vnow time.Duration
+	// clk is the clock of the Run session that drives the app (SPEC
+	// v0.4b §26.13), nil outside one; guarded by everyMu (runclock.go).
+	clk runClock
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity
@@ -266,9 +269,10 @@ func newApp(src []byte, path, dir string) *App {
 	if path == "" {
 		a.file = ""
 	}
-	a.doc = parse.Parse(src, path)
+	res := diskResolver(dir, path)
+	a.doc = parse.ParseWith(src, path, res.loader())
 	a.static = append(a.static, a.doc.Diags...)
-	a.loadStyles(diskResolver(dir, path))
+	a.loadStyles(res)
 	return a
 }
 
@@ -281,25 +285,28 @@ func (a *App) loadStyles(res styleResolver) {
 	// loads it (SPEC §5.1, v0.3b, v0.4b).
 	lang := a.doc.Lang
 	for _, s := range a.doc.Styles {
+		// A <style> is reported in the file it is written in, which is a
+		// fragment's when an include brought it (SPEC v0.4b §6.18.6).
+		file := s.File
 		if s.Src == "" {
-			sh, diags := css.ParseInlineSheetLang(s.Body, a.file, s.BodyLine, s.BodyCol, lang)
+			sh, diags := css.ParseInlineSheetLang(s.Body, file, s.BodyLine, s.BodyCol, lang)
 			a.static = append(a.static, diags...)
 			a.sheets = append(a.sheets, sh)
 			continue
 		}
-		d := ir.Diagnostic{Severity: ir.Error, Code: "V006", File: a.file, Line: s.Line, Col: s.Col, Path: "/style"}
-		resolved, outside := res.resolve(s.Src)
+		d := ir.Diagnostic{Severity: ir.Error, Code: "V006", File: file, Line: s.Line, Col: s.Col, Path: "/style"}
+		resolved, outside := res.resolve(s.From, s.Src)
 		if outside {
-			d.Msg = fmt.Sprintf("style src=%q is outside the file system", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q is outside the file system", s.Src)
 			a.static = append(a.static, d)
 			continue
 		}
 		canon := res.canon(resolved)
 		switch {
 		case canon == res.self || strings.HasSuffix(canon, ".tui"):
-			d.Msg = fmt.Sprintf("style src=%q includes a .tui document (include cycle)", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q includes a .tui document (include cycle)", s.Src)
 		case seen[canon]:
-			d.Msg = fmt.Sprintf("style src=%q is included twice (include cycle)", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q is included twice (include cycle)", s.Src)
 		}
 		if d.Msg != "" {
 			a.static = append(a.static, d)
@@ -308,14 +315,28 @@ func (a *App) loadStyles(res styleResolver) {
 		seen[canon] = true
 		body, err := res.read(resolved)
 		if err != nil {
-			d.Msg = fmt.Sprintf("style src=%q cannot be read: %v", s.Src, unwrapOrSelf(err))
+			d.Msg = placedMsg(s.Org, "style src=%q cannot be read: %v", s.Src, unwrapOrSelf(err))
 			a.static = append(a.static, d)
 			continue
 		}
-		sh, diags := css.ParseSheetLang(string(body), res.base(resolved), lang)
+		// A stylesheet is named by its base name, but one a fragment loads
+		// by its path relative to the document's directory: two kits'
+		// theme.tcss stay apart (SPEC v0.4b §6.18.6).
+		name := res.base(resolved)
+		if s.From != "" {
+			name = res.name(resolved)
+		}
+		sh, diags := css.ParseSheetLang(string(body), name, lang)
 		a.static = append(a.static, diags...)
 		a.sheets = append(a.sheets, sh)
 	}
+}
+
+// placedMsg is the message of a diagnostic about a <style> written in a
+// fragment: it ends with the placement suffix of the include (SPEC v0.4b
+// §6.18.6). For a <style> of the document itself it is the message alone.
+func placedMsg(org *ir.Origin, format string, args ...any) string {
+	return fmt.Sprintf(format, args...) + org.PlacedSuffix()
 }
 
 // unwrapOrSelf is errors.Unwrap(err), falling back to err itself when
@@ -356,11 +377,18 @@ func (a *App) Files() []string {
 	if a.path != "" {
 		out = append(out, a.path)
 	}
+	for _, f := range a.doc.Fragments {
+		out = append(out, f.Path)
+	}
 	for _, s := range a.doc.Styles {
 		if s.Src != "" {
 			p := s.Src
 			if !filepath.IsAbs(p) {
-				p = filepath.Join(a.dir, p)
+				d := a.dir
+				if s.From != "" {
+					d = filepath.Dir(s.From)
+				}
+				p = filepath.Join(d, p)
 			}
 			out = append(out, p)
 		}
@@ -640,7 +668,7 @@ func (a *App) CheckCatalog(known map[string]bool) ir.Diags {
 	}
 	for _, k := range a.doc.Keymap {
 		if k.Action != "" && !a.isBuiltin(k.Action) && !known[k.Action] {
-			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw), File: a.file, Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
+			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw) + k.Org.PlacedSuffix(), File: k.Org.FileOr(a.file), Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
 		}
 	}
 	walkIR(a.doc.Root, func(n *ir.Node) {
