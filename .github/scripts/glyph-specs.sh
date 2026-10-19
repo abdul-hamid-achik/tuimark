@@ -60,7 +60,7 @@ for spec in "$@"; do
   esac
 done
 
-# The parent imports @tuimark/host, a file: dependency on sdk/ts. bun copies
+# The parent imports @thelacanians/tuimark, a file: dependency on sdk/ts. bun copies
 # a file: directory into node_modules, so install fresh: a copy left from an
 # earlier run would hide a change to sdk/ts.
 if [ "$need_host_ts_deps" -eq 1 ]; then

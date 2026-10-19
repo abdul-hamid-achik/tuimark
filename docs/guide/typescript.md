@@ -1,11 +1,11 @@
 ---
 title: TypeScript client
-description: "@tuimark/host (0.4): drive a Tuimark view from a Bun program. spawnHost starts tuimark host, and the client writes data, reads it back, and answers the actions the document fires."
+description: "@thelacanians/tuimark (0.4): drive a Tuimark view from a Bun program. spawnHost starts tuimark host, and the client writes data, reads it back, and answers the actions the document fires."
 ---
 
 # TypeScript client
 
-`@tuimark/host` (0.4) is the TypeScript client of the [host protocol](/guide/host-protocol). Your Bun program calls `spawnHost`, which starts `tuimark host` with the document. From then on `tuimark` owns the terminal: it lays out, paints, and handles keys. Your program only does three things:
+`@thelacanians/tuimark` (0.4) is the TypeScript client of the [host protocol](/guide/host-protocol). Your Bun program calls `spawnHost`, which starts `tuimark host` with the document. From then on `tuimark` owns the terminal: it lays out, paints, and handles keys. Your program only does three things:
 
 - it writes data into the document with `set` and `batch`;
 - it reads data back with `get`;
@@ -14,17 +14,19 @@ description: "@tuimark/host (0.4): drive a Tuimark view from a Bun program. spaw
 It is a parent library, not a second runtime. Everything you see is still drawn by `tuimark`.
 
 ```sh
-bun add @tuimark/host
+bun add @thelacanians/tuimark
 ```
 
+The package also has a `tuimark` command (`npx @thelacanians/tuimark new my-app`). Its version is the Tuimark release it runs: it downloads that release's binary once, checks it against the release's `checksums.txt`, and caches it. `TUIMARK_BINARY` points it at a binary you installed yourself.
+
 ::: info Not on npm yet?
-The package is published to npm separately from the `tuimark` binary. If `bun add` cannot find it yet, install the copy in a clone of the repository: `bun add @tuimark/host@file:/path/to/tuimark/sdk/ts`.
+If `bun add` cannot find the package yet (its first release needs a Tuimark release that ships raw binaries), install the copy in a clone of the repository: `bun add @thelacanians/tuimark@file:/path/to/tuimark/sdk/ts`.
 :::
 
 - The package is ESM, written in TypeScript, and has no runtime dependencies.
-- It runs on Bun 1.4.2 or later. Node is not supported in 1.x.
-- Version 1.x speaks `protocol: 1`.
-- It needs `tuimark` 0.3.1 or later on `PATH`. To use another binary, pass `bin`.
+- The client runs on Bun 1.4.2 or later; Node is not supported for it. The `tuimark` command works on Node 18 or later, and on Bun.
+- It speaks `protocol: 1`.
+- It runs the `tuimark` binary of its own release: `TUIMARK_BINARY`, else the cache, else a checked download. To use another binary, pass `bin`.
 
 ::: tip Start from a template
 `tuimark new my-app --ts` writes a working project with an `app.tui`, a `theme.tcss`, a `sample.json`, an `AGENTS.md` for your coding agent, and a `parent.ts` built on this package. See [Dumps and tools](/guide/tools).
@@ -33,7 +35,7 @@ The package is published to npm separately from the `tuimark` binary. If `bun ad
 ## Example
 
 ```ts
-import { spawnHost } from "@tuimark/host";
+import { spawnHost } from "@thelacanians/tuimark";
 
 const ui = await spawnHost("app.tui", { data: "sample.json", replyTimeout: "5s" });
 
@@ -64,7 +66,7 @@ It rejects with `HostError` in two cases: the child cannot be started, or it exi
 | `data` | The document's data, bound at the root, like `--data`. A string is the path of a JSON file. An object is written to a temporary file (mode 0600), which is removed as soon as the child is up. |
 | `theme` | `"dark"` or `"light"`, like `--theme`. |
 | `replyTimeout` | Like `--reply-timeout`: a duration from `100ms` to `1m` (`"5s"`), or a number of milliseconds. |
-| `bin` | The executable. Defaults to `tuimark`, found on `PATH`. |
+| `bin` | The executable. Defaults to the binary of this package's release (`TUIMARK_BINARY`, the cache, or a checked download). |
 | `handlers` | Handlers registered before the first event can arrive. |
 | `onError` | `(ev, err) => unknown`. It receives an error a handler throws, and the session goes on. See [Replies](#replies). |
 | `onProtocolError` | `(msg) => void`. It receives each `error` message that belongs to no pending request: reply timeouts, late replies, and failed writes sent without an `id`. |

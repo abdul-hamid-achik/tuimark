@@ -173,7 +173,7 @@ func TestNewGoAndTSContent(t *testing.T) {
 
 	tsDir, _ := newProject(t, "ts-app", "--ts")
 	ts := readFileT(t, filepath.Join(tsDir, "parent.ts"))
-	for _, want := range []string{`from "@tuimark/host"`, "spawnHost(", "ui.on(", "ui.set(", "ui.batch(", "await ui.exited"} {
+	for _, want := range []string{`from "@thelacanians/tuimark"`, "spawnHost(", "ui.on(", "ui.set(", "ui.batch(", "await ui.exited"} {
 		if !strings.Contains(ts, want) {
 			t.Errorf("parent.ts lacks %q", want)
 		}
@@ -185,7 +185,7 @@ func TestNewGoAndTSContent(t *testing.T) {
 	if err := json.Unmarshal([]byte(readFileT(t, filepath.Join(tsDir, "package.json"))), &pkg); err != nil {
 		t.Fatalf("package.json: %v", err)
 	}
-	if pkg.Name != "ts-app" || pkg.Dependencies["@tuimark/host"] == "" {
+	if pkg.Name != "ts-app" || pkg.Dependencies["@thelacanians/tuimark"] != "^"+version {
 		t.Errorf("package.json = %+v", pkg)
 	}
 }
@@ -339,7 +339,7 @@ func TestNewGoProjectBuilds(t *testing.T) {
 	}
 }
 
-// The --ts project type-checks against @tuimark/host (sdk/ts). The
+// The --ts project type-checks against @thelacanians/tuimark (sdk/ts). The
 // generated parent.ts is the embedded template byte for byte, which
 // sdk/ts's own type-check (tsconfig.template.json, run by `task sdk-test`
 // and the sdk-ts CI job) also covers; this test checks the generated copy
@@ -377,7 +377,7 @@ func TestNewTSProjectTypeChecks(t *testing.T) {
 			"strict":                     true,
 			"skipLibCheck":               true,
 			"noEmit":                     true,
-			"paths":                      map[string][]string{"@tuimark/host": {filepath.Join(sdk, "src", "index.ts")}},
+			"paths":                      map[string][]string{"@thelacanians/tuimark": {filepath.Join(sdk, "src", "index.ts")}},
 		},
 		"files": []string{"parent.ts"},
 	}

@@ -122,7 +122,7 @@ cd todo && tuimark run app.tui --data sample.json
 ```
 
 ::: info `--ts` and npm
-A `--ts` project depends on [`@tuimark/host`](/guide/typescript), which is published to npm separately from the `tuimark` binary. If `bun install` cannot find it yet, install the copy in a clone of the repository instead: `bun add @tuimark/host@file:/path/to/tuimark/sdk/ts`.
+A `--ts` project depends on [`@thelacanians/tuimark`](/guide/typescript), which runs the `tuimark` binary of its own release. If `bun install` cannot find the package yet, install the copy in a clone of the repository instead: `bun add @thelacanians/tuimark@file:/path/to/tuimark/sdk/ts`.
 :::
 
 ## preview

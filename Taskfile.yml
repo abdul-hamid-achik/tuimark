@@ -123,7 +123,7 @@ tasks:
       - go test -exec "$PWD/.github/scripts/go-js-wasm-exec.sh" . ./internal/...
 
   host-ts-deps:
-    desc: Install examples/host-ts's dependencies (@tuimark/host, a file dependency on
+    desc: Install examples/host-ts's dependencies (@thelacanians/tuimark, a file dependency on
       sdk/ts), fresh, because bun copies a file directory. Skipped without `bun`.
     dir: examples/host-ts
     cmds:
@@ -136,7 +136,7 @@ tasks:
         fi
 
   sdk-test:
-    desc: Install, test, and type-check sdk/ts (@tuimark/host). Needs `bun`.
+    desc: Install, test, and type-check sdk/ts (@thelacanians/tuimark). Needs `bun`.
     dir: sdk/ts
     cmds:
       - bun install --frozen-lockfile

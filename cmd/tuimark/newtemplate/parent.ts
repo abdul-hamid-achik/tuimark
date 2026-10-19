@@ -1,4 +1,4 @@
-// parent.ts: app.tui driven by a Bun parent through @tuimark/host.
+// parent.ts: app.tui driven by a Bun parent through @thelacanians/tuimark.
 //
 // The view lives entirely in app.tui and theme.tcss. `tuimark host` lays it
 // out and paints it in this terminal; this file keeps the data and answers
@@ -6,8 +6,12 @@
 // refresh, and quit. It never reads or writes the terminal itself.
 //
 // Run it with: bun parent.ts
+//
+// spawnHost runs the tuimark binary of this package's release (downloaded
+// once and checked against the release's checksums). To use another build,
+// set TUIMARK_BINARY=/path/to/tuimark or pass { bin: "/path/to/tuimark" }.
 
-import { spawnHost } from "@tuimark/host";
+import { spawnHost } from "@thelacanians/tuimark";
 
 type Item = { id: string; title: string };
 

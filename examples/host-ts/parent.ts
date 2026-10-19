@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // examples/host-ts: a TypeScript parent, run by Bun, that drives a Tuimark
 // view over `tuimark host` (the host protocol, protocol 1) through
-// @tuimark/host (sdk/ts, SPEC §19.2). It is a parent, not a second host:
+// @thelacanians/tuimark (sdk/ts, SPEC §19.2). It is a parent, not a second host:
 // `tuimark` lays out, paints, and decides everything; this script only
 // answers the one host action of view.tui ("inc") by writing to the store.
 //
@@ -15,7 +15,7 @@
 // Usage: bun run parent.ts [path/to/tuimark]
 // (defaults to $TUIMARK_BIN, then "tuimark" on PATH)
 
-import { HostError, ProtocolVersionError, spawnHost } from "@tuimark/host";
+import { HostError, ProtocolVersionError, spawnHost } from "@thelacanians/tuimark";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 

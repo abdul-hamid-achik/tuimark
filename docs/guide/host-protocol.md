@@ -74,10 +74,10 @@ When the session ends, `exit` is the last message: `reason` is `"quit"`, `"eof"`
 
 ## From TypeScript
 
-For a Bun program, use [`@tuimark/host`](/guide/typescript) (0.4) instead of speaking the protocol yourself. It follows every rule below, correlates the acks, and turns each `event` into a call to your handler:
+For a Bun program, use [`@thelacanians/tuimark`](/guide/typescript) (0.4) instead of speaking the protocol yourself. It follows every rule below, correlates the acks, and turns each `event` into a call to your handler:
 
 ```ts
-import { spawnHost } from "@tuimark/host";
+import { spawnHost } from "@thelacanians/tuimark";
 
 const ui = await spawnHost("view.tui", { data: "sample.json" });
 let count = 0; // the parent owns the model; the view only shows it
@@ -158,6 +158,6 @@ You don't need a pty to test how your parent reacts to events: `tuimark play FIL
 
 ## See also
 
-- [TypeScript client](/guide/typescript) — `@tuimark/host`, the protocol from Bun.
+- [TypeScript client](/guide/typescript) — `@thelacanians/tuimark`, the protocol from Bun.
 - [Go API](/guide/go-api#run) — `Run()`, for a Go host that doesn't need a second process.
 - [MCP server](/guide/mcp) — for driving the *authoring* loop (`validate`/`dump`/`play`) from an agent, not running a live session.
