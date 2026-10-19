@@ -87,6 +87,41 @@ tasks:
           echo "skipping kit/ts: bun not found"
         fi
 
+  wasm:
+    desc: Build the playground's WebAssembly runtime (cmd/tuimark-wasm, ADR 0033) into bin/tuimark.wasm,
+      and copy the wasm_exec.js of the same Go toolchain next to it.
+    cmds:
+      - GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o bin/tuimark.wasm ./cmd/tuimark-wasm
+      - |
+        # Go 1.24 moved wasm_exec.js from misc/wasm to lib/wasm.
+        root="$(go env GOROOT)"
+        for d in lib/wasm misc/wasm; do
+          if [ -f "$root/$d/wasm_exec.js" ]; then cp "$root/$d/wasm_exec.js" bin/wasm_exec.js; exit 0; fi
+        done
+        echo "wasm_exec.js not found under $root" >&2
+        exit 1
+
+  wasm-check:
+    desc: Check bin/tuimark.wasm against its size budget (brotli 1.5 MB, gzip 2.0 MB) and run the Node
+      smoke test, which also compares every example's wasm dump with the native CLI's. Skipped without `node`.
+    deps: [wasm, build]
+    cmds:
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node cmd/tuimark-wasm/testdata/size.mjs bin/tuimark.wasm &&
+          node cmd/tuimark-wasm/testdata/smoke.mjs bin/tuimark.wasm --cli bin/tuimark
+        else
+          echo "skipping the wasm size check and smoke test: node not found"
+        fi
+
+  wasm-test:
+    desc: Run go test for the core packages under GOOS=js GOARCH=wasm with Node (about a minute; CI runs it, verify does not).
+    env:
+      GOOS: js
+      GOARCH: wasm
+    cmds:
+      - go test -exec "$PWD/.github/scripts/go-js-wasm-exec.sh" . ./internal/...
+
   host-ts-deps:
     desc: Install examples/host-ts's dependencies (@tuimark/host, a file dependency on
       sdk/ts), fresh, because bun copies a file directory. Skipped without `bun`.
@@ -191,7 +226,7 @@ tasks:
       - bunx @vscode/vsce package
 
   verify:
-    desc: fmt + vet + test + kit-go + kit-ts + build + golden + glyph, in that order.
+    desc: fmt + vet + test + kit-go + kit-ts + build + golden + wasm-check + glyph, in that order.
     cmds:
       - task: fmt
       - task: vet
@@ -200,4 +235,5 @@ tasks:
       - task: kit-ts
       - task: build
       - task: golden
+      - task: wasm-check
       - task: glyph
