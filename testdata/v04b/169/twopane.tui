@@ -1,0 +1,8 @@
+<tui>
+  <screen id="main">
+    <row id="top">
+      <col id="nav"><text>inbox</text><text>sent</text></col>
+      <col id="body"><text id="para" wrap="wrap">The quick brown fox jumps over the lazy dog and keeps running far away</text></col>
+    </row>
+  </screen>
+</tui>
