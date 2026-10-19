@@ -7,6 +7,15 @@ line.
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-19
+
+A patch on 0.4a with no change to the language. Tuimark ships on npm as
+`@thelacanians/tuimark` (the TypeScript SDK and a `tuimark` command that
+downloads the verified release binary), the component kit gains copyable Go
+and TypeScript host helpers, `examples/` gains a container-engine dashboard
+built on the kit, and the runtime builds for js/wasm for the website's
+playground.
+
 ### Added
 
 - **The npm package `@thelacanians/tuimark`** (`sdk/ts`): the SDK and the CLI
@@ -609,7 +618,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.2
 [0.4.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.1
 [0.4.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.0
 [0.3.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.2
