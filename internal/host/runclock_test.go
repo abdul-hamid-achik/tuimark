@@ -31,6 +31,7 @@ type fakeClock struct {
 	quiet       int
 	fed         int
 	quietAtFeed int
+	hooked      bool // the loop calls markIdle (not so when a test goes through run())
 	timedOut    bool // a wait gave up
 }
 
@@ -113,6 +114,7 @@ func (t *fakeTimer) Reset(d time.Duration) bool {
 // of a turn of the loop, right before the select blocks.
 func (c *fakeClock) markIdle() {
 	c.mu.Lock()
+	c.hooked = true
 	if !c.pending() {
 		c.quiet++
 	}
@@ -191,8 +193,9 @@ func (c *fakeClock) Advance(t *testing.T, d time.Duration) int {
 			n++
 		}
 	}
+	hooked := c.hooked
 	c.mu.Unlock()
-	if n > 0 {
+	if n > 0 && hooked {
 		c.waitQuiet(t, seq)
 	}
 	return n
@@ -264,7 +267,7 @@ func startClockRigApp(t *testing.T, a *App, o rigOpts) *clockRig {
 		}
 		lg.useClock(clk)
 	}
-	r.sess = &termSession{profile: o.profile, sync: syncOff, log: lg, clk: clk, idle: clk.markIdle, fed: clk.markFed}
+	r.sess = &termSession{profile: o.profile, sync: syncOff, log: lg, clk: clk, idle: clk.markIdle, fed: clk.markFed, noPoll: true}
 	go func() {
 		r.done <- a.loopSess(context.Background(), pr, r.out, func() (int, int) { return o.cols, o.rows }, nil, r.sess, o.hooks)
 	}()

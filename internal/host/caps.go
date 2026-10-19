@@ -276,6 +276,8 @@ type termSession struct {
 	// fed, when non-nil, is called when the loop takes a read of the
 	// terminal's input (tests only).
 	fed func()
+	// noPoll switches the 250 ms size poll off (tests only).
+	noPoll bool
 
 	mu       sync.Mutex
 	grapheme bool // mode 2027 was turned on: leaving turns it off

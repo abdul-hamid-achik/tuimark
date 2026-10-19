@@ -379,18 +379,23 @@ func TestRunClock196DumpStaysAtPhase0(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := startClockRigApp(t, app, rigOpts{})
+	liveBefore := r.app.lastFrame()
 	// Another goroutine Dumps all the while (the race detector's food).
+	// It blocks on every turn: js/wasm has no preemption, so a goroutine
+	// that spun would starve the loop and the waits of the test.
 	stop := make(chan struct{})
 	bad := make(chan string, 1)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		tick := time.NewTicker(time.Millisecond)
+		defer tick.Stop()
 		for {
 			select {
 			case <-stop:
 				return
-			default:
+			case <-tick.C:
 			}
 			if got := r.app.Dump(20, 5, false).Grid[0]; !strings.HasPrefix(got, "⠋") {
 				select {
@@ -414,6 +419,9 @@ func TestRunClock196DumpStaysAtPhase0(t *testing.T) {
 	case got := <-bad:
 		t.Fatalf("a concurrent Dump painted %q, want phase 0", got)
 	default:
+	}
+	if r.app.lastFrame() != liveBefore {
+		t.Error("the Dumps changed the live frame")
 	}
 	// The next redraw is still the next phase of the session's clock.
 	r.since()
@@ -530,10 +538,9 @@ func TestRunClock85ReloadKeepsClock(t *testing.T) {
 	}
 }
 
-// Decision 105 / MUST 13: a document without a spinner keeps the frame
-// skip as the session's clock moves (the phase is an input of the frame
-// only when there is a spinner), and one with a spinner does not.
-func TestRunClockPhaseOnlyForSpinnerDocuments(t *testing.T) {
+// HasSpinner finds a spinner wherever the document puts one (the frame
+// skip it gates is TestRunClockFrameSkipKeptWithoutSpinner).
+func TestRunClockHasSpinner(t *testing.T) {
 	plain := doc(t, v1(`<text>x</text>`))
 	if plain.HasSpinner() {
 		t.Error("a document without a spinner reports one")

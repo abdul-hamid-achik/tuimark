@@ -1235,6 +1235,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	for {
 		tick := armTick()
 		spin := armSpin()
+		// The size poll (below); the clock tests switch it off, so no
+		// turn of the loop they did not cause can pass for a barrier.
+		var poll <-chan time.Time
+		if !sess.noPoll {
+			poll = time.After(250 * time.Millisecond)
+		}
 		if sess.idle != nil {
 			sess.idle()
 		}
@@ -1294,7 +1300,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			if stop, err := settle(); stop {
 				return err
 			}
-		case <-time.After(250 * time.Millisecond):
+		case <-poll:
 			// Poll for size changes where no resize signal exists.
 			if c, r := size(); c != lastCols || r != lastRows {
 				if stop, err := settle(); stop {
