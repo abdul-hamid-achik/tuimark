@@ -1,4 +1,4 @@
-<tui version="2">
+<tui>
   <style>
     #confirm { width: 34; height: auto; }
     #actions { height: 1; gap: 2; justify: center; }

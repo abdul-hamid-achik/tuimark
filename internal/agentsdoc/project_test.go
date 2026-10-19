@@ -51,7 +51,7 @@ func TestProjectMarkdown(t *testing.T) {
 	if !strings.HasSuffix(p, "\n") || strings.HasSuffix(p, "\n\n") {
 		t.Error("the project briefing does not end with exactly one newline")
 	}
-	if !strings.Contains(p, "## Reference\n\n### Attributes per tag") {
+	if !strings.Contains(p, "## Reference\n\n`version` on `<tui>` is optional; leave it out.") {
 		t.Error("the Reference does not follow the Loop addition directly")
 	}
 	// The repository's own briefing is unchanged by all this.

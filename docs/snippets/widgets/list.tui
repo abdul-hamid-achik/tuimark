@@ -1,4 +1,4 @@
-<tui version="2">
+<tui>
   <style>
     #files { border: rounded; }
     #files > item:checked { color: $accent; }

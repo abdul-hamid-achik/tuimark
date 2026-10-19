@@ -1,9 +1,9 @@
 {
   "Tuimark document": {
     "prefix": ["tui", "tuimark", "doc"],
-    "description": "A version 3 document: stylesheet, keymap, and a screen",
+    "description": "A document: stylesheet, keymap, and a screen",
     "body": [
-      "<tui version=\"3\" theme=\"${1|dark,light,auto|}\">",
+      "<tui theme=\"${1|dark,light,auto|}\">",
       "  <style src=\"${2:theme.tcss}\"/>",
       "  <keymap>",
       "    <bind keys=\"q,ctrl+c\" action=\"quit\" label=\"quit\"/>",

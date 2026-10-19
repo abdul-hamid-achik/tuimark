@@ -10,7 +10,7 @@ A `.tui` file is a strict subset of XML that describes what is on the screen: co
 ## A document
 
 ```tui
-<tui version="2" theme="auto" mouse="mouse_enabled">
+<tui theme="auto" mouse="mouse_enabled">
   <style src="theme.tcss"/>
   <style>
     #title { bold: true; }
@@ -26,7 +26,7 @@ A `.tui` file is a strict subset of XML that describes what is on the screen: co
 </tui>
 ```
 
-- **`<tui>`** is the root. `version` is required (`V014` without it). `theme` is `dark` (the default), `light`, or, in `version="2"`, `auto`. `mouse` (version 2) turns mouse input on; see [the mouse](/guide/interaction#the-mouse).
+- **`<tui>`** is the root. It needs no `version` (see [versions](#versions)). `theme` is `dark` (the default), `light`, or `auto`. `mouse` turns mouse input on; see [the mouse](/guide/interaction#the-mouse).
 - **`<style>`** loads a stylesheet with `src` (relative to the document), or holds one inline. Several are fine; they apply in order.
 - **`<keymap>`** holds the `<bind>` rows: which keys fire which actions. See [Keymap, actions and focus](/guide/interaction).
 - **`<screen>`** is a full terminal surface. A document can have several; exactly one is active, the first by default, and the host switches with `Set("@screen", "logs")`. `focus="#id"` picks the node focused when the screen appears.
@@ -44,19 +44,20 @@ Control characters and ANSI escapes are removed from bound data before it is pai
 
 ## Versions
 
-Every document says which vocabulary it uses:
+You don't write a version. A `<tui>` without `version` is the current language: everything in these guides and in the [reference](/reference/tags) is available to it, and so are two layout warnings about content a dump shows as gone:
+
+- `L008`: a text cut without an ellipsis;
+- `L009`: a node that cuts a child on an axis it does not scroll.
+
+The dump marks the node with `clipped`. When a cut is intended, write `wrap: nowrap` or `overflow: hidden` and the warning goes away.
+
+The `version` attribute remains for documents that already declare one, and each value keeps the meaning it had:
 
 - **`version="1"`** is the original vocabulary. Its meaning, and its dumps, never change.
 - **`version="2"`** accepts everything `version="1"` does, with the same meaning, plus the 0.2 additions: the tags `table`, `column`, `tabs`, `tab`, `sparkline`, and `hints`; `each` on containers; multi-select; `class:NAME`; `theme="auto"`; `@media (theme: …)`; `layout: grid`; scrollbars; `bar: eighths`; the built-in `move-*`, `check-*`, and `switch-to` actions; the mouse; and `when` matching over the focus chain.
-- **`version="3"`** (0.3) is `version="2"` plus two layout warnings about content a dump shows as gone:
-  - `L008`: a text cut without an ellipsis;
-  - `L009`: a node that cuts a child on an axis it does not scroll.
+- **`version="3"`** is the current language, the same as writing no version: `version="2"` plus `L008`/`L009` and the 0.3 additions, all additive. `row-gap` and `column-gap` split `gap` into its two axes; `wrap: truncate-start` and `truncate-middle` join `truncate`; `<column priority="N">` hides a table column by priority instead of `@media`; `<sparkline scale="NAME">` shares a value range across the sparklines of one frame; a `<tab>`'s `label` and `short` become `{path}` templates; `<scroll stick="bottom">` keeps a growing viewport pinned to its end; `<modal focus="#id">` names the node a modal focuses on open; and `<keymap when="SEL">` gives every row inside it that `when`. Several `<keymap>` elements work in every version. See [layout](/guide/layout), [widgets](/guide/widgets), [keymap, actions and focus](/guide/interaction), and the [Go API](/guide/go-api) for each in its usual place, and the [tags](/reference/tags), [CSS properties](/reference/css), and [diagnostics](/reference/diagnostics) reference for the exact rules.
 
-  The dump marks the node with `clipped`. When a cut is intended, write `wrap: nowrap` or `overflow: hidden` and the warning goes away. A document that clips nothing dumps exactly as it would as `version="2"`.
-
-  0.3b adds a further `version="3"`-only vocabulary, all additive: `row-gap` and `column-gap` split `gap` into its two axes; `wrap: truncate-start` and `truncate-middle` join `truncate`; `<column priority="N">` hides a table column by priority instead of `@media`; `<sparkline scale="NAME">` shares a value range across the sparklines of one frame; a `<tab>`'s `label` and `short` become `{path}` templates; `<scroll stick="bottom">` keeps a growing viewport pinned to its end; and `<modal focus="#id">` names the node a modal focuses on open. Several `<keymap>` elements, and `<keymap when="SEL">` to give every row inside it that `when`, work in every version. See [layout](/guide/layout), [widgets](/guide/widgets), [keymap, actions and focus](/guide/interaction), and the [Go API](/guide/go-api) for each in its usual place, and the [tags](/reference/tags), [CSS properties](/reference/css), and [diagnostics](/reference/diagnostics) reference for the exact rules.
-
-Use `version="3"` for new documents. In a `version="1"` document each 0.2 addition is still recognized, and reported with a message that ends in `(requires version="2")`, so an agent knows exactly what to change. A `.tcss` file has no version of its own: it is checked against the document that loads it.
+In a `version="1"` document each 0.2 addition is still recognized, and reported with a message that ends in `(requires version="2")`; in a `version="1"` or `version="2"` one, each 0.3 addition ends in `(requires version="3")`. Removing the attribute gives the document the whole language. A `.tcss` file has no version of its own: it is checked against the document that loads it.
 
 ## The tags
 

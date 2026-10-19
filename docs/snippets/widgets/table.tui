@@ -1,4 +1,4 @@
-<tui version="2">
+<tui>
   <style>
     #procs { border: rounded; gap: 1; }
     #procs > column { bold: true; }

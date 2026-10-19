@@ -199,7 +199,6 @@ func TestDiagnosticCodes(t *testing.T) {
 		{"doctype", "V005", `<!DOCTYPE app><app/>`},
 		{"entity", "V005", `<app><text>&nbsp;</text></app>`},
 		{"uppercase", "V001", `<app><Box/></app>`},
-		{"missing version", "V014", `<tui><screen/></tui>`},
 		{"ansi", "V007", "<app><text>\x1b[31mred</text></app>"},
 		{"no id on input", "V012", `<tui version="1"><screen><input/></screen></tui>`},
 		{"each bad", "V011", `<tui version="1"><screen><list id="l" each="tickets"><item/></list></screen></tui>`},

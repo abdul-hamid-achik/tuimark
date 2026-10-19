@@ -46,7 +46,7 @@ var diagCodes = []DiagCode{
 	{"V011", "parse", "`each` / `if` missing path; an `each` alias equal to an enclosing one (version=\"2\")"},
 	{"V012", "parse", "list/input/button/modal without `id`; a `table`, `tabs`, or `tab` without `id` (version=\"2\"); a `scroll` with `stick` and no `id` (version=\"3\")"},
 	{"V013", "parse", "`<text>` has element children"},
-	{"V014", "parse", "missing `version` on `<tui>` (phase 1+)"},
+	{"V014", "parse", "retired: never reported since 0.4.1, when `version` became optional (a `<tui>` without it is `version=\"3\"`)"},
 	{"L001", "layout", "`fr` child of non-flex parent"},
 	{"L002", "layout", "`%` child of `auto` parent on that axis"},
 	{"L003", "layout", "fixed + min exceeds parent (warning; clip); also a table whose visible columns' cell and `%` widths and `auto`/`fr` min-widths, plus the gaps, exceed its width; in a version=\"3\" document, evaluated on the columns left once `priority` has hidden some"},
@@ -142,6 +142,7 @@ func Markdown() string {
 
 	b.WriteString("## Reference\n\n")
 	b.WriteString("`tuimark` in the Loop above is `./bin/tuimark` after `go build -o bin/tuimark ./cmd/tuimark`, or `go run ./cmd/tuimark` without building.\n\n")
+	b.WriteString("`version` on `<tui>` is optional; leave it out. A `<tui>` without it is the current language, `version=\"3\"`: everything below applies to it, every rule marked version=\"2\" or version=\"3\" included. Those marks matter only for a document that writes an older `version=\"1\"` or `version=\"2\"`, where the newer vocabulary is the diagnostic the mark names, with a message ending in `(requires version=…)`.\n\n")
 	writeAttrsPerTag(&b)
 	writeCSSProperties(&b)
 	writeKeyTokens(&b)
@@ -204,7 +205,7 @@ func writeV02bSection(b *strings.Builder) {
 // and the dump's clipped member (SPEC v0.3 §5.1, §14, §13.2).
 func writeV03aSection(b *strings.Builder) {
 	b.WriteString("### version=\"3\" (0.3a)\n\n")
-	b.WriteString("- `<tui version=\"3\">` accepts everything a `version=\"2\"` document does, with the same meaning (every version=\"2\" rule above holds for it too, `when` over the focus chain and the dump's `classes`/`checked` included); a `.tcss` it loads is checked as for version=\"2\". 0.3a gives it no vocabulary of its own: only the layout warnings `L008`/`L009` and the dump's `clipped` are new, and only for a version=\"3\" document. A version=\"2\" document is a valid version=\"3\" document, so upgrading is one attribute.\n")
+	b.WriteString("- `<tui version=\"3\">` accepts everything a `version=\"2\"` document does, with the same meaning (every version=\"2\" rule above holds for it too, `when` over the focus chain and the dump's `classes`/`checked` included); a `.tcss` it loads is checked as for version=\"2\". 0.3a gives it no vocabulary of its own: only the layout warnings `L008`/`L009` and the dump's `clipped` are new, and only for a version=\"3\" document. A version=\"2\" document is a valid version=\"3\" document, so upgrading is one attribute, or none: since 0.4.1 a `<tui>` without `version` is `version=\"3\"`.\n")
 	b.WriteString("- `L008` (warning) is a painted `text` that loses content without saying so: (a) its computed `wrap` is `nowrap` (the initial value, or the literal `nowrap`), that value is not document-written, and its widest line is wider than its content box, so columns are cut with no ellipsis; (b) its lines after wrapping and truncation outnumber its content box's rows, and `overflow: hidden` is not document-written on it. Silence (a) by writing `wrap: nowrap` (an author's own choice, not the default) or `wrap: truncate`; silence (b) by writing `overflow: hidden` or giving it more room. It never fires on a table cell, a tab label, or a hint item (each has its own cut rule already), or on `visibility: hidden` text.\n")
 	b.WriteString("- `L009` (warning) is a container that cuts a child, in flow or docked, on an axis it does not itself scroll (a `<scroll axis=\"y\">` is still checked on `x`): part or all of the child's outer rect falls outside the container's content box there. It is silenced by writing `overflow: hidden` on the container, and it is never reported for a `list`, a `table`, or a `hints` (they show part of their content by design), for a node `L003` already reported this frame (that message already explains the cut), or for a child `L006` already reported this frame (its own warning explains it); a child with `visibility: hidden` or an empty rect does not count.\n")
 	b.WriteString("- \"Document-written\" (both codes) means a presentational attribute, a stylesheet rule, or `style=\"\"`, on the node itself or — `wrap` is inherited — on an ancestor it inherits it from; the initial value and the built-in sheet's own `table { wrap: truncate; }` never count. Each is reported once per source element and frame (a template's repeated rows collapse into one diagnostic), while the dump's `clipped` (`\"text\"` for `L008`, `\"children\"` for `L009`) marks every node that meets the condition, generated rows included.\n")

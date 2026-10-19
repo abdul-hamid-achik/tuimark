@@ -168,7 +168,7 @@ terminal. Three files:
 `app.tui`:
 
 ```xml
-<tui version="1" theme="dark">
+<tui theme="dark">
   <style src="theme.tcss"/>
   <keymap>
     <bind keys="q,ctrl+c" action="quit"/>
@@ -244,13 +244,15 @@ takes over), proving the loop end to end. This one example touches:
 - **Keymap and actions** (SPEC §8): a global `<bind>` for `quit`, and
   `on:select="open"` as a named action the host would register with `On`.
 
-## Document versions: `version="1"`, `version="2"`, and `version="3"`
+## Document versions
 
-Every `<tui>` document declares `version="1"`, `version="2"`, or (0.3)
-`version="3"`. A
-`version="1"` document keeps the vocabulary and meaning it has always had,
-and its dumps stay byte-identical. `version="2"` opts into the 0.2b
-vocabulary (SPEC §5.1); this build implements all of it:
+A `<tui>` needs no `version`: without one it is the current language,
+`version="3"`, with everything this section describes. The attribute
+remains for documents that already declare one, and each value keeps its
+meaning. A `version="1"` document keeps the vocabulary and meaning it has
+always had, and its dumps stay byte-identical. `version="2"` adds the 0.2b
+vocabulary (SPEC §5.1), and `version="3"` the 0.3 one, the same as writing
+no version. This build implements all of it:
 
 - **The version gate.** In a `version="1"` document each 0.2b tag is
   `V001`, each 0.2b attribute `V002`, and each 0.2b value, property,
@@ -258,7 +260,7 @@ vocabulary (SPEC §5.1); this build implements all of it:
   that ends in `(requires version="2")`. A `.tcss` file is checked against
   the version of the document that loads it, so one stylesheet can serve
   both. Any other `version` is `V003`, and the document is read as
-  `version="1"`.
+  `version="1"`. Removing the attribute lifts the gate.
 - **`class:NAME="path"`** (or `!path`) on any rendered element adds the
   class `NAME` while the guard is truthy, evaluated every frame in the
   element's scope (a missing path is `B002` and counts as null, as for
@@ -561,7 +563,7 @@ is what you want, say so in the stylesheet and the warning goes away:
 `wrap: nowrap` on the text or an ancestor for a wide line, and
 `overflow: hidden` on the node that cuts. Nothing else changes: for a
 document that clips nothing, `version="3"` dumps are byte-identical to
-`version="2"` ones. Opting in costs one attribute. The warnings stay out of
+`version="2"` ones. A document without `version` gets them too. The warnings stay out of
 `version="1"` and `version="2"` documents, so existing hosts whose tests
 expect an empty `Validate()` keep passing.
 

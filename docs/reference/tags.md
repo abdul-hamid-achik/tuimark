@@ -1,6 +1,6 @@
 ---
 title: Tags and attributes
-description: Every Tuimark tag and the exact attributes it accepts, in version="1", version="2", and version="3" documents.
+description: Every Tuimark tag and the exact attributes it accepts, and what older version="1" and version="2" documents leave out.
 editLink: false
 ---
 
@@ -8,9 +8,9 @@ editLink: false
 
 # Tags and attributes
 
-The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. See [The .tui language](/guide/language) for what each tag does.
+The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. A document without `version` accepts every tag and attribute below; the last two sections are what an older `version="1"` (or `version="2"`) document leaves out. See [The .tui language](/guide/language) for what each tag does.
 
-## Every document
+## Every version
 
 | Tag | Attributes |
 |---|---|

@@ -20,12 +20,13 @@ func docWith(version, body string) string {
 	return "<tui version=\"" + version + "\">\n<screen>\n" + body + "\n</screen>\n</tui>"
 }
 
-// v0.3.2: V014 names every valid version.
-func TestV014MentionsEveryVersion(t *testing.T) {
-	doc := parse.Parse([]byte("<tui><screen/></tui>"), "")
-	d, ok := coreFind(doc, "V014")
+// v0.3.2: a bad version names every valid one. (V014 named them too, until
+// v0.4.1 made version optional.)
+func TestBadVersionMentionsEveryVersion(t *testing.T) {
+	doc := parse.Parse([]byte(`<tui version="4"><screen/></tui>`), "")
+	d, ok := coreFind(doc, "V003")
 	if !ok || !strings.Contains(d.Msg, `"1", "2", or "3"`) {
-		t.Errorf("V014 = %v (%v)", d, msgs(doc))
+		t.Errorf("V003 = %v (%v)", d, msgs(doc))
 	}
 }
 
