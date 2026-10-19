@@ -439,16 +439,17 @@ var errClockBoom = errors.New("boom")
 
 // 202. Quit and error from an Every function.
 func TestClock202QuitAndError(t *testing.T) {
-	const doc = `<tui><screen id="main"><text>x</text><list id="l"><item><text>a</text></item><item><text>b</text></item></list></screen></tui>`
+	const doc = `<tui><screen id="main"><text>k={k}</text><list id="l"><item><text>a</text></item><item><text>b</text></item></list></screen></tui>`
 	build := func(ret error) (*tuimark.App, *int) {
 		app := clockParse(t, doc)
 		k := new(int)
-		app.Every(100*time.Millisecond, func(*tuimark.Batch) error {
+		app.Every(100*time.Millisecond, func(b *tuimark.Batch) error {
 			*k++
 			if *k == 3 {
+				_ = b.Set("k", *k) // a failed batch applies nothing
 				return ret
 			}
-			return nil
+			return b.Set("k", *k)
 		})
 		return app, k
 	}
@@ -462,6 +463,11 @@ func TestClock202QuitAndError(t *testing.T) {
 	}
 	if len(res.Frames) != 2 || res.Frames[1].Input != "tick:1s" {
 		t.Errorf("frames = %+v; the tick step must have its entry and down none", res.Frames)
+	}
+	// The frame in effect is the one settled at 200 ms, not settled again
+	// after the failing call at 300 ms.
+	if got := strings.TrimSpace(res.Dump.Grid[0]); got != "k=2" {
+		t.Errorf("the dump shows %q, want k=2", got)
 	}
 	app, k = build(errClockBoom)
 	res, err = app.Play(tuimark.PlayOptions{}, "tick:1s")

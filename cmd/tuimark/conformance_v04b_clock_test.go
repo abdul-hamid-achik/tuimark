@@ -257,9 +257,29 @@ func TestV04bClock203CLIAndMCP(t *testing.T) {
 	if p := decodePlay(t, out); len(p.Events) != 0 || !strings.HasPrefix(p.Grid[0], "⠋") {
 		t.Errorf("events %v grid[0] %q (1 s is phase 10, glyph 0)", p.Events, p.Grid[0])
 	}
-	for _, f := range []string{inboxFixture, "../../examples/monitor/studio.tui"} {
-		if code, _, errw := runCLI("play", f, "--input", "tick:1s"); code != 0 && code != 2 {
-			t.Errorf("%s: exit %d: %s", f, code, errw)
+	// Any document: exit 0, and only the spinners move, so the final grid
+	// is the one of the same play without the tick step.
+	for _, c := range []struct{ file, data string }{
+		{inboxFixture, inboxData},
+		{"../../examples/monitor/studio.tui", "../../examples/monitor/sample.json"},
+		{clockS, ""},
+	} {
+		args := []string{"play", c.file, "--format", "json"}
+		if c.data != "" {
+			args = append(args, "--data", c.data)
+		}
+		code, with, errw := runCLI(append(args, "--input", "tick:1s")...)
+		if code != 0 {
+			t.Errorf("%s: exit %d: %s", c.file, code, errw)
+			continue
+		}
+		_, without, _ := runCLI(args...) // step 0 only
+		a, b := decodePlay(t, with), decodePlay(t, without)
+		if strings.Join(a.Grid, "\n") != strings.Join(b.Grid, "\n") && c.file != clockS {
+			t.Errorf("%s: tick:1s changed the grid beyond spinners", c.file)
+		}
+		if len(a.Events) != 0 {
+			t.Errorf("%s: tick:1s fired %v", c.file, a.Events)
 		}
 	}
 	srv := newMCPTestServer(t)
