@@ -33,7 +33,29 @@ type Loader struct {
 	// Self is the document's own Canon ("" when it has no path, as under
 	// Parse): an include of the document itself is a cycle.
 	Self string
+	// SelfPath is the document's own resolved path in the loader's file
+	// system ("" when it has none), for Same.
+	SelfPath string
+	// Same, when not nil, reports whether the files at two resolved paths
+	// are the same file on disk (os.SameFile), however they are spelled:
+	// a symlinked directory gives a fragment a second path to itself (ADR
+	// 0034). nil, or false, leaves the identity to Canon alone, as for an
+	// fs.FS that has no file identity.
+	Same func(a, b string) bool
 }
+
+// ExpansionLimit is the most elements the expansions of one document may
+// insert (ADR 0034): each element an <include> (later also a <use>)
+// inserts, at every depth, once per copy. Text, and the include and use
+// elements themselves, do not count.
+const ExpansionLimit = 100000
+
+// expFrame is an expansion under way: the innermost one reports V021.
+type expFrame struct{}
+
+// expansionOverflow is the panic that unwinds an expansion to the frame
+// that inserted one element too many.
+type expansionOverflow struct{ frame *expFrame }
 
 // composer is the state of composition while one document is built.
 type composer struct {
@@ -44,21 +66,52 @@ type composer struct {
 	// selfOnly is set when a fragment is checked on its own (FragmentDiags):
 	// an <include> gets only its own checks, and no file is read.
 	selfOnly bool
-	// read holds the Canon of each fragment already listed in
-	// Document.Fragments.
-	read map[string]bool
 	// used is whether an <include> was expanded (some diagnostics are then
 	// reported once per written element).
 	used bool
 	// docOrg is the origin of an <include> written in the document: its
 	// file, placed by nothing.
 	docOrg *ir.Origin
+	// frames are the expansions under way, outermost first; count is the
+	// number of elements they have inserted (ExpansionLimit); dead is set
+	// once one went over: no later include expands (ADR 0034).
+	frames []*expFrame
+	count  int
+	dead   bool
+	// files caches each fragment read and parsed, by Canon: an expansion
+	// may place a file many times, and reading and parsing it again each
+	// time would make the work grow with the copies, not the files.
+	files map[string]*fragFile
+}
+
+// fragFile is a fragment read once: its parsed root, or why it has none.
+type fragFile struct {
+	root    *RawNode
+	readErr error
+	syntax  *SyntaxError
 }
 
 // chainFile is one file on the chain of includes that leads to the
 // <include> being expanded.
 type chainFile struct {
 	path, canon, name string
+	// real is the file's resolved path in the loader's file system, for
+	// Same ("" for a document that has none).
+	real string
+}
+
+// countElement counts an element built inside an expansion. The one that
+// would pass ExpansionLimit unwinds to the innermost expansion, which
+// inserts nothing and reports V021 (ADR 0034).
+func (b *builder) countElement() {
+	cp := b.comp
+	if cp == nil || cp.dead || len(cp.frames) == 0 {
+		return
+	}
+	cp.count++
+	if cp.count > ExpansionLimit {
+		panic(&expansionOverflow{frame: cp.frames[len(cp.frames)-1]})
+	}
 }
 
 // docName is how the document is named in a message that names files.
@@ -157,7 +210,7 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		b.errInc(w, "V003", `<include> needs src="FILE"`)
 		return
 	}
-	if cp.selfOnly {
+	if cp.selfOnly || cp.dead {
 		return
 	}
 	cur := cp.chain[len(cp.chain)-1]
@@ -175,10 +228,11 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 	if cp.ld != nil {
 		canon, name = cp.ld.Canon(resolved), cp.ld.Name(resolved)
 	}
-	// 2. A cycle: the file is already being expanded on this chain.
+	// 2. A cycle: the file is already being expanded on this chain, by
+	// path or, when the loader can tell, as the same file on disk.
 	if cp.ld != nil {
 		for _, e := range cp.chain {
-			if e.canon != "" && e.canon == canon {
+			if (e.canon != "" && e.canon == canon) || (cp.ld.Same != nil && e.real != "" && cp.ld.Same(e.real, resolved)) {
 				names := make([]string, 0, len(cp.chain)+1)
 				for _, f := range cp.chain {
 					names = append(names, f.name)
@@ -199,20 +253,27 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		b.errInc(w, "V006", "include src=%q cannot be read: no file system to read it from", src)
 		return
 	}
-	data, err := cp.ld.Read(resolved)
-	if err != nil {
-		b.errInc(w, "V006", "include src=%q cannot be read: %v", src, unwrapOrSelf(err))
+	ff := cp.files[canon]
+	if ff == nil {
+		ff = &fragFile{}
+		data, err := cp.ld.Read(resolved)
+		if err != nil {
+			ff.readErr = err
+		} else {
+			b.doc.Fragments = append(b.doc.Fragments, FragmentRef{Path: resolved, Name: name})
+			ff.root, _, _, ff.syntax = ParseXML(data)
+		}
+		if cp.files == nil {
+			cp.files = map[string]*fragFile{}
+		}
+		cp.files[canon] = ff
+	}
+	if ff.readErr != nil {
+		b.errInc(w, "V006", "include src=%q cannot be read: %v", src, unwrapOrSelf(ff.readErr))
 		return
 	}
-	if !cp.read[canon] {
-		if cp.read == nil {
-			cp.read = map[string]bool{}
-		}
-		cp.read[canon] = true
-		b.doc.Fragments = append(b.doc.Fragments, FragmentRef{Path: resolved, Name: name})
-	}
 	// 5. Not well-formed, or against §5: V005 in that file.
-	root, _, _, serr := ParseXML(data)
+	root, serr := ff.root, ff.syntax
 	fo := &ir.Origin{File: name, Placed: w}
 	if serr != nil {
 		b.diagOrg(fo, false, ir.Error, "V005", serr.Line, serr.Col, "", "", "%s", serr.Msg)
@@ -223,9 +284,56 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		b.errInc(w, "V020", "include src=%q is not a fragment: its root is <%s>, and an included file's root is <fragment>", src, root.Name)
 		return
 	}
+	b.expandFragment(n, w, outer, root, fo, chainFile{path: resolved, canon: canon, name: name, real: resolved}, src)
+}
+
+// expandFragment builds the elements of a fragment in n (SPEC v0.4b
+// §6.18.2). An expansion that passes ExpansionLimit is undone: the include
+// inserts nothing, whatever it had inserted is discarded, and it reports
+// V021; the includes around it keep what they inserted, and none expands
+// after it (ADR 0034).
+func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Origin, file chainFile, src string) {
+	cp := b.comp
 	saved := b.org
+	chainLen := len(cp.chain)
+	nChildren, nDropped, nDroppedIn := len(n.Children), len(b.doc.dropped), len(b.droppedIn[n])
+	nStyles, nDiags, count := len(b.doc.Styles), len(b.doc.Diags), cp.count
+	nList := len(n.Source)
+	if outer != nil {
+		nList = len(outer.Children)
+	}
+	fr := &expFrame{}
+	cp.frames = append(cp.frames, fr)
+	defer func() {
+		cp.frames = cp.frames[:len(cp.frames)-1]
+		r := recover()
+		if r == nil {
+			return
+		}
+		if o, ok := r.(*expansionOverflow); !ok || o.frame != fr {
+			panic(r)
+		}
+		b.org = saved
+		cp.chain = cp.chain[:chainLen]
+		n.Children = n.Children[:nChildren]
+		if outer != nil {
+			outer.Children = outer.Children[:nList]
+		} else {
+			n.Source = n.Source[:nList]
+		}
+		b.doc.dropped = b.doc.dropped[:nDropped]
+		if b.droppedIn != nil {
+			b.droppedIn[n] = b.droppedIn[n][:nDroppedIn]
+		}
+		b.doc.Styles = b.doc.Styles[:nStyles]
+		b.doc.Diags = b.doc.Diags[:nDiags]
+		w.Children = nil
+		cp.count = count
+		cp.dead = true
+		b.errInc(w, "V021", "include src=%q exceeds the expansion limit of %d elements: it inserts nothing, and no later include or use expands", src, ExpansionLimit)
+	}()
 	b.org = fo
-	cp.chain = append(cp.chain, chainFile{path: resolved, canon: canon, name: name})
+	cp.chain = append(cp.chain, file)
 	b.fragmentRoot(root)
 	for _, fc := range root.Children {
 		if fc.Type != RawElement {

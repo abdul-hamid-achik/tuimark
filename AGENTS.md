@@ -189,6 +189,7 @@ Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`ente
 | V017 | parse | a `table` without `each` or without a `column` child; a `tabs` without a `tab` child (version="2") |
 | V018 | parse | `checked` on a `list`/`table` without both `each` and `key` (or on a list of static items); a `mark` that is not 1 or 2 columns wide; `mark` without `checked`; `on:change` on a `list` without `checked` (version="2") |
 | V020 | parse | an `<include src>` that names a `.tcss` stylesheet, or whose file is well-formed XML with a root other than `<fragment>`; the include inserts nothing (current language) |
+| V021 | parse | the expansions of a document would insert more than 100000 elements (every element an `<include>` inserts, at every depth, once per copy; text and the include elements themselves do not count): the include being expanded inserts nothing, and no later include expands (current language) |
 | B007 | bind | a built-in action whose target is known without data to be incompatible (from `to=`, or a `when` that is exactly `#id:focus`); static, error (version="2"); evaluated against each row's effective `when` (version="3", `<keymap when>`) |
 | B008 | bind | the value at a `checked` path is present and not an array (error; version="2") |
 | B009 | bind | the value at a `sparkline` `bind` is present and not an array, or holds an element that is neither a number nor `null` (warning; version="2") |

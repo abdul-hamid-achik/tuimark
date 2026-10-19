@@ -38,6 +38,11 @@ type styleResolver struct {
 	name func(resolved string) string
 	// readFile reads an included fragment; nil means read.
 	readFile func(resolved string) ([]byte, error)
+	// same reports whether two resolved paths are the same file on disk;
+	// nil where the file system has no file identity (ADR 0034).
+	same func(a, b string) bool
+	// selfPath is this document's own resolved path ("" for Parse).
+	selfPath string
 	// self is this document's own canon key ("" for Parse, which has no
 	// path to compare a src against).
 	self string
@@ -49,7 +54,7 @@ func (r styleResolver) loader() *parse.Loader {
 	if r.readFile != nil {
 		read = r.readFile
 	}
-	return &parse.Loader{Join: r.resolve, Read: read, Canon: r.canon, Name: r.name, Self: r.self}
+	return &parse.Loader{Join: r.resolve, Read: read, Canon: r.canon, Name: r.name, Self: r.self, SelfPath: r.selfPath, Same: r.same}
 }
 
 // diskResolver resolves a <style src> against an OS directory, exactly as
@@ -63,6 +68,7 @@ func diskResolver(dir, selfPath string) styleResolver {
 		self, _ = filepath.Abs(selfPath)
 	}
 	absDir, _ := filepath.Abs(dir)
+	stat := statCache(os.Stat)
 	return styleResolver{
 		resolve: func(from, src string) (string, bool) {
 			p := src
@@ -83,8 +89,17 @@ func diskResolver(dir, selfPath string) styleResolver {
 			data, err := ReadRegular(p, 0)
 			return data, includeReadErr(err)
 		},
-		canon: func(p string) string { abs, _ := filepath.Abs(p); return abs },
-		base:  filepath.Base,
+		canon:    func(p string) string { abs, _ := filepath.Abs(p); return abs },
+		selfPath: selfPath,
+		same: func(a, b string) bool {
+			fa, err := stat(a)
+			if err != nil {
+				return false
+			}
+			fb, err := stat(b)
+			return err == nil && os.SameFile(fa, fb)
+		},
+		base: filepath.Base,
 		name: func(p string) string {
 			abs, err := filepath.Abs(p)
 			if err != nil {
@@ -104,6 +119,7 @@ func diskResolver(dir, selfPath string) styleResolver {
 // dir (SPEC v0.3 §18.1): path.Join(path.Dir(name), src); an absolute src,
 // or one whose joined path climbs above fsys's root, is "outside".
 func fsResolver(fsys iofs.FS, dir, name string) styleResolver {
+	stat := statCache(func(p string) (iofs.FileInfo, error) { return iofs.Stat(fsys, p) })
 	return styleResolver{
 		resolve: func(from, src string) (string, bool) {
 			if path.IsAbs(src) {
@@ -124,10 +140,22 @@ func fsResolver(fsys iofs.FS, dir, name string) styleResolver {
 			data, err := readFSRegular(fsys, p)
 			return data, includeReadErr(err)
 		},
-		canon: path.Clean,
-		base:  path.Base,
-		name:  func(p string) string { return slashRel(dir, p) },
-		self:  path.Clean(name),
+		canon:    path.Clean,
+		selfPath: name,
+		// os.DirFS answers with os file information, which SameFile
+		// compares; an fs.FS without file identity (fstest.MapFS, the
+		// playground's) never is the same file but by path.
+		same: func(a, b string) bool {
+			fa, err := stat(a)
+			if err != nil {
+				return false
+			}
+			fb, err := stat(b)
+			return err == nil && os.SameFile(fa, fb)
+		},
+		base: path.Base,
+		name: func(p string) string { return slashRel(dir, p) },
+		self: path.Clean(name),
 	}
 }
 
@@ -166,6 +194,24 @@ func readFSRegular(fsys iofs.FS, name string) ([]byte, error) {
 		return nil, fmt.Errorf("%s: %w (over %d bytes)", name, ErrTooLarge, int64(MaxReadBytes))
 	}
 	return data, nil
+}
+
+// statCache memoizes stat for one load: the include cycle check asks about
+// the same few files for every include of an expansion.
+func statCache(stat func(string) (iofs.FileInfo, error)) func(string) (iofs.FileInfo, error) {
+	type res struct {
+		fi  iofs.FileInfo
+		err error
+	}
+	m := map[string]res{}
+	return func(p string) (iofs.FileInfo, error) {
+		if r, ok := m[p]; ok {
+			return r.fi, r.err
+		}
+		fi, err := stat(p)
+		m[p] = res{fi, err}
+		return fi, err
+	}
 }
 
 // slashRel is target relative to base, both cleaned slash-separated paths

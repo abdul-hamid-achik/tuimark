@@ -524,7 +524,11 @@ func ParseWith(src []byte, file string, ld *Loader) *Document {
 			if ld != nil {
 				self = ld.Self
 			}
-			b.comp = &composer{ld: ld, chain: []chainFile{{canon: self, name: b.docName()}}}
+			selfPath := ""
+			if ld != nil {
+				selfPath = ld.SelfPath
+			}
+			b.comp = &composer{ld: ld, chain: []chainFile{{canon: self, name: b.docName(), real: selfPath}}}
 		}
 	default:
 		b.diag(ir.Error, "V005", raw.Line, raw.Col, "/", "", "document root must be <tui> (or the phase-0 alias <app>), got <%s>", raw.Name)
@@ -560,6 +564,7 @@ func childPath(parent *ir.Node, tag string) string {
 
 // node converts a raw element (recursively) into an IR node.
 func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
+	b.countElement()
 	n := &ir.Node{
 		Tag: r.Name, Kind: r.Name, Parent: parent,
 		Attrs: map[string]string{}, On: map[string]string{},
