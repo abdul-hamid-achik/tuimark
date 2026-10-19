@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -149,4 +150,89 @@ func TestV04bTemplateRenamedAliasNeverSurfaces(t *testing.T) {
 	if rows[0] != "S|L1|" || rows[1] != "S|L2|" {
 		t.Errorf("grid %q", rows)
 	}
+}
+
+// A guarded <use> in a <table> prunes what it placed (§6.18.3: no node of
+// its copy is in the frame): a pruned column is absent altogether (no
+// header cell, no body cells, no width, no say in the header row, no
+// B003 from its cell template), a pruned row template leaves the rows
+// without its classes, and flipping the guard with play's set: brings
+// them back, the column measured again (review probes ifuse, ifcol).
+func TestV04bTemplateGuardedUseInATable(t *testing.T) {
+	doc := `<tui>
+<template id="colsT"><column title="B">{r.b}{r.gone}</column></template>
+<template id="itemT"><item class="hot"/></template>
+<style>.hot { bold: true; }</style>
+<screen id="main">
+<table id="tb" each="rs as r" key="r.a"><column>{r.a}</column><use template="colsT" if="show"/><use template="itemT" hidden="!show"/></table>
+</screen>
+</tui>`
+	f := writeTemp(t, "app.tui", doc)
+	off := writeTemp(t, "d.json", `{"show": false, "rs": [{"a": "1", "b": "wide-value"}]}`)
+	on := writeTemp(t, "d.json", `{"show": true, "rs": [{"a": "1", "b": "wide-value"}]}`)
+	summary := func(out string) (cols, items []string, errs []string) {
+		t.Helper()
+		var d struct {
+			Nodes []struct {
+				Tag     string   `json:"tag"`
+				Text    string   `json:"text"`
+				W       int      `json:"w"`
+				Y       int      `json:"y"`
+				Classes []string `json:"classes"`
+			} `json:"nodes"`
+			Errors []struct {
+				Code string `json:"code"`
+				Msg  string `json:"msg"`
+			} `json:"errors"`
+		}
+		if err := json.Unmarshal([]byte(out), &d); err != nil {
+			t.Fatalf("%v\n%s", err, out)
+		}
+		for _, n := range d.Nodes {
+			switch n.Tag {
+			case "column":
+				cols = append(cols, n.Text+"/"+strconv.Itoa(n.W))
+			case "item":
+				items = append(items, strconv.Itoa(n.Y)+":"+strings.Join(n.Classes, ","))
+			}
+		}
+		for _, e := range d.Errors {
+			errs = append(errs, e.Code+" "+e.Msg)
+		}
+		return cols, items, errs
+	}
+	_, out, _ := runCLI("dump", f, "--data", off, "--format", "json", "--cols", "20", "--rows", "3")
+	cols, items, errs := summary(out)
+	// One untitled column: no header row (so no column node is laid out),
+	// the row at y 0 with one cell, no class hot.
+	sameLines(t, "pruned columns", cols, nil)
+	sameLines(t, "pruned row template", items, []string{"0:"})
+	sameLines(t, "pruned diagnostics", errs, nil)
+	if rows := gridRows(t, f, "--data", off, "--cols", "20", "--rows", "3"); rows[0] != "1" {
+		t.Errorf("grid %q, want the row first, with no header", rows)
+	}
+	_, out, _ = runCLI("dump", f, "--data", on, "--format", "json", "--cols", "20", "--rows", "3")
+	cols, items, errs = summary(out)
+	sameLines(t, "columns", cols, []string{"/1", "B/10"})
+	sameLines(t, "row template", items, []string{"1:hot"})
+	if len(errs) != 1 || !strings.HasPrefix(errs[0], `B003 bind path "r.gone" is missing`) {
+		t.Errorf("diagnostics %q", errs)
+	}
+	// The guard flips in play: the same frame shows the column, measured
+	// for its rows, and the row template.
+	code, out, errw := runCLI("play", f, "--data", off, "--input", "set:show=true", "--format", "json", "--cols", "20", "--rows", "3")
+	if code != 0 {
+		t.Fatalf("play: exit %d %s", code, errw)
+	}
+	cols, items, _ = summary(out)
+	sameLines(t, "after set:", cols, []string{"/1", "B/10"})
+	sameLines(t, "row template after set:", items, []string{"1:hot"})
+	code, out, errw = runCLI("play", f, "--data", on, "--input", "set:show=false", "--format", "json", "--cols", "20", "--rows", "3")
+	if code != 0 {
+		t.Fatalf("play: exit %d %s", code, errw)
+	}
+	cols, items, errs = summary(out)
+	sameLines(t, "after set:false", cols, nil)
+	sameLines(t, "row template after set:false", items, []string{"0:"})
+	sameLines(t, "diagnostics after set:false", errs, nil)
 }
