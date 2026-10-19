@@ -1,0 +1,1909 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="892" height="508" viewBox="0 0 892 508" role="img" aria-label="minesweeper: a solver clearing an intermediate board, flagging proven mines and opening safe cells until the board is cleared">
+<title>minesweeper: a solver clearing an intermediate board, flagging proven mines and opening safe cells until the board is cleared</title>
+<style>@keyframes ka0{0%{visibility:visible}29.214%{visibility:hidden}}.a0{animation:ka0 10.94s step-end infinite}@keyframes ka1{0%{visibility:visible}30.165%{visibility:hidden}31.115%{visibility:visible}}.a1{animation:ka1 10.94s step-end infinite}@keyframes ka2{0%{visibility:visible}6.399%{visibility:hidden}}.a2{animation:ka2 10.94s step-end infinite}@keyframes ka3{0%{visibility:visible}14.004%{visibility:hidden}}.a3{animation:ka3 10.94s step-end infinite}@keyframes ka4{0%{visibility:visible}14.954%{visibility:hidden}}.a4{animation:ka4 10.94s step-end infinite}@keyframes ka5{0%{visibility:visible}15.905%{visibility:hidden}}.a5{animation:ka5 10.94s step-end infinite}@keyframes ka6{0%{visibility:visible}9.25%{visibility:hidden}10.201%{visibility:visible}}.a6{animation:ka6 10.94s step-end infinite}@keyframes ka7{0%{visibility:visible}18.757%{visibility:hidden}19.707%{visibility:visible}}.a7{animation:ka7 10.94s step-end infinite}@keyframes ka8{0%{visibility:visible}17.806%{visibility:hidden}}.a8{animation:ka8 10.94s step-end infinite}@keyframes ka9{0%{visibility:visible}8.3%{visibility:hidden}9.25%{visibility:visible}}.a9{animation:ka9 10.94s step-end infinite}@keyframes ka10{0%{visibility:visible}27.313%{visibility:hidden}}.a10{animation:ka10 10.94s step-end infinite}@keyframes ka11{0%{visibility:visible}22.559%{visibility:hidden}23.51%{visibility:visible}}.a11{animation:ka11 10.94s step-end infinite}@keyframes ka12{0%{visibility:visible}23.51%{visibility:hidden}24.461%{visibility:visible}}.a12{animation:ka12 10.94s step-end infinite}@keyframes ka13{0%{visibility:visible}21.609%{visibility:hidden}}.a13{animation:ka13 10.94s step-end infinite}@keyframes ka14{0%{visibility:visible}19.707%{visibility:hidden}}.a14{animation:ka14 10.94s step-end infinite}@keyframes ka15{0%{visibility:visible}16.856%{visibility:hidden}17.806%{visibility:visible}}.a15{animation:ka15 10.94s step-end infinite}@keyframes ka16{0%{visibility:visible}20.658%{visibility:hidden}}.a16{animation:ka16 10.94s step-end infinite}@keyframes ka17{0%{visibility:visible}20.658%{visibility:hidden}26.362%{visibility:visible}27.313%{visibility:hidden}}.a17{animation:ka17 10.94s step-end infinite}@keyframes ka18{0%{visibility:visible}10.201%{visibility:hidden}11.152%{visibility:visible}}.a18{animation:ka18 10.94s step-end infinite}@keyframes ka19{0%{visibility:visible}24.461%{visibility:hidden}}.a19{animation:ka19 10.94s step-end infinite}@keyframes ka20{0%{visibility:visible}26.362%{visibility:hidden}}.a20{animation:ka20 10.94s step-end infinite}@keyframes ka21{0%{visibility:visible}31.115%{visibility:hidden}32.066%{visibility:visible}}.a21{animation:ka21 10.94s step-end infinite}@keyframes ka22{0%{visibility:visible}25.411%{visibility:hidden}26.362%{visibility:visible}}.a22{animation:ka22 10.94s step-end infinite}@keyframes ka23{0%{visibility:visible}38.72%{visibility:hidden}}.a23{animation:ka23 10.94s step-end infinite}@keyframes ka24{0%{visibility:visible}38.72%{visibility:hidden}40.622%{visibility:visible}41.572%{visibility:hidden}}.a24{animation:ka24 10.94s step-end infinite}@keyframes ka25{0%{visibility:visible}32.066%{visibility:hidden}33.016%{visibility:visible}}.a25{animation:ka25 10.94s step-end infinite}@keyframes ka26{0%{visibility:visible}28.263%{visibility:hidden}29.214%{visibility:visible}}.a26{animation:ka26 10.94s step-end infinite}@keyframes ka27{0%{visibility:visible}39.671%{visibility:hidden}}.a27{animation:ka27 10.94s step-end infinite}@keyframes ka28{0%{visibility:visible}40.622%{visibility:hidden}}.a28{animation:ka28 10.94s step-end infinite}@keyframes ka29{0%{visibility:visible}33.016%{visibility:hidden}33.967%{visibility:visible}}.a29{animation:ka29 10.94s step-end infinite}@keyframes ka30{0%{visibility:visible}41.572%{visibility:hidden}}.a30{animation:ka30 10.94s step-end infinite}@keyframes ka31{0%{visibility:visible}11.152%{visibility:hidden}12.102%{visibility:visible}}.a31{animation:ka31 10.94s step-end infinite}@keyframes ka32{0%{visibility:visible}12.102%{visibility:hidden}13.053%{visibility:visible}}.a32{animation:ka32 10.94s step-end infinite}@keyframes ka33{0%{visibility:visible}43.473%{visibility:hidden}}.a33{animation:ka33 10.94s step-end infinite}@keyframes ka34{0%{visibility:visible}44.424%{visibility:hidden}}.a34{animation:ka34 10.94s step-end infinite}@keyframes ka35{0%{visibility:visible}33.967%{visibility:hidden}34.918%{visibility:visible}}.a35{animation:ka35 10.94s step-end infinite}@keyframes ka36{0%{visibility:visible}48.227%{visibility:hidden}}.a36{animation:ka36 10.94s step-end infinite}@keyframes ka37{0%{visibility:visible}42.523%{visibility:hidden}43.473%{visibility:visible}}.a37{animation:ka37 10.94s step-end infinite}@keyframes ka38{0%{visibility:visible}8.3%{visibility:hidden}}.a38{animation:ka38 10.94s step-end infinite}@keyframes ka39{0%{visibility:visible}49.177%{visibility:hidden}}.a39{animation:ka39 10.94s step-end infinite}@keyframes ka40{0%{visibility:visible}34.918%{visibility:hidden}35.868%{visibility:visible}}.a40{animation:ka40 10.94s step-end infinite}@keyframes ka41{0%{visibility:visible}50.128%{visibility:hidden}}.a41{animation:ka41 10.94s step-end infinite}@keyframes ka42{0%{visibility:visible}13.053%{visibility:hidden}14.004%{visibility:visible}}.a42{animation:ka42 10.94s step-end infinite}@keyframes ka43{0%{visibility:visible}45.375%{visibility:hidden}46.325%{visibility:visible}}.a43{animation:ka43 10.94s step-end infinite}@keyframes ka44{0%{visibility:visible}35.868%{visibility:hidden}36.819%{visibility:visible}}.a44{animation:ka44 10.94s step-end infinite}@keyframes ka45{0%{visibility:visible}51.079%{visibility:hidden}}.a45{animation:ka45 10.94s step-end infinite}@keyframes ka46{0%{visibility:visible}52.029%{visibility:hidden}52.98%{visibility:visible}}.a46{animation:ka46 10.94s step-end infinite}@keyframes ka47{0%{visibility:visible}52.98%{visibility:hidden}}.a47{animation:ka47 10.94s step-end infinite}@keyframes ka48{0%{visibility:visible}46.325%{visibility:hidden}47.276%{visibility:visible}}.a48{animation:ka48 10.94s step-end infinite}@keyframes ka49{0%{visibility:visible}29.214%{visibility:hidden}75.795%{visibility:visible}76.746%{visibility:hidden}}.a49{animation:ka49 10.94s step-end infinite}@keyframes ka50{0%{visibility:visible}36.819%{visibility:hidden}37.77%{visibility:visible}}.a50{animation:ka50 10.94s step-end infinite}@keyframes ka51{0%{visibility:visible}37.77%{visibility:hidden}38.72%{visibility:visible}}.a51{animation:ka51 10.94s step-end infinite}@keyframes ka52{0%{visibility:visible}53.931%{visibility:hidden}}.a52{animation:ka52 10.94s step-end infinite}@keyframes ka53{0%{visibility:visible}54.881%{visibility:hidden}}.a53{animation:ka53 10.94s step-end infinite}@keyframes ka54{0%{visibility:visible}75.795%{visibility:hidden}}.a54{animation:ka54 10.94s step-end infinite}@keyframes ka55{0%{visibility:visible}74.845%{visibility:hidden}75.795%{visibility:visible}}.a55{animation:ka55 10.94s step-end infinite}@keyframes ka56{0%{visibility:visible}62.486%{visibility:hidden}}.a56{animation:ka56 10.94s step-end infinite}@keyframes ka57{0%{visibility:visible}58.684%{visibility:hidden}}.a57{animation:ka57 10.94s step-end infinite}@keyframes ka58{0%{visibility:visible}56.782%{visibility:hidden}57.733%{visibility:visible}}.a58{animation:ka58 10.94s step-end infinite}@keyframes ka59{0%{visibility:visible}57.733%{visibility:hidden}58.684%{visibility:visible}}.a59{animation:ka59 10.94s step-end infinite}@keyframes ka60{0%{visibility:visible}55.832%{visibility:hidden}}.a60{animation:ka60 10.94s step-end infinite}@keyframes ka61{0%{visibility:visible}59.634%{visibility:hidden}}.a61{animation:ka61 10.94s step-end infinite}@keyframes ka62{0%{visibility:visible}76.746%{visibility:hidden}77.697%{visibility:visible}}.a62{animation:ka62 10.94s step-end infinite}@keyframes ka63{0%{visibility:visible}73.894%{visibility:hidden}}.a63{animation:ka63 10.94s step-end infinite}@keyframes ka64{0%{visibility:visible}64.388%{visibility:hidden}65.338%{visibility:visible}}.a64{animation:ka64 10.94s step-end infinite}@keyframes ka65{0%{visibility:visible}65.338%{visibility:hidden}66.289%{visibility:visible}}.a65{animation:ka65 10.94s step-end infinite}@keyframes ka66{0%{visibility:visible}63.437%{visibility:hidden}}.a66{animation:ka66 10.94s step-end infinite}@keyframes ka67{0%{visibility:visible}60.585%{visibility:hidden}61.536%{visibility:visible}}.a67{animation:ka67 10.94s step-end infinite}@keyframes ka68{0%{visibility:visible}61.536%{visibility:hidden}62.486%{visibility:visible}}.a68{animation:ka68 10.94s step-end infinite}@keyframes ka69{0%{visibility:visible}47.276%{visibility:hidden}48.227%{visibility:visible}}.a69{animation:ka69 10.94s step-end infinite}@keyframes ka70{0%{visibility:visible}66.289%{visibility:hidden}}.a70{animation:ka70 10.94s step-end infinite}@keyframes ka71{0%{visibility:visible}66.289%{visibility:hidden}70.091%{visibility:visible}71.042%{visibility:hidden}}.a71{animation:ka71 10.94s step-end infinite}@keyframes ka72{0%{visibility:visible}77.697%{visibility:hidden}}.a72{animation:ka72 10.94s step-end infinite}@keyframes ka73{0%{visibility:visible}67.239%{visibility:hidden}}.a73{animation:ka73 10.94s step-end infinite}@keyframes ka74{0%{visibility:visible}68.19%{visibility:hidden}}.a74{animation:ka74 10.94s step-end infinite}@keyframes ka75{0%{visibility:visible}69.141%{visibility:hidden}}.a75{animation:ka75 10.94s step-end infinite}@keyframes ka76{0%{visibility:visible}80.548%{visibility:hidden}}.a76{animation:ka76 10.94s step-end infinite}@keyframes ka77{0%{visibility:visible}84.351%{visibility:hidden}85.302%{visibility:visible}}.a77{animation:ka77 10.94s step-end infinite}@keyframes ka78{0%{visibility:visible}83.4%{visibility:hidden}}.a78{animation:ka78 10.94s step-end infinite}@keyframes ka79{0%{visibility:visible}82.45%{visibility:hidden}83.4%{visibility:visible}}.a79{animation:ka79 10.94s step-end infinite}@keyframes ka80{0%{visibility:visible}81.499%{visibility:hidden}}.a80{animation:ka80 10.94s step-end infinite}@keyframes ka81{0%{visibility:visible}70.091%{visibility:hidden}}.a81{animation:ka81 10.94s step-end infinite}@keyframes ka82{0%{visibility:visible}78.647%{visibility:hidden}79.598%{visibility:visible}}.a82{animation:ka82 10.94s step-end infinite}@keyframes ka83{0%{visibility:visible}71.993%{visibility:hidden}72.943%{visibility:visible}}.a83{animation:ka83 10.94s step-end infinite}@keyframes ka84{0%{visibility:visible}71.042%{visibility:hidden}}.a84{animation:ka84 10.94s step-end infinite}@keyframes ka85{0%{visibility:visible}72.943%{visibility:hidden}73.894%{visibility:visible}}.a85{animation:ka85 10.94s step-end infinite}@keyframes ka86{0%{visibility:visible}79.598%{visibility:hidden}}.a86{animation:ka86 10.94s step-end infinite}@keyframes ka87{0%{visibility:visible}85.302%{visibility:hidden}}.a87{animation:ka87 10.94s step-end infinite}@keyframes ka88{0%{visibility:visible}86.252%{visibility:hidden}87.203%{visibility:visible}}.a88{animation:ka88 10.94s step-end infinite}@keyframes ka89{0%{visibility:visible}87.203%{visibility:hidden}}.a89{animation:ka89 10.94s step-end infinite}@keyframes ka90{0%{visibility:visible}30.165%{visibility:hidden}}.a90{animation:ka90 10.94s step-end infinite}@keyframes ka91{0%{visibility:visible}9.25%{visibility:hidden}}.a91{animation:ka91 10.94s step-end infinite}@keyframes ka92{0%{visibility:visible}18.757%{visibility:hidden}}.a92{animation:ka92 10.94s step-end infinite}@keyframes ka93{0%{visibility:visible}22.559%{visibility:hidden}}.a93{animation:ka93 10.94s step-end infinite}@keyframes ka94{0%{visibility:visible}23.51%{visibility:hidden}}.a94{animation:ka94 10.94s step-end infinite}@keyframes ka95{0%{visibility:visible}16.856%{visibility:hidden}}.a95{animation:ka95 10.94s step-end infinite}@keyframes ka96{0%{visibility:visible}10.201%{visibility:hidden}}.a96{animation:ka96 10.94s step-end infinite}@keyframes ka97{0%{visibility:visible}31.115%{visibility:hidden}}.a97{animation:ka97 10.94s step-end infinite}@keyframes ka98{0%{visibility:visible}25.411%{visibility:hidden}}.a98{animation:ka98 10.94s step-end infinite}@keyframes ka99{0%{visibility:visible}32.066%{visibility:hidden}}.a99{animation:ka99 10.94s step-end infinite}@keyframes ka100{0%{visibility:visible}28.263%{visibility:hidden}}.a100{animation:ka100 10.94s step-end infinite}@keyframes ka101{0%{visibility:visible}33.016%{visibility:hidden}}.a101{animation:ka101 10.94s step-end infinite}@keyframes ka102{0%{visibility:visible}11.152%{visibility:hidden}}.a102{animation:ka102 10.94s step-end infinite}@keyframes ka103{0%{visibility:visible}12.102%{visibility:hidden}}.a103{animation:ka103 10.94s step-end infinite}@keyframes ka104{0%{visibility:visible}33.967%{visibility:hidden}}.a104{animation:ka104 10.94s step-end infinite}@keyframes ka105{0%{visibility:visible}42.523%{visibility:hidden}}.a105{animation:ka105 10.94s step-end infinite}@keyframes ka106{0%{visibility:visible}34.918%{visibility:hidden}}.a106{animation:ka106 10.94s step-end infinite}@keyframes ka107{0%{visibility:visible}13.053%{visibility:hidden}}.a107{animation:ka107 10.94s step-end infinite}@keyframes ka108{0%{visibility:visible}45.375%{visibility:hidden}}.a108{animation:ka108 10.94s step-end infinite}@keyframes ka109{0%{visibility:visible}35.868%{visibility:hidden}}.a109{animation:ka109 10.94s step-end infinite}@keyframes ka110{0%{visibility:visible}52.029%{visibility:hidden}}.a110{animation:ka110 10.94s step-end infinite}@keyframes ka111{0%{visibility:visible}46.325%{visibility:hidden}}.a111{animation:ka111 10.94s step-end infinite}@keyframes ka112{0%{visibility:visible}36.819%{visibility:hidden}}.a112{animation:ka112 10.94s step-end infinite}@keyframes ka113{0%{visibility:visible}37.77%{visibility:hidden}}.a113{animation:ka113 10.94s step-end infinite}@keyframes ka114{0%{visibility:visible}74.845%{visibility:hidden}}.a114{animation:ka114 10.94s step-end infinite}@keyframes ka115{0%{visibility:visible}56.782%{visibility:hidden}}.a115{animation:ka115 10.94s step-end infinite}@keyframes ka116{0%{visibility:visible}57.733%{visibility:hidden}}.a116{animation:ka116 10.94s step-end infinite}@keyframes ka117{0%{visibility:visible}76.746%{visibility:hidden}}.a117{animation:ka117 10.94s step-end infinite}@keyframes ka118{0%{visibility:visible}64.388%{visibility:hidden}}.a118{animation:ka118 10.94s step-end infinite}@keyframes ka119{0%{visibility:visible}65.338%{visibility:hidden}}.a119{animation:ka119 10.94s step-end infinite}@keyframes ka120{0%{visibility:visible}60.585%{visibility:hidden}}.a120{animation:ka120 10.94s step-end infinite}@keyframes ka121{0%{visibility:visible}61.536%{visibility:hidden}}.a121{animation:ka121 10.94s step-end infinite}@keyframes ka122{0%{visibility:visible}47.276%{visibility:hidden}}.a122{animation:ka122 10.94s step-end infinite}@keyframes ka123{0%{visibility:visible}84.351%{visibility:hidden}}.a123{animation:ka123 10.94s step-end infinite}@keyframes ka124{0%{visibility:visible}82.45%{visibility:hidden}}.a124{animation:ka124 10.94s step-end infinite}@keyframes ka125{0%{visibility:visible}78.647%{visibility:hidden}}.a125{animation:ka125 10.94s step-end infinite}@keyframes ka126{0%{visibility:visible}71.993%{visibility:hidden}}.a126{animation:ka126 10.94s step-end infinite}@keyframes ka127{0%{visibility:visible}72.943%{visibility:hidden}}.a127{animation:ka127 10.94s step-end infinite}@keyframes ka128{0%{visibility:visible}86.252%{visibility:hidden}}.a128{animation:ka128 10.94s step-end infinite}@keyframes ka129{0%{visibility:visible}7.349%{visibility:hidden}}.a129{animation:ka129 10.94s step-end infinite}@keyframes ka130{0%{visibility:hidden}6.399%{visibility:visible}14.004%{visibility:hidden}14.954%{visibility:visible}15.905%{visibility:hidden}}.a130{animation:ka130 10.94s step-end infinite}@keyframes ka131{0%{visibility:hidden}6.399%{visibility:visible}17.806%{visibility:hidden}18.757%{visibility:visible}29.214%{visibility:hidden}}.a131{animation:ka131 10.94s step-end infinite}@keyframes ka132{0%{visibility:hidden}6.399%{visibility:visible}15.905%{visibility:hidden}20.658%{visibility:visible}21.609%{visibility:hidden}}.a132{animation:ka132 10.94s step-end infinite}@keyframes ka133{0%{visibility:hidden}6.399%{visibility:visible}19.707%{visibility:hidden}21.609%{visibility:visible}22.559%{visibility:hidden}}.a133{animation:ka133 10.94s step-end infinite}@keyframes ka134{0%{visibility:hidden}6.399%{visibility:visible}27.313%{visibility:hidden}}.a134{animation:ka134 10.94s step-end infinite}@keyframes ka135{0%{visibility:hidden}6.399%{visibility:visible}24.461%{visibility:hidden}38.72%{visibility:visible}39.671%{visibility:hidden}}.a135{animation:ka135 10.94s step-end infinite}@keyframes ka136{0%{visibility:hidden}6.399%{visibility:visible}39.671%{visibility:hidden}44.424%{visibility:visible}45.375%{visibility:hidden}}.a136{animation:ka136 10.94s step-end infinite}@keyframes ka137{0%{visibility:hidden}6.399%{visibility:visible}41.572%{visibility:hidden}}.a137{animation:ka137 10.94s step-end infinite}@keyframes ka138{0%{visibility:hidden}6.399%{visibility:visible}8.3%{visibility:hidden}}.a138{animation:ka138 10.94s step-end infinite}@keyframes ka139{0%{visibility:hidden}6.399%{visibility:visible}50.128%{visibility:hidden}}.a139{animation:ka139 10.94s step-end infinite}@keyframes ka140{0%{visibility:hidden}6.399%{visibility:visible}}.a140{animation:ka140 10.94s step-end infinite}@keyframes ka141{0%{visibility:hidden}6.399%{visibility:visible}14.004%{visibility:hidden}14.954%{visibility:visible}}.a141{animation:ka141 10.94s step-end infinite}@keyframes ka142{0%{visibility:hidden}6.399%{visibility:visible}17.806%{visibility:hidden}18.757%{visibility:visible}}.a142{animation:ka142 10.94s step-end infinite}@keyframes ka143{0%{visibility:hidden}6.399%{visibility:visible}19.707%{visibility:hidden}20.658%{visibility:visible}}.a143{animation:ka143 10.94s step-end infinite}@keyframes ka144{0%{visibility:hidden}6.399%{visibility:visible}24.461%{visibility:hidden}25.411%{visibility:visible}}.a144{animation:ka144 10.94s step-end infinite}@keyframes ka145{0%{visibility:hidden}6.399%{visibility:visible}87.203%{visibility:hidden}}.a145{animation:ka145 10.94s step-end infinite}@keyframes ka146{0%{visibility:hidden}6.399%{visibility:visible}27.313%{visibility:hidden}28.263%{visibility:visible}}.a146{animation:ka146 10.94s step-end infinite}@keyframes ka147{0%{visibility:hidden}6.399%{visibility:visible}39.671%{visibility:hidden}40.622%{visibility:visible}}.a147{animation:ka147 10.94s step-end infinite}@keyframes ka148{0%{visibility:hidden}6.399%{visibility:visible}41.572%{visibility:hidden}42.523%{visibility:visible}}.a148{animation:ka148 10.94s step-end infinite}@keyframes ka149{0%{visibility:hidden}6.399%{visibility:visible}43.473%{visibility:hidden}44.424%{visibility:visible}}.a149{animation:ka149 10.94s step-end infinite}@keyframes ka150{0%{visibility:hidden}6.399%{visibility:visible}49.177%{visibility:hidden}50.128%{visibility:visible}}.a150{animation:ka150 10.94s step-end infinite}@keyframes ka151{0%{visibility:hidden}6.399%{visibility:visible}52.98%{visibility:hidden}53.931%{visibility:visible}}.a151{animation:ka151 10.94s step-end infinite}@keyframes ka152{0%{visibility:hidden}7.349%{visibility:visible}8.3%{visibility:hidden}}.a152{animation:ka152 10.94s step-end infinite}@keyframes ka153{0%{visibility:hidden}7.349%{visibility:visible}}.a153{animation:ka153 10.94s step-end infinite}@keyframes ka154{0%{visibility:hidden}8.3%{visibility:visible}9.25%{visibility:hidden}}.a154{animation:ka154 10.94s step-end infinite}@keyframes ka155{0%{visibility:hidden}8.3%{visibility:visible}49.177%{visibility:hidden}}.a155{animation:ka155 10.94s step-end infinite}@keyframes ka156{0%{visibility:hidden}9.25%{visibility:visible}10.201%{visibility:hidden}}.a156{animation:ka156 10.94s step-end infinite}@keyframes ka157{0%{visibility:hidden}9.25%{visibility:visible}}.a157{animation:ka157 10.94s step-end infinite}@keyframes ka158{0%{visibility:hidden}10.201%{visibility:visible}11.152%{visibility:hidden}}.a158{animation:ka158 10.94s step-end infinite}@keyframes ka159{0%{visibility:hidden}10.201%{visibility:visible}}.a159{animation:ka159 10.94s step-end infinite}@keyframes ka160{0%{visibility:hidden}11.152%{visibility:visible}12.102%{visibility:hidden}}.a160{animation:ka160 10.94s step-end infinite}@keyframes ka161{0%{visibility:hidden}11.152%{visibility:visible}}.a161{animation:ka161 10.94s step-end infinite}@keyframes ka162{0%{visibility:hidden}12.102%{visibility:visible}13.053%{visibility:hidden}}.a162{animation:ka162 10.94s step-end infinite}@keyframes ka163{0%{visibility:hidden}12.102%{visibility:visible}}.a163{animation:ka163 10.94s step-end infinite}@keyframes ka164{0%{visibility:hidden}13.053%{visibility:visible}14.004%{visibility:hidden}}.a164{animation:ka164 10.94s step-end infinite}@keyframes ka165{0%{visibility:hidden}13.053%{visibility:visible}16.856%{visibility:hidden}}.a165{animation:ka165 10.94s step-end infinite}@keyframes ka166{0%{visibility:hidden}13.053%{visibility:visible}}.a166{animation:ka166 10.94s step-end infinite}@keyframes ka167{0%{visibility:hidden}14.004%{visibility:visible}14.954%{visibility:hidden}}.a167{animation:ka167 10.94s step-end infinite}@keyframes ka168{0%{visibility:hidden}14.004%{visibility:visible}14.954%{visibility:hidden}15.905%{visibility:visible}}.a168{animation:ka168 10.94s step-end infinite}@keyframes ka169{0%{visibility:hidden}14.004%{visibility:visible}}.a169{animation:ka169 10.94s step-end infinite}@keyframes ka170{0%{visibility:hidden}14.954%{visibility:visible}15.905%{visibility:hidden}}.a170{animation:ka170 10.94s step-end infinite}@keyframes ka171{0%{visibility:hidden}14.954%{visibility:visible}15.905%{visibility:hidden}16.856%{visibility:visible}}.a171{animation:ka171 10.94s step-end infinite}@keyframes ka172{0%{visibility:hidden}14.954%{visibility:visible}}.a172{animation:ka172 10.94s step-end infinite}@keyframes ka173{0%{visibility:hidden}15.905%{visibility:visible}16.856%{visibility:hidden}}.a173{animation:ka173 10.94s step-end infinite}@keyframes ka174{0%{visibility:hidden}15.905%{visibility:visible}}.a174{animation:ka174 10.94s step-end infinite}@keyframes ka175{0%{visibility:hidden}15.905%{visibility:visible}19.707%{visibility:hidden}21.609%{visibility:visible}}.a175{animation:ka175 10.94s step-end infinite}@keyframes ka176{0%{visibility:hidden}15.905%{visibility:visible}20.658%{visibility:hidden}21.609%{visibility:visible}}.a176{animation:ka176 10.94s step-end infinite}@keyframes ka177{0%{visibility:hidden}16.856%{visibility:visible}}.a177{animation:ka177 10.94s step-end infinite}@keyframes ka178{0%{visibility:hidden}16.856%{visibility:visible}17.806%{visibility:hidden}}.a178{animation:ka178 10.94s step-end infinite}@keyframes ka179{0%{visibility:hidden}16.856%{visibility:visible}18.757%{visibility:hidden}}.a179{animation:ka179 10.94s step-end infinite}@keyframes ka180{0%{visibility:hidden}17.806%{visibility:visible}18.757%{visibility:hidden}}.a180{animation:ka180 10.94s step-end infinite}@keyframes ka181{0%{visibility:hidden}17.806%{visibility:visible}}.a181{animation:ka181 10.94s step-end infinite}@keyframes ka182{0%{visibility:hidden}18.757%{visibility:visible}19.707%{visibility:hidden}}.a182{animation:ka182 10.94s step-end infinite}@keyframes ka183{0%{visibility:hidden}18.757%{visibility:visible}22.559%{visibility:hidden}}.a183{animation:ka183 10.94s step-end infinite}@keyframes ka184{0%{visibility:hidden}19.707%{visibility:visible}20.658%{visibility:hidden}}.a184{animation:ka184 10.94s step-end infinite}@keyframes ka185{0%{visibility:hidden}19.707%{visibility:visible}21.609%{visibility:hidden}}.a185{animation:ka185 10.94s step-end infinite}@keyframes ka186{0%{visibility:hidden}19.707%{visibility:visible}}.a186{animation:ka186 10.94s step-end infinite}@keyframes ka187{0%{visibility:hidden}19.707%{visibility:visible}21.609%{visibility:hidden}22.559%{visibility:visible}}.a187{animation:ka187 10.94s step-end infinite}@keyframes ka188{0%{visibility:hidden}20.658%{visibility:visible}21.609%{visibility:hidden}}.a188{animation:ka188 10.94s step-end infinite}@keyframes ka189{0%{visibility:hidden}20.658%{visibility:visible}26.362%{visibility:hidden}27.313%{visibility:visible}}.a189{animation:ka189 10.94s step-end infinite}@keyframes ka190{0%{visibility:hidden}21.609%{visibility:visible}22.559%{visibility:hidden}}.a190{animation:ka190 10.94s step-end infinite}@keyframes ka191{0%{visibility:hidden}21.609%{visibility:visible}}.a191{animation:ka191 10.94s step-end infinite}@keyframes ka192{0%{visibility:hidden}22.559%{visibility:visible}23.51%{visibility:hidden}}.a192{animation:ka192 10.94s step-end infinite}@keyframes ka193{0%{visibility:hidden}22.559%{visibility:visible}24.461%{visibility:hidden}25.411%{visibility:visible}}.a193{animation:ka193 10.94s step-end infinite}@keyframes ka194{0%{visibility:hidden}23.51%{visibility:visible}24.461%{visibility:hidden}}.a194{animation:ka194 10.94s step-end infinite}@keyframes ka195{0%{visibility:hidden}23.51%{visibility:visible}}.a195{animation:ka195 10.94s step-end infinite}@keyframes ka196{0%{visibility:hidden}23.51%{visibility:visible}25.411%{visibility:hidden}}.a196{animation:ka196 10.94s step-end infinite}@keyframes ka197{0%{visibility:hidden}24.461%{visibility:visible}25.411%{visibility:hidden}}.a197{animation:ka197 10.94s step-end infinite}@keyframes ka198{0%{visibility:hidden}24.461%{visibility:visible}26.362%{visibility:hidden}}.a198{animation:ka198 10.94s step-end infinite}@keyframes ka199{0%{visibility:hidden}24.461%{visibility:visible}}.a199{animation:ka199 10.94s step-end infinite}@keyframes ka200{0%{visibility:hidden}24.461%{visibility:visible}38.72%{visibility:hidden}39.671%{visibility:visible}}.a200{animation:ka200 10.94s step-end infinite}@keyframes ka201{0%{visibility:hidden}25.411%{visibility:visible}26.362%{visibility:hidden}}.a201{animation:ka201 10.94s step-end infinite}@keyframes ka202{0%{visibility:hidden}25.411%{visibility:visible}28.263%{visibility:hidden}}.a202{animation:ka202 10.94s step-end infinite}@keyframes ka203{0%{visibility:hidden}26.362%{visibility:visible}27.313%{visibility:hidden}}.a203{animation:ka203 10.94s step-end infinite}@keyframes ka204{0%{visibility:hidden}26.362%{visibility:visible}38.72%{visibility:hidden}39.671%{visibility:visible}}.a204{animation:ka204 10.94s step-end infinite}@keyframes ka205{0%{visibility:hidden}26.362%{visibility:visible}}.a205{animation:ka205 10.94s step-end infinite}@keyframes ka206{0%{visibility:hidden}27.313%{visibility:visible}29.214%{visibility:hidden}}.a206{animation:ka206 10.94s step-end infinite}@keyframes ka207{0%{visibility:hidden}27.313%{visibility:visible}28.263%{visibility:hidden}}.a207{animation:ka207 10.94s step-end infinite}@keyframes ka208{0%{visibility:hidden}27.313%{visibility:visible}39.671%{visibility:hidden}40.622%{visibility:visible}}.a208{animation:ka208 10.94s step-end infinite}@keyframes ka209{0%{visibility:hidden}27.313%{visibility:visible}29.214%{visibility:hidden}30.165%{visibility:visible}}.a209{animation:ka209 10.94s step-end infinite}@keyframes ka210{0%{visibility:hidden}27.313%{visibility:visible}}.a210{animation:ka210 10.94s step-end infinite}@keyframes ka211{0%{visibility:hidden}28.263%{visibility:visible}29.214%{visibility:hidden}}.a211{animation:ka211 10.94s step-end infinite}@keyframes ka212{0%{visibility:hidden}28.263%{visibility:visible}30.165%{visibility:hidden}}.a212{animation:ka212 10.94s step-end infinite}@keyframes ka213{0%{visibility:hidden}29.214%{visibility:visible}}.a213{animation:ka213 10.94s step-end infinite}@keyframes ka214{0%{visibility:hidden}29.214%{visibility:visible}30.165%{visibility:hidden}}.a214{animation:ka214 10.94s step-end infinite}@keyframes ka215{0%{visibility:hidden}29.214%{visibility:visible}48.227%{visibility:hidden}49.177%{visibility:visible}}.a215{animation:ka215 10.94s step-end infinite}@keyframes ka216{0%{visibility:hidden}29.214%{visibility:visible}75.795%{visibility:hidden}76.746%{visibility:visible}}.a216{animation:ka216 10.94s step-end infinite}@keyframes ka217{0%{visibility:hidden}30.165%{visibility:visible}31.115%{visibility:hidden}}.a217{animation:ka217 10.94s step-end infinite}@keyframes ka218{0%{visibility:hidden}30.165%{visibility:visible}}.a218{animation:ka218 10.94s step-end infinite}@keyframes ka219{0%{visibility:hidden}31.115%{visibility:visible}32.066%{visibility:hidden}}.a219{animation:ka219 10.94s step-end infinite}@keyframes ka220{0%{visibility:hidden}31.115%{visibility:visible}}.a220{animation:ka220 10.94s step-end infinite}@keyframes ka221{0%{visibility:hidden}32.066%{visibility:visible}33.016%{visibility:hidden}}.a221{animation:ka221 10.94s step-end infinite}@keyframes ka222{0%{visibility:hidden}32.066%{visibility:visible}}.a222{animation:ka222 10.94s step-end infinite}@keyframes ka223{0%{visibility:hidden}33.016%{visibility:visible}33.967%{visibility:hidden}}.a223{animation:ka223 10.94s step-end infinite}@keyframes ka224{0%{visibility:hidden}33.016%{visibility:visible}}.a224{animation:ka224 10.94s step-end infinite}@keyframes ka225{0%{visibility:hidden}33.967%{visibility:visible}34.918%{visibility:hidden}}.a225{animation:ka225 10.94s step-end infinite}@keyframes ka226{0%{visibility:hidden}33.967%{visibility:visible}}.a226{animation:ka226 10.94s step-end infinite}@keyframes ka227{0%{visibility:hidden}34.918%{visibility:visible}35.868%{visibility:hidden}}.a227{animation:ka227 10.94s step-end infinite}@keyframes ka228{0%{visibility:hidden}34.918%{visibility:visible}}.a228{animation:ka228 10.94s step-end infinite}@keyframes ka229{0%{visibility:hidden}35.868%{visibility:visible}36.819%{visibility:hidden}}.a229{animation:ka229 10.94s step-end infinite}@keyframes ka230{0%{visibility:hidden}35.868%{visibility:visible}}.a230{animation:ka230 10.94s step-end infinite}@keyframes ka231{0%{visibility:hidden}36.819%{visibility:visible}37.77%{visibility:hidden}}.a231{animation:ka231 10.94s step-end infinite}@keyframes ka232{0%{visibility:hidden}36.819%{visibility:visible}}.a232{animation:ka232 10.94s step-end infinite}@keyframes ka233{0%{visibility:hidden}37.77%{visibility:visible}38.72%{visibility:hidden}}.a233{animation:ka233 10.94s step-end infinite}@keyframes ka234{0%{visibility:hidden}37.77%{visibility:visible}42.523%{visibility:hidden}}.a234{animation:ka234 10.94s step-end infinite}@keyframes ka235{0%{visibility:hidden}37.77%{visibility:visible}}.a235{animation:ka235 10.94s step-end infinite}@keyframes ka236{0%{visibility:hidden}38.72%{visibility:visible}39.671%{visibility:hidden}}.a236{animation:ka236 10.94s step-end infinite}@keyframes ka237{0%{visibility:hidden}38.72%{visibility:visible}40.622%{visibility:hidden}41.572%{visibility:visible}}.a237{animation:ka237 10.94s step-end infinite}@keyframes ka238{0%{visibility:hidden}38.72%{visibility:visible}}.a238{animation:ka238 10.94s step-end infinite}@keyframes ka239{0%{visibility:hidden}39.671%{visibility:visible}40.622%{visibility:hidden}}.a239{animation:ka239 10.94s step-end infinite}@keyframes ka240{0%{visibility:hidden}39.671%{visibility:visible}44.424%{visibility:hidden}45.375%{visibility:visible}}.a240{animation:ka240 10.94s step-end infinite}@keyframes ka241{0%{visibility:hidden}40.622%{visibility:visible}41.572%{visibility:hidden}}.a241{animation:ka241 10.94s step-end infinite}@keyframes ka242{0%{visibility:hidden}40.622%{visibility:visible}41.572%{visibility:hidden}42.523%{visibility:visible}43.473%{visibility:hidden}45.375%{visibility:visible}}.a242{animation:ka242 10.94s step-end infinite}@keyframes ka243{0%{visibility:hidden}40.622%{visibility:visible}}.a243{animation:ka243 10.94s step-end infinite}@keyframes ka244{0%{visibility:hidden}41.572%{visibility:visible}42.523%{visibility:hidden}}.a244{animation:ka244 10.94s step-end infinite}@keyframes ka245{0%{visibility:hidden}41.572%{visibility:visible}49.177%{visibility:hidden}50.128%{visibility:visible}}.a245{animation:ka245 10.94s step-end infinite}@keyframes ka246{0%{visibility:hidden}41.572%{visibility:visible}}.a246{animation:ka246 10.94s step-end infinite}@keyframes ka247{0%{visibility:hidden}42.523%{visibility:visible}43.473%{visibility:hidden}}.a247{animation:ka247 10.94s step-end infinite}@keyframes ka248{0%{visibility:hidden}42.523%{visibility:visible}45.375%{visibility:hidden}}.a248{animation:ka248 10.94s step-end infinite}@keyframes ka249{0%{visibility:hidden}43.473%{visibility:visible}44.424%{visibility:hidden}}.a249{animation:ka249 10.94s step-end infinite}@keyframes ka250{0%{visibility:hidden}43.473%{visibility:visible}}.a250{animation:ka250 10.94s step-end infinite}@keyframes ka251{0%{visibility:hidden}44.424%{visibility:visible}45.375%{visibility:hidden}}.a251{animation:ka251 10.94s step-end infinite}@keyframes ka252{0%{visibility:hidden}44.424%{visibility:visible}}.a252{animation:ka252 10.94s step-end infinite}@keyframes ka253{0%{visibility:hidden}44.424%{visibility:visible}49.177%{visibility:hidden}}.a253{animation:ka253 10.94s step-end infinite}@keyframes ka254{0%{visibility:hidden}44.424%{visibility:visible}54.881%{visibility:hidden}}.a254{animation:ka254 10.94s step-end infinite}@keyframes ka255{0%{visibility:hidden}44.424%{visibility:visible}59.634%{visibility:hidden}}.a255{animation:ka255 10.94s step-end infinite}@keyframes ka256{0%{visibility:hidden}44.424%{visibility:visible}83.4%{visibility:hidden}84.351%{visibility:visible}}.a256{animation:ka256 10.94s step-end infinite}@keyframes ka257{0%{visibility:hidden}44.424%{visibility:visible}66.289%{visibility:hidden}67.239%{visibility:visible}}.a257{animation:ka257 10.94s step-end infinite}@keyframes ka258{0%{visibility:hidden}45.375%{visibility:visible}46.325%{visibility:hidden}}.a258{animation:ka258 10.94s step-end infinite}@keyframes ka259{0%{visibility:hidden}46.325%{visibility:visible}47.276%{visibility:hidden}}.a259{animation:ka259 10.94s step-end infinite}@keyframes ka260{0%{visibility:hidden}46.325%{visibility:visible}}.a260{animation:ka260 10.94s step-end infinite}@keyframes ka261{0%{visibility:hidden}47.276%{visibility:visible}48.227%{visibility:hidden}}.a261{animation:ka261 10.94s step-end infinite}@keyframes ka262{0%{visibility:hidden}47.276%{visibility:visible}52.029%{visibility:hidden}}.a262{animation:ka262 10.94s step-end infinite}@keyframes ka263{0%{visibility:hidden}47.276%{visibility:visible}}.a263{animation:ka263 10.94s step-end infinite}@keyframes ka264{0%{visibility:hidden}48.227%{visibility:visible}49.177%{visibility:hidden}}.a264{animation:ka264 10.94s step-end infinite}@keyframes ka265{0%{visibility:hidden}48.227%{visibility:visible}50.128%{visibility:hidden}51.079%{visibility:visible}}.a265{animation:ka265 10.94s step-end infinite}@keyframes ka266{0%{visibility:hidden}48.227%{visibility:visible}}.a266{animation:ka266 10.94s step-end infinite}@keyframes ka267{0%{visibility:hidden}49.177%{visibility:visible}50.128%{visibility:hidden}}.a267{animation:ka267 10.94s step-end infinite}@keyframes ka268{0%{visibility:hidden}49.177%{visibility:visible}}.a268{animation:ka268 10.94s step-end infinite}@keyframes ka269{0%{visibility:hidden}50.128%{visibility:visible}51.079%{visibility:hidden}}.a269{animation:ka269 10.94s step-end infinite}@keyframes ka270{0%{visibility:hidden}50.128%{visibility:visible}51.079%{visibility:hidden}52.029%{visibility:visible}52.98%{visibility:hidden}53.931%{visibility:visible}}.a270{animation:ka270 10.94s step-end infinite}@keyframes ka271{0%{visibility:hidden}50.128%{visibility:visible}51.079%{visibility:hidden}52.029%{visibility:visible}}.a271{animation:ka271 10.94s step-end infinite}@keyframes ka272{0%{visibility:hidden}50.128%{visibility:visible}}.a272{animation:ka272 10.94s step-end infinite}@keyframes ka273{0%{visibility:hidden}51.079%{visibility:visible}52.029%{visibility:hidden}}.a273{animation:ka273 10.94s step-end infinite}@keyframes ka274{0%{visibility:hidden}51.079%{visibility:visible}53.931%{visibility:hidden}54.881%{visibility:visible}}.a274{animation:ka274 10.94s step-end infinite}@keyframes ka275{0%{visibility:hidden}51.079%{visibility:visible}53.931%{visibility:hidden}59.634%{visibility:visible}60.585%{visibility:hidden}}.a275{animation:ka275 10.94s step-end infinite}@keyframes ka276{0%{visibility:hidden}51.079%{visibility:visible}}.a276{animation:ka276 10.94s step-end infinite}@keyframes ka277{0%{visibility:hidden}51.079%{visibility:visible}58.684%{visibility:hidden}59.634%{visibility:visible}}.a277{animation:ka277 10.94s step-end infinite}@keyframes ka278{0%{visibility:hidden}51.079%{visibility:visible}55.832%{visibility:hidden}56.782%{visibility:visible}}.a278{animation:ka278 10.94s step-end infinite}@keyframes ka279{0%{visibility:hidden}52.029%{visibility:visible}52.98%{visibility:hidden}}.a279{animation:ka279 10.94s step-end infinite}@keyframes ka280{0%{visibility:hidden}52.029%{visibility:visible}56.782%{visibility:hidden}}.a280{animation:ka280 10.94s step-end infinite}@keyframes ka281{0%{visibility:hidden}52.98%{visibility:visible}53.931%{visibility:hidden}}.a281{animation:ka281 10.94s step-end infinite}@keyframes ka282{0%{visibility:hidden}52.98%{visibility:visible}54.881%{visibility:hidden}55.832%{visibility:visible}}.a282{animation:ka282 10.94s step-end infinite}@keyframes ka283{0%{visibility:hidden}52.98%{visibility:visible}}.a283{animation:ka283 10.94s step-end infinite}@keyframes ka284{0%{visibility:hidden}53.931%{visibility:visible}54.881%{visibility:hidden}}.a284{animation:ka284 10.94s step-end infinite}@keyframes ka285{0%{visibility:hidden}53.931%{visibility:visible}59.634%{visibility:hidden}60.585%{visibility:visible}}.a285{animation:ka285 10.94s step-end infinite}@keyframes ka286{0%{visibility:hidden}54.881%{visibility:visible}55.832%{visibility:hidden}}.a286{animation:ka286 10.94s step-end infinite}@keyframes ka287{0%{visibility:hidden}54.881%{visibility:visible}55.832%{visibility:hidden}56.782%{visibility:visible}58.684%{visibility:hidden}60.585%{visibility:visible}}.a287{animation:ka287 10.94s step-end infinite}@keyframes ka288{0%{visibility:hidden}54.881%{visibility:visible}}.a288{animation:ka288 10.94s step-end infinite}@keyframes ka289{0%{visibility:hidden}55.832%{visibility:visible}56.782%{visibility:hidden}}.a289{animation:ka289 10.94s step-end infinite}@keyframes ka290{0%{visibility:hidden}55.832%{visibility:visible}59.634%{visibility:hidden}}.a290{animation:ka290 10.94s step-end infinite}@keyframes ka291{0%{visibility:hidden}55.832%{visibility:visible}}.a291{animation:ka291 10.94s step-end infinite}@keyframes ka292{0%{visibility:hidden}55.832%{visibility:visible}63.437%{visibility:hidden}64.388%{visibility:visible}}.a292{animation:ka292 10.94s step-end infinite}@keyframes ka293{0%{visibility:hidden}56.782%{visibility:visible}57.733%{visibility:hidden}}.a293{animation:ka293 10.94s step-end infinite}@keyframes ka294{0%{visibility:hidden}57.733%{visibility:visible}58.684%{visibility:hidden}}.a294{animation:ka294 10.94s step-end infinite}@keyframes ka295{0%{visibility:hidden}57.733%{visibility:visible}60.585%{visibility:hidden}}.a295{animation:ka295 10.94s step-end infinite}@keyframes ka296{0%{visibility:hidden}57.733%{visibility:visible}}.a296{animation:ka296 10.94s step-end infinite}@keyframes ka297{0%{visibility:hidden}58.684%{visibility:visible}59.634%{visibility:hidden}}.a297{animation:ka297 10.94s step-end infinite}@keyframes ka298{0%{visibility:hidden}58.684%{visibility:visible}62.486%{visibility:hidden}}.a298{animation:ka298 10.94s step-end infinite}@keyframes ka299{0%{visibility:hidden}58.684%{visibility:visible}62.486%{visibility:hidden}63.437%{visibility:visible}}.a299{animation:ka299 10.94s step-end infinite}@keyframes ka300{0%{visibility:hidden}58.684%{visibility:visible}}.a300{animation:ka300 10.94s step-end infinite}@keyframes ka301{0%{visibility:hidden}59.634%{visibility:visible}60.585%{visibility:hidden}}.a301{animation:ka301 10.94s step-end infinite}@keyframes ka302{0%{visibility:hidden}59.634%{visibility:visible}63.437%{visibility:hidden}64.388%{visibility:visible}66.289%{visibility:hidden}67.239%{visibility:visible}}.a302{animation:ka302 10.94s step-end infinite}@keyframes ka303{0%{visibility:hidden}59.634%{visibility:visible}}.a303{animation:ka303 10.94s step-end infinite}@keyframes ka304{0%{visibility:hidden}60.585%{visibility:visible}61.536%{visibility:hidden}}.a304{animation:ka304 10.94s step-end infinite}@keyframes ka305{0%{visibility:hidden}61.536%{visibility:visible}62.486%{visibility:hidden}}.a305{animation:ka305 10.94s step-end infinite}@keyframes ka306{0%{visibility:hidden}61.536%{visibility:visible}64.388%{visibility:hidden}}.a306{animation:ka306 10.94s step-end infinite}@keyframes ka307{0%{visibility:hidden}61.536%{visibility:visible}}.a307{animation:ka307 10.94s step-end infinite}@keyframes ka308{0%{visibility:hidden}62.486%{visibility:visible}63.437%{visibility:hidden}}.a308{animation:ka308 10.94s step-end infinite}@keyframes ka309{0%{visibility:hidden}62.486%{visibility:visible}67.239%{visibility:hidden}69.141%{visibility:visible}73.894%{visibility:hidden}77.697%{visibility:visible}78.647%{visibility:hidden}}.a309{animation:ka309 10.94s step-end infinite}@keyframes ka310{0%{visibility:hidden}62.486%{visibility:visible}}.a310{animation:ka310 10.94s step-end infinite}@keyframes ka311{0%{visibility:hidden}62.486%{visibility:visible}67.239%{visibility:hidden}68.19%{visibility:visible}}.a311{animation:ka311 10.94s step-end infinite}@keyframes ka312{0%{visibility:hidden}62.486%{visibility:visible}68.19%{visibility:hidden}69.141%{visibility:visible}}.a312{animation:ka312 10.94s step-end infinite}@keyframes ka313{0%{visibility:hidden}63.437%{visibility:visible}}.a313{animation:ka313 10.94s step-end infinite}@keyframes ka314{0%{visibility:hidden}63.437%{visibility:visible}64.388%{visibility:hidden}}.a314{animation:ka314 10.94s step-end infinite}@keyframes ka315{0%{visibility:hidden}63.437%{visibility:visible}69.141%{visibility:hidden}70.091%{visibility:visible}}.a315{animation:ka315 10.94s step-end infinite}@keyframes ka316{0%{visibility:hidden}64.388%{visibility:visible}65.338%{visibility:hidden}}.a316{animation:ka316 10.94s step-end infinite}@keyframes ka317{0%{visibility:hidden}65.338%{visibility:visible}66.289%{visibility:hidden}}.a317{animation:ka317 10.94s step-end infinite}@keyframes ka318{0%{visibility:hidden}65.338%{visibility:visible}71.993%{visibility:hidden}}.a318{animation:ka318 10.94s step-end infinite}@keyframes ka319{0%{visibility:hidden}65.338%{visibility:visible}}.a319{animation:ka319 10.94s step-end infinite}@keyframes ka320{0%{visibility:hidden}66.289%{visibility:visible}67.239%{visibility:hidden}}.a320{animation:ka320 10.94s step-end infinite}@keyframes ka321{0%{visibility:hidden}66.289%{visibility:visible}70.091%{visibility:hidden}71.042%{visibility:visible}}.a321{animation:ka321 10.94s step-end infinite}@keyframes ka322{0%{visibility:hidden}66.289%{visibility:visible}}.a322{animation:ka322 10.94s step-end infinite}@keyframes ka323{0%{visibility:hidden}67.239%{visibility:visible}68.19%{visibility:hidden}}.a323{animation:ka323 10.94s step-end infinite}@keyframes ka324{0%{visibility:hidden}67.239%{visibility:visible}68.19%{visibility:hidden}71.042%{visibility:visible}71.993%{visibility:hidden}}.a324{animation:ka324 10.94s step-end infinite}@keyframes ka325{0%{visibility:hidden}67.239%{visibility:visible}73.894%{visibility:hidden}74.845%{visibility:visible}}.a325{animation:ka325 10.94s step-end infinite}@keyframes ka326{0%{visibility:hidden}67.239%{visibility:visible}}.a326{animation:ka326 10.94s step-end infinite}@keyframes ka327{0%{visibility:hidden}68.19%{visibility:visible}69.141%{visibility:hidden}}.a327{animation:ka327 10.94s step-end infinite}@keyframes ka328{0%{visibility:hidden}68.19%{visibility:visible}71.042%{visibility:hidden}71.993%{visibility:visible}}.a328{animation:ka328 10.94s step-end infinite}@keyframes ka329{0%{visibility:hidden}69.141%{visibility:visible}70.091%{visibility:hidden}}.a329{animation:ka329 10.94s step-end infinite}@keyframes ka330{0%{visibility:hidden}69.141%{visibility:visible}71.042%{visibility:hidden}71.993%{visibility:visible}73.894%{visibility:hidden}}.a330{animation:ka330 10.94s step-end infinite}@keyframes ka331{0%{visibility:hidden}69.141%{visibility:visible}}.a331{animation:ka331 10.94s step-end infinite}@keyframes ka332{0%{visibility:hidden}69.141%{visibility:visible}79.598%{visibility:hidden}80.548%{visibility:visible}}.a332{animation:ka332 10.94s step-end infinite}@keyframes ka333{0%{visibility:hidden}69.141%{visibility:visible}80.548%{visibility:hidden}81.499%{visibility:visible}}.a333{animation:ka333 10.94s step-end infinite}@keyframes ka334{0%{visibility:hidden}70.091%{visibility:visible}71.042%{visibility:hidden}}.a334{animation:ka334 10.94s step-end infinite}@keyframes ka335{0%{visibility:hidden}70.091%{visibility:visible}81.499%{visibility:hidden}}.a335{animation:ka335 10.94s step-end infinite}@keyframes ka336{0%{visibility:hidden}70.091%{visibility:visible}81.499%{visibility:hidden}82.45%{visibility:visible}}.a336{animation:ka336 10.94s step-end infinite}@keyframes ka337{0%{visibility:hidden}70.091%{visibility:visible}}.a337{animation:ka337 10.94s step-end infinite}@keyframes ka338{0%{visibility:hidden}71.042%{visibility:visible}71.993%{visibility:hidden}}.a338{animation:ka338 10.94s step-end infinite}@keyframes ka339{0%{visibility:hidden}71.042%{visibility:visible}}.a339{animation:ka339 10.94s step-end infinite}@keyframes ka340{0%{visibility:hidden}71.993%{visibility:visible}72.943%{visibility:hidden}}.a340{animation:ka340 10.94s step-end infinite}@keyframes ka341{0%{visibility:hidden}72.943%{visibility:visible}73.894%{visibility:hidden}}.a341{animation:ka341 10.94s step-end infinite}@keyframes ka342{0%{visibility:hidden}72.943%{visibility:visible}74.845%{visibility:hidden}}.a342{animation:ka342 10.94s step-end infinite}@keyframes ka343{0%{visibility:hidden}72.943%{visibility:visible}}.a343{animation:ka343 10.94s step-end infinite}@keyframes ka344{0%{visibility:hidden}73.894%{visibility:visible}77.697%{visibility:hidden}78.647%{visibility:visible}}.a344{animation:ka344 10.94s step-end infinite}@keyframes ka345{0%{visibility:hidden}73.894%{visibility:visible}74.845%{visibility:hidden}}.a345{animation:ka345 10.94s step-end infinite}@keyframes ka346{0%{visibility:hidden}73.894%{visibility:visible}}.a346{animation:ka346 10.94s step-end infinite}@keyframes ka347{0%{visibility:hidden}74.845%{visibility:visible}75.795%{visibility:hidden}}.a347{animation:ka347 10.94s step-end infinite}@keyframes ka348{0%{visibility:hidden}74.845%{visibility:visible}77.697%{visibility:hidden}}.a348{animation:ka348 10.94s step-end infinite}@keyframes ka349{0%{visibility:hidden}74.845%{visibility:visible}76.746%{visibility:hidden}}.a349{animation:ka349 10.94s step-end infinite}@keyframes ka350{0%{visibility:hidden}75.795%{visibility:visible}76.746%{visibility:hidden}}.a350{animation:ka350 10.94s step-end infinite}@keyframes ka351{0%{visibility:hidden}75.795%{visibility:visible}}.a351{animation:ka351 10.94s step-end infinite}@keyframes ka352{0%{visibility:hidden}76.746%{visibility:visible}77.697%{visibility:hidden}}.a352{animation:ka352 10.94s step-end infinite}@keyframes ka353{0%{visibility:hidden}76.746%{visibility:visible}78.647%{visibility:hidden}}.a353{animation:ka353 10.94s step-end infinite}@keyframes ka354{0%{visibility:hidden}77.697%{visibility:visible}78.647%{visibility:hidden}}.a354{animation:ka354 10.94s step-end infinite}@keyframes ka355{0%{visibility:hidden}77.697%{visibility:visible}79.598%{visibility:hidden}85.302%{visibility:visible}86.252%{visibility:hidden}}.a355{animation:ka355 10.94s step-end infinite}@keyframes ka356{0%{visibility:hidden}77.697%{visibility:visible}}.a356{animation:ka356 10.94s step-end infinite}@keyframes ka357{0%{visibility:hidden}78.647%{visibility:visible}79.598%{visibility:hidden}}.a357{animation:ka357 10.94s step-end infinite}@keyframes ka358{0%{visibility:hidden}78.647%{visibility:visible}82.45%{visibility:hidden}}.a358{animation:ka358 10.94s step-end infinite}@keyframes ka359{0%{visibility:hidden}79.598%{visibility:visible}80.548%{visibility:hidden}}.a359{animation:ka359 10.94s step-end infinite}@keyframes ka360{0%{visibility:hidden}79.598%{visibility:visible}}.a360{animation:ka360 10.94s step-end infinite}@keyframes ka361{0%{visibility:hidden}80.548%{visibility:visible}81.499%{visibility:hidden}}.a361{animation:ka361 10.94s step-end infinite}@keyframes ka362{0%{visibility:hidden}80.548%{visibility:visible}85.302%{visibility:hidden}}.a362{animation:ka362 10.94s step-end infinite}@keyframes ka363{0%{visibility:hidden}80.548%{visibility:visible}85.302%{visibility:hidden}86.252%{visibility:visible}}.a363{animation:ka363 10.94s step-end infinite}@keyframes ka364{0%{visibility:hidden}80.548%{visibility:visible}}.a364{animation:ka364 10.94s step-end infinite}@keyframes ka365{0%{visibility:hidden}81.499%{visibility:visible}85.302%{visibility:hidden}86.252%{visibility:visible}}.a365{animation:ka365 10.94s step-end infinite}@keyframes ka366{0%{visibility:hidden}81.499%{visibility:visible}82.45%{visibility:hidden}}.a366{animation:ka366 10.94s step-end infinite}@keyframes ka367{0%{visibility:hidden}81.499%{visibility:visible}87.203%{visibility:hidden}}.a367{animation:ka367 10.94s step-end infinite}@keyframes ka368{0%{visibility:hidden}81.499%{visibility:visible}}.a368{animation:ka368 10.94s step-end infinite}@keyframes ka369{0%{visibility:hidden}82.45%{visibility:visible}83.4%{visibility:hidden}}.a369{animation:ka369 10.94s step-end infinite}@keyframes ka370{0%{visibility:hidden}82.45%{visibility:visible}}.a370{animation:ka370 10.94s step-end infinite}@keyframes ka371{0%{visibility:hidden}82.45%{visibility:visible}84.351%{visibility:hidden}}.a371{animation:ka371 10.94s step-end infinite}@keyframes ka372{0%{visibility:hidden}83.4%{visibility:visible}84.351%{visibility:hidden}}.a372{animation:ka372 10.94s step-end infinite}@keyframes ka373{0%{visibility:hidden}83.4%{visibility:visible}}.a373{animation:ka373 10.94s step-end infinite}@keyframes ka374{0%{visibility:hidden}84.351%{visibility:visible}85.302%{visibility:hidden}}.a374{animation:ka374 10.94s step-end infinite}@keyframes ka375{0%{visibility:hidden}84.351%{visibility:visible}86.252%{visibility:hidden}}.a375{animation:ka375 10.94s step-end infinite}@keyframes ka376{0%{visibility:hidden}85.302%{visibility:visible}86.252%{visibility:hidden}}.a376{animation:ka376 10.94s step-end infinite}@keyframes ka377{0%{visibility:hidden}85.302%{visibility:visible}}.a377{animation:ka377 10.94s step-end infinite}@keyframes ka378{0%{visibility:hidden}86.252%{visibility:visible}87.203%{visibility:hidden}}.a378{animation:ka378 10.94s step-end infinite}@keyframes ka379{0%{visibility:hidden}86.252%{visibility:visible}}.a379{animation:ka379 10.94s step-end infinite}@keyframes ka380{0%{visibility:hidden}87.203%{visibility:visible}}.a380{animation:ka380 10.94s step-end infinite}@media (prefers-reduced-motion:reduce){.a{animation:none}}</style>
+<rect width="892" height="508" rx="6" fill="#fbfbfa"/>
+<path fill="#eef1f4" d="M13.5 14h865v20h-865zM13.5 474h865v20h-865z"/>
+<path fill="#f6f8fa" d="M138.3 74h327.4v20h-327.4zM138.3 354h10.6v20h-10.6zM138.3 394h10.6v20h-10.6zM138.3 414h327.4v20h-327.4z"/>
+<g class="a a0" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 94h10.6v20h-10.6zM138.3 114h10.6v20h-10.6zM138.3 134h10.6v20h-10.6zM138.3 154h10.6v20h-10.6zM138.3 174h10.6v20h-10.6zM138.3 194h10.6v20h-10.6zM138.3 214h10.6v20h-10.6zM138.3 234h10.6v20h-10.6zM138.3 254h10.6v20h-10.6zM138.3 274h10.6v20h-10.6zM138.3 294h10.6v20h-10.6z"/>
+<path fill="#bcc6d2" d="M147.9 94h20.2v20h-20.2zM186.3 94h20.2v20h-20.2zM224.7 94h20.2v20h-20.2zM167.1 114h20.2v20h-20.2zM205.5 114h20.2v20h-20.2zM243.9 114h20.2v20h-20.2zM147.9 134h20.2v20h-20.2zM186.3 134h20.2v20h-20.2zM224.7 134h20.2v20h-20.2zM167.1 154h20.2v20h-20.2zM205.5 154h20.2v20h-20.2zM147.9 174h20.2v20h-20.2zM186.3 174h20.2v20h-20.2zM224.7 174h20.2v20h-20.2zM167.1 194h20.2v20h-20.2zM205.5 194h20.2v20h-20.2zM147.9 214h20.2v20h-20.2zM186.3 214h20.2v20h-20.2zM167.1 234h20.2v20h-20.2zM205.5 234h20.2v20h-20.2zM147.9 254h20.2v20h-20.2zM186.3 254h20.2v20h-20.2zM167.1 274h20.2v20h-20.2zM147.9 294h20.2v20h-20.2zM186.3 294h20.2v20h-20.2zM167.1 314h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M167.1 94h20.2v20h-20.2zM205.5 94h20.2v20h-20.2zM147.9 114h20.2v20h-20.2zM186.3 114h20.2v20h-20.2zM224.7 114h20.2v20h-20.2zM167.1 134h20.2v20h-20.2zM205.5 134h20.2v20h-20.2zM243.9 134h20.2v20h-20.2zM147.9 154h20.2v20h-20.2zM186.3 154h20.2v20h-20.2zM224.7 154h20.2v20h-20.2zM167.1 174h20.2v20h-20.2zM205.5 174h20.2v20h-20.2zM147.9 194h20.2v20h-20.2zM186.3 194h20.2v20h-20.2zM167.1 214h20.2v20h-20.2zM205.5 214h20.2v20h-20.2zM147.9 234h20.2v20h-20.2zM186.3 234h20.2v20h-20.2zM167.1 254h20.2v20h-20.2zM147.9 274h20.2v20h-20.2zM186.3 274h20.2v20h-20.2zM167.1 294h20.2v20h-20.2zM147.9 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a1">
+<path fill="#d6dde6" d="M243.9 94h20.2v20h-20.2z"/>
+</g>
+<g class="a a2" visibility="hidden">
+<path fill="#bcc6d2" d="M263.1 94h20.2v20h-20.2zM301.5 94h20.2v20h-20.2zM339.9 94h20.2v20h-20.2zM378.3 94h20.2v20h-20.2zM282.3 114h20.2v20h-20.2zM320.7 114h20.2v20h-20.2zM359.1 114h20.2v20h-20.2zM339.9 134h20.2v20h-20.2zM378.3 134h20.2v20h-20.2zM359.1 154h20.2v20h-20.2zM397.5 154h20.2v20h-20.2zM263.1 174h20.2v20h-20.2zM301.5 174h20.2v20h-20.2zM339.9 174h20.2v20h-20.2zM378.3 174h20.2v20h-20.2zM282.3 194h20.2v20h-20.2zM320.7 194h20.2v20h-20.2zM359.1 194h20.2v20h-20.2zM397.5 194h20.2v20h-20.2zM263.1 214h20.2v20h-20.2zM301.5 214h20.2v20h-20.2zM339.9 214h20.2v20h-20.2zM378.3 214h20.2v20h-20.2zM282.3 234h20.2v20h-20.2zM320.7 234h20.2v20h-20.2zM359.1 234h20.2v20h-20.2zM263.1 254h20.2v20h-20.2zM339.9 254h20.2v20h-20.2zM282.3 274h20.2v20h-20.2zM320.7 274h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M282.3 94h20.2v20h-20.2zM320.7 94h20.2v20h-20.2zM359.1 94h20.2v20h-20.2zM263.1 114h20.2v20h-20.2zM301.5 114h20.2v20h-20.2zM339.9 114h20.2v20h-20.2zM378.3 114h20.2v20h-20.2zM359.1 134h20.2v20h-20.2zM397.5 134h20.2v20h-20.2zM339.9 154h20.2v20h-20.2zM378.3 154h20.2v20h-20.2zM282.3 174h20.2v20h-20.2zM359.1 174h20.2v20h-20.2zM397.5 174h20.2v20h-20.2zM263.1 194h20.2v20h-20.2zM301.5 194h20.2v20h-20.2zM339.9 194h20.2v20h-20.2zM378.3 194h20.2v20h-20.2zM282.3 214h20.2v20h-20.2zM320.7 214h20.2v20h-20.2zM359.1 214h20.2v20h-20.2zM397.5 214h20.2v20h-20.2zM263.1 234h20.2v20h-20.2zM301.5 234h20.2v20h-20.2zM339.9 234h20.2v20h-20.2zM282.3 254h20.2v20h-20.2zM320.7 254h20.2v20h-20.2zM359.1 254h20.2v20h-20.2zM263.1 274h20.2v20h-20.2zM301.5 274h20.2v20h-20.2zM339.9 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a3" visibility="hidden">
+<path fill="#d6dde6" d="M397.5 94h20.2v20h-20.2z"/>
+</g>
+<g class="a a4" visibility="hidden">
+<path fill="#bcc6d2" d="M416.7 94h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M416.7 114h20.2v20h-20.2z"/>
+</g>
+<g class="a a5" visibility="hidden">
+<path fill="#d6dde6" d="M435.9 94h20.2v20h-20.2zM435.9 134h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M455.1 94h10.6v20h-10.6zM455.1 114h10.6v20h-10.6zM455.1 134h10.6v20h-10.6z"/>
+<path fill="#bcc6d2" d="M435.9 114h20.2v20h-20.2zM416.7 134h20.2v20h-20.2z"/>
+</g>
+<g class="a a6">
+<path fill="#bcc6d2" d="M397.5 114h20.2v20h-20.2z"/>
+</g>
+<g class="a a7">
+<path fill="#bcc6d2" d="M263.1 134h20.2v20h-20.2z"/>
+</g>
+<g class="a a8" visibility="hidden">
+<path fill="#d6dde6" d="M282.3 134h20.2v20h-20.2z"/>
+<path fill="#bcc6d2" d="M301.5 134h20.2v20h-20.2z"/>
+</g>
+<g class="a a9">
+<path fill="#d6dde6" d="M320.7 134h20.2v20h-20.2z"/>
+</g>
+<g class="a a10" visibility="hidden">
+<path fill="#bcc6d2" d="M243.9 154h20.2v20h-20.2zM243.9 194h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M243.9 174h20.2v20h-20.2z"/>
+</g>
+<g class="a a11">
+<path fill="#d6dde6" d="M263.1 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a12">
+<path fill="#bcc6d2" d="M282.3 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a13" visibility="hidden">
+<path fill="#d6dde6" d="M301.5 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a14" visibility="hidden">
+<path fill="#bcc6d2" d="M320.7 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a15">
+<path fill="#d6dde6" d="M416.7 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a16" visibility="hidden">
+<path fill="#bcc6d2" d="M435.9 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a17" visibility="hidden">
+<path fill="#f6f8fa" d="M455.1 154h10.6v20h-10.6z"/>
+</g>
+<g class="a a18">
+<path fill="#d6dde6" d="M320.7 174h20.2v20h-20.2z"/>
+</g>
+<g class="a a19" visibility="hidden">
+<path fill="#bcc6d2" d="M416.7 174h20.2v20h-20.2z"/>
+</g>
+<g class="a a20" visibility="hidden">
+<path fill="#d6dde6" d="M435.9 174h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M455.1 174h10.6v20h-10.6z"/>
+</g>
+<g class="a a21">
+<path fill="#d6dde6" d="M224.7 194h20.2v20h-20.2z"/>
+</g>
+<g class="a a22">
+<path fill="#d6dde6" d="M416.7 194h20.2v20h-20.2z"/>
+</g>
+<g class="a a23" visibility="hidden">
+<path fill="#bcc6d2" d="M435.9 194h20.2v20h-20.2z"/>
+</g>
+<g class="a a24" visibility="hidden">
+<path fill="#f6f8fa" d="M455.1 194h10.6v20h-10.6z"/>
+</g>
+<g class="a a25">
+<path fill="#bcc6d2" d="M224.7 214h20.2v20h-20.2z"/>
+</g>
+<g class="a a26">
+<path fill="#d6dde6" d="M243.9 214h20.2v20h-20.2z"/>
+</g>
+<g class="a a27" visibility="hidden">
+<path fill="#bcc6d2" d="M416.7 214h20.2v20h-20.2z"/>
+</g>
+<g class="a a28" visibility="hidden">
+<path fill="#d6dde6" d="M435.9 214h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M455.1 214h10.6v20h-10.6z"/>
+</g>
+<g class="a a29">
+<path fill="#d6dde6" d="M224.7 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a30" visibility="hidden">
+<path fill="#bcc6d2" d="M243.9 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a31">
+<path fill="#d6dde6" d="M378.3 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a32">
+<path fill="#bcc6d2" d="M397.5 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a33" visibility="hidden">
+<path fill="#d6dde6" d="M416.7 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a34" visibility="hidden">
+<path fill="#bcc6d2" d="M435.9 234h20.2v20h-20.2zM416.7 254h20.2v20h-20.2zM397.5 274h20.2v20h-20.2zM435.9 274h20.2v20h-20.2zM378.3 294h20.2v20h-20.2zM416.7 294h20.2v20h-20.2zM359.1 314h20.2v20h-20.2zM397.5 314h20.2v20h-20.2zM435.9 314h20.2v20h-20.2zM339.9 334h20.2v20h-20.2zM378.3 334h20.2v20h-20.2zM416.7 334h20.2v20h-20.2zM359.1 354h20.2v20h-20.2zM397.5 354h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M455.1 234h10.6v20h-10.6zM455.1 254h10.6v20h-10.6zM455.1 274h10.6v20h-10.6zM455.1 294h10.6v20h-10.6zM455.1 314h10.6v20h-10.6zM455.1 334h10.6v20h-10.6z"/>
+<path fill="#d6dde6" d="M397.5 254h20.2v20h-20.2zM435.9 254h20.2v20h-20.2zM416.7 274h20.2v20h-20.2zM359.1 294h20.2v20h-20.2zM397.5 294h20.2v20h-20.2zM435.9 294h20.2v20h-20.2zM339.9 314h20.2v20h-20.2zM378.3 314h20.2v20h-20.2zM416.7 314h20.2v20h-20.2zM359.1 334h20.2v20h-20.2zM397.5 334h20.2v20h-20.2zM435.9 334h20.2v20h-20.2zM339.9 354h20.2v20h-20.2zM378.3 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a35">
+<path fill="#d6dde6" d="M205.5 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a36" visibility="hidden">
+<path fill="#bcc6d2" d="M224.7 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a37">
+<path fill="#d6dde6" d="M243.9 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a38" visibility="hidden">
+<path fill="#0b64c0" d="M301.5 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a39" visibility="hidden">
+<path fill="#bcc6d2" d="M378.3 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a40">
+<path fill="#bcc6d2" d="M205.5 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a41" visibility="hidden">
+<path fill="#d6dde6" d="M224.7 274h20.2v20h-20.2z"/>
+<path fill="#bcc6d2" d="M243.9 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a42">
+<path fill="#bcc6d2" d="M359.1 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a43">
+<path fill="#d6dde6" d="M378.3 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a44">
+<path fill="#d6dde6" d="M205.5 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a45" visibility="hidden">
+<path fill="#bcc6d2" d="M224.7 294h20.2v20h-20.2zM263.1 294h20.2v20h-20.2zM243.9 314h20.2v20h-20.2zM282.3 314h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M243.9 294h20.2v20h-20.2zM282.3 294h20.2v20h-20.2zM224.7 314h20.2v20h-20.2zM263.1 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a46">
+<path fill="#bcc6d2" d="M301.5 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a47" visibility="hidden">
+<path fill="#d6dde6" d="M320.7 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a48">
+<path fill="#bcc6d2" d="M339.9 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a49" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 314h10.6v20h-10.6z"/>
+</g>
+<g class="a a50">
+<path fill="#d6dde6" d="M186.3 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a51">
+<path fill="#bcc6d2" d="M205.5 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a52" visibility="hidden">
+<path fill="#d6dde6" d="M301.5 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a53" visibility="hidden">
+<path fill="#bcc6d2" d="M320.7 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a54" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 334h10.6v20h-10.6z"/>
+<path fill="#bcc6d2" d="M147.9 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a55">
+<path fill="#d6dde6" d="M167.1 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a56" visibility="hidden">
+<path fill="#bcc6d2" d="M186.3 334h20.2v20h-20.2zM205.5 354h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M186.3 354h20.2v20h-20.2zM224.7 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a57" visibility="hidden">
+<path fill="#d6dde6" d="M205.5 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a58">
+<path fill="#bcc6d2" d="M224.7 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a59">
+<path fill="#d6dde6" d="M243.9 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a60" visibility="hidden">
+<path fill="#bcc6d2" d="M263.1 334h20.2v20h-20.2zM301.5 334h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M282.3 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a61" visibility="hidden">
+<path fill="#d6dde6" d="M320.7 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a62">
+<path fill="#d6dde6" d="M147.9 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a63" visibility="hidden">
+<path fill="#bcc6d2" d="M167.1 354h20.2v20h-20.2zM167.1 394h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M167.1 374h20.2v20h-20.2zM186.3 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a64">
+<path fill="#bcc6d2" d="M243.9 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a65">
+<path fill="#d6dde6" d="M263.1 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a66" visibility="hidden">
+<path fill="#bcc6d2" d="M282.3 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a67">
+<path fill="#d6dde6" d="M301.5 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a68">
+<path fill="#bcc6d2" d="M320.7 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a69">
+<path fill="#d6dde6" d="M416.7 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a70" visibility="hidden">
+<path fill="#bcc6d2" d="M435.9 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a71" visibility="hidden">
+<path fill="#f6f8fa" d="M455.1 354h10.6v20h-10.6z"/>
+</g>
+<g class="a a72" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 374h10.6v20h-10.6z"/>
+<path fill="#bcc6d2" d="M147.9 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a73" visibility="hidden">
+<path fill="#bcc6d2" d="M186.3 374h20.2v20h-20.2zM224.7 374h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M205.5 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a74" visibility="hidden">
+<path fill="#d6dde6" d="M243.9 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a75" visibility="hidden">
+<path fill="#bcc6d2" d="M263.1 374h20.2v20h-20.2zM301.5 374h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M282.3 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a76" visibility="hidden">
+<path fill="#d6dde6" d="M320.7 374h20.2v20h-20.2z"/>
+<path fill="#bcc6d2" d="M320.7 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a77">
+<path fill="#bcc6d2" d="M339.9 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a78" visibility="hidden">
+<path fill="#d6dde6" d="M359.1 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a79">
+<path fill="#bcc6d2" d="M378.3 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a80" visibility="hidden">
+<path fill="#d6dde6" d="M397.5 374h20.2v20h-20.2zM416.7 394h20.2v20h-20.2z"/>
+<path fill="#bcc6d2" d="M397.5 394h20.2v20h-20.2zM435.9 394h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M455.1 394h10.6v20h-10.6z"/>
+</g>
+<g class="a a81" visibility="hidden">
+<path fill="#bcc6d2" d="M416.7 374h20.2v20h-20.2z"/>
+<path fill="#d6dde6" d="M435.9 374h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M455.1 374h10.6v20h-10.6z"/>
+</g>
+<g class="a a82">
+<path fill="#d6dde6" d="M147.9 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a83">
+<path fill="#bcc6d2" d="M205.5 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a84" visibility="hidden">
+<path fill="#d6dde6" d="M224.7 394h20.2v20h-20.2zM263.1 394h20.2v20h-20.2z"/>
+<path fill="#bcc6d2" d="M243.9 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a85">
+<path fill="#bcc6d2" d="M282.3 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a86" visibility="hidden">
+<path fill="#d6dde6" d="M301.5 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a87" visibility="hidden">
+<path fill="#d6dde6" d="M339.9 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a88">
+<path fill="#bcc6d2" d="M359.1 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a89" visibility="hidden">
+<path fill="#d6dde6" d="M378.3 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a130" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 94h135.4v20h-135.4z"/>
+</g>
+<g class="a a131" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 114h135.4v20h-135.4z"/>
+</g>
+<g class="a a132" visibility="hidden">
+<path fill="#f6f8fa" d="M339.9 134h77.8v20h-77.8z"/>
+</g>
+<g class="a a133" visibility="hidden">
+<path fill="#f6f8fa" d="M339.9 154h77.8v20h-77.8z"/>
+</g>
+<g class="a a134" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 174h58.6v20h-58.6zM263.1 194h154.6v20h-154.6z"/>
+</g>
+<g class="a a135" visibility="hidden">
+<path fill="#f6f8fa" d="M339.9 174h77.8v20h-77.8z"/>
+</g>
+<g class="a a136" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 214h154.6v20h-154.6z"/>
+</g>
+<g class="a a137" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 234h116.2v20h-116.2z"/>
+</g>
+<g class="a a138" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 254h39.4v20h-39.4zM320.7 254h58.6v20h-58.6z"/>
+</g>
+<g class="a a139" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 274h97v20h-97z"/>
+</g>
+<g class="a a154" visibility="hidden">
+<path fill="#0b64c0" d="M320.7 134h20.2v20h-20.2z"/>
+</g>
+<g class="a a155" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 254h116.2v20h-116.2z"/>
+</g>
+<g class="a a156" visibility="hidden">
+<path fill="#0b64c0" d="M397.5 114h20.2v20h-20.2z"/>
+</g>
+<g class="a a158" visibility="hidden">
+<path fill="#0b64c0" d="M320.7 174h20.2v20h-20.2z"/>
+</g>
+<g class="a a160" visibility="hidden">
+<path fill="#0b64c0" d="M378.3 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a162" visibility="hidden">
+<path fill="#0b64c0" d="M397.5 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a164" visibility="hidden">
+<path fill="#0b64c0" d="M359.1 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a167" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 94h116.2v20h-116.2zM397.5 94h20.2v20h-20.2z"/>
+<path fill="#0b64c0" d="M378.3 94h20.2v20h-20.2z"/>
+</g>
+<g class="a a170" visibility="hidden">
+<path fill="#0b64c0" d="M397.5 94h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M416.7 94h20.2v20h-20.2zM416.7 114h20.2v20h-20.2z"/>
+</g>
+<g class="a a173" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 94h154.6v20h-154.6zM435.9 94h29.8v20h-29.8z"/>
+<path fill="#0b64c0" d="M416.7 94h20.2v20h-20.2z"/>
+</g>
+<g class="a a174">
+<path fill="#f6f8fa" d="M416.7 114h49v20h-49z"/>
+</g>
+<g class="a a175">
+<path fill="#f6f8fa" d="M339.9 134h125.8v20h-125.8z"/>
+</g>
+<g class="a a177">
+<path fill="#f6f8fa" d="M263.1 94h202.6v20h-202.6z"/>
+</g>
+<g class="a a178" visibility="hidden">
+<path fill="#0b64c0" d="M416.7 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a180" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 114h39.4v20h-39.4zM320.7 114h77.8v20h-77.8z"/>
+<path fill="#0b64c0" d="M301.5 114h20.2v20h-20.2z"/>
+</g>
+<g class="a a181">
+<path fill="#f6f8fa" d="M282.3 134h39.4v20h-39.4z"/>
+</g>
+<g class="a a182" visibility="hidden">
+<path fill="#0b64c0" d="M263.1 134h20.2v20h-20.2z"/>
+</g>
+<g class="a a184" visibility="hidden">
+<path fill="#0b64c0" d="M339.9 134h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M359.1 134h106.6v20h-106.6z"/>
+</g>
+<g class="a a185" visibility="hidden">
+<path fill="#f6f8fa" d="M320.7 154h97v20h-97z"/>
+</g>
+<g class="a a188" visibility="hidden">
+<path fill="#0b64c0" d="M416.7 134h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M435.9 134h29.8v20h-29.8z"/>
+</g>
+<g class="a a189">
+<path fill="#f6f8fa" d="M435.9 154h29.8v20h-29.8z"/>
+</g>
+<g class="a a190" visibility="hidden">
+<path fill="#f6f8fa" d="M301.5 154h20.2v20h-20.2z"/>
+<path fill="#0b64c0" d="M320.7 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a192" visibility="hidden">
+<path fill="#0b64c0" d="M263.1 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a193">
+<path fill="#f6f8fa" d="M301.5 154h116.2v20h-116.2z"/>
+</g>
+<g class="a a194" visibility="hidden">
+<path fill="#0b64c0" d="M282.3 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a197" visibility="hidden">
+<path fill="#f6f8fa" d="M301.5 154h97v20h-97z"/>
+<path fill="#0b64c0" d="M397.5 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a198" visibility="hidden">
+<path fill="#f6f8fa" d="M339.9 174h97v20h-97z"/>
+</g>
+<g class="a a201" visibility="hidden">
+<path fill="#0b64c0" d="M416.7 194h20.2v20h-20.2z"/>
+</g>
+<g class="a a203" visibility="hidden">
+<path fill="#0b64c0" d="M435.9 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a204">
+<path fill="#f6f8fa" d="M339.9 174h125.8v20h-125.8z"/>
+</g>
+<g class="a a206" visibility="hidden">
+<path fill="#f6f8fa" d="M243.9 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a207" visibility="hidden">
+<path fill="#f6f8fa" d="M243.9 174h20.2v20h-20.2zM282.3 174h39.4v20h-39.4z"/>
+<path fill="#0b64c0" d="M263.1 174h20.2v20h-20.2z"/>
+</g>
+<g class="a a208">
+<path fill="#f6f8fa" d="M243.9 194h173.8v20h-173.8z"/>
+</g>
+<g class="a a211" visibility="hidden">
+<path fill="#f6f8fa" d="M243.9 174h77.8v20h-77.8z"/>
+<path fill="#0b64c0" d="M243.9 214h20.2v20h-20.2z"/>
+</g>
+<g class="a a213">
+<path fill="#f6f8fa" d="M138.3 94h106.6v20h-106.6zM138.3 114h260.2v20h-260.2zM138.3 134h125.8v20h-125.8zM138.3 174h183.4v20h-183.4zM138.3 194h87.4v20h-87.4zM138.3 214h87.4v20h-87.4zM138.3 254h68.2v20h-68.2zM138.3 274h68.2v20h-68.2zM138.3 294h68.2v20h-68.2z"/>
+</g>
+<g class="a a214" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 154h106.6v20h-106.6z"/>
+<path fill="#0b64c0" d="M243.9 154h20.2v20h-20.2z"/>
+</g>
+<g class="a a215">
+<path fill="#f6f8fa" d="M138.3 234h87.4v20h-87.4z"/>
+</g>
+<g class="a a216">
+<path fill="#f6f8fa" d="M138.3 314h49v20h-49z"/>
+</g>
+<g class="a a217" visibility="hidden">
+<path fill="#0b64c0" d="M243.9 94h20.2v20h-20.2z"/>
+</g>
+<g class="a a218">
+<path fill="#f6f8fa" d="M138.3 154h125.8v20h-125.8z"/>
+</g>
+<g class="a a219" visibility="hidden">
+<path fill="#0b64c0" d="M224.7 194h20.2v20h-20.2z"/>
+</g>
+<g class="a a221" visibility="hidden">
+<path fill="#0b64c0" d="M224.7 214h20.2v20h-20.2z"/>
+</g>
+<g class="a a223" visibility="hidden">
+<path fill="#0b64c0" d="M224.7 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a225" visibility="hidden">
+<path fill="#0b64c0" d="M205.5 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a227" visibility="hidden">
+<path fill="#0b64c0" d="M205.5 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a229" visibility="hidden">
+<path fill="#0b64c0" d="M205.5 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a231" visibility="hidden">
+<path fill="#0b64c0" d="M186.3 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a233" visibility="hidden">
+<path fill="#0b64c0" d="M205.5 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a236" visibility="hidden">
+<path fill="#0b64c0" d="M416.7 174h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M435.9 174h29.8v20h-29.8z"/>
+</g>
+<g class="a a237">
+<path fill="#f6f8fa" d="M435.9 194h29.8v20h-29.8z"/>
+</g>
+<g class="a a239" visibility="hidden">
+<path fill="#f6f8fa" d="M243.9 194h154.6v20h-154.6zM263.1 214h173.8v20h-173.8z"/>
+<path fill="#0b64c0" d="M397.5 194h20.2v20h-20.2z"/>
+</g>
+<g class="a a241" visibility="hidden">
+<path fill="#0b64c0" d="M435.9 194h20.2v20h-20.2z"/>
+</g>
+<g class="a a242">
+<path fill="#f6f8fa" d="M263.1 214h202.6v20h-202.6z"/>
+</g>
+<g class="a a244" visibility="hidden">
+<path fill="#0b64c0" d="M263.1 214h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M282.3 214h183.4v20h-183.4z"/>
+</g>
+<g class="a a245">
+<path fill="#f6f8fa" d="M243.9 234h135.4v20h-135.4z"/>
+</g>
+<g class="a a247" visibility="hidden">
+<path fill="#0b64c0" d="M243.9 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a249" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 214h135.4v20h-135.4zM416.7 214h49v20h-49zM416.7 234h20.2v20h-20.2z"/>
+<path fill="#0b64c0" d="M397.5 214h20.2v20h-20.2z"/>
+</g>
+<g class="a a251" visibility="hidden">
+<path fill="#0b64c0" d="M416.7 214h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M435.9 214h29.8v20h-29.8z"/>
+</g>
+<g class="a a252">
+<path fill="#f6f8fa" d="M416.7 234h49v20h-49zM397.5 274h68.2v20h-68.2zM359.1 294h106.6v20h-106.6z"/>
+</g>
+<g class="a a253" visibility="hidden">
+<path fill="#f6f8fa" d="M397.5 254h68.2v20h-68.2z"/>
+</g>
+<g class="a a254" visibility="hidden">
+<path fill="#f6f8fa" d="M339.9 314h125.8v20h-125.8z"/>
+</g>
+<g class="a a255" visibility="hidden">
+<path fill="#f6f8fa" d="M339.9 334h125.8v20h-125.8z"/>
+</g>
+<g class="a a256">
+<path fill="#f6f8fa" d="M339.9 354h77.8v20h-77.8z"/>
+</g>
+<g class="a a258" visibility="hidden">
+<path fill="#0b64c0" d="M378.3 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a259" visibility="hidden">
+<path fill="#0b64c0" d="M339.9 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a261" visibility="hidden">
+<path fill="#0b64c0" d="M416.7 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a264" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 234h68.2v20h-68.2z"/>
+<path fill="#0b64c0" d="M205.5 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a265">
+<path fill="#f6f8fa" d="M224.7 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a267" visibility="hidden">
+<path fill="#f6f8fa" d="M243.9 234h116.2v20h-116.2z"/>
+<path fill="#0b64c0" d="M359.1 234h20.2v20h-20.2z"/>
+</g>
+<g class="a a268">
+<path fill="#f6f8fa" d="M263.1 254h202.6v20h-202.6z"/>
+</g>
+<g class="a a269" visibility="hidden">
+<path fill="#0b64c0" d="M224.7 254h20.2v20h-20.2z"/>
+</g>
+<g class="a a270">
+<path fill="#f6f8fa" d="M224.7 274h135.4v20h-135.4z"/>
+</g>
+<g class="a a273" visibility="hidden">
+<path fill="#0b64c0" d="M224.7 274h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M243.9 274h116.2v20h-116.2z"/>
+</g>
+<g class="a a274">
+<path fill="#f6f8fa" d="M224.7 294h77.8v20h-77.8z"/>
+</g>
+<g class="a a275" visibility="hidden">
+<path fill="#f6f8fa" d="M224.7 314h77.8v20h-77.8z"/>
+</g>
+<g class="a a279" visibility="hidden">
+<path fill="#0b64c0" d="M301.5 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a281" visibility="hidden">
+<path fill="#f6f8fa" d="M224.7 274h77.8v20h-77.8zM320.7 274h39.4v20h-39.4z"/>
+<path fill="#0b64c0" d="M301.5 274h20.2v20h-20.2z"/>
+</g>
+<g class="a a282">
+<path fill="#f6f8fa" d="M320.7 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a284" visibility="hidden">
+<path fill="#f6f8fa" d="M224.7 294h58.6v20h-58.6zM224.7 314h97v20h-97z"/>
+<path fill="#0b64c0" d="M282.3 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a286" visibility="hidden">
+<path fill="#0b64c0" d="M320.7 294h20.2v20h-20.2z"/>
+</g>
+<g class="a a287">
+<path fill="#f6f8fa" d="M224.7 314h241v20h-241z"/>
+</g>
+<g class="a a289" visibility="hidden">
+<path fill="#f6f8fa" d="M224.7 314h58.6v20h-58.6zM301.5 314h164.2v20h-164.2z"/>
+<path fill="#0b64c0" d="M282.3 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a290" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 334h58.6v20h-58.6z"/>
+</g>
+<g class="a a293" visibility="hidden">
+<path fill="#0b64c0" d="M224.7 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a294" visibility="hidden">
+<path fill="#0b64c0" d="M243.9 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a297" visibility="hidden">
+<path fill="#0b64c0" d="M224.7 314h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M243.9 314h221.8v20h-221.8z"/>
+</g>
+<g class="a a298" visibility="hidden">
+<path fill="#f6f8fa" d="M205.5 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a301" visibility="hidden">
+<path fill="#0b64c0" d="M301.5 314h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M320.7 314h145v20h-145z"/>
+</g>
+<g class="a a302">
+<path fill="#f6f8fa" d="M263.1 334h202.6v20h-202.6z"/>
+</g>
+<g class="a a304" visibility="hidden">
+<path fill="#0b64c0" d="M301.5 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a305" visibility="hidden">
+<path fill="#0b64c0" d="M320.7 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a308" visibility="hidden">
+<path fill="#f6f8fa" d="M186.3 334h20.2v20h-20.2z"/>
+<path fill="#0b64c0" d="M205.5 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a309" visibility="hidden">
+<path fill="#f6f8fa" d="M186.3 354h58.6v20h-58.6z"/>
+</g>
+<g class="a a313">
+<path fill="#f6f8fa" d="M186.3 334h39.4v20h-39.4z"/>
+</g>
+<g class="a a314" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 334h39.4v20h-39.4zM320.7 334h145v20h-145z"/>
+<path fill="#0b64c0" d="M301.5 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a315">
+<path fill="#f6f8fa" d="M282.3 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a316" visibility="hidden">
+<path fill="#0b64c0" d="M243.9 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a317" visibility="hidden">
+<path fill="#0b64c0" d="M263.1 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a320" visibility="hidden">
+<path fill="#f6f8fa" d="M263.1 334h154.6v20h-154.6zM435.9 334h29.8v20h-29.8z"/>
+<path fill="#0b64c0" d="M416.7 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a321">
+<path fill="#f6f8fa" d="M435.9 354h29.8v20h-29.8z"/>
+</g>
+<g class="a a323" visibility="hidden">
+<path fill="#f6f8fa" d="M186.3 354h20.2v20h-20.2zM224.7 354h20.2v20h-20.2z"/>
+<path fill="#0b64c0" d="M205.5 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a324" visibility="hidden">
+<path fill="#f6f8fa" d="M186.3 374h58.6v20h-58.6z"/>
+</g>
+<g class="a a327" visibility="hidden">
+<path fill="#f6f8fa" d="M186.3 354h39.4v20h-39.4zM186.3 374h77.8v20h-77.8z"/>
+<path fill="#0b64c0" d="M224.7 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a329" visibility="hidden">
+<path fill="#0b64c0" d="M282.3 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a330" visibility="hidden">
+<path fill="#f6f8fa" d="M186.3 374h135.4v20h-135.4z"/>
+</g>
+<g class="a a334" visibility="hidden">
+<path fill="#0b64c0" d="M435.9 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a335" visibility="hidden">
+<path fill="#f6f8fa" d="M416.7 374h49v20h-49z"/>
+</g>
+<g class="a a338" visibility="hidden">
+<path fill="#0b64c0" d="M243.9 374h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M263.1 374h58.6v20h-58.6z"/>
+</g>
+<g class="a a339">
+<path fill="#f6f8fa" d="M224.7 394h58.6v20h-58.6z"/>
+</g>
+<g class="a a340" visibility="hidden">
+<path fill="#0b64c0" d="M205.5 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a341" visibility="hidden">
+<path fill="#0b64c0" d="M282.3 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a344">
+<path fill="#f6f8fa" d="M167.1 354h77.8v20h-77.8z"/>
+</g>
+<g class="a a345" visibility="hidden">
+<path fill="#f6f8fa" d="M167.1 374h20.2v20h-20.2zM205.5 374h116.2v20h-116.2z"/>
+<path fill="#0b64c0" d="M186.3 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a346">
+<path fill="#f6f8fa" d="M167.1 394h39.4v20h-39.4z"/>
+</g>
+<g class="a a347" visibility="hidden">
+<path fill="#0b64c0" d="M167.1 334h20.2v20h-20.2z"/>
+</g>
+<g class="a a348" visibility="hidden">
+<path fill="#f6f8fa" d="M167.1 374h154.6v20h-154.6z"/>
+</g>
+<g class="a a350" visibility="hidden">
+<path fill="#0b64c0" d="M147.9 314h20.2v20h-20.2z"/>
+<path fill="#f6f8fa" d="M167.1 314h20.2v20h-20.2z"/>
+</g>
+<g class="a a351">
+<path fill="#f6f8fa" d="M138.3 334h29.8v20h-29.8z"/>
+</g>
+<g class="a a352" visibility="hidden">
+<path fill="#0b64c0" d="M147.9 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a354" visibility="hidden">
+<path fill="#0b64c0" d="M167.1 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a355" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 374h183.4v20h-183.4z"/>
+</g>
+<g class="a a357" visibility="hidden">
+<path fill="#0b64c0" d="M147.9 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a359" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 374h145v20h-145zM301.5 374h20.2v20h-20.2zM301.5 394h20.2v20h-20.2z"/>
+<path fill="#0b64c0" d="M282.3 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a361" visibility="hidden">
+<path fill="#f6f8fa" d="M138.3 374h164.2v20h-164.2zM320.7 374h20.2v20h-20.2z"/>
+<path fill="#0b64c0" d="M301.5 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a362" visibility="hidden">
+<path fill="#f6f8fa" d="M301.5 394h39.4v20h-39.4z"/>
+</g>
+<g class="a a365">
+<path fill="#f6f8fa" d="M138.3 374h202.6v20h-202.6z"/>
+</g>
+<g class="a a366" visibility="hidden">
+<path fill="#f6f8fa" d="M397.5 374h20.2v20h-20.2zM435.9 374h29.8v20h-29.8z"/>
+<path fill="#0b64c0" d="M416.7 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a367" visibility="hidden">
+<path fill="#f6f8fa" d="M397.5 394h68.2v20h-68.2z"/>
+</g>
+<g class="a a369" visibility="hidden">
+<path fill="#0b64c0" d="M378.3 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a370">
+<path fill="#f6f8fa" d="M397.5 374h68.2v20h-68.2z"/>
+</g>
+<g class="a a372" visibility="hidden">
+<path fill="#f6f8fa" d="M339.9 354h39.4v20h-39.4zM397.5 354h20.2v20h-20.2z"/>
+<path fill="#0b64c0" d="M378.3 354h20.2v20h-20.2z"/>
+</g>
+<g class="a a373">
+<path fill="#f6f8fa" d="M359.1 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a374" visibility="hidden">
+<path fill="#0b64c0" d="M339.9 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a376" visibility="hidden">
+<path fill="#0b64c0" d="M320.7 374h20.2v20h-20.2z"/>
+</g>
+<g class="a a377">
+<path fill="#f6f8fa" d="M301.5 394h58.6v20h-58.6z"/>
+</g>
+<g class="a a378" visibility="hidden">
+<path fill="#0b64c0" d="M359.1 394h20.2v20h-20.2z"/>
+</g>
+<g class="a a380">
+<path fill="#f6f8fa" d="M378.3 394h87.4v20h-87.4z"/>
+</g>
+<g class="a a0" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M148.4 94h9.6v20h-9.6zM158 94h9.6v20h-9.6zM167.6 94h9.6v20h-9.6zM177.2 94h9.6v20h-9.6zM186.8 94h9.6v20h-9.6zM196.4 94h9.6v20h-9.6zM206 94h9.6v20h-9.6zM215.6 94h9.6v20h-9.6zM225.2 94h9.6v20h-9.6zM234.8 94h9.6v20h-9.6zM148.4 114h9.6v20h-9.6zM158 114h9.6v20h-9.6zM167.6 114h9.6v20h-9.6zM177.2 114h9.6v20h-9.6zM186.8 114h9.6v20h-9.6zM196.4 114h9.6v20h-9.6zM206 114h9.6v20h-9.6zM215.6 114h9.6v20h-9.6zM225.2 114h9.6v20h-9.6zM234.8 114h9.6v20h-9.6zM244.4 114h9.6v20h-9.6zM254 114h9.6v20h-9.6zM148.4 134h9.6v20h-9.6zM158 134h9.6v20h-9.6zM167.6 134h9.6v20h-9.6zM177.2 134h9.6v20h-9.6zM186.8 134h9.6v20h-9.6zM196.4 134h9.6v20h-9.6zM206 134h9.6v20h-9.6zM215.6 134h9.6v20h-9.6zM225.2 134h9.6v20h-9.6zM234.8 134h9.6v20h-9.6zM244.4 134h9.6v20h-9.6zM254 134h9.6v20h-9.6zM148.4 154h9.6v20h-9.6zM158 154h9.6v20h-9.6zM167.6 154h9.6v20h-9.6zM177.2 154h9.6v20h-9.6zM186.8 154h9.6v20h-9.6zM196.4 154h9.6v20h-9.6zM206 154h9.6v20h-9.6zM215.6 154h9.6v20h-9.6zM225.2 154h9.6v20h-9.6zM234.8 154h9.6v20h-9.6zM148.4 174h9.6v20h-9.6zM158 174h9.6v20h-9.6zM167.6 174h9.6v20h-9.6zM177.2 174h9.6v20h-9.6zM186.8 174h9.6v20h-9.6zM196.4 174h9.6v20h-9.6zM206 174h9.6v20h-9.6zM215.6 174h9.6v20h-9.6zM225.2 174h9.6v20h-9.6zM234.8 174h9.6v20h-9.6zM148.4 194h9.6v20h-9.6zM158 194h9.6v20h-9.6zM167.6 194h9.6v20h-9.6zM177.2 194h9.6v20h-9.6zM186.8 194h9.6v20h-9.6zM196.4 194h9.6v20h-9.6zM206 194h9.6v20h-9.6zM215.6 194h9.6v20h-9.6zM148.4 214h9.6v20h-9.6zM158 214h9.6v20h-9.6zM167.6 214h9.6v20h-9.6zM177.2 214h9.6v20h-9.6zM186.8 214h9.6v20h-9.6zM196.4 214h9.6v20h-9.6zM206 214h9.6v20h-9.6zM215.6 214h9.6v20h-9.6zM148.4 234h9.6v20h-9.6zM158 234h9.6v20h-9.6zM167.6 234h9.6v20h-9.6zM177.2 234h9.6v20h-9.6zM186.8 234h9.6v20h-9.6zM196.4 234h9.6v20h-9.6zM206 234h9.6v20h-9.6zM215.6 234h9.6v20h-9.6zM148.4 254h9.6v20h-9.6zM158 254h9.6v20h-9.6zM167.6 254h9.6v20h-9.6zM177.2 254h9.6v20h-9.6zM186.8 254h9.6v20h-9.6zM196.4 254h9.6v20h-9.6zM148.4 274h9.6v20h-9.6zM158 274h9.6v20h-9.6zM167.6 274h9.6v20h-9.6zM177.2 274h9.6v20h-9.6zM186.8 274h9.6v20h-9.6zM196.4 274h9.6v20h-9.6zM148.4 294h9.6v20h-9.6zM158 294h9.6v20h-9.6zM167.6 294h9.6v20h-9.6zM177.2 294h9.6v20h-9.6zM186.8 294h9.6v20h-9.6zM196.4 294h9.6v20h-9.6zM148.4 314h9.6v20h-9.6zM158 314h9.6v20h-9.6zM167.6 314h9.6v20h-9.6zM177.2 314h9.6v20h-9.6z"/>
+</g>
+<g class="a a2" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M263.6 94h9.6v20h-9.6zM273.2 94h9.6v20h-9.6zM282.8 94h9.6v20h-9.6zM292.4 94h9.6v20h-9.6zM302 94h9.6v20h-9.6zM311.6 94h9.6v20h-9.6zM321.2 94h9.6v20h-9.6zM330.8 94h9.6v20h-9.6zM340.4 94h9.6v20h-9.6zM350 94h9.6v20h-9.6zM359.6 94h9.6v20h-9.6zM369.2 94h9.6v20h-9.6zM378.8 94h9.6v20h-9.6zM388.4 94h9.6v20h-9.6zM263.6 114h9.6v20h-9.6zM273.2 114h9.6v20h-9.6zM282.8 114h9.6v20h-9.6zM292.4 114h9.6v20h-9.6zM302 114h9.6v20h-9.6zM311.6 114h9.6v20h-9.6zM321.2 114h9.6v20h-9.6zM330.8 114h9.6v20h-9.6zM340.4 114h9.6v20h-9.6zM350 114h9.6v20h-9.6zM359.6 114h9.6v20h-9.6zM369.2 114h9.6v20h-9.6zM378.8 114h9.6v20h-9.6zM388.4 114h9.6v20h-9.6zM340.4 134h9.6v20h-9.6zM350 134h9.6v20h-9.6zM359.6 134h9.6v20h-9.6zM369.2 134h9.6v20h-9.6zM378.8 134h9.6v20h-9.6zM388.4 134h9.6v20h-9.6zM398 134h9.6v20h-9.6zM407.6 134h9.6v20h-9.6zM340.4 154h9.6v20h-9.6zM350 154h9.6v20h-9.6zM359.6 154h9.6v20h-9.6zM369.2 154h9.6v20h-9.6zM378.8 154h9.6v20h-9.6zM388.4 154h9.6v20h-9.6zM398 154h9.6v20h-9.6zM407.6 154h9.6v20h-9.6zM263.6 174h9.6v20h-9.6zM273.2 174h9.6v20h-9.6zM282.8 174h9.6v20h-9.6zM292.4 174h9.6v20h-9.6zM302 174h9.6v20h-9.6zM311.6 174h9.6v20h-9.6zM340.4 174h9.6v20h-9.6zM350 174h9.6v20h-9.6zM359.6 174h9.6v20h-9.6zM369.2 174h9.6v20h-9.6zM378.8 174h9.6v20h-9.6zM388.4 174h9.6v20h-9.6zM398 174h9.6v20h-9.6zM407.6 174h9.6v20h-9.6zM263.6 194h9.6v20h-9.6zM273.2 194h9.6v20h-9.6zM282.8 194h9.6v20h-9.6zM292.4 194h9.6v20h-9.6zM302 194h9.6v20h-9.6zM311.6 194h9.6v20h-9.6zM321.2 194h9.6v20h-9.6zM330.8 194h9.6v20h-9.6zM340.4 194h9.6v20h-9.6zM350 194h9.6v20h-9.6zM359.6 194h9.6v20h-9.6zM369.2 194h9.6v20h-9.6zM378.8 194h9.6v20h-9.6zM388.4 194h9.6v20h-9.6zM398 194h9.6v20h-9.6zM407.6 194h9.6v20h-9.6zM263.6 214h9.6v20h-9.6zM273.2 214h9.6v20h-9.6zM282.8 214h9.6v20h-9.6zM292.4 214h9.6v20h-9.6zM302 214h9.6v20h-9.6zM311.6 214h9.6v20h-9.6zM321.2 214h9.6v20h-9.6zM330.8 214h9.6v20h-9.6zM340.4 214h9.6v20h-9.6zM350 214h9.6v20h-9.6zM359.6 214h9.6v20h-9.6zM369.2 214h9.6v20h-9.6zM378.8 214h9.6v20h-9.6zM388.4 214h9.6v20h-9.6zM398 214h9.6v20h-9.6zM407.6 214h9.6v20h-9.6zM263.6 234h9.6v20h-9.6zM273.2 234h9.6v20h-9.6zM282.8 234h9.6v20h-9.6zM292.4 234h9.6v20h-9.6zM302 234h9.6v20h-9.6zM311.6 234h9.6v20h-9.6zM321.2 234h9.6v20h-9.6zM330.8 234h9.6v20h-9.6zM340.4 234h9.6v20h-9.6zM350 234h9.6v20h-9.6zM359.6 234h9.6v20h-9.6zM369.2 234h9.6v20h-9.6zM263.6 254h9.6v20h-9.6zM273.2 254h9.6v20h-9.6zM282.8 254h9.6v20h-9.6zM292.4 254h9.6v20h-9.6zM321.2 254h9.6v20h-9.6zM330.8 254h9.6v20h-9.6zM340.4 254h9.6v20h-9.6zM350 254h9.6v20h-9.6zM359.6 254h9.6v20h-9.6zM369.2 254h9.6v20h-9.6zM263.6 274h9.6v20h-9.6zM273.2 274h9.6v20h-9.6zM282.8 274h9.6v20h-9.6zM292.4 274h9.6v20h-9.6zM302 274h9.6v20h-9.6zM311.6 274h9.6v20h-9.6zM321.2 274h9.6v20h-9.6zM330.8 274h9.6v20h-9.6zM340.4 274h9.6v20h-9.6zM350 274h9.6v20h-9.6z"/>
+<path fill="#ffffff" fill-opacity="0.45" d="M302 254h9.6v20h-9.6zM311.6 254h9.6v20h-9.6z"/>
+</g>
+<g class="a a3" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M398 94h9.6v20h-9.6zM407.6 94h9.6v20h-9.6z"/>
+</g>
+<g class="a a4" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M417.2 94h9.6v20h-9.6zM426.8 94h9.6v20h-9.6zM417.2 114h9.6v20h-9.6zM426.8 114h9.6v20h-9.6z"/>
+</g>
+<g class="a a5" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M436.4 94h9.6v20h-9.6zM446 94h9.6v20h-9.6zM436.4 114h9.6v20h-9.6zM446 114h9.6v20h-9.6zM417.2 134h9.6v20h-9.6zM426.8 134h9.6v20h-9.6zM436.4 134h9.6v20h-9.6zM446 134h9.6v20h-9.6z"/>
+</g>
+<g class="a a8" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M282.8 134h9.6v20h-9.6zM292.4 134h9.6v20h-9.6zM302 134h9.6v20h-9.6zM311.6 134h9.6v20h-9.6z"/>
+</g>
+<g class="a a10" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M244.4 154h9.6v20h-9.6zM254 154h9.6v20h-9.6zM244.4 174h9.6v20h-9.6zM254 174h9.6v20h-9.6zM244.4 194h9.6v20h-9.6zM254 194h9.6v20h-9.6z"/>
+</g>
+<g class="a a13" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M302 154h9.6v20h-9.6zM311.6 154h9.6v20h-9.6z"/>
+</g>
+<g class="a a14" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M321.2 154h9.6v20h-9.6zM330.8 154h9.6v20h-9.6z"/>
+</g>
+<g class="a a16" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M436.4 154h9.6v20h-9.6zM446 154h9.6v20h-9.6z"/>
+</g>
+<g class="a a19" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M417.2 174h9.6v20h-9.6zM426.8 174h9.6v20h-9.6z"/>
+</g>
+<g class="a a20" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M436.4 174h9.6v20h-9.6zM446 174h9.6v20h-9.6z"/>
+</g>
+<g class="a a23" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M436.4 194h9.6v20h-9.6zM446 194h9.6v20h-9.6z"/>
+</g>
+<g class="a a27" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M417.2 214h9.6v20h-9.6zM426.8 214h9.6v20h-9.6z"/>
+</g>
+<g class="a a28" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M436.4 214h9.6v20h-9.6zM446 214h9.6v20h-9.6z"/>
+</g>
+<g class="a a30" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M244.4 234h9.6v20h-9.6zM254 234h9.6v20h-9.6z"/>
+</g>
+<g class="a a33" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M417.2 234h9.6v20h-9.6zM426.8 234h9.6v20h-9.6z"/>
+</g>
+<g class="a a34" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M436.4 234h9.6v20h-9.6zM446 234h9.6v20h-9.6zM398 254h9.6v20h-9.6zM407.6 254h9.6v20h-9.6zM417.2 254h9.6v20h-9.6zM426.8 254h9.6v20h-9.6zM436.4 254h9.6v20h-9.6zM446 254h9.6v20h-9.6zM398 274h9.6v20h-9.6zM407.6 274h9.6v20h-9.6zM417.2 274h9.6v20h-9.6zM426.8 274h9.6v20h-9.6zM436.4 274h9.6v20h-9.6zM446 274h9.6v20h-9.6zM359.6 294h9.6v20h-9.6zM369.2 294h9.6v20h-9.6zM378.8 294h9.6v20h-9.6zM388.4 294h9.6v20h-9.6zM398 294h9.6v20h-9.6zM407.6 294h9.6v20h-9.6zM417.2 294h9.6v20h-9.6zM426.8 294h9.6v20h-9.6zM436.4 294h9.6v20h-9.6zM446 294h9.6v20h-9.6zM340.4 314h9.6v20h-9.6zM350 314h9.6v20h-9.6zM359.6 314h9.6v20h-9.6zM369.2 314h9.6v20h-9.6zM378.8 314h9.6v20h-9.6zM388.4 314h9.6v20h-9.6zM398 314h9.6v20h-9.6zM407.6 314h9.6v20h-9.6zM417.2 314h9.6v20h-9.6zM426.8 314h9.6v20h-9.6zM436.4 314h9.6v20h-9.6zM446 314h9.6v20h-9.6zM340.4 334h9.6v20h-9.6zM350 334h9.6v20h-9.6zM359.6 334h9.6v20h-9.6zM369.2 334h9.6v20h-9.6zM378.8 334h9.6v20h-9.6zM388.4 334h9.6v20h-9.6zM398 334h9.6v20h-9.6zM407.6 334h9.6v20h-9.6zM417.2 334h9.6v20h-9.6zM426.8 334h9.6v20h-9.6zM436.4 334h9.6v20h-9.6zM446 334h9.6v20h-9.6zM340.4 354h9.6v20h-9.6zM350 354h9.6v20h-9.6zM359.6 354h9.6v20h-9.6zM369.2 354h9.6v20h-9.6zM378.8 354h9.6v20h-9.6zM388.4 354h9.6v20h-9.6zM398 354h9.6v20h-9.6zM407.6 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a36" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M225.2 254h9.6v20h-9.6zM234.8 254h9.6v20h-9.6z"/>
+</g>
+<g class="a a38" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M321.2 134h9.6v20h-9.6zM330.8 134h9.6v20h-9.6z"/>
+</g>
+<g class="a a39" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M378.8 254h9.6v20h-9.6zM388.4 254h9.6v20h-9.6z"/>
+</g>
+<g class="a a41" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M225.2 274h9.6v20h-9.6zM234.8 274h9.6v20h-9.6zM244.4 274h9.6v20h-9.6zM254 274h9.6v20h-9.6z"/>
+</g>
+<g class="a a45" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M225.2 294h9.6v20h-9.6zM234.8 294h9.6v20h-9.6zM244.4 294h9.6v20h-9.6zM254 294h9.6v20h-9.6zM263.6 294h9.6v20h-9.6zM273.2 294h9.6v20h-9.6zM282.8 294h9.6v20h-9.6zM292.4 294h9.6v20h-9.6zM225.2 314h9.6v20h-9.6zM234.8 314h9.6v20h-9.6zM244.4 314h9.6v20h-9.6zM254 314h9.6v20h-9.6zM263.6 314h9.6v20h-9.6zM273.2 314h9.6v20h-9.6zM282.8 314h9.6v20h-9.6zM292.4 314h9.6v20h-9.6z"/>
+</g>
+<g class="a a47" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M321.2 294h9.6v20h-9.6zM330.8 294h9.6v20h-9.6z"/>
+</g>
+<g class="a a52" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M302 314h9.6v20h-9.6zM311.6 314h9.6v20h-9.6z"/>
+</g>
+<g class="a a53" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M321.2 314h9.6v20h-9.6zM330.8 314h9.6v20h-9.6z"/>
+</g>
+<g class="a a54" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M148.4 334h9.6v20h-9.6zM158 334h9.6v20h-9.6z"/>
+</g>
+<g class="a a56" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M186.8 334h9.6v20h-9.6zM196.4 334h9.6v20h-9.6zM186.8 354h9.6v20h-9.6zM196.4 354h9.6v20h-9.6zM206 354h9.6v20h-9.6zM215.6 354h9.6v20h-9.6zM225.2 354h9.6v20h-9.6zM234.8 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a57" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M206 334h9.6v20h-9.6zM215.6 334h9.6v20h-9.6z"/>
+</g>
+<g class="a a60" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M263.6 334h9.6v20h-9.6zM273.2 334h9.6v20h-9.6zM282.8 334h9.6v20h-9.6zM292.4 334h9.6v20h-9.6zM302 334h9.6v20h-9.6zM311.6 334h9.6v20h-9.6z"/>
+</g>
+<g class="a a61" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M321.2 334h9.6v20h-9.6zM330.8 334h9.6v20h-9.6z"/>
+</g>
+<g class="a a63" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M167.6 354h9.6v20h-9.6zM177.2 354h9.6v20h-9.6zM167.6 374h9.6v20h-9.6zM177.2 374h9.6v20h-9.6zM167.6 394h9.6v20h-9.6zM177.2 394h9.6v20h-9.6zM186.8 394h9.6v20h-9.6zM196.4 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a66" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M282.8 354h9.6v20h-9.6zM292.4 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a70" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M436.4 354h9.6v20h-9.6zM446 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a72" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M148.4 374h9.6v20h-9.6zM158 374h9.6v20h-9.6z"/>
+</g>
+<g class="a a73" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M186.8 374h9.6v20h-9.6zM196.4 374h9.6v20h-9.6zM206 374h9.6v20h-9.6zM215.6 374h9.6v20h-9.6zM225.2 374h9.6v20h-9.6zM234.8 374h9.6v20h-9.6z"/>
+</g>
+<g class="a a74" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M244.4 374h9.6v20h-9.6zM254 374h9.6v20h-9.6z"/>
+</g>
+<g class="a a75" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M263.6 374h9.6v20h-9.6zM273.2 374h9.6v20h-9.6zM282.8 374h9.6v20h-9.6zM292.4 374h9.6v20h-9.6zM302 374h9.6v20h-9.6zM311.6 374h9.6v20h-9.6z"/>
+</g>
+<g class="a a76" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M321.2 374h9.6v20h-9.6zM330.8 374h9.6v20h-9.6zM321.2 394h9.6v20h-9.6zM330.8 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a78" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M359.6 374h9.6v20h-9.6zM369.2 374h9.6v20h-9.6z"/>
+</g>
+<g class="a a80" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M398 374h9.6v20h-9.6zM407.6 374h9.6v20h-9.6zM398 394h9.6v20h-9.6zM407.6 394h9.6v20h-9.6zM417.2 394h9.6v20h-9.6zM426.8 394h9.6v20h-9.6zM436.4 394h9.6v20h-9.6zM446 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a81" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M417.2 374h9.6v20h-9.6zM426.8 374h9.6v20h-9.6zM436.4 374h9.6v20h-9.6zM446 374h9.6v20h-9.6z"/>
+</g>
+<g class="a a84" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M225.2 394h9.6v20h-9.6zM234.8 394h9.6v20h-9.6zM244.4 394h9.6v20h-9.6zM254 394h9.6v20h-9.6zM263.6 394h9.6v20h-9.6zM273.2 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a86" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M302 394h9.6v20h-9.6zM311.6 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a87" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M340.4 394h9.6v20h-9.6zM350 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a89" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M378.8 394h9.6v20h-9.6zM388.4 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a90" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M244.4 94h9.6v20h-9.6zM254 94h9.6v20h-9.6z"/>
+</g>
+<g class="a a91" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M398 114h9.6v20h-9.6zM407.6 114h9.6v20h-9.6z"/>
+</g>
+<g class="a a92" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M263.6 134h9.6v20h-9.6zM273.2 134h9.6v20h-9.6z"/>
+</g>
+<g class="a a93" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M263.6 154h9.6v20h-9.6zM273.2 154h9.6v20h-9.6z"/>
+</g>
+<g class="a a94" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M282.8 154h9.6v20h-9.6zM292.4 154h9.6v20h-9.6z"/>
+</g>
+<g class="a a95" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M417.2 154h9.6v20h-9.6zM426.8 154h9.6v20h-9.6z"/>
+</g>
+<g class="a a96" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M321.2 174h9.6v20h-9.6zM330.8 174h9.6v20h-9.6z"/>
+</g>
+<g class="a a97" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M225.2 194h9.6v20h-9.6zM234.8 194h9.6v20h-9.6z"/>
+</g>
+<g class="a a98" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M417.2 194h9.6v20h-9.6zM426.8 194h9.6v20h-9.6z"/>
+</g>
+<g class="a a99" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M225.2 214h9.6v20h-9.6zM234.8 214h9.6v20h-9.6z"/>
+</g>
+<g class="a a100" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M244.4 214h9.6v20h-9.6zM254 214h9.6v20h-9.6z"/>
+</g>
+<g class="a a101" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M225.2 234h9.6v20h-9.6zM234.8 234h9.6v20h-9.6z"/>
+</g>
+<g class="a a102" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M378.8 234h9.6v20h-9.6zM388.4 234h9.6v20h-9.6z"/>
+</g>
+<g class="a a103" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M398 234h9.6v20h-9.6zM407.6 234h9.6v20h-9.6z"/>
+</g>
+<g class="a a104" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M206 254h9.6v20h-9.6zM215.6 254h9.6v20h-9.6z"/>
+</g>
+<g class="a a105" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M244.4 254h9.6v20h-9.6zM254 254h9.6v20h-9.6z"/>
+</g>
+<g class="a a106" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M206 274h9.6v20h-9.6zM215.6 274h9.6v20h-9.6z"/>
+</g>
+<g class="a a107" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M359.6 274h9.6v20h-9.6zM369.2 274h9.6v20h-9.6z"/>
+</g>
+<g class="a a108" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M378.8 274h9.6v20h-9.6zM388.4 274h9.6v20h-9.6z"/>
+</g>
+<g class="a a109" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M206 294h9.6v20h-9.6zM215.6 294h9.6v20h-9.6z"/>
+</g>
+<g class="a a110" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M302 294h9.6v20h-9.6zM311.6 294h9.6v20h-9.6z"/>
+</g>
+<g class="a a111" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M340.4 294h9.6v20h-9.6zM350 294h9.6v20h-9.6z"/>
+</g>
+<g class="a a112" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M186.8 314h9.6v20h-9.6zM196.4 314h9.6v20h-9.6z"/>
+</g>
+<g class="a a113" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M206 314h9.6v20h-9.6zM215.6 314h9.6v20h-9.6z"/>
+</g>
+<g class="a a114" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M167.6 334h9.6v20h-9.6zM177.2 334h9.6v20h-9.6z"/>
+</g>
+<g class="a a115" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M225.2 334h9.6v20h-9.6zM234.8 334h9.6v20h-9.6z"/>
+</g>
+<g class="a a116" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M244.4 334h9.6v20h-9.6zM254 334h9.6v20h-9.6z"/>
+</g>
+<g class="a a117" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M148.4 354h9.6v20h-9.6zM158 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a118" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M244.4 354h9.6v20h-9.6zM254 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a119" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M263.6 354h9.6v20h-9.6zM273.2 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a120" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M302 354h9.6v20h-9.6zM311.6 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a121" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M321.2 354h9.6v20h-9.6zM330.8 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a122" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M417.2 354h9.6v20h-9.6zM426.8 354h9.6v20h-9.6z"/>
+</g>
+<g class="a a123" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M340.4 374h9.6v20h-9.6zM350 374h9.6v20h-9.6z"/>
+</g>
+<g class="a a124" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M378.8 374h9.6v20h-9.6zM388.4 374h9.6v20h-9.6z"/>
+</g>
+<g class="a a125" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M148.4 394h9.6v20h-9.6zM158 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a126" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M206 394h9.6v20h-9.6zM215.6 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a127" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M282.8 394h9.6v20h-9.6zM292.4 394h9.6v20h-9.6z"/>
+</g>
+<g class="a a128" visibility="hidden">
+<path fill="#a3b0bf" fill-opacity="0.45" d="M359.6 394h9.6v20h-9.6zM369.2 394h9.6v20h-9.6z"/>
+</g>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#aeb7c1" stroke-width="1.3" d="M494 144H494Q489.2 144 489.2 148.8V154M494 144H503.6M628.4 144H638M638 144H647.6M647.6 144H657.2M657.2 144H666.8M666.8 144H676.4M676.4 144H686M686 144H695.6M695.6 144H705.2M705.2 144H714.8M714.8 144H724.4M724.4 144H734M734 144H743.6M743.6 144H743.6Q748.4 144 748.4 148.8V154M489.2 154V174M748.4 154V174M489.2 174V194M748.4 174V194M489.2 194V214M748.4 194V214M489.2 214V234M748.4 214V234M489.2 234V254M503.6 244H513.2M513.2 244H522.8M522.8 244H532.4M532.4 244H542M542 244H551.6M551.6 244H561.2M561.2 244H570.8M570.8 244H580.4M580.4 244H590M590 244H599.6M599.6 244H609.2M609.2 244H618.8M618.8 244H628.4M628.4 244H638M638 244H647.6M647.6 244H657.2M657.2 244H666.8M666.8 244H676.4M676.4 244H686M686 244H695.6M695.6 244H705.2M705.2 244H714.8M714.8 244H724.4M724.4 244H734M748.4 234V254M489.2 254V274M748.4 254V274M489.2 274V294M748.4 274V294M489.2 294V314M748.4 294V314M489.2 314V334M748.4 314V334M494 344H494Q489.2 344 489.2 339.2V334M494 344H503.6M503.6 344H513.2M513.2 344H522.8M522.8 344H532.4M532.4 344H542M542 344H551.6M551.6 344H561.2M561.2 344H570.8M570.8 344H580.4M580.4 344H590M590 344H599.6M599.6 344H609.2M609.2 344H618.8M618.8 344H628.4M628.4 344H638M638 344H647.6M647.6 344H657.2M657.2 344H666.8M666.8 344H676.4M676.4 344H686M686 344H695.6M695.6 344H705.2M705.2 344H714.8M714.8 344H724.4M724.4 344H734M734 344H743.6M743.6 344H743.6Q748.4 344 748.4 339.2V334"/>
+<g class="a a89" visibility="hidden">
+<path stroke="#aeb7c1" stroke-width="1.3" d="M148.4 84H143.6V94M148.4 84H158M158 84H167.6M167.6 84H177.2M177.2 84H186.8M186.8 84H196.4M196.4 84H206M206 84H215.6M215.6 84H225.2M225.2 84H234.8M234.8 84H244.4M244.4 84H254M254 84H263.6M263.6 84H273.2M273.2 84H282.8M282.8 84H292.4M292.4 84H302M302 84H311.6M311.6 84H321.2M321.2 84H330.8M330.8 84H340.4M340.4 84H350M350 84H359.6M359.6 84H369.2M369.2 84H378.8M378.8 84H388.4M388.4 84H398M398 84H407.6M407.6 84H417.2M417.2 84H426.8M426.8 84H436.4M436.4 84H446M446 84H455.6M455.6 84H460.4V94M143.6 94V114M460.4 94V114M143.6 114V134M460.4 114V134M143.6 134V154M460.4 134V154M143.6 154V174M460.4 154V174M143.6 174V194M460.4 174V194M143.6 194V214M460.4 194V214M143.6 214V234M460.4 214V234M143.6 234V254M460.4 234V254M143.6 254V274M460.4 254V274M143.6 274V294M460.4 274V294M143.6 294V314M460.4 294V314M143.6 314V334M460.4 314V334M143.6 334V354M460.4 334V354M143.6 354V374M460.4 354V374M143.6 374V394M460.4 374V394M143.6 394V414M460.4 394V414M148.4 424H143.6V414M148.4 424H158M158 424H167.6M167.6 424H177.2M177.2 424H186.8M186.8 424H196.4M196.4 424H206M206 424H215.6M215.6 424H225.2M225.2 424H234.8M234.8 424H244.4M244.4 424H254M254 424H263.6M263.6 424H273.2M273.2 424H282.8M282.8 424H292.4M292.4 424H302M302 424H311.6M311.6 424H321.2M321.2 424H330.8M330.8 424H340.4M340.4 424H350M350 424H359.6M359.6 424H369.2M369.2 424H378.8M378.8 424H388.4M388.4 424H398M398 424H407.6M407.6 424H417.2M417.2 424H426.8M426.8 424H436.4M436.4 424H446M446 424H455.6M455.6 424H460.4V414"/>
+</g>
+<g class="a a380">
+<path stroke="#197a35" stroke-width="1.3" d="M148.4 84H143.6V94M148.4 84H158M158 84H167.6M167.6 84H177.2M177.2 84H186.8M186.8 84H196.4M196.4 84H206M206 84H215.6M215.6 84H225.2M225.2 84H234.8M234.8 84H244.4M244.4 84H254M254 84H263.6M263.6 84H273.2M273.2 84H282.8M282.8 84H292.4M292.4 84H302M302 84H311.6M311.6 84H321.2M321.2 84H330.8M330.8 84H340.4M340.4 84H350M350 84H359.6M359.6 84H369.2M369.2 84H378.8M378.8 84H388.4M388.4 84H398M398 84H407.6M407.6 84H417.2M417.2 84H426.8M426.8 84H436.4M436.4 84H446M446 84H455.6M455.6 84H460.4V94M143.6 94V114M460.4 94V114M143.6 114V134M460.4 114V134M143.6 134V154M460.4 134V154M143.6 154V174M460.4 154V174M143.6 174V194M460.4 174V194M143.6 194V214M460.4 194V214M143.6 214V234M460.4 214V234M143.6 234V254M460.4 234V254M143.6 254V274M460.4 254V274M143.6 274V294M460.4 274V294M143.6 294V314M460.4 294V314M143.6 314V334M460.4 314V334M143.6 334V354M460.4 334V354M143.6 354V374M460.4 354V374M143.6 374V394M460.4 374V394M143.6 394V414M460.4 394V414M148.4 424H143.6V414M148.4 424H158M158 424H167.6M167.6 424H177.2M177.2 424H186.8M186.8 424H196.4M196.4 424H206M206 424H215.6M215.6 424H225.2M225.2 424H234.8M234.8 424H244.4M244.4 424H254M254 424H263.6M263.6 424H273.2M273.2 424H282.8M282.8 424H292.4M292.4 424H302M302 424H311.6M311.6 424H321.2M321.2 424H330.8M330.8 424H340.4M340.4 424H350M350 424H359.6M359.6 424H369.2M369.2 424H378.8M378.8 424H388.4M388.4 424H398M398 424H407.6M407.6 424H417.2M417.2 424H426.8M426.8 424H436.4M436.4 424H446M446 424H455.6M455.6 424H460.4V414"/>
+</g>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="105.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">minesweeper</text>
+<text x="167.6" y="29" textLength="115.2" lengthAdjust="spacing" fill="#59636e">intermediate</text>
+<text x="292.4" y="29" textLength="57.6" lengthAdjust="spacing" fill="#59636e">16x16,</text>
+<text x="359.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#59636e">40</text>
+<text x="388.4" y="29" textLength="48" lengthAdjust="spacing" fill="#59636e">mines</text>
+<text x="513.2" y="149" textLength="105.6" lengthAdjust="spacing" fill="#59636e">minesweeper</text>
+<text x="503.6" y="189" textLength="48" lengthAdjust="spacing" fill="#59636e">mines</text>
+<text x="561.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#59636e">left</text>
+<text x="503.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#59636e">time</text>
+<text x="503.6" y="229" textLength="9.6" lengthAdjust="spacing" fill="#59636e">a</text>
+<text x="522.8" y="229" textLength="48" lengthAdjust="spacing" fill="#59636e">click</text>
+<text x="503.6" y="269" textLength="38.4" lengthAdjust="spacing" fill="#59636e">best</text>
+<text x="551.6" y="269" textLength="48" lengthAdjust="spacing" fill="#59636e">times</text>
+<text x="503.6" y="289" textLength="76.8" lengthAdjust="spacing" fill="#59636e">beginner</text>
+<text x="714.8" y="289" textLength="19.2" lengthAdjust="spacing" fill="#1f2328" font-weight="700">--</text>
+<text x="503.6" y="309" textLength="115.2" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">intermediate</text>
+<text x="503.6" y="329" textLength="57.6" lengthAdjust="spacing" fill="#59636e">expert</text>
+<text x="714.8" y="329" textLength="19.2" lengthAdjust="spacing" fill="#1f2328" font-weight="700">--</text>
+<text x="14" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">?</text>
+<text x="33.2" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">help</text>
+<text x="90.8" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">q</text>
+<text x="110" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">quit</text>
+<text x="167.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">↑↓←→</text>
+<text x="215.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">move</text>
+<text x="273.2" y="489" textLength="48" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">enter</text>
+<text x="330.8" y="489" textLength="57.6" lengthAdjust="spacing" fill="#59636e">reveal</text>
+<text x="407.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">f</text>
+<text x="426.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">flag</text>
+<text x="474.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">mode</text>
+<text x="532.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">g</text>
+<text x="551.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#59636e">flag</text>
+<text x="609.2" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">n</text>
+<text x="628.4" y="489" textLength="28.8" lengthAdjust="spacing" fill="#59636e">new</text>
+<text x="676.4" y="489" textLength="28.8" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">1-3</text>
+<text x="714.8" y="489" textLength="48" lengthAdjust="spacing" fill="#59636e">level</text>
+<text x="782" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">p</text>
+<text x="801.2" y="489" textLength="48" lengthAdjust="spacing" fill="#59636e">pause</text>
+<g class="a a2" visibility="hidden">
+<text x="532.4" y="169" textLength="48" lengthAdjust="spacing" fill="#1f2328" font-weight="700">ready</text>
+</g>
+<g class="a a38" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">040</text>
+</g>
+<g class="a a89" visibility="hidden">
+<text x="503.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#1f2328" font-weight="700">:)</text>
+<text x="714.8" y="309" textLength="19.2" lengthAdjust="spacing" fill="#1f2328" font-weight="700">--</text>
+</g>
+<g class="a a129" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:00</text>
+<text x="676.4" y="229" textLength="57.6" lengthAdjust="spacing" fill="#1f2328" font-weight="700">reveal</text>
+</g>
+<g class="a a140">
+<text x="273.2" y="109" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="273.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="292.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="330.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="350" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="388.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="388.4" y="149" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="407.6" y="149" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="350" y="169" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="292.4" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="311.6" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="350" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="407.6" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="273.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="311.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="330.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="350" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="369.2" y="229" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="388.4" y="229" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="273.2" y="249" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="273.2" y="269" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="350" y="269" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="369.2" y="269" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="273.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="292.4" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="330.8" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="350" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a141">
+<text x="388.4" y="109" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a142">
+<text x="311.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a143">
+<text x="350" y="149" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a144">
+<text x="407.6" y="169" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a145" visibility="hidden">
+<text x="532.4" y="169" textLength="67.2" lengthAdjust="spacing" fill="#1f2328" font-weight="700">playing</text>
+</g>
+<g class="a a146">
+<text x="273.2" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a147">
+<text x="407.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a148">
+<text x="273.2" y="229" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a149">
+<text x="407.6" y="229" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a150">
+<text x="369.2" y="249" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a151">
+<text x="311.6" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a152" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:01</text>
+</g>
+<g class="a a153">
+<text x="695.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#8a5a00" font-weight="700">flag</text>
+</g>
+<g class="a a154" visibility="hidden">
+<text x="330.8" y="149" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">039</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:02</text>
+</g>
+<g class="a a156" visibility="hidden">
+<text x="407.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">038</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:03</text>
+</g>
+<g class="a a157">
+<text x="330.8" y="149" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a158" visibility="hidden">
+<text x="330.8" y="189" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">037</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:04</text>
+</g>
+<g class="a a159">
+<text x="407.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a160" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">036</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:05</text>
+<text x="388.4" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a161">
+<text x="330.8" y="189" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a162" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">035</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:06</text>
+<text x="407.6" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a163">
+<text x="388.4" y="249" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a164" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:07</text>
+<text x="369.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a165" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">034</text>
+</g>
+<g class="a a166">
+<text x="407.6" y="249" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a167" visibility="hidden">
+<text x="388.4" y="109" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:08</text>
+</g>
+<g class="a a168">
+<text x="407.6" y="109" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a169">
+<text x="369.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a170" visibility="hidden">
+<text x="407.6" y="109" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:09</text>
+</g>
+<g class="a a171">
+<text x="426.8" y="109" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a172">
+<text x="426.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a173" visibility="hidden">
+<text x="426.8" y="109" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:10</text>
+</g>
+<g class="a a174">
+<text x="446" y="149" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a176">
+<text x="426.8" y="149" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a178" visibility="hidden">
+<text x="426.8" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:11</text>
+</g>
+<g class="a a179" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">033</text>
+</g>
+<g class="a a180" visibility="hidden">
+<text x="311.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:12</text>
+</g>
+<g class="a a181">
+<text x="292.4" y="149" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="311.6" y="149" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="426.8" y="169" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a182" visibility="hidden">
+<text x="273.2" y="149" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:13</text>
+</g>
+<g class="a a183" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">032</text>
+</g>
+<g class="a a184" visibility="hidden">
+<text x="350" y="149" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:14</text>
+</g>
+<g class="a a186">
+<text x="273.2" y="149" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a187">
+<text x="330.8" y="169" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a188" visibility="hidden">
+<text x="426.8" y="149" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:15</text>
+</g>
+<g class="a a189">
+<text x="446" y="169" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a190" visibility="hidden">
+<text x="330.8" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:16</text>
+</g>
+<g class="a a191">
+<text x="311.6" y="169" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a192" visibility="hidden">
+<text x="273.2" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">031</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:17</text>
+</g>
+<g class="a a194" visibility="hidden">
+<text x="292.4" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:18</text>
+</g>
+<g class="a a195">
+<text x="273.2" y="169" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a196" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">030</text>
+</g>
+<g class="a a197" visibility="hidden">
+<text x="407.6" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:19</text>
+</g>
+<g class="a a199">
+<text x="292.4" y="169" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a200">
+<text x="426.8" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a201" visibility="hidden">
+<text x="426.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:20</text>
+</g>
+<g class="a a202" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">029</text>
+</g>
+<g class="a a203" visibility="hidden">
+<text x="446" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:21</text>
+</g>
+<g class="a a205">
+<text x="446" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="426.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a207" visibility="hidden">
+<text x="273.2" y="189" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:22</text>
+</g>
+<g class="a a209">
+<text x="254" y="169" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a210">
+<text x="254" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="254" y="209" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a211" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:23</text>
+<text x="254" y="229" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a212" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">028</text>
+</g>
+<g class="a a213">
+<text x="234.8" y="109" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="234.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="254" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="254" y="149" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="215.6" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="234.8" y="189" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="215.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="215.6" y="229" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="254" y="229" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+<text x="196.4" y="249" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="196.4" y="269" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="196.4" y="289" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="177.2" y="309" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="196.4" y="309" textLength="9.6" lengthAdjust="spacing" fill="#1b1f8a" font-weight="700">4</text>
+<text x="177.2" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a214" visibility="hidden">
+<text x="254" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:24</text>
+</g>
+<g class="a a215">
+<text x="215.6" y="249" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a216">
+<text x="158" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a217" visibility="hidden">
+<text x="254" y="109" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">027</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:25</text>
+</g>
+<g class="a a219" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">026</text>
+<text x="234.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:26</text>
+</g>
+<g class="a a220">
+<text x="254" y="109" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a221" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">025</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:27</text>
+<text x="234.8" y="229" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a222">
+<text x="234.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a223" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">024</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:28</text>
+<text x="234.8" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a224">
+<text x="234.8" y="229" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a225" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">023</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:29</text>
+<text x="215.6" y="269" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a226">
+<text x="234.8" y="249" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a227" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">022</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:30</text>
+<text x="215.6" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a228">
+<text x="215.6" y="269" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a229" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">021</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:31</text>
+<text x="215.6" y="309" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a230">
+<text x="215.6" y="289" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a231" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">020</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:32</text>
+<text x="196.4" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a232">
+<text x="215.6" y="309" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a233" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:33</text>
+<text x="215.6" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a234" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">019</text>
+</g>
+<g class="a a235">
+<text x="196.4" y="329" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a236" visibility="hidden">
+<text x="426.8" y="189" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:34</text>
+</g>
+<g class="a a237">
+<text x="446" y="209" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a238">
+<text x="215.6" y="329" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a239" visibility="hidden">
+<text x="407.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:35</text>
+</g>
+<g class="a a240">
+<text x="426.8" y="229" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a241" visibility="hidden">
+<text x="446" y="209" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:36</text>
+</g>
+<g class="a a243">
+<text x="446" y="229" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a244" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:37</text>
+<text x="273.2" y="229" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a246">
+<text x="254" y="249" textLength="9.6" lengthAdjust="spacing" fill="#1b1f8a" font-weight="700">4</text>
+</g>
+<g class="a a247" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:38</text>
+<text x="254" y="269" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a248" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">018</text>
+</g>
+<g class="a a249" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:39</text>
+<text x="407.6" y="229" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3</text>
+</g>
+<g class="a a250">
+<text x="426.8" y="249" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="254" y="269" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a251" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:40</text>
+<text x="426.8" y="229" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+</g>
+<g class="a a252">
+<text x="407.6" y="269" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="426.8" y="269" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="407.6" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="369.2" y="309" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="388.4" y="309" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="407.6" y="309" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="350" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="369.2" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="350" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="407.6" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="446" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="350" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="369.2" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="407.6" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a256">
+<text x="388.4" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a257">
+<text x="426.8" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a258" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">017</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:41</text>
+<text x="388.4" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a259" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">016</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:42</text>
+<text x="350" y="309" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a260">
+<text x="388.4" y="289" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a261" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:43</text>
+<text x="426.8" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a262" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">015</text>
+</g>
+<g class="a a263">
+<text x="350" y="309" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a264" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:44</text>
+<text x="215.6" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3</text>
+</g>
+<g class="a a265">
+<text x="234.8" y="269" textLength="9.6" lengthAdjust="spacing" fill="#1b1f8a" font-weight="700">4</text>
+</g>
+<g class="a a266">
+<text x="426.8" y="369" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a267" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:45</text>
+<text x="369.2" y="249" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a268">
+<text x="388.4" y="269" textLength="9.6" lengthAdjust="spacing" fill="#1b1f8a" font-weight="700">4</text>
+</g>
+<g class="a a269" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:46</text>
+<text x="234.8" y="269" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">4</text>
+</g>
+<g class="a a271">
+<text x="234.8" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1b1f8a" font-weight="700">4</text>
+</g>
+<g class="a a272">
+<text x="254" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a273" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:47</text>
+<text x="234.8" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">4</text>
+</g>
+<g class="a a274">
+<text x="292.4" y="309" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a276">
+<text x="234.8" y="309" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="254" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="273.2" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a277">
+<text x="234.8" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1b1f8a" font-weight="700">4</text>
+</g>
+<g class="a a278">
+<text x="292.4" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a279" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:48</text>
+<text x="311.6" y="309" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a280" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">014</text>
+</g>
+<g class="a a281" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:49</text>
+<text x="311.6" y="289" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a282">
+<text x="330.8" y="309" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a283">
+<text x="311.6" y="309" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a284" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:50</text>
+<text x="292.4" y="309" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a285">
+<text x="311.6" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a286" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:51</text>
+<text x="330.8" y="309" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+</g>
+<g class="a a288">
+<text x="330.8" y="329" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a289" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:52</text>
+<text x="292.4" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a291">
+<text x="273.2" y="349" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="292.4" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a292">
+<text x="311.6" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a293" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">013</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:53</text>
+<text x="234.8" y="349" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a294" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:54</text>
+<text x="254" y="349" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a295" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">012</text>
+</g>
+<g class="a a296">
+<text x="234.8" y="349" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a297" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:55</text>
+<text x="234.8" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">4</text>
+</g>
+<g class="a a299">
+<text x="215.6" y="349" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a300">
+<text x="254" y="349" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a301" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:56</text>
+<text x="311.6" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a303">
+<text x="330.8" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a304" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">011</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:57</text>
+<text x="311.6" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a305" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:58</text>
+<text x="330.8" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a306" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">010</text>
+</g>
+<g class="a a307">
+<text x="311.6" y="369" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a308" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">0:59</text>
+<text x="215.6" y="349" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3</text>
+</g>
+<g class="a a310">
+<text x="196.4" y="349" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="196.4" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="330.8" y="369" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a311">
+<text x="215.6" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a312">
+<text x="234.8" y="369" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a314" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:00</text>
+<text x="311.6" y="349" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+</g>
+<g class="a a315">
+<text x="292.4" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a316" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">009</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:01</text>
+<text x="254" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a317" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:02</text>
+<text x="273.2" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a318" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">008</text>
+</g>
+<g class="a a319">
+<text x="254" y="369" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a320" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:03</text>
+<text x="426.8" y="349" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a321">
+<text x="446" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a322">
+<text x="273.2" y="369" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a323" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:04</text>
+<text x="215.6" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a325">
+<text x="196.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a326">
+<text x="215.6" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="234.8" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a327" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:05</text>
+<text x="234.8" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3</text>
+</g>
+<g class="a a328">
+<text x="254" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a329" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:06</text>
+<text x="292.4" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+</g>
+<g class="a a331">
+<text x="273.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a332">
+<text x="292.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a333">
+<text x="311.6" y="389" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a334" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:07</text>
+<text x="446" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a336">
+<text x="426.8" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a337">
+<text x="446" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a338" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:08</text>
+<text x="254" y="389" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+</g>
+<g class="a a339">
+<text x="234.8" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="273.2" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a340" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">007</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:09</text>
+<text x="215.6" y="409" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a341" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:10</text>
+<text x="292.4" y="409" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a342" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">006</text>
+</g>
+<g class="a a343">
+<text x="215.6" y="409" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a344">
+<text x="177.2" y="369" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a345" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:11</text>
+<text x="196.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a346">
+<text x="177.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="177.2" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="196.4" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+<text x="292.4" y="409" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a347" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:12</text>
+<text x="177.2" y="349" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a349" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">005</text>
+</g>
+<g class="a a350" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:13</text>
+<text x="158" y="329" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a351">
+<text x="158" y="349" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="177.2" y="349" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a352" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:14</text>
+<text x="158" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a353" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">004</text>
+</g>
+<g class="a a354" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:15</text>
+<text x="177.2" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">2</text>
+</g>
+<g class="a a356">
+<text x="158" y="369" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+<text x="158" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a357" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:16</text>
+<text x="158" y="409" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a358" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">003</text>
+</g>
+<g class="a a359" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:17</text>
+<text x="292.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3</text>
+</g>
+<g class="a a360">
+<text x="158" y="409" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+<text x="311.6" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a361" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:18</text>
+<text x="311.6" y="389" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3</text>
+</g>
+<g class="a a363">
+<text x="330.8" y="389" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+</g>
+<g class="a a364">
+<text x="330.8" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a366" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:19</text>
+<text x="426.8" y="389" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a368">
+<text x="407.6" y="389" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+<text x="407.6" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1f4fd8" font-weight="700">1</text>
+</g>
+<g class="a a369" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:20</text>
+<text x="388.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a371" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">002</text>
+</g>
+<g class="a a372" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:21</text>
+<text x="388.4" y="369" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">1</text>
+</g>
+<g class="a a373">
+<text x="369.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#cf222e" font-weight="700">3</text>
+<text x="388.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+</g>
+<g class="a a374" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:22</text>
+<text x="350" y="389" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a375" visibility="hidden">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">001</text>
+</g>
+<g class="a a376" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:23</text>
+<text x="330.8" y="389" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">3</text>
+</g>
+<g class="a a377">
+<text x="350" y="389" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+<text x="350" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+<g class="a a378" visibility="hidden">
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:24</text>
+<text x="369.2" y="409" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">►</text>
+</g>
+<g class="a a379">
+<text x="705.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" font-weight="700">000</text>
+</g>
+<g class="a a380">
+<text x="503.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#197a35" font-weight="700">B)</text>
+<text x="532.4" y="169" textLength="67.2" lengthAdjust="spacing" fill="#197a35" font-weight="700">cleared</text>
+<text x="695.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:25</text>
+<text x="695.6" y="309" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">1:25</text>
+<text x="369.2" y="409" textLength="9.6" lengthAdjust="spacing" fill="#9a1d17" font-weight="700">►</text>
+<text x="388.4" y="409" textLength="9.6" lengthAdjust="spacing" fill="#1a7f37" font-weight="700">2</text>
+</g>
+</g>
+</svg>

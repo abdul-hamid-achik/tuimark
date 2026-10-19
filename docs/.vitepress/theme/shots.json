@@ -218,6 +218,56 @@
     "ms": 8345
   },
   {
+    "name": "chess-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "chess: Morphy's Opera Game replayed move by move, the last move highlighted on the board and the move list growing, ending on 17.Rd8 checkmate",
+    "cmd": "go run ./examples/chess",
+    "animated": true,
+    "ms": 10860
+  },
+  {
+    "name": "tetris-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "tetris: the autopilot rotating and dropping pieces, a four-line clear flashing before it collapses, the score and lines rising",
+    "cmd": "go run ./examples/tetris",
+    "animated": true,
+    "ms": 10900
+  },
+  {
+    "name": "minesweeper-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "minesweeper: a solver clearing an intermediate board, flagging proven mines and opening safe cells until the board is cleared",
+    "cmd": "go run ./examples/minesweeper",
+    "animated": true,
+    "ms": 10940
+  },
+  {
+    "name": "sudoku-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "sudoku: the logic solver filling an easy puzzle digit by digit, then the solved board and the win dialog",
+    "cmd": "go run ./examples/sudoku",
+    "animated": true,
+    "ms": 10150
+  },
+  {
+    "name": "2048-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "2048: the autopilot sliding tiles, merged tiles popping and new tiles lit up, the score climbing to a 512 tile",
+    "cmd": "go run ./examples/2048",
+    "animated": true,
+    "ms": 10800
+  },
+  {
     "name": "pipeline-demo",
     "light": true,
     "cols": 100,
