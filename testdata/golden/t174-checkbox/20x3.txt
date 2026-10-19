@@ -1,0 +1,10 @@
+=== grid 20x3 ===
+[x] Dark mode       
+[ ] Beta            
+                    
+=== nodes ===
+main  screen    20x3 @(0,0)
+dark  checkbox  20x1 @(0,0) focus checked
+beta  checkbox  20x1 @(0,1)
+=== errors ===
+ok

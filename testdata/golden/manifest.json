@@ -437,5 +437,39 @@
     "sizes": ["20x5"],
     "json": ["20x5"],
     "frozen": false
+  },
+  {
+    "name": "t174-checkbox",
+    "file": "testdata/v04b/174/checkbox.tui",
+    "data": "testdata/v04b/174/checkbox.json",
+    "sizes": ["20x3"],
+    "json": ["20x3"],
+    "frozen": false
+  },
+  {
+    "name": "t174-checkbox-space",
+    "file": "testdata/v04b/174/checkbox.tui",
+    "data": "testdata/v04b/174/checkbox.json",
+    "input": "tab space",
+    "sizes": ["20x3"],
+    "json": ["20x3"],
+    "frozen": false
+  },
+  {
+    "name": "t177-radio-space",
+    "file": "testdata/v04b/177/radio.tui",
+    "data": "testdata/v04b/177/radio.json",
+    "input": "space",
+    "sizes": ["20x3"],
+    "json": ["20x3"],
+    "frozen": false
+  },
+  {
+    "name": "t178-radio-table",
+    "file": "testdata/v04b/178/radio-table.tui",
+    "data": "testdata/v04b/177/radio.json",
+    "sizes": ["20x3"],
+    "json": ["20x3"],
+    "frozen": false
   }
 ]
