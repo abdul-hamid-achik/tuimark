@@ -256,7 +256,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 			initFocus = a.focus
 		}
 	}
-	casc := css.NewCascade(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: theme})
+	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: theme}, a.doc.Lang)
 	if !a.noCache {
 		casc.EnableSharing()
 	}
@@ -861,11 +861,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	case "text":
 		b.Text = fb.interp(n, n.Text, sc)
 	case "button":
-		if l, ok := n.Attr("label"); ok {
-			b.Text = l
-		} else {
-			b.Text = n.Text
-		}
+		b.Text = fb.buttonText(n, sc)
 	case "input":
 		b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
 		b.Secret = n.Attrs["secret"] == "true"
@@ -1448,18 +1444,23 @@ func (fb *builder) tabFocusOf(root *layout.Box, list []*layout.Box) (string, boo
 	return fb.tabFocus(root, list)
 }
 
-// isFocusable reports whether a laid-out box can take focus.
-func isFocusable(b *layout.Box) bool {
+// isFocusable reports whether a laid-out box of a document of language l
+// can take focus: focusable= when written, else the kinds focusable by
+// default in l (focusableIn: a tabs in a <tui> without version).
+func isFocusable(b *layout.Box, l ir.Lang) bool {
 	if b.ID == "" || b.Disabled || b.Style.Visibility == "hidden" {
 		return false
 	}
 	if v, ok := b.Src.Attr("focusable"); ok {
 		return v == "true"
 	}
-	return focusableByDefault(b.Kind)
+	return focusableIn(b.Kind, l)
 }
 
-func collectFocusables(b *layout.Box, out *[]*layout.Box) {
+// collectFocusables appends the nodes of b that can take focus, in
+// document order (a node before its children, so a tabs comes before its
+// labels and its active tab: SPEC v0.4b §6.10.3), to out.
+func collectFocusables(b *layout.Box, l ir.Lang, out *[]*layout.Box) {
 	if b == nil {
 		return
 	}
@@ -1468,11 +1469,11 @@ func collectFocusables(b *layout.Box, out *[]*layout.Box) {
 		// each template takes focus (SPEC §6.8 item 8).
 		return
 	}
-	if isFocusable(b) {
+	if isFocusable(b, l) {
 		*out = append(*out, b)
 	}
 	for _, c := range b.Children {
-		collectFocusables(c, out)
+		collectFocusables(c, l, out)
 	}
 }
 
@@ -1522,13 +1523,13 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 			a.modalStack = append(a.modalStack, modalEntry{node: top.Src, ret: ret})
 		}
 		for _, c := range top.Children {
-			collectFocusables(c, &list)
+			collectFocusables(c, a.doc.Lang, &list)
 		}
-		if len(list) == 0 && isFocusable(top) {
+		if len(list) == 0 && isFocusable(top, a.doc.Lang) {
 			list = append(list, top)
 		}
 	} else {
-		collectFocusables(root, &list)
+		collectFocusables(root, a.doc.Lang, &list)
 	}
 	f.Focusables = list
 	focusable := func(id string) bool {

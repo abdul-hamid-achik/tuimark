@@ -612,8 +612,8 @@ func TestHelpClosesWithEveryKeyAndTheButton(t *testing.T) {
 			t.Errorf("%s quit from the help", key)
 		}
 	}
-	// q and ctrl+c quit from the help as anywhere: they are in the first
-	// keymap, which has no `when` that could go dead.
+	// q and ctrl+c quit from the help as anywhere: a modal traps the
+	// keymap, so they are repeated in <keymap when="modal">.
 	for _, key := range []string{"q", "ctrl+c"} {
 		r := newRig(t)
 		r.play("?")

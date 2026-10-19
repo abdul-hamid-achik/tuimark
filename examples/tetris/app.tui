@@ -4,6 +4,12 @@
     <bind keys="q,ctrl+c" action="quit" label="quit"/>
     <bind keys="?" action="help_open" label="help"/>
   </keymap>
+  <!-- A modal traps the keymap: the keys that also act under one are
+       repeated here, without labels, so the help lists each key once. -->
+  <keymap when="modal">
+    <bind keys="q,ctrl+c" action="quit"/>
+    <bind keys="?" action="help_open"/>
+  </keymap>
   <keymap when="#app">
     <bind keys="left,h" action="left" keycap="←→" label="move"/>
     <bind keys="right,l" action="right"/>
@@ -99,7 +105,7 @@
       <text id="toosmall">terminal too small: the board needs 24 columns by 24 rows</text>
       <hints id="keys"/>
     </col>
-    <modal id="over" open="over_modal" title="GAME OVER" focus="#over-board">
+    <modal id="over" open="over_modal" title="GAME OVER" focus="#over-board" on:escape="over_hide">
       <text class="big">score {score}</text>
       <text class="big">best {best}</text>
       <text class="big">lines {lines}</text>

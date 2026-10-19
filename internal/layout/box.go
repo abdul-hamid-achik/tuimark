@@ -101,6 +101,10 @@ type Box struct {
 	Clipped string
 
 	autoW, autoH bool // size on this axis came from content (for L002)
+	// unsized marks, per axis (bit axisIndex), a child with no size on
+	// its parent's main axis that §11.2 sized by its content (markUnsized,
+	// for L009's message).
+	unsized uint8
 
 	// The engine's memo of this box (Engine.intrinsic, Engine.shrinkable),
 	// kept on the box instead of in maps keyed by it, valid only for the
@@ -195,7 +199,7 @@ type Box struct {
 func (b *Box) ResetOutputs() {
 	b.X, b.Y, b.W, b.H = 0, 0, 0, 0
 	b.Content, b.Clip = Rect{}, Rect{}
-	b.Laid, b.Modal, b.autoW, b.autoH = false, false, false, false
+	b.Laid, b.Modal, b.autoW, b.autoH, b.unsized = false, false, false, false, 0
 	b.Clipped = ""
 	b.ScrollX, b.ScrollY, b.ContentW, b.ContentH = 0, 0, 0, 0
 	b.GroupLo, b.GroupHi, b.HasGroupLo, b.HasGroupHi = 0, 0, false, false

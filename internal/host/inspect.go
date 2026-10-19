@@ -261,7 +261,7 @@ func pseudoOf(b *layout.Box, v2 bool) []string {
 // class:NAME guards in attribute order, then (for a generated node) the
 // classes the runtime gave it. The caller holds a.mu.
 func (a *App) classInfo(b *layout.Box) []ClassInfo {
-	sheets := append(append([]*css.Sheet(nil), a.sheets...), css.UA())
+	sheets := append(append([]*css.Sheet(nil), a.sheets...), css.UALang(a.doc.Lang))
 	used := func(name string) bool { return css.NamesClass(sheets, name) }
 	out := []ClassInfo{}
 	if b.Src == nil {
@@ -290,7 +290,7 @@ func ruleOf(d css.DeclSource) RuleInfo {
 // styleInfo explains every TCSS property of b, in the order of SPEC §10.2
 // then §10.3, re-running the frame's cascade on it. The caller holds a.mu.
 func (a *App) styleInfo(f *Frame, b *layout.Box) []StyleInfo {
-	casc := css.NewCascade(a.sheets, css.Env{Cols: f.Cols, Rows: f.Rows, Theme: f.Theme})
+	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: f.Cols, Rows: f.Rows, Theme: f.Theme}, f.Lang)
 	var parent *css.Style
 	if b.Parent != nil {
 		parent = b.Parent.Style

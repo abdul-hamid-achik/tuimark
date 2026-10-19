@@ -273,13 +273,17 @@ func (fb *builder) tabFocus(root *layout.Box, list []*layout.Box) (string, bool)
 
 // focusWasOn reports whether focus (the id focused when the render
 // started) was, in the last frame, on the tabs node tabs, on its tab
-// prevTab or inside it, or nowhere (SPEC §6.10.3). The caller holds a.mu.
+// prevTab or inside it, or nowhere (SPEC §6.10.3). In a <tui> without
+// version, focus on the tabs node itself stays on its strip when its
+// active tab changes (SPEC v0.4b §6.10.3, the ARIA tabs pattern): the
+// rule applies only when focus was on prevTab, inside it, or nowhere. The
+// caller holds a.mu.
 func (a *App) focusWasOn(tabs, prevTab, focus string) bool {
 	if focus == "" {
 		return true
 	}
 	if focus == tabs {
-		return true
+		return !a.doc.Lang.V4()
 	}
 	if a.last == nil || prevTab == "" {
 		return false

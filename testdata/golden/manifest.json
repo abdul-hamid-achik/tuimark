@@ -429,5 +429,13 @@
     "sizes": ["40x12"],
     "json": ["40x12"],
     "frozen": true
+  },
+  {
+    "name": "spinner",
+    "file": "testdata/v04b/spinner/S.tui",
+    "input": "tick:100ms",
+    "sizes": ["20x5"],
+    "json": ["20x5"],
+    "frozen": false
   }
 ]

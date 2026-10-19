@@ -50,7 +50,8 @@ root, or pass `-dir examples/gitui` from elsewhere.
 | Key | Where | Does |
 |---|---|---|
 | `1` `2` `3`, `[` `]` | anywhere | Status, Log, Branches; previous/next tab |
-| `tab`, `shift+tab` | anywhere | move focus (staged, unstaged, diff) |
+| `tab`, `shift+tab` | anywhere | move focus (the tab strip, staged, unstaged, diff) |
+| `←` `→` | tab strip | previous/next tab |
 | `space` | Status lists | stage / unstage the selected file |
 | `a`, `A` | Status lists | stage all, unstage all |
 | `j` `k`, arrows, `pgup` `pgdn` | lists, tables, diff | move, scroll |
