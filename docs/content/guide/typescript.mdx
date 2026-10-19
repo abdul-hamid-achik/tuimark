@@ -15,13 +15,7 @@ It is a parent library, not a second runtime. Everything you see is still drawn 
 bun add @thelacanians/tuimark
 ```
 
-The package also has a `tuimark` command (`npx @thelacanians/tuimark new my-app`). Its version is the Tuimark release it runs: it downloads that release's binary once, checks it against a checksum built into the package, and caches it. `TUIMARK_BINARY` points it at a binary you installed yourself.
-
-<Callout type="info" title="Not on npm yet?">
-
-If `bun add` cannot find the package yet (its first release needs a Tuimark release that ships raw binaries), install the copy in a clone of the repository: `bun add @thelacanians/tuimark@file:/path/to/tuimark/sdk/ts`.
-
-</Callout>
+The package also has a `tuimark` command: `npx @thelacanians/tuimark new my-app`, or `npm i -g @thelacanians/tuimark` to put it on your `PATH`. Its version is the Tuimark release it runs: it downloads that release's binary once, checks it against a checksum built into the package, and caches it. `TUIMARK_BINARY` points it at a binary you installed yourself.
 
 - The package is ESM, written in TypeScript, and has no runtime dependencies.
 - The client runs on Bun 1.4.2 or later; Node is not supported for it. The `tuimark` command works on Node 18 or later, and on Bun.

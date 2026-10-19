@@ -35,17 +35,18 @@ export const INSTALL = {
   go: 'go install github.com/abdul-hamid-achik/tuimark/cmd/tuimark@latest',
   goLibrary: 'go get github.com/abdul-hamid-achik/tuimark@latest',
   npmPackage: '@thelacanians/tuimark',
+  npmGlobal: 'npm i -g @thelacanians/tuimark',
+  npx: 'npx @thelacanians/tuimark version',
   npmNew: 'bunx @thelacanians/tuimark new my-app --ts',
   npmInstall: 'npm i @thelacanians/tuimark',
 };
 
 /**
- * Whether @thelacanians/tuimark is on npm. While it is false, the npm install
- * tab says "coming soon" and shows its commands without a copy button, and
- * /llms.txt lists only Homebrew and Go. Its first publish comes with a
- * release tag; flip this to true then.
+ * Whether @thelacanians/tuimark is on npm (it is, since 0.4.2). While it is
+ * false, the npm install tab says "coming soon" and shows its commands
+ * without a copy button, and /llms.txt lists only Homebrew and Go.
  */
-export const NPM_PUBLISHED = false;
+export const NPM_PUBLISHED = true;
 
 /** An absolute URL on the canonical origin. */
 export function absoluteUrl(path: string): string {

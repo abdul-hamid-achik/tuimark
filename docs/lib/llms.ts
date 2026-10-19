@@ -40,7 +40,7 @@ export function llmsIndex(): string {
     'Tuimark is a closed vocabulary: structure in `.tui` (XML), style in `.tcss` (a reduced CSS), data as JSON, behavior as named actions. Never invent a tag, attribute or property; the reference pages list every one. The authoring loop is `tuimark validate`, then `tuimark dump --format json` at 80 and 120 columns, then `tuimark play` for interactions. `tuimark agents` prints a full briefing (AGENTS.md) generated from the installed binary, and `tuimark mcp` serves the loop as MCP tools.',
     '',
     NPM_PUBLISHED
-      ? `Install: \`${INSTALL.brew}\`, \`${INSTALL.go}\`, or, for a TypeScript project, \`${INSTALL.npmNew}\`.`
+      ? `Install: \`${INSTALL.brew}\`, \`${INSTALL.go}\`, or \`${INSTALL.npmGlobal}\` (or run \`${INSTALL.npx}\`); for a TypeScript project, \`${INSTALL.npmNew}\`.`
       : `Install: \`${INSTALL.brew}\` or \`${INSTALL.go}\`.`,
     '',
     'Every page below is linked as Markdown; drop the `.md` for the HTML page.',

@@ -43,18 +43,30 @@ function Panel({ method, Heading }: { method: Method; Heading: 'h2' | 'h3' }) {
         </Body>
       );
     case 'npm':
-      return (
-        <Body heading={NPM_PUBLISHED ? 'Start a TypeScript project' : 'npm: coming soon'} Heading={Heading}>
+      return NPM_PUBLISHED ? (
+        <Body heading="Install with npm" Heading={Heading}>
           <p>
-            <code>{INSTALL.npmPackage}</code> is the TypeScript client and the CLI in one package: its{' '}
-            <code>tuimark</code> command downloads the binary of its own release and checks it against a checksum
-            built into the package.{' '}
-            {NPM_PUBLISHED
-              ? 'Scaffold a project with a Bun parent, or add it to an existing one.'
-              : 'Its first publish comes with the next release; until then, install the CLI with Homebrew or Go.'}
+            <code>{INSTALL.npmPackage}</code> is the CLI and the TypeScript client in one package. Its{' '}
+            <code>tuimark</code> command downloads the binary of its own release once, checks it against a checksum
+            built into the package, and caches it. Install it globally, or run it with <code>npx</code>.
           </p>
-          <CommandCopy command={INSTALL.npmNew} copyable={NPM_PUBLISHED} />
-          <CommandCopy command={INSTALL.npmInstall} copyable={NPM_PUBLISHED} />
+          <CommandCopy command={INSTALL.npmGlobal} />
+          <CommandCopy command={INSTALL.npx} />
+          <p>
+            For a TypeScript host, scaffold a project with a Bun parent, or add the package to your own and import{' '}
+            <code>spawnHost</code> from <code>{INSTALL.npmPackage}</code>.
+          </p>
+          <CommandCopy command={INSTALL.npmNew} />
+          <CommandCopy command={INSTALL.npmInstall} />
+        </Body>
+      ) : (
+        <Body heading="npm: coming soon" Heading={Heading}>
+          <p>
+            <code>{INSTALL.npmPackage}</code> is the TypeScript client and the CLI in one package. Its first publish
+            comes with the next release; until then, install the CLI with Homebrew or Go.
+          </p>
+          <CommandCopy command={INSTALL.npmGlobal} copyable={false} />
+          <CommandCopy command={INSTALL.npmInstall} copyable={false} />
         </Body>
       );
     case 'release':
