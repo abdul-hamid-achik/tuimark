@@ -20,9 +20,21 @@ grid + node geometry
 agent edits again
 ```
 
-**Documentation:** [tuimark.dev](https://tuimark.dev) — guides
-and reference for the language, the CLI, and the Go API. Release history is
-in the [Changelog](CHANGELOG.md).
+**Website:** [tuimark.dev](https://tuimark.dev)
+
+- [Getting started](https://tuimark.dev/guide/getting-started), the guides,
+  and the [reference](https://tuimark.dev/reference) for the language, the
+  CLI, the Go API, and the TypeScript client
+- [Examples](https://tuimark.dev/examples): every app in `examples/`,
+  pictured from `tuimark play` output, with animated demos
+- [Kit components](https://tuimark.dev/kit): every component of the kit,
+  pictured in both themes, with its markup
+- [Blog](https://tuimark.dev/blog) ([RSS](https://tuimark.dev/blog/rss.xml))
+- For agents: every page as Markdown (its URL plus `.md`),
+  [llms.txt](https://tuimark.dev/llms.txt), and
+  [llms-full.txt](https://tuimark.dev/llms-full.txt)
+
+Release history is in the [Changelog](CHANGELOG.md).
 
 The Tuimark specification (the SPEC, currently v0.3) is the source of truth
 for the language and the runtime. It is maintained by the author outside
@@ -52,6 +64,25 @@ tuimark version
 ```
 
 The tap is added automatically; you do not need to run `brew tap` first.
+
+### npm (Node and Bun)
+
+```sh
+npm i -g @thelacanians/tuimark
+tuimark version
+```
+
+Or run it once without installing: `npx @thelacanians/tuimark version`.
+
+[`@thelacanians/tuimark`](https://www.npmjs.com/package/@thelacanians/tuimark)
+is the CLI and the TypeScript client in one package (`sdk/ts` in this
+repository). Its `tuimark` command is a small launcher (plain JavaScript for
+Node 18 or later and Bun, no dependencies, no `postinstall` script) that runs
+the Go binary of the release with the same version: it downloads
+`tuimark_<version>_<os>_<arch>` from the GitHub release once, checks its
+SHA-256 against a table built into the package, and caches it.
+`TUIMARK_BINARY` points it at a binary you installed yourself. See
+[TypeScript client](#typescript-client) for the library side.
 
 ### Go
 
@@ -93,6 +124,31 @@ It has no CGO and needs Go 1.22 or newer. On current macOS, a program
 built with Go 1.22 that links the `net` package (such as `examples/agent`)
 fails to start with `dyld: missing LC_UUID load command`; build it with Go
 1.23 or newer there.
+
+### TypeScript client
+
+The same npm package drives a view from a Bun program over the
+[host protocol](https://tuimark.dev/guide/host-protocol): `spawnHost` starts
+`tuimark host` with your document, and your program writes data and answers
+the actions the document fires.
+
+```sh
+bunx @thelacanians/tuimark new my-app --ts   # a project with a Bun parent
+npm i @thelacanians/tuimark                  # or add it to your own
+```
+
+```ts
+import { spawnHost } from "@thelacanians/tuimark";
+
+const ui = await spawnHost("app.tui", { data: "sample.json" });
+ui.on("open", async (ev) => {
+  await ui.set("detail", await load(ev.keys.item));
+});
+```
+
+The client needs Bun 1.4.2 or later. See the
+[TypeScript client guide](https://tuimark.dev/guide/typescript) and
+`examples/host-ts`.
 
 ### From source
 
@@ -1070,6 +1126,10 @@ module; the only supported entry points are the functions above.
 
 ## Examples
 
+Every example below is pictured on [tuimark.dev/examples](https://tuimark.dev/examples),
+rendered from `tuimark play` (or, for the ones that move on their own, from
+the app's `-demo` mode).
+
 - `examples/spike/inbox.tui` — the phase-0 fixture (5 tags: `app col row box
   text`). Its goldens in `testdata/golden/spike/` are **frozen**: they are
   never regenerated, by design — a geometry mismatch there is a runtime
@@ -1216,12 +1276,35 @@ module; the only supported entry points are the functions above.
   go build -o bin/sudoku ./examples/sudoku && ./bin/sudoku
   ```
 
-- `kit/` and `examples/kit-gallery` — a copy-paste component kit (design tokens,
-  `k-` component classes, and one small document per component) and an app that
-  shows every component on five tabs. See [`kit/README.md`](kit/README.md).
-  `examples/containers` is a larger app built on the kit: a container-engine
-  dashboard over a simulated engine, with a table, a detail pane, dialogs, a
-  command palette and an animated `-demo`.
+- `kit/` and `examples/kit-gallery` — a copy-paste component kit in the
+  spirit of shadcn (design tokens, `k-` component classes, and 21 small
+  documents, one per component, under `kit/components/`) and an app that
+  shows every component on five tabs. You copy what you need into your
+  project and own it; the kit adds no tag, attribute, or property. Its host
+  helpers do what markup cannot (toasts that expire, filter, sort and pages,
+  form validation, dialog routing, the palette's commands, async loads,
+  formatting), as files to copy too: `kit/go` (a nested module, not for
+  `go get`) and `kit/ts` (typed against `@thelacanians/tuimark`). See
+  [`kit/README.md`](kit/README.md), the
+  [kit guide](https://tuimark.dev/guide/kit#helpers), and every component
+  pictured on [tuimark.dev/kit](https://tuimark.dev/kit).
+
+  ```sh
+  go run ./examples/kit-gallery
+  tuimark run kit/components/table.tui --data kit/components/table.sample.json
+  ```
+
+- `examples/containers` — a container-engine dashboard built only from the
+  kit, over a simulated engine (a seeded state machine; no Docker): a
+  filterable, sortable, multi-select table whose columns hide by `priority`,
+  a detail pane with CPU and memory sparklines and a log that follows its
+  end, confirm dialogs, a command palette, a help overlay, toasts, and an
+  animated `-demo`.
+
+  ```sh
+  go run ./examples/containers
+  go run ./examples/containers -theme light
+  ```
 
 - `examples/stacked/{app.tui,theme.tcss}` — the phase-1 media fixture (SPEC
   §4, §21 test 10): the inbox layout with static text, where `@media
