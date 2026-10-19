@@ -1,0 +1,13 @@
+#body { gap: 1; }
+#services { width: 24; border: rounded; border-color: $border; }
+#services:focus { border-color: $focus; }
+#services > item.down { color: $danger; }
+#detail { width: 1fr; border: rounded; border-color: $border; padding: 0 1; gap: 1; }
+.status { color: $ok; bold: true; }
+.status.down { color: $danger; }
+.status.busy { color: $warn; }
+.meta { color: $muted; wrap: truncate; }
+progress { bar: eighths; color: $accent; }
+#p99 { height: 1fr; color: $accent; }
+.hint-key { color: $accent; bold: true; }
+hints { height: 1; }

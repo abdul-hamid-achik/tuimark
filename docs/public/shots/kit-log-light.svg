@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="719.2" height="268" viewBox="0 0 719.2 268" role="img" aria-label="a bordered build log with timestamps, a warning and a failed test in color, over its scroll hints">
+<title>a bordered build log with timestamps, a warning and a failed test in color, over its scroll hints</title>
+<rect width="719.2" height="268" rx="6" fill="#f6f8fa"/>
+<path fill="#ffffff" d="M14 234h691.2v20h-691.2z"/>
+<path fill="#0969da" d="M695.6 94h9.6v20h-9.6zM695.6 114h9.6v20h-9.6zM695.6 134h9.6v20h-9.6zM695.6 154h9.6v20h-9.6zM695.6 174h9.6v20h-9.6zM695.6 194h9.6v20h-9.6z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#0969da" stroke-width="1.1" d="M23.6 21.6H16.4V34M23.6 26.4H21.2V34M23.6 21.6H33.2M23.6 26.4H33.2M244.4 21.6H254M244.4 26.4H254M254 21.6H263.6M254 26.4H263.6M263.6 21.6H273.2M263.6 26.4H273.2M273.2 21.6H282.8M273.2 26.4H282.8M282.8 21.6H292.4M282.8 26.4H292.4M292.4 21.6H302M292.4 26.4H302M302 21.6H311.6M302 26.4H311.6M311.6 21.6H321.2M311.6 26.4H321.2M321.2 21.6H330.8M321.2 26.4H330.8M330.8 21.6H340.4M330.8 26.4H340.4M340.4 21.6H350M340.4 26.4H350M350 21.6H359.6M350 26.4H359.6M359.6 21.6H369.2M359.6 26.4H369.2M369.2 21.6H378.8M369.2 26.4H378.8M378.8 21.6H388.4M378.8 26.4H388.4M388.4 21.6H398M388.4 26.4H398M398 21.6H407.6M398 26.4H407.6M407.6 21.6H417.2M407.6 26.4H417.2M417.2 21.6H426.8M417.2 26.4H426.8M426.8 21.6H436.4M426.8 26.4H436.4M436.4 21.6H446M436.4 26.4H446M446 21.6H455.6M446 26.4H455.6M455.6 21.6H465.2M455.6 26.4H465.2M465.2 21.6H474.8M465.2 26.4H474.8M474.8 21.6H484.4M474.8 26.4H484.4M484.4 21.6H494M484.4 26.4H494M494 21.6H503.6M494 26.4H503.6M503.6 21.6H513.2M503.6 26.4H513.2M513.2 21.6H522.8M513.2 26.4H522.8M522.8 21.6H532.4M522.8 26.4H532.4M532.4 21.6H542M532.4 26.4H542M542 21.6H551.6M542 26.4H551.6M551.6 21.6H561.2M551.6 26.4H561.2M561.2 21.6H570.8M561.2 26.4H570.8M570.8 21.6H580.4M570.8 26.4H580.4M580.4 21.6H590M580.4 26.4H590M590 21.6H599.6M590 26.4H599.6M599.6 21.6H609.2M599.6 26.4H609.2M609.2 21.6H618.8M609.2 26.4H618.8M618.8 21.6H628.4M618.8 26.4H628.4M628.4 21.6H638M628.4 26.4H638M638 21.6H647.6M638 26.4H647.6M647.6 21.6H657.2M647.6 26.4H657.2M657.2 21.6H666.8M657.2 26.4H666.8M666.8 21.6H676.4M666.8 26.4H676.4M676.4 21.6H686M676.4 26.4H686M686 21.6H695.6M686 26.4H695.6M695.6 21.6H702.8V34M695.6 26.4H698V34M16.4 34V54M21.2 34V54M698 34V54M702.8 34V54M16.4 54V74M21.2 54V74M698 54V74M702.8 54V74M16.4 74V94M21.2 74V94M698 74V94M702.8 74V94M16.4 94V114M21.2 94V114M16.4 114V134M21.2 114V134M16.4 134V154M21.2 134V154M16.4 154V174M21.2 154V174M16.4 174V194M21.2 174V194M16.4 194V214M21.2 194V214M23.6 226.4H16.4V214M23.6 221.6H21.2V214M23.6 221.6H33.2M23.6 226.4H33.2M33.2 221.6H42.8M33.2 226.4H42.8M42.8 221.6H52.4M42.8 226.4H52.4M52.4 221.6H62M52.4 226.4H62M62 221.6H71.6M62 226.4H71.6M71.6 221.6H81.2M71.6 226.4H81.2M81.2 221.6H90.8M81.2 226.4H90.8M90.8 221.6H100.4M90.8 226.4H100.4M100.4 221.6H110M100.4 226.4H110M110 221.6H119.6M110 226.4H119.6M119.6 221.6H129.2M119.6 226.4H129.2M129.2 221.6H138.8M129.2 226.4H138.8M138.8 221.6H148.4M138.8 226.4H148.4M148.4 221.6H158M148.4 226.4H158M158 221.6H167.6M158 226.4H167.6M167.6 221.6H177.2M167.6 226.4H177.2M177.2 221.6H186.8M177.2 226.4H186.8M186.8 221.6H196.4M186.8 226.4H196.4M196.4 221.6H206M196.4 226.4H206M206 221.6H215.6M206 226.4H215.6M215.6 221.6H225.2M215.6 226.4H225.2M225.2 221.6H234.8M225.2 226.4H234.8M234.8 221.6H244.4M234.8 226.4H244.4M244.4 221.6H254M244.4 226.4H254M254 221.6H263.6M254 226.4H263.6M263.6 221.6H273.2M263.6 226.4H273.2M273.2 221.6H282.8M273.2 226.4H282.8M282.8 221.6H292.4M282.8 226.4H292.4M292.4 221.6H302M292.4 226.4H302M302 221.6H311.6M302 226.4H311.6M311.6 221.6H321.2M311.6 226.4H321.2M321.2 221.6H330.8M321.2 226.4H330.8M330.8 221.6H340.4M330.8 226.4H340.4M340.4 221.6H350M340.4 226.4H350M350 221.6H359.6M350 226.4H359.6M359.6 221.6H369.2M359.6 226.4H369.2M369.2 221.6H378.8M369.2 226.4H378.8M378.8 221.6H388.4M378.8 226.4H388.4M388.4 221.6H398M388.4 226.4H398M398 221.6H407.6M398 226.4H407.6M407.6 221.6H417.2M407.6 226.4H417.2M417.2 221.6H426.8M417.2 226.4H426.8M426.8 221.6H436.4M426.8 226.4H436.4M436.4 221.6H446M436.4 226.4H446M446 221.6H455.6M446 226.4H455.6M455.6 221.6H465.2M455.6 226.4H465.2M465.2 221.6H474.8M465.2 226.4H474.8M474.8 221.6H484.4M474.8 226.4H484.4M484.4 221.6H494M484.4 226.4H494M494 221.6H503.6M494 226.4H503.6M503.6 221.6H513.2M503.6 226.4H513.2M513.2 221.6H522.8M513.2 226.4H522.8M522.8 221.6H532.4M522.8 226.4H532.4M532.4 221.6H542M532.4 226.4H542M542 221.6H551.6M542 226.4H551.6M551.6 221.6H561.2M551.6 226.4H561.2M561.2 221.6H570.8M561.2 226.4H570.8M570.8 221.6H580.4M570.8 226.4H580.4M580.4 221.6H590M580.4 226.4H590M590 221.6H599.6M590 226.4H599.6M599.6 221.6H609.2M599.6 226.4H609.2M609.2 221.6H618.8M609.2 226.4H618.8M618.8 221.6H628.4M618.8 226.4H628.4M628.4 221.6H638M628.4 226.4H638M638 221.6H647.6M638 226.4H647.6M647.6 221.6H657.2M647.6 226.4H657.2M657.2 221.6H666.8M657.2 226.4H666.8M666.8 221.6H676.4M666.8 226.4H676.4M676.4 221.6H686M676.4 226.4H686M686 221.6H695.6M686 226.4H695.6M695.6 226.4H702.8V214M695.6 221.6H698V214"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="42.8" y="29" textLength="48" lengthAdjust="spacing" fill="#0969da">build</text>
+<text x="100.4" y="29" textLength="28.8" lengthAdjust="spacing" fill="#0969da">log</text>
+<text x="138.8" y="29" textLength="9.6" lengthAdjust="spacing" fill="#0969da">·</text>
+<text x="158" y="29" textLength="19.2" lengthAdjust="spacing" fill="#0969da">12</text>
+<text x="186.8" y="29" textLength="48" lengthAdjust="spacing" fill="#0969da">lines</text>
+<text x="33.2" y="49" textLength="76.8" lengthAdjust="spacing" fill="#0550ae">12:00:05</text>
+<text x="119.6" y="49" textLength="86.4" lengthAdjust="spacing" fill="#0550ae">compiling</text>
+<text x="215.6" y="49" textLength="38.4" lengthAdjust="spacing" fill="#0550ae">auth</text>
+<text x="33.2" y="69" textLength="76.8" lengthAdjust="spacing" fill="#9a6700">12:00:07</text>
+<text x="119.6" y="69" textLength="76.8" lengthAdjust="spacing" fill="#9a6700">warning:</text>
+<text x="206" y="69" textLength="57.6" lengthAdjust="spacing" fill="#9a6700">unused</text>
+<text x="273.2" y="69" textLength="57.6" lengthAdjust="spacing" fill="#9a6700">import</text>
+<text x="340.4" y="69" textLength="19.2" lengthAdjust="spacing" fill="#9a6700">in</text>
+<text x="369.2" y="69" textLength="86.4" lengthAdjust="spacing" fill="#9a6700">router.go</text>
+<text x="33.2" y="89" textLength="76.8" lengthAdjust="spacing" fill="#1f2328">12:00:08</text>
+<text x="119.6" y="89" textLength="67.2" lengthAdjust="spacing" fill="#1f2328">running</text>
+<text x="196.4" y="89" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">212</text>
+<text x="234.8" y="89" textLength="48" lengthAdjust="spacing" fill="#1f2328">tests</text>
+<text x="33.2" y="109" textLength="76.8" lengthAdjust="spacing" fill="#1f2328">12:00:09</text>
+<text x="119.6" y="109" textLength="19.2" lengthAdjust="spacing" fill="#1f2328">ok</text>
+<text x="167.6" y="109" textLength="96" lengthAdjust="spacing" fill="#1f2328">pkg/router</text>
+<text x="292.4" y="109" textLength="48" lengthAdjust="spacing" fill="#1f2328">0.41s</text>
+<text x="33.2" y="129" textLength="76.8" lengthAdjust="spacing" fill="#1f2328">12:00:09</text>
+<text x="119.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#1f2328">ok</text>
+<text x="167.6" y="129" textLength="76.8" lengthAdjust="spacing" fill="#1f2328">pkg/auth</text>
+<text x="292.4" y="129" textLength="48" lengthAdjust="spacing" fill="#1f2328">0.18s</text>
+<text x="33.2" y="149" textLength="76.8" lengthAdjust="spacing" fill="#d1242f">12:00:10</text>
+<text x="119.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#d1242f">FAIL</text>
+<text x="167.6" y="149" textLength="105.6" lengthAdjust="spacing" fill="#d1242f">pkg/billing</text>
+<text x="292.4" y="149" textLength="48" lengthAdjust="spacing" fill="#d1242f">1.02s</text>
+<text x="33.2" y="169" textLength="76.8" lengthAdjust="spacing" fill="#d1242f">12:00:10</text>
+<text x="119.6" y="169" textLength="182.4" lengthAdjust="spacing" fill="#d1242f">billing_test.go:88:</text>
+<text x="311.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d1242f">want</text>
+<text x="359.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#d1242f">200,</text>
+<text x="407.6" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d1242f">got</text>
+<text x="446" y="169" textLength="28.8" lengthAdjust="spacing" fill="#d1242f">504</text>
+<text x="33.2" y="189" textLength="76.8" lengthAdjust="spacing" fill="#9a6700">12:00:11</text>
+<text x="119.6" y="189" textLength="9.6" lengthAdjust="spacing" fill="#9a6700">1</text>
+<text x="138.8" y="189" textLength="67.2" lengthAdjust="spacing" fill="#9a6700">package</text>
+<text x="215.6" y="189" textLength="57.6" lengthAdjust="spacing" fill="#9a6700">failed</text>
+<text x="33.2" y="209" textLength="76.8" lengthAdjust="spacing" fill="#59636e">12:00:11</text>
+<text x="119.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#59636e">exit</text>
+<text x="167.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#59636e">1</text>
+<text x="23.6" y="249" textLength="28.8" lengthAdjust="spacing" fill="#0969da" font-weight="700">j/k</text>
+<text x="62" y="249" textLength="57.6" lengthAdjust="spacing" fill="#59636e">scroll</text>
+<text x="138.8" y="249" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">G</text>
+<text x="158" y="249" textLength="57.6" lengthAdjust="spacing" fill="#59636e">follow</text>
+<text x="234.8" y="249" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">g</text>
+<text x="254" y="249" textLength="28.8" lengthAdjust="spacing" fill="#59636e">top</text>
+</g>
+</svg>

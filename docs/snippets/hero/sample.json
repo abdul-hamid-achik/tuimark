@@ -1,0 +1,20 @@
+{
+  "selected": "api",
+  "services": [
+    { "id": "api", "name": "api-gateway", "down": false },
+    { "id": "auth", "name": "auth", "down": false },
+    { "id": "billing", "name": "billing", "down": true },
+    { "id": "search", "name": "search", "down": false },
+    { "id": "web", "name": "web", "down": false }
+  ],
+  "current": {
+    "name": "api-gateway",
+    "status": "● healthy",
+    "version": "v2.14.0",
+    "region": "eu-west-1",
+    "rollout": 100,
+    "down": false,
+    "busy": false,
+    "latency": [40, 40, 48, 44, 50, 49, 46, 51, 45, 48, 43, 41, 42, 45, 35, 34, 37, 39, 34, 32, 39, 29, 40, 35, 36, 38, 42, 49, 44, 50, 52, 50, 51, 46, 44, 44, 48, 43, 39, 40, 37, 33, 37, 35, 30, 34, 34, 39, 40, 37, 47, 40, 45, 50, 45, 50]
+  }
+}

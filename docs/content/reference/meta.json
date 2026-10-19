@@ -1,0 +1,16 @@
+{
+  "title": "Reference",
+  "description": "Exact tables, generated from the runtime",
+  "root": true,
+  "pages": [
+    "index",
+    "cli",
+    "tags",
+    "css",
+    "keys",
+    "diagnostics",
+    "---Guide---",
+    "[Getting started](/guide/getting-started)",
+    "[Use Tuimark with AI agents](/guide/agents)"
+  ]
+}

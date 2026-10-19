@@ -1,0 +1,708 @@
+/* The landing page. Shared pieces (.tf frames, TermShot, CommandCopy, the
+   install tabs) live in global.css; this sheet only lays the page out. */
+
+.landing {
+  flex: 1;
+  padding-bottom: clamp(64px, 9vw, 112px);
+  /* The cell grid a terminal draws on, faint behind the hero. */
+  background-image: linear-gradient(var(--t-cell-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--t-cell-line) 1px, transparent 1px);
+  background-position: -1px -1px;
+  background-size: 12px 24px;
+  background-repeat: repeat;
+}
+
+.l-shell {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: 24px;
+}
+
+.landing code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.landing kbd {
+  border: 1px solid var(--t-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 5px;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────────── */
+
+.l-hero {
+  padding-top: clamp(36px, 5.5vw, 72px);
+}
+
+.l-hero-copy {
+  max-width: 1000px;
+}
+
+.l-eyebrow {
+  margin: 0 0 18px;
+  color: var(--t-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.l-eyebrow span {
+  color: var(--t-accent);
+}
+
+.l-hero h1 {
+  margin: 0;
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: clamp(38px, 5.6vw, 66px);
+  font-weight: 650;
+  letter-spacing: -0.06em;
+  line-height: 1.04;
+  text-wrap: balance;
+}
+
+.l-pitch {
+  margin: 22px 0 0;
+  color: var(--t-fg);
+  font-size: clamp(19px, 2.2vw, 23px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+.l-pitch code {
+  color: var(--t-accent);
+  font-weight: 600;
+}
+
+.l-sub {
+  max-width: 74ch;
+  margin: 14px 0 0;
+  color: var(--t-fg-2);
+  font-size: 16.5px;
+  line-height: 1.65;
+}
+
+.l-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.l-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--t-border);
+  border-radius: 7px;
+  padding: 9px 16px;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.l-btn:hover {
+  border-color: var(--t-accent);
+}
+
+.l-btn.is-primary {
+  border-color: var(--t-accent);
+  background: var(--t-accent);
+  color: var(--t-select-fg);
+}
+
+.l-btn.is-primary:hover {
+  border-color: var(--t-accent-2);
+  background: var(--t-accent-2);
+}
+
+/* The editor and the terminal, side by side. */
+.l-demo {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: clamp(36px, 5vw, 56px);
+}
+
+.l-demo > * {
+  min-width: 0;
+}
+
+.l-run {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+}
+
+.l-run .term-shot {
+  margin: 0;
+  max-width: none !important;
+}
+
+.l-events {
+  padding: 16px 16px 12px;
+}
+
+.l-events ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+}
+
+.l-events li {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.ev-step {
+  display: inline-block;
+  min-width: 1.4em;
+  color: var(--t-muted);
+}
+
+.l-events b {
+  color: var(--t-accent);
+}
+
+.ev-src {
+  color: var(--t-fg-2);
+}
+
+.l-events code {
+  color: var(--t-fg);
+  font-size: 1em;
+}
+
+.tf-title small {
+  margin-left: 6px;
+  color: var(--t-muted);
+  font-weight: 400;
+}
+
+.l-demo-note {
+  max-width: 80ch;
+  margin: 18px 0 0;
+  color: var(--t-muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.l-demo-note code {
+  color: var(--t-fg);
+}
+
+/* ── Code tabs (the hero's editor, the hosts) ───────────────────────────── */
+
+.code-tabs {
+  overflow: hidden;
+  border: 1px solid var(--t-border);
+  border-radius: 9px;
+  background: var(--t-bg);
+}
+
+.code-tabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--t-divider);
+  padding: 8px 10px;
+  background: var(--t-panel);
+}
+
+.code-tabs-list button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  border: 0;
+  border-radius: 3px;
+  padding: 3px 10px 3px 4px;
+  background: transparent;
+  color: var(--t-fg-2);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  white-space: pre;
+}
+
+.code-tabs-list button:hover {
+  color: var(--t-fg);
+}
+
+.code-tabs-list button.is-active {
+  background: var(--t-accent);
+  color: var(--t-select-fg);
+  font-weight: 700;
+}
+
+.code-tabs-mark {
+  display: inline-block;
+  width: 1.2em;
+  text-align: center;
+}
+
+.code-tabs-list small {
+  margin-left: 7px;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.72;
+}
+
+/* Shiki output inside the landing's frames: no card, our own spacing. */
+.code-tabs pre.shiki,
+.l-code pre.shiki {
+  margin: 0;
+  overflow-x: auto;
+  border: 0;
+  border-radius: 0;
+  padding: 14px 0;
+  background: transparent !important;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  tab-size: 4;
+}
+
+.code-tabs pre.shiki .line,
+.l-code pre.shiki .line {
+  padding: 0 18px;
+}
+
+.l-editor pre.shiki {
+  min-height: 486px;
+}
+
+.l-code {
+  padding: 18px 0 6px;
+}
+
+.l-code .tf-title {
+  left: 12px;
+}
+
+.l-code pre.shiki {
+  padding: 4px 0 8px;
+  font-size: 12px;
+}
+
+.l-code-inline {
+  overflow: hidden;
+  border: 1px solid var(--t-divider);
+  border-radius: 7px;
+  padding: 0;
+}
+
+.l-code-inline pre.shiki {
+  padding: 10px 0;
+}
+
+.l-plain {
+  margin: 0;
+  overflow-x: auto;
+  padding: 4px 18px 8px;
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* ── Install ────────────────────────────────────────────────────────────── */
+
+.l-install {
+  padding-top: clamp(56px, 7vw, 88px);
+}
+
+.l-install-title {
+  margin: 0 0 16px;
+  color: var(--t-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.l-install-title::before {
+  content: '╭─ ';
+  color: var(--t-border);
+}
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
+
+.l-section {
+  padding-top: clamp(72px, 9vw, 120px);
+  scroll-margin-top: 64px;
+}
+
+.l-head {
+  max-width: 780px;
+  margin-bottom: 32px;
+}
+
+.l-kicker {
+  margin: 0 0 12px;
+  color: var(--t-accent);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.l-head h2 {
+  margin: 0;
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: clamp(26px, 3.4vw, 38px);
+  font-weight: 650;
+  letter-spacing: -0.05em;
+  line-height: 1.12;
+}
+
+.l-lede {
+  margin: 16px 0 0;
+  color: var(--t-fg-2);
+  font-size: 16.5px;
+  line-height: 1.65;
+}
+
+.l-lede code {
+  color: var(--t-fg);
+}
+
+.l-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  margin: 24px 0 0;
+}
+
+.l-more a {
+  color: var(--t-accent);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.l-more a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.l-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.l-split > * {
+  min-width: 0;
+}
+
+/* Vocabulary */
+.l-vocab {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px 16px;
+}
+
+.l-vocab ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.l-vocab li {
+  border: 1px solid var(--t-divider);
+  border-radius: 4px;
+  padding: 1px 7px;
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.l-briefing p,
+.l-tool p {
+  margin: 0 0 14px;
+  color: var(--t-fg-2);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.l-briefing p code,
+.l-tool p code {
+  color: var(--t-fg);
+}
+
+/* Loop */
+.l-loop {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.l-steps {
+  display: grid;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.l-steps .tf,
+.l-loop-out .tf {
+  min-width: 0;
+}
+
+.l-step-cmd {
+  display: block;
+  color: var(--t-fg);
+  font-size: 12.5px !important;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.l-step-cmd span {
+  color: var(--t-accent);
+  font-weight: 700;
+}
+
+.l-steps p {
+  margin: 8px 0 0;
+  color: var(--t-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.l-loop-out {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* Tools */
+.l-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.l-tool .command-copy {
+  margin-bottom: 12px;
+}
+
+.l-tool .l-more {
+  margin-top: 16px;
+}
+
+.l-checks {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--t-fg-2);
+  font-size: 14.5px;
+}
+
+.l-checks li::before {
+  content: '✓ ';
+  color: var(--t-ok);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* Kit */
+#kit .term-shot {
+  max-width: none !important;
+  margin: 0;
+}
+
+/* Gallery */
+.l-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 34px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.l-gallery li {
+  min-width: 0;
+}
+
+.l-gallery .term-shot {
+  margin: 0;
+}
+
+/* Thumbnails share one frame shape, cropped from the top left. */
+.l-gallery .ts-body {
+  aspect-ratio: 16 / 9;
+  background: var(--t-panel);
+}
+
+.l-gallery .ts-img {
+  height: 100%;
+  object-fit: cover;
+  object-position: left top;
+}
+
+.l-gallery h3 {
+  margin: 12px 0 4px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.l-gallery h3 a {
+  color: var(--t-fg);
+  text-decoration: none;
+}
+
+.l-gallery h3 a:hover {
+  color: var(--t-accent);
+}
+
+.l-gallery h3 span {
+  color: var(--t-accent);
+}
+
+.l-gallery p {
+  margin: 0;
+  color: var(--t-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Final call to action */
+.l-cta {
+  padding-top: clamp(72px, 9vw, 120px);
+}
+
+.l-cta-frame {
+  padding: clamp(28px, 4vw, 44px) clamp(20px, 4vw, 44px);
+  background: var(--t-panel);
+  --tf-bg: var(--t-panel);
+}
+
+.l-cta-frame h2 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(26px, 3.4vw, 38px);
+  font-weight: 650;
+  letter-spacing: -0.05em;
+  line-height: 1.1;
+}
+
+.l-cta-frame p {
+  max-width: 64ch;
+  margin: 14px 0 0;
+  color: var(--t-fg-2);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.l-cta-cmds {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+  margin-top: 24px;
+}
+
+/* Hosts: the code beside who does what. */
+.l-hosts {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+}
+
+.l-division h3 {
+  margin: 0 0 10px;
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.l-division .l-checks {
+  margin-bottom: 20px;
+}
+
+.l-checks.is-host li::before {
+  content: '→ ';
+  color: var(--t-accent);
+}
+
+.l-division p {
+  margin: 0;
+  color: var(--t-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.l-division p code {
+  color: var(--t-fg);
+}
+
+/* ── Narrow screens ─────────────────────────────────────────────────────── */
+
+@media (max-width: 1080px) {
+  .l-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .l-demo,
+  .l-split,
+  .l-loop {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .l-editor pre.shiki {
+    min-height: 0;
+    max-height: 420px;
+  }
+
+  /* On one column the terminal comes first: it is the point. */
+  .l-run {
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .l-shell {
+    padding-inline: 16px;
+  }
+
+  .l-gallery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .l-sub,
+  .l-lede {
+    font-size: 15.5px;
+  }
+
+  .l-btn {
+    padding: 8px 13px;
+    font-size: 13.5px;
+  }
+}

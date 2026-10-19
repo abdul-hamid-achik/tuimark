@@ -113,7 +113,7 @@ jobs:
           version="${TAG#v}"
           notes="$RUNNER_TEMP/release-notes.md"
           {
-            printf '```sh\nbrew install --cask abdul-hamid-achik/tap/tuimark\ngo install github.com/abdul-hamid-achik/tuimark/cmd/tuimark@%s\n```\n\nDocs: https://tuimark.vercel.app\n' "$TAG"
+            printf '```sh\nbrew install --cask abdul-hamid-achik/tap/tuimark\ngo install github.com/abdul-hamid-achik/tuimark/cmd/tuimark@%s\n```\n\nDocs: https://tuimark.dev\n' "$TAG"
             awk -v h="## [$version]" 'index($0, h) == 1 { f = 1; next } /^## \[/ { if (f) exit } f' CHANGELOG.md
           } > "$notes"
           if [ "$(wc -l < "$notes")" -le 6 ]; then

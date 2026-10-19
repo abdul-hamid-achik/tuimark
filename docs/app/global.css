@@ -1,0 +1,840 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/*
+ * tuimark.dev wears Tuimark's own built-in themes.
+ *
+ * Dark is the runtime's default theme ($bg #0d1117, $fg #e6edf3, $muted
+ * #8b949e, $border #30363d, $panel #161b22, cyan accent); light is its
+ * built-in light theme. The recurring motif is a rounded, titled frame --
+ * `╭─ title ───╮`, what `border: rounded` plus a `title` paints -- drawn here
+ * as `.tf` / `.tf-title` and reused by callouts, the landing page's panels
+ * and the 404. Active navigation carries the `▸` mark of <tabs>.
+ */
+
+@theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+}
+
+:root {
+  --t-bg: #ffffff;
+  --t-fg: #1f2328;
+  --t-fg-2: #454d56;
+  --t-muted: #656d76;
+  --t-border: #d0d7de;
+  --t-divider: #e4e8ec;
+  --t-panel: #f6f8fa;
+  --t-elev: #ffffff;
+  --t-accent: #0a7c86;
+  --t-accent-2: #086a73;
+  --t-accent-soft: rgba(10, 124, 134, 0.1);
+  --t-ok: #1a7f37;
+  --t-warn: #9a6700;
+  --t-danger: #cf222e;
+  --t-select-fg: #ffffff;
+  --t-cell-line: rgba(31, 35, 40, 0.05);
+
+  --color-fd-background: var(--t-bg);
+  --color-fd-foreground: var(--t-fg);
+  --color-fd-muted: var(--t-panel);
+  --color-fd-muted-foreground: var(--t-muted);
+  --color-fd-popover: var(--t-elev);
+  --color-fd-popover-foreground: var(--t-fg);
+  --color-fd-card: var(--t-panel);
+  --color-fd-card-foreground: var(--t-fg);
+  --color-fd-border: var(--t-divider);
+  --color-fd-primary: var(--t-accent);
+  --color-fd-primary-foreground: var(--t-select-fg);
+  --color-fd-secondary: var(--t-panel);
+  --color-fd-secondary-foreground: var(--t-fg);
+  --color-fd-accent: var(--t-accent-soft);
+  --color-fd-accent-foreground: var(--t-fg);
+  --color-fd-ring: var(--t-accent);
+  --fd-layout-width: 1440px;
+}
+
+.dark {
+  --t-bg: #0d1117;
+  --t-fg: #e6edf3;
+  --t-fg-2: #b1bac4;
+  --t-muted: #8b949e;
+  --t-border: #30363d;
+  --t-divider: #21262d;
+  --t-panel: #161b22;
+  --t-elev: #11161d;
+  --t-accent: #39c5cf;
+  --t-accent-2: #56d4dd;
+  --t-accent-soft: rgba(57, 197, 207, 0.12);
+  --t-ok: #3fb950;
+  --t-warn: #d29922;
+  --t-danger: #ff7b72;
+  --t-select-fg: #0d1117;
+  --t-cell-line: rgba(230, 237, 243, 0.035);
+}
+
+.dark #nd-sidebar {
+  --color-fd-muted: var(--t-panel);
+  --color-fd-secondary: var(--t-panel);
+  --color-fd-muted-foreground: var(--t-muted);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0 !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+body {
+  background: var(--t-bg);
+  color: var(--t-fg);
+  text-rendering: optimizeLegibility;
+}
+
+/* Code shows the characters as typed: no programming ligatures (!= stays !=). */
+code,
+pre,
+kbd,
+samp {
+  font-feature-settings: 'calt' 0, 'liga' 0;
+  font-variant-ligatures: none;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--t-accent) 28%, transparent);
+  color: var(--t-fg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--t-accent);
+  outline-offset: 2px;
+}
+
+/* ── Shared terminal vocabulary ─────────────────────────────────────────── */
+
+/* A titled frame: `border: rounded` with a `title`. */
+.tf {
+  --tf-bg: var(--t-bg);
+  position: relative;
+  border: 1px solid var(--t-border);
+  border-radius: 9px;
+  padding: 20px 18px 16px;
+  background: var(--tf-bg);
+}
+
+.tf-title {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  padding: 0 6px;
+  background: var(--tf-bg);
+  color: var(--t-muted);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.tf-title b {
+  color: var(--t-accent);
+}
+
+/* The wordmark: a block cursor sitting in a cell. */
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.wordmark-cursor {
+  display: inline-block;
+  width: 0.62em;
+  height: 1.15em;
+  border-radius: 1.5px;
+  background: var(--t-accent);
+  animation: wm-blink 1.15s steps(1, end) 3 forwards;
+}
+
+@keyframes wm-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ── Navigation ─────────────────────────────────────────────────────────── */
+
+#nd-nav a,
+#nd-nav button {
+  font-family: var(--font-mono);
+}
+
+#nd-sidebar {
+  background: var(--t-bg);
+}
+
+/* Sidebar separators read like a frame title: `╭─ the language`. */
+#nd-sidebar p[data-separator],
+#nd-sidebar .fd-separator {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: lowercase;
+  color: var(--t-muted);
+}
+
+/* ── TermShot ───────────────────────────────────────────────────────────── */
+
+.term-shot {
+  margin: 28px 0;
+}
+
+.ts-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--t-border);
+  border-bottom: 0;
+  border-radius: 9px 9px 0 0;
+  padding: 8px 12px;
+  background: var(--t-panel);
+}
+
+.ts-dots {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.ts-dots i {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--t-border);
+  border-radius: 50%;
+}
+
+.ts-cmd {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  color: var(--t-fg-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.ts-cmd::-webkit-scrollbar {
+  display: none;
+}
+
+.ts-prompt {
+  color: var(--t-accent);
+  font-weight: 700;
+}
+
+.ts-size {
+  flex: 0 0 auto;
+  color: var(--t-muted);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.ts-play {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--t-border);
+  border-radius: 5px;
+  color: var(--t-fg-2);
+  background: var(--t-bg);
+  cursor: pointer;
+}
+
+.ts-play:hover {
+  color: var(--t-accent);
+  border-color: var(--t-accent);
+}
+
+.ts-play svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+}
+
+.ts-body {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--t-border);
+  border-radius: 0 0 9px 9px;
+  line-height: 0;
+}
+
+.term-shot.is-bare .ts-body {
+  border-radius: 9px;
+}
+
+.ts-floating {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  line-height: normal;
+}
+
+.ts-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+/* Every rule below only hides, so they compose: an image shows when its
+   theme matches the site's and its motion matches the reader's choice (the
+   pause button), or their motion preference until they choose. A hidden
+   lazy image is never fetched. */
+html:not(.dark) .ts-dark,
+.dark .ts-light {
+  display: none;
+}
+
+/* A shot with one image (its document paints its own dark palette, so both
+   modes render alike) keeps a dark terminal frame on the light site too;
+   only the frame, not the caption below it. */
+.term-shot.is-fixed .ts-bar,
+.term-shot.is-fixed .ts-body {
+  --t-bg: #0d1117;
+  --t-fg: #e6edf3;
+  --t-fg-2: #b1bac4;
+  --t-muted: #8b949e;
+  --t-border: #30363d;
+  --t-panel: #161b22;
+  --t-accent: #39c5cf;
+  color-scheme: dark;
+}
+
+.ts-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .term-shot[data-animated]:not([data-state='paused']) .ts-still {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .term-shot[data-animated]:not([data-state='playing']) .ts-moving,
+  .term-shot[data-state='playing'] .ts-still {
+    display: none;
+  }
+}
+
+.term-shot[data-state='paused'] .ts-moving {
+  display: none;
+}
+
+.term-shot figcaption {
+  margin-top: 10px;
+  color: var(--t-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.term-shot figcaption code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--t-fg);
+}
+
+/* ── CommandCopy ────────────────────────────────────────────────────────── */
+
+.command-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--t-border);
+  border-radius: 7px;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  transition: border-color 140ms ease;
+}
+
+.command-copy:hover,
+.command-copy:focus-within {
+  border-color: var(--t-muted);
+}
+
+.command-copy.is-static {
+  grid-template-columns: minmax(0, 1fr);
+  border-style: dashed;
+}
+
+.command-copy.is-static code {
+  color: var(--t-muted);
+}
+
+.cc-text {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  overflow-x: auto;
+}
+
+.cc-prompt {
+  flex: 0 0 auto;
+  color: var(--t-accent);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.command-copy code {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.command-copy button {
+  min-width: 76px;
+  border: 0;
+  border-left: 1px solid var(--t-border);
+  background: transparent;
+  color: var(--t-fg-2);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.command-copy button:hover {
+  background: var(--t-panel);
+  color: var(--t-accent);
+}
+
+.command-copy.is-copied {
+  border-color: var(--t-ok);
+}
+
+.command-copy.is-copied button {
+  color: var(--t-ok);
+}
+
+.command-copy.is-error button {
+  color: var(--t-warn);
+}
+
+@media (max-width: 520px) {
+  .cc-text {
+    padding: 10px 12px;
+  }
+
+  .command-copy code {
+    overflow-wrap: anywhere;
+    font-size: 11.5px;
+    white-space: pre-wrap;
+  }
+
+  .command-copy button {
+    min-width: 64px;
+  }
+}
+
+/* ── InstallTabs ────────────────────────────────────────────────────────── */
+
+.install-tabs {
+  overflow: hidden;
+  border: 1px solid var(--t-border);
+  border-radius: 10px;
+  background: var(--t-bg);
+}
+
+.install-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  border-bottom: 1px solid var(--t-divider);
+  padding: 10px 12px;
+  background: var(--t-panel);
+}
+
+.install-tablist button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  border: 0;
+  border-radius: 3px;
+  padding: 3px 10px;
+  background: transparent;
+  color: var(--t-fg-2);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  white-space: pre;
+}
+
+.install-tablist button:hover {
+  color: var(--t-fg);
+}
+
+.install-tablist button.is-active {
+  background: var(--t-accent);
+  color: var(--t-select-fg);
+  font-weight: 700;
+}
+
+.install-tablist small {
+  color: var(--t-muted);
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+.install-tablist button.is-active small {
+  color: inherit;
+  opacity: 0.78;
+}
+
+.install-panel {
+  padding: clamp(18px, 3vw, 26px);
+}
+
+.install-method {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.install-method p {
+  max-width: 66ch;
+  margin: 0;
+  color: var(--t-fg-2);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.install-method p code,
+.install-steps code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--t-fg);
+}
+
+.install-heading {
+  margin: 0;
+  color: var(--t-fg);
+  font-family: var(--font-mono);
+  font-size: clamp(17px, 2.2vw, 20px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.install-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 30px;
+  margin: 4px 0 0;
+  border-top: 1px dashed var(--t-divider);
+  padding: 16px 0 0;
+  list-style: none;
+}
+
+.install-steps li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin: 0;
+}
+
+.install-steps li > span {
+  color: var(--t-accent);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.install-steps div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.install-steps strong {
+  color: var(--t-fg);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.install-steps code {
+  color: var(--t-fg-2);
+  font-size: 12.5px;
+}
+
+.install-link {
+  width: fit-content;
+  color: var(--t-accent);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.install-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ── Docs typography ────────────────────────────────────────────────────── */
+
+#nd-page h1,
+.prose :where(h1, h2, h3, h4) {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.prose :where(h2) {
+  margin-top: 2.6em;
+  border-top: 1px solid var(--t-divider);
+  padding-top: 1.1em;
+}
+
+.prose :where(a):not(:where(.not-prose, .not-prose *)) {
+  color: var(--t-accent);
+  text-decoration-color: color-mix(in srgb, var(--t-accent) 35%, transparent);
+  text-underline-offset: 4px;
+}
+
+.prose :where(a):not(:where(.not-prose, .not-prose *)):hover {
+  text-decoration-color: var(--t-accent);
+}
+
+/* A heading's anchor link keeps the heading's own color. */
+.prose :where(h1, h2, h3, h4, h5, h6) a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Terminal output (a dump's grid, a command's text output): rows sit
+   tight, as they do in a terminal, so box drawing joins up. */
+figure[data-lang='grid'] pre,
+figure[data-lang='term'] pre {
+  line-height: 1.32;
+}
+
+/* <details>: a folded frame. */
+.prose details {
+  margin: 1.4em 0;
+  border: 1px solid var(--t-border);
+  border-radius: 9px;
+  padding: 0 16px;
+  background: var(--t-panel);
+}
+
+.prose details > summary {
+  padding: 11px 0;
+  color: var(--t-fg);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+}
+
+.prose details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.prose details > summary::before {
+  content: '▸';
+  display: inline-block;
+  width: 1.3em;
+  color: var(--t-accent);
+}
+
+.prose details[open] > summary::before {
+  content: '▾';
+}
+
+.prose details[open] > summary {
+  border-bottom: 1px dashed var(--t-divider);
+}
+
+.prose details > :last-child {
+  margin-bottom: 16px;
+}
+
+/* Two frames side by side: a document and what it renders. */
+.side-by-side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0 20px;
+  align-items: start;
+}
+
+.side-by-side > * {
+  min-width: 0;
+}
+
+/* ── Site footer ────────────────────────────────────────────────────────── */
+
+.site-footer {
+  border-top: 1px solid var(--t-divider);
+  background: var(--t-bg);
+}
+
+.site-footer-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 44px 24px 36px;
+}
+
+.site-footer-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 28px 24px;
+}
+
+.site-footer-title {
+  margin: 0 0 12px;
+  color: var(--t-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.site-footer-title::before {
+  content: '╭─ ';
+  color: var(--t-border);
+}
+
+.site-footer ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer li {
+  margin: 0 0 8px;
+}
+
+.site-footer li a {
+  color: var(--t-fg-2);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.site-footer li a:hover {
+  color: var(--t-accent);
+}
+
+.site-footer-legal {
+  margin: 32px 0 0;
+  color: var(--t-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* ── 404 ────────────────────────────────────────────────────────────────── */
+
+.not-found {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 20px;
+}
+
+.not-found-frame {
+  width: min(560px, 100%);
+  padding: 34px 30px 26px;
+}
+
+.not-found-code {
+  margin: 0 0 14px;
+  color: var(--t-danger);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.not-found h1 {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+
+.not-found p {
+  margin: 0;
+  color: var(--t-fg-2);
+}
+
+.not-found-links {
+  display: grid;
+  gap: 6px;
+  margin: 18px 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.not-found-links a {
+  color: var(--t-accent);
+  text-decoration: none;
+}
+
+.not-found-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.not-found-hint {
+  font-size: 13px;
+}
+
+.not-found-hint kbd {
+  border: 1px solid var(--t-border);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

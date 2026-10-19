@@ -267,7 +267,7 @@ jobs:
           if-no-files-found: error
 
   docs:
-    name: docs site (generated pages fresh, build + dead links)
+    name: docs site (generated pages fresh, Next.js build, links)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -288,8 +288,13 @@ jobs:
           go build -o bin/tuimark ./cmd/tuimark
           node docs/scripts/generate.mjs --check
 
-      - name: Build the site (fails on dead links)
-        run: cd docs && npm ci && npm run build
+      - name: Build the site (static pages, type-checked)
+        working-directory: docs
+        run: npm ci && npm run build
+
+      - name: Every link, anchor, and asset in the built pages resolves
+        working-directory: docs
+        run: npm run check-links
 
   # @thelacanians/tuimark (sdk/ts, SPEC §19.2): Bun tests against a fake child, a
   # type-check, and the `tuimark` launcher under Node. It needs neither Go nor the

@@ -7,6 +7,23 @@ line.
 
 ## [Unreleased]
 
+### Changed
+
+- **The website moves to [tuimark.dev](https://tuimark.dev)** and is rebuilt
+  with Next.js and Fumadocs in place of VitePress. Every page keeps its URL
+  (the old `NAME.html` addresses redirect), and so does `tuimark.vercel.app`,
+  which redirects to the new domain. New: a landing page whose hero is a
+  `tuimark play` session of a three-file document, a page that pictures
+  every kit component in both themes with its markup (`/kit`), a blog with
+  an RSS feed, a static search, Open Graph images for every page, a sitemap,
+  and pages for agents: each page as Markdown at its URL plus `.md`,
+  `/llms.txt`, and `/llms-full.txt`. Screenshots follow the site's light or
+  dark mode, except the documents that paint their own dark palette. The
+  agents guide becomes "Use Tuimark with AI agents", with the `tuimark mcp`
+  setup for Claude Code and Cursor. `task docs` serves the site, `task
+  docs-build` builds it and checks every link, and the generated pages are
+  still `task docs-gen` and `task docs-check`.
+
 ## [0.4.2] - 2026-10-19
 
 A patch on 0.4a with no change to the language. Tuimark ships on npm as

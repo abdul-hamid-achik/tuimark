@@ -18,9 +18,8 @@ var versionMentions = []struct {
 	file string
 	re   *regexp.Regexp
 }{
-	{"docs/.vitepress/config.mts", regexp.MustCompile(`const VERSION = 'v([^']+)'`)},
-	{"docs/.vitepress/theme/components/HomeLanding.vue", regexp.MustCompile(`v([0-9][^ ]*) · Go runtime`)},
-	{"docs/.vitepress/theme/components/InstallPanel.vue", regexp.MustCompile(`tuimark_([0-9][^_]*)_Darwin_arm64`)},
+	{"docs/lib/site.ts", regexp.MustCompile(`export const VERSION = 'v([^']+)'`)},
+	{"docs/components/install-tabs.tsx", regexp.MustCompile(`tuimark_([0-9][^_]*)_Darwin_arm64`)},
 }
 
 // The release version is written in several files; a release that bumps one

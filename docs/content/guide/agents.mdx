@@ -1,0 +1,135 @@
+---
+title: Use Tuimark with AI agents
+description: How a coding agent such as Claude Code or Cursor builds terminal UIs with Tuimark - the AGENTS.md briefing from tuimark agents, the tuimark mcp server, the validate, dump and play loop, and the rules that keep it on track.
+---
+
+Tuimark was designed for a coding agent to write. An agent is good at editing text and reading structured output, and cannot look at a terminal. So in Tuimark the UI is text, and every frame can be printed as JSON: the agent edits files, renders them, reads back exactly what is on the screen, and repeats.
+
+Setting an agent up takes two steps: give it the briefing, and give it the tools, either as shell commands or as an MCP server.
+
+## The briefing: AGENTS.md
+
+`tuimark agents` prints a complete briefing for an agent: what to edit and what not to, the loop to follow, the tags and the attributes each takes, every CSS property and its values, the key tokens, every diagnostic code, and the behavior worth knowing. It is generated from the runtime's own catalogs, so it always matches the binary that printed it.
+
+Put it where your agent looks for instructions:
+
+```sh
+tuimark agents --project > AGENTS.md
+```
+
+- **A new project** gets it for free: [`tuimark new`](/guide/tools#new) writes the same briefing as the project's `AGENTS.md`, next to a working `app.tui`, `theme.tcss`, and `sample.json`.
+- **Claude Code** reads `CLAUDE.md`. Import the briefing from it with a line that says `@AGENTS.md`, so both files stay one.
+- **Cursor, Codex, and most other agents** read `AGENTS.md` at the root of the repository directly.
+
+Regenerate it when you upgrade Tuimark. Without `--project`, `tuimark agents` prints the briefing as the Tuimark repository itself uses it, with paths into its source; use `--project` everywhere else. The [reference](/reference) pages on this site are generated from the same output. Agents and editors that need the vocabulary as data, not prose, read [`tuimark catalog`](/guide/tools#catalog).
+
+## Connect the MCP server
+
+An agent with a shell can run the loop below as commands. An agent that reaches tools through the Model Context Protocol gets the same loop from `tuimark mcp`: five read-only tools, `tuimark_validate`, `tuimark_dump`, `tuimark_play`, `tuimark_inspect`, and `tuimark_agents`, each returning exactly what the matching command prints. It needs only the `tuimark` binary on your `PATH`.
+
+<Tabs items={['Claude Code', 'Cursor', 'Other clients']}>
+<Tab value="Claude Code">
+
+Add it for yourself:
+
+```sh
+claude mcp add tuimark -- tuimark mcp
+```
+
+or for everyone who works on the repository, which writes it to `.mcp.json` at the root:
+
+```sh
+claude mcp add --scope project tuimark -- tuimark mcp
+```
+
+</Tab>
+<Tab value="Cursor">
+
+Add it to `.cursor/mcp.json` in the project (or `~/.cursor/mcp.json` for every project):
+
+```json
+{
+  "mcpServers": {
+    "tuimark": {
+      "command": "tuimark",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+</Tab>
+<Tab value="Other clients">
+
+Any MCP client that starts stdio servers takes the same two values: the command `tuimark` and the single argument `mcp`. Most of them read the `mcpServers` JSON shown for Cursor; see your client's documentation for where it goes.
+
+</Tab>
+</Tabs>
+
+[MCP server](/guide/mcp) lists every tool's arguments and how to read a result.
+
+## Docs for agents
+
+This site is written for agents too. Every page has a Markdown version at the same URL plus `.md` (this page is [`/guide/agents.md`](/guide/agents.md)), which a request with `Accept: text/markdown` also gets. [`/llms.txt`](/llms.txt) indexes them, and [`/llms-full.txt`](/llms-full.txt) is the whole site in one file, for an agent that should read everything first.
+
+## The loop
+
+The whole method fits in four commands:
+
+```sh
+tuimark validate app.tui --data sample.json
+tuimark dump app.tui --data sample.json --cols 80  --rows 24 --format json
+tuimark dump app.tui --data sample.json --cols 120 --rows 24 --format json
+tuimark play app.tui --data sample.json --input "tab down enter" --styles --format json
+```
+
+1. **Edit** the `.tui`, the `.tcss`, and the sample data.
+2. **Validate.** Fix every error; read the warnings. Each diagnostic has a code, a position, and usually says what to write instead.
+3. **Dump** at 80 and 120 columns (and 40 if it has to fit a narrow pane). Read `grid` for what the screen shows and `nodes` for where each element landed, and check that `errors` is empty.
+4. **Play** the interactions: read `events` to confirm the right actions fired with the right `keys` and `value`, and `styles` to confirm that focus and selection actually change how cells look.
+
+Stop when the dumps match the intent at every width and nothing is reported. Then a person, or a host program, can run it for real.
+
+An agent connected to [the MCP server](#connect-the-mcp-server) runs the same loop as tool calls: `tuimark_validate`, `tuimark_dump`, and `tuimark_play` take the same arguments as the flags above and return what the commands print.
+
+### Reading a dump
+
+| Question | Where to look |
+|---|---|
+| Does it render at all? | `ok` is `true` and `errors` is empty |
+| Is the text right? | `grid`, one string per row |
+| Is this panel the right size, in the right place? | the node's `x`, `y`, `w`, `h` in `nodes` |
+| Is the list scrolled to the selection? | the list's `scroll` and the `selected` item |
+| Does focus start in the right place? | `focus` |
+| Did a conditional class apply? | the node's `classes` |
+| Is the focused row highlighted? | `play … --styles`: the row's spans have `"a": ["reverse"]` |
+| Why is this cell this color? | `tuimark inspect app.tui --at X,Y` |
+
+## Rules that keep an agent on track
+
+The briefing states them, and they are worth repeating in your own instructions:
+
+- **Edit only view files**: `*.tui`, `*.tcss`, and sample data. The view never needs Go.
+- **Never invent a tag or a property.** The vocabulary is closed; an invented one is a diagnostic, not a feature. Check the [tags](/reference/tags) and [properties](/reference/css) instead.
+- **No logic in markup.** If the view needs a computed value, it goes in the data, and the host computes it.
+- **No terminal UI framework code.** No hand-written layout, widths, padding, or truncation in the host; Tuimark does all of that from the document.
+- **Name actions; do not implement them in markup.** `on:select="open"` is a name, and the host decides what it means.
+
+## A prompt that works
+
+> Build the view for a deploy dashboard in `ui/app.tui` and `ui/theme.tcss`, with realistic data in `ui/sample.json`: a pipeline list on the left, a log panel on the right, a status bar, and a confirm modal for deploying. Read `AGENTS.md` first. Loop with `tuimark validate` and `tuimark dump --format json` at 80 and 120 columns until there are no diagnostics, and check the keymap with `tuimark play`. Do not write any Go. When you are done, list the action names the view fires.
+
+## Handing off to the host
+
+When the view is done, the host needs to know what to handle. `tuimark validate app.tui --json` includes the action catalog: every name, where it is used, and which are built in. Save the names the host implements to `actions.json`, and from then on:
+
+```sh
+tuimark validate app.tui --catalog actions.json
+```
+
+reports any action the view fires that the host does not know (`B004`), which catches a renamed action on either side. In Go, `ui.Catalog()` gives the same list; a [test](/guide/testing#go-tests) can require a handler for every name.
+
+## Keeping it honest
+
+- Commit goldens for the sizes you checked ([testing](/guide/testing#golden-dumps)): the next agent that edits the view gets a failing test and a diff, not a surprise.
+- Keep `sample.json` realistic, with the long names, empty lists, and wide characters real data will have.
