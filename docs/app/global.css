@@ -312,6 +312,28 @@ html:not(.dark) .ts-dark,
   display: none;
 }
 
+/* A shot with one image (its document paints its own dark palette, so both
+   modes render alike) keeps a dark terminal frame on the light site too;
+   only the frame, not the caption below it. */
+.term-shot.is-fixed .ts-bar,
+.term-shot.is-fixed .ts-body {
+  --t-bg: #0d1117;
+  --t-fg: #e6edf3;
+  --t-fg-2: #b1bac4;
+  --t-muted: #8b949e;
+  --t-border: #30363d;
+  --t-panel: #161b22;
+  --t-accent: #39c5cf;
+  color-scheme: dark;
+}
+
+.ts-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-style: italic;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .term-shot[data-animated]:not([data-state='paused']) .ts-still {
     display: none;

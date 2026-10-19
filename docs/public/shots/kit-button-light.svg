@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="719.2" height="228" viewBox="0 0 719.2 228" role="img" aria-label="primary, secondary, danger, ghost and disabled buttons, the focused one inverted">
+<title>primary, secondary, danger, ghost and disabled buttons, the focused one inverted</title>
+<rect width="719.2" height="228" rx="6" fill="#ffffff"/>
+<path fill="#1f2328" d="M23.6 114h76.8v20h-76.8z"/>
+<path fill="#eef1f4" d="M119.6 114h96v20h-96zM234.8 154h96v20h-96z"/>
+<path fill="#d1242f" d="M23.6 154h96v20h-96z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="49" textLength="57.6" lengthAdjust="spacing" fill="#1f2328" font-weight="700">button</text>
+<text x="23.6" y="89" textLength="28.8" lengthAdjust="spacing" fill="#59636e">tab</text>
+<text x="62" y="89" textLength="9.6" lengthAdjust="spacing" fill="#59636e">/</text>
+<text x="81.2" y="89" textLength="86.4" lengthAdjust="spacing" fill="#59636e">shift+tab</text>
+<text x="177.2" y="89" textLength="48" lengthAdjust="spacing" fill="#59636e">moves</text>
+<text x="234.8" y="89" textLength="57.6" lengthAdjust="spacing" fill="#59636e">focus;</text>
+<text x="302" y="89" textLength="48" lengthAdjust="spacing" fill="#59636e">enter</text>
+<text x="359.6" y="89" textLength="19.2" lengthAdjust="spacing" fill="#59636e">or</text>
+<text x="388.4" y="89" textLength="48" lengthAdjust="spacing" fill="#59636e">space</text>
+<text x="446" y="89" textLength="67.2" lengthAdjust="spacing" fill="#59636e">presses</text>
+<text x="23.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">[</text>
+<rect x="23.6" y="131" width="9.6" height="1" fill="#ffffff"/>
+<text x="42.8" y="129" textLength="38.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">Save</text>
+<rect x="42.8" y="131" width="38.4" height="1" fill="#ffffff"/>
+<text x="90.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">]</text>
+<rect x="90.8" y="131" width="9.6" height="1" fill="#ffffff"/>
+<text x="119.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">[</text>
+<text x="138.8" y="129" textLength="57.6" lengthAdjust="spacing" fill="#1f2328">Cancel</text>
+<text x="206" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">]</text>
+<text x="23.6" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">[</text>
+<text x="42.8" y="169" textLength="57.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">Delete</text>
+<text x="110" y="169" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">]</text>
+<text x="138.8" y="169" textLength="9.6" lengthAdjust="spacing" fill="#59636e">[</text>
+<text x="158" y="169" textLength="38.4" lengthAdjust="spacing" fill="#59636e">Skip</text>
+<text x="206" y="169" textLength="9.6" lengthAdjust="spacing" fill="#59636e">]</text>
+<text x="234.8" y="169" textLength="9.6" lengthAdjust="spacing" fill="#59636e" fill-opacity="0.55">[</text>
+<text x="254" y="169" textLength="57.6" lengthAdjust="spacing" fill="#59636e" fill-opacity="0.55">Locked</text>
+<text x="321.2" y="169" textLength="9.6" lengthAdjust="spacing" fill="#59636e" fill-opacity="0.55">]</text>
+</g>
+</svg>

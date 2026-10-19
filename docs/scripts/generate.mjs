@@ -9,6 +9,7 @@
 //                                        `tuimark play --frames` sessions (the landing page's hero)
 //   lib/generated/{catalog,shots}.json   counts, tag lists and the shot index the site's
 //                                        components read
+//   lib/generated/kit.json               the kit's component documents, for the /kit page
 //
 // Usage, from the repository root (or `task docs-gen` / `task docs-check`):
 //
@@ -436,8 +437,13 @@ for (const o of OUTPUTS) {
 // Each shot is `tuimark play FILE --styles --cells --format json` on one of
 // the repository's examples (run from the repository root) or on a guide
 // snippet (run from its directory), painted to SVG cell by cell (svg.mjs).
-// `themes: ['dark', 'light']` adds a `NAME-light.svg` rendered with
-// --theme light, which TermShot shows when the site is in light mode.
+// Every shot is rendered twice, as the document asks (dark, for all of
+// them) and with --theme light; the light render becomes `NAME-light.svg`,
+// which TermShot shows when the site is in light mode, only when it differs
+// from the dark one. A document that paints every cell with its own colors
+// (inbox, dashboard, unicode: version="1", theme="dark", hex colors in their
+// stylesheets) renders the same under both, so it gets one image, which the
+// site frames as a dark terminal in both modes (`light: false` in the index).
 
 const SHOTS = [
   { name: 'tour', dir: 'tour', file: 'app.tui', data: 'sample.json', cols: 80, rows: 10, alt: 'the tour document at 80 columns: a ticket list beside the selected ticket, key hints below' },
@@ -449,47 +455,138 @@ const SHOTS = [
   { name: 'w-modal', dir: 'widgets', file: 'modal.tui', cols: 44, rows: 7, alt: 'a modal with a title and two buttons, the focused one reversed' },
   { name: 'w-input', dir: 'widgets', file: 'input.tui', data: 'data.json', cols: 40, rows: 3, alt: 'an empty input showing its placeholder' },
   { name: 'tour-narrow', dir: 'tour', file: 'app.tui', data: 'sample.json', cols: 56, rows: 14, alt: 'the tour document at 56 columns: an @media rule stacks the list above the detail pane' },
-  { name: 'monitor-processes', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 120, rows: 26, input: 'space down space down', themes: ['dark', 'light'], alt: 'monitor studio: the processes tab, a table with two marked rows, the tab strip and the key hints' },
-  { name: 'monitor-overview', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 120, rows: 16, input: '1', themes: ['dark', 'light'], alt: 'monitor studio: the overview tab, a grid of panels with gauges and sparklines' },
-  { name: 'monitor-cpu', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 100, rows: 16, input: '2', themes: ['dark', 'light'], alt: 'monitor studio: the cpu tab, a scrolling grid of per-core gauges with a scrollbar' },
-  { name: 'monitor-narrow', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 56, rows: 16, input: 'down', themes: ['dark', 'light'], alt: 'monitor studio at 56 columns: only the active tab label, and a table that dropped its lowest-priority column' },
-  { name: 'logs-live', file: 'examples/logs/app.tui', data: 'examples/logs/sample.json', cols: 110, rows: 22, themes: ['dark', 'light'], alt: 'logs: a live tail with per-level counts, a lines-per-second sparkline, and color-coded lines including an error with its stack trace' },
-  { name: 'tasks-board', file: 'examples/tasks/app.tui', data: 'examples/tasks/sample.json', cols: 100, rows: 22, themes: ['dark', 'light'], alt: 'tasks: a kanban board with Todo, Doing and Done lanes of cards with priority marks, colored tags and due dates' },
-  { name: 'tasks-marked', file: 'examples/tasks/app.tui', data: 'examples/tasks/sample.json', cols: 100, rows: 22, input: 'right space down space', themes: ['dark', 'light'], alt: 'tasks: the Doing lane focused, two cards marked with a check to move together' },
-  { name: 'gitui-status', file: 'examples/gitui/app.tui', data: 'examples/gitui/sample.json', cols: 110, rows: 24, themes: ['dark', 'light'], alt: 'gitui: staged and unstaged files with colored status letters beside a colored diff preview' },
-  { name: 'gitui-commit', file: 'examples/gitui/app.tui', data: 'examples/gitui/sample.json', cols: 100, rows: 26, input: '2 set:detail_open=true', themes: ['dark', 'light'], alt: 'gitui: a commit opened from the log, with its author, message, stats and a scrolling colored diff' },
-  { name: 'http-client', file: 'examples/http/app.tui', data: 'examples/http/sample.json', cols: 110, rows: 24, themes: ['dark', 'light'], alt: 'http: a request collection, a POST request in the editor, and its 201 Created JSON response below' },
-  { name: 'http-headers', file: 'examples/http/app.tui', data: 'examples/http/sample.json', cols: 110, rows: 22, input: 'h', themes: ['dark', 'light'], alt: 'http: the response pane on its Headers tab, the response headers in a table' },
-  { name: 'kit-gallery', file: 'examples/kit-gallery/app.tui', data: 'examples/kit-gallery/sample.json', cols: 110, rows: 30, themes: ['dark', 'light'], alt: 'kit gallery: the basics tab with a breadcrumb, badges, buttons, alerts and stat cards in the kit components, under the tab strip and the key hints' },
-  { name: 'kit-gallery-data', file: 'examples/kit-gallery/app.tui', data: 'examples/kit-gallery/sample.json', cols: 100, rows: 28, input: '3 focus:#svc down', themes: ['dark', 'light'], alt: 'kit gallery: the data tab, a focused table with its cursor row as an accent bar and a build log below' },
-  { name: 'containers', file: 'examples/containers/app.tui', data: 'examples/containers/sample.json', cols: 110, rows: 26, themes: ['dark', 'light'], alt: 'containers: a table of twelve containers with status colors, CPU, memory, uptime and ports, two rows marked, over the key hints and a status bar that says the engine is degraded' },
-  { name: 'containers-detail', file: 'examples/containers/app.tui', data: 'examples/containers/sample.json', cols: 110, rows: 28, input: '2', themes: ['dark', 'light'], alt: 'containers: the detail of one container, an overview card beside CPU and memory sparklines, and its log in a tab strip with environment and ports' },
-  { name: 'inbox', file: 'examples/inbox/app.tui', data: 'examples/inbox/sample.json', cols: 100, rows: 20, input: 'tab', themes: ['dark', 'light'], alt: 'inbox: a search box and a ticket list on the left, the selected ticket on the right' },
-  { name: 'inbox-narrow', file: 'examples/inbox/app.tui', data: 'examples/inbox/sample.json', cols: 60, rows: 20, input: 'tab', themes: ['dark', 'light'], alt: 'inbox at 60 columns: the list stacked above the detail pane by an @media rule' },
-  { name: 'dashboard', file: 'examples/dashboard/app.tui', data: 'examples/dashboard/sample.json', cols: 100, rows: 20, themes: ['dark', 'light'], alt: 'deploy dashboard: pipeline steps, a progress bar and buttons beside a log panel' },
-  { name: 'agent', file: 'examples/agent/agent.tui', data: 'examples/agent/sample.json', cols: 120, rows: 26, themes: ['dark', 'light'], alt: 'coding-agent chat: transcript, composer, tool activity and files panels' },
-  { name: 'unicode', file: 'examples/unicode/app.tui', data: 'examples/unicode/sample.json', cols: 64, rows: 14, themes: ['dark', 'light'], alt: 'CJK, emoji and combining accents laid out in cells, borders intact' },
-  { name: 'spike', file: 'examples/spike/inbox.tui', cols: 80, rows: 12, themes: ['dark', 'light'], alt: 'the original spike: two bordered boxes and a status line, no stylesheet' },
+  { name: 'monitor-processes', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 120, rows: 26, input: 'space down space down', alt: 'monitor studio: the processes tab, a table with two marked rows, the tab strip and the key hints' },
+  { name: 'monitor-overview', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 120, rows: 16, input: '1', alt: 'monitor studio: the overview tab, a grid of panels with gauges and sparklines' },
+  { name: 'monitor-cpu', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 100, rows: 16, input: '2', alt: 'monitor studio: the cpu tab, a scrolling grid of per-core gauges with a scrollbar' },
+  { name: 'monitor-narrow', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 56, rows: 16, input: 'down', alt: 'monitor studio at 56 columns: only the active tab label, and a table that dropped its lowest-priority column' },
+  { name: 'logs-live', file: 'examples/logs/app.tui', data: 'examples/logs/sample.json', cols: 110, rows: 22, alt: 'logs: a live tail with per-level counts, a lines-per-second sparkline, and color-coded lines including an error with its stack trace' },
+  { name: 'tasks-board', file: 'examples/tasks/app.tui', data: 'examples/tasks/sample.json', cols: 100, rows: 22, alt: 'tasks: a kanban board with Todo, Doing and Done lanes of cards with priority marks, colored tags and due dates' },
+  { name: 'tasks-marked', file: 'examples/tasks/app.tui', data: 'examples/tasks/sample.json', cols: 100, rows: 22, input: 'right space down space', alt: 'tasks: the Doing lane focused, two cards marked with a check to move together' },
+  { name: 'gitui-status', file: 'examples/gitui/app.tui', data: 'examples/gitui/sample.json', cols: 110, rows: 24, alt: 'gitui: staged and unstaged files with colored status letters beside a colored diff preview' },
+  { name: 'gitui-commit', file: 'examples/gitui/app.tui', data: 'examples/gitui/sample.json', cols: 100, rows: 26, input: '2 set:detail_open=true', alt: 'gitui: a commit opened from the log, with its author, message, stats and a scrolling colored diff' },
+  { name: 'http-client', file: 'examples/http/app.tui', data: 'examples/http/sample.json', cols: 110, rows: 24, alt: 'http: a request collection, a POST request in the editor, and its 201 Created JSON response below' },
+  { name: 'http-headers', file: 'examples/http/app.tui', data: 'examples/http/sample.json', cols: 110, rows: 22, input: 'h', alt: 'http: the response pane on its Headers tab, the response headers in a table' },
+  { name: 'kit-gallery', file: 'examples/kit-gallery/app.tui', data: 'examples/kit-gallery/sample.json', cols: 110, rows: 30, alt: 'kit gallery: the basics tab with a breadcrumb, badges, buttons, alerts and stat cards in the kit components, under the tab strip and the key hints' },
+  { name: 'kit-gallery-data', file: 'examples/kit-gallery/app.tui', data: 'examples/kit-gallery/sample.json', cols: 100, rows: 28, input: '3 focus:#svc down', alt: 'kit gallery: the data tab, a focused table with its cursor row as an accent bar and a build log below' },
+  { name: 'containers', file: 'examples/containers/app.tui', data: 'examples/containers/sample.json', cols: 110, rows: 26, alt: 'containers: a table of twelve containers with status colors, CPU, memory, uptime and ports, two rows marked, over the key hints and a status bar that says the engine is degraded' },
+  { name: 'containers-detail', file: 'examples/containers/app.tui', data: 'examples/containers/sample.json', cols: 110, rows: 28, input: '2', alt: 'containers: the detail of one container, an overview card beside CPU and memory sparklines, and its log in a tab strip with environment and ports' },
+  { name: 'inbox', file: 'examples/inbox/app.tui', data: 'examples/inbox/sample.json', cols: 100, rows: 20, input: 'tab', alt: 'inbox: a search box and a ticket list on the left, the selected ticket on the right' },
+  { name: 'inbox-narrow', file: 'examples/inbox/app.tui', data: 'examples/inbox/sample.json', cols: 60, rows: 20, input: 'tab', alt: 'inbox at 60 columns: the list stacked above the detail pane by an @media rule' },
+  { name: 'dashboard', file: 'examples/dashboard/app.tui', data: 'examples/dashboard/sample.json', cols: 100, rows: 20, alt: 'deploy dashboard: pipeline steps, a progress bar and buttons beside a log panel' },
+  { name: 'agent', file: 'examples/agent/agent.tui', data: 'examples/agent/sample.json', cols: 120, rows: 26, alt: 'coding-agent chat: transcript, composer, tool activity and files panels' },
+  { name: 'unicode', file: 'examples/unicode/app.tui', data: 'examples/unicode/sample.json', cols: 64, rows: 14, alt: 'CJK, emoji and combining accents laid out in cells, borders intact' },
+  { name: 'spike', file: 'examples/spike/inbox.tui', cols: 80, rows: 12, alt: 'the original spike: two bordered boxes and a status line, no stylesheet' },
 ]
 
 const shotIndex = []
-for (const s of SHOTS) {
-  for (const theme of s.themes ?? [null]) {
+/** Shots whose light render is the dark one: one image, framed dark. */
+const darkOnly = []
+
+/**
+ * Emits NAME.svg (and NAME-still.svg for an animation) for the dark render
+ * and the -light twins when the light render differs; returns whether it did.
+ */
+function emitThemed(name, render) {
+  const dark = render('dark')
+  const light = render('light')
+  const differs = Object.keys(dark).some((sfx) => dark[sfx] !== light[sfx])
+  for (const [sfx, svg] of Object.entries(dark)) emit(`public/shots/${name}${sfx}.svg`, svg)
+  if (differs) for (const [sfx, svg] of Object.entries(light)) emit(`public/shots/${name}${sfx}-light.svg`, svg)
+  else darkOnly.push(name)
+  return differs
+}
+
+function playShot(s) {
+  const light = emitThemed(s.name, (theme) => {
     const args = ['play', s.file, '--cols', String(s.cols), '--rows', String(s.rows), '--format', 'json', '--styles', '--cells']
     if (s.data) args.push('--data', s.data)
     if (theme === 'light') args.push('--theme', 'light')
     if (s.input) args.push('--input', s.input)
     const dump = JSON.parse(tuimark(args, { cwd: s.dir ? join(SNIPPETS, s.dir) : REPO }).out)
     if (!dump.ok) throw new Error(`generate: shot ${s.name} has errors: ${JSON.stringify(dump.errors)}`)
-    const name = theme === 'light' ? `${s.name}-light` : s.name
-    emit(`public/shots/${name}.svg`, renderSVG(dump, { title: s.alt }))
-  }
+    return { '': renderSVG(dump, { title: s.alt }) }
+  })
   const cmd = ['tuimark', 'play', s.file]
   if (s.data) cmd.push('--data', s.data)
   cmd.push('--cols', String(s.cols), '--rows', String(s.rows))
   if (s.input) cmd.push('--input', shellQuote(s.input))
-  shotIndex.push({ name: s.name, light: (s.themes ?? []).includes('light'), cols: s.cols, rows: s.rows, alt: s.alt, cmd: cmd.join(' ') })
+  shotIndex.push({ name: s.name, light, cols: s.cols, rows: s.rows, alt: s.alt, cmd: cmd.join(' ') })
 }
+
+for (const s of SHOTS) playShot(s)
+
+// ── The kit's components ───────────────────────────────────────────────────
+//
+// One shot per kit/components/NAME.tui, run from the repository root with
+// its NAME.sample.json, and the document itself (its first line is the
+// component's contract) for the /kit page, which shows the markup to copy.
+// The order and the groups are the page's.
+
+const KIT = [
+  {
+    group: 'Layout',
+    items: [
+      ['appbar', 4, 'an app bar: the product mark and name, the page title, the signed-in user and an environment badge on one row'],
+      ['statusbar', 6, 'a status bar docked at the bottom: the mode, the file, a synced mark and the cursor position'],
+      ['breadcrumb', 7, 'a breadcrumb trail, Production › Services › billing › Settings, with a key hint to go up a level'],
+      ['tabs', 8, 'a tab strip with the active tab marked and a count in a tab label, above the active tab’s panel'],
+      ['split', 10, 'a list of incidents beside a detail pane that shows the selected one'],
+      ['hints', 6, 'key hints generated from the keymap along the bottom row'],
+    ],
+  },
+  {
+    group: 'Content',
+    items: [
+      ['card', 12, 'a titled card with a heading, a line of text and two buttons, and two smaller cards side by side'],
+      ['alert', 14, 'four alerts, info, success, warning and danger, each a titled frame with an icon and a message'],
+      ['badge', 9, 'badges for states such as draft, new, passing, flaky and failed, and a build number'],
+      ['stat', 8, 'two KPI cards, each with a value, a change marked up or down, and a sparkline'],
+      ['meter', 11, 'three labeled progress bars with their values: an upload, disk use and tests'],
+      ['empty', 15, 'an empty state: an icon, a title, a line of text and a button, centered'],
+      ['log', 12, 'a bordered build log with timestamps, a warning and a failed test in color, over its scroll hints'],
+    ],
+  },
+  {
+    group: 'Data and input',
+    items: [
+      ['table', 10, 'a data table of services with a header, state colors, right-aligned numbers and the cursor row as an accent bar'],
+      ['menu', 10, 'a navigation menu with icons and key shortcuts, one row checked and the cursor row highlighted'],
+      ['button', 10, 'primary, secondary, danger, ghost and disabled buttons, the focused one inverted'],
+      ['field', 13, 'a form with a focused name field and an email field showing its error message'],
+    ],
+  },
+  {
+    group: 'Overlays',
+    items: [
+      ['confirm', 16, 'a confirm dialog over the page asking to delete a project, with Cancel and Delete buttons'],
+      ['help', 17, 'a help overlay listing every labeled key binding'],
+      ['palette', 14, 'a command palette with a query typed and the matching commands listed'],
+      ['toast', 10, 'a toast along the bottom row saying the settings were saved, with esc to dismiss'],
+    ],
+  },
+]
+const KIT_COLS = 72
+const kitIndex = []
+{
+  const files = readdirSync(join(REPO, 'kit', 'components')).filter((f) => f.endsWith('.tui')).map((f) => f.slice(0, -4))
+  const listed = KIT.flatMap((g) => g.items.map(([n]) => n))
+  const missing = files.filter((f) => !listed.includes(f))
+  if (missing.length) throw new Error(`generate: kit/components has ${missing.join(', ')}, which KIT does not list`)
+  for (const { group, items } of KIT) {
+    const components = []
+    for (const [n, rows, alt] of items) {
+      const file = `kit/components/${n}.tui`
+      const source = readFileSync(join(REPO, file), 'utf8')
+      const m = source.match(/^<!-- (k-[\w-]+) · Contract: (.*?) · Actions: (.*?) · Keys: (.*?) · Requires: (.*?) -->\n/)
+      if (!m) throw new Error(`generate: ${file} does not start with a contract comment`)
+      const data = existsSync(join(REPO, 'kit', 'components', `${n}.sample.json`)) ? `kit/components/${n}.sample.json` : undefined
+      playShot({ name: `kit-${n}`, file, data, cols: KIT_COLS, rows, alt })
+      components.push({ name: n, cls: m[1], contract: m[2], actions: m[3], keys: m[4], requires: m[5], file, data: data ?? null, shot: `kit-${n}`, source: source.slice(m[0].length) })
+    }
+    kitIndex.push({ group, components })
+  }
+}
+emit('lib/generated/kit.json', JSON.stringify(kitIndex, null, 2))
 // ── Animated demos ─────────────────────────────────────────────────────────
 //
 // `tuimark play` runs no host, so it cannot show an app whose screen moves
@@ -502,16 +599,16 @@ for (const s of SHOTS) {
 // the reader prefers reduced motion.
 
 const DEMOS = [
-  { name: 'snake-demo', example: 'snake', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'snake: the autopilot steering the snake to the food, the score, level and speed climbing in the stats panel' },
-  { name: 'chess-demo', example: 'chess', cols: 100, rows: 24, themes: ['dark', 'light'], alt: "chess: Morphy's Opera Game replayed move by move, the last move highlighted on the board and the move list growing, ending on 17.Rd8 checkmate" },
-  { name: 'tetris-demo', example: 'tetris', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'tetris: the autopilot rotating and dropping pieces, a four-line clear flashing before it collapses, the score and lines rising' },
-  { name: 'minesweeper-demo', example: 'minesweeper', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'minesweeper: a solver clearing an intermediate board, flagging proven mines and opening safe cells until the board is cleared' },
-  { name: 'sudoku-demo', example: 'sudoku', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'sudoku: the logic solver filling an easy puzzle digit by digit, then the solved board and the win dialog' },
-  { name: '2048-demo', example: '2048', cols: 90, rows: 24, themes: ['dark', 'light'], alt: '2048: the autopilot sliding tiles, merged tiles popping and new tiles lit up, the score climbing to a 512 tile' },
-  { name: 'pipeline-demo', example: 'pipeline', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'pipeline: CI jobs running in parallel with spinners and progress bars, the integration log streaming in, a failure, a retry, and the run ending green' },
-  { name: 'containers-demo', example: 'containers', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'containers: filtering the table, marking and stopping two containers through the confirm dialog, starting them again, sorting, the detail and its tabs, a restart from the command palette, a scripted crash in the events, and the help overlay' },
-  { name: 'music-demo', example: 'music', cols: 100, rows: 24, themes: ['dark', 'light'], alt: 'music: a track playing with a bouncing spectrum visualizer and a moving position bar, a skip to the queued track, then a pause that lets the bars fall' },
-  { name: 'pomodoro-demo', example: 'pomodoro', cols: 90, rows: 24, themes: ['dark', 'light'], alt: 'pomodoro: big block digits counting down the last seconds of a work session, the colon blinking, a flash at zero, then the short break starting in green' },
+  { name: 'snake-demo', example: 'snake', cols: 90, rows: 24, alt: 'snake: the autopilot steering the snake to the food, the score, level and speed climbing in the stats panel' },
+  { name: 'chess-demo', example: 'chess', cols: 100, rows: 24, alt: "chess: Morphy's Opera Game replayed move by move, the last move highlighted on the board and the move list growing, ending on 17.Rd8 checkmate" },
+  { name: 'tetris-demo', example: 'tetris', cols: 100, rows: 24, alt: 'tetris: the autopilot rotating and dropping pieces, a four-line clear flashing before it collapses, the score and lines rising' },
+  { name: 'minesweeper-demo', example: 'minesweeper', cols: 90, rows: 24, alt: 'minesweeper: a solver clearing an intermediate board, flagging proven mines and opening safe cells until the board is cleared' },
+  { name: 'sudoku-demo', example: 'sudoku', cols: 90, rows: 24, alt: 'sudoku: the logic solver filling an easy puzzle digit by digit, then the solved board and the win dialog' },
+  { name: '2048-demo', example: '2048', cols: 90, rows: 24, alt: '2048: the autopilot sliding tiles, merged tiles popping and new tiles lit up, the score climbing to a 512 tile' },
+  { name: 'pipeline-demo', example: 'pipeline', cols: 100, rows: 24, alt: 'pipeline: CI jobs running in parallel with spinners and progress bars, the integration log streaming in, a failure, a retry, and the run ending green' },
+  { name: 'containers-demo', example: 'containers', cols: 100, rows: 24, alt: 'containers: filtering the table, marking and stopping two containers through the confirm dialog, starting them again, sorting, the detail and its tabs, a restart from the command palette, a scripted crash in the events, and the help overlay' },
+  { name: 'music-demo', example: 'music', cols: 100, rows: 24, alt: 'music: a track playing with a bouncing spectrum visualizer and a moving position bar, a skip to the queued track, then a pause that lets the bars fall' },
+  { name: 'pomodoro-demo', example: 'pomodoro', cols: 90, rows: 24, alt: 'pomodoro: big block digits counting down the last seconds of a work session, the colon blinking, a flash at zero, then the short break starting in green' },
 ]
 
 // An animated SVG keeps every cell run that ever changes; keep the pages
@@ -546,16 +643,14 @@ function demoFrames(example, cols, rows, theme) {
 
 for (const d of DEMOS) {
   let ms = 0
-  for (const theme of d.themes ?? [null]) {
+  const light = emitThemed(d.name, (theme) => {
     const frames = demoFrames(d.example, d.cols, d.rows, theme)
     ms = frames.reduce((t, f) => t + f.ms, 0)
-    const sfx = theme === 'light' ? '-light' : ''
     const svg = renderAnimatedSVG(frames, { title: d.alt })
-    if (svg.length > MAX_DEMO_BYTES) throw new Error(`generate: demo ${d.name}${sfx} is ${svg.length} bytes, over ${MAX_DEMO_BYTES}`)
-    emit(`public/shots/${d.name}${sfx}.svg`, svg)
-    emit(`public/shots/${d.name}-still${sfx}.svg`, renderSVG(frames[frames.length - 1].dump, { title: d.alt }))
-  }
-  shotIndex.push({ name: d.name, light: (d.themes ?? []).includes('light'), cols: d.cols, rows: d.rows, alt: d.alt, cmd: `go run ./examples/${d.example}`, animated: true, ms })
+    if (svg.length > MAX_DEMO_BYTES) throw new Error(`generate: demo ${d.name} (${theme}) is ${svg.length} bytes, over ${MAX_DEMO_BYTES}`)
+    return { '': svg, '-still': renderSVG(frames[frames.length - 1].dump, { title: d.alt }) }
+  })
+  shotIndex.push({ name: d.name, light, cols: d.cols, rows: d.rows, alt: d.alt, cmd: `go run ./examples/${d.example}`, animated: true, ms })
 }
 
 // ── The landing page's hero ────────────────────────────────────────────────
@@ -647,6 +742,7 @@ const HERO = { name: 'hero', cols: 72, rows: 16, alt: 'a service list and a deta
 }
 
 emit('lib/generated/shots.json', JSON.stringify(shotIndex, null, 2))
+if (!CHECK && darkOnly.length) console.log(`generate: the same in both themes, one dark image each: ${darkOnly.join(', ')}`)
 
 // ── Write or check ─────────────────────────────────────────────────────────
 

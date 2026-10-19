@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="719.2" height="208" viewBox="0 0 719.2 208" role="img" aria-label="badges for states such as draft, new, passing, flaky and failed, and a build number">
+<title>badges for states such as draft, new, passing, flaky and failed, and a build number</title>
+<rect width="719.2" height="208" rx="6" fill="#0d1117"/>
+<path fill="#1c2128" d="M23.6 74h67.2v20h-67.2z"/>
+<path fill="#58a6ff" d="M100.4 74h48v20h-48z"/>
+<path fill="#3fb950" d="M158 74h86.4v20h-86.4zM23.6 154h86.4v20h-86.4z"/>
+<path fill="#d29922" d="M23.6 114h67.2v20h-67.2z"/>
+<path fill="#f85149" d="M100.4 114h76.8v20h-76.8z"/>
+<path fill="#39c5cf" d="M186.8 114h67.2v20h-67.2z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="49" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">badge</text>
+<text x="33.2" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">draft</text>
+<text x="110" y="89" textLength="28.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">new</text>
+<text x="167.6" y="89" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">passing</text>
+<text x="33.2" y="129" textLength="48" lengthAdjust="spacing" fill="#0d1117" font-weight="700">flaky</text>
+<text x="110" y="129" textLength="57.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">failed</text>
+<text x="196.4" y="129" textLength="48" lengthAdjust="spacing" fill="#0d1117" font-weight="700">#1842</text>
+<text x="33.2" y="169" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">passing</text>
+</g>
+</svg>

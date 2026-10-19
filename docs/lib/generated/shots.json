@@ -1,7 +1,7 @@
 [
   {
     "name": "tour",
-    "light": false,
+    "light": true,
     "cols": 80,
     "rows": 10,
     "alt": "the tour document at 80 columns: a ticket list beside the selected ticket, key hints below",
@@ -9,7 +9,7 @@
   },
   {
     "name": "w-list",
-    "light": false,
+    "light": true,
     "cols": 40,
     "rows": 6,
     "alt": "a focused list with a ✓ on the checked row and the cursor row reversed",
@@ -17,7 +17,7 @@
   },
   {
     "name": "w-table",
-    "light": false,
+    "light": true,
     "cols": 44,
     "rows": 7,
     "alt": "a table with a header row, right-aligned numbers, hot cells and the cursor row reversed",
@@ -25,7 +25,7 @@
   },
   {
     "name": "w-progress",
-    "light": false,
+    "light": true,
     "cols": 40,
     "rows": 5,
     "alt": "progress bars in whole cells and in eighths, and a two-row sparkline",
@@ -33,7 +33,7 @@
   },
   {
     "name": "w-tabs",
-    "light": false,
+    "light": true,
     "cols": 44,
     "rows": 2,
     "alt": "a tab strip with the active tab marked and highlighted",
@@ -41,7 +41,7 @@
   },
   {
     "name": "w-hints",
-    "light": false,
+    "light": true,
     "cols": 44,
     "rows": 8,
     "alt": "key hints generated from the keymap along the bottom row",
@@ -49,7 +49,7 @@
   },
   {
     "name": "w-modal",
-    "light": false,
+    "light": true,
     "cols": 44,
     "rows": 7,
     "alt": "a modal with a title and two buttons, the focused one reversed",
@@ -57,7 +57,7 @@
   },
   {
     "name": "w-input",
-    "light": false,
+    "light": true,
     "cols": 40,
     "rows": 3,
     "alt": "an empty input showing its placeholder",
@@ -65,7 +65,7 @@
   },
   {
     "name": "tour-narrow",
-    "light": false,
+    "light": true,
     "cols": 56,
     "rows": 14,
     "alt": "the tour document at 56 columns: an @media rule stacks the list above the detail pane",
@@ -193,7 +193,7 @@
   },
   {
     "name": "inbox",
-    "light": true,
+    "light": false,
     "cols": 100,
     "rows": 20,
     "alt": "inbox: a search box and a ticket list on the left, the selected ticket on the right",
@@ -201,7 +201,7 @@
   },
   {
     "name": "inbox-narrow",
-    "light": true,
+    "light": false,
     "cols": 60,
     "rows": 20,
     "alt": "inbox at 60 columns: the list stacked above the detail pane by an @media rule",
@@ -209,7 +209,7 @@
   },
   {
     "name": "dashboard",
-    "light": true,
+    "light": false,
     "cols": 100,
     "rows": 20,
     "alt": "deploy dashboard: pipeline steps, a progress bar and buttons beside a log panel",
@@ -225,7 +225,7 @@
   },
   {
     "name": "unicode",
-    "light": true,
+    "light": false,
     "cols": 64,
     "rows": 14,
     "alt": "CJK, emoji and combining accents laid out in cells, borders intact",
@@ -238,6 +238,174 @@
     "rows": 12,
     "alt": "the original spike: two bordered boxes and a status line, no stylesheet",
     "cmd": "tuimark play examples/spike/inbox.tui --cols 80 --rows 12"
+  },
+  {
+    "name": "kit-appbar",
+    "light": true,
+    "cols": 72,
+    "rows": 4,
+    "alt": "an app bar: the product mark and name, the page title, the signed-in user and an environment badge on one row",
+    "cmd": "tuimark play kit/components/appbar.tui --data kit/components/appbar.sample.json --cols 72 --rows 4"
+  },
+  {
+    "name": "kit-statusbar",
+    "light": true,
+    "cols": 72,
+    "rows": 6,
+    "alt": "a status bar docked at the bottom: the mode, the file, a synced mark and the cursor position",
+    "cmd": "tuimark play kit/components/statusbar.tui --data kit/components/statusbar.sample.json --cols 72 --rows 6"
+  },
+  {
+    "name": "kit-breadcrumb",
+    "light": true,
+    "cols": 72,
+    "rows": 7,
+    "alt": "a breadcrumb trail, Production › Services › billing › Settings, with a key hint to go up a level",
+    "cmd": "tuimark play kit/components/breadcrumb.tui --data kit/components/breadcrumb.sample.json --cols 72 --rows 7"
+  },
+  {
+    "name": "kit-tabs",
+    "light": true,
+    "cols": 72,
+    "rows": 8,
+    "alt": "a tab strip with the active tab marked and a count in a tab label, above the active tab’s panel",
+    "cmd": "tuimark play kit/components/tabs.tui --data kit/components/tabs.sample.json --cols 72 --rows 8"
+  },
+  {
+    "name": "kit-split",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a list of incidents beside a detail pane that shows the selected one",
+    "cmd": "tuimark play kit/components/split.tui --data kit/components/split.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "kit-hints",
+    "light": true,
+    "cols": 72,
+    "rows": 6,
+    "alt": "key hints generated from the keymap along the bottom row",
+    "cmd": "tuimark play kit/components/hints.tui --cols 72 --rows 6"
+  },
+  {
+    "name": "kit-card",
+    "light": true,
+    "cols": 72,
+    "rows": 12,
+    "alt": "a titled card with a heading, a line of text and two buttons, and two smaller cards side by side",
+    "cmd": "tuimark play kit/components/card.tui --data kit/components/card.sample.json --cols 72 --rows 12"
+  },
+  {
+    "name": "kit-alert",
+    "light": true,
+    "cols": 72,
+    "rows": 14,
+    "alt": "four alerts, info, success, warning and danger, each a titled frame with an icon and a message",
+    "cmd": "tuimark play kit/components/alert.tui --data kit/components/alert.sample.json --cols 72 --rows 14"
+  },
+  {
+    "name": "kit-badge",
+    "light": true,
+    "cols": 72,
+    "rows": 9,
+    "alt": "badges for states such as draft, new, passing, flaky and failed, and a build number",
+    "cmd": "tuimark play kit/components/badge.tui --data kit/components/badge.sample.json --cols 72 --rows 9"
+  },
+  {
+    "name": "kit-stat",
+    "light": true,
+    "cols": 72,
+    "rows": 8,
+    "alt": "two KPI cards, each with a value, a change marked up or down, and a sparkline",
+    "cmd": "tuimark play kit/components/stat.tui --data kit/components/stat.sample.json --cols 72 --rows 8"
+  },
+  {
+    "name": "kit-meter",
+    "light": true,
+    "cols": 72,
+    "rows": 11,
+    "alt": "three labeled progress bars with their values: an upload, disk use and tests",
+    "cmd": "tuimark play kit/components/meter.tui --data kit/components/meter.sample.json --cols 72 --rows 11"
+  },
+  {
+    "name": "kit-empty",
+    "light": true,
+    "cols": 72,
+    "rows": 15,
+    "alt": "an empty state: an icon, a title, a line of text and a button, centered",
+    "cmd": "tuimark play kit/components/empty.tui --data kit/components/empty.sample.json --cols 72 --rows 15"
+  },
+  {
+    "name": "kit-log",
+    "light": true,
+    "cols": 72,
+    "rows": 12,
+    "alt": "a bordered build log with timestamps, a warning and a failed test in color, over its scroll hints",
+    "cmd": "tuimark play kit/components/log.tui --data kit/components/log.sample.json --cols 72 --rows 12"
+  },
+  {
+    "name": "kit-table",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a data table of services with a header, state colors, right-aligned numbers and the cursor row as an accent bar",
+    "cmd": "tuimark play kit/components/table.tui --data kit/components/table.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "kit-menu",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a navigation menu with icons and key shortcuts, one row checked and the cursor row highlighted",
+    "cmd": "tuimark play kit/components/menu.tui --data kit/components/menu.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "kit-button",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "primary, secondary, danger, ghost and disabled buttons, the focused one inverted",
+    "cmd": "tuimark play kit/components/button.tui --data kit/components/button.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "kit-field",
+    "light": true,
+    "cols": 72,
+    "rows": 13,
+    "alt": "a form with a focused name field and an email field showing its error message",
+    "cmd": "tuimark play kit/components/field.tui --data kit/components/field.sample.json --cols 72 --rows 13"
+  },
+  {
+    "name": "kit-confirm",
+    "light": true,
+    "cols": 72,
+    "rows": 16,
+    "alt": "a confirm dialog over the page asking to delete a project, with Cancel and Delete buttons",
+    "cmd": "tuimark play kit/components/confirm.tui --data kit/components/confirm.sample.json --cols 72 --rows 16"
+  },
+  {
+    "name": "kit-help",
+    "light": true,
+    "cols": 72,
+    "rows": 17,
+    "alt": "a help overlay listing every labeled key binding",
+    "cmd": "tuimark play kit/components/help.tui --data kit/components/help.sample.json --cols 72 --rows 17"
+  },
+  {
+    "name": "kit-palette",
+    "light": true,
+    "cols": 72,
+    "rows": 14,
+    "alt": "a command palette with a query typed and the matching commands listed",
+    "cmd": "tuimark play kit/components/palette.tui --data kit/components/palette.sample.json --cols 72 --rows 14"
+  },
+  {
+    "name": "kit-toast",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a toast along the bottom row saying the settings were saved, with esc to dismiss",
+    "cmd": "tuimark play kit/components/toast.tui --data kit/components/toast.sample.json --cols 72 --rows 10"
   },
   {
     "name": "snake-demo",

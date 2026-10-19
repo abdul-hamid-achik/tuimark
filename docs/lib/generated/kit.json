@@ -1,0 +1,274 @@
+[
+  {
+    "group": "Layout",
+    "components": [
+      {
+        "name": "appbar",
+        "cls": "k-appbar",
+        "contract": "reads app.name, app.page, app.user, app.env",
+        "actions": "none",
+        "keys": "none",
+        "requires": "k-badge",
+        "file": "kit/components/appbar.tui",
+        "data": "kit/components/appbar.sample.json",
+        "shot": "kit-appbar",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <screen id=\"demo\">\n    <col id=\"app\" width=\"1fr\" height=\"1fr\">\n      <!-- COPY: the app bar is a one-row `row` with class `k-appbar`. The\n           class docks it to the top of its parent (`dock: top`), so the\n           content below it keeps all the remaining space whatever it is.\n           Put at most one top-docked bar in a container. -->\n      <row class=\"k-appbar\">\n        <text class=\"k-appbar-brand\">◆ {app.name}</text>\n        <text class=\"k-appbar-title\">{app.page}</text>\n        <spacer/>\n        <text class=\"k-appbar-meta\">{app.user}</text>\n        <text class=\"k-badge ok\">{app.env}</text>\n      </row>\n      <col width=\"1fr\" height=\"1fr\" pad=\"1\">\n        <text class=\"k-muted\">The page content goes here.</text>\n      </col>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "statusbar",
+        "cls": "k-statusbar",
+        "contract": "reads status.mode, status.file, status.synced, status.position",
+        "actions": "none",
+        "keys": "none",
+        "requires": "k-muted",
+        "file": "kit/components/statusbar.tui",
+        "data": "kit/components/statusbar.sample.json",
+        "shot": "kit-statusbar",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <screen id=\"demo\">\n    <col id=\"app\" width=\"1fr\" height=\"1fr\">\n      <col width=\"1fr\" height=\"1fr\" pad=\"1\">\n        <text class=\"k-muted\">The page content goes here.</text>\n      </col>\n      <!-- COPY: the status bar is a one-row `row` with class `k-statusbar`,\n           docked to the bottom of its parent. Left segments first, a\n           `spacer`, then right segments. `k-statusbar-seg` is a filled chip\n           (modifiers: ok, warn, danger); `k-statusbar-text` and\n           `k-statusbar-muted` are plain. Only one bottom-docked bar per\n           container (L005): put the key hints above it, not docked. -->\n      <row class=\"k-statusbar\">\n        <text class=\"k-statusbar-seg\">{status.mode}</text>\n        <text class=\"k-statusbar-text\">{status.file}</text>\n        <spacer/>\n        <text class=\"k-statusbar-seg ok\" if=\"status.synced\">synced</text>\n        <text class=\"k-statusbar-seg warn\" if=\"!status.synced\">unsynced</text>\n        <text class=\"k-statusbar-muted\">{status.position}</text>\n      </row>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "breadcrumb",
+        "cls": "k-breadcrumb",
+        "contract": "reads crumbs[] {id, label, last}, where; the host trims crumbs on breadcrumb_up",
+        "actions": "breadcrumb_up",
+        "keys": "backspace (up)",
+        "requires": "k-hints, k-muted",
+        "file": "kit/components/breadcrumb.tui",
+        "data": "kit/components/breadcrumb.sample.json",
+        "shot": "kit-breadcrumb",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap>\n    <bind keys=\"backspace\" action=\"breadcrumb_up\" label=\"up\"/>\n  </keymap>\n  <screen id=\"demo\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\">\n      <!-- COPY: a breadcrumb is a `row` with class `k-breadcrumb` and `each`\n           over an array of {id, label, last}. Its children are the template,\n           repeated per element: the label (class `k-breadcrumb-item`, plus\n           `current` for the last one, by a class:NAME guard) and the\n           separator. The host builds the array from the current path and\n           trims it on `breadcrumb_up`. A template cannot hold anything\n           focusable, so the crumbs are display only; navigate with a keymap\n           row. -->\n      <row class=\"k-breadcrumb\" each=\"crumbs as c\" key=\"c.id\">\n        <text class=\"k-breadcrumb-item\" class:current=\"c.last\">{c.label}</text>\n        <text class=\"k-breadcrumb-sep\" if=\"!c.last\">›</text>\n      </row>\n      <text class=\"k-muted\" pad=\"1\">You are in {where}.</text>\n      <hints class=\"k-hints\"/>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "tabs",
+        "cls": "k-tabs",
+        "contract": "reads and writes view (the active tab's id); reads tabs.overview, tabs.activity, tabs.settings, tabs.count",
+        "actions": "none (the keymap uses the built-ins move-next, move-prev, switch-to)",
+        "keys": "] and [ move, 1 to 3 switch",
+        "requires": "k-card, k-hints",
+        "file": "kit/components/tabs.tui",
+        "data": "kit/components/tabs.sample.json",
+        "shot": "kit-tabs",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap>\n    <bind keys=\"]\" action=\"move-next\" to=\"#nav\" keycap=\"]/[\" label=\"tab\"/>\n    <bind keys=\"[\" action=\"move-prev\" to=\"#nav\"/>\n    <bind keys=\"1\" action=\"switch-to\" to=\"#overview\"/>\n    <bind keys=\"2\" action=\"switch-to\" to=\"#activity\"/>\n    <bind keys=\"3\" action=\"switch-to\" to=\"#settings\"/>\n  </keymap>\n  <screen id=\"demo\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"0\">\n      <!-- COPY: tabs are a `tabs` with class `k-tabs` bound to a path that\n           holds the active tab's id (the host or `switch-to` writes it).\n           Write `focusable` on it: whether a tab strip takes focus is then\n           your choice, not a default. Each `tab` needs an `id` (yours, not\n           a kit part: it is the value of the bound path) and a `label`;\n           `short` is the label used when the strip does not fit. The\n           generated labels are styled by the class (`.k-tabs > .tab-label`).\n           Only the active tab's content is laid out. `mark` is the glyph\n           before the active label. -->\n      <tabs id=\"nav\" class=\"k-tabs\" bind=\"view\" mark=\"▸\" focusable=\"true\">\n        <tab id=\"overview\" label=\"1 overview\" short=\"1 ovr\">\n          <box class=\"k-card\" title=\"Overview\">\n            <text class=\"k-card-text\">{tabs.overview}</text>\n          </box>\n        </tab>\n        <tab id=\"activity\" label=\"2 activity ({tabs.count})\" short=\"2 act\">\n          <box class=\"k-card\" title=\"Activity\">\n            <text class=\"k-card-text\">{tabs.activity}</text>\n          </box>\n        </tab>\n        <tab id=\"settings\" label=\"3 settings\" short=\"3 set\">\n          <box class=\"k-card\" title=\"Settings\">\n            <text class=\"k-card-text\">{tabs.settings}</text>\n          </box>\n        </tab>\n      </tabs>\n      <hints class=\"k-hints\"/>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "split",
+        "cls": "k-split",
+        "contract": "reads items[] {id, title, age}, detail.{title, status, open, age, summary, owner} (the host keeps detail with a Derive over items and the cursor); reads and writes cur (the cursor row's id)",
+        "actions": "menu_select",
+        "keys": "j and k move",
+        "requires": "k-menu, k-card, k-badge, k-muted",
+        "file": "kit/components/split.tui",
+        "data": "kit/components/split.sample.json",
+        "shot": "kit-split",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap when=\"#items\">\n    <bind keys=\"j\" action=\"move-next\"/>\n    <bind keys=\"k\" action=\"move-prev\"/>\n  </keymap>\n  <screen id=\"demo\" focus=\"#items\">\n    <!-- COPY: master / detail is a `row` with class `k-split`: a list on the\n         left (`k-split-master`, 34% wide, 24 to 40 columns) and a card on\n         the right (`k-split-detail`, the rest). The list `bind` is the\n         selected id; the host keeps `detail` (a Derive over `items` and the\n         cursor) so the right side follows the cursor with no handler.\n         The detail card shows the badge for the status through class:NAME\n         guards. -->\n    <row class=\"k-split\">\n      <list id=\"items\" class=\"k-menu k-split-master\" each=\"items as it\" key=\"it.id\" bind=\"cur\" title=\"Incidents\" on:select=\"menu_select\">\n        <item>\n          <row class=\"k-menu-row\">\n            <text class=\"k-menu-label\">{it.title}</text>\n            <text class=\"k-menu-key\">{it.age}</text>\n          </row>\n        </item>\n      </list>\n      <box class=\"k-card k-split-detail\" title=\"{detail.title}\">\n        <row width=\"1fr\" height=\"1\" gap=\"1\">\n          <text class=\"k-badge\" class:danger=\"detail.open\" class:ok=\"!detail.open\">{detail.status}</text>\n          <text class=\"k-muted\">{detail.age} ago</text>\n        </row>\n        <text class=\"k-card-text\" wrap=\"wrap\">{detail.summary}</text>\n        <text class=\"k-card-muted\">owner: {detail.owner}</text>\n      </box>\n    </row>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "hints",
+        "cls": "k-hints",
+        "contract": "reads nothing from the store; shows the keymap rows that have a label",
+        "actions": "none of its own (the demo names item_new, item_open, item_next, item_prev, item_search)",
+        "keys": "whatever the keymap binds",
+        "requires": "k-muted",
+        "file": "kit/components/hints.tui",
+        "data": null,
+        "shot": "kit-hints",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <!-- COPY: every keymap row with a `label` becomes a hint. `keycap` is the\n       text shown instead of the key (use it for \"j/k\" or \"^S\"). A row\n       without a label is bound but not shown. -->\n  <keymap>\n    <bind keys=\"n\" action=\"item_new\" label=\"new\"/>\n    <bind keys=\"enter\" action=\"item_open\" label=\"open\"/>\n    <bind keys=\"j\" action=\"item_next\" keycap=\"j/k\" label=\"move\"/>\n    <bind keys=\"k\" action=\"item_prev\"/>\n    <bind keys=\"/\" action=\"item_search\" label=\"search\"/>\n    <bind keys=\"q\" action=\"quit\" label=\"quit\"/>\n  </keymap>\n  <screen id=\"demo\">\n    <col id=\"app\" width=\"1fr\" height=\"1fr\">\n      <col width=\"1fr\" height=\"1fr\" pad=\"1\">\n        <text class=\"k-muted\">The page content goes here.</text>\n      </col>\n      <!-- COPY: `<hints/>` with class `k-hints`: one row, the key in the\n           accent color (`.hint-key`), the label muted (`.hint-label`; the\n           class styles both). Hints that do not fit are dropped from the\n           right. `scope=\"active\"` (the default) shows only the keys that\n           would fire right now. -->\n      <hints class=\"k-hints\"/>\n    </col>\n  </screen>\n</tui>\n"
+      }
+    ]
+  },
+  {
+    "group": "Content",
+    "components": [
+      {
+        "name": "card",
+        "cls": "k-card",
+        "contract": "reads card.title, card.heading, card.text",
+        "actions": "card_open, card_dismiss",
+        "keys": "tab, enter",
+        "requires": "k-btn, k-title",
+        "file": "kit/components/card.tui",
+        "data": "kit/components/card.sample.json",
+        "shot": "kit-card",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <screen id=\"demo\" focus=\"#card__open\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">card / panel</text>\n      <!-- COPY: a card is a `box` with class `k-card` and a `title`. The\n           border turns to the focus color while anything inside holds focus\n           (`.k-card:focus-within`). The class gives it `height: auto` to\n           wrap its content; write a number or fr on the box to fix it. -->\n      <box class=\"k-card\" title=\"{card.title}\">\n        <text class=\"k-card-title\">{card.heading}</text>\n        <text class=\"k-card-muted\">{card.text}</text>\n        <row class=\"k-card-actions\">\n          <button id=\"card__open\" class=\"k-btn primary\" label=\"Open\" on:click=\"card_open\"/>\n          <button id=\"card__dismiss\" class=\"k-btn ghost\" label=\"Dismiss\" on:click=\"card_dismiss\"/>\n        </row>\n      </box>\n      <!-- COPY: side-by-side cards share the row; each takes `1fr`. -->\n      <row width=\"1fr\" height=\"auto\" gap=\"1\">\n        <box class=\"k-card\" title=\"Left\">\n          <text class=\"k-card-text\">First card</text>\n        </box>\n        <box class=\"k-card\" title=\"Right\">\n          <text class=\"k-card-text\">Second card</text>\n        </box>\n      </row>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "alert",
+        "cls": "k-alert",
+        "contract": "reads alert.message",
+        "actions": "none",
+        "keys": "none",
+        "requires": "k-title",
+        "file": "kit/components/alert.tui",
+        "data": "kit/components/alert.sample.json",
+        "shot": "kit-alert",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <screen id=\"demo\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"0\" pad=\"1\">\n      <text class=\"k-title\">alert / callout</text>\n      <!-- COPY: an alert is a `box` with class `k-alert` plus a modifier\n           (info, ok, warn, danger). The title is the box title; the body\n           wraps. `k-alert-icon` takes the same modifier so it matches. -->\n      <box class=\"k-alert info\" title=\"Heads up\">\n        <row class=\"k-alert-row\">\n          <text class=\"k-alert-icon info\">i</text>\n          <text class=\"k-alert-text\">Deploys are paused until 09:00 UTC.</text>\n        </row>\n      </box>\n      <box class=\"k-alert ok\" title=\"Saved\">\n        <row class=\"k-alert-row\">\n          <text class=\"k-alert-icon ok\">✓</text>\n          <text class=\"k-alert-text\">Your changes are live in every region.</text>\n        </row>\n      </box>\n      <box class=\"k-alert warn\" title=\"Quota\">\n        <row class=\"k-alert-row\">\n          <text class=\"k-alert-icon warn\">!</text>\n          <text class=\"k-alert-text\">You have used 92% of this month's build minutes.</text>\n        </row>\n      </box>\n      <box class=\"k-alert danger\" title=\"Build failed\">\n        <row class=\"k-alert-row\">\n          <text class=\"k-alert-icon danger\">✗</text>\n          <text class=\"k-alert-text\">{alert.message}</text>\n        </row>\n      </box>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "badge",
+        "cls": "k-badge",
+        "contract": "reads build.number, build.status, build.ok",
+        "actions": "none",
+        "keys": "none",
+        "requires": "k-title",
+        "file": "kit/components/badge.tui",
+        "data": "kit/components/badge.sample.json",
+        "shot": "kit-badge",
+        "source": "<tui theme=\"auto\">\n  <!-- Every kit document loads the sheets in this order: tokens, components, then your own. -->\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <screen id=\"demo\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">badge</text>\n      <!-- COPY: a badge is one text with two classes: `k-badge` and a\n           modifier. Modifiers: accent, ok, warn, danger, info (none =\n           neutral). The label is literal text or a {path}. -->\n      <row width=\"1fr\" height=\"1\" gap=\"1\">\n        <text class=\"k-badge\">draft</text>\n        <text class=\"k-badge accent\">new</text>\n        <text class=\"k-badge ok\">passing</text>\n      </row>\n      <row width=\"1fr\" height=\"1\" gap=\"1\">\n        <text class=\"k-badge warn\">flaky</text>\n        <text class=\"k-badge danger\">failed</text>\n        <text class=\"k-badge info\">{build.number}</text>\n      </row>\n      <!-- COPY: choose the modifier from data with class:NAME guards on the\n           same node (the guards are paths the host keeps true or false). -->\n      <row width=\"1fr\" height=\"1\" gap=\"1\">\n        <text class=\"k-badge\" class:ok=\"build.ok\" class:danger=\"!build.ok\">{build.status}</text>\n      </row>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "stat",
+        "cls": "k-stat",
+        "contract": "reads stats.req.{value, delta, good, hist[]} and stats.err.{value, delta, good, hist[]}",
+        "actions": "none",
+        "keys": "none",
+        "requires": "k-title",
+        "file": "kit/components/stat.tui",
+        "data": "kit/components/stat.sample.json",
+        "shot": "kit-stat",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <screen id=\"demo\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">stat / KPI card</text>\n      <!-- COPY: a stat is a `box` with class `k-stat`: the label as the box\n           title, the value in bold, and a row with the change\n           (`k-stat-delta`, plus `good` or `bad` for green or red; guard it\n           with class:good / class:bad: whether a rise is good depends on\n           the metric) and a `sparkline` (class `k-stat-spark`) bound to an\n           array of numbers. Put stats in a row; each takes `1fr` of the\n           width. -->\n      <row width=\"1fr\" height=\"auto\" gap=\"1\">\n        <box class=\"k-stat\" title=\"Requests\">\n          <text class=\"k-stat-value\">{stats.req.value}</text>\n          <row class=\"k-stat-row\">\n            <text class=\"k-stat-delta\" class:good=\"stats.req.good\" class:bad=\"!stats.req.good\">{stats.req.delta}</text>\n            <sparkline class=\"k-stat-spark\" bind=\"stats.req.hist\"/>\n          </row>\n        </box>\n        <box class=\"k-stat\" title=\"Errors\">\n          <text class=\"k-stat-value\">{stats.err.value}</text>\n          <row class=\"k-stat-row\">\n            <text class=\"k-stat-delta\" class:good=\"stats.err.good\" class:bad=\"!stats.err.good\">{stats.err.delta}</text>\n            <sparkline class=\"k-stat-spark\" bind=\"stats.err.hist\"/>\n          </row>\n        </box>\n      </row>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "meter",
+        "cls": "k-meter",
+        "contract": "reads meters.upload.{label, text, pct}, meters.disk.{text, pct, warn, crit}, meters.tests.{text, pct} (pct is 0 to 100)",
+        "actions": "none",
+        "keys": "none",
+        "requires": "k-title",
+        "file": "kit/components/meter.tui",
+        "data": "kit/components/meter.sample.json",
+        "shot": "kit-meter",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <screen id=\"demo\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">labeled progress</text>\n      <!-- COPY: a meter is a `col` with class `k-meter`: a head row (label\n           on the left, the value text on the right) over a `progress` with\n           class `k-meter-bar`. `bind` is a number from 0 to 100. Add a\n           status color to the bar with the modifier `ok`, `warn`, or\n           `danger`, or pick it from data with class:NAME guards. The host\n           updates the number (and the text) as the work advances. -->\n      <col class=\"k-meter\">\n        <row class=\"k-meter-head\">\n          <text class=\"k-meter-label\">{meters.upload.label}</text>\n          <spacer/>\n          <text class=\"k-meter-value\">{meters.upload.text}</text>\n        </row>\n        <progress class=\"k-meter-bar\" bind=\"meters.upload.pct\"/>\n      </col>\n      <col class=\"k-meter\">\n        <row class=\"k-meter-head\">\n          <text class=\"k-meter-label\">Disk</text>\n          <spacer/>\n          <text class=\"k-meter-value\">{meters.disk.text}</text>\n        </row>\n        <progress class=\"k-meter-bar\" class:warn=\"meters.disk.warn\" class:danger=\"meters.disk.crit\" bind=\"meters.disk.pct\"/>\n      </col>\n      <col class=\"k-meter\">\n        <row class=\"k-meter-head\">\n          <text class=\"k-meter-label\">Tests</text>\n          <spacer/>\n          <text class=\"k-meter-value\">{meters.tests.text}</text>\n        </row>\n        <progress class=\"k-meter-bar ok\" bind=\"meters.tests.pct\"/>\n      </col>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "empty",
+        "cls": "k-empty",
+        "contract": "reads empty.title, empty.text",
+        "actions": "empty_create",
+        "keys": "enter on the button",
+        "requires": "k-btn, k-title",
+        "file": "kit/components/empty.tui",
+        "data": "kit/components/empty.sample.json",
+        "shot": "kit-empty",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <screen id=\"demo\" focus=\"#empty__create\">\n    <col width=\"1fr\" height=\"1fr\" pad=\"1\">\n      <text class=\"k-title\">empty state</text>\n      <!-- COPY: an empty state is a `col` with class `k-empty` (it fills the\n           space left and centers its children), an icon, a title, one line\n           of help, and the call to action (a button label is literal text).\n           Show it with `if=\"!items.any\"` next to the list it replaces. -->\n      <col class=\"k-empty\">\n        <text class=\"k-empty-icon\">◌</text>\n        <text class=\"k-empty-title\">{empty.title}</text>\n        <text class=\"k-empty-text\">{empty.text}</text>\n        <button id=\"empty__create\" class=\"k-btn primary\" label=\"New deployment\" on:click=\"empty_create\"/>\n      </col>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "log",
+        "cls": "k-log",
+        "contract": "reads log.count, log.lines[] {n, text, debug, info, warn, err}; the host appends lines",
+        "actions": "log_append (the host's key)",
+        "keys": "j and k scroll, g top, G follow",
+        "requires": "k-hints",
+        "file": "kit/components/log.tui",
+        "data": "kit/components/log.sample.json",
+        "shot": "kit-log",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap when=\"#log\">\n    <bind keys=\"j\" action=\"move-next\" keycap=\"j/k\" label=\"scroll\"/>\n    <bind keys=\"k\" action=\"move-prev\"/>\n    <bind keys=\"G\" action=\"move-last\" label=\"follow\"/>\n    <bind keys=\"g\" action=\"move-first\" label=\"top\"/>\n  </keymap>\n  <screen id=\"demo\" focus=\"#log\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"0\">\n      <!-- COPY: a log panel is a `scroll` with class `k-log` and\n           `stick=\"bottom\"`: it follows the end of its content as lines are\n           appended, until you scroll up to read; `move-last` (or scrolling\n           to the end) makes it follow again. It needs an `id` and must be\n           focusable to take the keys. The lines are a `col` with\n           `each` and a `key`; `height: auto` (the class) lets the column\n           be as tall as its lines, which is what the scroll measures.\n           Color a line with class:NAME guards: every line carries all the\n           flags (a missing path is B002), `false` for the ones it is not.\n           The host appends lines to the array (see examples/kit-gallery). -->\n      <scroll id=\"log\" class=\"k-log\" stick=\"bottom\" focusable=\"true\" title=\"build log · {log.count} lines\">\n        <col class=\"k-log-lines\" each=\"log.lines as l\" key=\"l.n\">\n          <text class=\"k-log-line\" class:muted=\"l.debug\" class:info=\"l.info\" class:warn=\"l.warn\" class:danger=\"l.err\">{l.text}</text>\n        </col>\n      </scroll>\n      <hints class=\"k-hints\"/>\n    </col>\n  </screen>\n</tui>\n"
+      }
+    ]
+  },
+  {
+    "group": "Data and input",
+    "components": [
+      {
+        "name": "table",
+        "cls": "k-table",
+        "contract": "reads services[] {id, name, state, ok, region, rps, p95} and count; reads and writes cur (the cursor row's id)",
+        "actions": "table_select, table_open",
+        "keys": "j and k move, enter opens",
+        "requires": "k-hints",
+        "file": "kit/components/table.tui",
+        "data": "kit/components/table.sample.json",
+        "shot": "kit-table",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap when=\"#svc\">\n    <bind keys=\"j\" action=\"move-next\"/>\n    <bind keys=\"k\" action=\"move-prev\"/>\n    <bind keys=\"enter\" action=\"table_open\" label=\"open\"/>\n  </keymap>\n  <screen id=\"demo\" focus=\"#svc\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"0\">\n      <!-- COPY: a data table is a `table` with class `k-table`. The header\n           is the `column` titles (bold, muted). Give a `column` the class\n           `k-num` for numbers: the header and every cell of it align to the\n           right. Columns with `priority` hide, lowest first, when the table\n           is too narrow, so give the least important column the smallest\n           number, and give the `1fr` column a `min-width` (the class\n           `k-table-name`) so columns hide before it is squeezed. `bind`\n           receives the cursor row's key; `on:select` fires as the cursor\n           moves. The cursor row is bold on a quiet fill while the table is\n           idle and a solid accent bar while it has focus. -->\n      <table id=\"svc\" class=\"k-table\" each=\"services as s\" key=\"s.id\" bind=\"cur\" title=\"Services · {count}\" placeholder=\"no services\" on:select=\"table_select\">\n        <column id=\"svc__name\" class=\"k-table-name\" title=\"SERVICE\" width=\"1fr\">{s.name}</column>\n        <column id=\"svc__state\" class=\"k-table-state\" class:ok=\"s.ok\" class:danger=\"!s.ok\" title=\"STATE\" width=\"9\">{s.state}</column>\n        <column id=\"svc__region\" class=\"k-table-muted\" title=\"REGION\" width=\"10\" priority=\"1\">{s.region}</column>\n        <column id=\"svc__rps\" class=\"k-num\" title=\"REQ/S\" width=\"8\" priority=\"2\">{s.rps}</column>\n        <column id=\"svc__p95\" class=\"k-num\" title=\"P95 MS\" width=\"8\" priority=\"3\">{s.p95}</column>\n      </table>\n      <hints class=\"k-hints\"/>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "menu",
+        "cls": "k-menu",
+        "contract": "reads menu.items[] {id, icon, label, key}, menu.checked[]; reads and writes menu.cur (the cursor row's id)",
+        "actions": "menu_select, menu_open",
+        "keys": "j and k move, space marks, enter opens",
+        "requires": "k-hints, k-title",
+        "file": "kit/components/menu.tui",
+        "data": "kit/components/menu.sample.json",
+        "shot": "kit-menu",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap when=\"#menu\">\n    <bind keys=\"j\" action=\"move-next\"/>\n    <bind keys=\"k\" action=\"move-prev\"/>\n    <bind keys=\"space\" action=\"check-toggle\" label=\"mark\"/>\n    <bind keys=\"enter\" action=\"menu_open\" label=\"open\"/>\n  </keymap>\n  <screen id=\"demo\" focus=\"#menu\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"0\" pad=\"1\">\n      <text class=\"k-title\">menu / nav list</text>\n      <!-- COPY: a menu is a `list` with class `k-menu`; each item is one\n           `k-menu-row` (icon, label, shortcut). `bind` holds the cursor\n           row's key; `checked` + `mark` add multi-select marks (space\n           toggles it through the `check-toggle` built-in). The cursor row is\n           bold on a quiet fill while another widget has focus, and a solid\n           accent bar while the menu has it. Enter is not implicit in a\n           list: bind it to the action that opens the row, as above. -->\n      <list id=\"menu\" class=\"k-menu\" each=\"menu.items as it\" key=\"it.id\" bind=\"menu.cur\" checked=\"menu.checked\" mark=\"✓\" title=\"Go to\" on:select=\"menu_select\">\n        <item>\n          <row class=\"k-menu-row\">\n            <text class=\"k-menu-icon\">{it.icon}</text>\n            <text class=\"k-menu-label\">{it.label}</text>\n            <text class=\"k-menu-key\">{it.key}</text>\n          </row>\n        </item>\n      </list>\n      <hints class=\"k-hints\"/>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "button",
+        "cls": "k-btn",
+        "contract": "reads last",
+        "actions": "button_save, button_cancel, button_delete, button_skip",
+        "keys": "tab and shift+tab move focus, enter or space presses, q quits",
+        "requires": "k-title, k-subtitle, k-muted",
+        "file": "kit/components/button.tui",
+        "data": "kit/components/button.sample.json",
+        "shot": "kit-button",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap>\n    <bind keys=\"ctrl+c,q\" action=\"quit\"/>\n  </keymap>\n  <screen id=\"demo\" focus=\"#buttons__primary\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">button</text>\n      <text class=\"k-subtitle\">tab / shift+tab moves focus; enter or space presses</text>\n      <!-- COPY: a button is `k-btn` plus a modifier: primary, secondary,\n           danger, ghost. `on:click` names the action (component_verb); the\n           host implements it. The focused button is drawn inverted, bold and\n           underlined (see `.k-btn:focus`). -->\n      <row width=\"1fr\" height=\"1\" gap=\"2\">\n        <button id=\"buttons__primary\" class=\"k-btn primary\" label=\"Save\" on:click=\"button_save\"/>\n        <button id=\"buttons__secondary\" class=\"k-btn secondary\" label=\"Cancel\" on:click=\"button_cancel\"/>\n      </row>\n      <row width=\"1fr\" height=\"1\" gap=\"2\">\n        <button id=\"buttons__danger\" class=\"k-btn danger\" label=\"Delete\" on:click=\"button_delete\"/>\n        <button id=\"buttons__ghost\" class=\"k-btn ghost\" label=\"Skip\" on:click=\"button_skip\"/>\n        <button id=\"buttons__off\" class=\"k-btn secondary\" label=\"Locked\" disabled=\"true\"/>\n      </row>\n      <text class=\"k-muted\">last action: {last}</text>\n    </col>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "field",
+        "cls": "k-field",
+        "contract": "reads and writes forms.profile.{name,email}.value; reads forms.profile.{name,email}.error (\"\" when fine; the host writes them); the host also writes forms.profile.valid, which the markup does not read",
+        "actions": "form_validate, form_submit",
+        "keys": "ctrl+s saves, enter in an input submits",
+        "requires": "k-btn, k-hints, k-title",
+        "file": "kit/components/field.tui",
+        "data": "kit/components/field.sample.json",
+        "shot": "kit-field",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap>\n    <bind keys=\"ctrl+s\" action=\"form_submit\" keycap=\"^S\" label=\"save\"/>\n  </keymap>\n  <screen id=\"demo\" focus=\"#profile__name\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"0\" pad=\"1\">\n      <text class=\"k-title\">form field</text>\n      <!-- COPY: a field is a `col` with class `k-field`: a label, an `input`\n           with class `k-field-input`, help text, and an error line. The\n           input has its own border (and height 3), which is what lets\n           `:focus` change `border-color`; an input without `border` cannot\n           show focus that way. The form is named by the id prefix: the\n           inputs are `profile__name` and `profile__email`, and the store\n           holds `forms.profile.<field>.value` and `.error`. The host writes\n           the error (\"\" when fine): `class:invalid` turns the label and the\n           border red, and the error line shows only while the path is\n           non-empty. `forms.profile.valid` (true when no rule fails) is the\n           host's too; the markup does not need it. -->\n      <col class=\"k-field\">\n        <text class=\"k-field-label\" class:invalid=\"forms.profile.name.error\">Name</text>\n        <input id=\"profile__name\" class=\"k-field-input\" class:invalid=\"forms.profile.name.error\" bind=\"forms.profile.name.value\" placeholder=\"your name\" on:change=\"form_validate\" on:submit=\"form_submit\"/>\n        <text class=\"k-field-help\" if=\"!forms.profile.name.error\">Shown on your profile.</text>\n        <text class=\"k-field-error\" if=\"forms.profile.name.error\">{forms.profile.name.error}</text>\n      </col>\n      <col class=\"k-field\">\n        <text class=\"k-field-label\" class:invalid=\"forms.profile.email.error\">Email</text>\n        <input id=\"profile__email\" class=\"k-field-input\" class:invalid=\"forms.profile.email.error\" bind=\"forms.profile.email.value\" placeholder=\"you@example.com\" on:change=\"form_validate\" on:submit=\"form_submit\"/>\n        <text class=\"k-field-help\" if=\"!forms.profile.email.error\">We never share it.</text>\n        <text class=\"k-field-error\" if=\"forms.profile.email.error\">{forms.profile.email.error}</text>\n      </col>\n      <row width=\"1fr\" height=\"1\" gap=\"2\">\n        <button id=\"profile__save\" class=\"k-btn primary\" label=\"Save\" on:click=\"form_submit\"/>\n        <hints class=\"k-hints\"/>\n      </row>\n    </col>\n  </screen>\n</tui>\n"
+      }
+    ]
+  },
+  {
+    "group": "Overlays",
+    "components": [
+      {
+        "name": "confirm",
+        "cls": "k-dialog",
+        "contract": "reads confirm.open, confirm.title, confirm.message; the host writes confirm.open and confirm.result",
+        "actions": "dialog_open, dialog_confirm, dialog_cancel",
+        "keys": "y confirms, n and esc cancel",
+        "requires": "k-btn, k-title, k-muted",
+        "file": "kit/components/confirm.tui",
+        "data": "kit/components/confirm.sample.json",
+        "shot": "kit-confirm",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <!-- The overlay's own keys come first: the first matching row in document\n       order wins, so they must precede any global row. `when=\".k-dialog\"`\n       holds while focus is anywhere inside a dialog. The host tells the\n       instance apart by the prefix of the event's source before the last\n       \"__\" (confirm__yes: the instance is \"confirm\"). -->\n  <keymap when=\".k-dialog\">\n    <bind keys=\"y\" action=\"dialog_confirm\" label=\"confirm\"/>\n    <bind keys=\"n\" action=\"dialog_cancel\" label=\"cancel\"/>\n  </keymap>\n  <screen id=\"demo\" focus=\"#confirm__open\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">confirm dialog</text>\n      <row width=\"1fr\" height=\"1\" gap=\"2\">\n        <button id=\"confirm__open\" class=\"k-btn danger\" label=\"Delete project\" on:click=\"dialog_open\"/>\n      </row>\n      <text class=\"k-muted\">result: {confirm.result}</text>\n    </col>\n    <!-- COPY: a confirm dialog is a `modal` with class `k-dialog` (add\n         `danger` for a destructive one), the message, and an action row of\n         `k-dialog-actions` (height 1). The modal must be the LAST child of\n         the screen (L004). `open` is a path the host flips; `focus` puts the\n         cursor on the SAFE button, so a stray enter cancels. `on:escape`\n         cancels. y / n work too (the keymap above). The class writes the\n         modal's size (52 columns, as tall as its content, at most the\n         screen). Keep the button labels short: the action row must fit a\n         40-column terminal. -->\n    <modal id=\"confirm__dialog\" class=\"k-dialog danger\" open=\"confirm.open\" title=\"{confirm.title}\" focus=\"#confirm__no\" on:escape=\"dialog_cancel\">\n      <text class=\"k-dialog-text\">{confirm.message}</text>\n      <row class=\"k-dialog-actions\">\n        <spacer/>\n        <button id=\"confirm__no\" class=\"k-btn secondary\" label=\"Cancel\" on:click=\"dialog_cancel\"/>\n        <button id=\"confirm__yes\" class=\"k-btn danger\" label=\"Delete\" on:click=\"dialog_confirm\"/>\n      </row>\n    </modal>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "help",
+        "cls": "k-help",
+        "contract": "reads help.open; lists every keymap row that has a label",
+        "actions": "help_open, help_close (the demo also names item_new, item_delete, item_next, item_prev, item_save)",
+        "keys": "? opens, q and ? close",
+        "requires": "k-hints, k-title, k-muted",
+        "file": "kit/components/help.tui",
+        "data": "kit/components/help.sample.json",
+        "shot": "kit-help",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <!-- The overlay's own keys come first (the first matching row in document\n       order wins), so q and ? close the help instead of reaching the global\n       rows below. `when=\".k-help\"` holds while the help modal is on top. -->\n  <keymap when=\".k-help\">\n    <bind keys=\"q,?\" action=\"help_close\" keycap=\"?\" label=\"close help\"/>\n  </keymap>\n  <!-- COPY: the help overlay lists every keymap row that has a `label`.\n       Give rows a `keycap` to show \"j/k\" or \"^S\" instead of the raw key. -->\n  <keymap>\n    <bind keys=\"?\" action=\"help_open\" label=\"help\"/>\n    <bind keys=\"n\" action=\"item_new\" label=\"new item\"/>\n    <bind keys=\"d\" action=\"item_delete\" label=\"delete item\"/>\n    <bind keys=\"j\" action=\"item_next\" keycap=\"j/k\" label=\"move\"/>\n    <bind keys=\"k\" action=\"item_prev\"/>\n    <bind keys=\"ctrl+s\" action=\"item_save\" keycap=\"^S\" label=\"save\"/>\n    <bind keys=\"q\" action=\"quit\" label=\"quit\"/>\n  </keymap>\n  <screen id=\"demo\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">help overlay</text>\n      <text class=\"k-muted\">press ? for the keys</text>\n      <hints class=\"k-hints\"/>\n    </col>\n    <!-- COPY: a modal with class `k-help` that holds `<hints scope=\"all\">`.\n         `scope=\"all\"` lists every labeled row, not only the ones that would\n         fire right now. `k-help-keys` stacks them in a column. The class\n         writes the modal's size (56 columns, as tall as its content). -->\n    <modal id=\"help__dialog\" class=\"k-help\" open=\"help.open\" title=\"Keys\" on:escape=\"help_close\">\n      <hints class=\"k-hints k-help-keys\" scope=\"all\"/>\n    </modal>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "palette",
+        "cls": "k-palette",
+        "contract": "reads palette.commands[], palette.query, found.items[] and found.any (the host keeps found with a Derive over palette.query and palette.commands); reads and writes palette.open, palette.query, palette.cur; reads palette.last",
+        "actions": "palette_open, palette_run, palette_close, palette_query (fires as the query changes; a Go host that filters with Derive needs no work in it, a TypeScript parent recomputes found there)",
+        "keys": "ctrl+k opens, up and down (or ctrl+p and ctrl+n) move, enter runs, esc closes",
+        "requires": "k-hints, k-title, k-muted",
+        "file": "kit/components/palette.tui",
+        "data": "kit/components/palette.sample.json",
+        "shot": "kit-palette",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <!-- The overlay's own keys come first (the first matching row in document\n       order wins). While the palette is open, up / down (and ctrl+n /\n       ctrl+p) move the cursor of the list although focus stays in the\n       input: the input does not consume them, so they reach the keymap, and\n       the built-ins act on the list named by `to`. Enter is the input's\n       `on:submit`; esc is the modal's `on:escape`. -->\n  <keymap when=\".k-palette\">\n    <bind keys=\"down,ctrl+n\" action=\"move-next\" to=\"#palette__list\"/>\n    <bind keys=\"up,ctrl+p\" action=\"move-prev\" to=\"#palette__list\"/>\n  </keymap>\n  <keymap>\n    <bind keys=\"ctrl+k\" action=\"palette_open\" keycap=\"^K\" label=\"commands\"/>\n  </keymap>\n  <screen id=\"demo\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">command palette</text>\n      <text class=\"k-muted\">ctrl+k opens it; type, up / down, enter, esc.</text>\n      <text class=\"k-muted\">last command: {palette.last}</text>\n      <hints class=\"k-hints\"/>\n    </col>\n    <!-- COPY: a modal with class `k-palette`: an input bound to the query,\n         and a list over the filtered commands. The filtering is the HOST's\n         job (no expressions in the markup): keep `found` with a Derive over\n         `palette.query` and `palette.commands`, so the list always reads the\n         result. The list `bind` is the cursor row's id. The class writes the\n         modal's size (60 by 16, at most the screen). -->\n    <modal id=\"palette__dialog\" class=\"k-palette\" open=\"palette.open\" title=\"Command palette\" focus=\"#palette__q\" on:escape=\"palette_close\">\n      <input id=\"palette__q\" class=\"k-palette-input\" bind=\"palette.query\" placeholder=\"type a command…\" on:change=\"palette_query\" on:submit=\"palette_run\"/>\n      <text class=\"k-palette-empty\" if=\"!found.any\">No command matches “{palette.query}”.</text>\n      <list id=\"palette__list\" class=\"k-palette-list\" each=\"found.items as r\" key=\"r.id\" bind=\"palette.cur\" focusable=\"false\">\n        <item>\n          <row class=\"k-palette-row\">\n            <text class=\"k-palette-label\">{r.label}</text>\n            <text class=\"k-palette-hint\">{r.hint}</text>\n          </row>\n        </item>\n      </list>\n    </modal>\n  </screen>\n</tui>\n"
+      },
+      {
+        "name": "toast",
+        "cls": "k-toast",
+        "contract": "reads toast.show, toast.text, toast.is_ok, toast.is_warn, toast.is_danger; the host clears toast.show after a few seconds",
+        "actions": "toast_show, toast_dismiss",
+        "keys": "esc dismisses",
+        "requires": "k-btn, k-title",
+        "file": "kit/components/toast.tui",
+        "data": "kit/components/toast.sample.json",
+        "shot": "kit-toast",
+        "source": "<tui theme=\"auto\">\n  <style src=\"../theme.tcss\"/>\n  <style src=\"../kit.tcss\"/>\n  <keymap>\n    <bind keys=\"esc\" action=\"toast_dismiss\" label=\"dismiss\"/>\n  </keymap>\n  <screen id=\"demo\" focus=\"#toast__show\">\n    <col width=\"1fr\" height=\"1fr\" gap=\"1\" pad=\"1\">\n      <text class=\"k-title\">toast</text>\n      <row width=\"1fr\" height=\"1\" gap=\"2\">\n        <button id=\"toast__show\" class=\"k-btn primary\" label=\"Save\" on:click=\"toast_show\"/>\n      </row>\n      <spacer/>\n      <!-- COPY: a toast is a one-row strip. `k-toast-slot` is a row that is\n           always one row high, so the page never jumps when the toast\n           appears; the `k-toast` row inside shows only while `toast.show`\n           is true. Info is the default; guard the modifiers `ok`, `warn`,\n           `danger` with class:NAME. The HOST clears it: set `toast.show`\n           back to false from an `Every` tick (see\n           examples/kit-gallery/main.go). The slot is not docked, so it can\n           sit above a docked status bar (only one bottom-docked bar per\n           container, L005). -->\n      <row class=\"k-toast-slot\">\n        <row class=\"k-toast\" if=\"toast.show\" class:ok=\"toast.is_ok\" class:warn=\"toast.is_warn\" class:danger=\"toast.is_danger\">\n          <text class=\"k-toast-text\">{toast.text}</text>\n          <text class=\"k-toast-key\">esc</text>\n        </row>\n      </row>\n    </col>\n  </screen>\n</tui>\n"
+      }
+    ]
+  }
+]

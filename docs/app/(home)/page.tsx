@@ -137,10 +137,12 @@ const loop = [
   },
 ];
 
-// The gallery: the example apps, most visual first (the kit gallery has its
-// own section, and the hero already shows a deploy dashboard). Eighteen keep
-// the grid even at three columns and at two. Animated demos start paused, so
-// the page loads only their still frames.
+// The gallery: the example apps, most visual first. Every tile follows the
+// site's light or dark mode, so inbox, dashboard and unicode, whose documents
+// paint their own dark palette, are left to /examples; the kit gallery shows
+// its data tab here (its basics tab is in the kit section). Eighteen keep the
+// grid even at three columns and at two. Animated demos start paused, so the
+// page loads only their still frames.
 const gallery: { shot: string; title: string; anchor: string; text: string }[] = [
   { shot: 'monitor-processes', title: 'monitor studio', anchor: 'monitor-studio', text: 'Nine tabs, a sortable process table with multi-select, gauges and sparklines.' },
   { shot: 'containers-demo', title: 'containers', anchor: 'containers', text: 'A container dashboard built on the kit: a filterable table, a detail pane, dialogs, and a palette.' },
@@ -151,7 +153,7 @@ const gallery: { shot: string; title: string; anchor: string; text: string }[] =
   { shot: 'tasks-board', title: 'tasks', anchor: 'tasks', text: 'A kanban board with lanes, priorities, tags, and cards you move together.' },
   { shot: 'pipeline-demo', title: 'pipeline', anchor: 'pipeline', text: 'CI jobs in parallel with spinners and progress, a failure, and a retry.' },
   { shot: 'music-demo', title: 'music', anchor: 'music', text: 'A player with a spectrum visualizer, a position bar, and a queue.' },
-  { shot: 'inbox', title: 'inbox', anchor: 'inbox', text: 'Search, a ticket list, and a detail pane that stacks on narrow terminals.' },
+  { shot: 'kit-gallery-data', title: 'kit gallery', anchor: 'kit-gallery', text: 'Every kit component on five tabs; here a focused data table over a build log.' },
   { shot: 'snake-demo', title: 'snake', anchor: 'snake', text: 'The classic, on an autopilot, with the score and speed climbing.' },
   { shot: 'tetris-demo', title: 'tetris', anchor: 'tetris', text: 'Falling pieces, line clears, and a next-piece preview.' },
   { shot: 'chess-demo', title: 'chess', anchor: 'chess', text: 'A famous game replayed move by move, with the move list.' },
@@ -159,7 +161,7 @@ const gallery: { shot: string; title: string; anchor: string; text: string }[] =
   { shot: 'minesweeper-demo', title: 'minesweeper', anchor: 'minesweeper', text: 'A solver flagging mines and opening safe cells.' },
   { shot: 'sudoku-demo', title: 'sudoku', anchor: 'sudoku', text: 'A logic solver filling a puzzle digit by digit.' },
   { shot: 'pomodoro-demo', title: 'pomodoro', anchor: 'pomodoro', text: 'Big block digits counting down a work session.' },
-  { shot: 'unicode', title: 'unicode', anchor: 'unicode', text: 'CJK, emoji, and combining marks in cells, borders intact.' },
+  { shot: 'spike', title: 'spike', anchor: 'spike', text: 'Where it started: five tags, two bordered boxes, and a status line.' },
 ];
 
 function Section({

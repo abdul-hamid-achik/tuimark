@@ -10,7 +10,9 @@ import { PlayToggle } from './term-shot-toggle';
 // in a loop, with a button that swaps it for its still last frame; a reader
 // who prefers reduced motion starts on the still frame. A `paused` shot
 // starts on the still frame for everyone and fetches the animation only
-// when the reader presses play (for pages that show many of them).
+// when the reader presses play (for pages that show many of them). A shot
+// with no light variant comes from a document that paints its own dark
+// palette: it keeps a dark frame in light mode too, and says why.
 
 export type Shot = {
   name: string;
@@ -80,9 +82,10 @@ export function TermShot({
   const shot = getShot(name);
   const startPaused = paused && !!shot.animated;
   const { width } = shotSize(shot);
+  const fixed = !shot.light;
   return (
     <figure
-      className={`term-shot not-prose ${bare ? 'is-bare' : ''} ${className}`}
+      className={`term-shot not-prose ${bare ? 'is-bare' : ''} ${fixed ? 'is-fixed' : ''} ${className}`}
       style={bare ? undefined : { maxWidth: `${Math.round(width * 1.2)}px` }}
       data-animated={shot.animated ? '' : undefined}
       data-state={startPaused ? 'paused' : undefined}
@@ -111,7 +114,14 @@ export function TermShot({
           </div>
         )}
       </div>
-      {children && <figcaption>{children}</figcaption>}
+      {(children || (fixed && !bare)) && (
+        <figcaption>
+          {children}
+          {fixed && !bare && (
+            <span className="ts-note">This document sets its own dark palette, so it looks the same in both modes.</span>
+          )}
+        </figcaption>
+      )}
     </figure>
   );
 }

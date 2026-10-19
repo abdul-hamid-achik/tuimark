@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="719.2" height="108" viewBox="0 0 719.2 108" role="img" aria-label="an app bar: the product mark and name, the page title, the signed-in user and an environment badge on one row">
+<title>an app bar: the product mark and name, the page title, the signed-in user and an environment badge on one row</title>
+<rect width="719.2" height="108" rx="6" fill="#0d1117"/>
+<path fill="#1c2128" d="M14 14h624v20h-624zM695.6 14h9.6v20h-9.6z"/>
+<path fill="#3fb950" d="M638 14h57.6v20h-57.6z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">orbit</text>
+<text x="110" y="29" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">Deployments</text>
+<text x="474.8" y="29" textLength="144" lengthAdjust="spacing" fill="#8b949e">ada@example.com</text>
+<text x="647.6" y="29" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">prod</text>
+<text x="23.6" y="69" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">The</text>
+<text x="62" y="69" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">page</text>
+<text x="110" y="69" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">content</text>
+<text x="186.8" y="69" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">goes</text>
+<text x="234.8" y="69" textLength="48" lengthAdjust="spacing" fill="#8b949e">here.</text>
+</g>
+</svg>
