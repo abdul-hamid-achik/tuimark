@@ -124,3 +124,32 @@ func TestExpansionLimitCountsIncludes(t *testing.T) {
 		t.Errorf("V021 %v, want exactly one", got)
 	}
 }
+
+// The byte budget (ADR 0034, second amendment): each include is charged its
+// fragment's size before anything is built. A fragment of exactly 1 MiB
+// placed 16 times is exactly the budget and fine; the 17th placement is
+// V021 and inserts nothing, and the ones before it stay.
+func TestExpansionByteBudgetBoundary(t *testing.T) {
+	if parse.ExpansionByteLimit != 16<<20 {
+		t.Fatalf("ExpansionByteLimit = %d", parse.ExpansionByteLimit)
+	}
+	const head, tail = "<fragment><text>a</text><!--", "--></fragment>"
+	frag := head + strings.Repeat("x", 1<<20-len(head)-len(tail)) + tail
+	if len(frag) != 1<<20 {
+		t.Fatalf("fragment is %d bytes", len(frag))
+	}
+	place := func(n int) *parse.Document {
+		return parse.ParseWith([]byte("<tui><screen>"+strings.Repeat("<include src=\"f.tui\"/>", n)+"</screen></tui>"), "app.tui", memLoader(map[string]string{"f.tui": frag}, "app.tui", nil))
+	}
+	doc := place(16)
+	if got := v021(doc); len(got) != 0 || screenChildren(doc) != 16 {
+		t.Errorf("at the budget: V021 %v, %d children", got, screenChildren(doc))
+	}
+	doc = place(17)
+	if got := v021(doc); len(got) != 1 || !strings.Contains(got[0], `exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands`) {
+		t.Errorf("over the budget: V021 %v", got)
+	}
+	if n := screenChildren(doc); n != 16 {
+		t.Errorf("%d children, want the 16 placed before the 17th", n)
+	}
+}

@@ -1,3 +1,9 @@
+//go:build !js
+
+// The expansion limits build documents of 100000 elements or 16 MiB of source and
+// render them; under js/wasm (4 GiB, no preemption) they run out of memory,
+// and internal/parse covers the same limits there without rendering.
+
 package tuimark_test
 
 import (
