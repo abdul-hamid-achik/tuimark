@@ -1,0 +1,12 @@
+<tui version="3">
+  <screen id="main">
+    <text>files</text>
+    <modal id="confirm" open="true" title="delete?">
+      <text>Delete report.pdf?</text>
+      <row id="act">
+        <button id="yes" label="yes"/>
+        <button id="no" label="no"/>
+      </row>
+    </modal>
+  </screen>
+</tui>

@@ -72,9 +72,11 @@ var structuralAttrs = map[string]bool{
 // BuildIR converts a parsed Document into the source IR (SPEC §13.1):
 // version "0.1" for a version="1" document and the spike, "0.2" for a
 // version="2" document (IR 0.2 adds the six kinds, app.mouse, and the
-// keymap's label and keycap; class:NAME stays in attrs, §13.1), and "0.3"
+// keymap's label and keycap; class:NAME stays in attrs, §13.1), "0.3"
 // for a version="3" document (IR 0.3 has exactly the shape of IR 0.2 in
-// 0.3a, SPEC v0.3 §23.4).
+// 0.3a, SPEC v0.3 §23.4), and "0.4" for a <tui> without version (SPEC
+// v0.4b §23.6; schema/ir.v0.4.json starts as ir.v0.3.json with that
+// version, and gains its 0.4b kinds with the phases that implement them).
 //
 // tokens is the resolved theme token table: the built-in theme's tokens
 // overridden by any :root custom properties in the document's stylesheets
@@ -85,6 +87,9 @@ var structuralAttrs = map[string]bool{
 func BuildIR(doc *Document, tokens map[string]string) *IR {
 	version := ir.Version
 	switch {
+	case doc.Lang.V4():
+		// A <tui> without version: IR 0.4 (SPEC v0.4b §5.1, §13.1, §23.6).
+		version = ir.VersionV4
 	case doc.V3:
 		version = ir.VersionV3
 	case doc.V2:

@@ -1,0 +1,261 @@
+{
+  "cols": 30,
+  "rows": 10,
+  "ok": true,
+  "focus": "ok",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 10
+    },
+    {
+      "id": "list",
+      "tag": "list",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 2,
+      "scroll": {
+        "y": 0,
+        "h": 2
+      }
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 1,
+      "key": "a",
+      "selected": true
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 1,
+      "text": "a"
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 1,
+      "key": "b"
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 1,
+      "text": "b"
+    },
+    {
+      "id": "keys",
+      "tag": "hints",
+      "x": 0,
+      "y": 2,
+      "w": 30,
+      "h": 1
+    },
+    {
+      "tag": "row",
+      "x": 0,
+      "y": 2,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "text": "q",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 2,
+      "y": 2,
+      "w": 4,
+      "h": 1,
+      "text": "quit",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 8,
+      "y": 2,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 8,
+      "y": 2,
+      "w": 1,
+      "h": 1,
+      "text": "o",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 10,
+      "y": 2,
+      "w": 4,
+      "h": 1,
+      "text": "open",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 16,
+      "y": 2,
+      "w": 8,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 16,
+      "y": 2,
+      "w": 3,
+      "h": 1,
+      "text": "esc",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 20,
+      "y": 2,
+      "w": 4,
+      "h": 1,
+      "text": "back",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "id": "dlg",
+      "tag": "modal",
+      "x": 3,
+      "y": 1,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "tag": "text",
+      "x": 4,
+      "y": 2,
+      "w": 22,
+      "h": 1,
+      "text": "sure?"
+    },
+    {
+      "id": "ok",
+      "tag": "button",
+      "x": 4,
+      "y": 3,
+      "w": 22,
+      "h": 1,
+      "text": "ok",
+      "focused": true
+    },
+    {
+      "id": "mkeys",
+      "tag": "hints",
+      "x": 4,
+      "y": 4,
+      "w": 22,
+      "h": 1
+    },
+    {
+      "tag": "row",
+      "x": 4,
+      "y": 4,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 4,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "text": "q",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 6,
+      "y": 4,
+      "w": 4,
+      "h": 1,
+      "text": "quit",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 12,
+      "y": 4,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 12,
+      "y": 4,
+      "w": 1,
+      "h": 1,
+      "text": "o",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 14,
+      "y": 4,
+      "w": 4,
+      "h": 1,
+      "text": "open",
+      "classes": [
+        "hint-label"
+      ]
+    }
+  ],
+  "grid": [
+    "a                             ",
+    "b  ┌──────────────────────┐   ",
+    "q q│sure?                 │   ",
+    "   │[ ok ]                │   ",
+    "   │q quit  o open        │   ",
+    "   │                      │   ",
+    "   │                      │   ",
+    "   │                      │   ",
+    "   └──────────────────────┘   ",
+    "                              "
+  ]
+}

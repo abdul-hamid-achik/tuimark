@@ -40,6 +40,10 @@ type Frame struct {
 	// V3 is set when the document is version="3": the layout pass reports
 	// L008/L009, and dumps of the frame carry clipped (SPEC v0.3 §13.2).
 	V3 bool
+	// Lang is the document's language (SPEC v0.4b §5.1), from which the
+	// frame's 0.4b behavior is read; V2 and V3 are Lang.V2() and
+	// Lang.V3().
+	Lang ir.Lang
 	// Mouse is the value of the document's mouse attribute on this frame
 	// (SPEC v0.2b §8.5): mouse events act only while it is true.
 	Mouse bool
@@ -56,7 +60,7 @@ type Frame struct {
 // Dump returns the frame's dump (SPEC §13.2), with the --cells map when
 // cells is set.
 func (f *Frame) Dump(cells bool) *dump.Dump {
-	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2, V3: f.V3})
+	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2, V3: f.V3, Lang: f.Lang})
 }
 
 // Dump renders the current state at cols×rows (negative sizes clamp to 0)
@@ -210,7 +214,7 @@ func (a *App) modalOpenOn(req *focusRequest, cols, rows int, theme string) bool 
 func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	cols, rows = max(cols, 0), max(rows, 0)
 	theme = css.EffectiveTheme(theme)
-	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, settled: true, slab: a.slab}
+	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, Lang: a.doc.Lang, settled: true, slab: a.slab}
 	static := a.staticFor(theme)
 	if a.doc.Root == nil {
 		f.Diags = append(f.Diags, static...)
@@ -288,7 +292,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	if kinds.hints {
 		fb.buildHints(casc, rootBox) // step 5
 	}
-	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Scratch: &a.scratch}
+	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Lang: a.doc.Lang, Scratch: &a.scratch}
 	if rootBox == nil {
 		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: newStyle(css.Initial())}
 	}

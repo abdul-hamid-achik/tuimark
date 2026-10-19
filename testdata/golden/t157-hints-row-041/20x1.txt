@@ -1,0 +1,13 @@
+=== grid 20x1 ===
+ready       q quit  
+=== nodes ===
+main    screen  20x1 @(0,0)
+status  row     20x1 @(0,0)
+-       text    5x1 @(0,0)
+-       spacer  7x1 @(5,0)
+keys    hints   8x1 @(12,0)
+-       row     6x1 @(12,0)
+-       text    1x1 @(12,0)
+-       text    4x1 @(14,0)
+=== errors ===
+ok

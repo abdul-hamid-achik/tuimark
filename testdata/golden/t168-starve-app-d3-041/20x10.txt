@@ -1,0 +1,25 @@
+=== grid 20x10 ===
+row 0               
+row 1               
+row 2               
+                    
+                    
+detail              
+                    
+                    
+                    
+                    
+=== nodes ===
+main    screen  20x10 @(0,0)
+app     col     20x10 @(0,0)
+l       list    20x5 @(0,0) focus
+-       item    20x1 @(0,0) selected
+-       text    20x1 @(0,0)
+-       item    20x1 @(0,1)
+-       text    20x1 @(0,1)
+-       item    20x1 @(0,2)
+-       text    20x1 @(0,2)
+detail  col     20x5 @(0,5)
+-       text    20x1 @(0,5)
+=== errors ===
+ok

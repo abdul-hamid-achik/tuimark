@@ -1,0 +1,18 @@
+<tui version="3">
+  <screen id="main">
+    <modal id="help" open="true" title="a long help title here">
+      <text>line 1</text>
+      <text>line 2</text>
+      <text>line 3</text>
+      <text>line 4</text>
+      <text>line 5</text>
+      <text>line 6</text>
+      <text>line 7</text>
+      <text>line 8</text>
+      <text>line 9</text>
+      <text>line 10</text>
+      <text>line 11</text>
+      <text>line 12</text>
+    </modal>
+  </screen>
+</tui>

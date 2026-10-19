@@ -16,6 +16,11 @@ type Engine struct {
 	// V3 is set for a version="3" document (SPEC v0.3 §5.1): Layout also
 	// reports the clipping warnings L008 and L009 (§14, §30.2).
 	V3 bool
+	// Lang is the document's language (SPEC v0.4b §5.1): the rules 0.4b
+	// changes are read from it, so a pinned document keeps its 0.4.1
+	// layout. V3 stays the flag of the version="3" rules, which hold for
+	// Lang3 and the current language alike. 0 is read as Lang1.
+	Lang ir.Lang
 	// memo holds the intrinsic sizes that do not fit a box's own memo
 	// slots (Box.memo); gen is this engine's generation (generation).
 	memo map[memoKey]int

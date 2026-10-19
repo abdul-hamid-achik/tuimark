@@ -1,0 +1,43 @@
+=== grid 30x10 ===
+a                             
+b  ┌──────────────────────┐   
+q q│sure?                 │   
+   │[ ok ]                │   
+   │q quit  o open        │   
+   │                      │   
+   │                      │   
+   │                      │   
+   └──────────────────────┘   
+                              
+=== nodes ===
+main   screen  30x10 @(0,0)
+list   list    30x2 @(0,0)
+-      item    30x1 @(0,0) selected
+-      text    30x1 @(0,0)
+-      item    30x1 @(0,1)
+-      text    30x1 @(0,1)
+keys   hints   30x1 @(0,2)
+-      row     6x1 @(0,2)
+-      text    1x1 @(0,2)
+-      text    4x1 @(2,2)
+-      row     6x1 @(8,2)
+-      text    1x1 @(8,2)
+-      text    4x1 @(10,2)
+-      row     8x1 @(16,2)
+-      text    3x1 @(16,2)
+-      text    4x1 @(20,2)
+dlg    modal   24x8 @(3,1)
+-      text    22x1 @(4,2)
+ok     button  22x1 @(4,3) focus
+mkeys  hints   22x1 @(4,4)
+-      row     6x1 @(4,4)
+-      text    1x1 @(4,4)
+-      text    4x1 @(6,4)
+-      row     6x1 @(12,4)
+-      text    1x1 @(12,4)
+-      text    4x1 @(14,4)
+=== errors ===
+ok
+=== events ===
+0 opened dlg {} null
+1 open_dialog ok {} null

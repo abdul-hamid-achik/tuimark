@@ -1,0 +1,19 @@
+=== grid 40x12 ===
+                                        
+                                        
+                                        
+                                        
+                  ┌─┐                   
+                  │ │                   
+                  └─┘                   
+                                        
+                                        
+                                        
+                                        
+                                        
+=== nodes ===
+main  screen  40x12 @(0,0)
+m     modal   3x3 @(18,4)
+t     input   1x1 @(19,5) focus
+=== errors ===
+ok

@@ -1,0 +1,21 @@
+=== grid 30x8 ===
+inbox          message body   
+sent                          
+                              
+                              
+ready                         
+                              
+                              
+                              
+=== nodes ===
+main       screen  30x8 @(0,0)
+top        row     30x4 @(0,0)
+nav        col     15x4 @(0,0)
+-          text    15x1 @(0,0)
+-          text    15x1 @(0,1)
+main-pane  col     15x4 @(15,0)
+-          text    15x1 @(15,0)
+status     row     30x4 @(0,4)
+-          text    5x4 @(0,4)
+=== errors ===
+ok

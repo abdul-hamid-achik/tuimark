@@ -66,7 +66,14 @@ type Document struct {
 	// version (SPEC v0.3 §5.1, v0.4.1): the clipping warnings L008 and L009
 	// fire, and the dump carries clipped. Every version="2" rule also holds
 	// for it (V2 is true too).
-	V3    bool
+	V3 bool
+	// Lang is the language the document is checked and rendered in (SPEC
+	// v0.4b §5.1): 1, 2, or 3 for a <tui> that writes that version (pinned
+	// to its tuimark 0.4.1 meaning), ir.LangCurrent for a <tui> without
+	// version, and 1 for the spike root <app>, an invalid version, and a
+	// document that fails before its root is read. V2 and V3 are
+	// Lang.V2() and Lang.V3().
+	Lang  ir.Lang
 	Theme string // the theme attribute: dark, light, auto (version="2"), or "" when absent
 	// Mouse is the mouse attribute as written (version="2", SPEC §8.5).
 	Mouse   string
@@ -213,6 +220,14 @@ var TagAttrsV3 = map[string]map[string]bool{
 	"sparkline": only("scale"),
 }
 
+// TagAttrsCurrent is what only the current language, a <tui> without
+// version, accepts on top of TagAttrs, TagAttrsV2, and TagAttrsV3 (SPEC
+// v0.4b §5.1, §6.15): in a pinned document each is V002 with
+// ir.VersionHintCurrent. Each 0.4b phase adds its attributes here, and
+// the rows of its tags, when it implements them; none is declared ahead
+// of its phase.
+var TagAttrsCurrent = map[string]map[string]bool{}
+
 // tableItemAttrs are the attributes of a table's row template <item>
 // (SPEC §6.9.1, §6.15), besides class:NAME.
 var tableItemAttrs = only("class")
@@ -224,9 +239,9 @@ var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "
 const ClassGuardPrefix = "class:"
 
 // attrAllowed reports whether a tag takes an attribute, and the lowest
-// document version that accepts it there: 1 (or 0, equivalently, for a
-// version="1" tag's own attributes), 2, or 3 (SPEC §6.15). parent is the
-// element's parent tag.
+// language that accepts it there: 1 (or 0, equivalently, for a
+// version="1" tag's own attributes), 2, 3 (SPEC §6.15), or 4, the current
+// language (SPEC v0.4b §5.1). parent is the element's parent tag.
 func attrAllowed(tag, parent, name string) (ok bool, need int) {
 	if strings.HasPrefix(name, ClassGuardPrefix) {
 		return !noClassGuard[tag], 2
@@ -234,11 +249,17 @@ func attrAllowed(tag, parent, name string) (ok bool, need int) {
 	if tag == "item" && parent == "table" {
 		return tableItemAttrs[name], 2
 	}
+	if ir.IsKindCurrent(tag) {
+		return TagAttrsCurrent[tag][name], int(ir.Lang4)
+	}
 	if ir.IsKindV2(tag) {
 		if TagAttrsV2[tag][name] {
 			return true, 2
 		}
-		return TagAttrsV3[tag][name], 3
+		if TagAttrsV3[tag][name] {
+			return true, 3
+		}
+		return TagAttrsCurrent[tag][name], int(ir.Lang4)
 	}
 	if TagAttrs[tag][name] {
 		return true, 1
@@ -246,7 +267,10 @@ func attrAllowed(tag, parent, name string) (ok bool, need int) {
 	if TagAttrsV2[tag][name] {
 		return true, 2
 	}
-	return TagAttrsV3[tag][name], 3
+	if TagAttrsV3[tag][name] {
+		return true, 3
+	}
+	return TagAttrsCurrent[tag][name], int(ir.Lang4)
 }
 
 // Focusable-by-default kinds that therefore need an id (V012).
@@ -266,6 +290,10 @@ type builder struct {
 	// warnings L008 and L009 fire (internal/layout), and the dump carries
 	// clipped. v2 is always true when v3 is.
 	v3 bool
+	// lang is the document's language (SPEC v0.4b §5.1), known with v2 and
+	// v3 before any element is built; v2 and v3 are lang.V2() and
+	// lang.V3().
+	lang ir.Lang
 	// droppedIn maps a node to the unknown-tag children content() kept
 	// out of its Children, in document order.
 	droppedIn map[*ir.Node][]*ir.Node
@@ -300,6 +328,13 @@ func (b *builder) v3Hint(line, col int, n *ir.Node, code, format string, args ..
 	b.diag(ir.Error, code, line, col, n.Path, n.ID, format+"%s", append(args, ir.VersionHintV3)...)
 }
 
+// currentHint reports an item only the current language accepts in a
+// document that writes version="1", "2", or "3": the message ends with
+// ` (requires a <tui> without version)` (SPEC v0.4b §5.1).
+func (b *builder) currentHint(line, col int, n *ir.Node, code, format string, args ...any) {
+	b.diag(ir.Error, code, line, col, n.Path, n.ID, format+"%s", append(args, ir.VersionHintCurrent)...)
+}
+
 // listHint is the advice given for a focus target inside a list row.
 func listHint(item *ir.Node) string {
 	sel := "list"
@@ -327,8 +362,8 @@ func (b *builder) warnN(n *ir.Node, code, format string, args ...any) {
 // Parse parses and validates a .tui document. file is used in diagnostics
 // and to resolve relative style src paths (it may be empty).
 func Parse(src []byte, file string) *Document {
-	doc := &Document{File: file, IDs: map[string]*ir.Node{}}
-	b := &builder{doc: doc, file: filepath.Base(file)}
+	doc := &Document{File: file, IDs: map[string]*ir.Node{}, Lang: ir.Lang1}
+	b := &builder{doc: doc, file: filepath.Base(file), lang: ir.Lang1}
 	if file == "" {
 		b.file = ""
 	}
@@ -346,25 +381,27 @@ func Parse(src []byte, file string) *Document {
 		// attribute order: <tui theme="auto" version="2"> is valid. A
 		// version="3" document accepts everything version="2" does (v0.3):
 		// it sets v2 too, plus its own v3 flag. Without the attribute the
-		// document is the current language, version="3" (v0.4.1); a value
-		// other than 1, 2, or 3 is V003 and still read as version="1".
-		hasVersion := false
+		// document is the current language (SPEC v0.4b §5.1), which holds
+		// every version="3" rule plus what 0.4b adds; a written version
+		// pins the document to its tuimark 0.4.1 meaning, and a value
+		// other than 1, 2, or 3 (version="4" included) is V003 and read as
+		// version="1".
+		b.lang = ir.LangCurrent
 		for _, a := range raw.Attrs {
 			if a.Name != "version" {
 				continue
 			}
-			hasVersion = true
 			switch a.Value {
 			case "2":
-				b.v2 = true
+				b.lang = ir.Lang2
 			case "3":
-				b.v2, b.v3 = true, true
+				b.lang = ir.Lang3
+			default:
+				b.lang = ir.Lang1
 			}
 		}
-		if !hasVersion {
-			b.v2, b.v3 = true, true
-		}
-		doc.V2, doc.V3 = b.v2, b.v3
+		b.v2, b.v3 = b.lang.V2(), b.lang.V3()
+		doc.V2, doc.V3, doc.Lang = b.v2, b.v3, b.lang
 	default:
 		b.diag(ir.Error, "V005", raw.Line, raw.Col, "/", "", "document root must be <tui> (or the phase-0 alias <app>), got <%s>", raw.Name)
 		return doc
@@ -468,18 +505,24 @@ func spikeTagSuggestion(tag string) string {
 
 // tagSuggestion is the suffix of an unknown tag's V001: a fixed hint for a
 // common HTML name, else the closest tag of the vocabulary (a
-// version="2" tag in a version="1" document says what it requires).
+// version="2" tag in a version="1" document says what it requires). The
+// current-language tags are candidates only in the current language: a
+// pinned document keeps 0.4.1's suggestion, or its lack of one, for a
+// name it misspells (SPEC v0.4b §5.1).
 func (b *builder) tagSuggestion(tag string) string {
 	if h, ok := htmlTagHints[tag]; ok {
 		return "; " + h
 	}
-	cands := make([]string, 0, len(ir.Kinds)+len(ir.KindsV2))
+	cands := make([]string, 0, len(ir.Kinds)+len(ir.KindsV2)+len(ir.KindsCurrent))
 	for _, k := range ir.Kinds {
 		if k != "tui" { // only valid as the root
 			cands = append(cands, k)
 		}
 	}
 	cands = append(cands, ir.KindsV2...)
+	if b.lang.V4() {
+		cands = append(cands, ir.KindsCurrent...)
+	}
 	best := ir.Suggest(tag, cands)
 	if best == "" {
 		return ""
@@ -491,9 +534,15 @@ func (b *builder) tagSuggestion(tag string) string {
 }
 
 // attrExists reports whether any tag of any version takes an attribute
-// called name.
-func attrExists(name string) bool {
-	for _, cat := range []map[string]map[string]bool{TagAttrs, TagAttrsV2, TagAttrsV3} {
+// called name. The current-language attributes count only in the current
+// language, so a pinned document keeps 0.4.1's suggestion for a name a
+// 0.4b attribute shares (SPEC v0.4b §5.1).
+func attrExists(name string, l ir.Lang) bool {
+	cats := []map[string]map[string]bool{TagAttrs, TagAttrsV2, TagAttrsV3}
+	if l.V4() {
+		cats = append(cats, TagAttrsCurrent)
+	}
+	for _, cat := range cats {
 		for _, m := range cat {
 			if m[name] {
 				return true
@@ -509,7 +558,7 @@ func attrExists(name string) bool {
 func (b *builder) attrSuggestion(tag, parent, name string) string {
 	// An attribute some other tag (or version) takes is misplaced, not
 	// misspelled: pointing it at a lookalike (bind -> id) would mislead.
-	if attrExists(name) {
+	if attrExists(name, b.lang) {
 		return ""
 	}
 	var set []map[string]bool
@@ -522,6 +571,9 @@ func (b *builder) attrSuggestion(tag, parent, name string) string {
 		}
 		if b.v3 {
 			set = append(set, TagAttrsV3[tag])
+		}
+		if b.lang.V4() {
+			set = append(set, TagAttrsCurrent[tag])
 		}
 	}
 	seen := map[string]bool{}
@@ -586,7 +638,13 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 		b.v2Hint(n.Line, n.Col, n, "V001", "tag <%s>", tag)
 		return
 	}
-	if !ir.IsKindIn(tag, b.v2) {
+	if ir.IsKindCurrent(tag) && !b.lang.V4() {
+		// SPEC v0.4b §5.1: a 0.4b tag in a pinned document is checked no
+		// further, and has no effect.
+		b.currentHint(n.Line, n.Col, n, "V001", "tag <%s>", tag)
+		return
+	}
+	if !ir.IsKindLang(tag, b.lang) {
 		b.errN(n, "V001", "unknown tag <%s>%s", tag, b.tagSuggestion(tag))
 		return
 	}
@@ -731,7 +789,7 @@ func (b *builder) tagKnown(tag string) bool {
 		}
 		return false
 	}
-	return ir.IsKindIn(tag, b.v2)
+	return ir.IsKindLang(tag, b.lang)
 }
 
 func (b *builder) attrErr(n *ir.Node, a RawAttr, code, format string, args ...any) {
@@ -835,10 +893,16 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			}
 			return
 		}
-		// A version="3" item is checked against version="3" first, whether
-		// the document is version="1" or version="2" (both get the same
-		// hint); only an attribute that needs exactly version="2" falls to
-		// the version="2" hint (SPEC v0.3b §5.1).
+		// The newest gate first: a current-language item gets its own
+		// hint in every pinned document (SPEC v0.4b §5.1); a version="3"
+		// item is checked against version="3" next, whether the document
+		// is version="1" or version="2" (both get the same hint); only an
+		// attribute that needs exactly version="2" falls to the version="2"
+		// hint (SPEC v0.3b §5.1).
+		if need >= int(ir.Lang4) && !b.lang.V4() {
+			b.currentHint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
+			return
+		}
 		if need >= 3 && !b.v3 {
 			b.v3Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
 			return
@@ -932,7 +996,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		}
 		n.Hints = append(n.Hints, ir.Prop{Name: "border", Value: v, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "wrap":
-		if err := css.CheckDeclIn("wrap", val, b.v2, b.v3); err != nil {
+		if err := css.CheckDeclLang("wrap", val, b.lang); err != nil {
 			b.attrErr(n, a, "V003", "%v", err)
 			return
 		}
@@ -941,7 +1005,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		// Recover per declaration (like a <style> rule's block), so one
 		// typo does not also drop every other, valid declaration in the
 		// same style="" attribute.
-		decls, errs := css.ParseDeclsAllIn(val, b.v2, b.v3)
+		decls, errs := css.ParseDeclsAllLang(val, b.lang)
 		for _, err := range errs {
 			b.attrErr(n, a, "V003", "%v", err)
 		}
@@ -1810,6 +1874,15 @@ func (b *builder) checkKeymap() {
 		for _, tok := range k.Keys {
 			if !ir.ValidKey(tok) {
 				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "unknown key %q (see the key token list: a-z 0-9 enter esc tab backspace space arrows home end pgup pgdn ctrl+x shift+tab)", tok)
+				continue
+			}
+			// SPEC v0.4b §8.1: in the current language a token that never
+			// reaches a keymap is V003, at the <bind>, once per token, with
+			// no version hint (decision 83). The row and its other tokens
+			// stay. A pinned document accepts it, never matching, as in
+			// 0.4.1.
+			if as, never := ir.ArrivesAs(tok); never && b.lang >= ir.KeysRejectedSince {
+				b.diag(ir.Error, "V003", k.Line, k.Col, path, "", "key %q never reaches a keymap: it arrives as %s (write %s)", tok, as, as)
 			}
 		}
 		switch {
@@ -1827,7 +1900,7 @@ func (b *builder) checkKeymap() {
 		switch {
 		case k.HasOwnWhen:
 			if k.When != "" {
-				sel, err := css.ParseSelectorIn(k.When, b.v2)
+				sel, err := css.ParseSelectorLang(k.When, b.lang)
 				if err == nil && sel.Root {
 					err = fmt.Errorf(":root is not a node selector")
 				}
@@ -1909,7 +1982,7 @@ func (b *builder) keymapWhens() map[*ir.Node]*css.Selector {
 		if !ok || w == "" {
 			continue
 		}
-		sel, err := css.ParseSelectorIn(w, b.v2)
+		sel, err := css.ParseSelectorLang(w, b.lang)
 		if err == nil && sel.Root {
 			err = fmt.Errorf(":root is not a node selector")
 		}

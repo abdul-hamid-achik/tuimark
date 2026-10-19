@@ -1,0 +1,13 @@
+=== grid 20x3 ===
+a         b         
+                    
+                    
+=== nodes ===
+-  screen  20x3 @(0,0)
+-  row     20x3 @(0,0)
+-  col     10x3 @(0,0)
+-  text    10x1 @(0,0)
+-  col     10x3 @(10,0)
+-  text    10x1 @(10,0)
+=== errors ===
+ok

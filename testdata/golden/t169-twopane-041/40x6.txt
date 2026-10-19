@@ -1,0 +1,17 @@
+=== grid 40x6 ===
+inbox               The quick brown fox 
+sent                jumps over the lazy 
+                    dog and keeps       
+                    running far away    
+                                        
+                                        
+=== nodes ===
+main  screen  40x6 @(0,0)
+top   row     40x6 @(0,0)
+nav   col     20x6 @(0,0)
+-     text    20x1 @(0,0)
+-     text    20x1 @(0,1)
+body  col     20x6 @(20,0)
+para  text    20x4 @(20,0)
+=== errors ===
+ok

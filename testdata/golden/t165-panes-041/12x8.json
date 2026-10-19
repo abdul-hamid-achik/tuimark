@@ -1,0 +1,102 @@
+{
+  "cols": 12,
+  "rows": 8,
+  "ok": true,
+  "focus": null,
+  "errors": [
+    {
+      "severity": "warning",
+      "code": "L008",
+      "msg": "text is 12 columns wide but its content box has 6; set wrap: truncate, or write wrap: nowrap to keep the cut",
+      "file": "panes.tui",
+      "line": 5,
+      "col": 27,
+      "path": "/screen/row/col/text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 12,
+      "h": 8
+    },
+    {
+      "id": "top",
+      "tag": "row",
+      "x": 0,
+      "y": 0,
+      "w": 12,
+      "h": 4
+    },
+    {
+      "id": "nav",
+      "tag": "col",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 4
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 1,
+      "text": "inbox"
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 6,
+      "h": 1,
+      "text": "sent"
+    },
+    {
+      "id": "main-pane",
+      "tag": "col",
+      "x": 6,
+      "y": 0,
+      "w": 6,
+      "h": 4
+    },
+    {
+      "tag": "text",
+      "x": 6,
+      "y": 0,
+      "w": 6,
+      "h": 1,
+      "text": "message body",
+      "clipped": "text"
+    },
+    {
+      "id": "status",
+      "tag": "row",
+      "x": 0,
+      "y": 4,
+      "w": 12,
+      "h": 4
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 4,
+      "w": 5,
+      "h": 4,
+      "text": "ready"
+    }
+  ],
+  "grid": [
+    "inbox messag",
+    "sent        ",
+    "            ",
+    "            ",
+    "ready       ",
+    "            ",
+    "            ",
+    "            "
+  ]
+}

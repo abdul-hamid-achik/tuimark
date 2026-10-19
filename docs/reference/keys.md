@@ -31,4 +31,4 @@ A `<bind keys="…">` row takes one or more of these tokens, separated by commas
 
 ## Other tokens
 
-Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`enter` and never match), and any single printable ASCII character except space (write `space`) and `,` (the `keys=` list separator; a token of `,` binds nothing).
+Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`enter` and never match: in a keymap of a `<tui>` without `version` each is V003, so write `tab` or `enter`; a document that writes `version` accepts them, never matching, as before; `play` steps accept them in every document and deliver `tab`/`enter`), and any single printable ASCII character except space (write `space`) and `,` (the `keys=` list separator; a token of `,` binds nothing).

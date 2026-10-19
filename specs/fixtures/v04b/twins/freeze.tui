@@ -1,0 +1,16 @@
+<tui version="3">
+  <style>
+    #r1 > box, #r3 > box, #c1 > box { width: 1fr; height: 1fr; }
+    #a1 { max-width: 5; }
+    #b2 { min-height: 12; }
+    #a3 { min-width: 40; }
+    #b3 { max-width: 20; }
+    #c4 { max-width: 2; }
+  </style>
+  <screen id="main">
+    <row id="r1" style="height: 1"><box id="a1"/><box id="b1"/><box id="c1x"/></row>
+    <row id="r3" style="height: 1"><box id="a3"/><box id="b3"/><box id="c3"/></row>
+    <row id="r4" style="height: 1"><box id="a4" style="width: 1fr"/><box id="b4" style="width: 1fr"/><box id="c4" style="width: 1fr"/></row>
+    <col id="c1" style="height: 20"><box id="a2"/><box id="b2"/><box id="c2"/></col>
+  </screen>
+</tui>

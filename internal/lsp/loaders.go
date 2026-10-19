@@ -72,11 +72,11 @@ func parsedLoaders(sn *snapshot, sheet string) []parsedDoc {
 	return out
 }
 
-// loadersVersion is the newest document version among docs, and the newest
-// the build knows (3) when there are none.
+// loadersVersion is the newest document version among docs, and the
+// current language (4, SPEC v0.4b §5.1) when there are none.
 func loadersVersion(docs []parsedDoc) int {
 	if len(docs) == 0 {
-		return 3
+		return int(ir.LangCurrent)
 	}
 	v := 1
 	for _, d := range docs {
@@ -178,8 +178,9 @@ func hasClass(n *ir.Node, name string) bool {
 
 // docVersionOf is the version of the .tui text without parsing it, as the
 // parser reads it: the version attribute of its <tui> when it is 1, 2, or
-// 3; 3 when the <tui> has no version (v0.4.1), and for a text with no root
-// yet; 1 for any other value and for the spike root <app>.
+// 3; the current language, 4, when the <tui> has no version (SPEC v0.4b
+// §5.1, §15.12), and for a text with no root yet; 1 for any other value
+// (version="4" included) and for the spike root <app>.
 var (
 	tuiOpenRE  = regexp.MustCompile(`<tui\b[^>]*`)
 	appOpenRE  = regexp.MustCompile(`<app\b`)
@@ -202,7 +203,7 @@ func docVersionOf(text string) int {
 		// version= being typed, with no closing quote yet.
 		return 1
 	}
-	return 3
+	return int(ir.LangCurrent)
 }
 
 // styleSrcsOf are the stylesheets a .tui text names, found in the text so

@@ -1,0 +1,10 @@
+<tui version="3">
+  <screen id="main">
+    <col id="app">
+      <row id="r1"><text>one</text></row>
+      <box id="b"><text>two</text></box>
+      <row id="r3" style="height: 1fr"><text>three</text></row>
+      <row id="r4"><box id="x"><text>a</text></box><spacer/><box id="y"><text>b</text></box></row>
+    </col>
+  </screen>
+</tui>

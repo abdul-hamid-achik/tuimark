@@ -32,7 +32,7 @@ type analysis struct {
 	diags     ir.Diags
 	hasData   bool
 	data      any // the decoded sample.json, nil without one
-	version   int // 1, 2, or 3
+	version   int // 1, 2, 3, or 4 (the current language)
 }
 
 // LSP severities (DiagnosticSeverity).
@@ -87,10 +87,13 @@ func analyze(sn *snapshot, path, text string) *analysis {
 	return a
 }
 
-// docVersion is the document version the vocabulary is filtered by: 3 and
+// docVersion is the document version the vocabulary is filtered by: 4 for
+// a <tui> without version (the current language, SPEC v0.4b §5.1), 3 and
 // 2 for those documents, else 1 (any other version is read as 1).
 func docVersion(d *parse.Document) int {
 	switch {
+	case d.Lang.V4():
+		return int(ir.LangCurrent)
 	case d.V3:
 		return 3
 	case d.V2:

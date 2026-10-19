@@ -44,20 +44,26 @@ func TestCatalogValidatesAgainstSchema(t *testing.T) {
 	if !reflect.DeepEqual(c.Versions, []int{1, 2, 3}) {
 		t.Errorf("versions = %v", c.Versions)
 	}
-	// A schema cannot check that a since is one of versions: do it here, on
-	// the decoded JSON, so an item of any shape is covered.
+	// SPEC v0.4b §15.10: the current language is numbered 4 and is not a
+	// version value.
+	if c.Current != 4 {
+		t.Errorf("current = %d, want 4", c.Current)
+	}
+	// A schema cannot check that a since is one of versions or current
+	// (SPEC v0.4b decision 93): do it here, on the decoded JSON, so an item
+	// of any shape is covered.
 	var walk func(path string, v any)
 	walk = func(path string, v any) {
 		switch x := v.(type) {
 		case map[string]any:
 			if s, ok := x["since"]; ok {
 				n := int(s.(float64))
-				found := false
+				found := n == c.Current
 				for _, v := range c.Versions {
 					found = found || v == n
 				}
 				if !found {
-					t.Errorf("%s: since %d is not one of versions %v", path, n, c.Versions)
+					t.Errorf("%s: since %d is not one of versions %v or current %d", path, n, c.Versions, c.Current)
 				}
 			}
 			for k, e := range x {
@@ -146,6 +152,9 @@ func TestCatalogEqualsTheTables(t *testing.T) {
 	for _, k := range ir.KindsV2 {
 		wantTags[k] = 2
 	}
+	for _, k := range ir.KindsCurrent {
+		wantTags[k] = catalog.Current
+	}
 	gotTags := map[string]catalog.Tag{}
 	var names []string
 	for _, tg := range c.Tags {
@@ -176,6 +185,11 @@ func TestCatalogEqualsTheTables(t *testing.T) {
 		for a := range parse.TagAttrsV3[name] {
 			if _, ok := want[a]; !ok {
 				want[a] = 3
+			}
+		}
+		for a := range parse.TagAttrsCurrent[name] {
+			if _, ok := want[a]; !ok {
+				want[a] = catalog.Current
 			}
 		}
 		if parse.TakesClassGuard(name) {
@@ -246,7 +260,8 @@ func TestCatalogEqualsTheTables(t *testing.T) {
 
 	// Keys.
 	if !reflect.DeepEqual(c.Keys.Named, ir.NamedKeys) || c.Keys.Ctrl != "a-z" || !c.Keys.Printable ||
-		!reflect.DeepEqual(c.Keys.NeverMatch, []string{"ctrl+i", "ctrl+j", "ctrl+m"}) {
+		!reflect.DeepEqual(c.Keys.NeverMatch, []string{"ctrl+i", "ctrl+j", "ctrl+m"}) ||
+		c.Keys.RejectedSince != 4 {
 		t.Errorf("keys = %+v", c.Keys)
 	}
 	for _, k := range ir.NamedKeys {
@@ -365,7 +380,7 @@ func compareToAgents(c catalog.Catalog, md string) (problems []string) {
 	// "### Attributes per tag": the version="1" list, then what version="2"
 	// and version="3" add.
 	lines := section(md, "### Attributes per tag")
-	var v1, v2, v3 []string
+	var v1, v2, v3, v4 []string
 	cur := &v1
 	for _, l := range lines {
 		switch {
@@ -373,6 +388,9 @@ func compareToAgents(c catalog.Catalog, md string) (problems []string) {
 			cur = &v2
 		case strings.HasPrefix(l, "Only in a `<tui version=\"3\">`"):
 			cur = &v3
+		case strings.HasPrefix(l, "Only in a `<tui>` without `version`"):
+			// SPEC v0.4b §5.1, §15.10: the current language's additions.
+			cur = &v4
 		default:
 			*cur = append(*cur, l)
 		}
@@ -407,6 +425,7 @@ func compareToAgents(c catalog.Catalog, md string) (problems []string) {
 	add(v1, 1)
 	add(v2, 2)
 	add(v3, 3)
+	add(v4, c.Current)
 	if len(want) == 0 {
 		errorf("no attribute bullets found in AGENTS.md")
 		return
@@ -489,6 +508,11 @@ func compareToAgents(c catalog.Catalog, md string) (problems []string) {
 			}
 			if !strings.Contains(l, "`ctrl+<a-z>`") {
 				errorf("AGENTS.md does not list ctrl+<a-z>")
+			}
+			// SPEC v0.4b test 209: the paragraph says the three are V003 in
+			// a <tui> without version and accepted in a pinned one.
+			if c.Keys.RejectedSince != 0 && (!strings.Contains(l, "V003") || !strings.Contains(l, "`<tui>` without `version`") || !strings.Contains(l, "accepts them, never matching")) {
+				errorf("AGENTS.md does not say the never-matching keys are V003 in a <tui> without version and accepted in a pinned one")
 			}
 		}
 	}

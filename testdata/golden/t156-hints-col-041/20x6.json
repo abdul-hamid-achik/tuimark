@@ -1,0 +1,107 @@
+{
+  "cols": 20,
+  "rows": 6,
+  "ok": true,
+  "focus": null,
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 6
+    },
+    {
+      "id": "body",
+      "tag": "col",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 3
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 1,
+      "text": "body"
+    },
+    {
+      "id": "keys",
+      "tag": "hints",
+      "x": 0,
+      "y": 3,
+      "w": 20,
+      "h": 3
+    },
+    {
+      "tag": "row",
+      "x": 0,
+      "y": 3,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "text": "q",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 2,
+      "y": 3,
+      "w": 4,
+      "h": 1,
+      "text": "quit",
+      "classes": [
+        "hint-label"
+      ]
+    },
+    {
+      "tag": "row",
+      "x": 8,
+      "y": 3,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 8,
+      "y": 3,
+      "w": 1,
+      "h": 1,
+      "text": "/",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 10,
+      "y": 3,
+      "w": 4,
+      "h": 1,
+      "text": "find",
+      "classes": [
+        "hint-label"
+      ]
+    }
+  ],
+  "grid": [
+    "body                ",
+    "                    ",
+    "                    ",
+    "q quit  / find      ",
+    "                    ",
+    "                    "
+  ]
+}

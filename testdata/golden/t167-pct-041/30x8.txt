@@ -1,0 +1,17 @@
+=== grid 30x8 ===
+x                             
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+=== nodes ===
+main  screen  30x8 @(0,0)
+app   col     30x8 @(0,0)
+r     row     30x8 @(0,0)
+half  box     1x4 @(0,0)
+-     text    1x1 @(0,0)
+=== errors ===
+ok

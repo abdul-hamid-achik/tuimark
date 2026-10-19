@@ -1,0 +1,82 @@
+{
+  "cols": 40,
+  "rows": 12,
+  "ok": true,
+  "focus": "yes",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 12
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 1,
+      "text": "files"
+    },
+    {
+      "id": "confirm",
+      "tag": "modal",
+      "x": 4,
+      "y": 1,
+      "w": 32,
+      "h": 9
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 2,
+      "w": 30,
+      "h": 1,
+      "text": "Delete report.pdf?"
+    },
+    {
+      "id": "act",
+      "tag": "row",
+      "x": 5,
+      "y": 3,
+      "w": 30,
+      "h": 6
+    },
+    {
+      "id": "yes",
+      "tag": "button",
+      "x": 5,
+      "y": 3,
+      "w": 7,
+      "h": 6,
+      "text": "yes",
+      "focused": true
+    },
+    {
+      "id": "no",
+      "tag": "button",
+      "x": 12,
+      "y": 3,
+      "w": 6,
+      "h": 6,
+      "text": "no"
+    }
+  ],
+  "grid": [
+    "files                                   ",
+    "    ┌─ delete? ────────────────────┐    ",
+    "    │Delete report.pdf?            │    ",
+    "    │[ yes ][ no ]                 │    ",
+    "    │                              │    ",
+    "    │                              │    ",
+    "    │                              │    ",
+    "    │                              │    ",
+    "    │                              │    ",
+    "    └──────────────────────────────┘    ",
+    "                                        ",
+    "                                        "
+  ]
+}
