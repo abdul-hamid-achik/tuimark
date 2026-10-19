@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import shots from '@/lib/generated/shots.json';
+import { EagerImg } from './eager-img';
 import { PlayToggle } from './term-shot-toggle';
 
 // A screenshot rendered by docs/scripts/generate.mjs from `tuimark play`
@@ -49,23 +50,14 @@ function Images({ shot, eager }: { shot: Shot; eager: boolean }) {
   }
   return (
     <>
-      {variants.map((v) => (
+      {variants.map((v) => {
+        const props = { className: `ts-img ${v.cls}`, src: `/shots/${v.file}.svg`, alt: shot.alt, width, height };
+        // An eager image is the page's largest paint: fetch it first, from
+        // a client component so the preload stays out of the RSC payload.
+        if (v.eager) return <EagerImg key={v.file} {...props} />;
         // eslint-disable-next-line @next/next/no-img-element -- SVGs: nothing for next/image to optimize
-        <img
-          key={v.file}
-          className={`ts-img ${v.cls}`}
-          src={`/shots/${v.file}.svg`}
-          alt={shot.alt}
-          width={width}
-          height={height}
-          // An eager image is the page's largest paint: fetch it first.
-          // (React also preloads it, so pages that prefetch this one fetch
-          // it at idle too; the hero is small enough for that.)
-          loading={v.eager ? 'eager' : 'lazy'}
-          fetchPriority={v.eager ? 'high' : undefined}
-          decoding="async"
-        />
-      ))}
+        return <img key={v.file} {...props} loading="lazy" decoding="async" />;
+      })}
     </>
   );
 }
