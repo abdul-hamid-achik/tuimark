@@ -235,6 +235,10 @@ type Options struct {
 	// V3 is set for a version="3" document: nodes carry clipped (SPEC v0.3
 	// §13.2).
 	V3 bool
+	// Lang is the document's language (SPEC v0.4b §5.1): what 0.4b adds
+	// to a dump is read from it, so a pinned document's dump keeps the
+	// shape of 0.4.1. It is never a member of the dump itself.
+	Lang ir.Lang
 }
 
 // NodeOf is the dump node of a laid-out box (SPEC §13.2). v2 adds the

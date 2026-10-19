@@ -231,6 +231,13 @@ func propSuggestion(prop string, v2, v3 bool) string {
 // in a version="1" document: CheckDeclIn with v2 and v3 false.
 func CheckDecl(prop, val string) error { return CheckDeclIn(prop, val, false, false) }
 
+// CheckDeclLang is CheckDeclIn for a document of language l (SPEC v0.4b
+// §5.1). The current language adds no property and no value in 0.4b's
+// first phase, so it checks exactly what a version="3" document does.
+func CheckDeclLang(prop, val string, l ir.Lang) error {
+	return CheckDeclIn(prop, val, l.V2(), l.V3())
+}
+
 // CheckDeclIn validates a declaration's syntax for a document of the
 // given version (SPEC §5.1, v0.3b): a version="1" document gets V003 with
 // the version="2" hint for a version="2" property or for layout: grid; a

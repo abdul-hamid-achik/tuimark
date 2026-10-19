@@ -98,9 +98,20 @@ type sheetParser struct {
 	col   int
 	file  string
 	diags ir.Diags
-	v2    bool // the document that loads the sheet is version="2" (SPEC §5.1)
-	v3    bool // the document that loads the sheet is version="3" (SPEC v0.3 §5.1, v0.3b)
+	// gate is the language of the document that loads the sheet (SPEC
+	// §5.1, v0.3b, v0.4b): its v2 and v3 are those of the *In functions.
+	gate
 }
+
+// gate is the language a stylesheet, a declaration, or a selector is
+// checked against: v2 and v3 are the flags of the *In functions (which
+// keep their exact meaning, any combination included, since fuzz tests
+// call them), and v4, the current language, is set only by the ir.Lang
+// variants (SPEC v0.4b §5.1).
+type gate struct{ v2, v3, v4 bool }
+
+// gateOf is the gate of a document of language l.
+func gateOf(l ir.Lang) gate { return gate{v2: l.V2(), v3: l.V3(), v4: l.V4()} }
 
 func (p *sheetParser) eof() bool { return p.pos >= len(p.src) }
 
@@ -185,17 +196,28 @@ func ParseSheet(src, file string) (*Sheet, ir.Diags) { return ParseSheetIn(src, 
 // of the document that loads it (SPEC §5.1, v0.3b). v3 implies v2 in a
 // valid document, but callers pass both explicitly.
 func ParseSheetIn(src, file string, v2, v3 bool) (*Sheet, ir.Diags) {
+	return parseSheet(src, file, gate{v2: v2, v3: v3})
+}
+
+// ParseSheetLang is ParseSheetIn for a document of language l (SPEC
+// v0.4b \u00a75.1): the stylesheet is checked against the language of the
+// document that loads it, the current language included.
+func ParseSheetLang(src, file string, l ir.Lang) (*Sheet, ir.Diags) {
+	return parseSheet(src, file, gateOf(l))
+}
+
+func parseSheet(src, file string, g gate) (*Sheet, ir.Diags) {
 	// A leading UTF-8 BOM is common from Windows editors; internal/parse's
 	// XML reader already strips one, so a .tcss file (which has no such
 	// reader in front of it) should not choke on one either.
 	src = strings.TrimPrefix(src, "\ufeff")
-	return parseSheetAt(src, file, 1, 1, v2, v3)
+	return parseSheetAt(src, file, 1, 1, g)
 }
 
 // parseSheetAt parses source that starts at a given document position
 // (inline <style> bodies report positions inside the .tui file).
-func parseSheetAt(src, file string, line, col int, v2, v3 bool) (*Sheet, ir.Diags) {
-	p := &sheetParser{src: strings.ReplaceAll(src, "\r\n", "\n"), file: file, line: line, col: col, v2: v2, v3: v3}
+func parseSheetAt(src, file string, line, col int, g gate) (*Sheet, ir.Diags) {
+	p := &sheetParser{src: strings.ReplaceAll(src, "\r\n", "\n"), file: file, line: line, col: col, gate: g}
 	sheet := &Sheet{File: file}
 	p.rules(sheet, nil)
 	return sheet, p.diags
@@ -204,13 +226,19 @@ func parseSheetAt(src, file string, line, col int, v2, v3 bool) (*Sheet, ir.Diag
 // ParseInlineSheet parses a <style> body of a version="1" document located
 // at line:col of file.
 func ParseInlineSheet(src, file string, line, col int) (*Sheet, ir.Diags) {
-	return parseSheetAt(src, file, line, col, false, false)
+	return parseSheetAt(src, file, line, col, gate{})
 }
 
 // ParseInlineSheetIn is ParseInlineSheet for a document of the given
 // version (v0.3b: v3).
 func ParseInlineSheetIn(src, file string, line, col int, v2, v3 bool) (*Sheet, ir.Diags) {
-	return parseSheetAt(src, file, line, col, v2, v3)
+	return parseSheetAt(src, file, line, col, gate{v2: v2, v3: v3})
+}
+
+// ParseInlineSheetLang is ParseInlineSheetIn for a document of language
+// l (SPEC v0.4b \u00a75.1).
+func ParseInlineSheetLang(src, file string, line, col int, l ir.Lang) (*Sheet, ir.Diags) {
+	return parseSheetAt(src, file, line, col, gateOf(l))
 }
 
 func (p *sheetParser) rules(sheet *Sheet, media *Media) {
@@ -249,7 +277,7 @@ func (p *sheetParser) rules(sheet *Sheet, media *Media) {
 			continue
 		}
 		p.advance(1)
-		sels, err := ParseSelectorListIn(selText, p.v2)
+		sels, err := parseSelectorList(selText, p.gate)
 		decls := p.block()
 		if err != nil {
 			p.errAt(line, col, "%v", err)
@@ -428,6 +456,12 @@ func parseMedia(head string, v2 bool) (*Media, error) {
 // typo in style="a: 1; b: 2; c: 3" does not also drop the good b and c.
 // The declarations are checked for a version="1" document.
 func ParseDeclsAll(src string) ([]Decl, []error) { return ParseDeclsAllIn(src, false, false) }
+
+// ParseDeclsAllLang is ParseDeclsAllIn for a document of language l
+// (SPEC v0.4b §5.1).
+func ParseDeclsAllLang(src string, l ir.Lang) ([]Decl, []error) {
+	return ParseDeclsAllIn(src, l.V2(), l.V3())
+}
 
 // ParseDeclsAllIn is ParseDeclsAll for a document of the given version
 // (v0.3b: v3).

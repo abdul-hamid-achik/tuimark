@@ -61,7 +61,7 @@ func (e *Engine) verifyChecks(root *Box, modals []*Box, nDiags int, snap checkSn
 	if seen == nil {
 		seen = map[string]bool{}
 	}
-	w := &Engine{File: e.File, V3: e.V3, seen: seen, l003: e.l003, l006: snap.l006}
+	w := &Engine{File: e.File, V3: e.V3, Lang: e.Lang, seen: seen, l003: e.l003, l006: snap.l006}
 	for _, t := range trees {
 		w.check(t)
 	}

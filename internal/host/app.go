@@ -259,11 +259,11 @@ func newApp(src []byte, path, dir string) *App {
 func (a *App) loadStyles(res styleResolver) {
 	seen := map[string]bool{}
 	// A stylesheet is checked against the version of the document that
-	// loads it (SPEC §5.1, v0.3b).
-	v2, v3 := a.doc.V2, a.doc.V3
+	// loads it (SPEC §5.1, v0.3b, v0.4b).
+	lang := a.doc.Lang
 	for _, s := range a.doc.Styles {
 		if s.Src == "" {
-			sh, diags := css.ParseInlineSheetIn(s.Body, a.file, s.BodyLine, s.BodyCol, v2, v3)
+			sh, diags := css.ParseInlineSheetLang(s.Body, a.file, s.BodyLine, s.BodyCol, lang)
 			a.static = append(a.static, diags...)
 			a.sheets = append(a.sheets, sh)
 			continue
@@ -293,7 +293,7 @@ func (a *App) loadStyles(res styleResolver) {
 			a.static = append(a.static, d)
 			continue
 		}
-		sh, diags := css.ParseSheetIn(string(body), res.base(resolved), v2, v3)
+		sh, diags := css.ParseSheetLang(string(body), res.base(resolved), lang)
 		a.static = append(a.static, diags...)
 		a.sheets = append(a.sheets, sh)
 	}

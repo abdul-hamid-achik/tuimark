@@ -7,9 +7,9 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
-// v0.4.1: a <tui> without version is read as version="3", whatever else it
-// writes, and tuimark ir says so.
-func TestMissingVersionReadsAsThree(t *testing.T) {
+// v0.4.1: a <tui> without version holds every version="3" rule, whatever
+// else it writes; since v0.4b it is the current language, IR 0.4.
+func TestMissingVersionReadsAsCurrent(t *testing.T) {
 	for _, src := range []string{
 		`<tui><screen/></tui>`,
 		`<tui theme="auto" mouse="true"><screen/></tui>`,
@@ -21,8 +21,8 @@ func TestMissingVersionReadsAsThree(t *testing.T) {
 		if !doc.V2 || !doc.V3 {
 			t.Errorf("%s: V2=%v V3=%v, want both", src, doc.V2, doc.V3)
 		}
-		if v := parse.BuildIR(doc, nil).Version; v != ir.VersionV3 {
-			t.Errorf("%s: ir version %q, want %q", src, v, ir.VersionV3)
+		if v := parse.BuildIR(doc, nil).Version; v != ir.VersionV4 {
+			t.Errorf("%s: ir version %q, want %q", src, v, ir.VersionV4)
 		}
 	}
 	for version, v2v3 := range map[string][2]bool{"1": {false, false}, "2": {true, false}, "3": {true, true}, "x": {false, false}} {

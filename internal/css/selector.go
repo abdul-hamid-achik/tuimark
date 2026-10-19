@@ -38,6 +38,15 @@ var v2Pseudos = map[string]bool{"checked": true, "focus-within": true}
 // silently never match anything.
 var nonRenderedTags = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true}
 
+// notANodeTags are current-language tags (ir.KindsCurrent) that are never
+// a node: the composition tags of SPEC v0.4b §6.18, expanded away before
+// the tree exists. In the current language a type selector naming one is
+// V003 "is not a node and never matches"; in a pinned document it is the
+// unknown type of 0.4.1, with no hint (§10.1, decision 94). Each tag
+// enters with the phase that adds it to ir.KindsCurrent (SPEC v0.4b F1,
+// F2); none is declared ahead of it.
+var notANodeTags = map[string]bool{}
+
 // Specificity: type=1, class=10, id=100, pseudo=+10 (SPEC §10.1).
 func (s Selector) Specificity() int {
 	n := 0
@@ -107,9 +116,19 @@ func ParseSelectorList(src string) ([]Selector, error) { return ParseSelectorLis
 // version: a version="2" document also accepts the six new type
 // selectors and :checked and :focus-within (SPEC §5.1).
 func ParseSelectorListIn(src string, v2 bool) ([]Selector, error) {
+	return parseSelectorList(src, gate{v2: v2})
+}
+
+// ParseSelectorListLang is ParseSelectorListIn for a document of language
+// l (SPEC v0.4b §5.1, §10.1).
+func ParseSelectorListLang(src string, l ir.Lang) ([]Selector, error) {
+	return parseSelectorList(src, gateOf(l))
+}
+
+func parseSelectorList(src string, g gate) ([]Selector, error) {
 	var out []Selector
 	for _, part := range strings.Split(src, ",") {
-		sel, err := ParseSelectorIn(part, v2)
+		sel, err := parseSelector(part, g)
 		if err != nil {
 			return nil, err
 		}
@@ -124,6 +143,16 @@ func ParseSelector(src string) (Selector, error) { return ParseSelectorIn(src, f
 // ParseSelectorIn parses one selector (no commas) for a document of the
 // given version.
 func ParseSelectorIn(src string, v2 bool) (Selector, error) {
+	return parseSelector(src, gate{v2: v2})
+}
+
+// ParseSelectorLang is ParseSelectorIn for a document of language l (SPEC
+// v0.4b §5.1, §10.1): a keymap when= is checked against it.
+func ParseSelectorLang(src string, l ir.Lang) (Selector, error) {
+	return parseSelector(src, gateOf(l))
+}
+
+func parseSelector(src string, g gate) (Selector, error) {
 	text := strings.TrimSpace(src)
 	if text == "" {
 		return Selector{}, fmt.Errorf("empty selector")
@@ -164,7 +193,7 @@ func ParseSelectorIn(src string, v2 bool) (Selector, error) {
 				return Selector{}, fmt.Errorf("selector %q: the descendant combinator (space) is not supported; use '>'", text)
 			}
 		}
-		comp, n, err := parseCompound(text[i:], text, v2)
+		comp, n, err := parseCompound(text[i:], text, g)
 		if err != nil {
 			return Selector{}, err
 		}
@@ -179,7 +208,8 @@ func ParseSelectorIn(src string, v2 bool) (Selector, error) {
 	return sel, nil
 }
 
-func parseCompound(s, whole string, v2 bool) (Compound, int, error) {
+func parseCompound(s, whole string, g gate) (Compound, int, error) {
+	v2 := g.v2
 	var c Compound
 	i := 0
 	readIdent := func() string {
@@ -194,8 +224,18 @@ func parseCompound(s, whole string, v2 bool) (Compound, int, error) {
 		if ir.IsKindV2(c.Tag) && !v2 {
 			return c, 0, fmt.Errorf("selector %q: type %q%s", whole, c.Tag, ir.VersionHint)
 		}
-		if !ir.IsKindIn(c.Tag, v2) {
+		// A tag only the current language has (SPEC v0.4b §5.1, §10.1):
+		// in a pinned document it carries the hint, unless it is a tag
+		// that is never a node there either (the composition tags,
+		// decision 94), which stays the unknown type of 0.4.1 below.
+		if ir.IsKindCurrent(c.Tag) && !g.v4 && !notANodeTags[c.Tag] {
+			return c, 0, fmt.Errorf("selector %q: type %q%s", whole, c.Tag, ir.VersionHintCurrent)
+		}
+		if !ir.IsKindIn(c.Tag, v2) && !(g.v4 && ir.IsKindCurrent(c.Tag)) {
 			return c, 0, fmt.Errorf("selector %q: unknown type %q (not in the tag catalog)", whole, c.Tag)
+		}
+		if notANodeTags[c.Tag] {
+			return c, 0, fmt.Errorf("selector %q: <%s> is not a node and never matches", whole, c.Tag)
 		}
 		if nonRenderedTags[c.Tag] {
 			return c, 0, fmt.Errorf("selector %q: <%s> is not rendered and never matches; style screen (or its descendants) instead", whole, c.Tag)
