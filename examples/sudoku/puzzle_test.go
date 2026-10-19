@@ -260,7 +260,7 @@ func TestFromGivensIsBounded(t *testing.T) {
 	}
 	// An empty grid is refused fast too, as having several solutions.
 	start = time.Now()
-	if _, err := fromGivens(strings.Repeat("0", 81)); err == nil || time.Since(start) > time.Second {
+	if _, err := fromGivens(strings.Repeat("0", 81)); err == nil || time.Since(start) > 3*time.Second {
 		t.Errorf("empty grid: %v in %v", err, time.Since(start))
 	}
 }

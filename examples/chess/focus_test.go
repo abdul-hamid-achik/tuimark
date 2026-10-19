@@ -64,10 +64,14 @@ func TestLiveSearchesTakeTheirMinimumTime(t *testing.T) {
 	if d := time.Since(start); d < a.thinkDelay {
 		t.Errorf("the computer answered in %v, less than %v", d, a.thinkDelay)
 	}
+	// The hint's own search takes what it takes (much longer under -race
+	// on a slow runner); what must not happen is the live reply's wait on
+	// top of it, so make that wait long enough to tell apart.
+	a.thinkDelay = 5 * time.Second
 	start = time.Now()
 	a.play(t, "H")
-	if d := time.Since(start); d > 100*time.Millisecond {
-		t.Errorf("the hint waited %v", d)
+	if d := time.Since(start); d >= a.thinkDelay {
+		t.Errorf("the hint waited %v, the live reply's minimum", d)
 	}
 	if minThink < 300*time.Millisecond {
 		t.Errorf("minThink = %v", minThink)
