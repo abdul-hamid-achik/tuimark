@@ -1,23 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/catalog"
+	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
-// The generated document is of the newest version this build accepts
-// (SPEC v0.4a §15.11: "version=\"3\" in 0.4a; 0.4b makes it \"4\""): a build
-// that learns version 4 fails here until the template follows.
+// The generated document writes no version (v0.4.1), so it is the current
+// language: the newest version this build accepts. A build that learns a
+// newer version fails here until a <tui> without version reads as it.
 func TestNewTemplateIsTheNewestVersion(t *testing.T) {
 	newest := catalog.Versions[len(catalog.Versions)-1]
 	b, err := templates.ReadFile("newtemplate/app.tui")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := fmt.Sprintf(`<tui version="%d"`, newest); !strings.HasPrefix(string(b), want) {
-		t.Errorf("newtemplate/app.tui starts %.40q, want %s", b, want)
+	doc := parse.Parse(b, "app.tui")
+	if v, ok := doc.Root.Attr("version"); ok {
+		t.Errorf("newtemplate/app.tui writes version=%q, want none", v)
+	}
+	if newest != 3 || !doc.V3 {
+		t.Errorf("a <tui> without version reads as V3=%v, the newest version is %d", doc.V3, newest)
 	}
 }

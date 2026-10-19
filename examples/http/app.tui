@@ -1,4 +1,4 @@
-<tui version="3" theme="auto">
+<tui theme="auto">
   <style src="theme.tcss"/>
   <keymap when="#filter">
     <bind keys="esc" action="filter_clear" label="clear"/>

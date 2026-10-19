@@ -82,4 +82,3 @@ reports any action the view fires that the host does not know (`B004`), which ca
 
 - Commit goldens for the sizes you checked ([testing](/guide/testing#golden-dumps)): the next agent that edits the view gets a failing test and a diff, not a surprise.
 - Keep `sample.json` realistic, with the long names, empty lists, and wide characters real data will have.
-- Prefer `version="3"`: it has everything `version="2"` has (`when` over the focus chain, the built-in `move-*` and `check-*` actions, and `<hints>`, which mean far less host code and less for an agent to get wrong), plus the `L008`/`L009` warnings, which name any text or panel a dump shows cut.

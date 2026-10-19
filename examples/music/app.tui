@@ -1,4 +1,4 @@
-<tui version="3" theme="auto">
+<tui theme="auto">
   <style src="theme.tcss"/>
   <keymap when="#lib">
     <bind keys="enter" action="lib_play" keycap="↵" label="play"/>

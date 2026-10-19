@@ -28,7 +28,7 @@ Reported while reading the `.tui` document and its stylesheets. Most are errors:
 | <span id="v011"></span>`V011` | `each` / `if` missing path; an `each` alias equal to an enclosing one (version="2") |
 | <span id="v012"></span>`V012` | list/input/button/modal without `id`; a `table`, `tabs`, or `tab` without `id` (version="2"); a `scroll` with `stick` and no `id` (version="3") |
 | <span id="v013"></span>`V013` | `<text>` has element children |
-| <span id="v014"></span>`V014` | missing `version` on `<tui>` (phase 1+) |
+| <span id="v014"></span>`V014` | retired: never reported since 0.4.1, when `version` became optional (a `<tui>` without it is `version="3"`) |
 | <span id="v015"></span>`V015` | a `class:NAME` whose NAME is not `[a-z_][a-z0-9_-]*` or whose value is not `path` / `!path` (version="2") |
 | <span id="v016"></span>`V016` | 0.2b structure (version="2"): a `column` whose parent is not a `table`; a `table` child other than `column` and one `item`, or a second `item`; text directly in a `table`; a table `item` with children or text; an element inside a `column`; a `tab` whose parent is not a `tabs`; a `tabs` child other than `tab`, or text directly in a `tabs`; children or text in a `sparkline` or a `hints` |
 | <span id="v017"></span>`V017` | a `table` without `each` or without a `column` child; a `tabs` without a `tab` child (version="2") |

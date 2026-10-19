@@ -1,4 +1,4 @@
-<tui version="2">
+<tui>
   <style>
     #card { border: rounded; }
     .ok { color: $ok; bold: true; }

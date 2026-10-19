@@ -1,4 +1,4 @@
-<tui version="3" theme="auto" mouse="mouse">
+<tui theme="auto" mouse="mouse">
   <style src="theme.tcss"/>
   <keymap when="#help">
     <bind keys="enter,q,?" action="help_close"/>

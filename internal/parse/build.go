@@ -58,13 +58,14 @@ type Document struct {
 	File    string
 	Spike   bool
 	Version string
-	// V2 is true for a <tui version="2"> or <tui version="3"> document: it
-	// accepts the 0.2b vocabulary (SPEC §5.1). Any other version is checked
-	// as "1".
+	// V2 is true for a <tui version="2"> or <tui version="3"> document, and
+	// for a <tui> without version (v0.4.1): it accepts the 0.2b vocabulary
+	// (SPEC §5.1). Any other version is checked as "1".
 	V2 bool
-	// V3 is true for a <tui version="3"> document (SPEC v0.3 §5.1): the
-	// clipping warnings L008 and L009 fire, and the dump carries clipped.
-	// Every version="2" rule also holds for it (V2 is true too).
+	// V3 is true for a <tui version="3"> document and a <tui> without
+	// version (SPEC v0.3 §5.1, v0.4.1): the clipping warnings L008 and L009
+	// fire, and the dump carries clipped. Every version="2" rule also holds
+	// for it (V2 is true too).
 	V3    bool
 	Theme string // the theme attribute: dark, light, auto (version="2"), or "" when absent
 	// Mouse is the mouse attribute as written (version="2", SPEC §8.5).
@@ -344,17 +345,24 @@ func Parse(src []byte, file string) *Document {
 		// The version decides every check below (SPEC §5.1), whatever the
 		// attribute order: <tui theme="auto" version="2"> is valid. A
 		// version="3" document accepts everything version="2" does (v0.3):
-		// it sets v2 too, plus its own v3 flag.
+		// it sets v2 too, plus its own v3 flag. Without the attribute the
+		// document is the current language, version="3" (v0.4.1); a value
+		// other than 1, 2, or 3 is V003 and still read as version="1".
+		hasVersion := false
 		for _, a := range raw.Attrs {
 			if a.Name != "version" {
 				continue
 			}
+			hasVersion = true
 			switch a.Value {
 			case "2":
 				b.v2 = true
 			case "3":
 				b.v2, b.v3 = true, true
 			}
+		}
+		if !hasVersion {
+			b.v2, b.v3 = true, true
 		}
 		doc.V2, doc.V3 = b.v2, b.v3
 	default:
@@ -1310,9 +1318,6 @@ func (b *builder) checkStructure() {
 	if b.doc.Spike {
 		b.walkAll(root, false, func(n *ir.Node, _ bool) { b.checkNode(n) })
 		return
-	}
-	if _, ok := root.Attr("version"); !ok {
-		b.errN(root, "V014", "<tui> needs version=\"1\", \"2\", or \"3\"")
 	}
 	for _, c := range root.Children {
 		if c.Tag == "screen" {

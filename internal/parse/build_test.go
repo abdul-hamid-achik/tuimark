@@ -286,9 +286,6 @@ func TestParseDiagnostics(t *testing.T) {
 		{"each list with two items", coreV1(`<list id="l" each="t as i" key="i.id"><item/><item/></list>`), "V013", 3, 1, "(found 2)"},
 		{"text in keymap", "<tui version=\"1\">\n<keymap>q</keymap>\n<screen/>\n</tui>", "V013", 2, 9, "wrap it in <text>"},
 
-		// V014 missing version.
-		{"missing version", "<tui>\n<screen/>\n</tui>", "V014", 1, 1, `needs version="1"`},
-
 		// L004 modal placement.
 		{"modal not last", coreV1("<modal id=\"m\" open=\"true\"/>\n<box/>"), "L004", 4, 1, "found <box> after it"},
 		{"modal not in screen", coreV1(`<box><modal id="m"/></box>`), "L004", 3, 6, "direct child of <screen>"},

@@ -1,4 +1,4 @@
-<tui version="3" theme="auto">
+<tui theme="auto">
   <style src="theme.tcss"/>
   <keymap when="#board">
     <bind keys="H" action="card_left" keycap="H/L" label="move"/>

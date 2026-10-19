@@ -1,4 +1,4 @@
-<tui version="3" theme="auto">
+<tui theme="auto">
   <style src="theme.tcss"/>
   <keymap>
     <bind keys="q,ctrl+c" action="quit" label="quit"/>

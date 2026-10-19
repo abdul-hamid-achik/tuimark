@@ -33,7 +33,7 @@ A Tuimark view is text. Make a directory with three files: the structure (`app.t
 
 Reading it top to bottom:
 
-- `<tui version="2">` is the root. Always declare the version; `version="2"` opts into the full vocabulary. See [versions](/guide/language#versions).
+- `<tui>` is the root. It needs no `version`: without one, a document gets the whole language. See [versions](/guide/language#versions).
 - `<style src>` loads the stylesheet, relative to the document.
 - The `<keymap>` binds `q` to the built-in `quit`, and `enter` to an action named `open`, but only while the list has focus. The `label`s make them key hints.
 - The `<screen>` holds a title, a list, and a `<hints>` bar. `{project}` and `{t.title}` read the JSON data; `each="tasks as t"` repeats the `<item>` once per task; `bind="selected"` ties the list's cursor to a value in the data.

@@ -1,4 +1,4 @@
-<tui version="3" theme="auto" mouse="mouse_on">
+<tui theme="auto" mouse="mouse_on">
   <style src="theme.tcss"/>
   <keymap when="#app">
     <bind keys="q" action="quit" label="quit"/>

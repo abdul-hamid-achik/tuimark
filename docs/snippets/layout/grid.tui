@@ -1,4 +1,4 @@
-<tui version="2">
+<tui>
   <style>
     #cards { layout: grid; grid-columns: 3; grid-min-width: 16; gap: 1; }
     .card { border: rounded; }

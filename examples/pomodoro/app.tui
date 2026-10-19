@@ -1,4 +1,4 @@
-<tui version="3" theme="auto" mouse="true">
+<tui theme="auto" mouse="true">
   <style src="theme.tcss"/>
   <keymap when="#app">
     <bind keys="space" action="toggle" keycap="space" label="start/pause"/>

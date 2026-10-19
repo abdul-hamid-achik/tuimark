@@ -1,4 +1,4 @@
-<tui version="3" theme="auto" mouse="settings.mouse">
+<tui theme="auto" mouse="settings.mouse">
   <style src="theme.tcss"/>
   <style src="sizes.tcss"/>
   <keymap>

@@ -8,30 +8,30 @@ editLink: false
 
 # CSS properties
 
-Every property TCSS accepts. An unknown property, or a value outside its list, is `V003`. Sizes are `N` cells, `N%` of the parent, `Nfr` shares of what is left, or `auto`. Colors are a `$token` (or `var(--token)`), one of the 16 ANSI names, `#rgb`, `#rrggbb`, or `default`. See [TCSS](/guide/tcss) and [Layout](/guide/layout) for how they combine.
+Every property TCSS accepts. An unknown property, or a value outside its list, is `V003`. A document without `version` accepts all of them; the notes say what an older `version="1"` or `version="2"` document leaves out. Sizes are `N` cells, `N%` of the parent, `Nfr` shares of what is left, or `auto`. Colors are a `$token` (or `var(--token)`), one of the 16 ANSI names, `#rgb`, `#rrggbb`, or `default`. See [TCSS](/guide/tcss) and [Layout](/guide/layout) for how they combine.
 
 | Property | Values | Notes |
 |---|---|---|
 | `align` | `start` · `center` · `end` · `stretch` |  |
 | `background` | `$token` · `var(--token)` · `ansi-name` · `#rgb` · `#rrggbb` · `default` |  |
-| `bar` | `block` · `eighths` | `version="2"` only |
+| `bar` | `block` · `eighths` | not in `version="1"` |
 | `bold` | `true` · `false` |  |
 | `border` | `none` · `single` · `double` · `rounded` · `thick` |  |
 | `border-color` | `$token` · `var(--token)` · `ansi-name` · `#rgb` · `#rrggbb` · `default` |  |
 | `color` | `$token` · `var(--token)` · `ansi-name` · `#rgb` · `#rrggbb` · `default` |  |
-| `column-gap` | 0-4 | `version="3"` only |
+| `column-gap` | 0-4 | not in `version="1"` or `"2"` |
 | `content-align` | `start` · `center` · `end` |  |
 | `dim` | `true` · `false` |  |
 | `display` | `flex` · `none` |  |
 | `dock` | `top` · `right` · `bottom` · `left` |  |
 | `flex` | number >= 0 |  |
 | `gap` | 0-4 |  |
-| `grid-columns` | integer 1-12 | `version="2"` only |
-| `grid-min-width` | integer >= 1 | `version="2"` only |
+| `grid-columns` | integer 1-12 | not in `version="1"` |
+| `grid-min-width` | integer >= 1 | not in `version="1"` |
 | `height` | `N` · `N%` · `Nfr` · `auto` |  |
 | `italic` | `true` · `false` |  |
 | `justify` | `start` · `center` · `end` · `space-between` |  |
-| `layout` | `column` · `row` · `grid` | `grid` needs `version="2"` |
+| `layout` | `column` · `row` · `grid` | `grid`: not in `version="1"` |
 | `margin` | 1-4 cell values | T R B L |
 | `max-height` | `N` · `N%` · `Nfr` · `auto` |  |
 | `max-width` | `N` · `N%` · `Nfr` · `auto` |  |
@@ -40,10 +40,10 @@ Every property TCSS accepts. An unknown property, or a value outside its list, i
 | `overflow` | `hidden` · `scroll` |  |
 | `padding` | 1-4 cell values | T R B L |
 | `reverse` | `true` · `false` |  |
-| `row-gap` | 0-4 | `version="3"` only |
-| `scrollbar` | `none` · `auto` | `version="2"` only |
+| `row-gap` | 0-4 | not in `version="1"` or `"2"` |
+| `scrollbar` | `none` · `auto` | not in `version="1"` |
 | `title-color` | `$token` · `var(--token)` · `ansi-name` · `#rgb` · `#rrggbb` · `default` |  |
 | `underline` | `true` · `false` |  |
 | `visibility` | `visible` · `hidden` |  |
 | `width` | `N` · `N%` · `Nfr` · `auto` |  |
-| `wrap` | `wrap` · `nowrap` · `truncate` · `truncate-start` · `truncate-middle` | `truncate-start` and `truncate-middle` need `version="3"` |
+| `wrap` | `wrap` · `nowrap` · `truncate` · `truncate-start` · `truncate-middle` | `truncate-start`, `truncate-middle`: not in `version="1"` or `"2"` |

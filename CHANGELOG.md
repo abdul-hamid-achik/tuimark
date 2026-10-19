@@ -7,9 +7,28 @@ line.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-18
+
+A patch on 0.4a. `version` on `<tui>` becomes optional, and `examples/`
+grows by thirteen apps: four tools, four animated apps (Snake among them),
+and five more games, with animated demos of nine of them on the docs site.
+
+### Changed
+
+- **`version` on `<tui>` is optional.** A `<tui>` without it is the
+  current language, `version="3"`: it accepts the whole vocabulary, and
+  `L008`/`L009` and the dump's `clipped` apply to it. `V014` is never
+  reported any more; its row stays in the catalog, marked retired. A
+  document that writes `version="1"`, `"2"`, or `"3"` keeps exactly the
+  meaning it had, and any other value is still `V003` and read as
+  `version="1"`. `tuimark new`, the examples, and the docs write no
+  version, except the SPEC fixtures (`examples/inbox`, `examples/monitor`)
+  and the examples that are `version="1"` on purpose. The language server
+  completes a document without `version` with the current vocabulary.
+
 ### Added
 
-- **Four example apps** in `examples/`, each a `version="3"` document, a
+- **Four example apps** in `examples/`, each a document, a
   stylesheet with dark and light palettes, sample data, a `mock.json` for
   `tuimark run --mock`, and a Go host on the 0.4 API with its own tests:
   - `logs`: a live log viewer. Lines stream in with `Every`, the view
@@ -485,7 +504,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.1
 [0.4.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.0
 [0.3.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.2
 [0.3.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.3.1

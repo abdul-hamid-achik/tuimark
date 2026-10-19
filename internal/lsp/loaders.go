@@ -176,17 +176,33 @@ func hasClass(n *ir.Node, name string) bool {
 	return false
 }
 
-// docVersionOf is the version of the .tui text without parsing it: the
-// version attribute of its <tui>, else 1.
-var versionRE = regexp.MustCompile(`<tui\b[^>]*?\bversion\s*=\s*"(\d+)"`)
+// docVersionOf is the version of the .tui text without parsing it, as the
+// parser reads it: the version attribute of its <tui> when it is 1, 2, or
+// 3; 3 when the <tui> has no version (v0.4.1), and for a text with no root
+// yet; 1 for any other value and for the spike root <app>.
+var (
+	tuiOpenRE  = regexp.MustCompile(`<tui\b[^>]*`)
+	appOpenRE  = regexp.MustCompile(`<app\b`)
+	versionRE  = regexp.MustCompile(`\bversion\s*=\s*"([^"]*)"`)
+	versionAny = regexp.MustCompile(`\bversion\s*=`)
+)
 
 func docVersionOf(text string) int {
-	if m := versionRE.FindStringSubmatch(text); m != nil {
-		if v, err := strconv.Atoi(m[1]); err == nil && v >= 1 && v <= 3 {
+	open := tuiOpenRE.FindString(text)
+	if open == "" && appOpenRE.MatchString(text) {
+		return 1
+	}
+	if m := versionRE.FindStringSubmatch(open); m != nil {
+		if v, err := strconv.Atoi(m[1]); err == nil && v >= 1 && v <= 3 && m[1] == strconv.Itoa(v) {
 			return v
 		}
+		return 1
 	}
-	return 1
+	if versionAny.MatchString(open) {
+		// version= being typed, with no closing quote yet.
+		return 1
+	}
+	return 3
 }
 
 // styleSrcsOf are the stylesheets a .tui text names, found in the text so

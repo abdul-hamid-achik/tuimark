@@ -124,7 +124,7 @@ function tagsPage() {
     }
     if (rows.length) {
       tables++
-      if (tables === 1) body.push('## Every document', '')
+      if (tables === 1) body.push('## Every version', '')
       else if (tables === 2 && !v2Heading) throw new Error('generate: the version="2" attribute table has no introduction')
       else if (tables === 3 && !v3Heading) throw new Error('generate: the version="3" attribute table has no introduction')
       body.push('| Tag | Attributes |', '|---|---|', ...rows, '')
@@ -137,7 +137,7 @@ function tagsPage() {
     [
       '---',
       'title: Tags and attributes',
-      'description: Every Tuimark tag and the exact attributes it accepts, in version="1", version="2", and version="3" documents.',
+      'description: Every Tuimark tag and the exact attributes it accepts, and what older version="1" and version="2" documents leave out.',
       'editLink: false',
       '---',
       '',
@@ -145,7 +145,7 @@ function tagsPage() {
       '',
       '# Tags and attributes',
       '',
-      'The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. See [The .tui language](/guide/language) for what each tag does.',
+      'The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. A document without `version` accepts every tag and attribute below; the last two sections are what an older `version="1"` (or `version="2"`) document leaves out. See [The .tui language](/guide/language) for what each tag does.',
       '',
       ...body,
     ].join('\n'),
@@ -162,13 +162,13 @@ function cssPage() {
     const paren = /\s*\(([^()]*)\)$/.exec(values)
     if (paren) {
       values = values.slice(0, paren.index)
-      if (paren[1] === 'version="2" stylesheets only') note = '`version="2"` only'
-      else if (paren[1] === 'version="3" stylesheets only') note = '`version="3"` only'
+      if (paren[1] === 'version="2" stylesheets only') note = 'not in `version="1"`'
+      else if (paren[1] === 'version="3" stylesheets only') note = 'not in `version="1"` or `"2"`'
       else if (paren[1] === 'version="2"') {
         const alts = values.split(' | ')
-        note = `\`${alts[alts.length - 1]}\` needs \`version="2"\``
+        note = `\`${alts[alts.length - 1]}\`: not in \`version="1"\``
       } else if (paren[1] === 'version="3"' && prop === 'wrap') {
-        note = '`truncate-start` and `truncate-middle` need `version="3"`'
+        note = '`truncate-start`, `truncate-middle`: not in `version="1"` or `"2"`'
       } else note = paren[1]
     }
     const alts = values.split(' | ')
@@ -191,7 +191,7 @@ function cssPage() {
       '',
       '# CSS properties',
       '',
-      'Every property TCSS accepts. An unknown property, or a value outside its list, is `V003`. Sizes are `N` cells, `N%` of the parent, `Nfr` shares of what is left, or `auto`. Colors are a `$token` (or `var(--token)`), one of the 16 ANSI names, `#rgb`, `#rrggbb`, or `default`. See [TCSS](/guide/tcss) and [Layout](/guide/layout) for how they combine.',
+      'Every property TCSS accepts. An unknown property, or a value outside its list, is `V003`. A document without `version` accepts all of them; the notes say what an older `version="1"` or `version="2"` document leaves out. Sizes are `N` cells, `N%` of the parent, `Nfr` shares of what is left, or `auto`. Colors are a `$token` (or `var(--token)`), one of the 16 ANSI names, `#rgb`, `#rrggbb`, or `default`. See [TCSS](/guide/tcss) and [Layout](/guide/layout) for how they combine.',
       '',
       '| Property | Values | Notes |',
       '|---|---|---|',
