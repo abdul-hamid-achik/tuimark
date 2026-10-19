@@ -1,0 +1,13 @@
+<tui>
+  <template id="cell">
+    <text id="t">{x.name}</text>
+  </template>
+  <template id="form">
+    <input id="q" bind="x.q"/>
+  </template>
+  <screen id="main">
+    <list id="l" each="rows as r" key="r.id">
+      <item><use id="c" template="cell" with="r as x"/></item>
+    </list>
+  </screen>
+</tui>

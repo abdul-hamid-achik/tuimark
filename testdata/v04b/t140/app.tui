@@ -1,0 +1,19 @@
+<tui>
+  <template id="a">
+    <text>a</text>
+    <use template="b"/>
+  </template>
+  <template id="b">
+    <text>b</text>
+    <use template="a"/>
+  </template>
+  <template id="c">
+    <use template="c"/>
+  </template>
+  <screen id="main">
+    <use template="a"/>
+    <use template="nope"/>
+    <use template="#a"/>
+    <use/>
+  </screen>
+</tui>

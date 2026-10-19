@@ -63,7 +63,7 @@ func TestLangVariantsMatchTheBoolFunctions(t *testing.T) {
 // include and fragment; the test adds a current-only node tag for its
 // duration.
 func TestCurrentTagSelectors(t *testing.T) {
-	for _, tag := range []string{"include", "fragment"} {
+	for _, tag := range []string{"include", "fragment", "template", "use"} { // F1, F2
 		for l, want := range map[ir.Lang]string{
 			ir.Lang3: fmt.Sprintf(`selector %q: unknown type %q (not in the tag catalog)`, tag, tag),
 			ir.Lang4: fmt.Sprintf(`selector %q: <%s> is not a node and never matches`, tag, tag),

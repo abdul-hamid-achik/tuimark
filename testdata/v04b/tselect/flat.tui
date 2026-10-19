@@ -1,0 +1,5 @@
+<tui>
+  <screen id="main" focus="#tz__s">
+    <select id="tz__s" bind="prefs.choice" each="prefs.opts as o" key="o.id" label="{o.name}" placeholder="{prefs.hint}" on:change="picked"/>
+  </screen>
+</tui>
