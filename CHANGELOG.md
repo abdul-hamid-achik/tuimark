@@ -14,13 +14,18 @@ line.
   TypeScript client that was `@tuimark/host` (never published), and its new
   `tuimark` command (`npx @thelacanians/tuimark new my-app`) runs the Go
   binary of the release with the same version, with the same arguments,
-  stdio, exit code, signals, and, for `tuimark host`, fd 3 and fd 4. The
-  launcher is plain JS for Node 18 or later and Bun, with no dependencies
-  and no `postinstall` script. It finds the binary in `TUIMARK_BINARY`, else
-  the cache (`$XDG_CACHE_HOME` or `~/.cache`, `~/Library/Caches`,
-  `%LOCALAPPDATA%`, then `tuimark/<version>/tuimark`), else it downloads the
-  release's `tuimark_<version>_<os>_<arch>[.exe]`, checks its SHA-256 against
-  `checksums.txt` (a mismatch is discarded and never run), and caches it.
+  stdio, exit code, and signals (and fd 3 and fd 4 of `tuimark host` when a
+  parent starts the installed command directly; parents should prefer
+  `spawnHost`, or run the binary themselves). The launcher is plain JS for
+  Node 18 or later and Bun, with no dependencies and no `postinstall` script.
+  It finds the binary in `TUIMARK_BINARY`, else the cache (`$XDG_CACHE_HOME`
+  or `~/.cache`, `~/Library/Caches`, `%LOCALAPPDATA%`, then
+  `tuimark/<version>/<os>_<arch>/tuimark`), else it downloads the release's
+  `tuimark_<version>_<os>_<arch>[.exe]`, checks its SHA-256 against a table
+  built into the package from the release's `checksums.txt` (a mismatch is
+  discarded and never run), and caches it; a cached binary is checked against
+  the same hash on every run. `TUIMARK_RELEASE_URL` points it at a mirror,
+  checked by the mirror's own `checksums.txt` and cached apart.
   `spawnHost` uses the same lookup when `bin` is not given, and
   `resolveBinary` is exported.
 - **Raw binaries in the release.** GoReleaser now also uploads
@@ -28,10 +33,12 @@ line.
   six platforms, listed in `checksums.txt`, next to the archives. The Homebrew
   cask still uses only the archives.
 - **npm publishing in `release.yml`.** After GoReleaser, the `npm-pack` job
-  (no OIDC token) builds the package at the tag's version and checks the
-  release has the six binaries, and the `npm-publish` job publishes it with
-  npm trusted publishing and provenance. `workflow_dispatch` with a `tag`
-  publishes the package of an existing tag.
+  (no OIDC token) builds the package at the tag's version, embeds the six
+  checksums, and checks the release has the six binaries, and the
+  `npm-publish` job (GitHub environment `npm`, which allows only `v*` tags)
+  publishes it with npm trusted publishing and provenance. Run by hand from a
+  release tag ("Use workflow from"), the workflow publishes that tag's
+  package.
 
 - **The Tuimark kit (v0).** `kit/` is a copy-paste component kit in the
   spirit of shadcn: two stylesheets (`theme.tcss`, the dark and light design

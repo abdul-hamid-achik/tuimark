@@ -7,24 +7,22 @@ name: Release
 #
 # npm trusted publishing: the trusted publisher of @thelacanians/tuimark on
 # npmjs.com names THIS file (release.yml), the repository
-# abdul-hamid-achik/tuimark, and no environment. npm checks the workflow
-# filename, so do not rename it or move the npm-publish job to another file.
-# (A separate workflow on `release: published` would never fire: releases
-# created with GITHUB_TOKEN do not trigger other workflows.)
+# abdul-hamid-achik/tuimark, and the environment `npm`. npm checks the
+# workflow filename, so do not rename it or move the npm-publish job to
+# another file. (A separate workflow on `release: published` would never fire:
+# releases created with GITHUB_TOKEN do not trigger other workflows.)
 #
-# Run by hand ("Run workflow", input `tag`), it only publishes the npm package
-# of an existing tag, for example after the npm-publish job of that tag failed.
+# The `npm` environment (created by the owner in Settings, Environments) has a
+# deployment rule that allows only tags `v*`, so nothing but a release tag can
+# publish. Run by hand ("Run workflow", "Use workflow from" = a release tag),
+# the workflow only publishes the npm package of that tag, for example after
+# the npm-publish job of the tag's own run failed.
 
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "An existing release tag (vX.Y.Z) whose GitHub release already has its binaries: publishes only the npm package"
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -152,7 +150,7 @@ jobs:
     permissions:
       contents: read
     env:
-      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      TAG: ${{ github.ref_name }}
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -160,8 +158,8 @@ jobs:
         id: version
         run: |
           set -euo pipefail
-          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
-            echo "::error::'$TAG' is not a release tag like v1.2.3"
+          if [ "$GITHUB_REF_TYPE" != tag ] || ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::the npm package is published from a release tag like v1.2.3, not from $GITHUB_REF"
             exit 1
           fi
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
@@ -169,7 +167,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          ref: refs/tags/${{ env.TAG }}
           persist-credentials: false
 
       # The package downloads these files, by these names, from the release.
@@ -182,7 +179,7 @@ jobs:
         run: |
           set -euo pipefail
           url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
-          curl --fail --silent --show-error --location --retry 5 --retry-delay 5 \
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 5 --retry-all-errors \
             --output "$RUNNER_TEMP/checksums.txt" "$url/checksums.txt"
           missing=0
           for target in darwin_amd64 darwin_arm64 linux_amd64 linux_arm64 windows_amd64.exe windows_arm64.exe; do
@@ -218,6 +215,15 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: npm version "$VERSION" --no-git-tag-version --allow-same-version
 
+      # The hashes of the six binaries go into the package, so the launcher
+      # checks what it downloads against npm's copy and not only against a file
+      # that sits next to the binary on GitHub.
+      - name: Embed the release checksums
+        working-directory: sdk/ts
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: node scripts/embed-checksums.mjs "$RUNNER_TEMP/checksums.txt" "$VERSION"
+
       - name: Build and pack
         working-directory: sdk/ts
         env:
@@ -231,8 +237,13 @@ jobs:
           test -f "$tarball"
           tar -tzf "$tarball" | sort
           # the launcher, the compiled client, and the TypeScript source Bun runs
-          for f in package/bin/tuimark.js package/dist/index.js package/dist/binary.js package/src/index.ts package/package.json; do
+          for f in package/bin/tuimark.js package/dist/index.js package/dist/binary.js package/dist/embedded.js package/src/index.ts package/package.json; do
             tar -tzf "$tarball" | grep -qx "$f" || { echo "::error::$f is not in the package"; exit 1; }
+          done
+          # the built-in table is the one of this version
+          for target in darwin_amd64 darwin_arm64 linux_amd64 linux_arm64 windows_amd64.exe windows_arm64.exe; do
+            tar -xOzf "$tarball" package/dist/embedded.js | grep -q "tuimark_${VERSION}_${target}" \
+              || { echo "::error::dist/embedded.js has no hash for $target"; exit 1; }
           done
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -250,6 +261,13 @@ jobs:
   npm-publish:
     name: npm package (publish)
     needs: npm-pack
+    # Explicit, because when the run is a manual one the `release` job two
+    # levels up is skipped, and a skipped ancestor skips this job too
+    # (actions/runner#2205).
+    if: ${{ !cancelled() && needs.npm-pack.result == 'success' }}
+    # The deployment rule of this environment allows only tags `v*`; the trusted
+    # publisher on npmjs.com names it too.
+    environment: npm
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -285,4 +303,4 @@ jobs:
           # npm 11 refuses a prerelease version without a dist-tag.
           tag=latest
           case "$VERSION" in *-*) tag=next ;; esac
-          npm publish ./pack/thelacanians-tuimark-"${VERSION}".tgz --access public --provenance --tag "$tag"
+          npm publish ./pack/thelacanians-tuimark-"${VERSION}".tgz --ignore-scripts --access public --provenance --tag "$tag"

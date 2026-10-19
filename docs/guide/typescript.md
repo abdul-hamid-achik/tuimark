@@ -17,7 +17,7 @@ It is a parent library, not a second runtime. Everything you see is still drawn 
 bun add @thelacanians/tuimark
 ```
 
-The package also has a `tuimark` command (`npx @thelacanians/tuimark new my-app`). Its version is the Tuimark release it runs: it downloads that release's binary once, checks it against the release's `checksums.txt`, and caches it. `TUIMARK_BINARY` points it at a binary you installed yourself.
+The package also has a `tuimark` command (`npx @thelacanians/tuimark new my-app`). Its version is the Tuimark release it runs: it downloads that release's binary once, checks it against a checksum built into the package, and caches it. `TUIMARK_BINARY` points it at a binary you installed yourself.
 
 ::: info Not on npm yet?
 If `bun add` cannot find the package yet (its first release needs a Tuimark release that ships raw binaries), install the copy in a clone of the repository: `bun add @thelacanians/tuimark@file:/path/to/tuimark/sdk/ts`.
