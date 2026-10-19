@@ -308,6 +308,7 @@ const runLogChildEnv = "TUIMARK_RUNLOG_CHILD"
 // the TUIMARK_LOG file (§26.1 step 1 comes first) but writes no record,
 // so the log never holds an end record without a start record before it.
 func TestRunLogWithoutSessionHasNoRecords(t *testing.T) {
+	skipOnJS(t, "os.Pipe is not implemented")
 	if os.Getenv(runLogChildEnv) != "" {
 		err := doc(t, loopDoc).Run(io.Discard)
 		fmt.Fprintf(os.Stderr, "RUN-RETURNED %v\n", err)

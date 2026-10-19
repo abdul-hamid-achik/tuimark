@@ -134,6 +134,51 @@ jobs:
       - name: go vet
         run: go vet ./...
 
+  # The runtime as WebAssembly, for the website's playground (ADR 0033): the
+  # js/wasm build of cmd/tuimark-wasm and its size budget, go test of the core
+  # packages under js (Node runs the test binaries), and a smoke test that
+  # loads the real .wasm and compares every example's dump with the native
+  # CLI's. Pinned to Go 1.26: lib/wasm (wasm_exec.js, go_js_wasm_exec) only
+  # exists from Go 1.24, and the matrix above also runs go.mod's 1.22.
+  wasm:
+    name: js/wasm build, tests, size, and native parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Build tuimark.wasm
+        run: |
+          GOOS=js GOARCH=wasm go vet ./cmd/tuimark-wasm ./internal/playground
+          GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o bin/tuimark.wasm ./cmd/tuimark-wasm
+          cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" bin/wasm_exec.js
+
+      - name: Size budget (brotli 1.5 MB, gzip 2.0 MB)
+        run: node cmd/tuimark-wasm/testdata/size.mjs bin/tuimark.wasm
+
+      # The wrapper runs Go's wasm_exec_node.js with a minimal environment: a
+      # runner's environment alone exceeds wasm_exec.js's argv+env limit.
+      - name: go test under js/wasm (core packages)
+        env:
+          GOOS: js
+          GOARCH: wasm
+        run: go test -count=1 -exec "$PWD/.github/scripts/go-js-wasm-exec.sh" . ./internal/...
+
+      - name: Smoke test and native-vs-wasm dump parity
+        run: |
+          go build -o bin/tuimark ./cmd/tuimark
+          node cmd/tuimark-wasm/testdata/smoke.mjs bin/tuimark.wasm --cli bin/tuimark
+
   specs:
     name: glyphrun specs (${{ matrix.os }})
     strategy:
