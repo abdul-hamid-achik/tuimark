@@ -120,9 +120,6 @@ playground.
   the generated `AGENTS.md`, and the guides. The package version is the Tuimark
   release it runs (it was `1.0.0`), and `sdk-ts-publish.yml` and its `sdk-ts-v*`
   tags are gone.
-
-### Changed
-
 - **The website moves to [tuimark.dev](https://tuimark.dev)** and is rebuilt
   with Next.js and Fumadocs in place of VitePress. Every page keeps its URL
   (the old `NAME.html` addresses redirect), and so does `tuimark.vercel.app`,
