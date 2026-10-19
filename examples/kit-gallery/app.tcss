@@ -1,0 +1,22 @@
+/*
+ * The gallery's own sheet, loaded after the kit. It holds only what is
+ * specific to this page: sizes the kit leaves to the app (a viewport inside
+ * a scrolling page needs a height of its own) and one-row button groups.
+ */
+
+/* A row of buttons or badges inside a card. */
+.btn-row { width: 1fr; height: 1; gap: 2; }
+
+/* Viewports inside a scrolling page cannot be 1fr tall: give them rows. */
+#svc { height: 9; }
+#log { height: 10; }
+.empty-card { height: 10; }
+.menu-fixed { height: 6; }
+
+/* The detail pane of the layouts tab fills its tab. */
+#items { height: 1fr; }
+
+/* The version badge is the first thing to go on a narrow terminal. */
+@media (max-cols: 60) {
+  .appbar > .badge { display: none; }
+}

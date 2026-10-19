@@ -158,6 +158,12 @@ var exampleDoc = map[string]string{
 	"spike":   "inbox.tui",
 }
 
+// outsideExample names the examples that load files from outside their own
+// directory, which an fs.FS rooted there cannot reach, with the reason.
+var outsideExample = map[string]string{
+	"kit-gallery": "loads ../../kit/theme.tcss and kit.tcss (the kit it shows)",
+}
+
 func TestLoadFSEqualsLoadForEveryExample(t *testing.T) {
 	entries, err := os.ReadDir("examples")
 	if err != nil {
@@ -169,6 +175,9 @@ func TestLoadFSEqualsLoadForEveryExample(t *testing.T) {
 			continue
 		}
 		dir := e.Name()
+		if _, ok := outsideExample[dir]; ok {
+			continue
+		}
 		base := exampleDoc[dir]
 		if base == "" {
 			base = "app.tui"

@@ -1,0 +1,88 @@
+{
+  "demo_press": [
+    {"path": "status.text", "value": "pressed a button"}
+  ],
+  "svc_select": [
+    {"path": "status.text", "value": "service selected"}
+  ],
+  "svc_open": [
+    {"path": "toast.text", "value": "Opening the service"},
+    {"path": "toast.is_success", "value": false},
+    {"path": "toast.is_warning", "value": false},
+    {"path": "toast.is_danger", "value": false},
+    {"path": "toast.show", "value": true}
+  ],
+  "prefs_change": [
+    {"path": "status.text", "value": "notification channels changed"}
+  ],
+  "item_select": [
+    {"path": "status.text", "value": "incident selected"}
+  ],
+  "empty_create": [
+    {"path": "toast.text", "value": "Deployment created"},
+    {"path": "toast.is_success", "value": true},
+    {"path": "toast.is_warning", "value": false},
+    {"path": "toast.is_danger", "value": false},
+    {"path": "toast.show", "value": true}
+  ],
+  "toast_show": [
+    {"path": "toast.text", "value": "Settings saved"},
+    {"path": "toast.is_success", "value": true},
+    {"path": "toast.is_warning", "value": false},
+    {"path": "toast.is_danger", "value": false},
+    {"path": "toast.show", "value": true}
+  ],
+  "toast_dismiss": [
+    {"path": "toast.show", "value": false}
+  ],
+  "confirm_open": [
+    {"path": "confirm.open", "value": true}
+  ],
+  "confirm_cancel": [
+    {"path": "confirm.open", "value": false}
+  ],
+  "confirm_accept": [
+    {"path": "confirm.open", "value": false},
+    {"path": "toast.text", "value": "Project deleted (preview only)"},
+    {"path": "toast.is_success", "value": true},
+    {"path": "toast.is_warning", "value": false},
+    {"path": "toast.is_danger", "value": false},
+    {"path": "toast.show", "value": true}
+  ],
+  "help_open": [
+    {"path": "help.open", "value": true}
+  ],
+  "help_close": [
+    {"path": "help.open", "value": false}
+  ],
+  "palette_open": [
+    {"path": "palette.open", "value": true}
+  ],
+  "palette_close": [
+    {"path": "palette.open", "value": false}
+  ],
+  "palette_run": [
+    {"path": "palette.open", "value": false},
+    {"path": "status.text", "value": "ran a command (preview only)"}
+  ],
+  "theme_toggle": [
+    {"path": "@theme", "value": "light"},
+    {"path": "theme.name", "value": "light"}
+  ],
+  "crumb_up": [
+    {"path": "status.text", "value": "up one level (preview only)"}
+  ],
+  "log_append": [
+    {"path": "status.text", "value": "appending needs the Go host"}
+  ],
+  "form_validate": [
+    {"path": "status.text", "value": "validation needs the Go host"}
+  ],
+  "form_submit": [
+    {"path": "toast.text", "value": "Profile saved (preview only)"},
+    {"path": "toast.is_success", "value": true},
+    {"path": "toast.is_warning", "value": false},
+    {"path": "toast.is_danger", "value": false},
+    {"path": "toast.show", "value": true}
+  ]
+}

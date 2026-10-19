@@ -1,0 +1,94 @@
+{
+  "view": "basics",
+  "theme": { "name": "dark" },
+  "status": { "text": "ready", "right": "kit v0" },
+  "toast": { "show": false, "text": "", "is_success": false, "is_warning": false, "is_danger": false },
+  "crumbs": [
+    { "id": "prod", "label": "Production", "last": false },
+    { "id": "svc", "label": "Services", "last": false },
+    { "id": "billing", "label": "billing", "last": false },
+    { "id": "settings", "label": "Settings", "last": true }
+  ],
+  "stats": {
+    "req": { "value": "128.4k", "delta": "▲ 4.2%", "good": true, "hist": [3, 4, 4, 6, 5, 7, 8, 7, 9, 11, 10, 12] },
+    "err": { "value": "0.31%", "delta": "▼ 0.08", "good": true, "hist": [5, 4, 6, 3, 4, 2, 3, 5, 2, 2, 3, 1] }
+  },
+  "meters": {
+    "upload": { "pct": 64, "text": "64% · 8.2 MB/s" },
+    "disk": { "pct": 91, "text": "91% of 500 GB", "warn": false, "crit": true },
+    "tests": { "pct": 100, "text": "212 / 212" }
+  },
+  "form": {
+    "name": "Ada Lovelace",
+    "name_error": "",
+    "email": "ada@example.com",
+    "email_error": ""
+  },
+  "prefs_cur": "email",
+  "prefs_on": ["email"],
+  "prefs": [
+    { "id": "email", "icon": "@", "label": "Email", "note": "daily" },
+    { "id": "slack", "icon": "#", "label": "Slack", "note": "instant" },
+    { "id": "sms", "icon": "✆", "label": "SMS", "note": "urgent" },
+    { "id": "push", "icon": "◉", "label": "Push", "note": "off" }
+  ],
+  "svc": {
+    "cur": "api",
+    "count": 5,
+    "rows": [
+      { "id": "api", "name": "api-gateway", "state": "running", "ok": true, "region": "us-east", "rps": "1,204", "p95": "42" },
+      { "id": "auth", "name": "auth", "state": "running", "ok": true, "region": "us-east", "rps": "310", "p95": "18" },
+      { "id": "billing", "name": "billing", "state": "degraded", "ok": false, "region": "eu-west", "rps": "27", "p95": "910" },
+      { "id": "search", "name": "search", "state": "running", "ok": true, "region": "eu-west", "rps": "88", "p95": "133" },
+      { "id": "mailer", "name": "mailer", "state": "stopped", "ok": false, "region": "ap-south", "rps": "0", "p95": "0" }
+    ]
+  },
+  "log": {
+    "count": 6,
+    "lines": [
+      { "n": 1, "text": "12:00:01 resolving dependencies", "debug": true, "info": false, "warn": false, "err": false },
+      { "n": 2, "text": "12:00:03 compiling api-gateway", "debug": false, "info": true, "warn": false, "err": false },
+      { "n": 3, "text": "12:00:07 warning: unused import in router.go", "debug": false, "info": false, "warn": true, "err": false },
+      { "n": 4, "text": "12:00:09 ok   pkg/router   0.41s", "debug": false, "info": false, "warn": false, "err": false },
+      { "n": 5, "text": "12:00:10 FAIL pkg/billing  1.02s", "debug": false, "info": false, "warn": false, "err": true },
+      { "n": 6, "text": "12:00:11 exit 1", "debug": true, "info": false, "warn": false, "err": false }
+    ]
+  },
+  "confirm": {
+    "open": false,
+    "title": "Delete project",
+    "message": "This permanently deletes orbit-api and its 14 deployments. This cannot be undone."
+  },
+  "palette": {
+    "open": false,
+    "query": "",
+    "cur": "deploy",
+    "commands": [
+      { "id": "deploy", "label": "Deploy to production", "hint": "d" },
+      { "id": "rollback", "label": "Roll back the last deploy", "hint": "r" },
+      { "id": "logs", "label": "Open the logs", "hint": "l" },
+      { "id": "theme", "label": "Toggle the theme", "hint": "t" },
+      { "id": "help", "label": "Show the keys", "hint": "?" }
+    ]
+  },
+  "found": {
+    "any": true,
+    "items": [
+      { "id": "deploy", "label": "Deploy to production", "hint": "d" },
+      { "id": "rollback", "label": "Roll back the last deploy", "hint": "r" },
+      { "id": "logs", "label": "Open the logs", "hint": "l" },
+      { "id": "theme", "label": "Toggle the theme", "hint": "t" },
+      { "id": "help", "label": "Show the keys", "hint": "?" }
+    ]
+  },
+  "help": { "open": false },
+  "split": {
+    "cur": "i2",
+    "items": [
+      { "id": "i1", "title": "Checkout latency", "age": "2h", "status": "resolved", "open": false, "summary": "p95 returned to normal after the cache was warmed.", "owner": "ada" },
+      { "id": "i2", "title": "Billing errors", "age": "14m", "status": "open", "open": true, "summary": "The billing worker is failing 3% of invoices with a timeout.", "owner": "grace" },
+      { "id": "i3", "title": "Search index lag", "age": "1d", "status": "resolved", "open": false, "summary": "Reindexed; lag is under a second.", "owner": "linus" }
+    ]
+  },
+  "detail": { "title": "Billing errors", "age": "14m", "status": "open", "open": true, "summary": "The billing worker is failing 3% of invoices with a timeout.", "owner": "grace" }
+}
