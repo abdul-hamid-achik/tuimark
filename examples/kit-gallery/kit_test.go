@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/abdul-hamid-achik/tuimark"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -385,4 +386,67 @@ func TestOverlayKeymapsComeFirst(t *testing.T) {
 			t.Errorf("%s: a global keymap comes before an overlay keymap", filepath.Base(path))
 		}
 	}
+}
+
+// The toast's text parts take no color of their own: they inherit it from the
+// toast row, so a modifier on the row recolors them. Check it on the screen.
+func TestToastTextTakesTheRowsTextColor(t *testing.T) {
+	for _, theme := range []string{"dark", "light"} {
+		for _, level := range []string{"info", "ok", "warn", "danger"} {
+			a := newApp(t)
+			for k, v := range map[string]any{
+				"@theme": theme, "toast.show": true, "toast.text": "toasted",
+				"toast.is_ok": level == "ok", "toast.is_warn": level == "warn", "toast.is_danger": level == "danger",
+			} {
+				if err := a.ui.Set(k, v); err != nil {
+					t.Fatal(err)
+				}
+			}
+			res := playAt(t, a, tuimark.PlayOptions{Cols: 100, Rows: 30, Styles: true})
+			found := false
+			for y, line := range res.Dump.Grid {
+				x := strings.Index(line, "toasted")
+				if x < 1 {
+					continue
+				}
+				found = true
+				// The text, like the row around it, is drawn in the token for
+				// text on that fill.
+				on := map[string]string{"info": "on-accent", "ok": "on-ok", "warn": "on-warn", "danger": "on-danger"}[level]
+				want := tokenValue(t, theme, on)
+				var textFG, padFG string
+				for _, sp := range res.Dump.Styles[y] {
+					if sp.X <= x-1 && x-1 < sp.X+sp.W {
+						padFG = sp.FG
+					}
+					if sp.X <= x && x < sp.X+sp.W {
+						textFG = sp.FG
+					}
+				}
+				if textFG != want || padFG != want {
+					t.Errorf("%s %s: toast text fg %s, toast row fg %s, want %s ($%s)", theme, level, textFG, padFG, want, on)
+				}
+			}
+			if !found {
+				t.Errorf("%s %s: the toast is not on screen", theme, level)
+			}
+		}
+	}
+}
+
+// tokenValue is the value of a token in a palette of theme.tcss.
+func tokenValue(t *testing.T, theme, name string) string {
+	t.Helper()
+	src := stripComments(readFile(t, "../../kit/theme.tcss"))
+	i := strings.Index(src, "@media (theme: light)")
+	if theme == "light" {
+		src = src[i:]
+	} else {
+		src = src[:i]
+	}
+	m := regexp.MustCompile(`--` + regexp.QuoteMeta(name) + `:\s*(#[0-9a-fA-F]+)`).FindStringSubmatch(src)
+	if m == nil {
+		t.Fatalf("no token %s in the %s palette", name, theme)
+	}
+	return strings.ToLower(m[1])
 }
