@@ -152,10 +152,13 @@ func TestV04bTemplate138ScopedIDs(t *testing.T) {
 }
 
 // 139. V004 and V012 with uses. The draft lists four diagnostics and says
-// the uses of card report nothing; the runtime reports, as for a written
-// <box focusable="true"> without id since 0.1, a V012 at the copied box,
-// once per use (placement suffix). Those two lines are filtered here and
-// reported as an erratum (the focus cycle bullet goes with them).
+// the uses of card report nothing; the runtime reports, as it has for a
+// written <box focusable="true"> without id since 0.1 (validate of
+// <tui><screen id="m"><box focusable="true"><text>c</text></box></screen></tui>
+// gives it, with and without version="3"), a V012 at the copied box, once
+// per use (placement suffix). Those two lines are filtered here and
+// reported as an erratum; the focus cycle bullet goes with them, since
+// focus is held by id.
 func TestV04bTemplate139V004AndV012(t *testing.T) {
 	app := composeFixtures + "t139/app.tui"
 	var got []string

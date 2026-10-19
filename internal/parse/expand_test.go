@@ -152,6 +152,18 @@ func TestTemplateSelfChecksOncePerWrittenElement(t *testing.T) {
 	}
 }
 
+// An unused template's elements get only the checks they give themselves:
+// no V012 for an input without id, no V004, no B-code. A malformed each or
+// if is such a check, V011, although §6.18.3's list names only V001,
+// V002, V003, V007, V013, V015, and V018; a fragment checked on its own
+// (F1) reports it the same way. Reported as an erratum of the list.
+func TestUnusedTemplateReportsItsOwnV011(t *testing.T) {
+	d := parseDoc("<tui>\n<template id=\"t\"><list id=\"l\" each=\"bad\"><item/></list><input bind=\"v\"/><text id=\"a\">a</text><text id=\"a\">b</text></template>\n<screen id=\"m\"/>\n</tui>")
+	if got := useDiags(d); len(got) != 1 || got[0] != `V011 2:31 each="bad" must be "path as alias"` {
+		t.Errorf("diagnostics: %v", got)
+	}
+}
+
 // with= grammar and collisions (SPEC v0.4b §6.18.5): each is one V011 at
 // the use, which inserts nothing; an each alias inside the copy that
 // repeats a with alias is V011 at that element, and the copy is inserted.
