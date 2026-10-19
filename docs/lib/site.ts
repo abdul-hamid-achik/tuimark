@@ -8,6 +8,8 @@ export const VERSION = 'v0.4.2';
 export const AUTHOR = 'Abdul Hamid Achik';
 
 export const TAGLINE = 'Terminal UIs as documents';
+/** The landing page's title, and the default for a page without one. */
+export const HOME_TITLE = `${SITE_NAME}: terminal UIs as documents`;
 export const PITCH =
   'Write .tui and .tcss, let any language drive it, let agents design it.';
 export const DESCRIPTION =

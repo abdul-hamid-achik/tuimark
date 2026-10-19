@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, JetBrains_Mono } from 'next/font/google';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { SearchDialog } from '@/components/search-lazy';
-import { AUTHOR, DESCRIPTION, KEYWORDS, SITE_NAME, SITE_URL, TAGLINE } from '@/lib/site';
+import { RSS } from '@/lib/metadata';
+import { AUTHOR, DESCRIPTION, HOME_TITLE, KEYWORDS, SITE_NAME, SITE_URL } from '@/lib/site';
 import './global.css';
 
 const sans = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' });
@@ -11,7 +12,7 @@ const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains', 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME}: ${TAGLINE.toLowerCase()}`,
+    default: HOME_TITLE,
     template: `%s | ${SITE_NAME}`,
   },
   description: DESCRIPTION,
@@ -19,12 +20,13 @@ export const metadata: Metadata = {
   authors: [{ name: AUTHOR, url: 'https://github.com/abdul-hamid-achik' }],
   creator: AUTHOR,
   keywords: KEYWORDS,
-  alternates: { canonical: '/' },
+  // No canonical here: each page sets its own (lib/metadata.ts), and a page
+  // that sets none, such as the 404, must not claim to be the home page.
+  alternates: { types: { 'application/rss+xml': [RSS] } },
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
     locale: 'en_US',
-    url: '/',
   },
   twitter: {
     card: 'summary_large_image',

@@ -14,6 +14,7 @@ import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { getMDXComponents } from '@/components/mdx';
 import { JsonLd } from '@/components/json-ld';
 import { markdownUrl, ogImageUrl, sectionOf, source } from '@/lib/source';
+import { pageMetadata } from '@/lib/metadata';
 import { AUTHOR, REPO_URL, SITE_NAME, SITE_URL, absoluteUrl } from '@/lib/site';
 
 export const dynamicParams = false;
@@ -91,26 +92,13 @@ export async function generateMetadata(props: PageProps<'/[...slug]'>): Promise<
   const page = source.getPage(slug);
   if (!page) notFound();
 
-  const image = { url: ogImageUrl(page), width: 1200, height: 630, alt: page.data.title };
-  return {
+  return pageMetadata({
     title: page.data.title,
-    description: page.data.description,
-    alternates: {
-      canonical: page.url,
-      types: { 'text/markdown': markdownUrl(page) },
-    },
-    openGraph: {
-      type: 'article',
-      url: page.url,
-      title: `${page.data.title} | ${SITE_NAME}`,
-      description: page.data.description,
-      images: [image],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${page.data.title} | ${SITE_NAME}`,
-      description: page.data.description,
-      images: [image.url],
-    },
-  };
+    description: page.data.description ?? '',
+    path: page.url,
+    image: { url: ogImageUrl(page), alt: page.data.title },
+    type: 'article',
+    types: { 'text/markdown': markdownUrl(page) },
+    modified: page.data.lastModified ? new Date(page.data.lastModified) : undefined,
+  });
 }
