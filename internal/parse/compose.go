@@ -346,7 +346,7 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 		}
 		b.org = saved
 		cp.chain = cp.chain[:chainLen]
-		cp.scope = cp.scope[:nScope] // an element of a copy left mid-build
+		cp.popTo(nScope) // an element of a copy left mid-build
 		n.Children = n.Children[:nChildren]
 		if outer != nil {
 			outer.Children = outer.Children[:nList]

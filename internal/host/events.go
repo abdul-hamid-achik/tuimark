@@ -141,7 +141,7 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 			// A copy: a handler that changes an object or array key
 			// must not change the store.
 			if ls.each {
-				ev.Keys[ls.alias] = deepCopyJSON(ls.keys[ls.index])
+				ev.Keys[ir.Unmark(ls.alias)] = deepCopyJSON(ls.keys[ls.index])
 			} else {
 				ev.Value = deepCopyJSON(ls.keys[ls.index])
 			}

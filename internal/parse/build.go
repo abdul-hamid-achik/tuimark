@@ -429,7 +429,7 @@ func (b *builder) diag(sev, code string, line, col int, path, id, format string,
 // stands gets it, a self-check (what the element's own attributes and text
 // say) does not, since it holds wherever the element is placed.
 func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, col int, path, id, format string, args ...any) {
-	msg := fmt.Sprintf(format, args...)
+	msg := fmt.Sprintf(format, ir.UnmarkArgs(args)...)
 	file := b.file
 	if org != nil {
 		file = org.File
@@ -2001,11 +2001,15 @@ func (b *builder) checkAliases(n *ir.Node) {
 	if err != nil {
 		return
 	}
+	// An alias the parser renamed in a copy (ir.MarkAlias) compares as
+	// written: renaming keeps a with path from being captured, it does not
+	// change what §6.8 says about two aliases.
+	alias := ir.Unmark(e.Alias)
 	for p := n.Parent; p != nil; p = p.Parent {
 		if p.Each == "" {
 			continue
 		}
-		if pe, err := ir.ParseEach(p.Each); err == nil && pe.Alias == e.Alias {
+		if pe, err := ir.ParseEach(p.Each); err == nil && ir.Unmark(pe.Alias) == alias {
 			b.errN(n, "V011", "each=%q: the alias %q repeats the alias of the enclosing each=%q of %s; pick another name", n.Each, e.Alias, p.Each, describeNode(p))
 			return
 		}

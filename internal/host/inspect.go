@@ -7,6 +7,7 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 )
 
@@ -288,7 +289,7 @@ func (a *App) classInfo(b *layout.Box) []ClassInfo {
 	}
 	for i, g := range b.Src.ClassGuards {
 		on := i < len(b.GuardOn) && b.GuardOn[i]
-		out = append(out, ClassInfo{Name: g.Name, From: "class:" + g.Name, Guard: g.Guard, Active: on, Used: used(g.Name)})
+		out = append(out, ClassInfo{Name: g.Name, From: "class:" + g.Name, Guard: ir.Unmark(g.Guard), Active: on, Used: used(g.Name)})
 	}
 	return out
 }

@@ -564,7 +564,7 @@ func (ds Diags) Sorted() Diags {
 // an element written in a fragment is reported in its own file, and one an
 // include placed names the include (SPEC v0.4b §6.18.6).
 func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
-	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, args...), File: file}
+	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...), File: file}
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
 		d.File = n.FileName(file)

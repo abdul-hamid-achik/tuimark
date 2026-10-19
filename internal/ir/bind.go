@@ -2,6 +2,8 @@ package ir
 
 import (
 	"fmt"
+	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -13,7 +15,8 @@ import (
 //	each   := path " as " ident
 //	if     := path | "!" path
 
-// IsIdent reports whether s matches the ident production.
+// IsIdent reports whether s matches the ident production, or is an each
+// alias the parser renamed in a template's copy (MarkAlias).
 func IsIdent(s string) bool {
 	if s == "" {
 		return false
@@ -23,7 +26,72 @@ func IsIdent(s string) bool {
 		switch {
 		case c == '_', c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z':
 		case c >= '0' && c <= '9' && i > 0:
+		case c == AliasMark && i > 0:
+			return allDigits(s[i+1:])
 		default:
+			return false
+		}
+	}
+	return true
+}
+
+// AliasMark starts the suffix of an each alias that the parser renamed in a
+// template's copy, so that a path a with alias stands for is never captured
+// by an each alias of the copy with the same name (SPEC v0.4b §6.18.5). It
+// is a control character: a document can never write it (XML 1.0 forbids
+// it, and Tuimark rejects character references), so a renamed alias never
+// meets a written name, a store root included.
+const AliasMark = '\x01'
+
+// MarkAlias is the name an each alias written as name takes when the parser
+// renames it, the n-th renamed in the document.
+func MarkAlias(name string, n int) string {
+	return name + string(rune(AliasMark)) + strconv.Itoa(n)
+}
+
+// Unmark is s with every renamed alias shown as written (MarkAlias): what a
+// message, an event's keys, or a tool prints, so no renamed name ever
+// surfaces.
+func Unmark(s string) string {
+	i := strings.IndexByte(s, AliasMark)
+	if i < 0 {
+		return s
+	}
+	var b strings.Builder
+	for i >= 0 {
+		b.WriteString(s[:i])
+		j := i + 1
+		for j < len(s) && s[j] >= '0' && s[j] <= '9' {
+			j++
+		}
+		s = s[j:]
+		i = strings.IndexByte(s, AliasMark)
+	}
+	b.WriteString(s)
+	return b.String()
+}
+
+// UnmarkArgs is args with every string unmarked (Unmark), for a message
+// formatted from paths.
+func UnmarkArgs(args []any) []any {
+	cloned := false
+	for i, a := range args {
+		if s, ok := a.(string); ok && strings.IndexByte(s, AliasMark) >= 0 {
+			if !cloned {
+				args, cloned = slices.Clone(args), true
+			}
+			args[i] = Unmark(s)
+		}
+	}
+	return args
+}
+
+func allDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
 			return false
 		}
 	}

@@ -70,8 +70,17 @@ type templating struct {
 	prefix string
 	// scope is the aliases in scope in the copies being built, innermost
 	// last: the with aliases of their uses, and the each aliases of their
-	// elements, which shadow them (§6.18.5).
-	scope []alias
+	// elements, which shadow them (§6.18.5). byName indexes it: the
+	// positions in scope of each name, innermost last, so a lookup costs
+	// the same however many aliases are in scope. heads counts the with
+	// aliases in scope by the first segment of the path they stand for
+	// (an each alias of that name is renamed, see copyContent). push and
+	// popTo keep the three in step.
+	scope  []alias
+	byName map[string][]int
+	heads  map[string]int
+	// renamed counts the each aliases renamed so far (ir.MarkAlias).
+	renamed int
 	// copies are the copies being built, outermost first; stack their
 	// templates.
 	copies []*copyFrame
@@ -117,10 +126,38 @@ type useInfo struct {
 
 // alias is an alias in scope in a copy: a with alias (use is its <use>,
 // path what it stands for), or an each alias of an element of the copy
-// (use nil), which shadows any alias of the same name around it.
+// (use nil), which shadows any alias of the same name around it. An each
+// alias the parser renamed has its new name in path (ir.MarkAlias).
 type alias struct {
 	name, path string
 	use        *ir.Node
+}
+
+// push brings a into scope, innermost.
+func (t *templating) push(a alias) {
+	if t.byName == nil {
+		t.byName, t.heads = map[string][]int{}, map[string]int{}
+	}
+	t.byName[a.name] = append(t.byName[a.name], len(t.scope))
+	if a.use != nil {
+		head, _, _ := strings.Cut(a.path, ".")
+		t.heads[head]++
+	}
+	t.scope = append(t.scope, a)
+}
+
+// popTo takes the aliases pushed after the first n out of scope.
+func (t *templating) popTo(n int) {
+	for i := len(t.scope) - 1; i >= n; i-- {
+		a := t.scope[i]
+		s := t.byName[a.name]
+		t.byName[a.name] = s[:len(s)-1]
+		if a.use != nil {
+			head, _, _ := strings.Cut(a.path, ".")
+			t.heads[head]--
+		}
+	}
+	t.scope = t.scope[:n]
 }
 
 // copyFrame is a copy being built: its elements whose focus= names an
@@ -503,33 +540,37 @@ func (b *builder) expandUse(n, q *ir.Node) {
 			return
 		}
 	}
-	for _, cl := range q.With {
-		if b.aliasInScope(q, cl.Alias) {
-			b.errUse(q, "V011", "with alias %q repeats an alias in scope", cl.Alias)
-			return
+	if len(q.With) > 0 {
+		inScope := b.aliasesAround(q)
+		for _, cl := range q.With {
+			if inScope(cl.Alias) {
+				b.errUse(q, "V011", "with alias %q repeats an alias in scope", cl.Alias)
+				return
+			}
 		}
 	}
 	b.copyTemplate(n, q, t)
 }
 
-// aliasInScope reports whether name is an alias in scope where the use q
-// stands: an each alias of an element around it, or an alias of a copy
-// being built, a with alias of an enclosing use included.
-func (b *builder) aliasInScope(q *ir.Node, name string) bool {
-	for _, a := range b.comp.scope {
-		if a.name == name {
-			return true
-		}
-	}
+// aliasesAround returns whether a name is an alias in scope where the use
+// q stands: an each alias of an element around it, or an alias of a copy
+// being built, a with alias of an enclosing use included. The each aliases
+// around it are collected once, so a with of many clauses costs one walk;
+// a renamed alias counts by its written name (ir.MarkAlias).
+func (b *builder) aliasesAround(q *ir.Node) func(string) bool {
+	cp := b.comp
+	around := map[string]bool{}
 	for p := q.Parent; p != nil; p = p.Parent {
 		if p.Each == "" {
 			continue
 		}
-		if e, err := ir.ParseEach(p.Each); err == nil && e.Alias == name {
-			return true
+		if e, err := ir.ParseEach(p.Each); err == nil {
+			around[ir.Unmark(e.Alias)] = true
 		}
 	}
-	return false
+	return func(name string) bool {
+		return around[name] || len(cp.byName[name]) > 0
+	}
 }
 
 // copyTemplate builds the copy of t's body that the use q places in n.
@@ -547,7 +588,8 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	defer func() {
 		cp.frames = cp.frames[:len(cp.frames)-1]
 		b.org, cp.chain, cp.prefix = savedOrg, savedChain, savedPrefix
-		cp.scope, cp.stack, cp.copies, cp.inTmpl = cp.scope[:nScope], cp.stack[:nStack], cp.copies[:nCopies], inTmpl
+		cp.popTo(nScope)
+		cp.stack, cp.copies, cp.inTmpl = cp.stack[:nStack], cp.copies[:nCopies], inTmpl
 		r := recover()
 		if r == nil {
 			return
@@ -576,7 +618,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	}
 	cp.prefix = prefix
 	for _, cl := range q.With {
-		cp.scope = append(cp.scope, alias{name: cl.Alias, path: cl.Path, use: q})
+		cp.push(alias{name: cl.Alias, path: cl.Path, use: q})
 	}
 	cp.stack = append(cp.stack, t)
 	frame := &copyFrame{}
@@ -681,14 +723,29 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 	}
 	if n.Each != "" {
 		if e, err := ir.ParseEach(n.Each); err == nil {
-			n.Each = cp.subst(e.Path) + " as " + e.Alias
+			// The alias is renamed when a with alias in scope stands for a
+			// path that starts with its name: inside this each, that path
+			// still resolves where its use stands (§6.18.5), so it must not
+			// meet this alias at run time. A path written with the alias
+			// takes the new name through subst; messages and events show
+			// the written one (ir.Unmark), and n.Written keeps it.
+			name := e.Alias
+			if cp.heads[name] > 0 {
+				cp.renamed++
+				name = ir.MarkAlias(e.Alias, cp.renamed)
+			}
+			n.Each = cp.subst(e.Path) + " as " + name
 			n.Attrs["each"] = n.Each
 			if a := cp.lookup(e.Alias); a != nil && a.use != nil {
 				// Reported at the element; the copy is still inserted,
 				// and inside this each its own alias is the innermost.
 				b.diagOrg(n.Org, false, ir.Error, "V011", n.Line, n.Col, n.Path, n.ID, "each alias %q repeats the with alias of %s at %s", e.Alias, describeUse(a.use), a.use.Loc(true))
 			}
-			cp.scope = append(cp.scope, alias{name: e.Alias})
+			al := alias{name: e.Alias}
+			if name != e.Alias {
+				al.path = name
+			}
+			cp.push(al)
 		}
 	}
 	// Per row, inside the each alias: a key, and a select's option label.
@@ -705,7 +762,7 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 	b.content(n, r)
 	w.Text = n.Text
 	n.Text = cp.substText(n.Text)
-	cp.scope = cp.scope[:depth]
+	cp.popTo(depth)
 }
 
 // describeUse names a <use> as a placement suffix does.
@@ -718,24 +775,24 @@ func describeUse(u *ir.Node) string {
 
 // lookup returns the innermost alias in scope called name, or nil.
 func (t *templating) lookup(name string) *alias {
-	for i := len(t.scope) - 1; i >= 0; i-- {
-		if t.scope[i].name == name {
-			return &t.scope[i]
-		}
+	s := t.byName[name]
+	if len(s) == 0 {
+		return nil
 	}
-	return nil
+	return &t.scope[s[len(s)-1]]
 }
 
 // subst is the path p as it resolves in the copies being built: a path
 // whose first segment is a with alias in scope (not shadowed by an each
-// alias) stands for the alias's path followed by the other segments.
+// alias) stands for the alias's path followed by the other segments, and
+// one whose first segment is a renamed each alias takes its new name.
 func (t *templating) subst(p string) string {
 	if len(t.scope) == 0 {
 		return p
 	}
 	head, rest, more := strings.Cut(p, ".")
 	a := t.lookup(head)
-	if a == nil || a.use == nil {
+	if a == nil || a.path == "" {
 		return p
 	}
 	if !more {

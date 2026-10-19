@@ -345,7 +345,7 @@ func (a *App) pickOption(b *layout.Box, i int) []Event {
 		return nil
 	}
 	if act, ok := b.Src.On["change"]; ok {
-		return []Event{{Action: act, Source: b.ID, Keys: map[string]any{st.alias: deepCopyJSON(k)}, Value: deepCopyJSON(k)}}
+		return []Event{{Action: act, Source: b.ID, Keys: map[string]any{ir.Unmark(st.alias): deepCopyJSON(k)}, Value: deepCopyJSON(k)}}
 	}
 	return nil
 }
