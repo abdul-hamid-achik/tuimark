@@ -246,7 +246,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 			initFocus = a.focus
 		}
 	}
-	casc := css.NewCascade(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: theme})
+	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: theme}, a.doc.Lang)
 	if !a.noCache {
 		casc.EnableSharing()
 	}

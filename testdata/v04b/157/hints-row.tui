@@ -1,0 +1,14 @@
+<tui>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="/" action="find" label="find"/>
+    <bind keys="r" action="reload" label="reload"/>
+  </keymap>
+  <screen id="main">
+    <row id="status" style="height: 1">
+      <text>ready</text>
+      <spacer/>
+      <hints id="keys"/>
+    </row>
+  </screen>
+</tui>
