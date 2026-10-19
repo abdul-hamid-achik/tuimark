@@ -26,6 +26,7 @@ var attrKeywords = map[string][]AttrKeyword{
 	"focusable":     flagKeywords(1),
 	"secret":        flagKeywords(1),
 	"indeterminate": flagKeywords(int(ir.Lang4)),
+	"single":        flagKeywords(int(ir.Lang4)),
 	"open":          flagKeywords(1),
 	"mouse":         flagKeywords(2),
 	"scroll.axis":   {{"both", 1}, {"x", 1}, {"y", 1}},

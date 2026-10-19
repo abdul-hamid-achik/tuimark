@@ -27,11 +27,22 @@ func TestLangFlags(t *testing.T) {
 	}
 }
 
-// IsKindLang adds KindsCurrent only in the current language. F0 leaves
-// KindsCurrent empty; a test-only entry shows the gate.
+// IsKindLang adds KindsCurrent only in the current language. Each 0.4b
+// phase adds its tags there (F8: checkbox), and none of them is a kind of
+// an older version; a test-only entry shows the gate.
 func TestIsKindLang(t *testing.T) {
-	if len(KindsCurrent) != 0 {
-		t.Fatalf("KindsCurrent = %v: F0 declares no current-language tag", KindsCurrent)
+	for _, k := range KindsCurrent {
+		if IsKindIn(k, true) {
+			t.Errorf("KindsCurrent holds %q, a kind of version=\"2\"", k)
+		}
+		for _, l := range []Lang{Lang1, Lang2, Lang3} {
+			if IsKindLang(k, l) {
+				t.Errorf("current-language tag %q is a kind of the pinned Lang(%d)", k, l)
+			}
+		}
+		if !IsKindLang(k, Lang4) {
+			t.Errorf("current-language tag %q is not a kind of the current language", k)
+		}
 	}
 	for _, k := range append(append([]string(nil), Kinds...), KindsV2...) {
 		for _, l := range []Lang{Lang1, Lang2, Lang3, Lang4} {

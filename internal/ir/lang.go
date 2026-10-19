@@ -52,7 +52,9 @@ const VersionHintCurrent = ` (requires a <tui> without version)`
 // v0.4b §5.1, §6): in a pinned document each is V001 with
 // VersionHintCurrent. Each 0.4b phase adds its tags here when it lays
 // them out and paints them; none is declared ahead of its phase.
-var KindsCurrent = []string{}
+var KindsCurrent = []string{
+	"checkbox", // SPEC v0.4b §6.16 (F8)
+}
 
 // IsKindCurrent reports whether tag is one of the current-language tags.
 func IsKindCurrent(tag string) bool {
