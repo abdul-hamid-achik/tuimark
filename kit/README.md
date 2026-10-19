@@ -388,7 +388,7 @@ no published name.
 `package kit` to your package; it imports only
 `github.com/abdul-hamid-achik/tuimark`. In TypeScript, copy the file
 (`kit/ts/toasts.ts`) next to your parent; it imports only types from
-`@tuimark/host`. A file that needs another says so in its header: `dialog` and
+`@thelacanians/tuimark`. A file that needs another says so in its header: `dialog` and
 `form` need `route`, and `palette` needs `filter`. Each file has its test beside
 it (`go test ./...` in `kit/go`, `bun test` in `kit/ts`). The Go tests for
 `toasts`, `form`, `dialog`, `palette` and `sortpage` load the real component

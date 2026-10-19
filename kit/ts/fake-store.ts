@@ -1,7 +1,7 @@
-// A store and a handler table in memory, standing in for @tuimark/host in the
+// A store and a handler table in memory, standing in for @thelacanians/tuimark in the
 // helpers' tests. It is test support, not a helper: do not copy it.
 import { readFileSync } from "node:fs";
-import type { Host, HostEvent } from "@tuimark/host";
+import type { Host, HostEvent } from "@thelacanians/tuimark";
 
 type Handler = (ev: HostEvent) => unknown;
 

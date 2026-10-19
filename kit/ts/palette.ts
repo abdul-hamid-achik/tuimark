@@ -1,6 +1,6 @@
 // palette: a command registry behind kit/components/palette.tui.
 //
-// Copy this file into your project. It depends on @tuimark/host (types) and on
+// Copy this file into your project. It depends on @thelacanians/tuimark (types) and on
 // filter.ts (createFilter): copy that file with this one.
 //
 // The component reads palette.commands (the registry, [{id, label, hint}]),
@@ -18,7 +18,7 @@
 // with no handler. The TypeScript host has no Derive: the component's input
 // fires palette_query on every change, and found is recomputed there. That is
 // the one action a TypeScript parent needs that a Go host does not.
-import type { Host, HostEvent } from "@tuimark/host";
+import type { Host, HostEvent } from "@thelacanians/tuimark";
 import { createFilter, type FilterMode } from "./filter.ts";
 
 type Ui = Pick<Host, "batch" | "get" | "set" | "on">;

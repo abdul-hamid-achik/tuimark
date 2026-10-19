@@ -1,6 +1,6 @@
 // sortpage: sort by a column (click to cycle) and paginate, for a table.
 //
-// Copy this file into your project. It depends only on @tuimark/host (types).
+// Copy this file into your project. It depends only on @thelacanians/tuimark (types).
 //
 // A table shows the array it is given. A sort-page controller computes two
 // paths from the full array and a small state object, so the table's `each`
@@ -16,7 +16,7 @@
 // The Go host derives both paths on every write; the TypeScript host has no
 // Derive, so cycle(), setPage() and the others recompute for you, and you call
 // recompute() after the source array changes.
-import type { Host } from "@tuimark/host";
+import type { Host } from "@thelacanians/tuimark";
 
 type Ui = Pick<Host, "batch" | "get">;
 

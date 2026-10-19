@@ -9,7 +9,7 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "paths": { "@tuimark/host": ["./src/index.ts"] }
+    "paths": { "@thelacanians/tuimark": ["./src/index.ts"] }
   },
   "files": ["../../cmd/tuimark/newtemplate/parent.ts"]
 }

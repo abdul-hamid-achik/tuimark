@@ -165,7 +165,7 @@ func projectFiles(dir string, goProject, tsProject bool) ([]templateFile, map[st
 func (c *cli) cmdNew(args []string) int {
 	fs := c.newFlags("new")
 	goProject := fs.Bool("go", false, "add main.go and go.mod: the same app as a Go program")
-	tsProject := fs.Bool("ts", false, "add parent.ts and package.json: the same app as a Bun parent through @tuimark/host")
+	tsProject := fs.Bool("ts", false, "add parent.ts and package.json: the same app as a Bun parent through @thelacanians/tuimark")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1

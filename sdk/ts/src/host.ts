@@ -2,6 +2,7 @@ import { closeSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { constants as osConstants, tmpdir } from "node:os";
 import { join } from "node:path";
+import { BinaryError, resolveBinary } from "./binary.ts";
 import { HostError, ProtocolVersionError, RequestError } from "./errors.ts";
 import { readLines } from "./lines.ts";
 import { FdWriter } from "./sink.ts";
@@ -16,7 +17,7 @@ import type {
   Write,
 } from "./types.ts";
 
-/** The protocol this package speaks (SPEC §19.1); `1.x` versions speak `1`. */
+/** The protocol this package speaks (SPEC §19.1). */
 const PROTOCOL = 1;
 
 /** SPEC §19.1, "Line bound": a line of this many bytes or more ends the session. */
@@ -209,7 +210,15 @@ export class Host {
 
   /** @internal Use {@link spawnHost}. */
   static async spawn(file: string, options: SpawnHostOptions = {}): Promise<Host> {
-    const bin = options.bin ?? "tuimark";
+    let bin = options.bin;
+    if (bin === undefined) {
+      try {
+        bin = await resolveBinary({ env: options.env, log: (line) => process.stderr.write(`${line}\n`) });
+      } catch (error) {
+        const reason = error instanceof BinaryError ? error.message : messageOf(error);
+        throw new HostError(`cannot find the tuimark binary: ${reason}`, { cause: error });
+      }
+    }
     const args = ["host", file];
 
     let tempDir: string | undefined;

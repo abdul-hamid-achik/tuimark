@@ -33,7 +33,7 @@ go build -o bin/logs ./examples/logs && ./bin/logs
 | [`agent`](agent) | A coding-agent chat on a scripted provider or a local Ollama model | a transcript, a composer, approval modals, a headless mode |
 | [`dashboard`](dashboard) | A deploy dashboard | two screens, a progress bar, buttons, a confirm modal |
 | [`inbox`](inbox) | A ticket inbox, the SPEC's reference fixture (`version="1"`) | a search input, a bound list, a detail pane, `@media` |
-| [`host-ts`](host-ts) | A minimal counter driven by a Bun parent through `@tuimark/host` | `tuimark host` and its fd 3/fd 4 protocol, from TypeScript |
+| [`host-ts`](host-ts) | A minimal counter driven by a Bun parent through `@thelacanians/tuimark` | `tuimark host` and its fd 3/fd 4 protocol, from TypeScript |
 
 `logs`, `tasks`, `gitui`, `http`, the six games (`snake`, `chess`, `tetris`,
 `minesweeper`, `2048`, `sudoku`), `pipeline`, `music`, `pomodoro`,

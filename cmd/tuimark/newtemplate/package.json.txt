@@ -2,12 +2,12 @@
   "name": "@@MODULE@@",
   "private": true,
   "type": "module",
-  "description": "A Tuimark view driven by a Bun parent through @tuimark/host.",
+  "description": "A Tuimark view driven by a Bun parent through @thelacanians/tuimark.",
   "scripts": {
     "start": "bun parent.ts"
   },
   "dependencies": {
-    "@tuimark/host": "^1.0.0"
+    "@thelacanians/tuimark": "^@@VERSION@@"
   },
   "devDependencies": {
     "@types/bun": "latest"

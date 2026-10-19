@@ -15,14 +15,14 @@ export class HostError extends Error {
   }
 }
 
-/** `ready` named a protocol this package does not speak (1.x speaks 1). */
+/** `ready` named a protocol this package does not speak (it speaks 1). */
 export class ProtocolVersionError extends HostError {
   override name = "ProtocolVersionError";
   readonly protocol: unknown;
 
   constructor(protocol: unknown, options?: { code?: number }) {
     super(
-      `tuimark host speaks protocol ${JSON.stringify(protocol)}; this @tuimark/host speaks protocol 1`,
+      `tuimark host speaks protocol ${JSON.stringify(protocol)}; this @thelacanians/tuimark speaks protocol 1`,
       options,
     );
     this.protocol = protocol;

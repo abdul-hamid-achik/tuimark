@@ -1,4 +1,4 @@
-// SPEC test 122: @tuimark/host against a fake child (test/fake-child.ts) that
+// SPEC test 122: @thelacanians/tuimark against a fake child (test/fake-child.ts) that
 // speaks the §19.1 protocol on fd 3 and fd 4. The parts that need a process of
 // their own (signals, exitWithChild) are in process.test.ts.
 import { afterEach, describe, expect, test } from "bun:test";
@@ -65,6 +65,40 @@ describe("handshake", () => {
     const error = await spawnHost("app.tui", { bin: "/nonexistent/tuimark" }).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(HostError);
     expect((error as HostError).message).toContain("/nonexistent/tuimark");
+  });
+
+  test("without `bin`, spawnHost runs the binary the resolver finds (TUIMARK_BINARY)", async () => {
+    const saved = process.env.TUIMARK_BINARY;
+    process.env.TUIMARK_BINARY = fakeBin;
+    try {
+      const { env } = fakeEnv({});
+      const host = await spawnHost("app.tui", { env });
+      await host.close();
+    } finally {
+      if (saved === undefined) delete process.env.TUIMARK_BINARY;
+      else process.env.TUIMARK_BINARY = saved;
+    }
+  });
+
+  test("without `bin`, TUIMARK_BINARY from options.env is honored", async () => {
+    expect(process.env.TUIMARK_BINARY).toBeUndefined();
+    const { env } = fakeEnv({});
+    const host = await spawnHost("app.tui", { env: { ...env, TUIMARK_BINARY: fakeBin } });
+    await host.close();
+  });
+
+  test("without `bin`, a TUIMARK_BINARY that is not a file rejects spawnHost", async () => {
+    const saved = process.env.TUIMARK_BINARY;
+    process.env.TUIMARK_BINARY = "/nonexistent/tuimark";
+    try {
+      const error = await spawnHost("app.tui").catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(HostError);
+      expect((error as HostError).message).toContain("cannot find the tuimark binary");
+      expect((error as HostError).message).toContain("/nonexistent/tuimark");
+    } finally {
+      if (saved === undefined) delete process.env.TUIMARK_BINARY;
+      else process.env.TUIMARK_BINARY = saved;
+    }
   });
 
   test("messages that arrive with ready wait for the caller's handlers", async () => {

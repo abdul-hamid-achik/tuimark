@@ -662,7 +662,7 @@ tuimark version
   `:selected` rules), `sample.json`, and the project briefing as
   `AGENTS.md`. `--go` adds `main.go` and a `go.mod` that requires this
   module at the version `tuimark version` reports; `--ts` adds `parent.ts`
-  and `package.json` (a Bun parent through `@tuimark/host`). The two flags
+  and `package.json` (a Bun parent through `@thelacanians/tuimark`). The two flags
   are exclusive. It prints the files it wrote, then the next command
   (`cd NAME && tuimark run app.tui --data sample.json`, `… go mod tidy && go
   run .`, or `… bun install && bun parent.ts`).
@@ -1268,7 +1268,7 @@ module; the only supported entry points are the functions above.
   go build -o bin/agent ./examples/agent
   ```
   The `host_ts*` specs also need `examples/host-ts`'s dependencies, which
-  include `@tuimark/host` copied from `sdk/ts`. Reinstall them from scratch
+  include `@thelacanians/tuimark` copied from `sdk/ts`. Reinstall them from scratch
   so a stale copy never hides an SDK change:
   ```sh
   (cd examples/host-ts && rm -rf node_modules && bun install --frozen-lockfile)

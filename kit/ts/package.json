@@ -2,13 +2,13 @@
   "name": "tuimark-kit-ts",
   "private": true,
   "type": "module",
-  "description": "Copyable TypeScript host helpers for the Tuimark kit: toasts, filter, sort and pages, forms, dialogs, a command palette, async loads and formatting, over @tuimark/host.",
+  "description": "Copyable TypeScript host helpers for the Tuimark kit: toasts, filter, sort and pages, forms, dialogs, a command palette, async loads and formatting, over @thelacanians/tuimark.",
   "scripts": {
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tuimark/host": "file:../../sdk/ts"
+    "@thelacanians/tuimark": "file:../../sdk/ts"
   },
   "devDependencies": {
     "@types/bun": "^1.4.3",

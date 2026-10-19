@@ -1,6 +1,6 @@
 // filter: keep a filtered copy of an array in the store, with counts.
 //
-// Copy this file into your project. It depends only on @tuimark/host (types).
+// Copy this file into your project. It depends only on @thelacanians/tuimark (types).
 // palette.ts imports it, so copy this file with that one.
 //
 // Markup has no expressions, so it cannot filter a list. The Go host's Derive
@@ -8,7 +8,7 @@
 // Derive, so the parent recomputes: call recompute() after a write to the
 // source, and from the event that tells you the query changed (an input's
 // on:change). A filter is as live as the events you wire to it.
-import type { Host } from "@tuimark/host";
+import type { Host } from "@thelacanians/tuimark";
 
 type Ui = Pick<Host, "set" | "get">;
 

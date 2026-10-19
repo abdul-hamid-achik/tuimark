@@ -13,7 +13,7 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "paths": { "@tuimark/host": ["../../sdk/ts/src/index.ts"] }
+    "paths": { "@thelacanians/tuimark": ["../../sdk/ts/src/index.ts"] }
   },
   "include": ["*.ts"]
 }

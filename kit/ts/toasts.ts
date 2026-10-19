@@ -1,6 +1,6 @@
 // toasts: a queue of toasts for kit/components/toast.tui, with expiry.
 //
-// Copy this file into your project. It depends only on @tuimark/host (types).
+// Copy this file into your project. It depends only on @thelacanians/tuimark (types).
 //
 // The component is one row: toast.tui shows the toast in toast.text while
 // toast.show is true, with the level in toast.is_ok, toast.is_warn and
@@ -9,7 +9,7 @@
 // shows for its time to live, and tick() moves to the next. The TS host has no
 // Every, so start() runs tick() on a timer. Esc, bound to toast_dismiss in the
 // component, drops the one on screen (register()).
-import type { Host } from "@tuimark/host";
+import type { Host } from "@thelacanians/tuimark";
 
 type Ui = Pick<Host, "batch" | "get" | "on">;
 

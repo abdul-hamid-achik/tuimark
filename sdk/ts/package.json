@@ -1,18 +1,39 @@
 {
-  "name": "@tuimark/host",
-  "version": "1.0.0",
-  "description": "TypeScript client for Tuimark's host protocol: drive a Tuimark view from a Bun program over `tuimark host`.",
+  "name": "@thelacanians/tuimark",
+  "version": "0.4.1",
+  "description": "Tuimark for npm: the `tuimark` command (validate, dump, play, run terminal UIs written as .tui markup) and a TypeScript client to drive a view from Bun over `tuimark host`.",
   "type": "module",
   "license": "MIT",
   "author": "Abdul Hamid Achik",
+  "homepage": "https://tuimark.dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/abdul-hamid-achik/tuimark.git",
     "directory": "sdk/ts"
   },
-  "keywords": ["tuimark", "tui", "terminal", "bun"],
+  "bugs": {
+    "url": "https://github.com/abdul-hamid-achik/tuimark/issues"
+  },
+  "keywords": [
+    "tuimark",
+    "tui",
+    "terminal",
+    "cli",
+    "ui",
+    "markup",
+    "declarative",
+    "layout",
+    "css",
+    "agents",
+    "ai-agents",
+    "bun",
+    "typescript"
+  ],
   "engines": {
-    "bun": ">=1.4.2"
+    "node": ">=18"
+  },
+  "bin": {
+    "tuimark": "./bin/tuimark.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,7 +45,10 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "src", "README.md", "LICENSE"],
+  "files": ["bin", "dist", "src", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",

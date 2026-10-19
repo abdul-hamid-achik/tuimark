@@ -56,6 +56,16 @@ archives:
       - CHANGELOG.md
       - LICENSE
 
+  # The raw executables, one per platform, named
+  # tuimark_<version>_<os>_<arch>[.exe] with Go's own os and arch names. The
+  # npm package @thelacanians/tuimark (sdk/ts, bin/tuimark.js) downloads these
+  # and checks them against checksums.txt, so it needs no tar or zip code. Keep
+  # the template in step with platformTarget() in sdk/ts/src/binary.ts.
+  - id: binary
+    formats:
+      - binary
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
 checksum:
   name_template: "checksums.txt"
 
@@ -77,6 +87,9 @@ homebrew_casks:
   - name: tuimark
     binaries:
       - tuimark
+    # Only the archives: the raw binaries (archive id `binary`) are for npm.
+    ids:
+      - default
     # The tap repo must exist and CI must provide HOMEBREW_TAP_TOKEN (a PAT
     # with write access to it); without the token the cask upload is skipped
     # and the GitHub release still publishes.
