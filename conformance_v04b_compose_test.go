@@ -118,6 +118,19 @@ func TestIncludePlacementAndFileNames(t *testing.T) {
 	})
 }
 
+// screenIsEmpty checks that the dump holds the screen alone: an include
+// that reports an error inserts nothing.
+func screenIsEmpty(t *testing.T, app *tuimark.App) {
+	t.Helper()
+	d, err := app.Dump(20, 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d.Nodes) != 1 {
+		t.Errorf("%d nodes, want the empty screen alone", len(d.Nodes))
+	}
+}
+
 // appWith is test 135's app.tui with line 3 replaced by body.
 func appWith(body string) string {
 	return "<tui>\n  <screen id=\"main\">\n    " + body + "\n  </screen>\n</tui>\n"
@@ -184,14 +197,7 @@ func TestIncludeErrors(t *testing.T) {
 			if !reflect.DeepEqual(r.diags, c.want) {
 				t.Errorf("diagnostics:\n%s\nwant\n%s", strings.Join(r.diags, "\n"), strings.Join(c.want, "\n"))
 			}
-			// The screen stays empty.
-			d, err := r.app.Dump(20, 4)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if len(d.Nodes) != 1 {
-				t.Errorf("%d nodes, want the empty screen alone", len(d.Nodes))
-			}
+			screenIsEmpty(t, r.app)
 		})
 	}
 	t.Run("missing", func(t *testing.T) {
@@ -199,12 +205,14 @@ func TestIncludeErrors(t *testing.T) {
 		if len(r.diags) != 1 || !strings.HasPrefix(r.diags[0], `V006 app.tui:3:5 /screen/include id= include src="missing.tui" cannot be read: `) {
 			t.Errorf("diagnostics: %v", r.diags)
 		}
+		screenIsEmpty(t, r.app)
 	})
 	t.Run("not well-formed", func(t *testing.T) {
 		r := run(t, strings.Replace(incl, "X", "bad.tui", 1), false)
 		if len(r.diags) != 1 || !strings.HasPrefix(r.diags[0], "V005 bad.tui:") {
 			t.Errorf("diagnostics: %v", r.diags)
 		}
+		screenIsEmpty(t, r.app)
 	})
 	t.Run("no src", func(t *testing.T) {
 		r := run(t, `<include/>`, false)
@@ -212,6 +220,7 @@ func TestIncludeErrors(t *testing.T) {
 		if !reflect.DeepEqual(r.diags, want) {
 			t.Errorf("diagnostics: %v, want %v", r.diags, want)
 		}
+		screenIsEmpty(t, r.app)
 	})
 	t.Run("outside the fs.FS", func(t *testing.T) {
 		for _, x := range []string{"../x.tui", "/x.tui"} {
@@ -220,6 +229,7 @@ func TestIncludeErrors(t *testing.T) {
 			if !reflect.DeepEqual(r.diags, want) {
 				t.Errorf("src=%q: %v, want %v", x, r.diags, want)
 			}
+			screenIsEmpty(t, r.app)
 		}
 	})
 	t.Run("in an element without element children", func(t *testing.T) {
