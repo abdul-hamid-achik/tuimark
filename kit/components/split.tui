@@ -1,0 +1,36 @@
+<!-- k-split · Contract: reads items[] {id, title, age}, detail.{title, status, open, age, summary, owner} (the host keeps detail with a Derive over items and the cursor); reads and writes cur (the cursor row's id) · Actions: menu_select · Keys: j and k move · Requires: k-menu, k-card, k-badge, k-muted -->
+<tui theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <keymap when="#items">
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+  </keymap>
+  <screen id="demo" focus="#items">
+    <!-- COPY: master / detail is a `row` with class `k-split`: a list on the
+         left (`k-split-master`, 34% wide, 24 to 40 columns) and a card on
+         the right (`k-split-detail`, the rest). The list `bind` is the
+         selected id; the host keeps `detail` (a Derive over `items` and the
+         cursor) so the right side follows the cursor with no handler.
+         The detail card shows the badge for the status through class:NAME
+         guards. -->
+    <row class="k-split">
+      <list id="items" class="k-menu k-split-master" each="items as it" key="it.id" bind="cur" title="Incidents" on:select="menu_select">
+        <item>
+          <row class="k-menu-row">
+            <text class="k-menu-label">{it.title}</text>
+            <text class="k-menu-key">{it.age}</text>
+          </row>
+        </item>
+      </list>
+      <box class="k-card k-split-detail" title="{detail.title}">
+        <row width="1fr" height="1" gap="1">
+          <text class="k-badge" class:danger="detail.open" class:ok="!detail.open">{detail.status}</text>
+          <text class="k-muted">{detail.age} ago</text>
+        </row>
+        <text class="k-card-text" wrap="wrap">{detail.summary}</text>
+        <text class="k-card-muted">owner: {detail.owner}</text>
+      </box>
+    </row>
+  </screen>
+</tui>

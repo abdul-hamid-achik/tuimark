@@ -1,0 +1,9 @@
+{
+  "cur": "i2",
+  "items": [
+    { "id": "i1", "title": "Checkout latency", "age": "2h", "status": "resolved", "open": false, "summary": "p95 returned to normal after the cache was warmed.", "owner": "ada" },
+    { "id": "i2", "title": "Billing errors", "age": "14m", "status": "open", "open": true, "summary": "The billing worker is failing 3% of invoices with a timeout.", "owner": "grace" },
+    { "id": "i3", "title": "Search index lag", "age": "1d", "status": "resolved", "open": false, "summary": "Reindexed; lag is under a second.", "owner": "linus" }
+  ],
+  "detail": { "title": "Billing errors", "age": "14m", "status": "open", "open": true, "summary": "The billing worker is failing 3% of invoices with a timeout.", "owner": "grace" }
+}

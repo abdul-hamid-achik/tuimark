@@ -1216,6 +1216,10 @@ module; the only supported entry points are the functions above.
   go build -o bin/sudoku ./examples/sudoku && ./bin/sudoku
   ```
 
+- `kit/` and `examples/kit-gallery` — a copy-paste component kit (design tokens,
+  `k-` component classes, and one small document per component) and an app that
+  shows every component on five tabs. See [`kit/README.md`](kit/README.md).
+
 - `examples/stacked/{app.tui,theme.tcss}` — the phase-1 media fixture (SPEC
   §4, §21 test 10): the inbox layout with static text, where `@media
   (max-cols: 80)` stacks `#sidebar` above `#detail`. It only feeds the

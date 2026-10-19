@@ -1,0 +1,13 @@
+{
+  "menu": {
+    "cur": "deploys",
+    "checked": ["logs"],
+    "items": [
+      { "id": "home", "icon": "⌂", "label": "Overview", "key": "g o" },
+      { "id": "deploys", "icon": "▲", "label": "Deployments", "key": "g d" },
+      { "id": "logs", "icon": "≡", "label": "Logs", "key": "g l" },
+      { "id": "metrics", "icon": "▁", "label": "Metrics", "key": "g m" },
+      { "id": "settings", "icon": "⚙", "label": "Settings", "key": "g s" }
+    ]
+  }
+}

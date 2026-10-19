@@ -1,0 +1,32 @@
+<!-- k-table · Contract: reads services[] {id, name, state, ok, region, rps, p95} and count; reads and writes cur (the cursor row's id) · Actions: table_select, table_open · Keys: j and k move, enter opens · Requires: k-hints -->
+<tui theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <keymap when="#svc">
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+    <bind keys="enter" action="table_open" label="open"/>
+  </keymap>
+  <screen id="demo" focus="#svc">
+    <col width="1fr" height="1fr" gap="0">
+      <!-- COPY: a data table is a `table` with class `k-table`. The header
+           is the `column` titles (bold, muted). Give a `column` the class
+           `k-num` for numbers: the header and every cell of it align to the
+           right. Columns with `priority` hide, lowest first, when the table
+           is too narrow, so give the least important column the smallest
+           number, and give the `1fr` column a `min-width` (the class
+           `k-table-name`) so columns hide before it is squeezed. `bind`
+           receives the cursor row's key; `on:select` fires as the cursor
+           moves. The cursor row is bold on a quiet fill while the table is
+           idle and a solid accent bar while it has focus. -->
+      <table id="svc" class="k-table" each="services as s" key="s.id" bind="cur" title="Services · {count}" placeholder="no services" on:select="table_select">
+        <column id="svc__name" class="k-table-name" title="SERVICE" width="1fr">{s.name}</column>
+        <column id="svc__state" class="k-table-state" class:ok="s.ok" class:danger="!s.ok" title="STATE" width="9">{s.state}</column>
+        <column id="svc__region" class="k-table-muted" title="REGION" width="10" priority="1">{s.region}</column>
+        <column id="svc__rps" class="k-num" title="REQ/S" width="8" priority="2">{s.rps}</column>
+        <column id="svc__p95" class="k-num" title="P95 MS" width="8" priority="3">{s.p95}</column>
+      </table>
+      <hints class="k-hints"/>
+    </col>
+  </screen>
+</tui>

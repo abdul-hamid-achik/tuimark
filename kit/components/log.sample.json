@@ -1,0 +1,103 @@
+{
+  "log": {
+    "count": 12,
+    "lines": [
+      {
+        "n": 1,
+        "text": "12:00:01 resolving dependencies",
+        "debug": true,
+        "info": false,
+        "warn": false,
+        "err": false
+      },
+      {
+        "n": 2,
+        "text": "12:00:02 fetched 214 packages",
+        "debug": true,
+        "info": false,
+        "warn": false,
+        "err": false
+      },
+      {
+        "n": 3,
+        "text": "12:00:03 compiling api-gateway",
+        "info": true,
+        "debug": false,
+        "warn": false,
+        "err": false
+      },
+      {
+        "n": 4,
+        "text": "12:00:05 compiling auth",
+        "info": true,
+        "debug": false,
+        "warn": false,
+        "err": false
+      },
+      {
+        "n": 5,
+        "text": "12:00:07 warning: unused import in router.go",
+        "warn": true,
+        "debug": false,
+        "info": false,
+        "err": false
+      },
+      {
+        "n": 6,
+        "text": "12:00:08 running 212 tests",
+        "debug": false,
+        "info": false,
+        "warn": false,
+        "err": false
+      },
+      {
+        "n": 7,
+        "text": "12:00:09 ok   pkg/router   0.41s",
+        "debug": false,
+        "info": false,
+        "warn": false,
+        "err": false
+      },
+      {
+        "n": 8,
+        "text": "12:00:09 ok   pkg/auth     0.18s",
+        "debug": false,
+        "info": false,
+        "warn": false,
+        "err": false
+      },
+      {
+        "n": 9,
+        "text": "12:00:10 FAIL pkg/billing  1.02s",
+        "err": true,
+        "debug": false,
+        "info": false,
+        "warn": false
+      },
+      {
+        "n": 10,
+        "text": "12:00:10 billing_test.go:88: want 200, got 504",
+        "err": true,
+        "debug": false,
+        "info": false,
+        "warn": false
+      },
+      {
+        "n": 11,
+        "text": "12:00:11 1 package failed",
+        "warn": true,
+        "debug": false,
+        "info": false,
+        "err": false
+      },
+      {
+        "n": 12,
+        "text": "12:00:11 exit 1",
+        "debug": true,
+        "info": false,
+        "warn": false,
+        "err": false
+      }
+    ]
+  }
+}

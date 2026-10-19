@@ -138,6 +138,7 @@ export default defineConfig({
             { text: 'Bindings and data', link: '/guide/bindings' },
             { text: 'Keymap, actions and focus', link: '/guide/interaction' },
             { text: 'Widgets', link: '/guide/widgets' },
+            { text: 'The kit', link: '/guide/kit' },
           ],
         },
         {

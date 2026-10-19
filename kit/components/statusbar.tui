@@ -1,0 +1,26 @@
+<!-- k-statusbar · Contract: reads status.mode, status.file, status.synced, status.position · Actions: none · Keys: none · Requires: k-muted -->
+<tui theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo">
+    <col id="app" width="1fr" height="1fr">
+      <col width="1fr" height="1fr" pad="1">
+        <text class="k-muted">The page content goes here.</text>
+      </col>
+      <!-- COPY: the status bar is a one-row `row` with class `k-statusbar`,
+           docked to the bottom of its parent. Left segments first, a
+           `spacer`, then right segments. `k-statusbar-seg` is a filled chip
+           (modifiers: ok, warn, danger); `k-statusbar-text` and
+           `k-statusbar-muted` are plain. Only one bottom-docked bar per
+           container (L005): put the key hints above it, not docked. -->
+      <row class="k-statusbar">
+        <text class="k-statusbar-seg">{status.mode}</text>
+        <text class="k-statusbar-text">{status.file}</text>
+        <spacer/>
+        <text class="k-statusbar-seg ok" if="status.synced">synced</text>
+        <text class="k-statusbar-seg warn" if="!status.synced">unsynced</text>
+        <text class="k-statusbar-muted">{status.position}</text>
+      </row>
+    </col>
+  </screen>
+</tui>

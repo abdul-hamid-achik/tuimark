@@ -27,6 +27,7 @@ go build -o bin/logs ./examples/logs && ./bin/logs
 | [`pipeline`](pipeline) | A CI pipeline run: parallel jobs, a flaky test, retry and rerun | spinners and progress bars driven by one simulation tick, the selected job's log in `<scroll stick="bottom">`, a confirm modal |
 | [`music`](music) | A music player with no audio: library, queue, albums, now playing | a six-row `<sparkline>` spectrum visualizer, `bar: eighths` position and volume, `<tabs>` with live counts in their labels, tables with `<column priority>` |
 | [`pomodoro`](pomodoro) | A Pomodoro timer and a clock in big block digits | a derived multi-line `<text>` for the digits and their blinking colon, phase colors from `class:` guards, a task `<input>`, a world-clock table |
+| [`kit-gallery`](kit-gallery) | Every component of the [copy-paste kit](../kit/README.md) on five tabs: badges, buttons, alerts, forms, a table, a log, dialogs, a command palette, toasts, a split pane | the kit's `k-` classes and tokens over two stylesheets plus your own, `instance__part` ids and `component_verb` actions, a host that routes by the prefix of the event's source, `Derive` for the palette filter, a light and a dark theme |
 | [`monitor`](monitor) | A system monitor's studio view | nine tabs, a panel grid with gauges and sparklines, a process table with sorting and multi-select, settings that switch the mouse and the theme |
 | [`agent`](agent) | A coding-agent chat on a scripted provider or a local Ollama model | a transcript, a composer, approval modals, a headless mode |
 | [`dashboard`](dashboard) | A deploy dashboard | two screens, a progress bar, buttons, a confirm modal |
@@ -34,8 +35,8 @@ go build -o bin/logs ./examples/logs && ./bin/logs
 | [`host-ts`](host-ts) | A minimal counter driven by a Bun parent through `@tuimark/host` | `tuimark host` and its fd 3/fd 4 protocol, from TypeScript |
 
 `logs`, `tasks`, `gitui`, `http`, the six games (`snake`, `chess`, `tetris`,
-`minesweeper`, `2048`, `sudoku`), `pipeline`, `music`, and `pomodoro` also
-ship a `mock.json`, so you can try the view with no Go at all (the mock
+`minesweeper`, `2048`, `sudoku`), `pipeline`, `music`, `pomodoro`, and
+`kit-gallery` also ship a `mock.json`, so you can try the view with no Go at all (the mock
 answers each action with fixed writes; the Go host is the real app, and
 nothing moves on its own without it):
 
@@ -58,6 +59,6 @@ These feed the tests rather than show an app:
 
 `tuimark validate` reports nothing for any app here with its sample data.
 `logs`, `tasks`, `gitui`, `http`, the six games, `pipeline`, `music`,
-`pomodoro`, and `monitor` also have their own Go tests
+`pomodoro`, `monitor`, and `kit-gallery` also have their own Go tests
 (`go test ./examples/logs/`, …), which replay keys with `Play` and check the
 store and the dump; `agent` has Go tests of its own too.

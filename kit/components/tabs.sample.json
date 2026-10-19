@@ -1,0 +1,9 @@
+{
+  "view": "overview",
+  "tabs": {
+    "count": 3,
+    "overview": "Everything at a glance.",
+    "activity": "Three things happened today.",
+    "settings": "Tune the app."
+  }
+}

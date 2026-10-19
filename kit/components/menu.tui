@@ -1,0 +1,33 @@
+<!-- k-menu · Contract: reads menu.items[] {id, icon, label, key}, menu.checked[]; reads and writes menu.cur (the cursor row's id) · Actions: menu_select, menu_open · Keys: j and k move, space marks, enter opens · Requires: k-hints, k-title -->
+<tui theme="auto">
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <keymap when="#menu">
+    <bind keys="j" action="move-next"/>
+    <bind keys="k" action="move-prev"/>
+    <bind keys="space" action="check-toggle" label="mark"/>
+    <bind keys="enter" action="menu_open" label="open"/>
+  </keymap>
+  <screen id="demo" focus="#menu">
+    <col width="1fr" height="1fr" gap="0" pad="1">
+      <text class="k-title">menu / nav list</text>
+      <!-- COPY: a menu is a `list` with class `k-menu`; each item is one
+           `k-menu-row` (icon, label, shortcut). `bind` holds the cursor
+           row's key; `checked` + `mark` add multi-select marks (space
+           toggles it through the `check-toggle` built-in). The cursor row is
+           bold on a quiet fill while another widget has focus, and a solid
+           accent bar while the menu has it. Enter is not implicit in a
+           list: bind it to the action that opens the row, as above. -->
+      <list id="menu" class="k-menu" each="menu.items as it" key="it.id" bind="menu.cur" checked="menu.checked" mark="✓" title="Go to" on:select="menu_select">
+        <item>
+          <row class="k-menu-row">
+            <text class="k-menu-icon">{it.icon}</text>
+            <text class="k-menu-label">{it.label}</text>
+            <text class="k-menu-key">{it.key}</text>
+          </row>
+        </item>
+      </list>
+      <hints class="k-hints"/>
+    </col>
+  </screen>
+</tui>

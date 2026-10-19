@@ -1,0 +1,29 @@
+<!-- k-badge · Contract: reads build.number, build.status, build.ok · Actions: none · Keys: none · Requires: k-title -->
+<tui theme="auto">
+  <!-- Every kit document loads the sheets in this order: tokens, components, then your own. -->
+  <style src="../theme.tcss"/>
+  <style src="../kit.tcss"/>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <text class="k-title">badge</text>
+      <!-- COPY: a badge is one text with two classes: `k-badge` and a
+           modifier. Modifiers: accent, ok, warn, danger, info (none =
+           neutral). The label is literal text or a {path}. -->
+      <row width="1fr" height="1" gap="1">
+        <text class="k-badge">draft</text>
+        <text class="k-badge accent">new</text>
+        <text class="k-badge ok">passing</text>
+      </row>
+      <row width="1fr" height="1" gap="1">
+        <text class="k-badge warn">flaky</text>
+        <text class="k-badge danger">failed</text>
+        <text class="k-badge info">{build.number}</text>
+      </row>
+      <!-- COPY: choose the modifier from data with class:NAME guards on the
+           same node (the guards are paths the host keeps true or false). -->
+      <row width="1fr" height="1" gap="1">
+        <text class="k-badge" class:ok="build.ok" class:danger="!build.ok">{build.status}</text>
+      </row>
+    </col>
+  </screen>
+</tui>

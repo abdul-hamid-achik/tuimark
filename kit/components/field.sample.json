@@ -1,0 +1,8 @@
+{
+  "form": {
+    "name": "Ada",
+    "name_error": "",
+    "email": "ada@",
+    "email_error": "Enter a full address like name@host."
+  }
+}

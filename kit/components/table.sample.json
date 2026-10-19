@@ -1,0 +1,11 @@
+{
+  "cur": "api",
+  "count": 5,
+  "services": [
+    { "id": "api", "name": "api-gateway", "state": "running", "ok": true, "region": "us-east", "rps": "1,204", "p95": "42" },
+    { "id": "auth", "name": "auth", "state": "running", "ok": true, "region": "us-east", "rps": "310", "p95": "18" },
+    { "id": "billing", "name": "billing", "state": "degraded", "ok": false, "region": "eu-west", "rps": "27", "p95": "910" },
+    { "id": "search", "name": "search", "state": "running", "ok": true, "region": "eu-west", "rps": "88", "p95": "133" },
+    { "id": "mailer", "name": "mailer", "state": "stopped", "ok": false, "region": "ap-south", "rps": "0", "p95": "0" }
+  ]
+}
