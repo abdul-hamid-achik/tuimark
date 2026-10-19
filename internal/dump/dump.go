@@ -247,7 +247,8 @@ type Options struct {
 func NodeOf(n *layout.Box, v2, v3 bool) Node {
 	dn := Node{ID: n.ID, Tag: n.Tag, X: n.X, Y: n.Y, W: n.W, H: n.H, Focused: n.Focused, Selected: n.Selected, Key: n.Key, Scroll: scrollOf(n), Checked: n.Checked}
 	switch n.Kind {
-	case "text", "button":
+	case "text", "button", "checkbox":
+		// A checkbox's text is its resolved label (SPEC v0.4b §6.16.3).
 		dn.Text = n.Text
 	case "column":
 		// A table's header cell: its resolved title (SPEC §13.2).

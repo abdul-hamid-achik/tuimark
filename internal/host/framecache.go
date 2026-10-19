@@ -97,8 +97,9 @@ func (a *App) renderLive(cols, rows int, theme string) *Frame {
 // effective theme, --strict, the store (by its write counters: every
 // write goes through wrote), the screen, focus, the modals and their
 // stack, the active and remembered tabs, every viewport offset and stick
-// maximum, every list's and table's cursor state, and every input's
-// state. The caller holds a.mu.
+// maximum, every list's and table's cursor state, every input's
+// state, and the value of every checkbox without bind (SPEC v0.4b
+// decision 106). The caller holds a.mu.
 func (a *App) frameInputs(cols, rows int, theme string) string {
 	b := make([]byte, 0, 256)
 	num := func(n int64) { b = strconv.AppendInt(b, n, 10); b = append(b, ',') }
@@ -166,6 +167,11 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 		str(st.value)
 		num(int64(st.cursor))
 		flag(st.init)
+	}
+	b = append(b, "|c"...)
+	for _, k := range sortedKeys(a.checks) {
+		str(k)
+		flag(a.checks[k])
 	}
 	return string(b)
 }

@@ -8,8 +8,9 @@ import (
 )
 
 // SPEC v0.4b §10.6: the current language's built-in sheet is UASheet with
-// its col and row rules replaced by three rules, and the focus rule added
-// at its end; every other rule is UASheet's, in order. Pinned documents
+// its col and row rules replaced by three rules, and the form-control rule
+// and the focus rule added at its end (v0.4b §12.5: checkbox); every other
+// rule is UASheet's, in order. Pinned documents
 // keep UASheet as it was in 0.4.1.
 func TestUASheetCurrentIsUASheetWithTheCurrentRules(t *testing.T) {
 	const old = "col    { layout: column; width: 1fr; height: 1fr; }\nrow    { layout: row;    width: 1fr; height: 1fr; }\n"
@@ -18,7 +19,9 @@ func TestUASheetCurrentIsUASheetWithTheCurrentRules(t *testing.T) {
 	if strings.Count(UASheet, old) != 1 {
 		t.Fatal("UASheet's col and row rules moved")
 	}
-	want := strings.Replace(UASheet, old, repl, 1) + "button:focus { reverse: true; }\n"
+	want := strings.Replace(UASheet, old, repl, 1) +
+		"checkbox { width: auto; height: auto; wrap: truncate; }\n" +
+		"button:focus, checkbox:focus { reverse: true; }\n"
 	if UASheetCurrent != want {
 		t.Errorf("UASheetCurrent drifted from UASheet:\n%s", UASheetCurrent)
 	}
