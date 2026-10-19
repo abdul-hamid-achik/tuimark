@@ -1,0 +1,8 @@
+<tui version="3">
+  <screen id="main">
+    <tabs id="nav" bind="view" on:select="changed" focusable="true">
+      <tab id="one" label="one"><list id="l1" each="xs as x" key="x"><item><text>{x}</text></item></list></tab>
+      <tab id="two" label="two"><button id="b2" label="go"/></tab>
+    </tabs>
+  </screen>
+</tui>

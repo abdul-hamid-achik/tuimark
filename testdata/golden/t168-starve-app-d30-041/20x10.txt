@@ -1,0 +1,79 @@
+=== grid 20x10 ===
+row 0               
+row 1               
+row 2               
+row 3               
+row 4               
+detail              
+                    
+                    
+                    
+                    
+=== nodes ===
+main    screen  20x10 @(0,0)
+app     col     20x10 @(0,0)
+l       list    20x5 @(0,0) focus
+-       item    20x1 @(0,0) selected
+-       text    20x1 @(0,0)
+-       item    20x1 @(0,1)
+-       text    20x1 @(0,1)
+-       item    20x1 @(0,2)
+-       text    20x1 @(0,2)
+-       item    20x1 @(0,3)
+-       text    20x1 @(0,3)
+-       item    20x1 @(0,4)
+-       text    20x1 @(0,4)
+-       item    20x1 @(0,5)
+-       text    20x1 @(0,5)
+-       item    20x1 @(0,6)
+-       text    20x1 @(0,6)
+-       item    20x1 @(0,7)
+-       text    20x1 @(0,7)
+-       item    20x1 @(0,8)
+-       text    20x1 @(0,8)
+-       item    20x1 @(0,9)
+-       text    20x1 @(0,9)
+-       item    20x1 @(0,10)
+-       text    20x1 @(0,10)
+-       item    20x1 @(0,11)
+-       text    20x1 @(0,11)
+-       item    20x1 @(0,12)
+-       text    20x1 @(0,12)
+-       item    20x1 @(0,13)
+-       text    20x1 @(0,13)
+-       item    20x1 @(0,14)
+-       text    20x1 @(0,14)
+-       item    20x1 @(0,15)
+-       text    20x1 @(0,15)
+-       item    20x1 @(0,16)
+-       text    20x1 @(0,16)
+-       item    20x1 @(0,17)
+-       text    20x1 @(0,17)
+-       item    20x1 @(0,18)
+-       text    20x1 @(0,18)
+-       item    20x1 @(0,19)
+-       text    20x1 @(0,19)
+-       item    20x1 @(0,20)
+-       text    20x1 @(0,20)
+-       item    20x1 @(0,21)
+-       text    20x1 @(0,21)
+-       item    20x1 @(0,22)
+-       text    20x1 @(0,22)
+-       item    20x1 @(0,23)
+-       text    20x1 @(0,23)
+-       item    20x1 @(0,24)
+-       text    20x1 @(0,24)
+-       item    20x1 @(0,25)
+-       text    20x1 @(0,25)
+-       item    20x1 @(0,26)
+-       text    20x1 @(0,26)
+-       item    20x1 @(0,27)
+-       text    20x1 @(0,27)
+-       item    20x1 @(0,28)
+-       text    20x1 @(0,28)
+-       item    20x1 @(0,29)
+-       text    20x1 @(0,29)
+detail  col     20x5 @(0,5)
+-       text    20x1 @(0,5)
+=== errors ===
+ok

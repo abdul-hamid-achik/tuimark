@@ -1,0 +1,7 @@
+<tui version="3">
+  <screen id="main">
+    <modal id="m" open="true" title="new" style="width: auto; height: auto">
+      <input id="t" bind="t"/>
+    </modal>
+  </screen>
+</tui>

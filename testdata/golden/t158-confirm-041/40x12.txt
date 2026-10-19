@@ -1,0 +1,23 @@
+=== grid 40x12 ===
+files                                   
+    ┌─ delete? ────────────────────┐    
+    │Delete report.pdf?            │    
+    │[ yes ][ no ]                 │    
+    │                              │    
+    │                              │    
+    │                              │    
+    │                              │    
+    │                              │    
+    └──────────────────────────────┘    
+                                        
+                                        
+=== nodes ===
+main     screen  40x12 @(0,0)
+-        text    40x1 @(0,0)
+confirm  modal   32x9 @(4,1)
+-        text    30x1 @(5,2)
+act      row     30x6 @(5,3)
+yes      button  7x6 @(5,3) focus
+no       button  6x6 @(12,3)
+=== errors ===
+ok

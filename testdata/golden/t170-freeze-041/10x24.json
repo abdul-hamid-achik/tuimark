@@ -1,0 +1,193 @@
+{
+  "cols": 10,
+  "rows": 24,
+  "ok": true,
+  "focus": null,
+  "errors": [
+    {
+      "severity": "warning",
+      "code": "L003",
+      "msg": "fixed and min sizes need 40 cells but the row has 10 on this axis; content is clipped",
+      "file": "freeze.tui",
+      "line": 12,
+      "col": 5,
+      "path": "/screen/row",
+      "id": "r3"
+    },
+    {
+      "severity": "warning",
+      "code": "L009",
+      "msg": "cuts #c2 on y: 2 of 8 cells shown; give it room, or write overflow: hidden to keep the cut",
+      "file": "freeze.tui",
+      "line": 14,
+      "col": 5,
+      "path": "/screen/col",
+      "id": "c1"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 10,
+      "h": 24
+    },
+    {
+      "id": "r1",
+      "tag": "row",
+      "x": 0,
+      "y": 0,
+      "w": 10,
+      "h": 1
+    },
+    {
+      "id": "a1",
+      "tag": "box",
+      "x": 0,
+      "y": 0,
+      "w": 3,
+      "h": 1
+    },
+    {
+      "id": "b1",
+      "tag": "box",
+      "x": 3,
+      "y": 0,
+      "w": 3,
+      "h": 1
+    },
+    {
+      "id": "c1x",
+      "tag": "box",
+      "x": 6,
+      "y": 0,
+      "w": 4,
+      "h": 1
+    },
+    {
+      "id": "r3",
+      "tag": "row",
+      "x": 0,
+      "y": 1,
+      "w": 10,
+      "h": 1
+    },
+    {
+      "id": "a3",
+      "tag": "box",
+      "x": 0,
+      "y": 1,
+      "w": 40,
+      "h": 1
+    },
+    {
+      "id": "b3",
+      "tag": "box",
+      "x": 40,
+      "y": 1,
+      "w": 3,
+      "h": 1
+    },
+    {
+      "id": "c3",
+      "tag": "box",
+      "x": 43,
+      "y": 1,
+      "w": 4,
+      "h": 1
+    },
+    {
+      "id": "r4",
+      "tag": "row",
+      "x": 0,
+      "y": 2,
+      "w": 10,
+      "h": 1
+    },
+    {
+      "id": "a4",
+      "tag": "box",
+      "x": 0,
+      "y": 2,
+      "w": 3,
+      "h": 1
+    },
+    {
+      "id": "b4",
+      "tag": "box",
+      "x": 3,
+      "y": 2,
+      "w": 3,
+      "h": 1
+    },
+    {
+      "id": "c4",
+      "tag": "box",
+      "x": 6,
+      "y": 2,
+      "w": 2,
+      "h": 1
+    },
+    {
+      "id": "c1",
+      "tag": "col",
+      "x": 0,
+      "y": 3,
+      "w": 10,
+      "h": 20,
+      "clipped": "children"
+    },
+    {
+      "id": "a2",
+      "tag": "box",
+      "x": 0,
+      "y": 3,
+      "w": 10,
+      "h": 6
+    },
+    {
+      "id": "b2",
+      "tag": "box",
+      "x": 0,
+      "y": 9,
+      "w": 10,
+      "h": 12
+    },
+    {
+      "id": "c2",
+      "tag": "box",
+      "x": 0,
+      "y": 21,
+      "w": 10,
+      "h": 8
+    }
+  ],
+  "grid": [
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          "
+  ]
+}

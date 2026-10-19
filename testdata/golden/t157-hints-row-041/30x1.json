@@ -1,0 +1,80 @@
+{
+  "cols": 30,
+  "rows": 1,
+  "ok": true,
+  "focus": null,
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 1
+    },
+    {
+      "id": "status",
+      "tag": "row",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 5,
+      "h": 1,
+      "text": "ready"
+    },
+    {
+      "tag": "spacer",
+      "x": 5,
+      "y": 0,
+      "w": 12,
+      "h": 1
+    },
+    {
+      "id": "keys",
+      "tag": "hints",
+      "x": 17,
+      "y": 0,
+      "w": 13,
+      "h": 1
+    },
+    {
+      "tag": "row",
+      "x": 17,
+      "y": 0,
+      "w": 6,
+      "h": 1
+    },
+    {
+      "tag": "text",
+      "x": 17,
+      "y": 0,
+      "w": 1,
+      "h": 1,
+      "text": "q",
+      "classes": [
+        "hint-key"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 19,
+      "y": 0,
+      "w": 4,
+      "h": 1,
+      "text": "quit",
+      "classes": [
+        "hint-label"
+      ]
+    }
+  ],
+  "grid": [
+    "ready            q quit       "
+  ]
+}

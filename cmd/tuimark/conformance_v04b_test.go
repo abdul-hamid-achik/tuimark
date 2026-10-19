@@ -79,8 +79,10 @@ func TestV04bPinnedDumpsValidateAgainstFrozenSchema(t *testing.T) {
 	}
 }
 
-// The twins of 189 and 129 are frozen entries of the manifest, written by
-// tuimark 0.4.1, so --update never rewrites them.
+// The 0.4.1 twins of plan §5 (tests 189, 129, and the pinned twins of
+// 156-170 and 221) are frozen entries of the manifest, written by tuimark
+// 0.4.1, so --update never rewrites them; every manifest entry named
+// "*-041" is one of them, and each pins its document.
 func TestV04bTwinsAreFrozen(t *testing.T) {
 	raw, err := os.ReadFile("../../testdata/golden/manifest.json")
 	if err != nil {
@@ -95,19 +97,46 @@ func TestV04bTwinsAreFrozen(t *testing.T) {
 	if err := json.Unmarshal(raw, &entries); err != nil {
 		t.Fatal(err)
 	}
+	const tw = "specs/fixtures/v04b/twins/"
 	want := map[string]string{
-		"inbox-041":   "examples/inbox/app.tui",
-		"monitor-041": "examples/monitor/studio.tui",
-		"colrow-041":  "specs/fixtures/v04b/twins/colrow.tui",
+		"inbox-041":               "examples/inbox/app.tui",
+		"monitor-041":             "examples/monitor/studio.tui",
+		"colrow-041":              tw + "colrow.tui",
+		"t156-hints-col-041":      tw + "hints-col.tui",
+		"t157-hints-row-041":      tw + "hints-row.tui",
+		"t158-confirm-041":        tw + "confirm.tui",
+		"t159-help-041":           tw + "help.tui",
+		"t160-esc-041":            tw + "esc.tui",
+		"t162-esc-q-041":          tw + "esc.tui",
+		"t162-esc-x-041":          tw + "esc.tui",
+		"t162-esc-o-041":          tw + "esc.tui",
+		"t162-esc-ctrlc-041":      tw + "esc.tui",
+		"t163-esc-041":            tw + "esc.tui",
+		"t164-tabs-041":           tw + "tabs.tui",
+		"t164-tabs-focusable-041": tw + "tabs-focusable.tui",
+		"t165-panes-041":          tw + "panes.tui",
+		"t166-stack-041":          tw + "stack.tui",
+		"t167-pct-041":            tw + "pct.tui",
+		"t168-starve-d30-041":     tw + "starve.tui",
+		"t168-starve-d3-041":      tw + "starve.tui",
+		"t168-starve-app-d30-041": tw + "starve-app.tui",
+		"t168-starve-app-d3-041":  tw + "starve-app.tui",
+		"t169-twopane-041":        tw + "twopane.tui",
+		"t170-freeze-041":         tw + "freeze.tui",
+		"t221-field-041":          tw + "field.tui",
+		"t221-field-typed-041":    tw + "field.tui",
 	}
 	for _, e := range entries {
 		file, ok := want[e.Name]
 		if !ok {
+			if strings.HasSuffix(e.Name, "-041") {
+				t.Errorf("%s: a twin this test does not list", e.Name)
+			}
 			continue
 		}
 		delete(want, e.Name)
-		if !e.Frozen || e.File != file {
-			t.Errorf("%s: %+v, want frozen and file %s", e.Name, e, file)
+		if !e.Frozen || e.File != file || len(e.JSON) == 0 {
+			t.Errorf("%s: %+v, want frozen, file %s, and JSON sizes", e.Name, e, file)
 		}
 		for _, size := range e.JSON {
 			if _, err := os.Stat(filepath.Join("../../testdata/golden", e.Name, size+".json")); err != nil {
@@ -130,6 +159,24 @@ func mustRead(t *testing.T, path string) []byte {
 		t.Fatal(err)
 	}
 	return b
+}
+
+// 189's "same diagnostics": validate --json of each pinned example prints,
+// byte for byte, what tuimark 0.4.1 printed (testdata/validate-*-041.json,
+// written by v0.4.1 from this directory with the same arguments).
+func TestV04bPinnedValidateAsIn041(t *testing.T) {
+	for _, c := range []struct{ golden, file, data string }{
+		{"testdata/validate-inbox-041.json", "../../examples/inbox/app.tui", "../../examples/inbox/sample.json"},
+		{"testdata/validate-monitor-041.json", "../../examples/monitor/studio.tui", "../../examples/monitor/sample.json"},
+	} {
+		code, out, errw := runCLI("validate", c.file, "--data", c.data, "--json")
+		if code != 0 {
+			t.Fatalf("%s: exit %d: %s", c.file, code, errw)
+		}
+		if want := string(mustRead(t, c.golden)); out != want {
+			t.Errorf("%s: validate --json differs from 0.4.1\ngot:\n%s\nwant:\n%s", c.file, out, want)
+		}
+	}
 }
 
 // 209, through the CLI. The current language: validate --catalog reports

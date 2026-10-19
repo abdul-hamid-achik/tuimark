@@ -1,0 +1,18 @@
+=== grid 30x6 ===
+onetwo                        
+[ go ]                        
+                              
+                              
+                              
+                              
+=== nodes ===
+main  screen  30x6 @(0,0)
+nav   tabs    30x2 @(0,0)
+-     text    3x1 @(0,0)
+-     text    3x1 @(3,0) selected
+two   tab     30x1 @(0,1)
+b2    button  30x1 @(0,1) focus
+=== errors ===
+ok
+=== events ===
+1 changed nav {} "two"

@@ -1,0 +1,7 @@
+<tui version="3">
+  <screen id="main">
+    <col id="app">
+      <row id="r"><box id="half" style="height: 50%"><text>x</text></box></row>
+    </col>
+  </screen>
+</tui>

@@ -1,0 +1,39 @@
+{
+  "actions": [
+    {
+      "name": "focus",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys /"
+      ]
+    },
+    {
+      "name": "open",
+      "registered": false,
+      "sources": [
+        "keys enter",
+        "#inbox on:select"
+      ]
+    },
+    {
+      "name": "quit",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys q"
+      ]
+    },
+    {
+      "name": "search",
+      "registered": false,
+      "sources": [
+        "#query on:submit"
+      ]
+    }
+  ],
+  "data": "../../examples/inbox/sample.json",
+  "diagnostics": [],
+  "file": "../../examples/inbox/app.tui",
+  "ok": true
+}

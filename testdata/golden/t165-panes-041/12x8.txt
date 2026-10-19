@@ -1,0 +1,21 @@
+=== grid 12x8 ===
+inbox messag
+sent        
+            
+            
+ready       
+            
+            
+            
+=== nodes ===
+main       screen  12x8 @(0,0)
+top        row     12x4 @(0,0)
+nav        col     6x4 @(0,0)
+-          text    6x1 @(0,0)
+-          text    6x1 @(0,1)
+main-pane  col     6x4 @(6,0)
+-          text    6x1 @(6,0) clipped
+status     row     12x4 @(0,4)
+-          text    5x4 @(0,4)
+=== errors ===
+warning L008 panes.tui:5:27 /screen/row/col/text text is 12 columns wide but its content box has 6; set wrap: truncate, or write wrap: nowrap to keep the cut

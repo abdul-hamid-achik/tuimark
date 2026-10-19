@@ -1,0 +1,46 @@
+=== grid 30x24 ===
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+=== nodes ===
+main  screen  30x24 @(0,0)
+r1    row     30x1 @(0,0)
+a1    box     5x1 @(0,0)
+b1    box     10x1 @(5,0)
+c1x   box     10x1 @(15,0)
+r3    row     30x1 @(0,1)
+a3    box     40x1 @(0,1)
+b3    box     10x1 @(40,1)
+c3    box     10x1 @(50,1)
+r4    row     30x1 @(0,2)
+a4    box     10x1 @(0,2)
+b4    box     10x1 @(10,2)
+c4    box     2x1 @(20,2)
+c1    col     30x20 @(0,3) clipped
+a2    box     30x6 @(0,3)
+b2    box     30x12 @(0,9)
+c2    box     30x8 @(0,21)
+=== errors ===
+warning L003 freeze.tui:12:5 /screen/row fixed and min sizes need 40 cells but the row has 30 on this axis; content is clipped
+warning L009 freeze.tui:14:5 /screen/col cuts #c2 on y: 2 of 8 cells shown; give it room, or write overflow: hidden to keep the cut

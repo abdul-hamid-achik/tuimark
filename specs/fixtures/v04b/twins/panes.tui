@@ -1,0 +1,9 @@
+<tui version="3">
+  <screen id="main">
+    <row id="top">
+      <col id="nav"><text>inbox</text><text>sent</text></col>
+      <col id="main-pane"><text>message body</text></col>
+    </row>
+    <row id="status"><text>ready</text></row>
+  </screen>
+</tui>

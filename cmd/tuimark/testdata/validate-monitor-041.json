@@ -1,0 +1,246 @@
+{
+  "actions": [
+    {
+      "name": "check-all",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys ctrl+a"
+      ]
+    },
+    {
+      "name": "check-none",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys ctrl+d"
+      ]
+    },
+    {
+      "name": "check-toggle",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys space"
+      ]
+    },
+    {
+      "name": "cursor_moved",
+      "registered": false,
+      "sources": [
+        "#procs on:select"
+      ]
+    },
+    {
+      "name": "detail_close",
+      "registered": false,
+      "sources": [
+        "keys enter,q",
+        "#detail on:escape"
+      ]
+    },
+    {
+      "name": "detail_refresh",
+      "registered": false,
+      "sources": [
+        "keys r"
+      ]
+    },
+    {
+      "name": "diagnose",
+      "registered": false,
+      "sources": [
+        "keys enter"
+      ]
+    },
+    {
+      "name": "filter",
+      "registered": false,
+      "sources": [
+        "#filter on:change"
+      ]
+    },
+    {
+      "name": "filter_apply",
+      "registered": false,
+      "sources": [
+        "keys tab,shift+tab",
+        "#filter on:submit"
+      ]
+    },
+    {
+      "name": "filter_cancel",
+      "registered": false,
+      "sources": [
+        "keys esc"
+      ]
+    },
+    {
+      "name": "filter_open",
+      "registered": false,
+      "sources": [
+        "keys /"
+      ]
+    },
+    {
+      "name": "help_close",
+      "registered": false,
+      "sources": [
+        "#help on:escape",
+        "#help-ok on:click"
+      ]
+    },
+    {
+      "name": "help_open",
+      "registered": false,
+      "sources": [
+        "keys ?"
+      ]
+    },
+    {
+      "name": "kill_ask",
+      "registered": false,
+      "sources": [
+        "keys K"
+      ]
+    },
+    {
+      "name": "kill_cancel",
+      "registered": false,
+      "sources": [
+        "keys n",
+        "#kill on:escape",
+        "#kill-no on:click"
+      ]
+    },
+    {
+      "name": "kill_confirm",
+      "registered": false,
+      "sources": [
+        "keys y",
+        "#kill-yes on:click"
+      ]
+    },
+    {
+      "name": "kill_force_ask",
+      "registered": false,
+      "sources": [
+        "keys X"
+      ]
+    },
+    {
+      "name": "marks_changed",
+      "registered": false,
+      "sources": [
+        "#procs on:change"
+      ]
+    },
+    {
+      "name": "move-next",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys tab,right,l",
+        "keys j",
+        "keys j"
+      ]
+    },
+    {
+      "name": "move-prev",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys shift+tab,left,h",
+        "keys k",
+        "keys k"
+      ]
+    },
+    {
+      "name": "pause",
+      "registered": false,
+      "sources": [
+        "keys p"
+      ]
+    },
+    {
+      "name": "quit",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys q",
+        "keys ctrl+c"
+      ]
+    },
+    {
+      "name": "refresh",
+      "registered": false,
+      "sources": [
+        "keys r"
+      ]
+    },
+    {
+      "name": "setting_next",
+      "registered": false,
+      "sources": [
+        "keys enter,space"
+      ]
+    },
+    {
+      "name": "setting_prev",
+      "registered": false,
+      "sources": [
+        "keys -"
+      ]
+    },
+    {
+      "name": "settings_save",
+      "registered": false,
+      "sources": [
+        "keys s"
+      ]
+    },
+    {
+      "name": "sort_cpu",
+      "registered": false,
+      "sources": [
+        "keys c",
+        "#c-cpu on:click"
+      ]
+    },
+    {
+      "name": "sort_mem",
+      "registered": false,
+      "sources": [
+        "keys m",
+        "#c-mem on:click"
+      ]
+    },
+    {
+      "name": "switch-to",
+      "builtin": true,
+      "registered": false,
+      "sources": [
+        "keys 1",
+        "keys 2",
+        "keys 3",
+        "keys 4",
+        "keys 5",
+        "keys 6",
+        "keys 7",
+        "keys 8",
+        "keys 9"
+      ]
+    },
+    {
+      "name": "view_changed",
+      "registered": false,
+      "sources": [
+        "#nav on:select"
+      ]
+    }
+  ],
+  "data": "../../examples/monitor/sample.json",
+  "diagnostics": [],
+  "file": "../../examples/monitor/studio.tui",
+  "ok": true
+}
