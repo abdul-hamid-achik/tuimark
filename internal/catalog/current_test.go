@@ -46,3 +46,36 @@ func TestCurrentItemsHaveSinceCurrent(t *testing.T) {
 		}
 	}
 }
+
+// SPEC v0.4b §15.10: the attribute indeterminate on progress has since 4,
+// with the keywords true and false, each since 4 (test 119 reads the same
+// facts off AGENTS.md).
+func TestIndeterminateIsCurrentWithBooleanKeywords(t *testing.T) {
+	c := Build("x")
+	for _, tg := range c.Tags {
+		if tg.Name != "progress" {
+			for _, a := range tg.Attrs {
+				if a.Name == "indeterminate" {
+					t.Errorf("indeterminate on <%s>", tg.Name)
+				}
+			}
+			continue
+		}
+		if tg.Since != 1 {
+			t.Errorf("progress: since %d", tg.Since)
+		}
+		found := false
+		for _, a := range tg.Attrs {
+			if a.Name != "indeterminate" {
+				continue
+			}
+			found = true
+			if a.Since != 4 || len(a.Keywords) != 2 || a.Keywords[0] != (Item{"true", 4}) || a.Keywords[1] != (Item{"false", 4}) {
+				t.Errorf("indeterminate = %+v", a)
+			}
+		}
+		if !found {
+			t.Error("progress has no attribute indeterminate")
+		}
+	}
+}

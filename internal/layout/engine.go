@@ -1426,6 +1426,9 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 	case "progress":
 		if horizontal {
 			v = 10
+			if b.IsSpinner() {
+				v = 1 // SPEC v0.4b §11.5: a spinner is one cell until given a size
+			}
 		} else {
 			v = 1
 		}

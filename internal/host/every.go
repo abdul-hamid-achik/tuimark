@@ -13,6 +13,11 @@ type everyReg struct {
 	// registration (everyBegin). Guarded by App.everyMu.
 	next    time.Time
 	stopped bool // stop was called; guarded by App.everyMu
+	// vnext is its virtual deadline (SPEC v0.4b §15.4.1), apart from the
+	// real one Run uses: V + d when the registration is made, and u + d
+	// after it fires at the instant u. Only VirtualTick reads or moves it;
+	// guarded by App.everyMu.
+	vnext time.Duration
 }
 
 // Every arranges for fn to be called every d while Run is active (SPEC
@@ -27,11 +32,15 @@ type everyReg struct {
 // session, OnError gets any other error with ev == nil, and without
 // OnError it ends Run.
 //
+// Play calls fn only on a tick:DUR step, on a virtual clock with its own
+// deadlines (SPEC v0.4b §15.4.1, VirtualTick): a Play without tick steps
+// never calls it, and Run's real-time deadlines are separate.
+//
 // Every may be called before Run or during it: a registration made during
 // a session counts its first tick d after the call, and each session
 // counts the first tick of every other live registration d after it
-// starts. Registrations persist across Run calls until stopped. Dump,
-// Validate, and Play never call fn. A d of zero or less panics, as
+// starts. Registrations persist across Run calls until stopped. Dump and
+// Validate never call fn. A d of zero or less panics, as
 // time.NewTicker does.
 //
 // stop cancels the registration: it is idempotent, safe from any
@@ -47,6 +56,7 @@ func (a *App) Every(d time.Duration, fn func(b *Batch) error) (stop func()) {
 	r := &everyReg{d: d, fn: fn}
 	a.everyMu.Lock()
 	r.next = time.Now().Add(d)
+	r.vnext = a.vnow + d
 	a.every = append(a.every, r)
 	a.everyMu.Unlock()
 	a.kickEvery()

@@ -279,9 +279,13 @@ func (a *App) Quit() { a.h.Quit() }
 // Every may be called before Run or during it: a registration made during
 // a session counts its first tick d after the call, and each session
 // counts the first tick of every other live registration d after it
-// starts. Registrations persist across Run calls until stopped. Dump,
-// Validate, and Play never call fn, so a test drives time-based state
-// with set: steps. A d of zero or less panics, as time.NewTicker does.
+// starts. Registrations persist across Run calls until stopped. Dump and
+// Validate never call fn. Play calls it only on a tick:DUR step, on a
+// virtual clock with deadlines of its own (a registration made while Play
+// runs takes its first virtual deadline d after the virtual instant it is
+// made), so a Play without tick steps never calls it and Run's real-time
+// deadlines are separate; a test drives time-based state with tick: or
+// set: steps. A d of zero or less panics, as time.NewTicker does.
 //
 // stop cancels the registration: it is idempotent, safe from any
 // goroutine (fn included), and never waits. Once it returns, no new call
@@ -387,10 +391,21 @@ type PlayResult struct {
 // previous call left queued; steps 1..n are then applied and settled the
 // same way. Each string in steps is exactly one step of tuimark play's
 // --input grammar (a key token, or text:/paste:/set:/focus:/resize:/
-// click:/wheel-up:/wheel-down:) — nothing splits it on spaces, so
+// click:/wheel-up:/wheel-down:/tick:) — nothing splits it on spaces, so
 // "text:hello world" types a space — and every step is parsed before any
 // is applied: an invalid one returns an error naming its index and step,
 // a nil result, and does nothing, step 0 included.
+//
+// tick:DUR is the clock step (v0.4b): it advances the app's virtual clock
+// by DUR (a whole number of milliseconds from 1ms to 1h, written with the
+// units ms, s, m, and h, such as "tick:250ms"; a caller holding a
+// time.Duration writes "tick:" + d.String()), which persists across Play
+// calls, calls the Every functions that fall due on it unless
+// opts.NoHandlers is set (as many as 10000 per step), and moves the
+// spinners of the frames Play builds (a spinner paints phase
+// floor(V/100ms); Dump paints phase 0). An Every function's ErrQuit ends
+// the call with Quit: true and any other error ends it with that error,
+// as a handler's does.
 //
 // Unless opts.NoHandlers is set, the handler registered with On for a
 // dispatched action is called synchronously, in the order Run's loop
