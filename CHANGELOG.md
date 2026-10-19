@@ -9,6 +9,30 @@ line.
 
 ### Added
 
+- **The npm package `@thelacanians/tuimark`** (`sdk/ts`): the SDK and the CLI
+  in one package. `import { spawnHost } from "@thelacanians/tuimark"` is the
+  TypeScript client that was `@tuimark/host` (never published), and its new
+  `tuimark` command (`npx @thelacanians/tuimark new my-app`) runs the Go
+  binary of the release with the same version, with the same arguments,
+  stdio, exit code, signals, and, for `tuimark host`, fd 3 and fd 4. The
+  launcher is plain JS for Node 18 or later and Bun, with no dependencies
+  and no `postinstall` script. It finds the binary in `TUIMARK_BINARY`, else
+  the cache (`$XDG_CACHE_HOME` or `~/.cache`, `~/Library/Caches`,
+  `%LOCALAPPDATA%`, then `tuimark/<version>/tuimark`), else it downloads the
+  release's `tuimark_<version>_<os>_<arch>[.exe]`, checks its SHA-256 against
+  `checksums.txt` (a mismatch is discarded and never run), and caches it.
+  `spawnHost` uses the same lookup when `bin` is not given, and
+  `resolveBinary` is exported.
+- **Raw binaries in the release.** GoReleaser now also uploads
+  `tuimark_<version>_<os>_<arch>[.exe]` (Go's own OS and arch names) for the
+  six platforms, listed in `checksums.txt`, next to the archives. The Homebrew
+  cask still uses only the archives.
+- **npm publishing in `release.yml`.** After GoReleaser, the `npm-pack` job
+  (no OIDC token) builds the package at the tag's version and checks the
+  release has the six binaries, and the `npm-publish` job publishes it with
+  npm trusted publishing and provenance. `workflow_dispatch` with a `tag`
+  publishes the package of an existing tag.
+
 - **The Tuimark kit (v0).** `kit/` is a copy-paste component kit in the
   spirit of shadcn: two stylesheets (`theme.tcss`, the dark and light design
   tokens on top of the runtime's ten required ones; `kit.tcss`, the `k-`
@@ -72,6 +96,14 @@ line.
   and promises no compatibility. `task wasm` builds it, `task wasm-test` runs
   the core tests under js with Node, and `task verify` checks its size budget
   and a Node smoke test. The CLI and `Run` are not part of the js target.
+
+### Changed
+
+- `@tuimark/host` is now `@thelacanians/tuimark`, in `tuimark new --ts`
+  (whose `package.json` depends on `^<the running version>`), `examples/host-ts`,
+  the generated `AGENTS.md`, and the guides. The package version is the Tuimark
+  release it runs (it was `1.0.0`), and `sdk-ts-publish.yml` and its `sdk-ts-v*`
+  tags are gone.
 
 ## [0.4.1] - 2026-10-18
 
