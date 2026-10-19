@@ -160,6 +160,13 @@ func TestExpansionDepthIncludeChain(t *testing.T) {
 	if src := doc.Root.Children[0].Source; len(src) != 2 || len(src[1].Children) != 0 {
 		t.Errorf("the screen as written: %d entries, the second holding %d", len(src), len(src[1].Children))
 	}
+	// The same chain in the body of an unused template, as written (the
+	// template at 2, as the screen): the definitions' own message.
+	tdoc := parse.ParseWith([]byte("<tui>\n<template id=\"T\"><include src=\"f1.tui\"/></template>\n<screen id=\"main\"><text>x</text></screen>\n</tui>"), "app.tui", memLoader(files, "app.tui", nil))
+	want = `f4.tui:1:311 include src="f5.tui" in <template id="T"> exceeds the expansion depth limit of 256 levels: it inserts nothing into the template's own checks, and no later include in a template definition expands`
+	if got := v021(tdoc); len(got) != 1 || got[0] != want {
+		t.Errorf("in a template: V021 %q, want %q", got, want)
+	}
 	// f5 with 8 cols puts its text at 256, which fits.
 	files["f5.tui"] = "<fragment>" + strings.Repeat("<col>", 8) + "<text>end</text>" + strings.Repeat("</col>", 8) + "</fragment>"
 	doc = parse.ParseWith([]byte(app), "app.tui", memLoader(files, "app.tui", nil))

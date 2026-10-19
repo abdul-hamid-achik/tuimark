@@ -91,6 +91,22 @@ type expansionOverflow struct {
 // limit bounds a document as written.
 const MaxExpandedDepth = maxNestingDepth
 
+// defOverflowMsg is the V021 message of an include in the body of the
+// template t as written, charged to the definitions' budget (the F2
+// review): only the template's own checks lose what it inserts, and the
+// placements go on.
+func defOverflowMsg(src string, t *ir.Node, o *expansionOverflow) string {
+	in := "<template>"
+	if t != nil && t.ID != "" {
+		in = fmt.Sprintf("<template id=%q>", t.ID)
+	}
+	limit := fmt.Sprintf("the expansion limit for template definitions (%d elements or %d MiB of placed source)", ExpansionLimit, ExpansionByteLimit>>20)
+	if o.depth {
+		limit = fmt.Sprintf("the expansion depth limit of %d levels", MaxExpandedDepth)
+	}
+	return fmt.Sprintf("include src=%q in %s exceeds %s: it inserts nothing into the template's own checks, and no later include in a template definition expands", src, in, limit)
+}
+
 // overflowMsg is the V021 message of the expansion what (`include
 // src="X"` or `use template="T"`) that o unwound.
 func overflowMsg(what string, o *expansionOverflow) string {
@@ -440,7 +456,11 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 		w.Children = nil
 		fr.bg.count, fr.bg.bytes = count, bytes
 		fr.bg.dead = true
-		b.errInc(w, "V021", "%s", overflowMsg(fmt.Sprintf("include src=%q", src), o))
+		if fr.bg == &cp.def {
+			b.errInc(w, "V021", "%s", defOverflowMsg(src, cp.defining, o))
+		} else {
+			b.errInc(w, "V021", "%s", overflowMsg(fmt.Sprintf("include src=%q", src), o))
+		}
 	}()
 	b.chargeBytes(size) // before anything is built
 	b.countElement()    // the include itself, so it is the one that reports

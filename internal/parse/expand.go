@@ -60,8 +60,9 @@ type templating struct {
 	pending, expanding bool
 	// selfCheck is set while a template's body is built as written: its
 	// elements get only the checks an element gets from itself, and a
-	// <use> in it does not expand.
+	// <use> in it does not expand. defining is that template's node.
 	selfCheck bool
+	defining  *ir.Node
 	// inTmpl counts the template bodies (as written, or copied) being
 	// built: what a template may not hold is V001 inside one.
 	inTmpl int
@@ -278,12 +279,12 @@ func (b *builder) template(n *ir.Node, c *RawNode, outer *ir.Node) {
 // expanded (§6.18.1 step 1), a <use> in it not.
 func (b *builder) templateBody(t *ir.Node, c *RawNode) {
 	cp := b.comp
-	saved := cp.selfCheck
-	cp.selfCheck = true
+	saved, savedDef := cp.selfCheck, cp.defining
+	cp.selfCheck, cp.defining = true, t
 	cp.inTmpl++
 	b.depth++ // the template's own level, in the tree as written
 	defer func() {
-		cp.selfCheck = saved
+		cp.selfCheck, cp.defining = saved, savedDef
 		cp.inTmpl--
 		b.depth--
 	}()
@@ -546,8 +547,12 @@ func (b *builder) expandUse(n, q *ir.Node) {
 		return
 	}
 	if t.onStack > 0 {
-		// A cycle checkCycles reports at the use that closes it: never
-		// expanded, whatever the path.
+		// A cycle checkCycles did not see, through an include that a
+		// template's body as written left unexpanded (the definitions'
+		// budget ran out): reported here, never stopped silently (the F2
+		// review). The copies being built name it, from the template
+		// whose copy holds q back to t; it never expands.
+		b.errUse(q, "V019", "<use template=%q> in <template id=%q> makes a cycle of templates: %s", name, cp.stack[len(cp.stack)-1].node.ID, cp.stackCycle(t))
 		return
 	}
 	if q.ID == "" && b.eachContainer(q) == nil {
@@ -679,6 +684,24 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 		outer.refs = append(outer.refs, left...)
 	}
 	cp.markUsed(t)
+}
+
+// stackCycle names the cycle a use of t closes while the copies on the
+// stack are built, t among them: from the template whose copy holds the
+// use (the top of the stack) to t, then the templates copied inside t's
+// copy, back to the top (cycleText). The templates on the stack are
+// distinct, so the cycle is simple.
+func (cp *composer) stackCycle(t *tmpl) string {
+	top := len(cp.stack) - 1
+	k := top
+	for cp.stack[k] != t {
+		k--
+	}
+	names := []string{cp.stack[top].node.ID}
+	for _, s := range cp.stack[k:top] {
+		names = append(names, s.node.ID)
+	}
+	return cycleText(names[:min(len(names), cycleShown)], max(0, len(names)-cycleShown))
 }
 
 // markUsed records that a use copied t; unuse(n) takes back what was

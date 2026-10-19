@@ -215,24 +215,72 @@ func TestTemplateDefinitionIsNotChargedToTheDocument(t *testing.T) {
 
 // The definitions share one budget, so every body built as written stays
 // bounded: two unused templates that include 9 MiB each pass it, and the
-// second include reports V021 (review probe cap/t9d). That V021 stops
-// nothing in the document: an include and a use after it still expand.
+// second include reports V021 (review probe cap/t9d), with a message of
+// its own: it concerns the template's own checks, and no later include in
+// a template definition expands (W's, below). It stops nothing in the
+// document: an include and a use after it still expand.
 func TestDefinitionsBudgetNeverStopsThePlacements(t *testing.T) {
 	files := map[string]string{
 		"frag9.tui": "<fragment><text>" + strings.Repeat("x", 9<<20) + "</text></fragment>",
 		"one.tui":   "<fragment><text>included</text></fragment>",
 	}
-	const app = "<tui>\n<template id=\"T\"><include src=\"frag9.tui\"/></template>\n<template id=\"U\"><include src=\"frag9.tui\"/></template>\n<template id=\"S\"><text>copied</text></template>\n<screen id=\"main\">\n<include src=\"one.tui\"/><use template=\"S\"/>\n</screen>\n</tui>"
+	const app = "<tui>\n<template id=\"T\"><include src=\"frag9.tui\"/></template>\n<template id=\"U\"><include src=\"frag9.tui\"/></template>\n<template id=\"W\"><include src=\"one.tui\"/></template>\n<template id=\"S\"><text>copied</text></template>\n<screen id=\"main\">\n<include src=\"one.tui\"/><use template=\"S\"/>\n</screen>\n</tui>"
 	var doc *parse.Document
 	within(t, 60*time.Second, func() {
 		doc = parse.ParseWith([]byte(app), "app.tui", memLoader(files, "app.tui", nil))
 	})
-	want := `app.tui:3:18 include src="frag9.tui" exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands`
+	want := `app.tui:3:18 include src="frag9.tui" in <template id="U"> exceeds the expansion limit for template definitions (100000 elements or 16 MiB of placed source): it inserts nothing into the template's own checks, and no later include in a template definition expands`
 	if got := v021(doc); len(got) != 1 || got[0] != want {
 		t.Errorf("V021 %q, want %q", got, want)
 	}
 	if got := screenTexts(doc); got != "included copied" {
 		t.Errorf("screen texts %q, want the include's and the copy's", got)
+	}
+	// W's include, as written, inserts nothing.
+	found := false
+	for _, n := range doc.Root.Source {
+		if n.Kind == "template" && n.ID == "W" {
+			found = true
+			if inc := n.Source; len(inc) != 1 || inc[0].Kind != "include" || len(inc[0].Children) != 0 {
+				t.Errorf("W as written: %v", inc)
+			}
+		}
+	}
+	if !found {
+		t.Error("no template W in the document as written")
+	}
+}
+
+// A cycle that checkCycles cannot see, because the include that closes it
+// is in a template body left unexpanded once the definitions' budget ran
+// out, is reported where a copy meets it, instead of stopping silently
+// (the F2 review): A's fragment uses A, and B's fragment uses A, whose
+// body uses B.
+func TestCycleThroughAnUnexpandedIncludeIsReported(t *testing.T) {
+	files := map[string]string{
+		"big.tui":   texts(parse.ExpansionLimit),
+		"loopA.tui": `<fragment><text>a</text><use template="A"/></fragment>`,
+		"loopB.tui": `<fragment><text>b</text><use template="C"/></fragment>`,
+	}
+	const app = "<tui>\n<template id=\"T\"><include src=\"big.tui\"/></template>\n<template id=\"A\"><include src=\"loopA.tui\"/></template>\n<template id=\"B\"><include src=\"loopB.tui\"/></template>\n<template id=\"C\"><use template=\"B\"/></template>\n<screen id=\"main\"><use template=\"A\"/><use id=\"c\" template=\"C\"/></screen>\n</tui>"
+	var doc *parse.Document
+	within(t, 60*time.Second, func() {
+		doc = parse.ParseWith([]byte(app), "app.tui", memLoader(files, "app.tui", nil))
+	})
+	sameDiags := []string{
+		`V019 loopA.tui:1:25 <use template="A"> in <template id="A"> makes a cycle of templates: A → A`,
+		`V019 loopB.tui:1:25 <use template="C"> in <template id="B"> makes a cycle of templates: B → C → B`,
+		`V021 app.tui:2:18 include src="big.tui" in <template id="T"> exceeds the expansion limit for template definitions (100000 elements or 16 MiB of placed source): it inserts nothing into the template's own checks, and no later include in a template definition expands`,
+	}
+	var got []string
+	for _, d := range doc.Diags {
+		got = append(got, fmt.Sprintf("%s %s:%d:%d %s", d.Code, d.File, d.Line, d.Col, d.Msg))
+	}
+	if strings.Join(got, "\n") != strings.Join(sameDiags, "\n") {
+		t.Errorf("diagnostics:\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(sameDiags, "\n"))
+	}
+	if got := screenTexts(doc); got != "a b" {
+		t.Errorf("screen texts %q", got)
 	}
 }
 
