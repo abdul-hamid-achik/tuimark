@@ -123,11 +123,19 @@ func TestUseExpansionLimitFanOut(t *testing.T) {
 }
 
 // Each copy charges its template's source span, from <template to the end
-// of </template>: a template of exactly 1 MiB copied 16 times is the
-// budget; the 17th copy is V021.
+// of </template>, and each element it places its placement suffix (the F2
+// re-review; a use without id has no prefix): a template whose span and
+// one element's suffix make exactly 1 MiB, copied 16 times, is the budget;
+// the 17th copy is V021.
 func TestUseByteBudgetBoundary(t *testing.T) {
 	const head, tail = `<template id="t"><text>a</text><!--`, "--></template>"
-	tmpl := head + strings.Repeat("x", 1<<20-len(head)-len(tail)) + tail
+	// The suffix ", placed by <use template="t"> at app.tui:1:COL", with
+	// a 7-digit column for every use.
+	suffix := len(`, placed by <use template="t"> at app.tui:1:`) + 7
+	tmpl := head + strings.Repeat("x", 1<<20-suffix-len(head)-len(tail)) + tail
+	if first, last := len("<tui>"+tmpl+"<screen>")+1, len("<tui>"+tmpl+"<screen>")+1+16*len(`<use template="t"/>`); len(fmt.Sprint(first)) != 7 || len(fmt.Sprint(last)) != 7 {
+		t.Fatalf("columns %d..%d", first, last)
+	}
 	place := func(n int) *parse.Document {
 		return parseDoc("<tui>" + tmpl + "<screen>" + strings.Repeat(`<use template="t"/>`, n) + "</screen></tui>")
 	}

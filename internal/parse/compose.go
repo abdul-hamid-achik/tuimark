@@ -98,7 +98,7 @@ const MaxExpandedDepth = maxNestingDepth
 func defOverflowMsg(src string, t *ir.Node, o *expansionOverflow) string {
 	in := "<template>"
 	if t != nil && t.ID != "" {
-		in = fmt.Sprintf("<template id=%q>", t.ID)
+		in = fmt.Sprintf("<template id=%q>", ir.ShownID(t.ID))
 	}
 	limit := fmt.Sprintf("the expansion limit for template definitions (%d elements or %d MiB of placed source)", ExpansionLimit, ExpansionByteLimit>>20)
 	if o.depth {

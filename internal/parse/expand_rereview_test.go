@@ -314,3 +314,32 @@ func isASCII(s string) bool {
 	}
 	return true
 }
+
+// An ordinary document stays far from the byte budget with the charges of
+// the F2 re-review (prefix, substitution, class list, placement suffix):
+// 1000 uses with ordinary ids of a template of 50 elements, 49 of them
+// with ids and a with path (50 000 copied elements), leave room for an
+// 11 MiB copy besides, so they cost under 5 MiB of the 16.
+func TestOrdinaryCopiesAreFarFromTheByteBudget(t *testing.T) {
+	var b strings.Builder
+	b.WriteString("<tui>\n<template id=\"row\"><col>")
+	for i := 0; i < 49; i++ {
+		fmt.Fprintf(&b, "<text id=\"c%d\" class=\"cell\">{r.v}</text>", i)
+	}
+	b.WriteString("</col></template>\n<template id=\"fill\"><text>f</text><!--" + strings.Repeat("x", 11<<20) + "--></template>\n<screen>\n")
+	for i := 0; i < 1000; i++ {
+		fmt.Fprintf(&b, "<use id=\"r%d\" template=\"row\" class=\"odd\" with=\"rows as r\"/>\n", i)
+	}
+	b.WriteString("<use template=\"fill\"/>\n</screen>\n</tui>\n")
+	var doc *parse.Document
+	el := within(t, 60*time.Second, func() { doc = parse.Parse([]byte(b.String()), "app.tui") })
+	if el > time.Second {
+		t.Errorf("took %v", el)
+	}
+	if len(doc.Diags) != 0 {
+		t.Errorf("diagnostics %v", useDiags(doc)[:min(3, len(doc.Diags))])
+	}
+	if n := len(screenOf(doc).Children); n != 1001 {
+		t.Errorf("%d children, want 1000 copies and the filler", n)
+	}
+}

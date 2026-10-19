@@ -3,7 +3,8 @@ package parse
 import (
 	"fmt"
 	"strings"
-	"unicode/utf8"
+
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 )
 
 // cycleShown is how many templates a V019 names before it shortens a cycle
@@ -12,23 +13,9 @@ import (
 // cycleShown templates and the count of the others.
 const cycleShown = 8
 
-// maxShownID is the longest template id a V019 shows whole (the owner's
-// decision in the F2 re-review): a longer one is shown as its first
-// maxShownID bytes, cut at a rune boundary, then "…" (shownID), so that
-// the messages of many uses of a long id stay linear in the document.
-const maxShownID = 64
-
-// shownID is the template id id as a V019 shows it (maxShownID).
-func shownID(id string) string {
-	if len(id) <= maxShownID {
-		return id
-	}
-	cut := maxShownID
-	for cut > 0 && !utf8.RuneStart(id[cut]) {
-		cut--
-	}
-	return id[:cut] + "…"
-}
+// shownID is id as a composition diagnostic shows it (ir.ShownID): a
+// V019 shows every template id it quotes so.
+func shownID(id string) string { return ir.ShownID(id) }
 
 // cycleSearchBudget is how many uses the searches for a shortest cycle may
 // follow in one document, all of them together, in the document order of

@@ -603,12 +603,7 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 		n.Attrs[a.Name] = a.Value
 		n.Order = append(n.Order, a.Name)
 	}
-	if b.comp != nil && b.comp.prefix != "" {
-		// Every element a copy places is charged its scoped-id prefix, id
-		// or not (the F2 re-review): it bounds the ids of a use with a
-		// long id, nested ones included, and the placement suffixes.
-		b.chargeBytes(len(b.comp.prefix))
-	}
+	b.chargePlaced()
 	if id, ok := n.Attrs["id"]; ok {
 		n.ID = id
 		if b.comp != nil && b.comp.prefix != "" {

@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // Version is the source IR version `tuimark ir` emits for version="1"
@@ -244,16 +245,37 @@ func (o *Origin) PlacedSuffix() string {
 	return ", placed by " + o.Placed.describePlacer() + " at " + o.Placed.Loc(true)
 }
 
-// describePlacer names an <include> (and, in a later phase, a <use>) the
-// way a placement suffix does.
+// describePlacer names an <include> or a <use> the way a placement suffix
+// does, its id or template id as ShownID shows it.
 func (n *Node) describePlacer() string {
 	if n.ID != "" {
-		return fmt.Sprintf("<%s id=%q>", n.Tag, n.ID)
+		return fmt.Sprintf("<%s id=%q>", n.Tag, ShownID(n.ID))
 	}
 	if t, ok := n.Attrs["template"]; ok && n.Tag == "use" {
-		return fmt.Sprintf("<use template=%q>", t)
+		return fmt.Sprintf("<use template=%q>", ShownID(t))
 	}
 	return "<" + n.Tag + ">"
+}
+
+// MaxShownID is the longest id a composition diagnostic shows whole when
+// it quotes an id (or an include's file) written somewhere other than its
+// own site (the owner's decisions in the F2 re-review): a longer one is
+// shown as its first MaxShownID bytes, cut at a rune boundary, then "…"
+// (ShownID). It keeps what many diagnostics print about one long id
+// linear in the document: the placement suffix, V019, V012, V021, V006,
+// V011, and the reasons of an id that names no node.
+const MaxShownID = 64
+
+// ShownID is id as a composition diagnostic shows it (MaxShownID).
+func ShownID(id string) string {
+	if len(id) <= MaxShownID {
+		return id
+	}
+	cut := MaxShownID
+	for cut > 0 && !utf8.RuneStart(id[cut]) {
+		cut--
+	}
+	return id[:cut] + "…"
 }
 
 // Loc is the node's position in the file it is written in as LINE:COL, or

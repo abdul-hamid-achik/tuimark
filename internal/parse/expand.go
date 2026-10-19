@@ -85,6 +85,11 @@ type templating struct {
 	// charge charges the expansion under way the bytes a substitution
 	// adds (builder.chargeBytes; nil charges nothing).
 	charge func(n int)
+	// sufOrg and sufPrefix are the origin and prefix chargePlaced last
+	// measured, sufCharge what it charges for them.
+	sufOrg    *ir.Origin
+	sufPrefix string
+	sufCharge int
 	// copies are the copies being built, outermost first; stack their
 	// templates.
 	copies []*copyFrame
@@ -357,7 +362,7 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 		q.Attrs[a.Name] = a.Value
 		q.Order = append(q.Order, a.Name)
 	}
-	b.chargeBytes(len(cp.prefix)) // as for any element a copy places (node)
+	b.chargePlaced() // as for any element a copy places (node)
 	if id, ok := q.Attrs["id"]; ok {
 		q.ID = cp.prefix + id
 	}
@@ -586,6 +591,7 @@ func (b *builder) expandUse(n, q *ir.Node) {
 	}
 	if q.ID == "" && b.eachContainer(q) == nil {
 		if x := b.firstID(t); x != "" {
+			x = shownID(x) // written in the template, not at the use
 			b.errUse(q, "V012", "<use template=%q> needs an id: its template holds ids (#%s), which the use scopes as ID__%s", name, x, x)
 			return
 		}
@@ -745,6 +751,29 @@ func (cp *composer) stackCycle(t *tmpl) string {
 	return cycleText(names[:min(len(names), cycleShown)], max(0, len(names)-cycleShown))
 }
 
+// chargePlaced charges an element a copy places (the F2 re-review): its
+// scoped-id prefix, id or not, and its placement suffix as a diagnostic
+// shows it (ir.Origin.PlacedSuffix), less the bytes of the prefix the
+// suffix already shows (the id of the use that scoped it). Together they
+// bound the ids a copy makes, nested uses with long ids included, and
+// what every diagnostic about one of its elements may print, whether or
+// not one is printed.
+func (b *builder) chargePlaced() {
+	cp := b.comp
+	if cp == nil || len(cp.copies) == 0 {
+		return
+	}
+	if cp.sufOrg != b.org || cp.sufPrefix != cp.prefix {
+		cp.sufOrg, cp.sufPrefix = b.org, cp.prefix
+		n := len(cp.prefix) + len(b.org.PlacedSuffix())
+		if p := b.org.Placed; p != nil && p.Kind == "use" && p.ID != "" && cp.prefix == p.ID+"__" {
+			n -= len(strings.TrimSuffix(shownID(p.ID), "…"))
+		}
+		cp.sufCharge = n
+	}
+	b.chargeBytes(cp.sufCharge)
+}
+
 // markUsed records that a use copied t; unuse(n) takes back what was
 // recorded after the first n, for the copies a V021 discards.
 func (cp *composer) markUsed(t *tmpl) {
@@ -875,9 +904,9 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 // describeUse names a <use> as a placement suffix does.
 func describeUse(u *ir.Node) string {
 	if u.ID != "" {
-		return fmt.Sprintf("<use id=%q>", u.ID)
+		return fmt.Sprintf("<use id=%q>", shownID(u.ID))
 	}
-	return fmt.Sprintf("<use template=%q>", u.Attrs["template"])
+	return fmt.Sprintf("<use template=%q>", shownID(u.Attrs["template"]))
 }
 
 // lookup returns the innermost alias in scope called name, or nil.
@@ -1080,7 +1109,7 @@ func (b *builder) notANode(id string) string {
 	cp := b.comp
 	if q := cp.useIDs[id]; q != nil {
 		if first := firstNodeID(q.Children); first != "" {
-			return "is a <use>, not a node; name a node of its copy, such as #" + first
+			return "is a <use>, not a node; name a node of its copy, such as #" + shownID(first)
 		}
 		return "is a <use>, not a node, and its copy has no id"
 	}
@@ -1101,7 +1130,7 @@ func (b *builder) notANode(id string) string {
 		})
 	}
 	if s := cp.written[id]; s != "" {
-		return idMissing + "; ids in a <template> are scoped by their <use>: #" + s
+		return idMissing + "; ids in a <template> are scoped by their <use>: #" + shownID(s)
 	}
 	return idMissing
 }
