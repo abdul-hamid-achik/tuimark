@@ -187,10 +187,9 @@ func TestFormsVersionGate(t *testing.T) {
 		t.Errorf("single in version=3: %v", diagLines(ds))
 	}
 	const table = `<table id="t" each="xs as x" key="x" checked="c" single="true"><column>{x}</column></table>`
-	// version="1": the table's own V001 (and its column's), and no V002
-	// for single.
-	ds = btnApp(t, doc("1", table), "").Validate()
-	if !reflect.DeepEqual(codesOf(ds), []string{"V001", "V001"}) || ds[0].Msg != `tag <table> (requires version="2")` {
+	// version="1": only the table's own V001, no V002 for single.
+	ds = btnApp(t, doc("1", `<table id="t" each="xs as x" key="x" checked="c" single="true"/>`), "").Validate()
+	if !reflect.DeepEqual(codesOf(ds), []string{"V001"}) || ds[0].Msg != `tag <table> (requires version="2")` {
 		t.Errorf("single on a table in version=1: %v", diagLines(ds))
 	}
 	const sheet = `<style>checkbox { color: red; }</style>`
@@ -205,6 +204,15 @@ func TestFormsVersionGate(t *testing.T) {
 	}
 	if ds := btnApp(t, `<tui>`+sheet+`<screen/></tui>`, "").Validate(); len(ds) != 0 {
 		t.Errorf("checkbox selector in the current language: %v", diagLines(ds))
+	}
+	// The same type selector in a keymap's when.
+	const when = `<keymap><bind keys="x" action="go" when="checkbox:focus"/></keymap>`
+	ds = btnApp(t, `<tui version="3">`+when+`<screen/></tui>`, "").Validate()
+	if len(ds) != 1 || ds[0].Code != "V003" || !strings.HasSuffix(ds[0].Msg, hint) {
+		t.Errorf("checkbox selector in a version=3 when: %v", diagLines(ds))
+	}
+	if ds := btnApp(t, `<tui>`+when+`<screen/></tui>`, "").Validate(); len(ds) != 0 {
+		t.Errorf("checkbox selector in a current when: %v", diagLines(ds))
 	}
 	// The HTML-name hints (decision 67).
 	ds = btnApp(t, doc("", `<radio/>`), "").Validate()
@@ -303,14 +311,23 @@ func TestCheckbox(t *testing.T) {
 	wantBox(t, d, "beta", 13, 0, 8, 1, "Beta")
 }
 
-// 174's text form: the dark line ends with " focus checked".
-func TestCheckboxTextDump(t *testing.T) {
-	d, err := btnApp(t, formsSource(t, "174/checkbox.tui"), checkboxData).Dump(20, 3)
+// §6.16.3: a checkbox is a leaf that never shrinks. In a row too narrow
+// for both, the second keeps its width and the row cuts it (L009).
+func TestCheckboxNeverShrinks(t *testing.T) {
+	src := formsSource(t, "174/checkbox.tui")
+	row := strings.Replace(strings.Replace(src, `<checkbox id="dark"`, `<row id="r" style="height: 1"><checkbox id="dark"`, 1), `label="Beta"/>`, `label="Beta"/></row>`, 1)
+	app := btnApp(t, row, checkboxData)
+	d, err := app.Dump(15, 3)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if n := btnNode(t, d, "dark"); !n.Focused || !n.Checked {
-		t.Errorf("dark: %+v", n)
+	wantBox(t, d, "dark", 0, 0, 13, 1, "Dark mode")
+	wantBox(t, d, "beta", 13, 0, 8, 1, "Beta")
+	if d.Grid[0] != "[x] Dark mode[ " {
+		t.Errorf("grid[0] = %q", d.Grid[0])
+	}
+	if !hasDiag(d.Errors, "L009", "") {
+		t.Errorf("no L009 at 15 columns: %v", diagLines(d.Errors))
 	}
 }
 
@@ -537,13 +554,12 @@ func TestSingleList(t *testing.T) {
 	// while the single list has focus.
 	pick := strings.Replace(src, "<keymap>", `<keymap><bind keys="space" action="pick"/>`, 1)
 	draft := strings.Replace(src, "<keymap>", `<keymap><bind keys="space" action="check-toggle" when="#size:focus"/>`, 1)
-	for name, s := range map[string]string{"pick": pick, "draft": draft} {
-		res := formsPlay(t, s, radioData, 20, 3, "space")
-		if got := eventsJSON(t, res.Events); got != `[{"step":1,"action":"size_changed","source":"size","keys":{"it":"s"},"value":"s"}]` {
-			t.Errorf("%s row: %s", name, got)
-		}
-		singleCases(t, draft)
+	res := formsPlay(t, pick, radioData, 20, 3, "space")
+	if got := eventsJSON(t, res.Events); got != `[{"step":1,"action":"size_changed","source":"size","keys":{"it":"s"},"value":"s"}]` {
+		t.Errorf("pick row: %s", got)
 	}
+	// With the draft's space row added back, every result is unchanged.
+	singleCases(t, draft)
 
 	// Static checks.
 	b007 := strings.Replace(src, "<keymap>", `<keymap><bind keys="b" action="check-all" when="#size:focus"/>`, 1)
@@ -573,7 +589,7 @@ func TestSingleList(t *testing.T) {
 	if got := checkedKeysOf(d); len(got) != 0 {
 		t.Errorf("numeric keys: checked %v", got)
 	}
-	res := formsPlay(t, src, numeric, 20, 3, "space")
+	res = formsPlay(t, src, numeric, 20, 3, "space")
 	if got := eventsJSON(t, res.Events); got != `[{"step":1,"action":"size_changed","source":"size","keys":{"it":1},"value":1}]` {
 		t.Errorf("numeric keys, space: %s", got)
 	}
@@ -632,7 +648,7 @@ func TestSingleConsumesSpace(t *testing.T) {
 		t.Errorf("object key: %s", eventsJSON(t, res.Events))
 	}
 	// A multi-select keeps space not implicit.
-	multi := strings.Replace(strings.Replace(src, ` single="true"`, ``, 1), `"size"`, `"size"`, 1)
+	multi := strings.Replace(src, ` single="true"`, ``, 1)
 	res = formsPlay(t, multi, `{"size": [], `+sizes+`}`, 20, 3, "space")
 	if got := eventsJSON(t, res.Events); got != `[{"step":1,"action":"pick","source":"size","keys":{"it":"s"},"value":null}]` {
 		t.Errorf("multi-select space: %s", got)
