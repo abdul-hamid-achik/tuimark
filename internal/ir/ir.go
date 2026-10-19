@@ -148,6 +148,30 @@ type Node struct {
 	// written in the document itself and placed by nothing, which is every
 	// element of a document without composition.
 	Org *Origin
+
+	// CopiedBy is set on a top-level element of a <use>'s copy (SPEC
+	// v0.4b §6.18.3): the uses whose copy it is a top-level element of,
+	// innermost first. Their static class is already in Classes; their if
+	// and hidden decide, each frame, whether the element is in it. nil
+	// for every other element.
+	CopiedBy []*Node
+	// Written is what an element of a copy (or a <use> in one) wrote,
+	// before its paths went through the with aliases in scope and its #id
+	// references were resolved (SPEC v0.4b §6.18.4, §6.18.5, decision
+	// 18): `tuimark ir` shows it, and the messages that name a path as
+	// written read it. nil outside copies.
+	Written *Written
+	// With is a <use> node's with clauses (SPEC v0.4b §6.18.5), each path
+	// already resolved where the use stands (through the aliases in scope
+	// there); nil for every other node and for a use whose with is V011.
+	With []Each
+}
+
+// Written is an element of a copy as written (Node.Written).
+type Written struct {
+	Attrs                map[string]string
+	Bind, Each, If, Text string
+	Classes              []string
 }
 
 // Origin is where an element of an expanded document was written (SPEC

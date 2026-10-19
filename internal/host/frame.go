@@ -809,6 +809,9 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	case "tui", "style", "keymap", "bind":
 		return nil
 	}
+	if len(n.CopiedBy) > 0 && fb.usePruned(n, sc) {
+		return nil // SPEC v0.4b §6.18.3 (uses.go)
+	}
 	if n.If != "" {
 		g, err := ir.ParseGuard(n.If)
 		if err == nil {

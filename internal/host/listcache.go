@@ -219,6 +219,10 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 		}
 		guard(t.If)
 		guard(t.Bind)
+		for _, u := range t.CopiedBy { // the guards of the uses that placed it
+			guard(u.If)
+			guard(u.Attrs["hidden"])
+		}
 		if t.Each != "" {
 			if te, err := ir.ParseEach(t.Each); err == nil {
 				dep(te.Path)

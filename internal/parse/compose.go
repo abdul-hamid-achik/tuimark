@@ -93,6 +93,8 @@ type composer struct {
 	// may place a file many times, and reading and parsing it again each
 	// time would make the work grow with the copies, not the files.
 	files map[string]*fragFile
+	// templating is the state of <template> and <use> (expand.go).
+	templating
 }
 
 // fragFile is a fragment read once: its parsed root, or why it has none.
@@ -177,7 +179,7 @@ func (b *builder) attach(n, outer, child *ir.Node) {
 		if b.droppedIn == nil {
 			b.droppedIn = map[*ir.Node][]droppedAt{}
 		}
-		b.droppedIn[n] = append(b.droppedIn[n], droppedAt{len(n.Children), child})
+		b.droppedIn[n] = append(b.droppedIn[n], droppedAt{at: len(n.Children), node: child})
 		return
 	}
 	n.Children = append(n.Children, child)
@@ -326,6 +328,7 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 	chainLen := len(cp.chain)
 	nChildren, nDropped, nDroppedIn := len(n.Children), len(b.doc.dropped), len(b.droppedIn[n])
 	nStyles, nDiags, count, bytes := len(b.doc.Styles), len(b.doc.Diags), cp.count, cp.bytes
+	nScope := len(cp.scope)
 	nList := len(n.Source)
 	if outer != nil {
 		nList = len(outer.Children)
@@ -343,6 +346,7 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 		}
 		b.org = saved
 		cp.chain = cp.chain[:chainLen]
+		cp.scope = cp.scope[:nScope] // an element of a copy left mid-build
 		n.Children = n.Children[:nChildren]
 		if outer != nil {
 			outer.Children = outer.Children[:nList]
@@ -372,8 +376,7 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 		if fc.Type != RawElement {
 			continue
 		}
-		if fc.Name == "include" {
-			b.include(n, fc, w)
+		if b.compose(n, fc, w) {
 			continue
 		}
 		b.attach(n, w, b.node(fc, n))
@@ -420,8 +423,7 @@ func FragmentDiags(doc *Document) ir.Diags {
 		if c.Type != RawElement {
 			continue
 		}
-		if c.Name == "include" {
-			b.include(holder, c, nil)
+		if b.compose(holder, c, nil) {
 			continue
 		}
 		b.attach(holder, nil, b.node(c, holder))

@@ -39,6 +39,10 @@ type RawNode struct {
 	Text        string // decoded character data, comment body, or CDATA body
 	SelfClosing bool
 	Line, Col   int
+	// Span is an element's length in the source, in bytes, from its '<'
+	// to the end of its end tag: the source a <use> of a <template>
+	// places (ADR 0034's byte budget).
+	Span int
 }
 
 // SyntaxError is a V005 well-formedness failure.
@@ -405,6 +409,7 @@ func (s *scanner) element() (*RawNode, *SyntaxError) {
 		return nil, s.errf(line, col, "elements nested deeper than %d levels", maxNestingDepth)
 	}
 	defer func() { s.depth-- }()
+	start := s.pos
 	s.advance(1) // <
 	name := s.name()
 	if name == "" {
@@ -424,6 +429,7 @@ func (s *scanner) element() (*RawNode, *SyntaxError) {
 		if s.has("/>") {
 			s.advance(2)
 			n.SelfClosing = true
+			n.Span = s.pos - start
 			return n, nil
 		}
 		if s.peek() == '>' {
@@ -490,6 +496,7 @@ func (s *scanner) element() (*RawNode, *SyntaxError) {
 			if cn != name {
 				return nil, s.errf(cline, ccol, "closing tag </%s> does not match <%s> opened at %d:%d", cn, name, line, col)
 			}
+			n.Span = s.pos - start
 			return n, nil
 		case s.has("<!--"):
 			c, err := s.comment()

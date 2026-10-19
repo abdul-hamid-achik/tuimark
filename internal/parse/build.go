@@ -264,6 +264,10 @@ var TagAttrsV3 = map[string]map[string]bool{
 var TagAttrsCurrent = map[string]map[string]bool{
 	"include":  only("src"),
 	"fragment": only(),
+	// SPEC v0.4b §6.18.3; a <use>'s attributes are decision 9's.
+	"template": only("id"),
+	"use":      only("id", "template", "with", "if", "hidden", "class"),
+
 	"progress": only("indeterminate"), // SPEC v0.4b §6.4.1: the spinner
 	"checkbox": checkboxAttrs(),       // SPEC v0.4b §6.16 (forms.go)
 	"list":     only("single"),        // SPEC v0.4b §6.14.1
@@ -275,7 +279,7 @@ var TagAttrsCurrent = map[string]map[string]bool{
 var tableItemAttrs = only("class")
 
 // noClassGuard are the tags that take no class:NAME (SPEC §6.13).
-var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true}
+var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true, "template": true, "use": true}
 
 // ClassGuardPrefix starts every class:NAME attribute (SPEC §6.13).
 const ClassGuardPrefix = "class:"
@@ -362,10 +366,13 @@ type builder struct {
 }
 
 // droppedAt is an unknown-tag child content() kept out of its parent's
-// Children, with the number of Children before it.
+// Children, with the number of Children before it. A ghost entry is a
+// <template> or a <use> instead (expand.go): never a node, but where it
+// stands is its place in the id space.
 type droppedAt struct {
-	at   int
-	node *ir.Node
+	at    int
+	node  *ir.Node
+	ghost ghostKind
 }
 
 // listItem returns the list <item> that n is or is inside (the nearest
@@ -545,6 +552,7 @@ func ParseWith(src []byte, file string, ld *Loader) *Document {
 		return doc
 	}
 	doc.Root = b.node(raw, nil)
+	b.expandUses() // SPEC v0.4b §6.18.1 steps 2 and 3 (expand.go)
 	b.checkStructure()
 	b.checkIDs(doc.Root)
 	b.checkKeymap()
@@ -590,10 +598,17 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 	}
 	if id, ok := n.Attrs["id"]; ok {
 		n.ID = id
+		if b.comp != nil && b.comp.prefix != "" {
+			n.ID = b.comp.prefix + id // scoped by its use (SPEC v0.4b §6.18.4)
+		}
 	}
 	b.checkTag(n, parent)
 	for _, a := range r.Attrs {
 		b.attr(n, a)
+	}
+	if b.comp != nil && len(b.comp.copies) > 0 {
+		b.copyContent(n, r) // an element of a copy (expand.go)
+		return n
 	}
 	b.content(n, r)
 	return n
@@ -621,7 +636,6 @@ var htmlTagHints = map[string]string{
 	"option":    "a <list> with on:select picks one row",
 	"radio":     "a <list> with on:select picks one row",
 	"textarea":  "not in the vocabulary yet; use <input>",
-	"template":  "Tuimark has no components or includes; only <style src> loads another file",
 	"slot":      "Tuimark has no components or includes; only <style src> loads another file",
 	"component": "Tuimark has no components or includes; only <style src> loads another file",
 	"import":    "Tuimark has no components or includes; only <style src> loads another file",
@@ -832,10 +846,11 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 		b.errSelf(n, "V001", "unknown tag <%s>%s", tag, b.tagSuggestion(tag))
 		return
 	}
-	if b.comp != nil && b.comp.selfOnly {
-		// A fragment checked on its own: where an element stands is not
-		// known, so only the checks an element gets from itself (SPEC
-		// v0.4b §6.18.3, "An unused template").
+	if b.comp != nil && (b.comp.selfOnly || b.comp.selfCheck) {
+		// A fragment checked on its own, or a template's body as written:
+		// where an element stands is not known, so only the checks an
+		// element gets from itself (SPEC v0.4b §6.18.3, "An unused
+		// template").
 		return
 	}
 	ptag := ""
@@ -1538,13 +1553,13 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<%s> cannot contain elements (found <%s>)", n.Tag, c.Name)
 				continue
 			}
-			if c.Name == "include" && b.comp != nil {
-				// SPEC v0.4b §6.18.1: the elements of the fragment take the
-				// include's place, built here as if written here. This
-				// comes after the rules above: in an element that takes no
-				// element children, an include is reported by that rule and
-				// its file is not read (§6.18.2).
-				b.include(n, c, nil)
+			if b.comp != nil && b.compose(n, c, nil) {
+				// SPEC v0.4b §6.18.1: the elements of a fragment, or of a
+				// template's copy, take the include's or the use's place,
+				// built here as if written here (expand.go). This comes
+				// after the rules above: in an element that takes no
+				// element children, an include or a use is reported by
+				// that rule and not expanded (§6.18.2, §6.18.3).
 				continue
 			}
 			// An unknown kind still gets its subtree validated (V001 plus
@@ -1733,27 +1748,40 @@ func (b *builder) checkStructure() {
 // itself is never passed to fn (its attributes, id included, are not
 // validated: V001 is all it gets).
 func (b *builder) walkAll(n *ir.Node, dropped bool, fn func(n *ir.Node, dropped bool)) {
+	b.walkSeq(n, dropped, false, fn)
+}
+
+// walkSeq is walkAll that, with ghosts, also passes fn the <template> and
+// <use> elements where they stand (expand.go), without walking into them:
+// the id space holds their ids, in document order (SPEC v0.4b §6.18.4).
+func (b *builder) walkSeq(n *ir.Node, dropped, ghosts bool, fn func(n *ir.Node, dropped bool)) {
 	if b.tagKnown(n.Tag) {
 		fn(n, dropped)
 	}
-	kids := n.Children
-	if extra := b.droppedIn[n]; len(extra) > 0 {
-		// Merge by the index content() recorded: a source position says
-		// nothing about the order of nodes read from different files.
-		kids = make([]*ir.Node, 0, len(n.Children)+len(extra))
-		j := 0
-		for i := 0; i <= len(n.Children); i++ {
-			for j < len(extra) && extra[j].at == i {
-				kids = append(kids, extra[j].node)
-				j++
-			}
-			if i < len(n.Children) {
-				kids = append(kids, n.Children[i])
-			}
+	extra := b.droppedIn[n]
+	if len(extra) == 0 {
+		for _, c := range n.Children {
+			b.walkSeq(c, dropped || !b.tagKnown(c.Tag), ghosts, fn)
 		}
+		return
 	}
-	for _, c := range kids {
-		b.walkAll(c, dropped || !b.tagKnown(c.Tag), fn)
+	// Merge by the index content() recorded: a source position says
+	// nothing about the order of nodes read from different files.
+	j := 0
+	for i := 0; i <= len(n.Children); i++ {
+		for j < len(extra) && extra[j].at == i {
+			switch e := extra[j]; {
+			case e.ghost == 0:
+				b.walkSeq(e.node, true, ghosts, fn)
+			case ghosts:
+				fn(e.node, dropped)
+			}
+			j++
+		}
+		if i < len(n.Children) {
+			c := n.Children[i]
+			b.walkSeq(c, dropped || !b.tagKnown(c.Tag), ghosts, fn)
+		}
 	}
 }
 
@@ -1894,8 +1922,8 @@ func (b *builder) checkTabFocus(n *ir.Node) {
 	if n.Tag == "tab" {
 		if f, ok := n.Attr("focus"); ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
 			id := f[1:]
-			if why := b.idTarget(id); why == idMissing {
-				b.errN(n, "B005", "focus=%q refers to an id that does not exist", f)
+			if why := b.idTarget(id); strings.HasPrefix(why, idMissing) {
+				b.errN(n, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
 				b.errN(n, "B005", "focus=%q %s", f, why)
 			} else if !inside(b.doc.IDs[id], n) {
@@ -1935,8 +1963,8 @@ func (b *builder) checkModalFocus(n *ir.Node) {
 	if n.Tag == "modal" {
 		if f, ok := n.Attr("focus"); ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
 			id := f[1:]
-			if why := b.idTarget(id); why == idMissing {
-				b.errN(n, "B005", "focus=%q refers to an id that does not exist", f)
+			if why := b.idTarget(id); strings.HasPrefix(why, idMissing) {
+				b.errN(n, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
 				b.errN(n, "B005", "focus=%q %s", f, why)
 			} else if !inside(b.doc.IDs[id], n) {
@@ -2027,13 +2055,17 @@ func (b *builder) checkMultiSelect(n *ir.Node) {
 // tree but never becomes addressable.
 func (b *builder) checkIDs(root *ir.Node) {
 	seen := map[string]*ir.Node{}
-	b.walkAll(root, false, func(n *ir.Node, dropped bool) {
+	// The <template> and <use> elements are in the id space too (SPEC
+	// v0.4b §6.18.4): walkSeq passes them where they stand.
+	b.walkSeq(root, false, b.comp != nil, func(n *ir.Node, dropped bool) {
 		if n.ID == "" {
 			return
 		}
 		inTemplate := b.eachContainer(n) != nil
 		if prev, ok := seen[n.ID]; ok {
-			b.dupID(n, prev)
+			if !sameIDCopies(n, prev) {
+				b.dupID(n, prev)
+			}
 		} else {
 			seen[n.ID] = n
 			if inTemplate {
@@ -2044,6 +2076,9 @@ func (b *builder) checkIDs(root *ir.Node) {
 		}
 		if dropped {
 			return
+		}
+		if b.ghostID(n) {
+			return // not a node (expand.go)
 		}
 		if _, ok := b.doc.IDs[n.ID]; !ok {
 			b.doc.IDs[n.ID] = n
@@ -2063,9 +2098,16 @@ const idMissing = "does not exist"
 // exist, or it exists only inside a list <item>, where nothing is focused
 // or addressed by id at run time (the host inflates rows without an id
 // index). It returns "" when the id is a valid target.
+//
+// A missing id's reason starts with idMissing and may go on: in a document
+// with templates, an id that is not a node may be a <use>'s or a
+// <template>'s, or one an element of a template writes (expand.go).
 func (b *builder) idTarget(id string) string {
 	n, ok := b.doc.IDs[id]
 	if !ok {
+		if b.comp != nil {
+			return b.notANode(id)
+		}
 		return idMissing
 	}
 	if !b.addressable[id] {
@@ -2219,8 +2261,8 @@ func (b *builder) checkKeymap() {
 				b.errKB(k, "V003", path, "to=%q: want #id", k.To)
 			} else {
 				k.To = k.To[1:]
-				if why := b.idTarget(k.To); why == idMissing {
-					b.errKB(k, "B005", path, "to=\"#%s\" refers to an id that does not exist", k.To)
+				if why := b.idTarget(k.To); strings.HasPrefix(why, idMissing) {
+					b.errKB(k, "B005", path, "to=\"#%s\" refers to an id that %s", k.To, why)
 				} else if why != "" {
 					b.errKB(k, "B005", path, "to=\"#%s\" %s", k.To, why)
 				} else {
@@ -2237,8 +2279,8 @@ func (b *builder) checkKeymap() {
 	}
 	for _, s := range b.doc.Screens {
 		if f, ok := s.Attr("focus"); ok && strings.HasPrefix(f, "#") {
-			if why := b.idTarget(f[1:]); why == idMissing {
-				b.errN(s, "B005", "focus=%q refers to an id that does not exist", f)
+			if why := b.idTarget(f[1:]); strings.HasPrefix(why, idMissing) {
+				b.errN(s, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
 				b.errN(s, "B005", "focus=%q %s", f, why)
 			}
