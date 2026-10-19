@@ -58,9 +58,11 @@ function Images({ shot, eager }: { shot: Shot; eager: boolean }) {
           alt={shot.alt}
           width={width}
           height={height}
-          // No fetchPriority: React would turn it into a preload hint that
-          // every page linking here (and so prefetching it) would follow.
+          // An eager image is the page's largest paint: fetch it first.
+          // (React also preloads it, so pages that prefetch this one fetch
+          // it at idle too; the hero is small enough for that.)
           loading={v.eager ? 'eager' : 'lazy'}
+          fetchPriority={v.eager ? 'high' : undefined}
           decoding="async"
         />
       ))}

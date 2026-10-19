@@ -464,12 +464,12 @@ const SHOTS = [
   { name: 'kit-gallery-data', file: 'examples/kit-gallery/app.tui', data: 'examples/kit-gallery/sample.json', cols: 100, rows: 28, input: '3 focus:#svc down', themes: ['dark', 'light'], alt: 'kit gallery: the data tab, a focused table with its cursor row as an accent bar and a build log below' },
   { name: 'containers', file: 'examples/containers/app.tui', data: 'examples/containers/sample.json', cols: 110, rows: 26, themes: ['dark', 'light'], alt: 'containers: a table of twelve containers with status colors, CPU, memory, uptime and ports, two rows marked, over the key hints and a status bar that says the engine is degraded' },
   { name: 'containers-detail', file: 'examples/containers/app.tui', data: 'examples/containers/sample.json', cols: 110, rows: 28, input: '2', themes: ['dark', 'light'], alt: 'containers: the detail of one container, an overview card beside CPU and memory sparklines, and its log in a tab strip with environment and ports' },
-  { name: 'inbox', file: 'examples/inbox/app.tui', data: 'examples/inbox/sample.json', cols: 100, rows: 20, input: 'tab', alt: 'inbox: a search box and a ticket list on the left, the selected ticket on the right' },
-  { name: 'inbox-narrow', file: 'examples/inbox/app.tui', data: 'examples/inbox/sample.json', cols: 60, rows: 20, input: 'tab', alt: 'inbox at 60 columns: the list stacked above the detail pane by an @media rule' },
-  { name: 'dashboard', file: 'examples/dashboard/app.tui', data: 'examples/dashboard/sample.json', cols: 100, rows: 20, alt: 'deploy dashboard: pipeline steps, a progress bar and buttons beside a log panel' },
-  { name: 'agent', file: 'examples/agent/agent.tui', data: 'examples/agent/sample.json', cols: 120, rows: 26, alt: 'coding-agent chat: transcript, composer, tool activity and files panels' },
-  { name: 'unicode', file: 'examples/unicode/app.tui', data: 'examples/unicode/sample.json', cols: 64, rows: 14, alt: 'CJK, emoji and combining accents laid out in cells, borders intact' },
-  { name: 'spike', file: 'examples/spike/inbox.tui', cols: 80, rows: 12, alt: 'the original spike: two bordered boxes and a status line, no stylesheet' },
+  { name: 'inbox', file: 'examples/inbox/app.tui', data: 'examples/inbox/sample.json', cols: 100, rows: 20, input: 'tab', themes: ['dark', 'light'], alt: 'inbox: a search box and a ticket list on the left, the selected ticket on the right' },
+  { name: 'inbox-narrow', file: 'examples/inbox/app.tui', data: 'examples/inbox/sample.json', cols: 60, rows: 20, input: 'tab', themes: ['dark', 'light'], alt: 'inbox at 60 columns: the list stacked above the detail pane by an @media rule' },
+  { name: 'dashboard', file: 'examples/dashboard/app.tui', data: 'examples/dashboard/sample.json', cols: 100, rows: 20, themes: ['dark', 'light'], alt: 'deploy dashboard: pipeline steps, a progress bar and buttons beside a log panel' },
+  { name: 'agent', file: 'examples/agent/agent.tui', data: 'examples/agent/sample.json', cols: 120, rows: 26, themes: ['dark', 'light'], alt: 'coding-agent chat: transcript, composer, tool activity and files panels' },
+  { name: 'unicode', file: 'examples/unicode/app.tui', data: 'examples/unicode/sample.json', cols: 64, rows: 14, themes: ['dark', 'light'], alt: 'CJK, emoji and combining accents laid out in cells, borders intact' },
+  { name: 'spike', file: 'examples/spike/inbox.tui', cols: 80, rows: 12, themes: ['dark', 'light'], alt: 'the original spike: two bordered boxes and a status line, no stylesheet' },
 ]
 
 const shotIndex = []

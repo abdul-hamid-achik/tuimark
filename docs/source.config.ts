@@ -44,12 +44,14 @@ const term: LanguageRegistration = {
     {
       match: String.raw`^(\$) (\S+)(.*)$`,
       captures: {
-        1: { name: 'comment' },
+        // Not `comment`: the themes' comment gray is under 4.5:1 on the
+        // code background.
+        1: { name: 'constant.other' },
         2: { name: 'entity.name.function' },
         3: { name: 'variable.other' },
       },
     },
-    { match: String.raw`^=== .* ===$`, name: 'comment' },
+    { match: String.raw`^=== .* ===$`, name: 'markup.heading' },
     {
       match: String.raw`^(error|warning) ([VLB]\d{3})`,
       captures: { 1: { name: 'keyword' }, 2: { name: 'keyword' } },
@@ -63,7 +65,7 @@ export default defineConfig({
   plugins: [lastModified()],
   mdxOptions: {
     rehypeCodeOptions: {
-      themes: { light: 'github-light', dark: 'github-dark' },
+      themes: { light: 'github-light-default', dark: 'github-dark-default' },
       // xml and css are preloaded: an alias is only followed to a loaded language.
       langs: [grid, term, 'xml', 'css'],
       langAlias: { tui: 'xml', tcss: 'css' },

@@ -193,7 +193,7 @@
   },
   {
     "name": "inbox",
-    "light": false,
+    "light": true,
     "cols": 100,
     "rows": 20,
     "alt": "inbox: a search box and a ticket list on the left, the selected ticket on the right",
@@ -201,7 +201,7 @@
   },
   {
     "name": "inbox-narrow",
-    "light": false,
+    "light": true,
     "cols": 60,
     "rows": 20,
     "alt": "inbox at 60 columns: the list stacked above the detail pane by an @media rule",
@@ -209,7 +209,7 @@
   },
   {
     "name": "dashboard",
-    "light": false,
+    "light": true,
     "cols": 100,
     "rows": 20,
     "alt": "deploy dashboard: pipeline steps, a progress bar and buttons beside a log panel",
@@ -217,7 +217,7 @@
   },
   {
     "name": "agent",
-    "light": false,
+    "light": true,
     "cols": 120,
     "rows": 26,
     "alt": "coding-agent chat: transcript, composer, tool activity and files panels",
@@ -225,7 +225,7 @@
   },
   {
     "name": "unicode",
-    "light": false,
+    "light": true,
     "cols": 64,
     "rows": 14,
     "alt": "CJK, emoji and combining accents laid out in cells, borders intact",
@@ -233,7 +233,7 @@
   },
   {
     "name": "spike",
-    "light": false,
+    "light": true,
     "cols": 80,
     "rows": 12,
     "alt": "the original spike: two bordered boxes and a status line, no stylesheet",

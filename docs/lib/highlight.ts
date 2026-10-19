@@ -11,7 +11,7 @@ export type Lang = 'xml' | 'css' | 'json' | 'go' | 'ts' | 'sh';
 export function code(source: string, lang: Lang) {
   return highlight(source.replace(/\n+$/, ''), {
     lang,
-    themes: { light: 'github-light', dark: 'github-dark' },
+    themes: { light: 'github-light-default', dark: 'github-dark-default' },
     // Only CSS variables, no inline color: Fumadocs' stylesheet picks
     // --shiki-light or --shiki-dark from the site's theme.
     defaultColor: false,
