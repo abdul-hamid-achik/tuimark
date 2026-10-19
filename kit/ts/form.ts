@@ -1,6 +1,6 @@
 // form: per-field validation rules for kit/components/field.tui.
 //
-// Copy this file into your project. It depends on @tuimark/host (types) and
+// Copy this file into your project. It depends on @thelacanians/tuimark (types) and
 // on route.ts (instance, part): copy that file with this one.
 //
 // A form is named by the id prefix of its inputs: the form "profile" owns the
@@ -13,7 +13,7 @@
 // The component's actions are form_validate (the inputs' on:change) and
 // form_submit (on:submit, the Save button, ctrl+s). One handler of each serves
 // every form, routed by the instance of the event's source.
-import type { Host, HostEvent } from "@tuimark/host";
+import type { Host, HostEvent } from "@thelacanians/tuimark";
 import { instance, part } from "./route.ts";
 
 type Ui = Pick<Host, "batch" | "get" | "set" | "on">;

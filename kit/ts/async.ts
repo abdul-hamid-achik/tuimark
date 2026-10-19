@@ -1,6 +1,6 @@
 // async: run work off the handler and write its state to the store.
 //
-// Copy this file into your project. It depends only on @tuimark/host (types).
+// Copy this file into your project. It depends only on @thelacanians/tuimark (types).
 //
 // A handler's settling is its reply, and the terminal waits for it (up to the
 // reply timeout), so the slow part of an action (a request, a scan) should not
@@ -11,7 +11,7 @@
 //   <path>.loading  true while the work runs
 //   <path>.error    "" or the error's message
 //   <path>.data     the result (kept, not cleared, while a reload runs)
-import type { Host } from "@tuimark/host";
+import type { Host } from "@thelacanians/tuimark";
 
 type Ui = Pick<Host, "batch" | "get">;
 

@@ -1,6 +1,6 @@
 // dialog: open kit/components/confirm.tui and route its answer.
 //
-// Copy this file into your project. It depends on @tuimark/host (types) and
+// Copy this file into your project. It depends on @thelacanians/tuimark (types) and
 // on route.ts (instance): copy that file with this one.
 //
 // The component reads confirm.open, confirm.title and confirm.message and the
@@ -9,7 +9,7 @@
 // was pressed; one handler of each serves every dialog, told apart by the
 // instance of the event's source (confirm__yes: confirm). A dialog is opened by
 // your own code, from your own action, with confirm().
-import type { Host, HostEvent } from "@tuimark/host";
+import type { Host, HostEvent } from "@thelacanians/tuimark";
 import { instance } from "./route.ts";
 
 type Ui = Pick<Host, "batch" | "on">;

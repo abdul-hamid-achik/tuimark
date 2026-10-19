@@ -72,7 +72,7 @@ line.
   `format` (bytes, durations, relative time, percentages, thousands). `kit/go`
   is a nested module named `tuimarkkit` (no dot, so `go get` cannot fetch it)
   whose tests drive the real kit components; `kit/ts` is typed against
-  `@tuimark/host`. Both run in CI and in `task verify`. For the helpers to be
+  `@thelacanians/tuimark`. Both run in CI and in `task verify`. For the helpers to be
   sound, two kit contracts moved: a form is named by the id prefix of its
   inputs (`profile__name`) with its state at `forms.<form>.<field>.{value,
   error}`, and the palette's input fires a `palette_query` action as the query
