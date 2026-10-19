@@ -54,7 +54,8 @@ for (const f of files.filter((f) => f.endsWith('.html'))) {
 const routes = new Set();
 for (const f of files.filter((f) => f.endsWith('.body'))) {
   const rel = relative(APP, f).replace(/\\/g, '/').replace(/\.body$/, '');
-  routes.add('/' + rel);
+  // A route group, such as (home) for /blog/rss.xml, is not part of the URL.
+  routes.add('/' + rel.split('/').filter((s) => !/^\(.*\)$/.test(s)).join('/'));
 }
 // /guide/x.md is rewritten to the /md/guide/x route.
 for (const url of pages.keys()) if (routes.has(`/md${url}`)) routes.add(`${url}.md`);

@@ -1,0 +1,68 @@
+---
+title: Why terminal UIs as documents
+description: Tuimark describes a terminal screen as markup, a stylesheet, and JSON data instead of layout code, and hands every frame back as JSON. Why that split helps people, and why it helps coding agents even more.
+author: Abdul Hamid Achik
+date: 2026-10-19T15:00:00Z
+---
+
+Most terminal UIs are programs. Layout, colors, state, and key handling live in the same code, and the only way to see what a change did is to run it in a terminal and look. That is slow for a person, and it is worse for a coding agent, which cannot look at all: it edits the code, runs it, and gets back a stream of escape sequences.
+
+Tuimark takes the view out of the program. A screen is a document, the runtime draws it, and any frame can be read back as data.
+
+## A screen is three files
+
+The structure is a `.tui` file, the style is a `.tcss` file, and the content is JSON. This is a whole working view:
+
+<include cwd lang="tui" meta='tab="app.tui"'>snippets/hello/app.tui</include>
+
+<include cwd lang="tcss" meta='tab="theme.tcss"'>snippets/hello/theme.tcss</include>
+
+<include cwd lang="json" meta='tab="sample.json"'>snippets/hello/sample.json</include>
+
+There is no code in it. `{project}` and `each="tasks as t"` read the data, `bind="selected"` ties the list's cursor to a value in it, and `on:select="moved"` only *names* what happened. A host program, in Go, in TypeScript, or in any language that can write JSON lines, decides what `moved` and `open` mean and writes new data back. The markup never runs anything.
+
+## A closed vocabulary
+
+Tuimark has a fixed set of tags, attributes, CSS properties, and key names, and every one of them is listed in the [reference](/reference). Nothing outside it means anything, so nothing outside it is silently ignored: a typo is a diagnostic with a code, a position, and often a suggestion.
+
+<include cwd lang="term">snippets/out/hello-broken.txt</include>
+
+That matters most to an agent. A model that invents a plausible tag or property gets an error it can act on, instead of a screen that quietly looks wrong. The `V`, `L`, and `B` codes (parse, layout, and binding problems) are all in [one table](/reference/diagnostics).
+
+## Frames are data
+
+`tuimark dump` lays the document out at a size you choose and prints the frame: the grid of cells as text, and every node with its rectangle, its focus, and its selection. `tuimark play` does the same after replaying keys, and lists the actions that fired:
+
+<include cwd lang="term">snippets/out/hello-play.txt</include>
+
+With `--format json`, the same frame is JSON, and `--styles` adds the colors and attributes of every cell. An agent checks its work by reading this: is the list 48 cells wide, did the cursor land on the third row, did `enter` fire `open` with the right key? Nobody has to eyeball a screenshot, and every picture on this site is drawn from exactly this output.
+
+## The loop
+
+Put together, designing a screen becomes a loop that needs no terminal:
+
+1. **`tuimark validate`** the document, with `--data` to check the bindings too.
+2. **`tuimark dump`** it at 80 and at 120 columns, and read the grid and the nodes.
+3. **`tuimark play`** the keys a person would press, and read `events`.
+4. Edit the markup or the stylesheet, and repeat until both widths match the intent and there are no errors.
+
+Only then does anyone write a handler. `tuimark agents` prints a briefing, `AGENTS.md`, generated from the binary you have installed, so an agent learns this exact vocabulary and this loop, and `tuimark new` writes it into every new project. `tuimark mcp` serves the same commands as MCP tools for an agent without a shell. The [agents guide](/guide/agents) has the setup.
+
+## The same frame in tests
+
+Because a frame is text, it can be committed. `tuimark test` renders each document again and compares it with a saved dump, a *golden*, so a change to the geometry, the text, or the colors of a screen shows up as a failing test and a readable diff in review. The same `Dump`, `Validate`, and `Play` are methods on the Go API, for tests next to the host code. See [testing](/guide/testing).
+
+## What stays in the host
+
+Markup has no expressions, on purpose. Filtering a list, formatting a number, or deciding which pane to show is host work: the Go API's `Derive` keeps a computed value at a path in the data, and the document reads it like any other value.
+
+```go
+ui.On("open", func(ev tuimark.Event) error {
+	id, _ := ev.Keys["t"].(string)
+	return ui.Set("current", lookup(id))
+})
+```
+
+That split is the point. The document says what the screen is, the host says what the app does, and both can be checked on their own.
+
+If that sounds like the way you want to build terminal tools, or the way you want your agent to, start with [getting started](/guide/getting-started). It takes a few minutes, and the first thing you write is one of these documents.

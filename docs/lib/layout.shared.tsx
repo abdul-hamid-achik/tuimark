@@ -22,6 +22,8 @@ export function baseOptions(): BaseLayoutProps {
       { text: 'Guide', url: '/guide/getting-started', active: 'none' },
       { text: 'Reference', url: '/reference', active: 'nested-url' },
       { text: 'Examples', url: '/examples' },
+      { text: 'Kit', url: '/kit' },
+      { text: 'Blog', url: '/blog', active: 'nested-url' },
       {
         type: 'menu',
         text: VERSION,

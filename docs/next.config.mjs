@@ -2,8 +2,8 @@ import { createMDX } from 'fumadocs-mdx/next';
 
 const withMDX = createMDX();
 
-// Pages that have a Markdown twin (the .md routes): every docs page.
-const DOC_PATHS = ['/guide/:path*', '/reference', '/reference/:path*', '/examples'];
+// Pages that have a Markdown twin (the .md routes): every docs page and post.
+const DOC_PATHS = ['/guide/:path*', '/reference', '/reference/:path*', '/examples', '/blog/:slug'];
 
 /** @type {import('next').NextConfig} */
 const config = {

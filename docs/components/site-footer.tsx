@@ -11,6 +11,7 @@ const columns: { title: string; links: { text: string; href: string; external?: 
       { text: 'The .tui language', href: '/guide/language' },
       { text: 'Widgets', href: '/guide/widgets' },
       { text: 'The kit', href: '/guide/kit' },
+      { text: 'Kit components', href: '/kit' },
     ],
   },
   {
@@ -36,6 +37,7 @@ const columns: { title: string; links: { text: string; href: string; external?: 
   {
     title: 'project',
     links: [
+      { text: 'Blog', href: '/blog' },
       { text: 'GitHub', href: REPO_URL, external: true },
       { text: 'Releases', href: `${REPO_URL}/releases`, external: true },
       { text: 'Changelog', href: `${REPO_URL}/blob/main/CHANGELOG.md`, external: true },

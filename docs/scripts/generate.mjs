@@ -520,48 +520,49 @@ for (const s of SHOTS) playShot(s)
 // One shot per kit/components/NAME.tui, run from the repository root with
 // its NAME.sample.json, and the document itself (its first line is the
 // component's contract) for the /kit page, which shows the markup to copy.
-// The order and the groups are the page's.
+// The order and the groups are the page's; `title` and `line` are the
+// component's name and one-line summary in the kit guide's table.
 
 const KIT = [
   {
     group: 'Layout',
     items: [
-      ['appbar', 4, 'an app bar: the product mark and name, the page title, the signed-in user and an environment badge on one row'],
-      ['statusbar', 6, 'a status bar docked at the bottom: the mode, the file, a synced mark and the cursor position'],
-      ['breadcrumb', 7, 'a breadcrumb trail, Production › Services › billing › Settings, with a key hint to go up a level'],
-      ['tabs', 8, 'a tab strip with the active tab marked and a count in a tab label, above the active tab’s panel'],
-      ['split', 10, 'a list of incidents beside a detail pane that shows the selected one'],
-      ['hints', 6, 'key hints generated from the keymap along the bottom row'],
+      { name: 'appbar', rows: 4, title: 'app bar', line: 'a one-row bar docked to the top', alt: 'an app bar: the product mark and name, the page title, the signed-in user and an environment badge on one row' },
+      { name: 'statusbar', rows: 6, title: 'status bar', line: 'a one-row bar docked to the bottom, with filled segments', alt: 'a status bar docked at the bottom: the mode, the file, a synced mark and the cursor position' },
+      { name: 'breadcrumb', rows: 7, title: 'breadcrumb', line: 'the current path, down to the last crumb on a narrow terminal', alt: 'a breadcrumb trail, Production › Services › billing › Settings, with a key hint to go up a level' },
+      { name: 'tabs', rows: 8, title: 'tabs', line: 'a tab strip bound to a path', alt: 'a tab strip with the active tab marked and a count in a tab label, above the active tab’s panel' },
+      { name: 'split', rows: 10, title: 'split pane', line: 'a list beside a detail card, stacked on a narrow terminal', alt: 'a list of incidents beside a detail pane that shows the selected one' },
+      { name: 'hints', rows: 6, title: 'key hints', line: 'the keymap’s labeled rows as a row of hints', alt: 'key hints generated from the keymap along the bottom row' },
     ],
   },
   {
     group: 'Content',
     items: [
-      ['card', 12, 'a titled card with a heading, a line of text and two buttons, and two smaller cards side by side'],
-      ['alert', 14, 'four alerts, info, success, warning and danger, each a titled frame with an icon and a message'],
-      ['badge', 9, 'badges for states such as draft, new, passing, flaky and failed, and a build number'],
-      ['stat', 8, 'two KPI cards, each with a value, a change marked up or down, and a sparkline'],
-      ['meter', 11, 'three labeled progress bars with their values: an upload, disk use and tests'],
-      ['empty', 15, 'an empty state: an icon, a title, a line of text and a button, centered'],
-      ['log', 12, 'a bordered build log with timestamps, a warning and a failed test in color, over its scroll hints'],
+      { name: 'card', rows: 12, title: 'card', line: 'a bordered panel with a title that takes the focus color while it holds focus', alt: 'a titled card with a heading, a line of text and two buttons, and two smaller cards side by side' },
+      { name: 'alert', rows: 14, title: 'alert', line: 'a callout with an icon, in four status colors', alt: 'four alerts, info, success, warning and danger, each a titled frame with an icon and a message' },
+      { name: 'badge', rows: 9, title: 'badge', line: 'a short status label, with a modifier for its color', alt: 'badges for states such as draft, new, passing, flaky and failed, and a build number' },
+      { name: 'stat', rows: 8, title: 'stat', line: 'a KPI card with a change and a sparkline', alt: 'two KPI cards, each with a value, a change marked up or down, and a sparkline' },
+      { name: 'meter', rows: 11, title: 'labeled progress', line: 'a label, a value and a bar in eighths', alt: 'three labeled progress bars with their values: an upload, disk use and tests' },
+      { name: 'empty', rows: 15, title: 'empty state', line: 'an icon, a title, a line of help and a call to action, centered', alt: 'an empty state: an icon, a title, a line of text and a button, centered' },
+      { name: 'log', rows: 12, title: 'log panel', line: 'a scrolling log that follows its end', alt: 'a bordered build log with timestamps, a warning and a failed test in color, over its scroll hints' },
     ],
   },
   {
     group: 'Data and input',
     items: [
-      ['table', 10, 'a data table of services with a header, state colors, right-aligned numbers and the cursor row as an accent bar'],
-      ['menu', 10, 'a navigation menu with icons and key shortcuts, one row checked and the cursor row highlighted'],
-      ['button', 10, 'primary, secondary, danger, ghost and disabled buttons, the focused one inverted'],
-      ['field', 13, 'a form with a focused name field and an email field showing its error message'],
+      { name: 'table', rows: 10, title: 'data table', line: 'a table with a header, right-aligned numbers and columns that hide by priority', alt: 'a data table of services with a header, state colors, right-aligned numbers and the cursor row as an accent bar' },
+      { name: 'menu', rows: 10, title: 'menu', line: 'a navigation list with icons, shortcuts and optional check marks', alt: 'a navigation menu with icons and key shortcuts, one row checked and the cursor row highlighted' },
+      { name: 'button', rows: 10, title: 'button', line: '`primary`, `secondary`, `danger` and `ghost`, inverted when focused', alt: 'primary, secondary, danger, ghost and disabled buttons, the focused one inverted' },
+      { name: 'field', rows: 13, title: 'form field', line: 'a label, an input, help text and an error line, with invalid styling', alt: 'a form with a focused name field and an email field showing its error message' },
     ],
   },
   {
     group: 'Overlays',
     items: [
-      ['confirm', 16, 'a confirm dialog over the page asking to delete a project, with Cancel and Delete buttons'],
-      ['help', 17, 'a help overlay listing every labeled key binding'],
-      ['palette', 14, 'a command palette with a query typed and the matching commands listed'],
-      ['toast', 10, 'a toast along the bottom row saying the settings were saved, with esc to dismiss'],
+      { name: 'confirm', rows: 16, title: 'confirm dialog', line: 'a modal that puts the cursor on the safe button', alt: 'a confirm dialog over the page asking to delete a project, with Cancel and Delete buttons' },
+      { name: 'help', rows: 17, title: 'help overlay', line: 'a modal that lists every labeled key', alt: 'a help overlay listing every labeled key binding' },
+      { name: 'palette', rows: 14, title: 'command palette', line: 'a modal with an input over a filtered list', alt: 'a command palette with a query typed and the matching commands listed' },
+      { name: 'toast', rows: 10, title: 'toast', line: 'a one-row notice that never moves the page', alt: 'a toast along the bottom row saying the settings were saved, with esc to dismiss' },
     ],
   },
 ]
@@ -569,19 +570,19 @@ const KIT_COLS = 72
 const kitIndex = []
 {
   const files = readdirSync(join(REPO, 'kit', 'components')).filter((f) => f.endsWith('.tui')).map((f) => f.slice(0, -4))
-  const listed = KIT.flatMap((g) => g.items.map(([n]) => n))
+  const listed = KIT.flatMap((g) => g.items.map((c) => c.name))
   const missing = files.filter((f) => !listed.includes(f))
   if (missing.length) throw new Error(`generate: kit/components has ${missing.join(', ')}, which KIT does not list`)
   for (const { group, items } of KIT) {
     const components = []
-    for (const [n, rows, alt] of items) {
+    for (const { name: n, rows, title, line, alt } of items) {
       const file = `kit/components/${n}.tui`
       const source = readFileSync(join(REPO, file), 'utf8')
       const m = source.match(/^<!-- (k-[\w-]+) · Contract: (.*?) · Actions: (.*?) · Keys: (.*?) · Requires: (.*?) -->\n/)
       if (!m) throw new Error(`generate: ${file} does not start with a contract comment`)
       const data = existsSync(join(REPO, 'kit', 'components', `${n}.sample.json`)) ? `kit/components/${n}.sample.json` : undefined
       playShot({ name: `kit-${n}`, file, data, cols: KIT_COLS, rows, alt })
-      components.push({ name: n, cls: m[1], contract: m[2], actions: m[3], keys: m[4], requires: m[5], file, data: data ?? null, shot: `kit-${n}`, source: source.slice(m[0].length) })
+      components.push({ name: n, title, line, cls: m[1], contract: m[2], actions: m[3], keys: m[4], requires: m[5], file, data: data ?? null, shot: `kit-${n}`, source })
     }
     kitIndex.push({ group, components })
   }

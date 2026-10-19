@@ -1,0 +1,78 @@
+---
+title: tuimark.dev is live, and Tuimark is on npm
+description: Tuimark has a home at tuimark.dev, and @thelacanians/tuimark puts the tuimark command and the TypeScript client in one npm package. What is on the site, and what the package does when you run it.
+author: Abdul Hamid Achik
+date: 2026-10-19T16:00:00Z
+---
+
+Tuimark is a view language for terminals. You write a screen as `.tui` markup, `.tcss` styles, and JSON data, and a small Go runtime lays it out on a cell grid, paints it, and can dump any frame as JSON. Two things are new: the project has a website, [tuimark.dev](/), and the CLI installs from npm.
+
+## Install it from npm
+
+Release 0.4.2 published [`@thelacanians/tuimark`](https://www.npmjs.com/package/@thelacanians/tuimark). Install the `tuimark` command globally:
+
+```sh
+npm i -g @thelacanians/tuimark
+tuimark version
+```
+
+Or run it once without installing anything:
+
+```sh
+npx @thelacanians/tuimark version
+```
+
+The `tuimark` command in the package is a small launcher written in plain JavaScript. It runs on Node 18 or later and on Bun, has no dependencies, and has no `postinstall` script. The first time it runs, it downloads the Go binary of the Tuimark release with the same version as the package, checks its SHA-256 against a table built into the package from that release's `checksums.txt`, and caches it. A download that does not match is thrown away and never run, and the cached binary is checked against the same hash every time it starts. Arguments, standard input and output, the exit code, and signals pass straight through, so it behaves like the binary itself.
+
+Two environment variables change where the binary comes from:
+
+- `TUIMARK_BINARY` points at a binary you installed yourself, and the launcher runs that one.
+- `TUIMARK_RELEASE_URL` downloads from a mirror, checked against the mirror's own `checksums.txt` and cached apart.
+
+The package is published by the release workflow with npm trusted publishing and provenance, right after the release binaries it points at are uploaded.
+
+## The TypeScript client is in the same package
+
+The same package is the client for a TypeScript program that drives a view. `spawnHost` starts `tuimark host` with your document. From then on `tuimark` owns the terminal: it lays out, paints, and handles keys, while your program writes data and answers the actions the document fires.
+
+```ts
+import { spawnHost } from "@thelacanians/tuimark";
+
+const ui = await spawnHost("app.tui", { data: "sample.json" });
+ui.on("open", async (ev) => {
+  await ui.set("detail", await load(ev.keys.item));
+});
+```
+
+The client runs on Bun 1.4.2 or later. To start a project with a Bun parent already wired up:
+
+```sh
+bunx @thelacanians/tuimark new my-app --ts
+```
+
+The [TypeScript client guide](/guide/typescript) has the whole API. Homebrew and Go installs work as before; the [getting started guide](/guide/getting-started#install) lists every way to install.
+
+## What is on tuimark.dev
+
+The site is the documentation, rebuilt, plus a few pages that were missing:
+
+- **The guide and the reference.** The reference pages for the CLI, the tags and attributes, the CSS properties, the keys, and the diagnostic codes are generated from the `tuimark` binary, so they cannot drift from the runtime they describe.
+- **Pictures that are real frames.** Every screenshot on the site is a frame from `tuimark play`, painted cell by cell into an SVG, with the command that produced it in its title bar. Documents with a light theme get a light picture when the site is in light mode.
+- **[Examples](/examples)** with animated demos. Each example app that moves on its own (the games, the CI pipeline, the music player, the container dashboard) replays a scripted session from its own `-demo` mode, and the site turns those frames into an animation.
+- **[Kit components](/kit)**: every component of the Tuimark kit, pictured in both themes, with the markup to copy.
+- **Pages for agents.** Every docs page is also Markdown at its URL plus `.md`, and [`/llms.txt`](/llms.txt) and [`/llms-full.txt`](/llms-full.txt) index and bundle the whole site. The [agents guide](/guide/agents) shows how to connect `tuimark mcp` to Claude Code and Cursor.
+- **This blog**, with an [RSS feed](/blog/rss.xml).
+
+## Also in 0.4.2
+
+The same release added copyable host helpers to the kit, in Go and in TypeScript (toasts that expire, filtering and sorting, form validation, dialog routing, a command palette), and a new example, `examples/containers`, a container-engine dashboard built only from kit components over a simulated engine. The [release notes](https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.2) list everything.
+
+## Try it
+
+```sh
+npm i -g @thelacanians/tuimark
+tuimark new my-app
+cd my-app && tuimark run app.tui --data sample.json
+```
+
+`tuimark new` writes a document, a stylesheet, sample data, and an `AGENTS.md` that briefs a coding agent on the language. Then read [getting started](/guide/getting-started).

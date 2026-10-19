@@ -4,7 +4,8 @@ import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import catalog from '@/lib/generated/catalog.json';
 import { code } from '@/lib/highlight';
-import { DESCRIPTION, INSTALL, REPO_URL, SITE_NAME, SITE_URL, TAGLINE, VERSION, AUTHOR, absoluteUrl } from '@/lib/site';
+import { DESCRIPTION, HOME_TITLE, INSTALL, REPO_URL, SITE_NAME, SITE_URL, VERSION, AUTHOR, absoluteUrl } from '@/lib/site';
+import { pageMetadata } from '@/lib/metadata';
 import { CodeTabs } from '@/components/landing/code-tabs';
 import { CommandCopy } from '@/components/command-copy';
 import { InstallTabs } from '@/components/install-tabs';
@@ -12,11 +13,7 @@ import { JsonLd } from '@/components/json-ld';
 import { TermShot } from '@/components/term-shot';
 import './landing.css';
 
-export const metadata: Metadata = {
-  title: { absolute: `${SITE_NAME}: ${TAGLINE.toLowerCase()}` },
-  description: DESCRIPTION,
-  alternates: { canonical: '/' },
-};
+export const metadata: Metadata = pageMetadata({ title: HOME_TITLE, absoluteTitle: true, description: DESCRIPTION, path: '/' });
 
 // Everything on this page is read at build time: the hero is the files in
 // snippets/hero and the output docs/scripts/generate.mjs recorded for them.
@@ -489,7 +486,8 @@ export default async function HomePage() {
         </TermShot>
         <More
           links={[
-            ['/guide/kit', 'The kit'],
+            ['/kit', 'Every component, pictured'],
+            ['/guide/kit', 'The kit guide'],
             ['/guide/kit#helpers', 'Helpers'],
             [`/examples#kit-gallery`, 'The gallery app'],
           ]}

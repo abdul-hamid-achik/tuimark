@@ -1,4 +1,4 @@
-import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
+import { defineCollections, defineConfig, defineDocs } from 'fumadocs-mdx/config';
 import lastModified from 'fumadocs-mdx/plugins/last-modified';
 import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
 import { metaSchema, pageSchema } from 'fumadocs-core/source/schema';
@@ -23,6 +23,22 @@ export const docs = defineDocs({
   },
   meta: {
     schema: metaSchema,
+  },
+});
+
+// The blog: blog/SLUG.mdx is /blog/SLUG. It sits outside content/, so the
+// docs' sidebars and search never list it.
+export const blog = defineCollections({
+  type: 'doc',
+  dir: 'blog',
+  schema: pageSchema.extend({
+    description: z.string(),
+    author: z.string(),
+    // YAML reads an unquoted 2026-10-19 as a Date; a quoted one as a string.
+    date: z.coerce.date(),
+  }),
+  postprocess: {
+    includeProcessedMarkdown: true,
   },
 });
 
@@ -66,8 +82,10 @@ export default defineConfig({
   mdxOptions: {
     rehypeCodeOptions: {
       themes: { light: 'github-light-default', dark: 'github-dark-default' },
-      // xml and css are preloaded: an alias is only followed to a loaded language.
-      langs: [grid, term, 'xml', 'css'],
+      // xml, css and shellscript are preloaded: an alias (tui, tcss, sh) is
+      // only followed to a loaded language, and the docs and the blog are
+      // compiled side by side, so neither can count on the other loading it.
+      langs: [grid, term, 'xml', 'css', 'shellscript'],
       langAlias: { tui: 'xml', tcss: 'css' },
       // Fumadocs' own transformers, plus the language as data-lang on the
       // block, so the stylesheet can set terminal output (grid, term) tight.

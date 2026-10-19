@@ -1,4 +1,5 @@
 import type * as PageTree from 'fumadocs-core/page-tree';
+import { postMarkdown, posts } from './blog';
 import { pageMarkdown, source, type DocPage } from './source';
 import { DESCRIPTION, INSTALL, NPM_PUBLISHED, REPO_URL, SITE_NAME, absoluteUrl } from './site';
 
@@ -52,11 +53,16 @@ export function llmsIndex(): string {
       lines.push(`- [${p.data.title}](${absoluteUrl(`${p.url}.md`)})${desc}`);
     }
   }
+  lines.push('', '## Blog', '');
+  for (const p of posts()) {
+    lines.push(`- [${p.data.title}](${absoluteUrl(`${p.url}.md`)}) (${p.data.date.toISOString().slice(0, 10)}): ${p.data.description}`);
+  }
   lines.push(
     '',
     '## Optional',
     '',
-    `- [Everything above in one file](${absoluteUrl('/llms-full.txt')}): every page of the guide, the reference and the examples, as Markdown`,
+    `- [Everything above in one file](${absoluteUrl('/llms-full.txt')}): every page of the guide, the reference and the examples, and every post, as Markdown`,
+    `- [Kit components](${absoluteUrl('/kit')}): every component of the kit, pictured, with its markup`,
     `- [Source code](${REPO_URL}): the Go runtime, the CLI, the kit, and the examples`,
     `- [Changelog](${REPO_URL}/blob/main/CHANGELOG.md): release history`,
     '',
@@ -64,7 +70,7 @@ export function llmsIndex(): string {
   return lines.join('\n');
 }
 
-/** /llms-full.txt: every page as Markdown, in sidebar order. */
+/** /llms-full.txt: every page as Markdown, in sidebar order, then every post, newest first. */
 export async function llmsFull(): Promise<string> {
   const parts = [
     `# ${SITE_NAME}: the complete documentation`,
@@ -76,5 +82,6 @@ export async function llmsFull(): Promise<string> {
   for (const { pages } of pagesBySection()) {
     for (const page of pages) parts.push('', '---', '', await pageMarkdown(page));
   }
+  for (const post of posts()) parts.push('', '---', '', await postMarkdown(post));
   return parts.join('\n');
 }
