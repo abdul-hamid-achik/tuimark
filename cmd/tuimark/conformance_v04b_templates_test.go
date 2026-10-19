@@ -410,6 +410,12 @@ func TestV04bTemplate154Unused(t *testing.T) {
 	if len(got) != 2 || !strings.HasPrefix(got[0], "error V002 app.tui:3:18 ") || !strings.HasPrefix(got[1], "error V001 app.tui:4:5 /template/zzz id= unknown tag <zzz>") {
 		t.Errorf("validate: %v", got)
 	}
+	// The V003 its own attributes give, an inline style="" included.
+	own := writeTemp(t, "app.tui", "<tui>\n  <template id=\"t\">\n    <text style=\"colr: red\" width=\"abc\">hi</text>\n  </template>\n  <screen id=\"main\"><text>s</text></screen>\n</tui>")
+	got = vdiags(t, own, data)
+	if len(got) != 2 || !strings.HasPrefix(got[0], "error V003 app.tui:3:11 ") || !strings.Contains(got[0], `unknown property "colr"`) || !strings.HasPrefix(got[1], "error V003 app.tui:3:29 ") {
+		t.Errorf("own V003: %v", got)
+	}
 }
 
 // 155. Selectors: a composition tag is never a node, a use's id matches
