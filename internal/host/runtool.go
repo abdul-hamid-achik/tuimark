@@ -163,6 +163,13 @@ func (a *App) takeOver(old *App, keepStore bool) {
 			a.checks[id] = v
 		}
 	}
+	// A select without bind keeps its chosen key; an open option list
+	// closes (SPEC v0.4b §6.17.3, §15.9): a.opts starts closed.
+	for id, st := range old.selects {
+		if kept(id) != nil && st.has {
+			a.selectState(id).mem, a.selectState(id).has = st.mem, true
+		}
+	}
 	// An offset the wheel gave a viewport without an id is kept under a
 	// key naming its old element (offsetKey), which no id matches: it
 	// starts at 0 again.

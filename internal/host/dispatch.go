@@ -99,6 +99,7 @@ type keyStep int
 
 const (
 	stepNone       keyStep = iota // nothing takes the key: it does nothing
+	stepOptions                   // 0: the open option list takes it (SPEC v0.4b)
 	stepEscape                    // 1: the top modal's on:escape fires
 	stepEscClose                  // 1: esc closes the top modal (current language)
 	stepWidget                    // 2: the focused, enabled widget consumes it
@@ -117,6 +118,10 @@ type keyPlan struct {
 	// path is the top modal's visibility path esc writes false at
 	// (stepEscClose).
 	path string
+	// close is set when step 0 closes the open option list first (tab,
+	// shift+tab, or ctrl+c, SPEC v0.4b §8.6): the step that then takes
+	// the key is decided as if the list had not been open.
+	close bool
 }
 
 // planKey runs the key dispatch of SPEC §8.6 for k on v without side
@@ -133,8 +138,26 @@ type keyPlan struct {
 //     for a built-in of §8.4, whose target matches at run time;
 //  4. tab and shift+tab cycle focus, ctrl+c fires quit.
 //
+// Before them all, step 0 (SPEC v0.4b): while the focused select's option
+// list is open it takes every key (optionsKey), except tab, shift+tab, and
+// ctrl+c, which close it and go on from step 1 on the same frame.
+//
 // Anything else does nothing. The caller holds a.mu.
 func (a *App) planKey(v keyView, k Key) keyPlan {
+	if a.optionsOpen(v.focused) {
+		switch k.Name {
+		case "tab", "shift+tab", "ctrl+c":
+			p := a.planSteps(v, k)
+			p.close = true
+			return p
+		}
+		return keyPlan{step: stepOptions}
+	}
+	return a.planSteps(v, k)
+}
+
+// planSteps is planKey from step 1 on.
+func (a *App) planSteps(v keyView, k Key) keyPlan {
 	if k.Name == "esc" {
 		if m := v.topModal(); m != nil && m.Src != nil {
 			if _, ok := m.Src.On["escape"]; ok {
@@ -260,6 +283,11 @@ func (a *App) consumes(b *layout.Box, k Key) bool {
 		// space toggles it; enter goes on to the keymap (SPEC v0.4b
 		// §6.16.2, decision 97). It takes no on:click (decision 45).
 		return k.Name == "space"
+	case "select":
+		// enter and space open its option list when it has an option
+		// (SPEC v0.4b §6.17.3); closed, it never takes up or down
+		// (decision 62), and it takes no on:click (decision 45).
+		return (k.Name == "enter" || k.Name == "space") && b.Rows > 0
 	case "tabs":
 		// A focused (so focusable) tabs with an enabled visible tab
 		// consumes left and right (SPEC §6.10.4 item 8).
@@ -294,7 +322,12 @@ func (a *App) rows(b *layout.Box) int {
 func (a *App) handleKey(k Key) []Event {
 	v := a.liveView()
 	p := a.planKey(v, k)
+	if p.close {
+		a.closeOptions()
+	}
 	switch p.step {
+	case stepOptions:
+		return a.optionsKey(v.focused, k)
 	case stepEscape:
 		m := v.topModal()
 		return []Event{{Action: m.Src.On["escape"], Source: m.ID, Keys: map[string]any{}}}
@@ -406,6 +439,9 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 		return nil
 	case "checkbox":
 		return a.toggleCheckbox(b)
+	case "select":
+		a.openOptions(b)
+		return nil
 	case "tabs":
 		// left and right act as move-prev and move-next on it.
 		switch k.Name {

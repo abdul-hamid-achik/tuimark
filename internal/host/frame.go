@@ -47,6 +47,11 @@ type Frame struct {
 	// Mouse is the value of the document's mouse attribute on this frame
 	// (SPEC v0.2b §8.5): mouse events act only while it is true.
 	Mouse bool
+	// Options is the open option list of a select (SPEC v0.4b §6.17.4),
+	// placed in step 7a above the screen and every modal, or nil. It is
+	// not in Root's tree, in Modals, or in ByID: it is never part of "the
+	// frame" of §6.12 and §8.4.
+	Options *layout.Box
 	// settled is set when the render that built the frame reached a pass
 	// that moved neither focus nor a tab (renderOnce), so building it again
 	// from the state it left behind gives the same frame (liveFrame).
@@ -60,7 +65,7 @@ type Frame struct {
 // Dump returns the frame's dump (SPEC §13.2), with the --cells map when
 // cells is set.
 func (f *Frame) Dump(cells bool) *dump.Dump {
-	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2, V3: f.V3, Lang: f.Lang})
+	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2, V3: f.V3, Lang: f.Lang, Options: f.Options})
 }
 
 // Dump renders the current state at cols×rows (negative sizes clamp to 0)
@@ -129,6 +134,9 @@ type builder struct {
 	// list's rows then go into its listSlab, slabFor); 0 for every other
 	// builder, which allocates fresh memory.
 	pass uint64
+	// open holds the options of the select whose option list is open, as
+	// step 1 resolved them, for step 7a (SPEC v0.4b §18); nil otherwise.
+	open *selectOptions
 }
 
 // newBox returns a zeroed box for inflate, cut from a chunk the builder
@@ -287,6 +295,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	} else {
 		a.tabPrev = map[string]string{}
 	}
+	fb.closeOptionsIn(rootBox) // the end of step 4 (SPEC v0.4b §18)
 	// screen@focus gives initial focus like any other focus change: on:focus
 	// fires once (resolveFocus reports the case where it had to pick another
 	// target).
@@ -323,8 +332,9 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	if len(fb.tables) > 0 || a.noCache {
 		fb.placeTableRows(casc, rootBox) // step 7
 	}
+	f.Options = fb.placeOptions(casc, f) // step 7a (SPEC v0.4b §18)
 	f.Root, f.Modals = rootBox, fb.modals
-	f.Grid = paint.PaintPhase(rootBox, fb.modals, cols, rows, a.phase) // step 8
+	f.Grid = paint.PaintFrame(rootBox, fb.modals, f.Options, cols, rows, a.phase) // step 8
 	f.ByID = fb.byID
 	f.Focus = a.focus
 	// Remember scroll offsets clamped by layout.
@@ -864,6 +874,10 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		b.Text = fb.buttonText(n, sc)
 	case "checkbox":
 		fb.inflateCheckbox(n, b, sc)
+	case "select":
+		// Inside a list item or a container each template it is V001
+		// (SPEC v0.4b §6.8 item 12): nested.
+		fb.inflateSelect(n, b, sc, inItem || sc != nil)
 	case "input":
 		b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
 		b.Secret = n.Attrs["secret"] == "true"

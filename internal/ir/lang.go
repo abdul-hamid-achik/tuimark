@@ -54,6 +54,7 @@ const VersionHintCurrent = ` (requires a <tui> without version)`
 // them out and paints them; none is declared ahead of its phase.
 var KindsCurrent = []string{
 	"checkbox", // SPEC v0.4b §6.16 (F8)
+	"select",   // SPEC v0.4b §6.17 (F9)
 }
 
 // IsKindCurrent reports whether tag is one of the current-language tags.

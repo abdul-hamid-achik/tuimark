@@ -606,7 +606,7 @@ tuimark version
   sake — it still renders internally at 40/80/120×24 to catch
   layout/bind problems (under both themes, dark first, for a `theme="auto"`
   document without `--theme`). Without `--data`, bind-dependent checks
-  (`B001`–`B003`, the 0.2b `B008`–`B010`, and the 0.4b `B011`) are skipped, since every path
+  (`B001`–`B003`, the 0.2b `B008`–`B010`, and the 0.4b `B011` and `B012`) are skipped, since every path
   would otherwise read as "missing", and the text output ends with
   `ok (bindings not checked: no --data)` instead of `ok` (0.4a); with
   `--data` the line stays `ok`. `--json` has the members `actions`, `data`

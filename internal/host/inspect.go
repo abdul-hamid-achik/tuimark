@@ -128,6 +128,12 @@ func (a *App) Inspect(f *Frame, t InspectTarget) (*Inspection, error) {
 // it, which shows through when the modal does not paint its rect
 // (visibility: hidden), counts as none, so the start is the top modal.
 func HitNode(f *Frame, x, y int) *layout.Box {
+	if l := f.Options; l != nil && l.Laid && l.Clip.Contains(x, y) {
+		// The open option list is the top layer (SPEC v0.4b §8.5 step 0):
+		// S is the list, and the descent reaches a row's text, its item,
+		// or the list itself.
+		return descend(l, x, y)
+	}
 	var top *layout.Box
 	if n := len(f.Modals); n > 0 {
 		m := f.Modals[n-1]
@@ -155,6 +161,13 @@ func HitNode(f *Frame, x, y int) *layout.Box {
 			s = top
 		}
 	}
+	return descend(s, x, y)
+}
+
+// descend is step 3 of SPEC v0.2b §8.5: from s, move to the last child in
+// document order that has no id, is laid out, and whose clipped outer
+// rect contains the cell, while there is one.
+func descend(s *layout.Box, x, y int) *layout.Box {
 	for s != nil {
 		var next *layout.Box
 		for _, c := range s.Children {

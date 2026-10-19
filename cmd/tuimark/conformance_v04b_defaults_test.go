@@ -66,7 +66,7 @@ func TestV04bInspectColRowDefaults(t *testing.T) {
 // its twin.
 func TestV04bInspectButtonFocusLook(t *testing.T) {
 	r := f5Inspect(t, v04bDefaults+"158/confirm.tui", "yes", "40", "12")["reverse"]
-	if r.Value != "true" || r.Origin != "ua" || r.Rule == nil || r.Rule.Selector != "button:focus, checkbox:focus" || r.Rule.Specificity != 11 {
+	if r.Value != "true" || r.Origin != "ua" || r.Rule == nil || r.Rule.Selector != "button:focus, checkbox:focus, select:focus" || r.Rule.Specificity != 11 {
 		t.Errorf("#yes reverse: %+v %+v", r, r.Rule)
 	}
 	r = f5Inspect(t, "../../specs/fixtures/v04b/twins/confirm.tui", "yes", "40", "12")["reverse"]

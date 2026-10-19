@@ -98,8 +98,9 @@ func (a *App) renderLive(cols, rows int, theme string) *Frame {
 // write goes through wrote), the screen, focus, the modals and their
 // stack, the active and remembered tabs, every viewport offset and stick
 // maximum, every list's and table's cursor state, every input's
-// state, and the value of every checkbox without bind (SPEC v0.4b
-// decision 106). The caller holds a.mu.
+// state, the value of every checkbox without bind (SPEC v0.4b decision
+// 106), and every select's remembered key and the open option list. The
+// caller holds a.mu.
 func (a *App) frameInputs(cols, rows int, theme string) string {
 	b := make([]byte, 0, 256)
 	num := func(n int64) { b = strconv.AppendInt(b, n, 10); b = append(b, ',') }
@@ -173,6 +174,20 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 		str(k)
 		flag(a.checks[k])
 	}
+	// A select's key chosen without bind, and the open option list with
+	// its cursor and offset (SPEC v0.4b §6.17).
+	b = append(b, "|x"...)
+	for _, k := range sortedKeys(a.selects) {
+		st := a.selects[k]
+		str(k)
+		flag(st.has)
+		if st.has {
+			str(keyID(st.mem))
+		}
+	}
+	str(a.opts.id)
+	num(int64(a.opts.cursor))
+	num(int64(a.opts.offset))
 	return string(b)
 }
 

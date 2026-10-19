@@ -10,15 +10,14 @@ import (
 // <tui> without version (SPEC v0.4b §10.6): UASheet with its col and row
 // rules replaced by three rules, so an unsized col or row is 1fr only as
 // a direct child of screen, modal, or tab (§11.2), and the focus look
-// added at its end (ADR 0031), so a focused button or checkbox is
-// reversed with no author rule. Before the focus rule come the rules of
-// the current language's form controls: checkbox (F8) is auto × auto and
-// truncates its label (§10.6, §12.5). A document that writes version, and
-// the spike root <app>, keep UASheet unchanged (Lang1-Lang3).
-//
-// Each form-control phase adds its own tags: a type selector this sheet's
-// language does not know would make init panic, so select joins the
-// checkbox rule and the focus rule with its tag (F9, plan §2).
+// added at its end (ADR 0031), so a focused button, checkbox, or select
+// is reversed with no author rule. Before the focus rule come the rules
+// of the current language's form controls: checkbox and select are auto
+// × auto and truncate their label (§10.6, §12.5), and a select's option
+// list (select > list, §6.17.4) has a border, shows at most 10 options
+// with it, and does not inherit a reversed select's reverse. A document
+// that writes version, and the spike root <app>, keep UASheet unchanged
+// (Lang1-Lang3).
 //
 // The rest of the text is UASheet's, rule for rule and in order
 // (TestUASheetCurrentIsUASheetWithTheCurrentRules), so tuimark inspect
@@ -44,8 +43,9 @@ tab    { layout: column; }
 sparkline { width: auto; height: auto; }
 hints  { layout: row; gap: 2; }
 hints > row { gap: 1; }
-checkbox { width: auto; height: auto; wrap: truncate; }
-button:focus, checkbox:focus { reverse: true; }
+checkbox, select { width: auto; height: auto; wrap: truncate; }
+select > list { border: single; max-height: 12; reverse: false; wrap: truncate; }
+button:focus, checkbox:focus, select:focus { reverse: true; }
 `
 
 var uaSheetCurrent *Sheet

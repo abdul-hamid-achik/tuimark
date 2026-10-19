@@ -239,6 +239,11 @@ type Options struct {
 	// to a dump is read from it, so a pinned document's dump keeps the
 	// shape of 0.4.1. It is never a member of the dump itself.
 	Lang ir.Lang
+	// Options is the open option list of a select (SPEC v0.4b §6.17.6),
+	// nil when none is open: its nodes come after every other node, the
+	// modals included (the list, then each laid-out row's item followed
+	// by its text).
+	Options *layout.Box
 }
 
 // NodeOf is the dump node of a laid-out box (SPEC §13.2). v2 adds the
@@ -247,8 +252,10 @@ type Options struct {
 func NodeOf(n *layout.Box, v2, v3 bool) Node {
 	dn := Node{ID: n.ID, Tag: n.Tag, X: n.X, Y: n.Y, W: n.W, H: n.H, Focused: n.Focused, Selected: n.Selected, Key: n.Key, Scroll: scrollOf(n), Checked: n.Checked}
 	switch n.Kind {
-	case "text", "button", "checkbox":
-		// A checkbox's text is its resolved label (SPEC v0.4b §6.16.3).
+	case "text", "button", "checkbox", "select":
+		// A checkbox's text is its resolved label (SPEC v0.4b §6.16.3); a
+		// select's, its chosen option's label, never its placeholder
+		// (§6.17.6), which the host keeps out of Text.
 		dn.Text = n.Text
 	case "column":
 		// A table's header cell: its resolved title (SPEC §13.2).
@@ -295,6 +302,9 @@ func BuildWith(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.
 	}
 	for _, m := range modals {
 		add(m)
+	}
+	if o.Options != nil {
+		add(o.Options)
 	}
 	if g == nil {
 		g = paint.NewGrid(cols, rows)
