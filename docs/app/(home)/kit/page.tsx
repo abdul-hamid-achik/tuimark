@@ -83,7 +83,7 @@ function Component({ c }: { c: KitComponent }) {
 export default function KitPage() {
   const count = KIT_GROUPS.reduce((n, g) => n + g.components.length, 0);
   return (
-    <main className="pg">
+    <div className="pg">
       <JsonLd
         data={[
           {
@@ -176,6 +176,6 @@ export default function KitPage() {
           </section>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

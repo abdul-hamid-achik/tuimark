@@ -233,7 +233,7 @@ export default async function HomePage() {
   };
 
   return (
-    <main className="landing">
+    <div className="landing">
       <JsonLd data={jsonLd} />
 
       {/* ── Hero ───────────────────────────────────────────────────────── */}
@@ -589,6 +589,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

@@ -24,7 +24,7 @@ export default async function Post(props: PageProps<'/blog/[slug]'>) {
   const older = all[i + 1];
 
   return (
-    <main className="pg">
+    <div className="pg">
       <JsonLd
         data={[
           {
@@ -93,7 +93,7 @@ export default async function Post(props: PageProps<'/blog/[slug]'>) {
           </a>
         </footer>
       </article>
-    </main>
+    </div>
   );
 }
 

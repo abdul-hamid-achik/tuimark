@@ -20,7 +20,7 @@ export const metadata: Metadata = pageMetadata({
 export default function BlogIndex() {
   const all = posts();
   return (
-    <main className="pg">
+    <div className="pg">
       <JsonLd
         data={[
           {
@@ -81,6 +81,6 @@ export default function BlogIndex() {
           ))}
         </ol>
       </div>
-    </main>
+    </div>
   );
 }

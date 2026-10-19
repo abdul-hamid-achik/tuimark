@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <HomeLayout {...baseOptions()}>
-      <main className="not-found">
+      <div className="not-found">
         <div className="tf not-found-frame">
           <span className="tf-title">
             <b>404</b> no such screen
@@ -39,7 +39,7 @@ export default function NotFound() {
             <kbd>⌘</kbd> <kbd>K</kbd> searches the docs.
           </p>
         </div>
-      </main>
+      </div>
     </HomeLayout>
   );
 }
