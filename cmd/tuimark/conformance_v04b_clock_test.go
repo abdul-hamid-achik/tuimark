@@ -13,7 +13,8 @@ import (
 // SPEC v0.4b §24, phase F10: the CLI parts of the spinner and tick:DUR
 // tests (190, 191, 193, 203, 204, 208, 210). The Go API parts are the
 // root package's conformance_v04b_clock_test.go; the Run side of the
-// spinner (194-196) is F11's.
+// spinner (194-196) is F11's: internal/host's runclock_*_test.go, and
+// conformance_v04b_clock_run_test.go here for the CLI side of 196.
 
 const clockS = "../../testdata/v04b/spinner/S.tui"
 

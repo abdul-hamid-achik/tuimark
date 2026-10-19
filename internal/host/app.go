@@ -192,6 +192,9 @@ type App struct {
 	// 0 when the app is created, advanced only by tick steps. Guarded by
 	// everyMu, with the registrations' virtual deadlines (everyReg.vnext).
 	vnow time.Duration
+	// clk is the clock of the Run session that drives the app (SPEC
+	// v0.4b §26.13), nil outside one; guarded by everyMu (runclock.go).
+	clk runClock
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity

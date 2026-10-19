@@ -55,7 +55,7 @@ func (a *App) Every(d time.Duration, fn func(b *Batch) error) (stop func()) {
 	}
 	r := &everyReg{d: d, fn: fn}
 	a.everyMu.Lock()
-	r.next = time.Now().Add(d)
+	r.next = a.nowLocked().Add(d)
 	r.vnext = a.vnow + d
 	a.every = append(a.every, r)
 	a.everyMu.Unlock()
