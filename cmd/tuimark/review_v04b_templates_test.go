@@ -163,6 +163,48 @@ func TestV04bTemplateRenamedAliasNeverSurfaces(t *testing.T) {
 	}
 }
 
+// A guard that reads a renamed alias still applies at run time: the
+// runtime reads node fields through the Field grammar (re-review B1), on
+// a list row's class:NAME and on a table's row template alike.
+func TestV04bTemplateRenamedAliasGuardsApply(t *testing.T) {
+	doc := `<tui>
+<template id="T">
+  <list id="l" each="o.lines as order" key="order.k">
+    <item class:hot="order.hot"><text>{order.k}</text></item>
+  </list>
+  <table id="t" each="o.lines as order" key="order.k" height="4">
+    <column title="K">{order.k}</column>
+    <item class:warm="order.hot"/>
+  </table>
+</template>
+<screen id="main"><use id="u" template="T" with="order as o"/></screen>
+</tui>`
+	f := writeTemp(t, "app.tui", doc)
+	data := writeTemp(t, "d.json", `{"order": {"lines": [{"k": "L1", "hot": true}, {"k": "L2"}]}}`)
+	// (L2 has no hot: the B002s name the path as written.)
+	sameLines(t, "validate", vdiags(t, f, data), []string{
+		`warning B002 app.tui:4:5 /screen/list/item id= class:hot="order.hot": path "order.hot" is missing, placed by <use id="u"> at app.tui:11:19`,
+		`warning B002 app.tui:8:5 /screen/table/item id= class:warm="order.hot": path "order.hot" is missing, placed by <use id="u"> at app.tui:11:19`,
+	})
+	nodes, _ := dumpNodes(t, f, "--data", data, "--cols", "20", "--rows", "8")
+	var got []string
+	for _, n := range nodes {
+		if k, ok := n["key"].(string); ok {
+			got = append(got, k+" "+jsonString(t, n["classes"]))
+		}
+	}
+	sameLines(t, "rows", got, []string{`L1 ["hot"]`, "L2 null", `L1 ["warm"]`, "L2 null"})
+}
+
+func jsonString(t *testing.T, v any) string {
+	t.Helper()
+	b, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
 // The grammar a document meets is §7's, exactly as in 0.4.1: a control
 // character in a path is never an identifier (re-review B1, probes
 // misc/ctl.tui and ctl2.tui). A renamed alias is made after validation,
