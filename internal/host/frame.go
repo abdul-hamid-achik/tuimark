@@ -851,11 +851,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	case "text":
 		b.Text = fb.interp(n, n.Text, sc)
 	case "button":
-		if l, ok := n.Attr("label"); ok {
-			b.Text = l
-		} else {
-			b.Text = n.Text
-		}
+		b.Text = fb.buttonText(n, sc)
 	case "input":
 		b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
 		b.Secret = n.Attrs["secret"] == "true"

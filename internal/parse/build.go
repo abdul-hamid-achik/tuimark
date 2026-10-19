@@ -1079,6 +1079,16 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			}
 		case tabTemplate && ir.HasInterp(clean):
 			b.v3Hint(a.Line, a.Col, n, "V003", "%s: {path} is only allowed in <text>, title, and placeholder", name)
+		case tag == "button" && name == "label" && b.lang.V4():
+			// A button's label is a template in the current language (SPEC
+			// v0.4b §6.4.2, §7): checked like a <text> body.
+			if _, err := ir.ParseInterp(clean); err != nil {
+				b.attrErr(n, a, "V003", "%s: %v", name, err)
+			}
+		case tag == "button" && name == "label" && ir.HasInterp(clean):
+			// Pinned: V003 at the attribute, as in 0.4.1, with the hint of
+			// §5.1 in place of the 0.4.1 wording (§6.4.2).
+			b.currentHint(a.Line, a.Col, n, "V003", "{path} in a <button> label")
 		case ir.HasInterp(clean):
 			b.attrErr(n, a, "V003", "%s: {path} is only allowed in <text>, title, and placeholder", name)
 		}
@@ -1345,8 +1355,18 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				b.diag(ir.Error, "V003", textLine, textCol, n.Path, n.ID, "%v", err)
 			}
 		}
-		if n.Tag == "button" && ir.HasInterp(n.Text) {
-			b.errN(n, "V003", "button label: {path} is only allowed in <text>, title, and placeholder")
+		if n.Tag == "button" {
+			if b.lang.V4() {
+				// The body is a template like a <text> body in the current
+				// language (SPEC v0.4b §6.4.2).
+				if _, err := ir.ParseInterp(n.Text); err != nil {
+					b.diag(ir.Error, "V003", textLine, textCol, n.Path, n.ID, "%v", err)
+				}
+			} else if ir.HasInterp(n.Text) {
+				// Pinned: V003 once per body, at the <button>, as in 0.4.1,
+				// with the hint of §5.1 (§6.4.2).
+				b.currentHint(n.Line, n.Col, n, "V003", "{path} in a <button> label")
+			}
 		}
 	default:
 		if isXMLWhitespaceOnly(body) {
