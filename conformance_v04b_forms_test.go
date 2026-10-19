@@ -1393,4 +1393,30 @@ func TestSelectLiveDump(t *testing.T) {
 	if got := eventsJSON(t, res.Events); got != `[{"step":2,"action":"tz_changed","source":"tz","keys":{"z":"tok"},"value":"tok"}]` {
 		t.Errorf("after the dumps: %s", got)
 	}
+
+	// A Dump whose frame would close the list (the select is below the
+	// grid there) closes it in that dump only: the live list stays open,
+	// with its cursor.
+	low := strings.Replace(src, `<select id="tz"`, `<text height="5">top</text><select id="tz"`, 1)
+	app = btnApp(t, low, data)
+	opts = tuimark.PlayOptions{Cols: 20, Rows: 8, NoHandlers: true}
+	if res, err = app.Play(opts, "enter", "up"); err != nil {
+		t.Fatal(err)
+	}
+	if !hasNode(res.Dump, "list") {
+		t.Fatalf("low: the list did not open: %q", res.Dump.Grid)
+	}
+	d, err := app.Dump(20, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasNode(d, "list") {
+		t.Errorf("low, at 20x3: a list: %q", d.Grid)
+	}
+	if res, err = app.Play(opts); err != nil {
+		t.Fatal(err)
+	}
+	if got := nodesJSON(t, res.Dump, "item"); !strings.Contains(got, `"key":"utc","selected":true`) {
+		t.Errorf("low, after the dump: %s %q", got, res.Dump.Grid)
+	}
 }
