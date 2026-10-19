@@ -953,6 +953,14 @@ func TestQuit(t *testing.T) {
 	if err != nil || !res.Quit {
 		t.Errorf("ctrl+c under a modal: quit=%v err=%v", res != nil && res.Quit, err)
 	}
+	// q quits from under the new game modal as well: a modal traps the
+	// keymap, so the row is repeated in <keymap when="modal">.
+	a = newApp(t)
+	play(t, a, "N")
+	res, err = a.ui.Play(tuimark.PlayOptions{Cols: 100, Rows: 24}, "q")
+	if err != nil || !res.Quit {
+		t.Errorf("q under the new game modal: quit=%v err=%v", res != nil && res.Quit, err)
+	}
 }
 
 func TestNewGameModal(t *testing.T) {

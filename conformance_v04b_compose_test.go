@@ -364,3 +364,36 @@ func TestIncludeOverAMapFS(t *testing.T) {
 		t.Errorf("nodes: %+v", d.Nodes)
 	}
 }
+
+// The placement policy covers what the other 0.4b phases report on an
+// element an include placed (SPEC v0.4b §6.18.6): F7's button label is a
+// template, so its missing path is B003 with the suffix; F5's L009 (a
+// layout warning) is in the fragment's file with the suffix.
+func TestPlacementSuffixOnOtherPhasesDiagnostics(t *testing.T) {
+	const doc = "<tui>\n <screen id=\"s\">\n  <include src=\"f.tui\"/>\n </screen>\n</tui>\n"
+	load := func(frag string) *tuimark.App {
+		mem := fstest.MapFS{
+			"app.tui": {Data: []byte(doc)},
+			"f.tui":   {Data: []byte(frag)},
+		}
+		app, err := tuimark.LoadFS(mem, "app.tui")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return app
+	}
+	const by = ", placed by <include> at app.tui:3:3"
+	app := load("<fragment>\n <button id=\"b\" label=\"{d.no}\"/>\n</fragment>\n")
+	if err := app.Bind("", map[string]any{"d": map[string]any{}}); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{`B003 f.tui:2:2 /screen/button id=b bind path "d.no" is missing` + by}
+	if got := diagTexts(app.Validate()); !reflect.DeepEqual(got, want) {
+		t.Errorf("button label:\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	app = load("<fragment>\n <col width=\"10\" height=\"2\"><text>a</text><text>b</text><text>c</text></col>\n</fragment>\n")
+	got := diagTexts(app.Validate())
+	if len(got) != 1 || !strings.HasPrefix(got[0], "L009 f.tui:2:2 /screen/col id= cuts text[2] on y") || !strings.HasSuffix(got[0], by) {
+		t.Errorf("L009: %v", got)
+	}
+}

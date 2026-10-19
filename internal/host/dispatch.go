@@ -100,6 +100,7 @@ type keyStep int
 const (
 	stepNone       keyStep = iota // nothing takes the key: it does nothing
 	stepEscape                    // 1: the top modal's on:escape fires
+	stepEscClose                  // 1: esc closes the top modal (current language)
 	stepWidget                    // 2: the focused, enabled widget consumes it
 	stepKeymap                    // 3: a keymap row matches and fires
 	stepBuiltinKey                // 4: tab, shift+tab, or ctrl+c
@@ -113,17 +114,23 @@ type keyPlan struct {
 	// target is the node a built-in action of §8.4 acts on (stepKeymap on
 	// such a row; nil for switch-to, whose target is not in the frame).
 	target *layout.Box
+	// path is the top modal's visibility path esc writes false at
+	// (stepEscClose).
+	path string
 }
 
 // planKey runs the key dispatch of SPEC §8.6 for k on v without side
 // effects and returns the step that takes k:
 //
-//  1. esc, while the top open modal has on:escape: that action;
+//  1. esc, while the top open modal has on:escape: that action; in a
+//     <tui> without version, else, while the top modal closes on esc
+//     (escClose): a false written at its visibility path;
 //  2. a focused, enabled node consumes the keys of its kind (consumes);
 //  3. the keymap rows in document order: the first row whose keys hold k,
 //     whose when matches (§8.1: the focused node in a version="1"
-//     document, the focus chain in a version="2" one), and, for a
-//     built-in of §8.4, whose target matches at run time;
+//     document, the focus chain in a version="2" one, the modal chain
+//     while a modal traps the keymap in a <tui> without version), and,
+//     for a built-in of §8.4, whose target matches at run time;
 //  4. tab and shift+tab cycle focus, ctrl+c fires quit.
 //
 // Anything else does nothing. The caller holds a.mu.
@@ -132,6 +139,9 @@ func (a *App) planKey(v keyView, k Key) keyPlan {
 		if m := v.topModal(); m != nil && m.Src != nil {
 			if _, ok := m.Src.On["escape"]; ok {
 				return keyPlan{step: stepEscape}
+			}
+			if path, ok := a.escClose(v); ok {
+				return keyPlan{step: stepEscClose, path: path}
 			}
 		}
 	}
@@ -181,8 +191,12 @@ func containsKey(keys []string, name string) bool {
 // matches while nothing is focused. In a version="2" document it matches
 // when the selector matches at least one node of the focus chain, each
 // taken in turn as the subject (with > checked against that node's
-// parents as usual).
+// parents as usual). In a <tui> without version, while a modal is open,
+// the modal traps the keymap (trapMatches, SPEC v0.4b §8.1).
 func (a *App) whenMatches(sel *css.Selector, v keyView) bool {
+	if a.trapped(v) {
+		return trapMatches(sel, v)
+	}
 	if sel == nil {
 		return true
 	}
@@ -274,6 +288,8 @@ func (a *App) handleKey(k Key) []Event {
 	case stepEscape:
 		m := v.topModal()
 		return []Event{{Action: m.Src.On["escape"], Source: m.ID, Keys: map[string]any{}}}
+	case stepEscClose:
+		return a.closeOnEsc(p.path)
 	case stepWidget:
 		return a.widgetKey(v.focused, k)
 	case stepKeymap:

@@ -8,6 +8,11 @@
     <bind keys="q" action="quit" label="quit"/>
     <bind keys="ctrl+c" action="quit"/>
   </keymap>
+  <!-- A modal traps the keymap: q quits from the new game and solved
+       modals too (in the help, the row above closes it first). -->
+  <keymap when="modal">
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
   <keymap when="#board">
     <bind keys="up,k" action="up" keycap="↑↓←→" label="move"/>
     <bind keys="down,j" action="down"/>

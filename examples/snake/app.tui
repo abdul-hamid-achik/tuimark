@@ -11,6 +11,13 @@
     <bind keys="?" action="help_open" label="help"/>
     <bind keys="q,ctrl+c" action="quit" label="quit"/>
   </keymap>
+  <!-- A modal traps the keymap: the keys that also act under one are
+       repeated here, without labels, so the help lists each key once. -->
+  <keymap when="modal">
+    <bind keys="r" action="restart"/>
+    <bind keys="?" action="help_open"/>
+    <bind keys="q,ctrl+c" action="quit"/>
+  </keymap>
   <screen id="main">
     <col id="app">
       <row id="top">
@@ -79,7 +86,9 @@
       <text id="toosmall">terminal too small: the board needs 52 columns by 20 rows</text>
       <hints id="keys"/>
     </col>
-    <modal id="over" open="over" title="{over_title}">
+    <!-- state.over is derived, so esc cannot write it: the game over
+         modal stays open until r or q, as it says. -->
+    <modal id="over" open="state.over" title="{over_title}">
       <text class="big">score {score}  ·  length {length}</text>
       <text class="big">best {best}</text>
       <text class="muted">r restart  ·  q quit</text>

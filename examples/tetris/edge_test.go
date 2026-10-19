@@ -279,8 +279,11 @@ func TestGameOverTextIsWhole(t *testing.T) {
 	}
 }
 
-// While a modal is open the keys it would ignore are not advertised: the
-// hints are quit and help, and the move keys come back with the board.
+// While a modal is open the keys it would ignore are not advertised. A
+// modal traps the keymap, and the rows repeated for it in
+// <keymap when="modal"> (quit and help) carry no label, so the help lists
+// each key once: the bar under a modal is empty, while q and ? still work
+// there. The move keys come back with the board.
 func TestHintsHideDeadKeysBehindModals(t *testing.T) {
 	last := func(r *rig) string {
 		d, err := r.a.ui.Dump(100, 24)
@@ -302,8 +305,8 @@ func TestHintsHideDeadKeysBehindModals(t *testing.T) {
 		r := newRig(t)
 		open(r)
 		h := last(r)
-		if !strings.Contains(h, "q quit") || !strings.Contains(h, "? help") {
-			t.Errorf("%s: hints %q lose quit or help", name, h)
+		if strings.TrimSpace(h) != "" {
+			t.Errorf("%s: hints %q, want none under a modal", name, h)
 		}
 		for _, w := range dead {
 			if strings.Contains(h, w) {
