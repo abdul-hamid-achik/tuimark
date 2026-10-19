@@ -128,6 +128,12 @@ type Node struct {
 	// the host, and the dump see the expanded Children.
 	Source []*Node
 
+	// Spinner is set by the parser on a <progress> of the current
+	// language that is a spinner: indeterminate="true", with neither bind
+	// nor value (SPEC v0.4b §6.4.1). In every other case, a pinned
+	// document's indeterminate included, the progress is a bar.
+	Spinner bool
+
 	Line, Col int
 	Path      string
 	// Org says where an element of an expanded document was written and

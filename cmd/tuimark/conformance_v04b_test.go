@@ -242,17 +242,11 @@ func TestV04bIRVersion(t *testing.T) {
 }
 
 // The "Only in a <tui> without version" attribute section of AGENTS.md is
-// written once a phase fills parse.TagAttrsCurrent (F1 adds include and
-// fragment), and the catalog cross-check of test 119 reads it back with
-// since current. The test replaces the tables with a tag and an attribute
-// of its own for its duration.
+// written once a phase fills parse.TagAttrsCurrent, and the catalog
+// cross-check of test 119 reads it back with since current. The test
+// replaces the tables for its duration, so it does not depend on the
+// vocabulary the phases have filled.
 func TestV04bCurrentAttrsSectionRoundTrips(t *testing.T) {
-	md0 := agentsdoc.RepoMarkdown()
-	for _, s := range []string{"Only in a `<tui>` without `version`", "- `include`: src\n", "- `fragment`: (no attributes)\n"} {
-		if !strings.Contains(md0, s) {
-			t.Errorf("AGENTS.md lacks %q", s)
-		}
-	}
 	kinds, attrs := ir.KindsCurrent, parse.TagAttrsCurrent
 	t.Cleanup(func() { ir.KindsCurrent, parse.TagAttrsCurrent = kinds, attrs })
 	ir.KindsCurrent = []string{"checkbox"}

@@ -261,6 +261,7 @@ var TagAttrsV3 = map[string]map[string]bool{
 var TagAttrsCurrent = map[string]map[string]bool{
 	"include":  only("src"),
 	"fragment": only(),
+	"progress": only("indeterminate"), // SPEC v0.4b §6.4.1: the spinner
 }
 
 // tableItemAttrs are the attributes of a table's row template <item>
@@ -1167,6 +1168,25 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 	case "focusable", "secret":
 		if val != "true" && val != "false" {
 			b.attrErr(n, a, "V003", "%s=%q: want true or false", name, val)
+		}
+	case "indeterminate":
+		// SPEC v0.4b §6.4.1 (only the current language gets here, the
+		// version gate above comes first): literal true or false. true
+		// with bind or value is V003 and the progress stays a bar; the
+		// test is on the attributes as written, so an invalid bind path
+		// counts, whatever the order of the attributes.
+		switch val {
+		case "false":
+		case "true":
+			_, hasBind := n.Attrs["bind"]
+			_, hasValue := n.Attrs["value"]
+			if hasBind || hasValue {
+				b.attrErr(n, a, "V003", "indeterminate=%q cannot be combined with bind or value", val)
+				return
+			}
+			n.Spinner = true
+		default:
+			b.attrErr(n, a, "V003", "indeterminate=%q: want true or false", val)
 		}
 	case "bind":
 		if !ir.IsPath(val) {

@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -123,6 +124,10 @@ type App struct {
 	// parity. passes numbers the builder passes of the live builds.
 	slab   uint8
 	passes uint64
+	// phase is the spinner phase the frame under construction paints
+	// (SPEC v0.4b §12.6): set by FrameAt for a live frame, forced to 0 by
+	// Dump. It is an input of the frame (frameInputs).
+	phase int
 	// scratch is the memory every layout of this app cuts its work lists
 	// from (layout.Scratch): one Layout call at a time, under a.mu, and
 	// nothing it hands out outlives the call.
@@ -183,6 +188,10 @@ type App struct {
 	everyMu   sync.Mutex
 	every     []*everyReg
 	everyKick chan struct{}
+	// vnow is the virtual clock of Play (SPEC v0.4b §15.4.1): app state,
+	// 0 when the app is created, advanced only by tick steps. Guarded by
+	// everyMu, with the registrations' virtual deadlines (everyReg.vnext).
+	vnow time.Duration
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity
