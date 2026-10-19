@@ -237,6 +237,52 @@ func TestV04bTemplateGuardedUseInATable(t *testing.T) {
 	sameLines(t, "diagnostics after set:false", errs, nil)
 }
 
+// A use whose id is V003 inserts nothing, as one with a malformed with,
+// and that V003 is its only diagnostic: id="" is not also the V012 of a
+// use without id (review probe rob/c14). A valid id still scopes the copy.
+func TestV04bTemplateUseWithABadID(t *testing.T) {
+	f := writeTemp(t, "app.tui", `<tui><template id="t"><text id="x">x</text></template><screen id="m"><use id="" template="t"/><use id="a b" template="t"/><use id="1" template="t"/><use id="ok" template="t"/></screen></tui>`)
+	sameLines(t, "validate", vdiags(t, f, ""), []string{
+		`error V003 app.tui:1:75 /screen/use id= bad id "" (letters, digits, '-' and '_'; must not start with a digit)`,
+		`error V003 app.tui:1:100 /screen/use id=a b bad id "a b" (letters, digits, '-' and '_'; must not start with a digit)`,
+		`error V003 app.tui:1:128 /screen/use id=1 bad id "1" (letters, digits, '-' and '_'; must not start with a digit)`,
+	})
+	_, out, _ := runCLI("dump", f, "--format", "json", "--cols", "10", "--rows", "3")
+	var d struct {
+		Nodes []struct {
+			ID string `json:"id"`
+		} `json:"nodes"`
+	}
+	if err := json.Unmarshal([]byte(out), &d); err != nil {
+		t.Fatal(err)
+	}
+	var ids []string
+	for _, n := range d.Nodes {
+		ids = append(ids, n.ID)
+	}
+	sameLines(t, "nodes", ids, []string{"m", "ok__x"})
+}
+
+// In the current language, the HTML names of composition point at
+// <template>/<use> and <include> (the F2 review); a document that writes
+// version keeps 0.4.1's hint (review probe comp).
+func TestV04bTemplateCompositionHints(t *testing.T) {
+	const body = "\n<screen><component/><slot/><import/></screen>\n</tui>"
+	sameLines(t, "current", vdiags(t, writeTemp(t, "app.tui", "<tui>"+body), ""), []string{
+		`error V001 app.tui:2:9 /screen/component id= unknown tag <component>; write it once in a <template id=…> and place it with <use template=…>`,
+		`error V001 app.tui:2:21 /screen/slot id= unknown tag <slot>; a <use> takes no content: write the markup in a <template id=…> and place it with <use template=…>`,
+		`error V001 app.tui:2:28 /screen/import id= unknown tag <import>; use <include src=…> for markup, <style src=…> for a stylesheet`,
+	})
+	const old = "Tuimark has no components or includes; only <style src> loads another file"
+	for _, v := range []string{"1", "2", "3"} {
+		sameLines(t, "version="+v, vdiags(t, writeTemp(t, "app.tui", `<tui version="`+v+`">`+body), ""), []string{
+			`error V001 app.tui:2:9 /screen/component id= unknown tag <component>; ` + old,
+			`error V001 app.tui:2:21 /screen/slot id= unknown tag <slot>; ` + old,
+			`error V001 app.tui:2:28 /screen/import id= unknown tag <import>; ` + old,
+		})
+	}
+}
+
 // `tuimark ir` at the expansion depth limit (the F2 review): a chain of
 // element-less uses whose text lands at level 256 prints its IR, 256
 // levels deep; a chain of 6000 is one V021 (exit 2), where the IR used to

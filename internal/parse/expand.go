@@ -352,6 +352,12 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 	if _, ok := q.Attrs["if"]; ok && q.If == "" {
 		info.bad = true // V011 (attr)
 	}
+	if id, ok := q.Attrs["id"]; ok && !isIDName(id) {
+		// V003 (attr), the use's only diagnostic: a bad id scopes nothing,
+		// so the use inserts nothing, as with a malformed with (the F2
+		// review), and is no V012 either.
+		info.bad = true
+	}
 	for _, cc := range c.Children {
 		if cc.Type == RawElement || ((cc.Type == RawText || cc.Type == RawCData) && !isXMLWhitespaceOnly(cc.Text)) {
 			b.diag(ir.Error, "V013", cc.Line, cc.Col, q.Path, q.ID, "<use> takes no content; Tuimark has no slots")

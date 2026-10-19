@@ -156,19 +156,15 @@ func TestV04bTemplate138ScopedIDs(t *testing.T) {
 // written <box focusable="true"> without id since 0.1 (validate of
 // <tui><screen id="m"><box focusable="true"><text>c</text></box></screen></tui>
 // gives it, with and without version="3"), a V012 at the copied box, once
-// per use (placement suffix). Those two lines are filtered here and
-// reported as an erratum; the focus cycle bullet goes with them, since
-// focus is held by id.
+// per use (placement suffix), reported as an erratum and pinned here (the
+// F2 review confirmed 0.4.1's V012). The focus cycle bullet goes with
+// them, since focus is held by id.
 func TestV04bTemplate139V004AndV012(t *testing.T) {
 	app := composeFixtures + "t139/app.tui"
-	var got []string
-	for _, l := range vdiags(t, app, "") {
-		if !strings.Contains(l, "<box> is focusable and needs an id") {
-			got = append(got, l)
-		}
-	}
-	sameLines(t, "validate", got, []string{
+	sameLines(t, "validate", vdiags(t, app, ""), []string{
 		`error V004 app.tui:4:7 /screen/row/input id=bill__in duplicate id "bill__in" (first defined at 11:5)`,
+		`error V012 app.tui:8:5 /screen/box id= <box> is focusable and needs an id, placed by <use template="card"> at app.tui:16:5`,
+		`error V012 app.tui:8:5 /screen/box id= <box> is focusable and needs an id, placed by <use template="card"> at app.tui:17:5`,
 		`error V004 app.tui:13:5 /screen/use id=bill duplicate id "bill" (first defined at 12:5)`,
 		`error V004 app.tui:14:5 /screen/box id=field duplicate id "field" (first defined at 2:3)`,
 		`error V012 app.tui:15:5 /screen/use id= <use template="field"> needs an id: its template holds ids (#row), which the use scopes as ID__row`,
