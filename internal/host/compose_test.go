@@ -144,3 +144,35 @@ func TestExpansionLimitLoadBuffers(t *testing.T) {
 		t.Fatal("LoadBuffers hangs on the fan-out")
 	}
 }
+
+// ADR 0034: includes count toward the limit, so a fan-out whose leaf holds
+// no element is bounded too, under LoadBuffers as under Load.
+func TestExpansionLimitCountsIncludesLoadBuffers(t *testing.T) {
+	files := map[string]string{
+		"app.tui": "<tui>\n  <screen id=\"s\"><include src=\"f0.tui\"/></screen>\n</tui>\n",
+		"f30.tui": "<fragment/>",
+	}
+	for i := 0; i < 30; i++ {
+		files[fmt.Sprintf("f%d.tui", i)] = fmt.Sprintf("<fragment><include src=\"f%d.tui\"/><include src=\"f%d.tui\"/></fragment>", i+1, i+1)
+	}
+	dir := writeTree(t, files)
+	done := make(chan []string, 1)
+	go func() {
+		app, _ := LoadBuffers(filepath.Join(dir, "app.tui"), []byte(files["app.tui"]), func(string) ([]byte, bool) { return nil, false })
+		var v []string
+		for _, d := range app.Document().Diags {
+			if d.Code == "V021" {
+				v = append(v, d.Msg)
+			}
+		}
+		done <- v
+	}()
+	select {
+	case v := <-done:
+		if len(v) != 1 {
+			t.Errorf("V021: %v", v)
+		}
+	case <-time.After(30 * time.Second):
+		t.Fatal("LoadBuffers hangs on the fan-out of empty fragments")
+	}
+}

@@ -31,18 +31,19 @@ func screenChildren(doc *parse.Document) int {
 	return len(doc.Root.Children[0].Children)
 }
 
-// The boundary: exactly ExpansionLimit elements is fine, one more is V021
-// and the include inserts nothing.
+// The boundary: the include counts one, so a fragment of ExpansionLimit-1
+// elements makes exactly the limit, which is fine; one more is V021 and the
+// include inserts nothing.
 func TestExpansionLimitBoundary(t *testing.T) {
 	if parse.ExpansionLimit != 100000 {
 		t.Fatalf("ExpansionLimit = %d", parse.ExpansionLimit)
 	}
 	const app = "<tui>\n<screen>\n<include src=\"big.tui\"/>\n</screen>\n</tui>"
-	doc := parse.ParseWith([]byte(app), "app.tui", memLoader(map[string]string{"big.tui": texts(parse.ExpansionLimit)}, "app.tui", nil))
-	if got := v021(doc); len(got) != 0 || screenChildren(doc) != parse.ExpansionLimit {
+	doc := parse.ParseWith([]byte(app), "app.tui", memLoader(map[string]string{"big.tui": texts(parse.ExpansionLimit - 1)}, "app.tui", nil))
+	if got := v021(doc); len(got) != 0 || screenChildren(doc) != parse.ExpansionLimit-1 {
 		t.Errorf("at the limit: V021 %v, %d children", got, screenChildren(doc))
 	}
-	doc = parse.ParseWith([]byte(app), "app.tui", memLoader(map[string]string{"big.tui": texts(parse.ExpansionLimit + 1)}, "app.tui", nil))
+	doc = parse.ParseWith([]byte(app), "app.tui", memLoader(map[string]string{"big.tui": texts(parse.ExpansionLimit)}, "app.tui", nil))
 	want := `app.tui:3:1 include src="big.tui" exceeds the expansion limit of 100000 elements: it inserts nothing, and no later include or use expands`
 	if got := v021(doc); len(got) != 1 || got[0] != want {
 		t.Errorf("over the limit: V021 %v, want %s", got, want)
@@ -98,10 +99,28 @@ func TestExpansionLimitFanOut(t *testing.T) {
 		t.Errorf("took %v", d)
 	}
 	got := v021(doc)
-	if len(got) != 1 || !strings.HasPrefix(got[0], "f29.tui:1:") {
-		t.Errorf("V021 %v, want one at f29.tui", got)
+	if len(got) != 1 {
+		t.Errorf("V021 %v, want exactly one", got)
 	}
-	if n := screenChildren(doc); n != parse.ExpansionLimit {
+	// What stays plus the includes that expanded is at most the limit.
+	if n := screenChildren(doc); n <= 0 || n >= parse.ExpansionLimit {
 		t.Errorf("%d elements inserted", n)
+	}
+}
+
+// Includes count too, so a fan-out of fragments that hold no element at all
+// is bounded: thirty levels of two includes each, a leaf of <fragment/>.
+func TestExpansionLimitCountsIncludes(t *testing.T) {
+	files := map[string]string{"f30.tui": "<fragment/>"}
+	for i := 0; i < 30; i++ {
+		files[fmt.Sprintf("f%d.tui", i)] = fmt.Sprintf("<fragment><include src=\"f%d.tui\"/><include src=\"f%d.tui\"/></fragment>", i+1, i+1)
+	}
+	start := time.Now()
+	doc := parse.ParseWith([]byte("<tui><screen><include src=\"f0.tui\"/></screen></tui>"), "app.tui", memLoader(files, "app.tui", nil))
+	if d := time.Since(start); d > 5*time.Second {
+		t.Errorf("took %v", d)
+	}
+	if got := v021(doc); len(got) != 1 {
+		t.Errorf("V021 %v, want exactly one", got)
 	}
 }

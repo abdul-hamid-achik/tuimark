@@ -46,8 +46,10 @@ type Loader struct {
 
 // ExpansionLimit is the most elements the expansions of one document may
 // insert (ADR 0034): each element an <include> (later also a <use>)
-// inserts, at every depth, once per copy. Text, and the include and use
-// elements themselves, do not count.
+// inserts, at every depth, once per copy, and one for each include (use)
+// expanded, a written one at the top of the document included. Text does
+// not count. Counting the includes too is what bounds a fan-out of
+// fragments that hold no element.
 const ExpansionLimit = 100000
 
 // expFrame is an expansion under way: the innermost one reports V021.
@@ -332,6 +334,7 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 		cp.dead = true
 		b.errInc(w, "V021", "include src=%q exceeds the expansion limit of %d elements: it inserts nothing, and no later include or use expands", src, ExpansionLimit)
 	}()
+	b.countElement() // the include itself, so it is the one that reports
 	b.org = fo
 	cp.chain = append(cp.chain, file)
 	b.fragmentRoot(root)
