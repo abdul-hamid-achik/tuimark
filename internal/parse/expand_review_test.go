@@ -4,6 +4,7 @@ package parse_test
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -72,6 +73,69 @@ func TestWithScopeLookupDoesNotGrowWithTheScope(t *testing.T) {
 	}
 	if got := screenOf(d).Children[0].Text; got != "{xp1.v}{yp2.v}" {
 		t.Errorf("text %q", got)
+	}
+}
+
+// ring is n templates, each holding a use of the next, the last of the
+// first.
+func ring(n int) string {
+	var b strings.Builder
+	b.WriteString("<tui>\n")
+	for i := 0; i < n; i++ {
+		fmt.Fprintf(&b, "<template id=\"t%d\"><use template=\"t%d\"/></template>\n", i, (i+1)%n)
+	}
+	b.WriteString("<screen id=\"main\"><text>x</text></screen>\n</tui>")
+	return b.String()
+}
+
+// V019 on a long cycle (the owner's decision on the F2 review): one per
+// use on it, each naming the first 8 templates from the template holding
+// the use, then how many more, then that template again; and the whole
+// check stays near-linear on a ring (review probe ring10000: 15.7 s and
+// 990 MB of output before).
+func TestV019LongCycleIsShortenedAndFast(t *testing.T) {
+	var doc *parse.Document
+	el := within(t, 60*time.Second, func() { doc = parse.Parse([]byte(ring(10000)), "app.tui") })
+	if el > time.Second {
+		t.Errorf("took %v", el)
+	}
+	got := useDiags(doc)
+	if len(got) != 10000 {
+		t.Fatalf("%d diagnostics, want one V019 per use", len(got))
+	}
+	for i, want := range map[int]string{
+		0:    `V019 2:19 <use template="t1"> in <template id="t0"> makes a cycle of templates: t0 → t1 → t2 → t3 → t4 → t5 → t6 → t7 → … (9992 more) → t0`,
+		9999: `V019 10001:22 <use template="t0"> in <template id="t9999"> makes a cycle of templates: t9999 → t0 → t1 → t2 → t3 → t4 → t5 → t6 → … (9992 more) → t9999`,
+	} {
+		if got[i] != want {
+			t.Errorf("diagnostic %d:\n%s\nwant\n%s", i, got[i], want)
+		}
+	}
+}
+
+// A cycle of 8 templates is named whole, as before; one of 9 names 8 and
+// "(1 more)".
+func TestV019CycleOfEightAndNine(t *testing.T) {
+	got := useDiags(parse.Parse([]byte(ring(8)), "app.tui"))
+	if want := `V019 2:19 <use template="t1"> in <template id="t0"> makes a cycle of templates: t0 → t1 → t2 → t3 → t4 → t5 → t6 → t7 → t0`; len(got) != 8 || got[0] != want {
+		t.Errorf("8: %q\nwant %s first", got, want)
+	}
+	got = useDiags(parse.Parse([]byte(ring(9)), "app.tui"))
+	if want := `V019 4:19 <use template="t3"> in <template id="t2"> makes a cycle of templates: t2 → t3 → t4 → t5 → t6 → t7 → t8 → t0 → … (1 more) → t2`; len(got) != 9 || got[2] != want {
+		t.Errorf("9: %q\nwant %s third", got, want)
+	}
+	// A component that is not a single ring keeps the shortest cycle: a
+	// chord from t0 to t5 in a ring of 12 makes t0's first use close a
+	// cycle of 12, its second (the chord) one of 8.
+	src := strings.Replace(ring(12), `<template id="t0"><use template="t1"/>`, `<template id="t0"><use template="t1"/><use template="t5"/>`, 1)
+	got = useDiags(parse.Parse([]byte(src), "app.tui"))
+	for _, want := range []string{
+		`V019 2:19 <use template="t1"> in <template id="t0"> makes a cycle of templates: t0 → t1 → t2 → t3 → t4 → t5 → t6 → t7 → … (4 more) → t0`,
+		`V019 2:39 <use template="t5"> in <template id="t0"> makes a cycle of templates: t0 → t5 → t6 → t7 → t8 → t9 → t10 → t11 → t0`,
+	} {
+		if !slices.Contains(got, want) {
+			t.Errorf("chord: %q\nwant %s", got, want)
+		}
 	}
 }
 
