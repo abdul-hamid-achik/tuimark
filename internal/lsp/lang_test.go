@@ -23,6 +23,10 @@ func TestDocVersionIsTheTextVersion(t *testing.T) {
 		{`<tui version="3"><screen/></tui>`, 3},
 		{`<tui version="4"><screen/></tui>`, 1},
 		{`<tui version="abc"><screen/></tui>`, 1},
+		// The parser takes double quotes only: a single-quoted version is
+		// V005 and the document reads as 1, which the text reading agrees
+		// with.
+		{`<tui version='3'><screen/></tui>`, 1},
 		{`<app><text>x</text></app>`, 1},
 	} {
 		if got := docVersion(parse.Parse([]byte(c.text), "t.tui")); got != c.want {

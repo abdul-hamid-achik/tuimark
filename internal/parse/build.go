@@ -505,7 +505,10 @@ func spikeTagSuggestion(tag string) string {
 
 // tagSuggestion is the suffix of an unknown tag's V001: a fixed hint for a
 // common HTML name, else the closest tag of the vocabulary (a
-// version="2" tag in a version="1" document says what it requires).
+// version="2" tag in a version="1" document says what it requires). The
+// current-language tags are candidates only in the current language: a
+// pinned document keeps 0.4.1's suggestion, or its lack of one, for a
+// name it misspells (SPEC v0.4b §5.1).
 func (b *builder) tagSuggestion(tag string) string {
 	if h, ok := htmlTagHints[tag]; ok {
 		return "; " + h
@@ -517,7 +520,9 @@ func (b *builder) tagSuggestion(tag string) string {
 		}
 	}
 	cands = append(cands, ir.KindsV2...)
-	cands = append(cands, ir.KindsCurrent...)
+	if b.lang.V4() {
+		cands = append(cands, ir.KindsCurrent...)
+	}
 	best := ir.Suggest(tag, cands)
 	if best == "" {
 		return ""
@@ -525,16 +530,19 @@ func (b *builder) tagSuggestion(tag string) string {
 	if ir.IsKindV2(best) && !b.v2 {
 		return "; did you mean <" + best + "> (requires version=\"2\")?"
 	}
-	if ir.IsKindCurrent(best) && !b.lang.V4() {
-		return "; did you mean <" + best + ">" + ir.VersionHintCurrent + "?"
-	}
 	return didYouMean("<"+best+">", best)
 }
 
 // attrExists reports whether any tag of any version takes an attribute
-// called name.
-func attrExists(name string) bool {
-	for _, cat := range []map[string]map[string]bool{TagAttrs, TagAttrsV2, TagAttrsV3, TagAttrsCurrent} {
+// called name. The current-language attributes count only in the current
+// language, so a pinned document keeps 0.4.1's suggestion for a name a
+// 0.4b attribute shares (SPEC v0.4b §5.1).
+func attrExists(name string, l ir.Lang) bool {
+	cats := []map[string]map[string]bool{TagAttrs, TagAttrsV2, TagAttrsV3}
+	if l.V4() {
+		cats = append(cats, TagAttrsCurrent)
+	}
+	for _, cat := range cats {
 		for _, m := range cat {
 			if m[name] {
 				return true
@@ -550,7 +558,7 @@ func attrExists(name string) bool {
 func (b *builder) attrSuggestion(tag, parent, name string) string {
 	// An attribute some other tag (or version) takes is misplaced, not
 	// misspelled: pointing it at a lookalike (bind -> id) would mislead.
-	if attrExists(name) {
+	if attrExists(name, b.lang) {
 		return ""
 	}
 	var set []map[string]bool

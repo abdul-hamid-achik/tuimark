@@ -109,11 +109,62 @@ func TestCurrentHintOnPinnedDocuments(t *testing.T) {
 			t.Errorf("current language: %s %s", d.Code, d.Msg)
 		}
 	}
-	// A misspelling close to a current-only tag suggests it with the hint
-	// in a pinned document.
-	doc = parse.Parse([]byte(`<tui version="3"><screen><checkbx id="c"/></screen></tui>`), "t.tui")
-	if len(doc.Diags) == 0 || !strings.Contains(doc.Diags[0].Msg, "did you mean <checkbox> (requires a <tui> without version)?") {
-		t.Errorf("pinned misspelling: %v", doc.Diags)
+}
+
+// inject04b stands in for the filled 0.4b tables (F1, F2, F8, F9): the
+// composition tags, checkbox and select, and their attributes, restored
+// when the test ends. Tests that call it never run in parallel.
+func inject04b(t *testing.T) {
+	t.Helper()
+	kinds, attrs := ir.KindsCurrent, parse.TagAttrsCurrent
+	t.Cleanup(func() { ir.KindsCurrent, parse.TagAttrsCurrent = kinds, attrs })
+	ir.KindsCurrent = []string{"include", "fragment", "template", "use", "checkbox", "select"}
+	parse.TagAttrsCurrent = map[string]map[string]bool{
+		"include":  {"src": true},
+		"template": {"name": true},
+		"use":      {"template": true, "with": true},
+		"checkbox": {"id": true, "bind": true, "label": true},
+		"select":   {"id": true, "bind": true, "each": true, "key": true},
+		"list":     {"single": true},
+	}
+}
+
+// SPEC v0.4b §5.1 ("keeps its 0.4.1 meaning, diagnostics, and dumps"): a
+// misspelling is not a 0.4b item, so a pinned document gets 0.4.1's V001
+// or V002 for it byte for byte, even when the name is close to a 0.4b tag
+// or a 0.4b attribute shares it. The texts are tuimark 0.4.1's. The
+// current language suggests its own tags, and treats an attribute another
+// tag takes (with, on <use>) as misplaced, not misspelled, as it does
+// for every attribute.
+func TestPinnedSuggestionsAsIn041(t *testing.T) {
+	inject04b(t)
+	const body = `<screen><selec id="s"/><checkbx id="c"/><usee id="u"/><box with="x"/></screen></tui>`
+	diags := func(src string) string {
+		var got []string
+		for _, d := range parse.Parse([]byte(src), "t.tui").Diags {
+			got = append(got, d.Code+" "+d.Msg)
+		}
+		return strings.Join(got, "\n")
+	}
+	pinned := strings.Join([]string{
+		"V001 unknown tag <selec>",
+		"V001 unknown tag <checkbx>",
+		"V001 unknown tag <usee>",
+		`V002 attribute "with" is not allowed on <box>; did you mean "width"?`,
+	}, "\n")
+	for _, v := range []string{"1", "2", "3"} {
+		if got := diags(`<tui version="` + v + `">` + body); got != pinned {
+			t.Errorf("version=%s:\n%s\nwant (0.4.1)\n%s", v, got, pinned)
+		}
+	}
+	current := strings.Join([]string{
+		"V001 unknown tag <selec>; did you mean <select>?",
+		"V001 unknown tag <checkbx>; did you mean <checkbox>?",
+		"V001 unknown tag <usee>; did you mean <use>?",
+		`V002 attribute "with" is not allowed on <box>`,
+	}, "\n")
+	if got := diags(`<tui>` + body); got != current {
+		t.Errorf("current language:\n%s\nwant\n%s", got, current)
 	}
 }
 
