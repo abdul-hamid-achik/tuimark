@@ -1,0 +1,8 @@
+<tui>
+  <screen id="main" focus="#del">
+    <row style="height: 1">
+      <button id="del" label="Delete {n} tasks" on:click="delete"/>
+      <button id="cancel" on:click="cancel">{no}</button>
+    </row>
+  </screen>
+</tui>
