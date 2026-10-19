@@ -53,9 +53,12 @@ func fuzzSeeds(tb testing.TB) []string {
 	return out
 }
 
-// checkApp renders app at every fuzzSizes entry and replays fuzzSteps,
-// returning the first broken invariant. It must not panic.
-func checkApp(app *App) error {
+// checkApp renders app at cols x rows (and at the fixed sizes), replays
+// fuzzSteps, and returns the first broken invariant. It must not panic.
+// Besides the grid shape it checks what the docs promise: a dump is a
+// snapshot that does not depend on what was dumped before it, and Dump and
+// Validate give the same answer when asked twice.
+func checkApp(app *App, cols, rows int) error {
 	var store any
 	if err := json.Unmarshal([]byte(fuzzStore), &store); err != nil {
 		return err
@@ -63,27 +66,53 @@ func checkApp(app *App) error {
 	if err := app.Bind("", store); err != nil {
 		return err
 	}
-	for _, sz := range fuzzSizes {
-		cols, rows := sz[0], sz[1]
-		d, err := app.Dump(cols, rows)
+	dumpJSON := func(c, r int) (string, error) {
+		d, err := app.Dump(c, r)
 		if err != nil {
-			return fmt.Errorf("Dump(%d, %d): %v", cols, rows, err)
+			return "", fmt.Errorf("Dump(%d, %d): %v", c, r, err)
 		}
-		if err := checkGrid("Dump", d.Grid, d.Wide, cols, rows); err != nil {
-			return err
+		if err := checkGrid("Dump", d.Grid, d.Wide, c, r); err != nil {
+			return "", err
 		}
 		if d.OK == hasError(d.Errors) {
-			return fmt.Errorf("Dump(%d, %d): ok=%v with errors %v", cols, rows, d.OK, d.Errors)
+			return "", fmt.Errorf("Dump(%d, %d): ok=%v with errors %v", c, r, d.OK, d.Errors)
+		}
+		for _, n := range d.Nodes {
+			if n.W < 0 || n.H < 0 {
+				return "", fmt.Errorf("Dump(%d, %d): node %s#%s has size %dx%d", c, r, n.Tag, n.ID, n.W, n.H)
+			}
+		}
+		b, err := json.Marshal(d)
+		return string(b), err
+	}
+	first, err := dumpJSON(80, 24)
+	if err != nil {
+		return err
+	}
+	for _, sz := range [][2]int{{cols, rows}, {1, 1}, {200, 60}} {
+		x, err := dumpJSON(sz[0], sz[1])
+		if err != nil {
+			return err
+		}
+		y, err := dumpJSON(sz[0], sz[1])
+		if err != nil {
+			return err
+		}
+		if x != y {
+			return fmt.Errorf("Dump(%d, %d) differs between two calls", sz[0], sz[1])
 		}
 	}
-	_ = app.Validate()
-	for _, sz := range fuzzSizes {
-		cols, rows := sz[0], sz[1]
-		res, _ := app.Play(PlayOptions{Cols: cols, Rows: rows, Cells: true}, fuzzSteps...)
-		if res == nil {
-			// A step that cannot apply is a reported error, never a panic.
-			continue
-		}
+	if again, err := dumpJSON(80, 24); err != nil {
+		return err
+	} else if again != first {
+		return fmt.Errorf("Dump(80, 24) depends on the dumps made before it")
+	}
+	v1, v2 := app.Validate(), app.Validate()
+	if fmt.Sprint(v1) != fmt.Sprint(v2) {
+		return fmt.Errorf("Validate differs between two calls")
+	}
+	res, _ := app.Play(PlayOptions{Cols: max(cols, 1), Rows: max(rows, 1), Cells: true}, fuzzSteps...)
+	if res != nil {
 		d := res.Dump
 		if err := checkGrid("Play", d.Grid, d.Wide, d.Cols, d.Rows); err != nil {
 			return err
@@ -127,7 +156,7 @@ func hasError(ds []Diagnostic) bool {
 // checkWithDeadline runs checkApp and fails the test when it returns an
 // error, panics, or takes longer than d: a hang is a bug the fuzz engine
 // would otherwise only see as a stuck worker.
-func checkWithDeadline(t *testing.T, app *App, d time.Duration) {
+func checkWithDeadline(t *testing.T, app *App, cols, rows int, d time.Duration) {
 	t.Helper()
 	type result struct {
 		err   error
@@ -142,7 +171,7 @@ func checkWithDeadline(t *testing.T, app *App, d time.Duration) {
 			}
 			done <- r
 		}()
-		r.err = checkApp(app)
+		r.err = checkApp(app, cols, rows)
 	}()
 	select {
 	case r := <-done:
@@ -162,9 +191,9 @@ func checkWithDeadline(t *testing.T, app *App, d time.Duration) {
 // exactly rows lines of cols cells (see "wide"), ok matches the errors.
 func FuzzDocument(f *testing.F) {
 	for _, s := range fuzzSeeds(f) {
-		f.Add(s)
+		f.Add(s, uint8(40), uint8(10))
 	}
-	f.Fuzz(func(t *testing.T, src string) {
+	f.Fuzz(func(t *testing.T, src string, w, h uint8) {
 		if len(src) > 8<<10 {
 			t.Skip()
 		}
@@ -172,7 +201,7 @@ func FuzzDocument(f *testing.F) {
 		if err != nil {
 			t.Fatalf("Parse: %v", err)
 		}
-		checkWithDeadline(t, app, 20*time.Second)
+		checkWithDeadline(t, app, int(w)%201, int(h)%61, 20*time.Second)
 	})
 }
 
@@ -194,7 +223,7 @@ func FuzzStylesheet(f *testing.F) {
 		paths, _ := filepath.Glob(pat)
 		for _, p := range paths {
 			if b, err := os.ReadFile(p); err == nil && len(b) <= 8<<10 {
-				f.Add(string(b))
+				f.Add(string(b), uint8(80), uint8(24))
 			}
 		}
 	}
@@ -210,9 +239,9 @@ func FuzzStylesheet(f *testing.F) {
 		"scroll, list, table { padding: 1 1 1 1; border: thick; overflow: hidden } item { margin: 1 }",
 		"text { visibility: hidden } col { display: none } col { display: flex } row { justify: space-between; align: center }",
 	} {
-		f.Add(s)
+		f.Add(s, uint8(200), uint8(60))
 	}
-	f.Fuzz(func(t *testing.T, css string) {
+	f.Fuzz(func(t *testing.T, css string, w, h uint8) {
 		if len(css) > 8<<10 {
 			t.Skip()
 		}
@@ -224,6 +253,6 @@ func FuzzStylesheet(f *testing.F) {
 		if err != nil {
 			t.Fatalf("LoadFS: %v", err)
 		}
-		checkWithDeadline(t, app, 20*time.Second)
+		checkWithDeadline(t, app, int(w)%201, int(h)%61, 20*time.Second)
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 
@@ -80,7 +81,9 @@ func FuzzParse(f *testing.F) {
 			t.Skip()
 		}
 		doc := parse.Parse([]byte(src), "")
-		lines := strings.Split(src, "\n")
+		// XML line ends are CRLF, CR, and LF; a position may sit just past
+		// the last one (end of input), which is a line of its own.
+		lines := strings.Split(strings.NewReplacer("\r\n", "\n", "\r", "\n").Replace(src), "\n")
 		for _, d := range doc.Diags {
 			if !known[d.Code] {
 				t.Fatalf("unknown diagnostic code %q: %+v", d.Code, d)
@@ -88,8 +91,15 @@ func FuzzParse(f *testing.F) {
 			if d.Severity != ir.Error && d.Severity != ir.Warning {
 				t.Fatalf("bad severity %q: %+v", d.Severity, d)
 			}
-			if d.Line < 1 || d.Line > len(lines) || d.Col < 1 {
+			if d.Line < 1 || d.Line > len(lines) || d.Col < 1 || d.Col > len(lines[d.Line-1])+1 {
 				t.Fatalf("diagnostic position out of the input (%d lines): %+v", len(lines), d)
+			}
+		}
+		// Formatting must not change what the document means to the
+		// validator: the same diagnostic codes before and after.
+		if out, err := parse.Format([]byte(src)); err == nil {
+			if got, want := codes(parse.Parse([]byte(out), "").Diags), codes(doc.Diags); got != want {
+				t.Fatalf("Format changes the diagnostics\nbefore: %s\nafter:  %s\nformatted: %q", want, got, out)
 			}
 		}
 		again := parse.Parse([]byte(src), "")
@@ -105,4 +115,14 @@ func FuzzParse(f *testing.F) {
 			t.Fatalf("IR differs between two parses:\n%s\n%s", a, b)
 		}
 	})
+}
+
+// codes lists the diagnostics' severity and code, sorted, one string.
+func codes(ds ir.Diags) string {
+	var out []string
+	for _, d := range ds {
+		out = append(out, d.Severity+" "+d.Code)
+	}
+	sort.Strings(out)
+	return strings.Join(out, ", ")
 }

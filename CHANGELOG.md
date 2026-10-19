@@ -23,6 +23,13 @@ line.
 - **`examples/kit-gallery`**: every component in one app on five tabs, with a
   Go host that routes by the prefix of an event's source, a `mock.json`, and
   tests that hold the kit's conventions to every document.
+- More fuzz targets (internal; `task fuzz` runs each briefly, outside
+  `task verify` and CI): the document parser (diagnostic codes, positions,
+  determinism, `fmt` keeps the diagnostics), the binding, key-token and
+  size grammars, the stylesheet cascade, `play` step parsing, and a
+  whole-runtime render of any document or any stylesheet (grid shape,
+  snapshot independence, no hang). About an hour of local fuzzing found no
+  crash.
 
 ## [0.4.1] - 2026-10-18
 
