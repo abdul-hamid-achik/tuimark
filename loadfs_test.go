@@ -183,12 +183,12 @@ func TestLoadFSEqualsLoadForEveryExample(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Load(%q): %v", path, err)
 			}
-			// Each example is rooted at its own directory, except the kit
-			// gallery, which loads the kit's sheets from ../../kit and so
-			// needs the repository root as its file system.
+			// Each example is rooted at its own directory, except the ones
+			// that load the kit's sheets from ../../kit (the kit gallery,
+			// containers): they need the repository root as their file system.
 			fsys, name := fs.FS(os.DirFS(filepath.Join("examples", dir))), base
-			if dir == "kit-gallery" {
-				fsys, name = os.DirFS("."), "examples/kit-gallery/app.tui"
+			if src, err := os.ReadFile(path); err == nil && strings.Contains(string(src), `src="../../kit/`) {
+				fsys, name = os.DirFS("."), filepath.ToSlash(path)
 			}
 			viaFS, err := tuimark.LoadFS(fsys, name)
 			if err != nil {
