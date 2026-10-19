@@ -204,7 +204,7 @@ func (a *App) segsOf(s string) ([]ir.Segment, bool) {
 	if e, ok := a.interps[s]; ok {
 		return e.segs, e.ok
 	}
-	segs, err := ir.ParseInterp(s)
+	segs, err := ir.ParseInterpField(s)
 	e := interpEntry{segs, err == nil}
 	if !a.noCache {
 		if a.interps == nil {

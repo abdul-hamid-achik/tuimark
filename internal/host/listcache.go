@@ -176,7 +176,7 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 			break
 		}
 	}
-	e, err := ir.ParseEach(n.Each)
+	e, err := ir.ParseEachField(n.Each)
 	if err != nil || p.template == nil {
 		return p
 	}
@@ -190,12 +190,12 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 		}
 	}
 	guard := func(v string) {
-		if g, err := ir.ParseGuard(v); err == nil {
+		if g, err := ir.ParseGuardField(v); err == nil {
 			dep(g.Path)
 		}
 	}
 	interp := func(v string) {
-		segs, _ := ir.ParseInterp(v)
+		segs, _ := ir.ParseInterpField(v)
 		for _, sg := range segs {
 			if sg.Path != "" {
 				dep(sg.Path)
@@ -224,7 +224,7 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 			guard(u.Attrs["hidden"])
 		}
 		if t.Each != "" {
-			if te, err := ir.ParseEach(t.Each); err == nil {
+			if te, err := ir.ParseEachField(t.Each); err == nil {
 				dep(te.Path)
 			}
 		}
@@ -232,7 +232,7 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 		for _, v := range t.Attrs {
 			guard(v)
 			interp(v)
-			if te, err := ir.ParseEach(v); err == nil {
+			if te, err := ir.ParseEachField(v); err == nil {
 				dep(te.Path)
 			}
 		}

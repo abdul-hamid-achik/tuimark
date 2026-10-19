@@ -145,6 +145,56 @@ func TestIsIdentAndPath(t *testing.T) {
 	}
 }
 
+// The grammar a document meets never accepts a renamed alias, nor a
+// control character where one used to stand (re-review B1); only the
+// Field variants read a renamed alias, and Unmark changes no string a
+// document can write.
+func TestRenamedAliasIsFieldOnly(t *testing.T) {
+	m := MarkAlias("order", 12)
+	if m != "order\xff12" {
+		t.Fatalf("MarkAlias = %q", m)
+	}
+	for _, s := range []string{m, m + ".k", "a\x011", "a\x011.k", "\xff1", "a\xff", "a\xffx"} {
+		if IsIdent(s) || IsPath(s) {
+			t.Errorf("IsIdent/IsPath accept %q", s)
+		}
+		if _, err := ParseEach("rows as " + s); err == nil {
+			t.Errorf("ParseEach accepts alias %q", s)
+		}
+		if _, err := ParseGuard("!" + s); err == nil {
+			t.Errorf("ParseGuard accepts %q", s)
+		}
+		if _, err := ParseInterp("{" + s + "}"); err == nil {
+			t.Errorf("ParseInterp accepts %q", s)
+		}
+	}
+	if !IsPathField(m+".k") || !IsPathField("a.b") {
+		t.Error("IsPathField rejects a renamed alias")
+	}
+	for _, s := range []string{"a\x011", "\xff1", "a\xff", "a\xffx", "a\xff1x"} {
+		if IsPathField(s) {
+			t.Errorf("IsPathField accepts %q", s)
+		}
+	}
+	if e, err := ParseEachField(m + ".items as " + m); err != nil || e.Alias != m {
+		t.Errorf("ParseEachField = %+v, %v", e, err)
+	}
+	if g, err := ParseGuardField("!" + m); err != nil || g.Path != m || !g.Neg {
+		t.Errorf("ParseGuardField = %+v, %v", g, err)
+	}
+	if segs, err := ParseInterpField("x{" + m + ".k}"); err != nil || len(segs) != 2 || segs[1].Path != m+".k" {
+		t.Errorf("ParseInterpField = %+v, %v", segs, err)
+	}
+	if got := Unmark("{" + m + ".k}"); got != "{order.k}" {
+		t.Errorf("Unmark = %q", got)
+	}
+	for _, s := range []string{"a\x011", `a\x011`, "order12", "ñ1"} {
+		if got := Unmark(s); got != s {
+			t.Errorf("Unmark(%q) = %q", s, got)
+		}
+	}
+}
+
 func TestParseEach(t *testing.T) {
 	good := []struct {
 		in          string

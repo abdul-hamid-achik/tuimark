@@ -14,7 +14,7 @@ func (fb *builder) usePruned(n *ir.Node, sc *scope) bool {
 	for i := len(n.CopiedBy) - 1; i >= 0; i-- {
 		u := n.CopiedBy[i]
 		if u.If != "" {
-			if g, err := ir.ParseGuard(u.If); err == nil {
+			if g, err := ir.ParseGuardField(u.If); err == nil {
 				v, found := sc.resolve(fb.a.store, g.Path)
 				if !found {
 					fb.report(u, ir.Warning, "B002", "if=%q: path %q is missing", u.If, g.Path)

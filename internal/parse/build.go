@@ -2003,7 +2003,7 @@ func (b *builder) checkAliases(n *ir.Node) {
 	if n.Each == "" {
 		return
 	}
-	e, err := ir.ParseEach(n.Each)
+	e, err := ir.ParseEachField(n.Each)
 	if err != nil {
 		return
 	}
@@ -2015,11 +2015,22 @@ func (b *builder) checkAliases(n *ir.Node) {
 		if p.Each == "" {
 			continue
 		}
-		if pe, err := ir.ParseEach(p.Each); err == nil && ir.Unmark(pe.Alias) == alias {
-			b.errN(n, "V011", "each=%q: the alias %q repeats the alias of the enclosing each=%q of %s; pick another name", n.Each, e.Alias, p.Each, describeNode(p))
+		if pe, err := ir.ParseEachField(p.Each); err == nil && ir.Unmark(pe.Alias) == alias {
+			// The message quotes each each as written: an element of a
+			// copy holds its paths after the with aliases (Node.Written).
+			b.errN(n, "V011", "each=%q: the alias %q repeats the alias of the enclosing each=%q of %s; pick another name", writtenEach(n), alias, writtenEach(p), describeNode(p))
 			return
 		}
 	}
+}
+
+// writtenEach is n's each as the document wrote it: what an element of a
+// copy wrote before its paths went through the with aliases in scope.
+func writtenEach(n *ir.Node) string {
+	if n.Written != nil {
+		return n.Written.Each
+	}
+	return n.Each
 }
 
 // checkMultiSelect applies the V018 rules of SPEC §6.14 and §6.10.1:

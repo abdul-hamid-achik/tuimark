@@ -77,12 +77,23 @@ func TestV04bTemplateWithAliasesAreHygienic(t *testing.T) {
 		want: []string{"ROWA|x"},
 		// §6.8's V011 for the copy's each inside the use's each stands as
 		// before, its message showing the alias as written.
-		diags: []string{`error V011 app.tui:2:18 /screen/col/col id= each="r.lines as r": the alias "r" repeats the alias of the enclosing each="rows as r" of <col> at 3:9; pick another name, placed by <use template="T"> at app.tui:3:41`},
+		diags: []string{`error V011 app.tui:2:18 /screen/col/col id= each="o.lines as r": the alias "r" repeats the alias of the enclosing each="rows as r" of <col> at 3:9; pick another name, placed by <use template="T"> at app.tui:3:41`},
 	}, {
 		name: "nested use",
 		doc:  `<tui><template id="A"><col each="o.lines as order" key="order.k"><use template="B" with="o as q"/></col></template><template id="B"><text>{q.id}|{order.k}</text></template><screen><use template="A" with="order as o"/></screen></tui>`,
 		data: data,
 		want: []string{"STORE-ORDER-ID|L1", "STORE-ORDER-ID|L2"},
+	}, {
+		// §6.8's V011 quotes both eaches as written, the enclosing one
+		// an element of an outer copy (re-review nit, probe hyg/inner).
+		name: "nested copies quote their eaches as written",
+		doc:  "<tui>\n<template id=\"T2\"><col><text>{line.k}|{order.id}</text><col each=\"line.subs as order\" key=\"order.v\"><text>{order.v}/{line.k}</text></col></col></template>\n<template id=\"T1\"><col each=\"o.lines as order\" key=\"order.k\"><use template=\"T2\" with=\"order as line\"/></col></template>\n<screen><use template=\"T1\" with=\"order as o\"/></screen>\n</tui>",
+		data: writeTemp(t, "d.json", `{"order":{"id":"ORD","lines":[{"k":"a","subs":[{"v":"a1"},{"v":"a2"}]},{"k":"b","subs":[{"v":"b1"}]}]}}`),
+		want: []string{"a|", "a1/a", "a2/a"},
+		diags: []string{
+			`warning B003 app.tui:2:24 /screen/col/col/text id= bind path "order.id" is missing, placed by <use template="T2"> at app.tui:3:62`,
+			`error V011 app.tui:2:56 /screen/col/col/col id= each="line.subs as order": the alias "order" repeats the alias of the enclosing each="o.lines as order" of <col> at 3:19; pick another name, placed by <use template="T2"> at app.tui:3:62`,
+		},
 	}, {
 		name:  "test 141: an each alias equal to the with alias shadows it",
 		doc:   "<tui>\n<template id=\"t2\"><box each=\"a.items as a\" key=\"a\"><text>{a}</text></box></template>\n<screen id=\"main\"><use id=\"u\" template=\"t2\" with=\"data as a\"/></screen>\n</tui>",
@@ -126,7 +137,7 @@ func TestV04bTemplateRenamedAliasNeverSurfaces(t *testing.T) {
 		if code != 0 && code != 2 {
 			t.Fatalf("%s: exit %d %s", what, code, errw)
 		}
-		for _, bad := range []string{"\x01", `\u0001`, `\x01`} {
+		for _, bad := range []string{"\xff", "�", `�`, `\xff`, "\x01", `\u0001`, `\x01`} {
 			if strings.Contains(out+errw, bad) {
 				t.Errorf("%s shows a renamed alias (%q):\n%s%s", what, bad, out, errw)
 			}
@@ -150,6 +161,57 @@ func TestV04bTemplateRenamedAliasNeverSurfaces(t *testing.T) {
 	if rows[0] != "S|L1|" || rows[1] != "S|L2|" {
 		t.Errorf("grid %q", rows)
 	}
+}
+
+// The grammar a document meets is §7's, exactly as in 0.4.1: a control
+// character in a path is never an identifier (re-review B1, probes
+// misc/ctl.tui and ctl2.tui). A renamed alias is made after validation,
+// with a byte valid UTF-8 never holds, so a document can neither write one
+// (V005) nor reach one: what it writes in a copy with the renamed alias's
+// old mark is V003/V011/V015, and at run time it reads nothing.
+func TestV04bTemplateRenamedAliasCannotBeWritten(t *testing.T) {
+	t.Run("0.4.1 diagnostics", func(t *testing.T) {
+		f := writeTemp(t, "app.tui", "<tui version=\"1\">\n<screen>\n<input id=\"i\" bind=\"a\x011\"/>\n<text if=\"!b\x013\">x</text>\n</screen>\n</tui>\n")
+		sameLines(t, "validate", vdiags(t, f, ""), []string{
+			`error V003 app.tui:3:15 /screen/input id=i bind="a\x011" is not a path`,
+			`error V011 app.tui:4:7 /screen/text id= if: "!b\x013" is not a path or !path (no spaces)`,
+		})
+		code, out, _ := runCLI("validate", f)
+		if code != 2 || out != "error V003 app.tui:3:15 /screen/input bind=\"a\\x011\" is not a path\n"+
+			"error V011 app.tui:4:7 /screen/text if: \"!b\\x013\" is not a path or !path (no spaces)\n" {
+			t.Errorf("validate: exit %d\n%s", code, out)
+		}
+	})
+	t.Run("current language template", func(t *testing.T) {
+		doc := "<tui>\n<template id=\"T\">\n  <list id=\"l\" each=\"o.lines as order\" key=\"order.k\">\n" +
+			"    <item class:hot=\"order\x011\"><text if=\"!order\x011\">{o.id}|{order.k}</text></item>\n" +
+			"  </list>\n  <input id=\"i\" bind=\"order\x011\"/>\n</template>\n" +
+			"<screen id=\"main\"><use id=\"u\" template=\"T\" with=\"order as o\"/></screen>\n</tui>\n"
+		f := writeTemp(t, "app.tui", doc)
+		data := writeTemp(t, "d.json", `{"order": {"id": "S", "lines": [{"k": "L1"}, {"k": "L2"}]}}`)
+		sameLines(t, "validate", vdiags(t, f, data), []string{
+			`error V015 app.tui:4:11 /screen/list/item id= class:hot="order\x011": a class guard is path or !path`,
+			`error V011 app.tui:4:37 /screen/list/item/text id= if: "!order\x011" is not a path or !path (no spaces)`,
+			`error V003 app.tui:6:17 /screen/input id=u__i bind="order\x011" is not a path`,
+		})
+		// The each alias order is renamed (o stands for the store root
+		// order), and what the copy wrote with \x01 never reads it: the
+		// !guard is ignored as in 0.4.1, so both rows show, and no row is
+		// hot.
+		if rows := gridRows(t, f, "--data", data, "--cols", "20", "--rows", "3"); rows[0] != "S|L1" || rows[1] != "S|L2" {
+			t.Errorf("grid %q", rows)
+		}
+		nodes, _ := dumpNodes(t, f, "--data", data, "--cols", "20", "--rows", "3")
+		for _, n := range nodes {
+			if cl, _ := n["classes"].([]any); len(cl) > 0 {
+				t.Errorf("node %v has classes %v", n["path"], cl)
+			}
+		}
+	})
+	t.Run("the mark itself is not UTF-8", func(t *testing.T) {
+		f := writeTemp(t, "app.tui", "<tui><screen><text if=\"a\xff1\">x</text></screen></tui>\n")
+		sameLines(t, "validate", vdiags(t, f, ""), []string{`error V005 app.tui:1:1  id= document is not valid UTF-8`})
+	})
 }
 
 // A guarded <use> in a <table> prunes what it placed (§6.18.3: no node of

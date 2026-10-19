@@ -111,7 +111,7 @@ func (fb *builder) inflateSelect(n *ir.Node, b *layout.Box, sc *scope, nested bo
 func (fb *builder) resolveOptions(n *ir.Node, sc *scope) *selectOptions {
 	a := fb.a
 	o := &selectOptions{}
-	e, err := ir.ParseEach(n.Each)
+	e, err := ir.ParseEachField(n.Each)
 	if err != nil {
 		return o
 	}

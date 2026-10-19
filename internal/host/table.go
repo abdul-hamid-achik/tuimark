@@ -143,7 +143,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 	}
 	p := &tablePlan{keyPath: n.Attrs["key"], colIndex: map[*ir.Node]int{}}
 	if n.Each != "" {
-		if e, err := ir.ParseEach(n.Each); err == nil {
+		if e, err := ir.ParseEachField(n.Each); err == nil {
 			p.each, p.ok = e, true
 		}
 	}
@@ -152,7 +152,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 		case c.Kind == "item" && p.item == nil:
 			p.item = c
 		case c.Kind == "column":
-			segs, _ := ir.ParseInterp(c.Text)
+			segs, _ := ir.ParseInterpField(c.Text)
 			p.colIndex[c] = len(p.cols)
 			p.cols = append(p.cols, c)
 			p.segs = append(p.segs, segs)
@@ -177,7 +177,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 				return
 			}
 			for _, cg := range n.ClassGuards {
-				if g, err := ir.ParseGuard(cg.Guard); err == nil {
+				if g, err := ir.ParseGuardField(cg.Guard); err == nil {
 					dep(g.Path, true)
 				}
 			}
@@ -472,7 +472,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	// SPEC §6.14: the checked row keys, and the mark channel of every
 	// row, the header row's too (§6.9.3).
 	var checked keySet
-	if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
+	if path, ok := n.Attr("checked"); ok && ir.IsPathField(path) {
 		keys, _ := fb.checkedKeys(n, path, sc)
 		checked = fb.checkedSet(n, path, keys, sc)
 		if m, ok := n.Attr("mark"); ok {

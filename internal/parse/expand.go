@@ -585,7 +585,7 @@ func (b *builder) aliasesAround(q *ir.Node) func(string) bool {
 		if p.Each == "" {
 			continue
 		}
-		if e, err := ir.ParseEach(p.Each); err == nil {
+		if e, err := ir.ParseEachField(p.Each); err == nil {
 			around[ir.Unmark(e.Alias)] = true
 		}
 	}
