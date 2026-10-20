@@ -1,0 +1,64 @@
+version: 1
+name: help_esc_tetris
+intent: |
+    examples/tetris writes no version, so it is the current language, where
+    esc closes the top modal (SPEC v0.4b §31.7, test 172). Its help modal
+    holds every labeled key, a tip, and a close button; opening it pauses
+    the game. `?` opens it; esc fires the modal's on:escape (help_close),
+    the host writes the help's flag false, and the app comes back, still
+    running, with `? help` in its hint bar. Its hint bar is trapped while
+    the help is open (the keys repeated in `<keymap when="modal">` have no
+    label), so `? help` coming back shows the trap released.
+target:
+    cmd: ["${vars.tetris}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "◆ tetris"
+        timeoutMs: 5000
+    - press: "?"
+    - wait:
+        screen:
+            contains: "tetris keys"
+        timeoutMs: 3000
+    - snapshot: help_open
+    - press: esc
+    - wait:
+        screen:
+            notContains: "tetris keys"
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "? help"
+        timeoutMs: 3000
+    - snapshot: help_closed
+outcomes:
+    - id: question_mark_opens_the_help
+      description: "? opens the help modal"
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/help_open.txt"
+                if grep -qF 'tetris keys' "$f"; then
+                  echo '{"ok": true, "evidence": "the help_open snapshot shows the help"}'
+                else
+                  echo '{"ok": false, "evidence": "? did not open the help"}'
+                fi
+    - id: esc_closes_the_help
+      description: esc closes the help through on:escape; the app and its hint bar are back
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/help_closed.txt"
+                if ! grep -qF 'tetris keys' "$f" && grep -qF '◆ tetris' "$f" && grep -qF '? help' "$f"; then
+                  echo '{"ok": true, "evidence": "the help_closed snapshot shows the app and its hint bar without the help"}'
+                else
+                  echo '{"ok": false, "evidence": "esc did not close the help, or the app did not come back"}'
+                fi
+contractHash: sha256:d0b8a7d800124d82350ac7d8e19e2050d447809a2b192fd37d81a4e69c2bd570
