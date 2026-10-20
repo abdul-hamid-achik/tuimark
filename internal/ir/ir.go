@@ -156,6 +156,12 @@ type Node struct {
 	// and hidden decide, each frame, whether the element is in it. nil
 	// for every other element.
 	CopiedBy []*Node
+	// EmptyCopies are the uses whose copies placed no element among n's
+	// children (an empty template, or one whose body places nothing),
+	// each as the CopiedBy its elements would have had, innermost first:
+	// their if, hidden, and with are still checked once per placement,
+	// where n's children stand (the F3 review). nil for most nodes.
+	EmptyCopies [][]*Node
 	// Written is what an element of a copy (or a <use> in one) wrote,
 	// before its paths went through the with aliases in scope and its #id
 	// references were resolved (SPEC v0.4b §6.18.4, §6.18.5, decision
@@ -192,10 +198,13 @@ type ViaKey struct {
 // of Use (SPEC v0.4b §6.18.5): Written is the path as written in the
 // template, and Base the path the alias stands for, resolved where Use
 // stands (the path of its clause in Use.With). The path itself is Base
-// followed by Written's other segments.
+// followed by Written's other segments. EachRel is set when Base starts
+// with an each alias in scope where Use stands (a row's or an element's),
+// not with a store member.
 type Via struct {
 	Written, Base string
 	Use           *Node
+	EachRel       bool
 }
 
 // ViaOf is how the path of n written in slot, as its seg-th path (see
@@ -211,13 +220,27 @@ func (n *Node) ViaOf(slot string, seg int) *Via {
 // through v, ends with in place of the placement suffix (SPEC v0.4b
 // §6.18.5 "Messages"): ` (P via <use id="U">)`, with P the path p
 // stands for (ShownPath) and the use named as a placement suffix names
-// it (`<use template="T">` without id).
+// it (`<use template="T">` without id). When P starts with an each alias
+// (EachRel) and the use has no id, P reads the same in every each that
+// holds such a use, so the use is also named by where it is written, as
+// the placement suffix names it: ` (P via <use template="T"> at
+// FILE:LINE:COL)` (the owner's decision on the F3 review). A use written
+// in a template or a fragment stands at one FILE:LINE:COL in every copy
+// or include that places it, so its own placement suffix follows when
+// something placed it: ` (P via <use template="T"> at FILE:LINE:COL,
+// placed by <use id="U"> at FILE:LINE:COL)` (the coordinator's follow-up
+// to that decision). A P that starts with a store member says which data
+// it reads, and a use with an id is named by it, so neither adds a place.
 func (v *Via) Suffix(p string) string {
-	return " (" + ShownPath(p) + " via " + v.Use.describePlacer() + ")"
+	at := ""
+	if v.EachRel && v.Use.ID == "" {
+		at = " at " + v.Use.Loc(true) + PlacedSuffix(v.Use)
+	}
+	return " (" + ShownPath(p) + " via " + v.Use.describePlacer() + at + ")"
 }
 
 // ShownPath is a path, or any other value, a diagnostic at an element of
-// a copy quotes (ShownAt, CutQuoted), and the P of a path through a with
+// a copy quotes (ShownAt, CutArgs), and the P of a path through a with
 // alias (Via.Suffix): every renamed alias shown as written (Unmark), and
 // cut as ShownID cuts an id. It reads only as much of p as the cut needs:
 // a prefix of p that unmarks to more than MaxShownID bytes is cut where
@@ -234,24 +257,58 @@ func ShownPath(p string) string {
 	}
 }
 
-// ShownAt is s, a value a diagnostic about the node at quotes, as it
-// shows it: ShownPath(s) for an element of a copy (InCopy), whose
-// diagnostics are reported once per copy with a placement suffix (or the
-// via of a path through a with alias) that tells them apart, so a long
-// value would print once per copy; s whole otherwise, as 0.4.1 quotes it
-// (an element written once, and every element of a pinned document).
-func ShownAt(at *Node, s string) string {
-	if at != nil && at.InCopy() {
-		return ShownPath(s)
+// ShownAt is s, a value a diagnostic about the node at quotes with %s, as
+// it shows it: for an element of a copy (InCopy), whose diagnostics are
+// reported once per copy with a placement suffix (or the via of a path
+// through a with alias) that tells them apart, so that a long value would
+// print once per copy, a Shown that prints as ShownPath cuts it; s whole
+// otherwise, as 0.4.1 quotes it (an element written once, and every
+// element of a pinned document).
+func ShownAt(at *Node, s string) any {
+	if at != nil && len(s) > MaxShownID && at.InCopy() {
+		return Shown{s}
 	}
 	return s
 }
 
-// CutQuoted is args with every string a %q verb of format quotes cut by
+// Shown is a value a diagnostic at an element of a copy quotes with %s
+// (ShownAt): it prints cut (String), and the diagnostic keeps it whole
+// (CutArgs, Diagnostic.whole), so two that differ only past the cut stay
+// two.
+type Shown struct{ Whole string }
+
+// String is s as a message shows it: ShownPath(s.Whole).
+func (s Shown) String() string { return ShownPath(s.Whole) }
+
+// CutArgs is args with every string a %q verb of format quotes cut by
 // ShownPath: what a diagnostic at an element of a copy quotes (a path, an
 // attribute's value, an action), which ShownAt explains. Other verbs keep
 // their arguments, and so does a format with an explicit argument index.
-func CutQuoted(format string, args []any) []any {
+// whole is what was cut, as written (Unmark), with the Whole of every
+// Shown among args (cut by ShownAt), joined by NUL ("" for nothing): what
+// tells apart two diagnostics whose messages read the same once cut
+// (Diagnostic.whole).
+func CutArgs(format string, args []any) (out []any, whole string) {
+	n := 0
+	keep := func(s string) {
+		if n == 0 {
+			whole = Unmark(s)
+		} else {
+			whole += "\x00" + Unmark(s)
+		}
+		n++
+	}
+	out = cutQuoted(format, args, keep)
+	for _, a := range args {
+		if s, ok := a.(Shown); ok {
+			keep(s.Whole)
+		}
+	}
+	return out, whole
+}
+
+// cutQuoted is CutArgs's cut, calling keep with each string it cuts.
+func cutQuoted(format string, args []any, keep func(string)) []any {
 	out, arg, copied := args, 0, false
 	for i := 0; i < len(format); i++ {
 		if format[i] != '%' {
@@ -275,6 +332,7 @@ func CutQuoted(format string, args []any) []any {
 				out, copied = append([]any(nil), args...), true
 			}
 			out[arg] = ShownPath(s)
+			keep(s)
 		}
 		arg++
 	}
@@ -696,6 +754,22 @@ type Diagnostic struct {
 	Col      int    `json:"col,omitempty"`
 	Path     string `json:"path,omitempty"`
 	ID       string `json:"id,omitempty"`
+	// whole is what the message cut at an element of a copy, whole
+	// (CutArgs): two diagnostics whose messages read the same once cut
+	// are still two when it differs (the F3 review). "" for a message that
+	// cut nothing, which is every diagnostic outside copies.
+	whole string
+}
+
+// Whole is what d's message cut, whole (Diagnostic.whole), for a dedupe:
+// two diagnostics are one when their text and Whole are equal.
+func Whole(d Diagnostic) string { return d.whole }
+
+// WithWhole is d with what its message cut set to whole (CutArgs), for a
+// diagnostic built outside At.
+func WithWhole(d Diagnostic, whole string) Diagnostic {
+	d.whole = whole
+	return d
 }
 
 func (d Diagnostic) String() string {
@@ -751,12 +825,14 @@ func (ds Diags) Sorted() Diags {
 // At builds a diagnostic located at a node. file is the document's name;
 // an element written in a fragment is reported in its own file, and one an
 // include placed names the include (SPEC v0.4b §6.18.6). At an element of
-// a copy, what the message quotes with %q is cut (CutQuoted).
+// a copy, what the message quotes with %q is cut, and kept whole beside
+// it (CutArgs).
 func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
+	var whole string
 	if n.InCopy() {
-		args = CutQuoted(format, args)
+		args, whole = CutArgs(format, args)
 	}
-	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...), File: file}
+	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...), File: file, whole: whole}
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
 		d.File = n.FileName(file)
@@ -770,10 +846,11 @@ func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
 // ` (P via <use id="U">)` of a path through a with alias, or one about a
 // <use> itself, which carries none ("" adds nothing).
 func AtSuffix(n *Node, file, sev, code, suffix, format string, args ...any) Diagnostic {
+	var whole string
 	if n.InCopy() {
-		args = CutQuoted(format, args)
+		args, whole = CutArgs(format, args)
 	}
-	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...) + suffix, File: file}
+	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...) + suffix, File: file, whole: whole}
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
 		d.File = n.FileName(file)

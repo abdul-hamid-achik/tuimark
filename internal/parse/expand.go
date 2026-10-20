@@ -163,6 +163,9 @@ type useInfo struct {
 type alias struct {
 	name, path string
 	use        *ir.Node
+	// eachRel is set for a with alias whose path starts with an each
+	// alias in scope at its use (ir.Via.EachRel).
+	eachRel bool
 }
 
 // push brings a into scope, innermost.
@@ -650,7 +653,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	cp := b.comp
 	cp.used = true
 	savedOrg, savedChain, savedPrefix := b.org, cp.chain, cp.prefix
-	nChildren, nDroppedIn, nDropped := len(n.Children), len(b.droppedIn[n]), len(b.doc.dropped)
+	nChildren, nDroppedIn, nDropped, nEmpty := len(n.Children), len(b.droppedIn[n]), len(b.doc.dropped), len(n.EmptyCopies)
 	fr := &expFrame{bg: cp.active()}
 	nDiags, count, bytes := len(b.doc.Diags), fr.bg.count, fr.bg.bytes
 	nScope, nStack, nCopies, inTmpl := len(cp.scope), len(cp.stack), len(cp.copies), cp.inTmpl
@@ -673,6 +676,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 			panic(r)
 		}
 		n.Children = n.Children[:nChildren]
+		n.EmptyCopies = n.EmptyCopies[:nEmpty]
 		q.Children = nil
 		b.doc.dropped = b.doc.dropped[:nDropped]
 		if b.droppedIn != nil {
@@ -697,7 +701,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	}
 	cp.prefix = prefix
 	for _, cl := range q.With {
-		cp.push(alias{name: cl.Alias, path: cl.Path, use: q})
+		cp.push(alias{name: cl.Alias, path: cl.Path, use: q, eachRel: eachRelAt(q, cl.Path)})
 	}
 	cp.stack = append(cp.stack, t)
 	t.onStack++
@@ -736,6 +740,15 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 			}
 		}
 		e.CopiedBy = append(e.CopiedBy, q)
+	}
+	// A use whose copy places nothing here is still checked where it
+	// stands (ir.Node.EmptyCopies): an inner use's empty copy is under q
+	// too, and q's own, when nothing else of it is.
+	for i := nEmpty; i < len(n.EmptyCopies); i++ {
+		n.EmptyCopies[i] = append(n.EmptyCopies[i], q)
+	}
+	if len(tops) == 0 && len(n.EmptyCopies) == nEmpty {
+		n.EmptyCopies = append(n.EmptyCopies, []*ir.Node{q})
 	}
 	left := resolveRefs(frame.refs, q, tops, prefix)
 	if nCopies > 0 && len(left) > 0 {
@@ -1004,9 +1017,26 @@ func (t *templating) substedAt(slot string, seg int, p string) string {
 		if t.viaTo.Vias == nil {
 			t.viaTo.Vias = map[ir.ViaKey]*ir.Via{}
 		}
-		t.viaTo.Vias[ir.ViaKey{Slot: slot, Seg: seg}] = &ir.Via{Written: p, Base: a.path, Use: a.use}
+		t.viaTo.Vias[ir.ViaKey{Slot: slot, Seg: seg}] = &ir.Via{Written: p, Base: a.path, Use: a.use, EachRel: a.eachRel}
 	}
 	return out
+}
+
+// eachRelAt reports whether path p, a with path of the use q resolved
+// where q stands, starts with an each alias in scope there: that of an
+// element around q (a container each, a list, or a table, the copy's own
+// elements included, whose renamed alias p then holds).
+func eachRelAt(q *ir.Node, p string) bool {
+	head, _, _ := strings.Cut(p, ".")
+	for n := q.Parent; n != nil; n = n.Parent {
+		if n.Each == "" {
+			continue
+		}
+		if e, err := ir.ParseEachField(n.Each); err == nil && e.Alias == head {
+			return true
+		}
+	}
+	return false
 }
 
 // growth is len(subst(p)) - len(p), computed without building it.

@@ -1,6 +1,11 @@
 package host
 
-import "github.com/abdul-hamid-achik/tuimark/internal/ir"
+import (
+	"slices"
+	"strings"
+
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
+)
 
 // placement is one place a <use> stands in a frame: the use, and the
 // scope its copy's top-level elements are inflated in (the use's own: a
@@ -23,12 +28,32 @@ type placement struct {
 // a list row's cache reads the guard's paths and the with paths as it
 // reads the row's own (listPlan).
 func (fb *builder) usePruned(n *ir.Node, sc *scope) bool {
-	for i := len(n.CopiedBy) - 1; i >= 0; i-- {
-		u := n.CopiedBy[i]
+	return fb.usesPruned(n.CopiedBy, sc, "")
+}
+
+// placeEmpty checks the uses whose copies placed nothing among n's
+// children (ir.Node.EmptyCopies) in sc, the scope n's children stand in:
+// each placement once, as one whose copy has elements is (usesPruned),
+// so an empty copy's use still reports its if, hidden, and with (the F3
+// review).
+func (fb *builder) placeEmpty(n *ir.Node, sc *scope) {
+	for _, chain := range n.EmptyCopies {
+		fb.usesPruned(chain, sc, "")
+	}
+}
+
+// usesPruned is usePruned over chain, the uses that placed an element
+// (CopiedBy, innermost first). A with clause whose path starts with
+// rowAlias is not checked here, where that alias is not in scope: the
+// columns and the row template of a table stand in the table's scope, and
+// the with paths through its row alias are read per row (rowWith).
+func (fb *builder) usesPruned(chain []*ir.Node, sc *scope, rowAlias string) bool {
+	for i := len(chain) - 1; i >= 0; i-- {
+		u := chain[i]
 		k := placement{u, sc}
 		pruned, seen := fb.placed[k]
 		if !seen {
-			pruned = fb.placeUse(u, sc)
+			pruned = fb.placeUse(u, sc, rowAlias)
 			if fb.placed == nil {
 				fb.placed = map[placement]bool{}
 			}
@@ -45,33 +70,74 @@ func (fb *builder) usePruned(n *ir.Node, sc *scope) bool {
 // it prunes its copy. Its if and hidden come first (a missing if path is
 // B002 at the use); a pruned copy is in the frame nowhere, so nothing
 // else of it is checked. Then each with clause whose path does not
-// resolve is one B003 at the use (SPEC v0.4b §6.18.5, decision 14), an
-// error under --strict: `with path "P" (alias x) is missing`. The paths
-// of the copy that go through that alias report nothing of their own
-// (pathMiss). A diagnostic about a use names no placement, as one the
-// parser reports about it does: a use in a copy says where its paths
-// come from with ` (P via <use …>)` instead, and one whose paths are the
-// store's says the same thing in every copy, which is reported once.
+// resolve is one B003 at the use (checkWith), except one whose path
+// starts with rowAlias, which is checked where it is read (usesPruned).
 //
 // What it reports about one use is the same text at every place the use
 // stands (its paths, as written and as the aliases make them, are the
 // use's), so it is formatted once per pass (useSaid): a use in every row
 // of a long list costs one message, whatever its paths' length.
-func (fb *builder) placeUse(u *ir.Node, sc *scope) bool {
+func (fb *builder) placeUse(u *ir.Node, sc *scope, rowAlias string) bool {
 	fb.a.placeChecks++
 	if fb.useGuard(u, "if", u.If, sc, false) || fb.useGuard(u, "hidden", u.Attrs["hidden"], sc, true) {
 		return true
 	}
 	for i, cl := range u.With {
-		if _, found := sc.resolve(fb.a.store, cl.Path); found || fb.said(u, i) {
+		if rowAlias != "" && aliasHead(cl.Path) == rowAlias {
 			continue
 		}
-		if ok, via := fb.pathMiss(u, "with", i, cl.Path, sc, missValue); ok {
-			fb.reportPath(u, via, cl.Path, fb.bindSev(), "B003", "with path %q (alias %s) is missing", shownPath(cl.Path, via), ir.ShownAt(u, cl.Alias))
-			fb.saidNow(u, i)
-		}
+		fb.checkWith(u, i, sc)
 	}
 	return false
+}
+
+// checkWith reports the B003 of the with clause i of the use u when its
+// path does not resolve in sc (SPEC v0.4b §6.18.5, decision 14), an error
+// under --strict: `with path "P" (alias x) is missing`, once per pass.
+// The paths of the copy that go through that alias report nothing of
+// their own (pathMiss). A diagnostic about a use names no placement, as
+// one the parser reports about it does: a use in a copy says where its
+// paths come from with ` (P via <use …>)` instead, and one whose paths
+// are the store's says the same thing in every copy, which is reported
+// once.
+func (fb *builder) checkWith(u *ir.Node, i int, sc *scope) {
+	cl := u.With[i]
+	if _, found := sc.resolve(fb.a.store, cl.Path); found || fb.said(u, i) {
+		return
+	}
+	if ok, via := fb.pathMiss(u, "with", i, cl.Path, sc, missValue); ok {
+		fb.reportPath(u, via, cl.Path, fb.bindSev(), "B003", "with path %q (alias %s) is missing", shownPath(cl.Path, via), ir.ShownAt(u, cl.Alias))
+		fb.saidNow(u, i)
+	}
+}
+
+// aliasHead is the first segment of path p: the alias or store member it
+// starts from.
+func aliasHead(p string) string {
+	head, _, _ := strings.Cut(p, ".")
+	return head
+}
+
+// useClause is the with clause i of the use u.
+type useClause struct {
+	use *ir.Node
+	i   int
+}
+
+// rowWith appends to out the with clauses of the uses in chain whose path
+// starts with rowAlias, each once: what a table checks on every row
+// (checkWith in the row's scope), once per pass however many rows read
+// it (useSaid), since its columns and row template stand in the table's
+// scope, where the row alias is not.
+func rowWith(out []useClause, chain []*ir.Node, rowAlias string) []useClause {
+	for _, u := range chain {
+		for i, cl := range u.With {
+			if aliasHead(cl.Path) == rowAlias && !slices.Contains(out, useClause{u, i}) {
+				out = append(out, useClause{u, i})
+			}
+		}
+	}
+	return out
 }
 
 // useGuard evaluates the if (or, flag, the hidden) of the use u, written
@@ -235,11 +301,19 @@ func writtenAttr(n *ir.Node, attr, v string, via *ir.Via) string {
 // placement (SPEC v0.4b §6.18.6, decision 16). The message already holds
 // what tells two placements apart: the placement suffix, or the
 // ` (P via <use …>)` of a path through a with alias.
-func (a *App) diagKey(d ir.Diagnostic) string {
+// Two diagnostics whose messages read the same only once cut (at an
+// element of a copy, ir.CutArgs) stay two: the key holds what was cut,
+// whole (the F3 review).
+func (a *App) diagKey(d ir.Diagnostic) diagID {
 	if a.doc.Composed {
 		d.Path = "" // a copy: d is the caller's diagnostic unchanged
 	}
-	return d.String()
+	return diagID{d.String(), ir.Whole(d)}
+}
+
+// diagID is a diagnostic's identity in a dedupe (diagKey).
+type diagID struct {
+	text, whole string
 }
 
 // bindSev is the severity of B003: a warning, an error under --strict.

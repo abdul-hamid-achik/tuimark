@@ -219,16 +219,22 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 		}
 		guard(t.If)
 		guard(t.Bind)
-		for _, u := range t.CopiedBy {
-			// The guards of the uses that placed it, and the paths of
-			// their with, whose B003 a row reports (SPEC v0.4b §6.18.3,
-			// §6.18.5): a row whose guard flips, or whose with path comes
-			// or goes, is built again.
-			guard(u.If)
-			guard(u.Attrs["hidden"])
-			for _, cl := range u.With {
-				dep(cl.Path)
+		uses := func(chain []*ir.Node) {
+			for _, u := range chain {
+				// The guards of the uses that placed it, and the paths of
+				// their with, whose B003 a row reports (SPEC v0.4b
+				// §6.18.3, §6.18.5): a row whose guard flips, or whose
+				// with path comes or goes, is built again.
+				guard(u.If)
+				guard(u.Attrs["hidden"])
+				for _, cl := range u.With {
+					dep(cl.Path)
+				}
 			}
+		}
+		uses(t.CopiedBy)
+		for _, chain := range t.EmptyCopies {
+			uses(chain) // a use whose copy placed nothing among t's children
 		}
 		if t.Each != "" {
 			if te, err := ir.ParseEachField(t.Each); err == nil {
@@ -270,7 +276,7 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box, slab *listSlab
 	if r := c.rows; r != nil && r.strict == a.strict && r.disabled == b.Disabled && sameStamp(r.stamp, st) {
 		return r, nil
 	}
-	sub := &builder{a: a, seen: map[string]bool{}}
+	sub := &builder{a: a, seen: map[diagID]bool{}}
 	r = &listRows{stamp: st, strict: a.strict, disabled: b.Disabled}
 	v, found := (*scope)(nil).resolve(a.store, p.each.Path)
 	arr, isArr := v.([]any)

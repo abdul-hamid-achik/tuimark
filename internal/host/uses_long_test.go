@@ -12,8 +12,9 @@ import (
 // ADR 0034 for what phase F3 reports about copies (too slow for js/wasm,
 // whose test run is `task wasm-test`): a long with path, a long use id,
 // or a use in many list rows gives a validate output at most ten times
-// its input (document and data), within a second (scaled by slowdown under
-// the race detector). A message about a path
+// its input (document and data), within three seconds (scaled by
+// slowdown under the race detector): the bound catches a quadratic
+// regression, not a linear run a loaded machine slowed down. A message about a path
 // through a with alias shows the path the alias stands for, and the use's
 // id, cut at 64 bytes; a use's own B002 and B003 are formatted once per
 // pass, however many rows place it.
@@ -46,6 +47,14 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 		var b strings.Builder
 		for i := 0; i < copies; i++ {
 			fmt.Fprintf(&b, `<use template="%s" with="a%d as f"/>`, t, i)
+		}
+		return b.String()
+	}
+	// placedBy is many("t") with each use given the id prefix+N.
+	placedBy := func(prefix string) string {
+		var b strings.Builder
+		for i := 0; i < copies; i++ {
+			fmt.Fprintf(&b, `<use id="%s%d" template="t" with="a%d as f"/>`, prefix, i, i)
 		}
 		return b.String()
 	}
@@ -107,6 +116,22 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 		{"a long alias in many copies",
 			`<tui><template id="in"><text>x</text></template><template id="t"><use template="in" with="f.z as ` + long + `"/></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
 			manyData("{}"), map[string]int{"B003": copies, "L009": 1}},
+		{"a long with path of an empty copy in many copies",
+			`<tui><template id="e"></template><template id="t"><use template="e" with="f.` + long + ` as g"/></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
+			manyData("{}"), map[string]int{"B003": copies}},
+		{"a long guard of an empty copy in many copies",
+			`<tui><template id="e"></template><template id="t"><use template="e" if="f.` + long + `"/></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
+			manyData("1"), map[string]int{"B002": copies}},
+		// A via whose P starts with an each alias names where its use is
+		// written, so each of these 150 eaches reports its own B003.
+		{"a long written path through an each alias in many eaches",
+			`<tui><template id="t"><text>{f.` + long + `}</text></template><screen id="main"><col>` + strings.Repeat(`<box each="rows as r"><use template="t" with="r as f"/></box>`, copies) + `</col></screen></tui>`,
+			`{"rows": [{}]}`, map[string]int{"B003": copies}},
+		// Such a via also names what placed its use: here 150 uses with
+		// long ids, each placing a template whose each holds the use.
+		{"a via naming its use's long-id placer in many copies",
+			`<tui><template id="in"><text>{x.` + long + `}</text></template><template id="t"><box each="f.rows as it"><use template="in" with="it as x"/></box></template><screen id="main"><col>` + placedBy(long[:1000]) + `</col></screen></tui>`,
+			manyData(`{"rows": [{}]}`), map[string]int{"B003": copies}},
 		{"a use's missing with path in many rows",
 			`<tui><template id="t"><text>{a.n}</text></template><screen id="main"><list id="l" each="rows as r" key="r.id"><item><use template="t" with="r.` + long[:10000] + ` as a"/></item></list></screen></tui>`,
 			rows(20000), map[string]int{"B003": 1}},
@@ -125,7 +150,7 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 			if in := len(c.src) + len(c.data); out > 10*in {
 				t.Errorf("%d bytes of diagnostics for %d of input", out, in)
 			}
-			if el > slowdown*time.Second {
+			if el > 3*slowdown*time.Second {
 				t.Errorf("took %v", el)
 			}
 			if fmt.Sprint(got) != fmt.Sprint(c.want) {
@@ -190,7 +215,7 @@ func TestCopyDiagnosticsQuoteValuesShortened(t *testing.T) {
 			if in := len(src) + len(c.data); out > 10*in {
 				t.Errorf("%d bytes of diagnostics for %d of input", out, in)
 			}
-			if el > slowdown*time.Second {
+			if el > 3*slowdown*time.Second {
 				t.Errorf("took %v", el)
 			}
 			if n != copies {

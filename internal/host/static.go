@@ -50,7 +50,7 @@ func (a *App) checkDocks(themes []string) ir.Diags {
 	if a.doc.Root == nil {
 		return out
 	}
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, env := range dockEnvs(themes) {
 		casc := css.NewCascadeLang(a.sheets, env, a.doc.Lang)
 		var walk func(n *ir.Node, parent *staticEl, ps *css.Style)

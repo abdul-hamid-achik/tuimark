@@ -94,7 +94,7 @@ func TestSelectNestingIsTheRowNotTheScope(t *testing.T) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	fb := &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}, rc: &renderCtx{tabDone: map[string]bool{}}}
+	fb := &builder{a: a, seen: map[diagID]bool{}, byID: map[string]*layout.Box{}, rc: &renderCtx{tabDone: map[string]bool{}}}
 	sc := &scope{alias: "d", value: map[string]any{"x": 1}}
 	if b := fb.inflate(n, nil, sc, false); b == nil || b.Rows != 2 || b.Placeholder != "zone" {
 		t.Errorf("under an alias scope: %v", boxSummary(b))

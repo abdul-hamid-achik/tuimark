@@ -202,8 +202,8 @@ func TestEachThroughAMissingAlias(t *testing.T) {
 </tui>`
 	ra := useApp(t, rows, `{"rows": [{"id": 1}, {"id": 2, "x": {"items": 4}}, {"id": 3, "x": {}}]}`)
 	sameDiags(t, "rows", useDiags(ra), []string{
-		`error B001 2:20 /screen/list/item/box each="f.items as it": "f.items" is a number, not an array (r.x.items via <use template="t">)`,
-		`error B001 2:20 /screen/list/item/box each="f.items as it": path "f.items" is missing (want an array) (r.x.items via <use template="t">)`,
+		`error B001 2:20 /screen/list/item/box each="f.items as it": "f.items" is a number, not an array (r.x.items via <use template="t"> at app.tui:4:52)`,
+		`error B001 2:20 /screen/list/item/box each="f.items as it": path "f.items" is missing (want an array) (r.x.items via <use template="t"> at app.tui:4:52)`,
 		`warning B003 4:52 /screen/list/item/use with path "r.x" (alias f) is missing`,
 	})
 }
@@ -348,6 +348,230 @@ func TestListRowsFollowTheirUsesWithPaths(t *testing.T) {
 	sameDiags(t, "removed", useDiags(a), b003)
 }
 
+// The columns and the row template of a table stand in the table's scope,
+// but a with path through its row alias is read on every row (the F3
+// review): `with="r as c"` on a use that places a column is no B003, and
+// `with="r.sub as c"` is one B003 at the use, once, for the rows that lack
+// it. It holds for a table in a copy too, whose row alias is renamed.
+func TestTableUsesReadRowAliasPerRow(t *testing.T) {
+	const data = `{"rows": [{"id": "a", "tag": "x", "sub": {"tag": "s"}}, {"id": "b", "tag": "y"}]}`
+	table := func(with string) string {
+		return `<tui>
+  <template id="col"><column title="T">{c.tag}</column></template>
+  <template id="row"><item class:hot="c.tag"/></template>
+  <screen id="main">
+    <table id="t" each="rows as r" key="r.id">
+      <use template="row" with="` + with + `"/>
+      <column title="N">{r.id}</column>
+      <use template="col" with="` + with + `"/>
+    </table>
+  </screen>
+</tui>`
+	}
+	a := useApp(t, table("r as c"), data)
+	a.SetStrict(true)
+	sameDiags(t, "r as c", useDiags(a), []string{})
+	if got := texts(a); !reflect.DeepEqual(got, []string{"a", "x", "b", "y"}) {
+		t.Errorf("texts %q", got)
+	}
+	a = useApp(t, table("r.sub as c"), data)
+	a.SetStrict(true)
+	sameDiags(t, "r.sub as c", useDiags(a), []string{
+		`error B003 6:7 /screen/table/use with path "r.sub" (alias c) is missing`,
+		`error B003 8:7 /screen/table/use with path "r.sub" (alias c) is missing`,
+	})
+	if got := texts(a); !reflect.DeepEqual(got, []string{"a", "s", "b", ""}) {
+		t.Errorf("texts %q", got)
+	}
+	inCopy := `<tui>
+  <template id="col"><column title="T">{c.tag}</column></template>
+  <template id="tbl">
+    <table id="t" each="f.rows as r" key="r.id">
+      <column title="N">{r.id}</column>
+      <use template="col" with="r as c"/>
+    </table>
+  </template>
+  <screen id="main">
+    <use id="u" template="tbl" with="d as f"/>
+  </screen>
+</tui>`
+	a = useApp(t, inCopy, `{"d": `+data+`}`)
+	a.SetStrict(true)
+	sameDiags(t, "in a copy", useDiags(a), []string{})
+	if got := texts(a); !reflect.DeepEqual(got, []string{"a", "x", "b", "y"}) {
+		t.Errorf("texts in a copy %q", got)
+	}
+}
+
+// A use whose copy places nothing (an empty template, or one whose body is
+// another such use) is still checked where it stands (the F3 review): its
+// if (B002), then, unless it prunes, its with paths (B003), in the scope
+// of the element, row, or tab it stands in; an outer use that prunes keeps
+// the inner one from being checked; and a list row's cache follows its
+// paths.
+func TestEmptyCopiesAreChecked(t *testing.T) {
+	const src = `<tui>
+  <template id="e"></template>
+  <template id="outer"><use template="e" with="g.y as h"/></template>
+  <screen id="main">
+    <use template="e" with="nope as f" if="gone"/>
+    <use template="outer" with="cfg as g" if="on"/>
+    <box each="aa as r"><use template="e" with="r.x as f"/></box>
+    <box each="bb as r"><use template="e" with="r.x as f"/></box>
+    <list id="l" each="rows as r" key="r.id"><item><text>{r.id}</text><use template="e" with="pick.x as f"/></item></list>
+    <tabs id="tb"><tab id="a" label="A"><use template="e" with="tabv as f"/></tab></tabs>
+    <table id="t" each="rows as r" key="r.id"><column>{r.id}</column><use template="e" with="r.x as f"/></table>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{"aa": [{"x": 1}, {}], "bb": [{"x": 1}, {"x": 2}], "rows": [{"id": 1, "x": 1}, {"id": 2}]}`)
+	sameDiags(t, "validate", useDiags(a), []string{
+		`warning B002 5:5 /screen/use if="gone": path "gone" is missing`,
+		`warning B002 6:5 /screen/use if="on": path "on" is missing`,
+		`warning B003 7:25 /screen/box/use with path "r.x" (alias f) is missing`,
+		`warning B003 9:71 /screen/list/item/use with path "pick.x" (alias f) is missing`,
+		`warning B003 10:41 /screen/tabs/tab/use with path "tabv" (alias f) is missing`,
+		`warning B003 11:70 /screen/table/use with path "r.x" (alias f) is missing`,
+	})
+	if err := a.Set("pick", map[string]any{"x": 1.0}); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Set("on", true); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Set("cfg", map[string]any{}); err != nil {
+		t.Fatal(err)
+	}
+	sameDiags(t, "set", useDiags(a), []string{
+		`warning B003 3:24 /screen/use with path "g.y" (alias h) is missing (cfg.y via <use template="outer">)`,
+		`warning B002 5:5 /screen/use if="gone": path "gone" is missing`,
+		`warning B003 7:25 /screen/box/use with path "r.x" (alias f) is missing`,
+		`warning B003 10:41 /screen/tabs/tab/use with path "tabv" (alias f) is missing`,
+		`warning B003 11:70 /screen/table/use with path "r.x" (alias f) is missing`,
+	})
+}
+
+// A path through a with alias that stands for a path from an each alias
+// (P from a row or an element) reads the same in every each that holds
+// such a use, so a use without id is also named by where it is written,
+// as the placement suffix names it (the owner's decision on the F3
+// review): two eaches over one template give two B003 (the review's
+// two/app.tui). So is one written in an each inside a copy, whose alias
+// is renamed, followed by what placed it (TestViaNamesWhatPlacedItsUse).
+// A use with an id is named by it, and a P from a store
+// member says which data it reads: neither adds a place.
+func TestViaFromAnEachAliasNamesWhereTheUseIs(t *testing.T) {
+	const two = `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <screen id="main">
+    <box each="aa as r"><use template="b" with="r as x"/></box>
+    <box each="bb as r"><use template="b" with="r as x"/></box>
+  </screen>
+</tui>
+`
+	a := useApp(t, two, `{"aa":[{}],"bb":[{}]}`)
+	sameDiags(t, "two", useDiags(a), []string{
+		`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at app.tui:4:25)`,
+		`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at app.tui:5:25)`,
+	})
+	const others = `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <template id="w"><box each="f.items as it"><use template="b" with="it as x"/></box></template>
+  <screen id="main">
+    <use id="u1" template="w" with="d as f"/>
+    <list id="l" each="rows as r" key="r.id"><item><use id="k" template="b" with="r as x"/></item></list>
+    <use id="s" template="b" with="cfg as x"/>
+    <use template="b" with="cfg as x"/>
+  </screen>
+</tui>`
+	a = useApp(t, others, `{"d": {"items": [{}]}, "rows": [{"id": 1}], "cfg": {}}`)
+	sameDiags(t, "others", useDiags(a), []string{
+		`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (it.missing via <use template="b"> at app.tui:3:46, placed by <use id="u1"> at app.tui:5:5)`,
+		`warning B003 2:20 /screen/list/item/text bind path "x.missing" is missing (r.missing via <use id="k">)`,
+		`warning B003 2:20 /screen/text bind path "x.missing" is missing (cfg.missing via <use id="s">)`,
+		`warning B003 2:20 /screen/text bind path "x.missing" is missing (cfg.missing via <use template="b">)`,
+	})
+}
+
+// A use without id written in a template or a fragment stands at one place
+// in every copy or include that places it, so a via through it whose P is
+// from an each alias also names what placed it, as a placement suffix
+// does (the coordinator's follow-up to the owner's decision): a nested use
+// in two eaches, a use in an each of a template placed by two uses with
+// ids, and a use in a fragment included twice each give two B003 (the
+// review's probes b, c, and d).
+func TestViaNamesWhatPlacedItsUse(t *testing.T) {
+	const data = `{"aa": [{}], "bb": [{}], "d1": {"items": [{}]}, "d2": {"items": [{}]}, "cfg": {"rows": [{"id": 1}]}}`
+	for _, c := range []struct {
+		name  string
+		files map[string]string
+		want  []string
+	}{
+		{"a nested use in two eaches", map[string]string{"app.tui": `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <template id="w"><use template="b" with="y as x"/></template>
+  <screen id="main">
+    <box each="aa as r"><use template="w" with="r as y"/></box>
+    <box each="bb as r"><use template="w" with="r as y"/></box>
+  </screen>
+</tui>
+`}, []string{
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at app.tui:3:20, placed by <use template="w"> at app.tui:5:25)`,
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at app.tui:3:20, placed by <use template="w"> at app.tui:6:25)`,
+		}},
+		{"a use in an each of a template placed twice", map[string]string{"app.tui": `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <template id="w"><box each="f.items as it"><use template="b" with="it as x"/></box></template>
+  <screen id="main">
+    <use id="u1" template="w" with="d1 as f"/>
+    <use id="u2" template="w" with="d2 as f"/>
+  </screen>
+</tui>
+`}, []string{
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (it.missing via <use template="b"> at app.tui:3:46, placed by <use id="u1"> at app.tui:5:5)`,
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (it.missing via <use template="b"> at app.tui:3:46, placed by <use id="u2"> at app.tui:6:5)`,
+		}},
+		{"a use in a fragment included twice", map[string]string{"app.tui": `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <screen id="main">
+    <include src="frag.tui"/>
+    <include src="frag.tui"/>
+  </screen>
+</tui>
+`, "frag.tui": `<fragment>
+  <box each="aa as r"><use template="b" with="r as x"/></box>
+</fragment>
+`}, []string{
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at frag.tui:2:23, placed by <include> at app.tui:4:5)`,
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at frag.tui:2:23, placed by <include> at app.tui:5:5)`,
+		}},
+		// Placed too, but a P from a store member, or a use with an id,
+		// keeps the via as it was.
+		{"a store P and a use with id, placed", map[string]string{"app.tui": `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <template id="s"><use template="b" with="d1 as x"/></template>
+  <template id="k"><list id="l" each="f.rows as it" key="it.id"><item><use id="k2" template="b" with="it as x"/></item></list></template>
+  <screen id="main">
+    <use id="o" template="s"/>
+    <use id="ok" template="k" with="cfg as f"/>
+  </screen>
+</tui>
+`}, []string{
+			`warning B003 2:20 /screen/text bind path "x.missing" is missing (d1.missing via <use template="b">)`,
+			`warning B003 2:20 /screen/list/item/text bind path "x.missing" is missing (it.missing via <use id="ok__k2">)`,
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			dir := writeTree(t, c.files)
+			a, err := Load(filepath.Join(dir, "app.tui"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			bindJSON(t, a, data)
+			sameDiags(t, c.name, useDiags(a), c.want)
+		})
+	}
+}
+
 // A via is kept where its path is written (ir.ViaKey), not under the path
 // it stands for: {f.x} and {g.x}, with f and g standing for one path, name
 // each its own written path; a literal {a.x} beside them is a store path
@@ -422,6 +646,35 @@ func TestViasAreKeptWhereWritten(t *testing.T) {
 	}
 	sa := useApp(t, slots, `{"a": {}, "opts": [{"id": 1}], "rows": [{"id": 1}], "none": []}`)
 	sameDiags(t, "slots", useDiags(sa), want)
+}
+
+// What a diagnostic at an element of a copy cuts (ir.CutArgs, ir.ShownAt)
+// still tells two diagnostics apart (the F3 review): two missing paths of
+// one element that differ only past the 64-byte cut are two B003, two
+// class guards whose names do two B002, and two with clauses whose
+// aliases do two B003 at the use; what every pass of Validate repeats is
+// still one.
+func TestCutValuesStayApart(t *testing.T) {
+	long := strings.Repeat("a", 70)
+	src := `<tui>
+  <template id="in"><text>x</text></template>
+  <template id="t">
+    <col>
+      <text>{f.` + long + `1} {f.` + long + `2}</text>
+      <text class:` + long + `1="f.q" class:` + long + `2="f.q">y</text>
+      <use template="in" with="z as ` + long + `1, z as ` + long + `2"/>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="u" template="t" with="x as f"/>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{"x": 5}`)
+	cut := strings.Repeat("a", 62) + "…"
+	b003 := `warning B003 5:7 /screen/col/text bind path "f.` + cut + `" is missing (x.` + cut + ` via <use id="u">)`
+	b002 := `warning B002 6:7 /screen/col/text class:` + strings.Repeat("a", 58) + `…="f.q": path "f.q" is missing (x.q via <use id="u">)`
+	with := `warning B003 7:7 /screen/col/use with path "z" (alias ` + strings.Repeat("a", 64) + `…) is missing`
+	sameDiags(t, "validate", useDiags(a), []string{b003, b003, b002, b002, with, with})
 }
 
 // What a diagnostic quotes is cut only at an element of a copy: the same

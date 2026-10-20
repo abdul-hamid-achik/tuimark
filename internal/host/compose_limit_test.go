@@ -5,6 +5,7 @@ package host
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -39,6 +40,23 @@ func TestExpansionLimitLoadBuffers(t *testing.T) {
 		}
 	case <-time.After(30 * time.Second):
 		t.Fatal("LoadBuffers hangs on the fan-out")
+	}
+}
+
+// A copy that goes over the limit is undone with the empty copies its
+// uses recorded (ir.Node.EmptyCopies): the use of an empty template in
+// it, which inserts nothing as the rest of it does, reports nothing.
+func TestExpansionLimitUndoesEmptyCopies(t *testing.T) {
+	src := "<tui>\n  <template id=\"e\"></template>\n" +
+		"  <template id=\"big\"><use template=\"e\" with=\"nope as f\"/>" + strings.Repeat("<text>x</text>", 100001) + "</template>\n" +
+		"  <screen id=\"main\"><use template=\"big\"/></screen>\n</tui>\n"
+	a := useApp(t, src, `{}`)
+	var got []string
+	for _, d := range a.Validate() {
+		got = append(got, d.Code)
+	}
+	if fmt.Sprint(got) != "[V021]" {
+		t.Errorf("diagnostics %v, want only the V021", got)
 	}
 }
 

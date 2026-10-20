@@ -529,18 +529,18 @@ func FragmentDiags(doc *Document) ir.Diags {
 }
 
 // dedupeDiags keeps the first of the diagnostics equal in severity, code,
-// message, file, line, and column: one written element placed more than
-// once reports once (SPEC v0.4b §6.18.6), with the path and id of its first
-// placement.
+// message, file, line, and column, and in what the message cut (ir.Whole):
+// one written element placed more than once reports once (SPEC v0.4b
+// §6.18.6), with the path and id of its first placement.
 func dedupeDiags(ds ir.Diags) ir.Diags {
 	type key struct {
-		sev, code, msg, file string
-		line, col            int
+		sev, code, msg, file, whole string
+		line, col                   int
 	}
 	seen := make(map[key]bool, len(ds))
 	out := ds[:0:0]
 	for _, d := range ds {
-		k := key{d.Severity, d.Code, d.Msg, d.File, d.Line, d.Col}
+		k := key{d.Severity, d.Code, d.Msg, d.File, ir.Whole(d), d.Line, d.Col}
 		if seen[k] {
 			continue
 		}

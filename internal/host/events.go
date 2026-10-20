@@ -393,7 +393,7 @@ func (a *App) Static() ir.Diags {
 	defer a.mu.Unlock()
 	themes := a.validateThemes()
 	out := append(ir.Diags(nil), a.static...)
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, d := range out {
 		seen[a.diagKey(d)] = true
 	}

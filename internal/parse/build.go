@@ -530,13 +530,6 @@ func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, co
 			placed = org.Placed
 		}
 	}
-	if placed != nil && org.InCopy() {
-		// One per copy, each told apart by its placement suffix: what it
-		// quotes with %q is cut, as the runtime's are (ir.At). A
-		// self-check (no suffix) is the same in every copy and in the
-		// template's own body, and is reported once, whole.
-		args = ir.CutQuoted(format, args)
-	}
 	if b.comp != nil && b.comp.used && earlyDedupe {
 		// dedupeDiags applies (ParseWith): a repeat is dropped unformatted.
 		if b.reported == nil {
@@ -552,14 +545,24 @@ func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, co
 			}
 		}
 	}
+	var whole string
+	if placed != nil && org.InCopy() {
+		// One per copy, each told apart by its placement suffix: what it
+		// quotes with %q is cut, as the runtime's are (ir.At), and kept
+		// whole beside it, so the repeat dropped above, and the dedupes
+		// after (dedupeDiags, the host's), compare it whole. A self-check
+		// (no suffix) is the same in every copy and in the template's own
+		// body, and is reported once, whole.
+		args, whole = ir.CutArgs(format, args)
+	}
 	msg := fmt.Sprintf(format, ir.UnmarkArgs(args)...)
 	if placed != nil {
 		msg += org.PlacedSuffix()
 	}
-	b.doc.Diags = append(b.doc.Diags, ir.Diagnostic{
+	b.doc.Diags = append(b.doc.Diags, ir.WithWhole(ir.Diagnostic{
 		Severity: sev, Code: code, Msg: msg,
 		File: file, Line: line, Col: col, Path: path, ID: id,
-	})
+	}, whole))
 }
 
 // diagPlaced is diag for a check that depends on where the element stands:

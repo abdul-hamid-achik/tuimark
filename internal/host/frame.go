@@ -113,7 +113,7 @@ func (a *App) FrameAt(cols, rows, phase int) *Frame {
 type builder struct {
 	a      *App
 	diags  ir.Diags
-	seen   map[string]bool
+	seen   map[diagID]bool
 	modals []*layout.Box
 	byID   map[string]*layout.Box
 	// tables holds the tables inflated in step 1, for step 7.
@@ -282,7 +282,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	kinds := a.kinds()
 	f.settled = false
 	for pass := 0; pass < 3; pass++ {
-		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
+		fb = &builder{a: a, seen: map[diagID]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
 		if a.slab != 0 {
 			a.passes++
 			fb.pass = a.passes
@@ -364,7 +364,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	}
 	// The static token check and the cascade can report the same V003.
 	var diags ir.Diags
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, ds := range []ir.Diags{static, casc.Diags, fb.diags, eng.Diags} {
 		for _, d := range ds {
 			if k := a.diagKey(d); !seen[k] {
@@ -1014,6 +1014,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 			return b
 		}
 	}
+	fb.placeEmpty(n, sc)
 	for i, c := range n.Children {
 		cb := fb.inflate(c, b, sc, inItem)
 		if cb == nil {
@@ -1068,6 +1069,7 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 			}
 		}
 		isc.key = key
+		fb.placeEmpty(n, isc)
 		for _, c := range n.Children {
 			// The template holds nothing focusable or addressed by id
 			// (SPEC §6.8 item 8): it is inflated like a list row.
@@ -1271,6 +1273,7 @@ func keyEqual(a, b any) bool { return Format(a) == Format(b) && typeName(a) == t
 // inflateList expands each= (or static items) and marks the selection.
 func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	a := fb.a
+	fb.placeEmpty(n, sc)
 	if n.Each != "" && sc == nil && !a.noCache {
 		if p := a.listPlan(n); p.ok {
 			fb.inflateListCached(n, b, p)

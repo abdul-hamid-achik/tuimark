@@ -111,7 +111,7 @@ func TestUseExpansionLimitFanOut(t *testing.T) {
 	b.WriteString("<template id=\"t30\"><text>x</text></template><screen><use template=\"t0\"/></screen></tui>")
 	start := time.Now()
 	d := parseDoc(b.String())
-	if el := time.Since(start); el > 5*time.Second {
+	if el := time.Since(start); el > slowdown*5*time.Second {
 		t.Errorf("took %v", el)
 	}
 	if got := v021(d); len(got) != 1 {

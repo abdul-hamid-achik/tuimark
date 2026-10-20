@@ -701,7 +701,7 @@ func (a *App) Validate() ir.Diags {
 	defer a.restoreState(saved)
 	themes := a.validateThemes()
 	out := append(ir.Diags(nil), a.static...)
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, d := range out {
 		seen[a.diagKey(d)] = true
 	}
