@@ -576,7 +576,7 @@ func (b *builder) dupID(n, prev *ir.Node) {
 	// The element and the file where the diagnostic stands.
 	at, atFile := n, nFile
 	if nFile == pFile && n.Line == prev.Line && n.Col == prev.Col && n.Org != nil && n.Org.Placed != nil {
-		at = outermostNewPlacer(n, prev)
+		at = innermostNewPlacer(n, prev)
 		atFile = at.FileName(docFile)
 	}
 	loc := fmt.Sprintf("%d:%d", prev.Line, prev.Col)
@@ -590,22 +590,22 @@ func (b *builder) dupID(n, prev *ir.Node) {
 	msg := fmt.Sprintf("duplicate id %q (first defined at %s%s)", n.ID, loc, ir.PlacedSuffix(prev))
 	path := n.Path
 	if at != n {
-		// Test 137 expects the path of the include here; §6.18.6 says the
-		// element's own path. Provisional until the draft decides.
+		// The path of the placer it stands at, as test 137 expects (the
+		// SPEC promotion's erratum on §6.18.6).
 		path = at.Path
 	}
 	b.diagOrg(at.Org, false, ir.Error, "V004", at.Line, at.Col, path, n.ID, "%s", msg)
 }
 
-// outermostNewPlacer is the include that placed the second occurrence n of
-// a written element and did not place the first, prev (SPEC v0.4b §6.18.4):
-// walking out from the innermost include of n, the first whose written
-// element (file, line, column) is not on prev's chain of includes. For a
-// fragment included three times through one fragment that includes it, the
-// innermost include is the same written element every time, so it is the
-// outer one that tells the copies apart. It falls back to the innermost
-// include when every one is on both chains.
-func outermostNewPlacer(n, prev *ir.Node) *ir.Node {
+// innermostNewPlacer is the innermost include or use that placed the
+// second occurrence n of a written element and did not place the first,
+// prev (SPEC v0.4b §6.18.6): walking out from the innermost placer of n,
+// the first whose written element (file, line, column) is not on prev's
+// chain of placers. For a fragment included three times through one
+// fragment that includes it, the innermost include is the same written
+// element every time, so it is the outer one that tells the copies apart.
+// It falls back to the innermost placer when every one is on both chains.
+func innermostNewPlacer(n, prev *ir.Node) *ir.Node {
 	type site struct {
 		file      string
 		line, col int
