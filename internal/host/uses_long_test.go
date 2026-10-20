@@ -37,6 +37,29 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 		b.WriteString("]}")
 		return b.String()
 	}
+	// many is 150 uses of template t, each with its own with path aN (so
+	// each copy's message is its own), and data that gives each aN the
+	// JSON value v: about 15 MB of copies, within the expansion budget.
+	const copies = 150
+	many := func(t string) string {
+		var b strings.Builder
+		for i := 0; i < copies; i++ {
+			fmt.Fprintf(&b, `<use template="%s" with="a%d as f"/>`, t, i)
+		}
+		return b.String()
+	}
+	manyData := func(v string) string {
+		var b strings.Builder
+		b.WriteString("{")
+		for i := 0; i < copies; i++ {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			fmt.Fprintf(&b, `"a%d": %s`, i, v)
+		}
+		b.WriteString("}")
+		return b.String()
+	}
 	for _, c := range []struct {
 		name, src, data string
 		want            map[string]int // diagnostics per code
@@ -65,6 +88,24 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 		{"a use with a long with path in many rows",
 			`<tui><template id="t"><text>{a.n}</text></template><screen id="main"><list id="l" each="rows as r" key="r.id"><item><use template="t" with="r.` + long[:10000] + ` as a" if="r.` + long[:10000] + `"/></item></list></screen></tui>`,
 			rows(20000), map[string]int{"B002": 1}},
+		// What a message quotes as written in the template (a path, an
+		// attribute, a class name, an alias) is cut as P is, since every
+		// copy through its own with path says it again.
+		{"a long written path in many copies",
+			`<tui><template id="t"><text>{f.` + long + `}</text></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
+			manyData("{}"), map[string]int{"B003": copies}},
+		{"a long written flag in many copies",
+			`<tui><template id="t"><text if="f.` + long + `">x</text></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
+			manyData("1"), map[string]int{"B002": copies}},
+		{"a long written each in many copies",
+			`<tui><template id="t"><box each="f.` + long + ` as it"><text>{it}</text></box></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
+			manyData("{}"), map[string]int{"B001": copies}},
+		{"a long class name in many copies",
+			`<tui><template id="t"><text class:` + long + `="f.x">x</text></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
+			manyData("1"), map[string]int{"B002": copies, "L009": 1}},
+		{"a long alias in many copies",
+			`<tui><template id="in"><text>x</text></template><template id="t"><use template="in" with="f.z as ` + long + `"/></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
+			manyData("{}"), map[string]int{"B003": copies, "L009": 1}},
 		{"a use's missing with path in many rows",
 			`<tui><template id="t"><text>{a.n}</text></template><screen id="main"><list id="l" each="rows as r" key="r.id"><item><use template="t" with="r.` + long[:10000] + ` as a"/></item></list></screen></tui>`,
 			rows(20000), map[string]int{"B003": 1}},

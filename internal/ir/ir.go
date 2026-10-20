@@ -203,11 +203,12 @@ func (v *Via) Suffix(p string) string {
 }
 
 // ShownPath is a path a diagnostic quotes away from where it is written,
-// the P of a path through a with alias (Via.Suffix): every renamed alias
-// shown as written (Unmark) and cut as ShownID cuts an id, in time
-// bounded by MaxShownID however long p is. A path holds at most one
-// renamed alias, at its head: one AliasMark byte and the digits of an
-// int.
+// the P of a path through a with alias (Via.Suffix), and what such a
+// diagnostic quotes from the template (the path as written, an
+// attribute's name and value, an alias): every renamed alias shown as
+// written (Unmark) and cut as ShownID cuts an id, in time bounded by
+// MaxShownID however long p is. A path holds at most one renamed alias,
+// at its head: one AliasMark byte and the digits of an int.
 func ShownPath(p string) string {
 	const room = MaxShownID + 22
 	if len(p) > room {

@@ -803,7 +803,7 @@ func (fb *builder) flag(n *ir.Node, attr string, sc *scope) bool {
 // Through a with alias it is an optional prop (pathMiss).
 func (fb *builder) missingFlag(n *ir.Node, attr, v, p string, sc *scope) {
 	if ok, via := fb.pathMiss(n, p, sc, missFlag); ok {
-		fb.reportPath(n, via, p, ir.Warning, "B002", "%s=%q: path %q is missing", attr, writtenAttr(n, attr, v, via), shownPath(p, via))
+		fb.reportPath(n, via, p, ir.Warning, "B002", "%s=%q: path %q is missing", written(attr, via), writtenAttr(n, attr, v, via), shownPath(p, via))
 	}
 }
 

@@ -144,6 +144,35 @@ func TestPathsThroughAWithAliasNameTheirUse(t *testing.T) {
 	})
 }
 
+// A message about a path through a with alias quotes what is written in
+// the template (the path, the attribute's name and value, the alias) and
+// P cut at 64 bytes on a rune boundary, then "…" (ADR 0034): each copy
+// through a with path of its own says them again.
+func TestViaMessagesCutWhatTheyQuote(t *testing.T) {
+	name := "m" + strings.Repeat("y", 69)
+	cut := "m" + strings.Repeat("y", 61) + "…" // 64 bytes with the "f." or "a." before it
+	src := `<tui>
+  <template id="in">
+    <text>x</text>
+  </template>
+  <template id="t">
+    <col>
+      <text if="!f.` + name + `" class:` + name + `="f.k">x</text>
+      <use template="in" with="f.z as ` + name + `"/>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="u" template="t" with="a as f"/>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{"a": 1}`)
+	sameDiags(t, "a number", useDiags(a), []string{
+		`warning B002 7:7 /screen/col/text if="!f.m` + strings.Repeat("y", 60) + `…": path "f.` + cut + `" is missing (a.` + cut + ` via <use id="u">)`,
+		`warning B002 7:7 /screen/col/text class:m` + strings.Repeat("y", 57) + `…="f.k": path "f.k" is missing (a.k via <use id="u">)`,
+		`warning B003 8:7 /screen/col/use with path "f.z" (alias m` + strings.Repeat("y", 63) + `…) is missing (a.z via <use id="u">)`,
+	})
+}
+
 // Decision 100: the if and hidden of a nested use, a disabled, and an
 // open read through an enclosing use's alias are optional props while the
 // alias stands for an object (null: if false, hidden false), and B002,

@@ -67,7 +67,7 @@ func (fb *builder) placeUse(u *ir.Node, sc *scope) bool {
 			continue
 		}
 		if ok, via := fb.pathMiss(u, cl.Path, sc, missValue); ok {
-			fb.reportPath(u, via, cl.Path, fb.bindSev(), "B003", "with path %q (alias %s) is missing", shownPath(cl.Path, via), cl.Alias)
+			fb.reportPath(u, via, cl.Path, fb.bindSev(), "B003", "with path %q (alias %s) is missing", shownPath(cl.Path, via), written(cl.Alias, via))
 			fb.saidNow(u, i)
 		}
 	}
@@ -168,7 +168,7 @@ func (fb *builder) badEach(n *ir.Node, p string, v any, found bool) {
 	via := n.ViaOf(p)
 	each := n.Each
 	if via != nil && n.Written != nil {
-		each = n.Written.Each
+		each = written(n.Written.Each, via)
 	}
 	if !found {
 		fb.reportPath(n, via, p, ir.Error, "B001", "each=%q: path %q is missing (want an array)", each, shownPath(p, via))
@@ -202,24 +202,39 @@ func (fb *builder) reportPath(n *ir.Node, via *ir.Via, p string, sev, code, form
 }
 
 // shownPath is the path p of a message: as written when it went through
-// a with alias (via), else p itself.
+// a with alias (via), cut (written), else p itself.
 func shownPath(p string, via *ir.Via) string {
 	if via != nil {
-		return via.Written
+		return written(via.Written, via)
 	}
 	return p
 }
 
 // writtenAttr is the value of n's attribute attr a message quotes: as
-// written when the path in it went through a with alias (via), else v,
-// the value the runtime reads.
+// written, cut (written), when the path in it went through a with alias
+// (via), else v, the value the runtime reads.
 func writtenAttr(n *ir.Node, attr, v string, via *ir.Via) string {
 	if via != nil && n.Written != nil {
 		if w, ok := n.Written.Attrs[attr]; ok {
-			return w
+			return written(w, via)
 		}
 	}
 	return v
+}
+
+// written is s, a path, an attribute's name or value, or an alias that a
+// message about a path through a with alias (via) quotes from where it
+// is written: cut at 64 bytes as P is (ir.ShownPath). Each copy through a
+// with path of its own says it again, in a message of its own (P tells
+// them apart), so the whole of s would make the output grow with the
+// copies times its length (ADR 0034). Without via s is quoted whole, as
+// in 0.4.1: a message without a via is the same in every copy, or names
+// its placement, as F2 left it.
+func written(s string, via *ir.Via) string {
+	if via != nil {
+		return ir.ShownPath(s)
+	}
+	return s
 }
 
 // diagKey is what makes two diagnostics one (the dedupe of a frame's and
