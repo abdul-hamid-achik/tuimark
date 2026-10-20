@@ -15,7 +15,7 @@ const (
 	Lang2 Lang = 2
 	Lang3 Lang = 3
 	// Lang4 is the language 0.4b extends: a <tui> without version in
-	// tuimark 0.4.2. Rules that 0.4b introduces are gated on it (l >=
+	// tuimark 0.4.3. Rules that 0.4b introduces are gated on it (l >=
 	// Lang4), never on LangCurrent, so a later cut that moves the current
 	// language keeps them, and keeps their catalog since, at 4.
 	Lang4 Lang = 4

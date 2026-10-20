@@ -24,10 +24,11 @@ The 0.4b release. It extends the current language, the language of a
 There is no `version="4"`: writing it is `V003`, and the document is read as
 `version="1"`. Tools that need a number for the current language use 4. A
 document that writes `version="1"`, `"2"`, or `"3"`, and the spike `<app>`
-root, keeps exactly the meaning, diagnostics, and dumps it had in 0.4.1. A
-tag, attribute, or `{path}` that 0.4.3 adds is `V001`, `V002`, or `V003` in
-such a document, with a message ending in `(requires a <tui> without
-version)`; an include's file is never read there.
+root, keeps exactly the meaning, layout, diagnostic codes, and dumps it had
+in 0.4.1. A tag, attribute, or `{path}` that 0.4.3 adds is `V001`, `V002`,
+or `V003` in such a document, with a message ending in `(requires a <tui>
+without version)` (the hint for `<template>` and its kin used to say Tuimark
+had no components); an include's file is never read there.
 
 ### Changed — versionless documents
 
@@ -218,8 +219,9 @@ leaned on the old defaults change in these ways.
   `each`, and `key` (`V012`, `V017`); a bound value that is no option's key is
   the new `B012`, a warning. `validate` without `--data` skips `B011` and
   `B012` with the other data checks.
-- **`<progress indeterminate="true">`** is a one-glyph spinner (`⠋⠙⠹…`, ASCII
-  under the 16-color profile) that turns every 100 ms. In a live session it
+- **`<progress indeterminate="true">`** is a one-glyph spinner (`⠋⠙⠹…`; a
+  live session under the 16-color profile draws ASCII) that turns every 100
+  ms. In a live session it
   redraws on a session clock, painting only; it builds no frame, fires no
   `Every`, and writes no `TUIMARK_LOG` record. Combined with `bind` or `value`
   it is `V003`.
@@ -255,19 +257,22 @@ leaned on the old defaults change in these ways.
   - `tuimark mcp` returns stderr as the result when a command exits 2 with
     nothing on stdout (`tuimark_inspect` of a fragment), still not as an
     error.
-- **VS Code extension:** highlighting and snippets for `include`, `fragment`,
-  `template`, `use`, `checkbox`, `select`, `single`, and `indeterminate`.
+- **VS Code extension** (`editors/vscode`, built from the repository):
+  highlighting and snippets for `include`, `fragment`, `template`, `use`,
+  `checkbox`, `select`, `single`, and `indeterminate`; the snippets for the
+  `version="2"` vocabulary no longer say it needs a version.
 - **Go API.** No function, type, or option is added. `Load`, `LoadFS`, and
   `Parse` expand includes and templates, `Play` takes the `tick:` step and
-  calls `Every` functions on its virtual clock (up to 10000 per step, not when
-  `PlayOptions.NoHandlers` is set), and an `Every` function's `ErrQuit` ends the
-  call with `Quit: true`.
+  calls `Every` functions on its virtual clock (not when
+  `PlayOptions.NoHandlers` is set; a step that would make more than 10000
+  calls is an error and changes nothing), and an `Every` function's `ErrQuit`
+  ends the call with `Quit: true`.
 - **Docs.** New guides, "Templates and composition" and "Tuimark for frontend
   devs" (a map from the web, with the differences between the current language
   and a pinned `version="3"`), and the layout, widgets, interaction, language,
   testing, and tools guides cover the 0.4b behavior.
 
-### Changed
+### Changed — Go API, examples, and website
 
 - **Go API: `tuimark.Diagnostic` gained an unexported field.** It is an alias
   of the internal type, which now keeps what a message cut at an element of a

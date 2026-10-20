@@ -29,7 +29,7 @@
   },
   "Media (theme)": {
     "prefix": "mediatheme",
-    "description": "Per-theme rules or a :root palette (version 2 or 3 stylesheets)",
+    "description": "Per-theme rules or a :root palette",
     "body": ["@media (theme: ${1|light,dark|}) {", "  :root {", "    $0", "  }", "}"]
   },
   "Focus": {
@@ -39,7 +39,7 @@
   },
   "Grid": {
     "prefix": "grid",
-    "description": "An auto-fit grid container (version 2 or 3 stylesheets)",
+    "description": "An auto-fit grid container",
     "body": ["${1:#panels} {", "  layout: grid;", "  grid-columns: ${2:2};", "  grid-min-width: ${3:36};", "  gap: ${4:1};", "}"]
   }
 }

@@ -98,7 +98,7 @@
   },
   "Table with columns": {
     "prefix": ["table", "tablecols"],
-    "description": "A table over an array (version 2 or 3)",
+    "description": "A table over an array",
     "body": [
       "<table id=\"${1:rows}\" each=\"${2:rows} as ${3:r}\" key=\"${3:r}.${4:id}\" bind=\"${5:cursor}\" placeholder=\"${6:no rows}\">",
       "  <column id=\"c-${4:id}\" title=\"${7:ID}\" width=\"${8:6}\">{${3:r}.${4:id}}</column>",
@@ -108,12 +108,12 @@
   },
   "Table column": {
     "prefix": "column",
-    "description": "A table column (version 2 or 3)",
+    "description": "A table column",
     "body": "<column id=\"c-${1:name}\" title=\"${2:Name}\" width=\"${3:1fr}\">{${4:r}.${1:name}}</column>"
   },
   "Tabs": {
     "prefix": "tabs",
-    "description": "A tab strip with two tabs (version 2 or 3)",
+    "description": "A tab strip with two tabs",
     "body": [
       "<tabs id=\"${1:nav}\" bind=\"${2:view}\" mark=\"▸\" focusable=\"true\">",
       "  <tab id=\"${3:first}\" label=\"${4:1 first}\" short=\"${5:1 fst}\">",
@@ -126,7 +126,7 @@
   },
   "Tab": {
     "prefix": "tab",
-    "description": "One tab of a tabs (version 2 or 3)",
+    "description": "One tab of a tabs",
     "body": ["<tab id=\"${1:name}\" label=\"${2:1 name}\" short=\"${3:1 nm}\">", "  $0", "</tab>"]
   },
   "Modal": {
@@ -149,12 +149,12 @@
   },
   "Sparkline": {
     "prefix": "sparkline",
-    "description": "A sparkline over a numeric array (version 2 or 3)",
+    "description": "A sparkline over a numeric array",
     "body": "<sparkline bind=\"${1:hist}\" min=\"${2:0}\" max=\"${3:100}\"/>"
   },
   "Hints": {
     "prefix": "hints",
-    "description": "Key hints from the keymap rows that have a label (version 2 or 3)",
+    "description": "Key hints from the keymap rows that have a label",
     "body": "<hints scope=\"${1|active,all|}\"/>"
   },
   "Checkbox": {
@@ -216,7 +216,7 @@
   },
   "Class guard": {
     "prefix": "classguard",
-    "description": "Add a class while a path is truthy (version 2 or 3)",
+    "description": "Add a class while a path is truthy",
     "body": "class:${1:name}=\"${2:path}\""
   }
 }
