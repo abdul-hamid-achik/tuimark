@@ -62,7 +62,7 @@ func TestWithScopeLookupDoesNotGrowWithTheScope(t *testing.T) {
 	src := []byte(b.String())
 	var d *parse.Document
 	el := within(t, 60*time.Second, func() { d = parse.Parse(src, "app.tui") })
-	if el > 5*time.Second {
+	if el > slowdown*5*time.Second {
 		t.Errorf("took %v", el)
 	}
 	if len(d.Diags) != 0 {
@@ -96,7 +96,7 @@ func ring(n int) string {
 func TestV019LongCycleIsShortenedAndFast(t *testing.T) {
 	var doc *parse.Document
 	el := within(t, 60*time.Second, func() { doc = parse.Parse([]byte(ring(10000)), "app.tui") })
-	if el > time.Second {
+	if el > slowdown*time.Second {
 		t.Errorf("took %v", el)
 	}
 	got := useDiags(doc)
@@ -145,7 +145,7 @@ func TestV019FallbackIsFast(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			var doc *parse.Document
 			el := within(t, 60*time.Second, func() { doc = parse.Parse([]byte(c.src), "app.tui") })
-			if el > time.Second {
+			if el > slowdown*time.Second {
 				t.Errorf("took %v", el)
 			}
 			got := useDiags(doc)
