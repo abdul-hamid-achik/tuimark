@@ -5,7 +5,7 @@
 // on route.ts (instance): copy that file with this one.
 //
 // <use id="confirm" template="k-confirm" with="confirm as d"/> reads
-// confirm.open, confirm.title, confirm.message and the button labels
+// confirm.open, confirm.title, confirm.body and the button labels
 // confirm.yes and confirm.no, which open() writes; the host also writes
 // confirm.result ("confirmed" or "cancelled"). Its actions are dialog_confirm
 // and dialog_cancel, fired by whichever button was pressed; one handler of
@@ -44,7 +44,7 @@ export function createDialogs(ui: Ui) {
     pending.set(inst, r);
     await ui.batch([
       { path: `${inst}.title`, value: r.title },
-      { path: `${inst}.message`, value: r.body },
+      { path: `${inst}.body`, value: r.body },
       { path: `${inst}.yes`, value: r.yes || "Confirm" },
       { path: `${inst}.no`, value: r.no || "Cancel" },
       { path: `${inst}.result`, value: "none" },

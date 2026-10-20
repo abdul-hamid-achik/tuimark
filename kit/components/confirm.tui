@@ -1,4 +1,4 @@
-<!-- k-confirm · Contract: with="PATH as d" reads d.open, d.title, d.message, d.no and d.yes (the button labels) and the flag d.danger; the host writes d.open, and here confirm.result · Actions: dialog_open, dialog_confirm, dialog_cancel · Keys: y confirms, n and esc cancel · Requires: k-btn, k-title, k-muted -->
+<!-- k-confirm · Contract: with="PATH as d" reads d.open, d.title, d.body, d.no and d.yes (the button labels) and the flag d.danger; the host writes d.open, and here confirm.result · Actions: dialog_open, dialog_confirm, dialog_cancel · Keys: y confirms, n and esc cancel · Requires: k-btn, k-title, k-muted -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo" focus="#confirm__open">
@@ -16,9 +16,11 @@
          before the last "__". `class="danger"` makes a destructive dialog
          (or set the flag d.danger from data). The cursor starts on the SAFE
          button, so a stray enter cancels; esc cancels too, and y / n work
-         (the kit's <keymap when=".k-dialog">). The dialog is 52 columns
-         wide, at most the screen, and as tall as its content. Keep the
-         labels short: the action row must fit a 40-column terminal. -->
+         (the kit's <keymap when=".k-dialog">). The dialog takes the size
+         of its content: as wide as the title, the text or the action row,
+         up to 60 columns (and the screen), where the text wraps, and as
+         tall as its content. Keep the labels short: the action row must fit
+         a 40-column terminal. -->
     <use id="confirm" template="k-confirm" class="danger" with="confirm as d"/>
   </screen>
 </tui>

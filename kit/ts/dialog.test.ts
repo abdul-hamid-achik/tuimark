@@ -8,11 +8,11 @@ describe("dialogs", () => {
     const dialogs = createDialogs(store.host);
     await dialogs.confirm("confirm", "Delete project", "This permanently deletes orbit-api.", () => {});
     expect(store.at("confirm")).toEqual({
-      open: true, title: "Delete project", message: "This permanently deletes orbit-api.",
+      open: true, title: "Delete project", body: "This permanently deletes orbit-api.",
       yes: "Confirm", no: "Cancel", result: "none",
     });
     const source = component("confirm");
-    for (const p of ["confirm.open", "confirm.title", "confirm.message", "confirm.yes", "confirm.no", "confirm.result"]) {
+    for (const p of ["confirm.open", "confirm.title", "confirm.body", "confirm.yes", "confirm.no", "confirm.result"]) {
       expect(source).toContain(p);
     }
     expect(source).toContain('id="confirm__yes"');

@@ -6,7 +6,7 @@
 // that file with this one.
 //
 // <use id="confirm" template="k-confirm" with="confirm as d"/> reads
-// confirm.open, confirm.title, confirm.message and the button labels
+// confirm.open, confirm.title, confirm.body and the button labels
 // confirm.yes and confirm.no, which Open writes; the host also writes
 // confirm.result ("confirmed" or "cancelled"). Its actions are dialog_confirm
 // and dialog_cancel, fired by whichever button was pressed; one handler of
@@ -73,7 +73,7 @@ func (d *Dialogs) Open(inst string, r Request) error {
 	}
 	return d.app.Batch(func(b *tuimark.Batch) error {
 		return errors.Join(
-			b.Set(inst+".title", r.Title), b.Set(inst+".message", r.Body),
+			b.Set(inst+".title", r.Title), b.Set(inst+".body", r.Body),
 			b.Set(inst+".yes", yes), b.Set(inst+".no", no),
 			b.Set(inst+".result", "none"), b.Set(inst+".open", true),
 		)

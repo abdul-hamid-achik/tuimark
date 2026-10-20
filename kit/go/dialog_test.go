@@ -8,7 +8,7 @@ import (
 
 func confirmApp(t *testing.T) (*tuimark.App, *Dialogs, *int) {
 	t.Helper()
-	app := loadComponent(t, "confirm", `{"confirm": {"open": false, "title": "", "message": "", "result": "none"}}`)
+	app := loadComponent(t, "confirm", `{"confirm": {"open": false, "title": "", "body": "", "result": "none"}}`)
 	d := NewDialogs(app)
 	d.Register()
 	deleted := 0

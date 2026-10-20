@@ -141,13 +141,14 @@
 
   <!-- Overlays: a modal, so a <use> of one is the last child of a screen. -->
 
-  <!-- k-confirm: a confirm dialog that puts the cursor on the safe button.
-       with="PATH as d": d.open, d.title, d.message, d.no and d.yes (the
+  <!-- k-confirm: a confirm dialog that puts the cursor on the safe button,
+       sized by its content (up to 60 columns, where the text wraps).
+       with="PATH as d": d.open, d.title, d.body, d.no and d.yes (the
        button labels); flag d.danger. Variant: danger. Fires dialog_confirm
        and dialog_cancel (esc too), from U__yes, U__no or U__dialog. -->
   <template id="k-confirm">
     <modal id="dialog" class="k-dialog" class:danger="d.danger" open="d.open" title="{d.title}" focus="#no" on:escape="dialog_cancel">
-      <text class="k-dialog-text">{d.message}</text>
+      <text class="k-dialog-text">{d.body}</text>
       <row class="k-dialog-actions">
         <spacer/>
         <button id="no" class="k-btn secondary" label="{d.no}" on:click="dialog_cancel"/>

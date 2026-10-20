@@ -2,7 +2,7 @@
   "confirm": {
     "open": true,
     "title": "Delete project",
-    "message": "This permanently deletes orbit-api and its 14 deployments. This cannot be undone.",
+    "body": "This permanently deletes orbit-api and its 14 deployments. This cannot be undone.",
     "no": "Cancel",
     "yes": "Delete",
     "result": "none"

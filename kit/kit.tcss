@@ -109,7 +109,9 @@
 
 /* --------------------------------------------------------------- dialogs */
 
-.k-dialog { width: 52; max-width: 100%; height: auto; padding: 1 2; border: rounded; background: $panel; border-color: $accent; title-color: $accent; }
+/* A dialog takes the size of its content, up to 60 columns (the text wraps
+ * there) and the screen. */
+.k-dialog { width: auto; max-width: 60; height: auto; padding: 1 2; border: rounded; background: $panel; border-color: $accent; title-color: $accent; }
 .k-dialog.danger { border-color: $danger; title-color: $danger; }
 /* A danger dialog's confirm button is a danger button, focused or not. */
 .k-dialog.danger > .k-dialog-actions > .k-btn.primary { color: $on-danger; background: $danger; }
