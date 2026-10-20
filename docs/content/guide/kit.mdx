@@ -1,30 +1,31 @@
 ---
 title: The kit
-description: A copy-paste component kit for Tuimark - design tokens, k- component classes and 21 small documents you copy into your project and own, with a gallery app that shows them all.
+description: A copy-paste component kit for Tuimark - one file of templates you include, design tokens and k- component classes, small documents that show each of the 21 components, and a gallery app that shows them all.
 ---
 
-The kit is a set of ready-made components for Tuimark: buttons, cards, alerts, a data table, a command palette, dialogs, toasts, and more. It follows the shadcn way: you do not install it, you **copy what you need into your project and own it**. There is nothing to import and nothing to keep in sync; if a card should look different, you edit your copy.
+The kit is a set of ready-made components for Tuimark: buttons, cards, alerts, a data table, a command palette, dialogs, toasts, and more. It follows the shadcn way: you do not install it, you **copy it into your project and own it**. There is nothing to import from a registry and nothing to keep in sync; if a card should look different, you edit your copy.
 
-The kit adds no tag, attribute, or CSS property to the language. A component is ordinary `.tui` markup plus class names, ids, and action names that follow a few conventions, styled by two stylesheets. It lives in the repository's [`kit/`](https://github.com/abdul-hamid-achik/tuimark/tree/main/kit) directory.
+The kit adds no tag, attribute, or CSS property to the language. It is a [fragment](/guide/composition) of `<template>` elements, two stylesheets, and a few conventions for class names, ids, and action names. It lives in the repository's [`kit/`](https://github.com/abdul-hamid-achik/tuimark/tree/main/kit) directory.
 
 | File | Holds |
 |---|---|
+| `kit/kit.tui` | the kit as one fragment: it loads the two sheets, holds the overlays' keys, and has one `<template>` per component that takes data |
 | `kit/theme.tcss` | the design tokens, dark and light, and the base typography |
 | `kit/kit.tcss` | the component classes |
-| `kit/components/NAME.tui` | one small, valid document per component, with the markup to copy and a `NAME.sample.json` beside it when it binds data |
+| `kit/components/NAME.tui` | one small, valid document per component: a template in use, or the markup to copy for a class component, with a `NAME.sample.json` beside it when it binds data |
 | `examples/kit-gallery` | every component in one app, on five tabs, with a Go host |
 
 ## Using it
 
-Copy `theme.tcss` and `kit.tcss` into your project and load them first, then your own sheet **last**. There is no `@import` in TCSS, so each document lists the sheets it uses:
+Copy `kit.tui`, `theme.tcss`, and `kit.tcss` into a folder of your project (they find each other by their relative paths), include the kit as the first child of your `<tui>`, and load your own sheet after it:
 
 ```tui
 <tui theme="auto">
-  <style src="theme.tcss"/>
-  <style src="kit.tcss"/>
+  <include src="kit/kit.tui"/>
   <style src="app.tcss"/>
-  <screen>
-    <col width="1fr" height="1fr" pad="1">
+  <screen id="main">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <use template="k-alert" class="warn" with="quota as a"/>
       <box class="k-card" title="Deploy">
         <text class="k-card-title">api-gateway 2.14.0</text>
         <row class="k-card-actions">
@@ -33,31 +34,71 @@ Copy `theme.tcss` and `kit.tcss` into your project and load them first, then you
         </row>
       </box>
     </col>
+    <use id="confirm" template="k-confirm" class="danger" with="confirm as d"/>
   </screen>
 </tui>
 ```
 
+A component that takes data is a **template**: `<use template="k-NAME">` copies it where it stands. A component whose content is yours (a card, a button row, a table's columns, a menu) is a **class**: you write the markup and give it the kit's classes, since a template has no slots.
+
+### Data: `with`
+
+A template reads everything it shows through the alias of `with`. `with="quota as a"` makes `a.title` read `quota.title`, so one template serves any part of your store, and a widget that writes (a field's input, the palette's cursor) writes the path the alias stands for:
+
+```json
+{
+  "quota": { "title": "Quota", "icon": "!", "text": "You have used 92% of this month's build minutes." },
+  "confirm": { "open": false, "title": "Delete project", "body": "This cannot be undone.", "no": "Cancel", "yes": "Delete" }
+}
+```
+
+Labels, titles, and texts are all paths, a button's label included. **Flags** (the paths a template reads in `if`, `open`, or a `class:NAME` guard) are optional members of the `with` object: a missing one reads as false, so `{"icon": "!"}` shows the icon and leaving `icon` out hides it. The elements of an array the template repeats, such as the log's lines, still carry every flag. A template that reads two objects takes two aliases: `with="palette as p, found as f"`.
+
+### Variants: `class`
+
+A variant is a static class on the `<use>`: `<use template="k-alert" class="danger" …/>`. It lands on the copy's root, and the kit's rules style the parts from there. When the variant comes from your data instead, a template reads a flag for it (`d.danger` on the dialog, `m.ok`, `m.warn`, and `m.danger` on the meter).
+
+### Ids and actions
+
+A template that holds ids needs an `id` on its `<use>`, which becomes the prefix of every id in the copy, with two underscores. `<use id="confirm" template="k-confirm">` makes `confirm__dialog`, `confirm__no`, and `confirm__yes`, and a field `<use id="profile__email" template="k-field">` makes the input `profile__email__input`. Refer to them by those names from your own markup and host: `focus="#profile__email__input"`, `when="#log__view"`.
+
+The kit's actions are `component_verb`: `dialog_confirm`, `palette_run`, `toast_show`, `form_submit`. An action does not say which copy fired it; a host routes by the part of the event's `source` before the last `__`, so `confirm__yes` belongs to the instance `confirm`, and one handler serves every dialog the document uses.
+
+The kit's keymaps name classes only, never ids, since they land in every document that includes the kit: `y` and `n` answer whichever dialog has focus. While a modal is open it traps the keymap, so a key that must also work under one goes in a `<keymap when="modal">` of your own. The palette's arrows move the list of your copy, so they name its id and live in your document:
+
+```tui
+<keymap when=".k-palette">
+  <bind keys="down,ctrl+n" action="move-next" to="#palette__list"/>
+  <bind keys="up,ctrl+p" action="move-prev" to="#palette__list"/>
+</keymap>
+```
+
+### Rebranding
+
 The sheets are cascaded together, and where two rules tie the later one wins. That is how you rebrand the kit: every color is a token in `:root`, so your own sheet only re-declares the ones you want to change.
 
 ```tcss
-/* app.tcss, loaded after theme.tcss and kit.tcss */
+/* app.tcss, loaded after the kit */
 :root { --accent: #e8590c; --focus: #e8590c; }
 @media (theme: light) {
   :root { --accent: #c2410c; --focus: #c2410c; }
 }
 ```
 
-Every document in the kit validates on its own, so you can try a component before copying it:
+### Checking it
+
+The kit itself is checked on its own, and every component document validates and runs, so you can try a component before using it:
 
 ```sh
+tuimark validate kit/kit.tui          # ok (fragment checked on its own)
 tuimark validate kit/components/table.tui --data kit/components/table.sample.json
-tuimark run kit/components/table.tui --data kit/components/table.sample.json
+tuimark run kit/components/confirm.tui --data kit/components/confirm.sample.json
 ```
 
 Each component file starts with a **contract**, an XML comment that says what it needs from your store and your host:
 
 ```text
-k-NAME · Contract: <store paths it reads and writes> · Actions: <named actions> · Keys: <keys> · Requires: <other kit classes>
+k-NAME · Contract: <the with alias and the paths it reads and writes> · Actions: <named actions> · Keys: <keys> · Requires: <other kit classes>
 ```
 
 ## Tokens
@@ -77,13 +118,13 @@ Selection and focus never rely on a background color alone. A cursor row is also
 
 ## Conventions
 
-**Classes.** Every kit class starts with `k-`: `k-card` for a component and `k-card-title` for a part of it. (TCSS has no descendant combinator, only `>`, so a part cannot be styled as "text inside a card"; each part carries its own class.) A **modifier** is a second, short class on the same node, such as `primary`, `ok`, `warn`, `danger`, and it is only ever used next to its component class: `k-btn danger`, `k-badge ok`, `k-alert warn`. Pick a modifier from your data with `class:NAME="path"` guards.
+**Classes.** Every kit class starts with `k-`: `k-card` for a component and `k-card-title` for a part of it. (TCSS has no descendant combinator, only `>`, so a part cannot be styled as "text inside a card"; each part carries its own class.) A **modifier** is a second, short class on the same node, such as `primary`, `ok`, `warn`, `danger`, and it is only ever used next to its component class (`k-btn danger`, `k-badge ok`) or as a `<use>`'s variant, which lands on a `k-` root. Pick a modifier from your data with `class:NAME="path"` guards.
 
-**Ids** are `instance__part`, with two underscores: `confirm__dialog`, `confirm__yes`, `confirm__no`, `profile__email`. A node that is the whole component keeps the instance name (`svc` for a table), and so do the singletons of your app (`app`, `status`, `nav`).
+**Ids** are `instance__part`: a use's id is the instance and the template's ids are the parts. A node that is the whole component keeps the instance name (`svc` for a table), and so do the singletons of your app (`app`, `status`, `nav`).
 
-**Actions** are `component_verb`, a plain identifier: `dialog_confirm`, `palette_run`, `toast_show`, `form_submit`, `table_select`. Generic names such as `cancel` or `save` are avoided. An action does not say which instance fired it; a host routes by the prefix of the event's `source` before the last `__`, so `confirm__yes` belongs to the instance `confirm`, and one handler serves every dialog.
+**Actions** are `component_verb`, a plain identifier. Generic names such as `cancel` or `save` are avoided.
 
-**Overlays** (dialogs, the palette, the help) are modals that close on `esc`, write their own size, and declare their keys in a keymap scoped to their own class, listed before any global keymap:
+**Overlays** (the dialog, the palette, the help) are modals that close on `esc` through their `on:escape` action, and declare their keys in a keymap scoped to their own class, listed before any global keymap (the kit's come first, from the include):
 
 ```tui
 <keymap when=".k-dialog">
@@ -92,45 +133,45 @@ Selection and focus never rely on a background color alone. A cursor row is also
 </keymap>
 ```
 
-**Sizes are explicit.** A component that fills a space says so in its class, and a `tabs` writes `focusable`, so nothing depends on the default size of a bare `row`, `col`, or modal.
+**Sizes are explicit.** Every template's root writes its own size, so a copy is the same size in a screen, a tab, or a column; a component that fills a space says so in its class; a `tabs` writes `focusable`. The confirm dialog takes the size of its content, up to 60 columns where its text wraps.
 
-## Kit components as templates
+## Templates in your own markup
 
-The kit is markup you copy, and copying a component three times into one document means three copies to keep in step. Since [`<template>` and `<use>`](/guide/composition) a component can be written once and used where it is needed. The kit's `instance__part` ids are exactly the ids a use gives its copy: the confirm dialog below, used as `confirm`, has the parts `confirm__dialog`, `confirm__yes`, and `confirm__no`, which is what the host's routing by the part before the last `__` expects.
+A template from the kit is an ordinary [template](/guide/composition), so everything about `<use>` holds for it. The confirm dialog, included and used once:
 
 <include cwd lang="tui">snippets/templates/kit-dialog.tui</include>
 
-The two `<style>` lines point at the kit's sheets in this repository; use the paths of your copy. The dialog's `y` key routes to the instance that has focus:
+The include's path points at the kit in this repository; use the path of your copy. The dialog's `y` key routes to the copy that has focus:
 
 <include cwd lang="term">snippets/out/tpl-kit-events.txt</include>
 
-The `source` is `confirm__no`, the button the template's `focus="#no"` put the cursor on (the safe one), so one `dialog_confirm` handler serves every dialog the document uses. The kit's own component files stay plain markup, so each one validates and runs alone.
+The `source` is `confirm__no`, the button the template's `focus="#no"` put the cursor on (the safe one), so one `dialog_confirm` handler serves every dialog the document uses.
 
 ## Components
 
-| Component | Class | In one line |
+| Component | Use | In one line |
 |---|---|---|
-| badge | `k-badge` | a short status label, with a modifier for its color |
-| button | `k-btn` | `primary`, `secondary`, `danger` and `ghost`, inverted when focused |
-| card | `k-card` | a bordered panel with a title that takes the focus color while it holds focus |
-| alert | `k-alert` | a callout with an icon, in four status colors |
-| app bar | `k-appbar` | a one-row bar docked to the top |
-| status bar | `k-statusbar` | a one-row bar docked to the bottom, with filled segments |
-| key hints | `k-hints` | the keymap's labeled rows as a row of hints |
-| confirm dialog | `k-dialog` | a modal that puts the cursor on the safe button |
-| form field | `k-field` | a label, an input, help text and an error line, with invalid styling |
-| empty state | `k-empty` | an icon, a title, a line of help and a call to action, centered |
-| data table | `k-table` | a table with a header, right-aligned numbers and columns that hide by priority |
-| menu | `k-menu` | a navigation list with icons, shortcuts and optional check marks |
-| tabs | `k-tabs` | a tab strip bound to a path |
-| labeled progress | `k-meter` | a label, a value and a bar in eighths |
-| stat | `k-stat` | a KPI card with a change and a sparkline |
-| toast | `k-toast` | a one-row notice that never moves the page |
-| command palette | `k-palette` | a modal with an input over a filtered list |
-| help overlay | `k-help` | a modal that lists every labeled key |
-| split pane | `k-split` | a list beside a detail card, stacked on a narrow terminal |
-| log panel | `k-log` | a scrolling log that follows its end |
-| breadcrumb | `k-breadcrumb` | the current path, down to the last crumb on a narrow terminal |
+| badge | class `k-badge` | a short status label, with a modifier for its color |
+| button | class `k-btn` | `primary`, `secondary`, `danger` and `ghost`, inverted when focused |
+| card | class `k-card` | a bordered panel with a title that takes the focus color while it holds focus |
+| alert | template `k-alert` | a callout with an icon, in four status colors |
+| app bar | class `k-appbar` | a one-row bar docked to the top |
+| status bar | class `k-statusbar` | a one-row bar docked to the bottom, with filled segments |
+| key hints | class `k-hints` | the keymap's labeled rows as a row of hints |
+| confirm dialog | template `k-confirm` | a modal that puts the cursor on the safe button |
+| form field | template `k-field` | a label, an input, help text and an error line, with invalid styling |
+| empty state | template `k-empty` | an icon, a title, a line of help and a call to action, centered |
+| data table | class `k-table` | a table with a header, right-aligned numbers and columns that hide by priority |
+| menu | class `k-menu` | a navigation list with icons, shortcuts and optional check marks |
+| tabs | class `k-tabs` | a tab strip bound to a path |
+| labeled progress | template `k-meter` | a label, a value and a bar in eighths |
+| stat | template `k-stat` | a KPI card with a change and a sparkline |
+| toast | template `k-toast` | a one-row notice that never moves the page |
+| command palette | template `k-palette` | a modal with an input over a filtered list |
+| help overlay | template `k-help` | a modal that lists every labeled key |
+| split pane | class `k-split` | a list beside a detail card, stacked on a narrow terminal |
+| log panel | template `k-log` | a scrolling log that follows its end |
+| breadcrumb | template `k-breadcrumb` | the current path, down to the last crumb on a narrow terminal |
 
 Markup has no expressions, so a few components lean on the host: the palette's filtered list and the split pane's detail are computed with `Derive`, and a toast is cleared by an `Every` tick. The contract comment of each file says which, and the [helpers](#helpers) below do the common ones for you.
 
@@ -147,10 +188,12 @@ To use one, copy its file into your project. In Go, change `package kit` to your
 | `filter` | substring or fuzzy match over an array of objects, by named fields | `{items, any, count, total}` at a path you choose |
 | `sortpage` | cycle the sort of a column (with an arrow in its title) and paginate (`1–50 of 340`) | the sorted rows of the page, and a meta object |
 | `form` | per-field rules (required, pattern, length, your own function) on change and on submit | `forms.<form>.<field>.error`, `forms.<form>.valid` |
-| `dialog` | `Confirm(instance, title, body, onConfirm)` opens a `k-dialog` and routes `dialog_confirm` / `dialog_cancel` by instance | `<instance>.open`, `.title`, `.message`, `.result` |
+| `dialog` | `Confirm(instance, title, body, onConfirm)` opens a `k-confirm` copy and routes `dialog_confirm` / `dialog_cancel` by instance | `<instance>.open`, `.title`, `.body`, `.yes`, `.no`, `.result` |
 | `palette` | a registry of commands (title, key hint, function) behind the palette | `palette.commands`, `found`, `palette.open`, `.cur`, `.last` |
 | `async` | `Load(path, fn)` runs slow work off the handler | `<path>.loading`, `.error`, `.data` |
 | `format` | `Bytes`, `Duration`, `Relative`, `Percent`, `Thousands` | strings ready for `{path}` |
+
+The dialog's button labels are `Confirm` and `Cancel` unless the request names its own (`Yes` and `No` in Go, `yes` and `no` in TypeScript).
 
 The Go API has `Derive` and `Every` and the TypeScript host does not, so two things differ. In Go, `filter` and `sortpage` are derived values that follow every store write, and a toast expires on an `Every` tick. In TypeScript you call `recompute()` after a write, the palette's input fires `palette_query` on every change so the parent can, and `toasts.start()` runs the tick on a timer.
 
@@ -174,7 +217,7 @@ const stop = toasts.start(500);
 await toasts.push("ok", "Settings saved");
 ```
 
-A form named by the id prefix of its inputs (`profile__name`, `profile__email`), in Go:
+A form is named by the id prefix of its fields, `<use id="profile__name" template="k-field" with="forms.profile.name as f"/>` and `<use id="profile__email" …/>`, whose inputs fire `form_validate` from `profile__name__input` and `profile__email__input`. In Go:
 
 ```go
 forms := kit.NewForms(app)
@@ -192,7 +235,7 @@ Sorting by clicking a column header (`<column on:click="table_sort">`, with `tit
 
 ## The gallery
 
-`examples/kit-gallery` shows every component together, with a Go host that implements the actions and routes them by instance. See it on the [Examples](/examples#kit-gallery) page, or run the view alone with fixed answers for every action:
+`examples/kit-gallery` includes the kit and shows every component together, with a Go host that implements the actions and routes them by instance. See it on the [Examples](/examples#kit-gallery) page, or run the view alone with fixed answers for every action:
 
 ```sh
 tuimark run examples/kit-gallery/app.tui --data examples/kit-gallery/sample.json --mock examples/kit-gallery/mock.json

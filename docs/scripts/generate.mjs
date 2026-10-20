@@ -9,7 +9,7 @@
 //                                        `tuimark play --frames` sessions (the landing page's hero)
 //   lib/generated/{catalog,shots}.json   counts, tag lists and the shot index the site's
 //                                        components read
-//   lib/generated/kit.json               the kit's component documents, for the /kit page
+//   lib/generated/kit.json               the kit's component documents and templates, for /kit
 //
 // Usage, from the repository root (or `task docs-gen` / `task docs-check`):
 //
@@ -623,7 +623,8 @@ for (const s of SHOTS) playShot(s)
 //
 // One shot per kit/components/NAME.tui, run from the repository root with
 // its NAME.sample.json, and the document itself (its first line is the
-// component's contract) for the /kit page, which shows the markup to copy.
+// component's contract) for the /kit page, which shows the markup to copy,
+// and for a template component the template from kit/kit.tui.
 // The order and the groups are the page's; `title` and `line` are the
 // component's name and one-line summary in the kit guide's table.
 
@@ -672,6 +673,26 @@ const KIT = [
 ]
 const KIT_COLS = 72
 const kitIndex = []
+// A component that is a <template> in kit/kit.tui (its contract names the
+// template) gets the template's source too, with the comment above it,
+// dedented: its document in kit/components shows only the <use>.
+const kitTemplate = (() => {
+  const kit = readFileSync(join(REPO, 'kit', 'kit.tui'), 'utf8')
+  return (id) => {
+    const open = kit.indexOf(`<template id="${id}">`)
+    if (open < 0) return null
+    const close = kit.indexOf('</template>', open) + '</template>'.length
+    let start = open
+    const before = kit.slice(0, open).trimEnd()
+    if (before.endsWith('-->')) start = before.lastIndexOf('<!--')
+    const text = kit.slice(kit.lastIndexOf('\n', start) + 1, close)
+    const indent = text.match(/^ */)[0].length
+    return text
+      .split('\n')
+      .map((l) => (l.startsWith(' '.repeat(indent)) ? l.slice(indent) : l.trimStart()))
+      .join('\n')
+  }
+})()
 {
   const files = readdirSync(join(REPO, 'kit', 'components')).filter((f) => f.endsWith('.tui')).map((f) => f.slice(0, -4))
   const listed = KIT.flatMap((g) => g.items.map((c) => c.name))
@@ -686,7 +707,9 @@ const kitIndex = []
       if (!m) throw new Error(`generate: ${file} does not start with a contract comment`)
       const data = existsSync(join(REPO, 'kit', 'components', `${n}.sample.json`)) ? `kit/components/${n}.sample.json` : undefined
       playShot({ name: `kit-${n}`, file, data, cols: KIT_COLS, rows, alt })
-      components.push({ name: n, title, line, cls: m[1], contract: m[2], actions: m[3], keys: m[4], requires: m[5], file, data: data ?? null, shot: `kit-${n}`, source })
+      const template = kitTemplate(m[1])
+      if (template === null && source.includes(`template="${m[1]}"`)) throw new Error(`generate: ${file} uses ${m[1]}, which kit/kit.tui does not define`)
+      components.push({ name: n, title, line, cls: m[1], contract: m[2], actions: m[3], keys: m[4], requires: m[5], file, data: data ?? null, shot: `kit-${n}`, source, template })
     }
     kitIndex.push({ group, components })
   }

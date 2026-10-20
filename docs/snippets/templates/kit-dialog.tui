@@ -1,24 +1,9 @@
 <tui theme="auto">
-  <style src="../../../kit/theme.tcss"/>
-  <style src="../../../kit/kit.tcss"/>
-  <template id="dialog">
-    <modal id="dialog" class="k-dialog danger" open="d.open" title="{d.title}" focus="#no" on:escape="dialog_cancel">
-      <text class="k-dialog-text">{d.message}</text>
-      <row class="k-dialog-actions">
-        <spacer/>
-        <button id="no" class="k-btn secondary" label="Cancel" on:click="dialog_cancel"/>
-        <button id="yes" class="k-btn danger" label="Delete" on:click="dialog_confirm"/>
-      </row>
-    </modal>
-  </template>
-  <keymap when=".k-dialog">
-    <bind keys="y" action="dialog_confirm" label="confirm"/>
-    <bind keys="n" action="dialog_cancel" label="cancel"/>
-  </keymap>
+  <include src="../../../kit/kit.tui"/>
   <screen id="demo">
     <col width="1fr" height="1fr" pad="1">
       <text class="k-title">confirm dialog</text>
     </col>
-    <use id="confirm" template="dialog" with="confirm as d"/>
+    <use id="confirm" template="k-confirm" class="danger" with="confirm as d"/>
   </screen>
 </tui>

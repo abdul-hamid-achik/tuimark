@@ -220,4 +220,4 @@ A message quotes at most 64 bytes of an id or a path, cut at a character boundar
 - [`validate`, `fmt`, `inspect`, `run`, and `preview --watch`](/guide/tools#composition-in-the-tools) know about fragments and copies.
 - [The language server](/guide/editors#what-the-language-server-does) checks a fragment through the documents that include it and follows `template=` and scoped ids across files.
 - [`play` and `dump`](/guide/testing#documents-built-from-parts) in a test see the expanded document, so a golden does not change when you move a piece into a fragment, as long as the expansion is the same.
-- The [kit](/guide/kit#kit-components-as-templates) is copy-and-paste markup; a component you paste several times in one document is a good template.
+- The [kit](/guide/kit#templates-in-your-own-markup) is a fragment of templates: include `kit/kit.tui` once and copy its components with `<use>`.
