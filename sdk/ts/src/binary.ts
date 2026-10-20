@@ -1,7 +1,7 @@
 // Finds, or fetches, the `tuimark` executable that matches this package.
 //
-// The package version is the Tuimark release it drives: version 0.4.2 of
-// @thelacanians/tuimark runs the binary of the GitHub release v0.4.2. The
+// The package version is the Tuimark release it drives: version 0.4.3 of
+// @thelacanians/tuimark runs the binary of the GitHub release v0.4.3. The
 // binary is looked up in this order (nothing here needs a postinstall script,
 // which bun and pnpm 10 block):
 //

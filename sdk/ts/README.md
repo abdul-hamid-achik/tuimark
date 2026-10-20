@@ -10,7 +10,7 @@ npm install -g @thelacanians/tuimark      # the `tuimark` command everywhere
 
 ## The `tuimark` command
 
-The package has a `bin` named `tuimark`. It runs the Go binary of the Tuimark release that has the same version as this package (`@thelacanians/tuimark@0.4.2` runs `v0.4.2`), with your arguments, your terminal, and your signals, and exits with its exit code. It needs Node 18 or later, or Bun, and no `postinstall` script (bun and pnpm 10 block those). `tuimark host` also works through it when a parent starts the installed command directly (a global install, or `node_modules/.bin/tuimark`) with its pipes on fd 3 and fd 4; through `npx` or `bunx` the runtime owns those descriptors, so a parent should start `tuimark host` itself, or, from TypeScript, use `spawnHost`, which runs the binary directly.
+The package has a `bin` named `tuimark`. It runs the Go binary of the Tuimark release that has the same version as this package (`@thelacanians/tuimark@0.4.3` runs `v0.4.3`), with your arguments, your terminal, and your signals, and exits with its exit code. It needs Node 18 or later, or Bun, and no `postinstall` script (bun and pnpm 10 block those). `tuimark host` also works through it when a parent starts the installed command directly (a global install, or `node_modules/.bin/tuimark`) with its pipes on fd 3 and fd 4; through `npx` or `bunx` the runtime owns those descriptors, so a parent should start `tuimark host` itself, or, from TypeScript, use `spawnHost`, which runs the binary directly.
 
 The binary is found in this order:
 

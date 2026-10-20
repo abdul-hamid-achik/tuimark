@@ -7,8 +7,282 @@ line.
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-10-19
+
+The 0.4b release. It extends the current language, the language of a
+`<tui>` without `version`, in three directions:
+
+- reuse and split markup: `<include>` and `<fragment>` put a document in
+  several files, and `<template>` and `<use>` stamp a piece of markup with
+  its own ids and its own data;
+- form controls: `<checkbox>`, `<select>`, radio groups (`single`), a
+  spinner (`<progress indeterminate>`), and `{path}` in a button's label;
+- defaults for people coming from the web: content-sized `col` and `row`,
+  an `esc` that closes a modal, a modal that traps the keymap, a focus look
+  on buttons.
+
+There is no `version="4"`: writing it is `V003`, and the document is read as
+`version="1"`. Tools that need a number for the current language use 4. A
+document that writes `version="1"`, `"2"`, or `"3"`, and the spike `<app>`
+root, keeps exactly the meaning, diagnostics, and dumps it had in 0.4.1. A
+tag, attribute, or `{path}` that 0.4.3 adds is `V001`, `V002`, or `V003` in
+such a document, with a message ending in `(requires a <tui> without
+version)`; an include's file is never read there.
+
+### Changed — versionless documents
+
+A `<tui>` without `version` changes layout and keys with 0.4.3. To keep
+0.4.1's behavior, write `<tui version="3">`; nothing else in the document
+needs to change. To see what a document gains or loses, copy it with
+`version="3"`, run `tuimark dump --format json` on both at 80 and 120
+columns, and diff the results. Measured this way on the 15 examples that
+write no version, at five sizes, none changes its base layout, because each
+writes the sizes it relies on; with a modal open, some show the focus look,
+the trapped keymap's shorter hint bar, or content-sized hints. Documents that
+leaned on the old defaults change in these ways.
+
+**Layout.**
+
+- **`col` and `row` are content-sized** (`auto` on both axes) except as
+  direct children of a `screen`, a `modal`, or a `tab`, where they stay
+  `1fr` by `1fr`. A sidebar `col` beside a body `col` is as wide as its text,
+  and the body needs `width: 1fr` to take the rest; panes that are wider than
+  their row push the last ones out (`L009`), and a `wrap: wrap` text in a
+  content-sized pane is measured unwrapped. The `col` and `row` children of an
+  `each` container take their content size instead of equal shares, `justify`
+  acts in containers that `1fr` children no longer fill, and a `%` child of a
+  content-sized container is `L002`. A header or status `row` written directly
+  in a `screen` is still `1fr`, so give it `height: 1`. `box` is unchanged (it
+  was never `1fr` on its main axis).
+- **The sibling-`fr` rule applies to viewports only.** An unsized sibling of
+  an `fr` child becomes `1fr` only when it is a `scroll`, a `list`, a `table`,
+  or has `overflow: scroll`; a `text`, `button`, `box`, `tabs`, or `hints` next
+  to an `fr` pane stays at its content size. A filter `row` above a list in a
+  `tab`, a `screen`, or a `modal` is `1fr` and splits the space with the list:
+  give it `height: 1`.
+- **`fr` meets `min-*` and `max-*` as CSS does.** A child that a `max` clamps
+  (or a `min` lifts) is frozen at that size, and the other `fr` children share
+  what it frees: three `1fr` columns in 40 cells, the first with `max-width:
+  10`, are 10, 15, and 15, where a pinned document gives 10, 13, and 14 and
+  leaves 3 cells empty. Table columns keep their old split.
+- **`modal` and `hints` are content-sized.** A `modal` with no size is as big
+  as its content, wide enough for its title, capped by a written `max-width`
+  or `max-height` and otherwise by 80% of the screen (a pinned document
+  gives 80% by 80%). A `hints` is as big as its items along their axis and
+  drops the items that do not fit, with no diagnostic, so a status row of a
+  text, a `spacer`, and `<hints/>` keeps the text and the hints whole.
+- **An `input` is `max(width(placeholder) + 1, 20)` columns wide** when it
+  has no `width`, whatever its value, so it no longer grows while you type.
+
+**Keys and focus.**
+
+- **`esc` closes the top modal** that has no `on:escape`, by writing `false`
+  at its `open` path (its `bind` path when it has no `open`); the next frame
+  fires `on:close` and gives focus back. A modal whose `open` is `true`,
+  `false`, or `!path`, or whose path a `Derive` computes, stays open, because
+  there is nothing to write: use one of these, or `on:escape`, for a dialog
+  that must not be dismissed (the game-over modals of `snake` and `tetris`).
+- **A modal traps the keymap.** While one is open, a keymap row fires only
+  when its effective `when` matches the focus chain up to the top modal, so a
+  `q` quit row without `when` no longer quits under a confirmation, and a
+  `ctrl+c` row without `when` gives way to the built-in quit. `tab`,
+  `shift+tab`, `ctrl+c`, and the keys the focused widget takes still work, and
+  `<hints/>` shows only the rows that fire. A key that must also work under a
+  modal is repeated in `<keymap when="modal">`, a group whose rows all carry
+  that `when`.
+- **A `tabs` is focusable** without `focusable="true"`: `tab` reaches it,
+  `left` and `right` switch the tab, and focus stays on the strip when the
+  active tab changes. `focusable="false"` turns it off. Specs that count `tab`
+  presses change; a `screen focus=` keeps the old initial focus.
+- **A focused `button`, `checkbox`, or `select` is reversed** by the built-in
+  sheet (`button:focus, checkbox:focus, select:focus { reverse: true; }`).
+  A document whose buttons have another focus style adds `reverse: false` to
+  it; the kit's `.k-btn:focus` now does.
+- **`ctrl+i`, `ctrl+j`, and `ctrl+m` in a keymap are `V003`**, once per
+  token, because a terminal delivers them as `tab` and `enter` and they never
+  matched. Write `tab` or `enter`. Pinned documents accept them as before.
+
+**Messages and output.**
+
+- **`L002` and `L009` name the fix.** `L002` under a `col` or `row` ends with
+  `(width: 1fr fills it)` (or `height`), and `L009` on a content-sized `col`,
+  `row`, or `box` says that the child is sized by its content and does not
+  shrink, and to give it `width: 1fr` (or `flex: 1`), or to write `overflow:
+  hidden` to keep the cut.
+- **`tuimark ir` prints `"version": "0.4"` for a versionless document** (it
+  printed `"0.3"`), validated by the new `schema/ir.v0.4.json`, and `tuimark
+  inspect` ends with a `source` line (`--json`: a `source` member) naming the
+  element a node was built from. Pinned documents print neither.
+
+### Added
+
+- **`<include src>` and `<fragment>`.** `<include src="parts/forms.tui"/>`
+  places the elements of another file where it stands: directly under
+  `<tui>`, in a `<screen>`, in a container, or in a `<keymap>`. `src` is
+  relative to the file that writes the include. The file's root is
+  `<fragment>`, which takes no attributes and holds any number of elements,
+  `<template>`s, a `<style>`, a `<keymap>`, or further includes. Ids, styles,
+  and data are shared and the result is checked as if written where the
+  include stands; a diagnostic about a placed element ends with `, placed by
+  <include> at FILE:LINE:COL`. A fragment is named by its path relative to the
+  document, and the same fragment may be included twice (its ids then repeat:
+  `V004`). Failures insert nothing and the rest of the document is still
+  checked:
+  - an include cycle is `V006`, judged by file identity, so a symbolic link
+    cannot hide one; so are a file outside the file system `LoadFS` was
+    given, one that cannot be read, and one that is not a regular file of at
+    most 64 MiB;
+  - a stylesheet, or a file whose root is not `<fragment>`, is the new `V020`.
+
+  A fragment is not a document: `dump`, `play`, `preview`, `ir`, and
+  `inspect` print `V005` for it ("check it through the document that includes
+  it") and exit 2, while `validate` checks it on its own (`ok (fragment
+  checked on its own)`, with or without `--data`) and `fmt` formats it.
+- **`<template>` and `<use>`.** `<template id="field">` holds a piece of
+  markup that is never drawn by itself, and `<use id="email" template="field"
+  with="form.email as f"/>` is replaced, when the document is read, by a copy
+  built where the use stands. A template is a direct child of `<tui>` or
+  `<screen>`, in the document or in a fragment, and may come after its uses.
+  A `<use>` is not a node, so it takes no space and holds no content (no
+  slots).
+  - **Scoped ids.** The copy's ids are prefixed with the use's id and two
+    underscores: the `input` of `<use id="email">` is `email__input`, and a
+    use inside a template adds its own prefix (`billing__street__input`).
+    Outside the copy (`to=`, `when=`, `focus=`, `#id` selectors, `focus:`
+    steps, an event's `source`) you write the scoped id; inside the template
+    `#x` means the element of the same copy. A use needs an `id` when its
+    template holds any (`V012`), and naming an unscoped id from outside is
+    `B005` with the scoped form in the message.
+  - **`with="path as alias"`** makes the alias stand for the path inside the
+    copy, so `{f.label}` reads `form.email.label` and `bind="f.value"` reads
+    and writes `form.email.value`; clauses are separated by exactly `, `. A
+    copy also reads the aliases in scope where its use stands (a list row's
+    `each` alias). A `with` path that is missing is one `B003` at the use and
+    nothing more from the copy, and a flag read through an alias that stands
+    for an object (`if`, `hidden`, `disabled`, `open`, `class:NAME`) is `null`
+    when the member is missing, so a field shows an error only when the host
+    wrote one.
+  - **Guards and classes.** `if` and `hidden` on a use are read where the use
+    stands and are decided per row in a list `<item>`, an `each` container, or
+    a table. A static `class` on a use is added to every top-level element of
+    the copy, after the template's own classes, so
+    `<use template="confirm" class="danger">` styles one copy with an ordinary
+    class rule. To reuse a table column or its row `<item>`, make it the
+    template and put the use directly in the `<table>`.
+  - **Errors.** A use without `template` or naming a missing template, and each
+    use on a cycle of templates, is the new `V019`; a cycle is named as a
+    simple loop from the use's own template (up to 8 templates whole, else the
+    first 8, `… (N more)`, and the template it returns to), and a long ring
+    is found in near-linear time. A malformed `with`, a repeated alias, or one
+    already in scope is `V011`; any other attribute on a use is `V002`, naming
+    the class as the way to style a copy.
+  - **Messages about a copy** say which copy they mean. A path that went
+    through an alias ends with `(P via <use id="email">)`, naming the path it
+    stands for (a use without an id is `<use template="badge">`, with ` at
+    FILE:LINE:COL` when the path starts with an `each` alias); any other
+    diagnostic ends with `, placed by <use …> at FILE:LINE:COL`. Each is
+    reported once per written element, and an id, path, or template name a
+    message quotes is cut at 64 bytes, at a character boundary, followed by
+    `…`.
+- **Expansion limits, `V021`.** Includes and uses share a budget per
+  document: 100000 elements inserted (counted once per copy, at every depth),
+  16 MiB of placed source (fragment files, copied templates, scoped-id
+  prefixes, and the paths `with` substitutes), and 256 levels of nesting. The
+  include or use that would go over inserts nothing, no later one expands,
+  and the rest of the document is still reported. A fragment included inside a
+  `<template>` has a budget of its own, so a template whose include fans out
+  is reported whether or not any use copies it.
+- **`single` on `list` and `table`.** With `checked`, `single="true"` makes
+  the path hold one row key, or `null`, instead of an array: a radio group.
+  `space` on the cursor row chooses it (choosing the checked row again keeps
+  it), `check-none` clears it, and `check-all` never applies (`B007`).
+  Without `checked` it is `V018`; a checked path that is an array or an object
+  is `B008`.
+- **`<checkbox>`.** `<checkbox id="dark" bind="settings.dark" label="Dark
+  mode" on:change="dark_changed"/>` paints `[x] Dark mode` or `[ ] Dark mode`
+  (`:checked` and `:focus` match). `space` toggles it, writing a boolean to
+  `bind` (without `bind` the runtime keeps the value by `id`) and firing
+  `on:change` with it; `enter` goes on to the keymap, so a form's submit row
+  fires from it. A click toggles it too, and its `label` is a template like a
+  `<text>` body. A bound value that is not a boolean is the new `B011`, a
+  warning.
+- **`<select>`.** `<select id="tz" bind="tz" each="zones as z" key="z.id"
+  label="{z.name}" placeholder="zone" on:change="tz_changed"/>` is one row: the
+  chosen option's label or the dim placeholder, then `▾`. `enter`, `space`, or a
+  click opens its option list below it (above it when there is more room
+  there), drawn over the screen and over every modal; the arrows, `home`,
+  `end`, `pgup`, and `pgdn` move its cursor, `enter`, `space`, or a click picks
+  (writing the key and firing `on:change` only when it changed), and `esc`
+  closes it. `tab`, `shift+tab`, and `ctrl+c` close it and then act as usual.
+  Style it with `select > list` and `select > list > item`. It needs `id`,
+  `each`, and `key` (`V012`, `V017`); a bound value that is no option's key is
+  the new `B012`, a warning. `validate` without `--data` skips `B011` and
+  `B012` with the other data checks.
+- **`<progress indeterminate="true">`** is a one-glyph spinner (`⠋⠙⠹…`, ASCII
+  under the 16-color profile) that turns every 100 ms. In a live session it
+  redraws on a session clock, painting only; it builds no frame, fires no
+  `Every`, and writes no `TUIMARK_LOG` record. Combined with `bind` or `value`
+  it is `V003`.
+- **`tick:DUR` in `play`** advances a virtual clock by `DUR` (`250ms`, `1.5s`,
+  `1m30s`; the units `ms`, `s`, `m`, and `h`, from `1ms` to `1h`), which turns
+  a spinner and calls a Go host's `Every` functions that fall due, so
+  time-based state can be tested. It is also `{"tick":"250ms"}` in a
+  `--script`, `"input": "tick:300ms"` in a golden manifest, and a step of
+  `tuimark_play` and `Play`. A spinner paints glyph `floor(V / 100ms)` at
+  virtual time `V`, and `Dump` paints the first. Every document accepts the
+  step; `play` without it never calls an `Every` function.
+- **`{path}` in a button.** A button's `label`, or its body when it has no
+  label, is a template resolved every frame like a `<text>` body: a missing
+  path is `B003` at the button, and an auto-width button follows its data.
+- **Tools.**
+  - `inspect` ends with the element a node was built from and, for a copy or
+    a placed element, one `via` line per use or include that placed it,
+    innermost first (`--json`: `source` with `file`, `line`, `col`, and `via`).
+  - `tuimark ir` keeps the composition as written: an `include` or `use` node
+    holds the nodes it placed, in the template's own words, with scoped ids,
+    each with a `from` member (`FILE:LINE`).
+  - `tuimark catalog` gains `current` (4), `since: 4` on the new tags and
+    attributes, and `keys.rejected_since` for the `ctrl+i`, `ctrl+j`, and
+    `ctrl+m` rule; `versions` still lists 1, 2, and 3.
+  - `run` and `preview --watch` watch every fragment the last load read, at any
+    depth, including one that does not exist yet, so creating it reloads.
+  - `tuimark lsp` gives a fragment the diagnostics of the documents that
+    include it (found among the open documents and the `.tui` files of its
+    directory and its parent), republishes them when either side changes,
+    checks a fragment no document reads on its own, follows `<include src>`,
+    `template=`, and scoped ids for go to definition, and completes template
+    ids and scoped ids, by the language of the document.
+  - `tuimark mcp` returns stderr as the result when a command exits 2 with
+    nothing on stdout (`tuimark_inspect` of a fragment), still not as an
+    error.
+- **VS Code extension:** highlighting and snippets for `include`, `fragment`,
+  `template`, `use`, `checkbox`, `select`, `single`, and `indeterminate`.
+- **Go API.** No function, type, or option is added. `Load`, `LoadFS`, and
+  `Parse` expand includes and templates, `Play` takes the `tick:` step and
+  calls `Every` functions on its virtual clock (up to 10000 per step, not when
+  `PlayOptions.NoHandlers` is set), and an `Every` function's `ErrQuit` ends the
+  call with `Quit: true`.
+- **Docs.** New guides, "Templates and composition" and "Tuimark for frontend
+  devs" (a map from the web, with the differences between the current language
+  and a pinned `version="3"`), and the layout, widgets, interaction, language,
+  testing, and tools guides cover the 0.4b behavior.
+
 ### Changed
 
+- **Go API: `tuimark.Diagnostic` gained an unexported field.** It is an alias
+  of the internal type, which now keeps what a message cut at an element of a
+  copy, whole, so that two diagnostics whose messages read the same once cut
+  stay two. Unkeyed struct literals of `Diagnostic` no longer compile (write
+  the field names), and `==` also compares the hidden field, so two values
+  with equal exported fields can differ. The fields, their JSON, and
+  `String()` are unchanged. Before 1.0 this ships as a patch.
+- **The examples that opened modals follow the new keys.** `2048`,
+  `minesweeper`, `snake`, `sudoku`, and `tetris` repeat the keys that act
+  under a modal in a `<keymap when="modal">`, `snake`'s game-over modal reads
+  a derived path so `esc` leaves it open, and `tetris`'s has an `on:escape`.
+  The kit's `.k-btn:focus` writes `reverse: false`, since its colors are
+  already inverted. `schema/dump.v0.2.json` lists `checkbox` and `select` among
+  the node tags.
 - **The website moves to [tuimark.dev](https://tuimark.dev)** and is rebuilt
   with Next.js and Fumadocs in place of VitePress. Every page keeps its URL
   (the old `NAME.html` addresses redirect), and so does `tuimark.vercel.app`,
@@ -635,7 +909,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.3
 [0.4.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.2
 [0.4.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.1
 [0.4.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.0
