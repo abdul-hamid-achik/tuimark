@@ -7,8 +7,8 @@
 # spec and then reports all the failures, so one CI run shows everything that
 # broke.
 #
-# It builds nothing: the five binaries under bin/ must already exist (run
-# `task build`, or the `go build` lines in README's Testing section).
+# It builds nothing: every binary the specs run must already exist under bin/
+# (run `task build`).
 #
 # Usage:
 #   .github/scripts/glyph-specs.sh                      # every specs/glyphrun/*.yml
@@ -34,7 +34,10 @@ if ! command -v "$GLYPH" >/dev/null 2>&1; then
   exit 1
 fi
 
-for bin in tuimark inbox dashboard monitor agent; do
+# Every binary the specs run: the ./bin/ paths of glyphrun.config.yml's vars,
+# and bin/agent, which examples/agent's specs launch by path.
+bins="agent $(sed -n 's|^ *[A-Za-z0-9_]*: \./bin/\([A-Za-z0-9_-]*\)$|\1|p' glyphrun.config.yml)"
+for bin in $bins; do
   if [ ! -x "bin/$bin" ]; then
     echo "glyph-specs: bin/$bin is missing; build the binaries first (task build)" >&2
     exit 1

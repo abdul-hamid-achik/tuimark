@@ -61,7 +61,7 @@ host's `Derive`. Use the Go build for the real thing.
 
 ## What it shows
 
-- **`<scroll stick="bottom">`** (version 3): follows a growing log, holds still
+- **`<scroll stick="bottom">`**: follows a growing log, holds still
   once you scroll up, and sticks again after `G`.
 - **`App.Every`**: a 250ms tick appends lines in one `*Batch`; a 1s tick feeds the
   sparkline. Neither fires in `Dump` or `Play`, so the tests call them directly.

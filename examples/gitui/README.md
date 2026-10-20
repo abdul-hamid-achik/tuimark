@@ -80,7 +80,7 @@ tuimark play examples/gitui/app.tui --data examples/gitui/sample.json --input "2
 
 ## What it shows
 
-- `<tabs bind>` with `{counts.total}` in a version 3 tab label, `focus=` per
+- `<tabs bind>` with `{counts.total}` in a tab label, `focus=` per
   tab, `switch-to` and `move-next`/`move-prev` built-ins, `<hints/>` and a
   `scope="all"` help modal fed by labeled keymap rows.
 - Several `<keymap when>` blocks (`#files`, `#commits:focus`, `#filter`,

@@ -1,0 +1,64 @@
+version: 1
+name: help_esc_snake
+intent: |
+    examples/snake writes no version, so it is the current language, where
+    esc closes the top modal (SPEC v0.4b §31.7, test 172). Its help modal
+    holds every labeled key and three tips; opening it pauses the game. `?`
+    opens it; esc fires the modal's on:escape (help_close), the host writes
+    the help's flag false, and the app comes back, still running, with
+    `? help` in its hint bar. The autopilot plays, so no game over can open
+    the other modal before `?`. Its hint bar is trapped while the help is
+    open, so `? help` coming back shows the trap released.
+target:
+    cmd: ["${vars.snake}", "-autopilot"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "◆ snake"
+        timeoutMs: 5000
+    - press: "?"
+    - wait:
+        screen:
+            contains: "esc or ? closes this and resumes."
+        timeoutMs: 3000
+    - snapshot: help_open
+    - press: esc
+    - wait:
+        screen:
+            notContains: "esc or ? closes this and resumes."
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "? help"
+        timeoutMs: 3000
+    - snapshot: help_closed
+outcomes:
+    - id: question_mark_opens_the_help
+      description: "? opens the help modal"
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/help_open.txt"
+                if grep -qF 'esc or ? closes this and resumes.' "$f"; then
+                  echo '{"ok": true, "evidence": "the help_open snapshot shows the help"}'
+                else
+                  echo '{"ok": false, "evidence": "? did not open the help"}'
+                fi
+    - id: esc_closes_the_help
+      description: esc closes the help through on:escape; the app and its hint bar are back
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/help_closed.txt"
+                if ! grep -qF 'esc or ? closes this and resumes.' "$f" && grep -qF '◆ snake' "$f" && grep -qF '? help' "$f"; then
+                  echo '{"ok": true, "evidence": "the help_closed snapshot shows the app and its hint bar without the help"}'
+                else
+                  echo '{"ok": false, "evidence": "esc did not close the help, or the app did not come back"}'
+                fi
+contractHash: sha256:091b2757dbbc22809e8f197d25337755dca703408f0a7edc50c34f1fdcc4187a

@@ -1,0 +1,63 @@
+version: 1
+name: help_esc_pipeline
+intent: |
+    examples/pipeline writes no version, so it is the current language,
+    where esc closes the top modal (SPEC v0.4b §31.7, test 172). Its help
+    modal holds every labeled key and a tip, in a scroll, and a close
+    button. `?` opens it; esc fires the modal's on:escape (help_close), the
+    host writes the help's flag false, and the app comes back, still
+    running, with `? help` in its hint bar. The simulated run keeps going
+    behind the modal; the marker is the tip.
+target:
+    cmd: ["${vars.pipeline}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "◆ ci"
+        timeoutMs: 5000
+    - press: "?"
+    - wait:
+        screen:
+            contains: "f pauses and resumes the log."
+        timeoutMs: 3000
+    - snapshot: help_open
+    - press: esc
+    - wait:
+        screen:
+            notContains: "f pauses and resumes the log."
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "? help"
+        timeoutMs: 3000
+    - snapshot: help_closed
+outcomes:
+    - id: question_mark_opens_the_help
+      description: "? opens the help modal"
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/help_open.txt"
+                if grep -qF 'f pauses and resumes the log.' "$f"; then
+                  echo '{"ok": true, "evidence": "the help_open snapshot shows the help"}'
+                else
+                  echo '{"ok": false, "evidence": "? did not open the help"}'
+                fi
+    - id: esc_closes_the_help
+      description: esc closes the help through on:escape; the app and its hint bar are back
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/help_closed.txt"
+                if ! grep -qF 'f pauses and resumes the log.' "$f" && grep -qF '◆ ci' "$f" && grep -qF '? help' "$f"; then
+                  echo '{"ok": true, "evidence": "the help_closed snapshot shows the app and its hint bar without the help"}'
+                else
+                  echo '{"ok": false, "evidence": "esc did not close the help, or the app did not come back"}'
+                fi
+contractHash: sha256:aaa7de213c65491c7a10149250bd2e4728a1acfeceecc8a083d7f522e1fc10af

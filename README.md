@@ -1347,14 +1347,12 @@ the app's `-demo` mode).
 - `glyph run specs/glyphrun/*.yml` — terminal end-to-end specs driven by
   Glyphrun (the `glyph` CLI) against the real interactive hosts
   (`examples/inbox`, `examples/dashboard`, `examples/monitor`,
-  `examples/agent`) and the `tuimark` CLI itself. All five binaries must
-  exist under `bin/` before running the specs — build them first:
+  `examples/agent`, and the help modal of every example that writes no
+  `version`) and the `tuimark` CLI itself. Every binary the specs run must
+  exist under `bin/` first — `task build` builds `bin/tuimark` and all the
+  example apps:
   ```sh
-  go build -o bin/tuimark ./cmd/tuimark
-  go build -o bin/inbox ./examples/inbox
-  go build -o bin/dashboard ./examples/dashboard
-  go build -o bin/monitor ./examples/monitor
-  go build -o bin/agent ./examples/agent
+  task build
   ```
   The `host_ts*` specs also need `examples/host-ts`'s dependencies, which
   include `@thelacanians/tuimark` copied from `sdk/ts`. Reinstall them from scratch
@@ -1362,8 +1360,7 @@ the app's `-demo` mode).
   ```sh
   (cd examples/host-ts && rm -rf node_modules && bun install --frozen-lockfile)
   ```
-  or run `task build` (see `Taskfile.yml`), which builds all five in one
-  step; `task glyph` builds and then runs every spec; `task verify` runs
+  `task glyph` builds and then runs every spec; `task verify` runs
   fmt, vet, test, build, golden, and glyph in order — the full local gate.
   See `glyphrun.config.yml` and `glyph docs` for the spec format.
 

@@ -43,7 +43,7 @@ func TestExpansionLimitFanOutThroughLoadFS(t *testing.T) {
 	if _, err := app.Dump(80, 24); err != nil {
 		t.Fatal(err)
 	}
-	if d := time.Since(start); d > 20*time.Second {
+	if d := time.Since(start); d > 20*time.Second*slowdown {
 		t.Errorf("load, validate, and dump took %v", d)
 	}
 	if len(v021) != 1 || !strings.HasPrefix(v021[0], "V021 f29.tui:") || !strings.Contains(v021[0], `include src="f30.tui" exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands`) {
@@ -74,7 +74,7 @@ func TestExpansionLimitCountsIncludesLoad(t *testing.T) {
 			v021 = append(v021, d)
 		}
 	}
-	if d := time.Since(start); d > 20*time.Second {
+	if d := time.Since(start); d > 20*time.Second*slowdown {
 		t.Errorf("took %v", d)
 	}
 	if len(v021) != 1 {

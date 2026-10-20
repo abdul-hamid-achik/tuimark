@@ -364,11 +364,7 @@ The manual equivalent, without `task verify` (useful for a faster loop on one pi
 gofmt -l .
 go vet ./...
 go test ./...
-go build -o bin/tuimark ./cmd/tuimark
-go build -o bin/inbox ./examples/inbox
-go build -o bin/dashboard ./examples/dashboard
-go build -o bin/monitor ./examples/monitor
-go build -o bin/agent ./examples/agent
+task build    # bin/tuimark and every example app the Glyphrun specs run
 ./bin/tuimark test
 task wasm-check
 (cd examples/host-ts && rm -rf node_modules && bun install --frozen-lockfile)

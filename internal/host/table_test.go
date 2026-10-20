@@ -714,13 +714,18 @@ func TestCheckedScales(t *testing.T) {
 	all := frameAllocs()
 	_ = a.Set("m", []any{})
 	none := frameAllocs()
-	if all > none+100 {
-		t.Errorf("a frame with %d checked keys: %.0f allocations, %.0f with none", n+1, all, none)
-	}
-	// The bound cursor is found in an index kept with the rows, not by
-	// formatting every row key each frame: O(V), not O(n).
-	if none > n/5 {
-		t.Errorf("a frame that changed nothing, cursor bound to row %d: %.0f allocations, want at most %d", n-1, none, n/5)
+	// With the tuimark_verify tag every Frame also builds a cold frame to
+	// compare it with, so these counts measure that build: only a build
+	// without the tag checks them.
+	if !verifyFrames {
+		if all > none+100 {
+			t.Errorf("a frame with %d checked keys: %.0f allocations, %.0f with none", n+1, all, none)
+		}
+		// The bound cursor is found in an index kept with the rows, not by
+		// formatting every row key each frame: O(V), not O(n).
+		if none > n/5 {
+			t.Errorf("a frame that changed nothing, cursor bound to row %d: %.0f allocations, want at most %d", n-1, none, n/5)
+		}
 	}
 
 	// Every write of the checked array rebuilds the set.
