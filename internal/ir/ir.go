@@ -198,10 +198,13 @@ type ViaKey struct {
 // of Use (SPEC v0.4b §6.18.5): Written is the path as written in the
 // template, and Base the path the alias stands for, resolved where Use
 // stands (the path of its clause in Use.With). The path itself is Base
-// followed by Written's other segments.
+// followed by Written's other segments. EachRel is set when Base starts
+// with an each alias in scope where Use stands (a row's or an element's),
+// not with a store member.
 type Via struct {
 	Written, Base string
 	Use           *Node
+	EachRel       bool
 }
 
 // ViaOf is how the path of n written in slot, as its seg-th path (see
@@ -217,9 +220,19 @@ func (n *Node) ViaOf(slot string, seg int) *Via {
 // through v, ends with in place of the placement suffix (SPEC v0.4b
 // §6.18.5 "Messages"): ` (P via <use id="U">)`, with P the path p
 // stands for (ShownPath) and the use named as a placement suffix names
-// it (`<use template="T">` without id).
+// it (`<use template="T">` without id). When P starts with an each alias
+// (EachRel) and the use has no id, P reads the same in every each that
+// holds such a use, so the use is also named by where it is written, as
+// the placement suffix names it: ` (P via <use template="T"> at
+// FILE:LINE:COL)` (the owner's decision on the F3 review). A P that
+// starts with a store member says which data it reads, and a use with an
+// id is named by it, so neither adds a place.
 func (v *Via) Suffix(p string) string {
-	return " (" + ShownPath(p) + " via " + v.Use.describePlacer() + ")"
+	at := ""
+	if v.EachRel && v.Use.ID == "" {
+		at = " at " + v.Use.Loc(true)
+	}
+	return " (" + ShownPath(p) + " via " + v.Use.describePlacer() + at + ")"
 }
 
 // ShownPath is a path, or any other value, a diagnostic at an element of

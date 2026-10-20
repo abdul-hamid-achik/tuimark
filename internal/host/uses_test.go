@@ -202,8 +202,8 @@ func TestEachThroughAMissingAlias(t *testing.T) {
 </tui>`
 	ra := useApp(t, rows, `{"rows": [{"id": 1}, {"id": 2, "x": {"items": 4}}, {"id": 3, "x": {}}]}`)
 	sameDiags(t, "rows", useDiags(ra), []string{
-		`error B001 2:20 /screen/list/item/box each="f.items as it": "f.items" is a number, not an array (r.x.items via <use template="t">)`,
-		`error B001 2:20 /screen/list/item/box each="f.items as it": path "f.items" is missing (want an array) (r.x.items via <use template="t">)`,
+		`error B001 2:20 /screen/list/item/box each="f.items as it": "f.items" is a number, not an array (r.x.items via <use template="t"> at app.tui:4:52)`,
+		`error B001 2:20 /screen/list/item/box each="f.items as it": path "f.items" is missing (want an array) (r.x.items via <use template="t"> at app.tui:4:52)`,
 		`warning B003 4:52 /screen/list/item/use with path "r.x" (alias f) is missing`,
 	})
 }
@@ -447,6 +447,47 @@ func TestEmptyCopiesAreChecked(t *testing.T) {
 		`warning B003 7:25 /screen/box/use with path "r.x" (alias f) is missing`,
 		`warning B003 10:41 /screen/tabs/tab/use with path "tabv" (alias f) is missing`,
 		`warning B003 11:70 /screen/table/use with path "r.x" (alias f) is missing`,
+	})
+}
+
+// A path through a with alias that stands for a path from an each alias
+// (P from a row or an element) reads the same in every each that holds
+// such a use, so a use without id is also named by where it is written,
+// as the placement suffix names it (the owner's decision on the F3
+// review): two eaches over one template give two B003 (the review's
+// two/app.tui). So is one written in an each inside a copy, whose alias
+// is renamed. A use with an id is named by it, and a P from a store
+// member says which data it reads: neither adds a place.
+func TestViaFromAnEachAliasNamesWhereTheUseIs(t *testing.T) {
+	const two = `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <screen id="main">
+    <box each="aa as r"><use template="b" with="r as x"/></box>
+    <box each="bb as r"><use template="b" with="r as x"/></box>
+  </screen>
+</tui>
+`
+	a := useApp(t, two, `{"aa":[{}],"bb":[{}]}`)
+	sameDiags(t, "two", useDiags(a), []string{
+		`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at app.tui:4:25)`,
+		`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at app.tui:5:25)`,
+	})
+	const others = `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <template id="w"><box each="f.items as it"><use template="b" with="it as x"/></box></template>
+  <screen id="main">
+    <use id="u1" template="w" with="d as f"/>
+    <list id="l" each="rows as r" key="r.id"><item><use id="k" template="b" with="r as x"/></item></list>
+    <use id="s" template="b" with="cfg as x"/>
+    <use template="b" with="cfg as x"/>
+  </screen>
+</tui>`
+	a = useApp(t, others, `{"d": {"items": [{}]}, "rows": [{"id": 1}], "cfg": {}}`)
+	sameDiags(t, "others", useDiags(a), []string{
+		`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (it.missing via <use template="b"> at app.tui:3:46)`,
+		`warning B003 2:20 /screen/list/item/text bind path "x.missing" is missing (r.missing via <use id="k">)`,
+		`warning B003 2:20 /screen/text bind path "x.missing" is missing (cfg.missing via <use id="s">)`,
+		`warning B003 2:20 /screen/text bind path "x.missing" is missing (cfg.missing via <use template="b">)`,
 	})
 }
 

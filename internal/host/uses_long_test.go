@@ -113,6 +113,11 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 		{"a long guard of an empty copy in many copies",
 			`<tui><template id="e"></template><template id="t"><use template="e" if="f.` + long + `"/></template><screen id="main"><col>` + many("t") + `</col></screen></tui>`,
 			manyData("1"), map[string]int{"B002": copies}},
+		// A via whose P starts with an each alias names where its use is
+		// written, so each of these 150 eaches reports its own B003.
+		{"a long written path through an each alias in many eaches",
+			`<tui><template id="t"><text>{f.` + long + `}</text></template><screen id="main"><col>` + strings.Repeat(`<box each="rows as r"><use template="t" with="r as f"/></box>`, copies) + `</col></screen></tui>`,
+			`{"rows": [{}]}`, map[string]int{"B003": copies}},
 		{"a use's missing with path in many rows",
 			`<tui><template id="t"><text>{a.n}</text></template><screen id="main"><list id="l" each="rows as r" key="r.id"><item><use template="t" with="r.` + long[:10000] + ` as a"/></item></list></screen></tui>`,
 			rows(20000), map[string]int{"B003": 1}},
