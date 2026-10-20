@@ -52,10 +52,12 @@ type SourceInfo struct {
 // {"use", "template", "file", "line", "col"}, with Use its id in the
 // expanded document ("" without one) and Template its template's id; or
 // an include, {"include", "file", "line", "col"}, with Include its src as
-// written. Use and Template are cut as a composition diagnostic cuts an
-// id (ir.ShownID): a use's scoped id holds the ids of every use around
-// it, so whole they would make a via list grow with the square of the
-// nesting.
+// written. Use is cut as a composition diagnostic cuts an id
+// (ir.ShownID): a use's scoped id holds the ids of every use around it,
+// so whole they would make a via list grow with the square of the
+// nesting. Template is cut the same way, as a placement suffix names a
+// use's template, though the templates of one chain are distinct and
+// their total is bounded by the document.
 type ViaInfo struct {
 	Use      *string `json:"use,omitempty"`
 	Template *string `json:"template,omitempty"`
