@@ -312,6 +312,52 @@ func TestViasAreKeptWhereWritten(t *testing.T) {
 	if got := texts(a); !reflect.DeepEqual(got, []string{"  ", "y"}) {
 		t.Errorf("texts %q", got)
 	}
+
+	// Every slot that holds a template string counts its paths apart
+	// (ViaKey.Seg): a literal {a.N} before {f.N} in one string is a store
+	// path, and only {f.N} names its via.
+	const slots = `<tui>
+  <template id="t">
+    <col>
+      <text>{a.body} {f.body}</text>
+      <box border="single" height="3" title="{a.title} {f.title}"><text>z</text></box>
+      <input id="i" placeholder="{a.iph} {f.iph}"/>
+      <button id="b" label="{a.blabel} {f.blabel}"/>
+      <button id="b2">{a.bbody} {f.bbody}</button>
+      <checkbox id="c" label="{a.clabel} {f.clabel}"/>
+      <select id="s" each="opts as o" key="o.id" label="{a.slabel} {f.slabel}" placeholder="{a.sph} {f.sph}"/>
+      <table id="tb" each="rows as r" key="r.id"><column title="{a.ctitle} {f.ctitle}">{a.cell} {f.cell}</column></table>
+      <table id="te" each="none as r" key="r.id" placeholder="{a.tph} {f.tph}"><column>{r.id}</column></table>
+      <tabs id="tabs"><tab id="tt" label="{a.tlabel} {f.tlabel}" short="{a.tshort} {f.tshort}"><text>q</text></tab></tabs>
+    </col>
+  </template>
+  <screen id="main">
+    <scroll><use id="u" template="t" with="a as f"/></scroll>
+  </screen>
+</tui>`
+	want := []string{}
+	for _, s := range []struct{ at, path, name string }{
+		{"4:7", "text", "body"},
+		{"5:7", "box", "title"},
+		{"6:7", "input", "iph"},
+		{"7:7", "button", "blabel"},
+		{"8:7", "button", "bbody"},
+		{"9:7", "checkbox", "clabel"},
+		{"10:7", "select", "sph"},
+		{"10:7", "select", "slabel"},
+		{"11:50", "table/column", "cell"},
+		{"11:50", "table/column", "ctitle"},
+		{"12:7", "table", "tph"},
+		{"13:23", "tabs/tab", "tlabel"},
+		{"13:23", "tabs/tab", "tshort"},
+	} {
+		at := "warning B003 " + s.at + " /screen/scroll/col/" + s.path + " bind path "
+		want = append(want,
+			at+`"a.`+s.name+`" is missing, placed by <use id="u"> at app.tui:17:13`,
+			at+`"f.`+s.name+`" is missing (a.`+s.name+` via <use id="u">)`)
+	}
+	sa := useApp(t, slots, `{"a": {}, "opts": [{"id": 1}], "rows": [{"id": 1}], "none": []}`)
+	sameDiags(t, "slots", useDiags(sa), want)
 }
 
 // What a diagnostic quotes is cut only at an element of a copy: the same

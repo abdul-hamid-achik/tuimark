@@ -12,7 +12,8 @@ import (
 // ADR 0034 for what phase F3 reports about copies (too slow for js/wasm,
 // whose test run is `task wasm-test`): a long with path, a long use id,
 // or a use in many list rows gives a validate output at most ten times
-// its input (document and data), within a second. A message about a path
+// its input (document and data), within a second (scaled by slowdown under
+// the race detector). A message about a path
 // through a with alias shows the path the alias stands for, and the use's
 // id, cut at 64 bytes; a use's own B002 and B003 are formatted once per
 // pass, however many rows place it.
@@ -124,7 +125,7 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 			if in := len(c.src) + len(c.data); out > 10*in {
 				t.Errorf("%d bytes of diagnostics for %d of input", out, in)
 			}
-			if el > time.Second {
+			if el > slowdown*time.Second {
 				t.Errorf("took %v", el)
 			}
 			if fmt.Sprint(got) != fmt.Sprint(c.want) {
@@ -139,7 +140,9 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 // each copy reports it with its own placement suffix, so 150 uses of a
 // template that quotes a 100 KB path printed 15 MB before (the F3
 // review). Each code reachable at a copy that quotes such a value is
-// checked here, through the uses' placements alone (no with).
+// checked here, through the uses' placements alone (no with). B007 is
+// not: it is reported at a keymap row, and a <keymap> cannot be inside a
+// <template> (V001), so no copy holds one.
 func TestCopyDiagnosticsQuoteValuesShortened(t *testing.T) {
 	long := "p" + strings.Repeat("x", 100000)
 	value := strings.Repeat("v", 100000)
@@ -159,6 +162,8 @@ func TestCopyDiagnosticsQuoteValuesShortened(t *testing.T) {
 		{"B003", `<text>{st.` + long + `}</text>`, `{"st": {}}`},
 		{"B003", `<box each="rows as r" key="r.` + long + `"><text>x</text></box>`, `{"rows": [{}]}`},
 		{"B004", `<button id="b" on:click="` + long + `">x</button>`, `{}`},
+		{"B005", `<tabs id="tb"><tab id="a" label="A" focus="#` + long + `"><text>a</text></tab></tabs>`, `{}`},
+		{"B005", `<modal id="m" open="false" focus="#` + long + `"><text>m</text></modal>`, `{}`},
 		{"B006", `<list id="l" each="st.` + long + ` as r"><item><text>x</text></item></list>`, `{"st": {"` + long + `": []}}`},
 		{"B008", `<list id="l" each="rows as r" key="r.id" checked="st.` + long + `"><item><text>x</text></item></list>`, `{"rows": [{"id": "a"}], "st": {"` + long + `": 5}}`},
 		{"B009", `<sparkline bind="st.` + long + `"/>`, `{"st": {"` + long + `": "x"}}`},
@@ -185,7 +190,7 @@ func TestCopyDiagnosticsQuoteValuesShortened(t *testing.T) {
 			if in := len(src) + len(c.data); out > 10*in {
 				t.Errorf("%d bytes of diagnostics for %d of input", out, in)
 			}
-			if el > time.Second {
+			if el > slowdown*time.Second {
 				t.Errorf("took %v", el)
 			}
 			if n != copies {
