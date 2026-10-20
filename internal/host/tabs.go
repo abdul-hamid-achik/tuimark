@@ -136,7 +136,7 @@ func (fb *builder) pickTab(t *layout.Box, visible []*layout.Box) *layout.Box {
 	if n.Bind != "" {
 		v, found := fb.tabsScope(t).resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind)
+			fb.missingBind(n, n.Bind, fb.tabsScope(t))
 			return visible[0]
 		}
 		if v == nil {

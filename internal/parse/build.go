@@ -116,6 +116,12 @@ type Document struct {
 	// any depth, in the order they were read, each once (SPEC v0.4b
 	// §6.18.2): what run and preview --watch watch.
 	Fragments []FragmentRef
+	// Composed is set when an <include> or a <use> was expanded: one
+	// written element may then be placed more than once, and diagnostics
+	// equal in severity, code, message, file, line, and column are one,
+	// with the path and id of the first placement (SPEC v0.4b §6.18.6,
+	// decision 16). Every pinned document leaves it false.
+	Composed bool
 
 	// dropped holds the subtrees rooted at an unknown tag: validated, kept
 	// out of Root (see builder.tagKnown), in document order.
@@ -660,8 +666,9 @@ func ParseWith(src []byte, file string, ld *Loader) *Document {
 	b.checkKeymap()
 	if b.comp != nil && b.comp.used {
 		// One written element placed more than once reports once (SPEC
-		// v0.4b §6.18.6).
+		// v0.4b §6.18.6), at render time too (Composed).
 		doc.Diags = dedupeDiags(doc.Diags)
+		doc.Composed = true
 	}
 	sort.SliceStable(doc.Diags, func(i, j int) bool {
 		if doc.Diags[i].Line != doc.Diags[j].Line {

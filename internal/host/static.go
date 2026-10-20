@@ -73,8 +73,8 @@ func (a *App) checkDocks(themes []string) ir.Diags {
 				row := (&layout.Box{Kind: parent.n.Kind, Style: ps}).Direction() == "row"
 				if layout.DockConflict(st, row) {
 					d := ir.At(n, a.file, ir.Error, "V010", "%s", layout.DockConflictMsg(st.Dock))
-					if !seen[d.String()] {
-						seen[d.String()] = true
+					if k := a.diagKey(d); !seen[k] {
+						seen[k] = true
 						out = append(out, d)
 					}
 				}

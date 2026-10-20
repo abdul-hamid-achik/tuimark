@@ -118,11 +118,8 @@ func (fb *builder) resolveOptions(n *ir.Node, sc *scope) *selectOptions {
 	o.alias = e.Alias
 	v, found := sc.resolve(a.store, e.Path)
 	arr, isArr := v.([]any)
-	switch {
-	case !found:
-		fb.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, e.Path)
-	case !isArr:
-		fb.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, e.Path, typeName(v))
+	if !found || !isArr {
+		fb.badEach(n, e.Path, v, found)
 	}
 	keyPath, hasKey := n.Attr("key")
 	label, hasLabel := n.Attr("label")
@@ -147,7 +144,7 @@ func (fb *builder) resolveOptions(n *ir.Node, sc *scope) *selectOptions {
 			if kv, ok := isc.resolve(a.store, keyPath); ok {
 				key = kv
 			} else {
-				fb.report(n, keySev, "B003", "key=%q is missing on option %d (its key is the index)", keyPath, i)
+				fb.missingKey(n, keyPath, isc, keySev, "key=%q is missing on option %d (its key is the index)", i)
 			}
 		}
 		isc.key = key
@@ -182,7 +179,7 @@ func (fb *builder) chosenOption(n *ir.Node, sc *scope, o *selectOptions, st *sel
 	}
 	v, found := sc.resolve(fb.a.store, n.Bind)
 	if !found {
-		fb.missingBind(n, n.Bind)
+		fb.missingBind(n, n.Bind, sc)
 		return -1
 	}
 	if v == nil {

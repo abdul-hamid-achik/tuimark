@@ -395,12 +395,12 @@ func (a *App) Static() ir.Diags {
 	out := append(ir.Diags(nil), a.static...)
 	seen := map[string]bool{}
 	for _, d := range out {
-		seen[d.String()] = true
+		seen[a.diagKey(d)] = true
 	}
 	add := func(ds ir.Diags) {
 		for _, d := range ds {
-			if !seen[d.String()] {
-				seen[d.String()] = true
+			if k := a.diagKey(d); !seen[k] {
+				seen[k] = true
 				out = append(out, d)
 			}
 		}

@@ -36,7 +36,7 @@ func (fb *builder) buttonText(n *ir.Node, sc *scope) string {
 		}
 		v, found := sc.resolve(fb.a.store, sg.Path)
 		if !found {
-			fb.missingBind(n, sg.Path)
+			fb.missingBind(n, sg.Path, sc)
 			continue
 		}
 		b.WriteString(oneLineLabel(cleanText(Format(v))))

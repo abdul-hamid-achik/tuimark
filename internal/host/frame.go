@@ -137,6 +137,13 @@ type builder struct {
 	// open holds the options of the select whose option list is open, as
 	// step 1 resolved them, for step 7a (SPEC v0.4b §18); nil otherwise.
 	open *selectOptions
+	// placed holds the places of <use> elements this pass has checked,
+	// with whether each prunes its copy (usePruned): each is checked
+	// once (SPEC v0.4b §6.18.3, decision 107). nil until the first.
+	placed map[placement]bool
+	// useSaid holds the messages about a <use> this pass reported
+	// (placeUse), so that each is formatted once. nil until the first.
+	useSaid map[useMsg]bool
 }
 
 // newBox returns a zeroed box for inflate, cut from a chunk the builder
@@ -360,7 +367,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	seen := map[string]bool{}
 	for _, ds := range []ir.Diags{static, casc.Diags, fb.diags, eng.Diags} {
 		for _, d := range ds {
-			if k := d.String(); !seen[k] {
+			if k := a.diagKey(d); !seen[k] {
 				seen[k] = true
 				diags = append(diags, d)
 			}
@@ -786,19 +793,27 @@ func (fb *builder) flag(n *ir.Node, attr string, sc *scope) bool {
 	}
 	val, found := sc.resolve(fb.a.store, g.Path)
 	if !found {
-		fb.report(n, ir.Warning, "B002", "%s=%q: path %q is missing", attr, v, g.Path)
+		fb.missingFlag(n, attr, v, g.Path, sc)
 	}
 	return ir.Truthy(val) != g.Neg
 }
 
-// missingBind reports B003 for a path absent from the store (an error with
-// --strict).
-func (fb *builder) missingBind(n *ir.Node, path string) {
-	sev := ir.Warning
-	if fb.a.strict {
-		sev = ir.Error
+// missingFlag reports B002 for the path p of a flag or a guard, written v
+// in attribute attr, absent from the store; it counts as null (SPEC §7).
+// Through a with alias it is an optional prop (pathMiss).
+func (fb *builder) missingFlag(n *ir.Node, attr, v, p string, sc *scope) {
+	if ok, via := fb.pathMiss(n, p, sc, missFlag); ok {
+		fb.reportPath(n, via, p, ir.Warning, "B002", "%s=%q: path %q is missing", attr, writtenAttr(n, attr, v, via), shownPath(p, via))
 	}
-	fb.report(n, sev, "B003", "bind path %q is missing", path)
+}
+
+// missingBind reports B003 for a path absent from the store (an error with
+// --strict), in sc: through a with alias whose own path is missing, it
+// reports nothing (pathMiss).
+func (fb *builder) missingBind(n *ir.Node, path string, sc *scope) {
+	if ok, via := fb.pathMiss(n, path, sc, missValue); ok {
+		fb.reportPath(n, via, path, fb.bindSev(), "B003", "bind path %q is missing", shownPath(path, via))
+	}
 }
 
 // interp resolves {path} segments; missing paths render empty (B003).
@@ -840,7 +855,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		if err == nil {
 			v, found := sc.resolve(a.store, g.Path)
 			if !found {
-				fb.report(n, ir.Warning, "B002", "if=%q: path %q is missing", n.If, g.Path)
+				fb.missingFlag(n, "if", n.If, g.Path, sc)
 			}
 			if ir.Truthy(v) == g.Neg {
 				return nil
@@ -858,7 +873,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		} else if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind)
+				fb.missingBind(n, n.Bind, sc)
 			}
 			open = ir.Truthy(v)
 		}
@@ -907,7 +922,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind)
+				fb.missingBind(n, n.Bind, sc)
 			}
 			b.Text = Format(v)
 		} else {
@@ -924,12 +939,13 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind)
+				fb.missingBind(n, n.Bind, sc)
 			}
 			if f, ok := v.(float64); ok {
 				b.Value = f
 			} else if found && v != nil {
-				fb.report(n, ir.Warning, "B003", "progress bind %q is %s, want a number 0-100", n.Bind, typeName(v))
+				via := n.ViaOf(n.Bind)
+				fb.reportPath(n, via, n.Bind, ir.Warning, "B003", "progress bind %q is %s, want a number 0-100", shownPath(n.Bind, via), typeName(v))
 			}
 		} else if s, ok := n.Attr("value"); ok {
 			b.Value, _ = strconv.ParseFloat(s, 64)
@@ -1034,12 +1050,8 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 	}
 	v, found := sc.resolve(a.store, e.Path)
 	arr, isArr := v.([]any)
-	if !found {
-		fb.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, e.Path)
-		return
-	}
-	if !isArr {
-		fb.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, e.Path, typeName(v))
+	if !found || !isArr {
+		fb.badEach(n, e.Path, v, found)
 		return
 	}
 	keyPath := n.Attrs["key"]
@@ -1050,11 +1062,7 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 			if kv, ok := isc.resolve(a.store, keyPath); ok {
 				key = kv
 			} else {
-				sev := ir.Warning
-				if a.strict {
-					sev = ir.Error
-				}
-				fb.report(n, sev, "B003", "key=%q is missing on element %d (its key is the index)", keyPath, i)
+				fb.missingKey(n, keyPath, isc, fb.bindSev(), "key=%q is missing on element %d (its key is the index)", i)
 			}
 		}
 		isc.key = key
@@ -1082,7 +1090,7 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 func (fb *builder) checkedKeys(n *ir.Node, path string, sc *scope) (keys []any, ok bool) {
 	v, found := sc.resolve(fb.a.store, path)
 	if !found {
-		fb.missingBind(n, path)
+		fb.missingBind(n, path, sc)
 		return nil, true
 	}
 	if n.Single {
@@ -1215,7 +1223,7 @@ func (fb *builder) guard(n *ir.Node, attr, v string, sc *scope) bool {
 	}
 	val, found := sc.resolve(fb.a.store, g.Path)
 	if !found {
-		fb.report(n, ir.Warning, "B002", "%s=%q: path %q is missing", attr, v, g.Path)
+		fb.missingFlag(n, attr, v, g.Path, sc)
 	}
 	return ir.Truthy(val) != g.Neg
 }
@@ -1294,10 +1302,8 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 		}
 		v, found := sc.resolve(a.store, e.Path)
 		arr, isArr := v.([]any)
-		if !found {
-			fb.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, e.Path)
-		} else if !isArr {
-			fb.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, e.Path, typeName(v))
+		if !found || !isArr {
+			fb.badEach(n, e.Path, v, found)
 		}
 		keyPath := n.Attrs["key"]
 		ls.alias, ls.each = e.Alias, true
@@ -1308,7 +1314,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 				if kv, ok := isc.resolve(a.store, keyPath); ok {
 					key = kv
 				} else {
-					fb.report(n, ir.Warning, "B003", "key=%q is missing on item %d", keyPath, i)
+					fb.missingKey(n, keyPath, isc, ir.Warning, "key=%q is missing on item %d", i)
 				}
 			}
 			isc.key = key
@@ -1332,7 +1338,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	if n.Bind != "" {
 		v, found := sc.resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind)
+			fb.missingBind(n, n.Bind, sc)
 		}
 		if found && v != nil {
 			for i, k := range ls.keys {
@@ -1414,7 +1420,7 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 	if n.Bind != "" {
 		v, found := (*scope)(nil).resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind)
+			fb.missingBind(n, n.Bind, nil)
 		}
 		if found && v != nil {
 			if i := r.rowOf(v); i >= 0 {

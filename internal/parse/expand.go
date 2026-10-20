@@ -82,6 +82,10 @@ type templating struct {
 	heads  map[string]int
 	// renamed counts the each aliases renamed so far (ir.MarkAlias).
 	renamed int
+	// viaTo is the element of a copy (or the <use> in one) whose paths
+	// are being substituted: substed records on it each path that goes
+	// through a with alias (ir.Node.Vias). nil records nothing.
+	viaTo *ir.Node
 	// charge charges the expansion under way the bytes a substitution
 	// adds (builder.chargeBytes; nil charges nothing).
 	charge func(n int)
@@ -406,6 +410,9 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 	}
 	if len(cp.copies) > 0 {
 		q.Written = &ir.Written{Attrs: maps.Clone(q.Attrs), If: q.If, Classes: slices.Clone(q.Classes)}
+		prev := cp.viaTo
+		cp.viaTo = q
+		defer func() { cp.viaTo = prev }()
 		if q.If != "" {
 			q.If = cp.substGuard(q.If)
 			q.Attrs["if"] = q.If
@@ -869,6 +876,9 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 	w := &ir.Written{Attrs: maps.Clone(n.Attrs), Bind: n.Bind, Each: n.Each, If: n.If, Classes: slices.Clone(n.Classes)}
 	n.Written = w
 	depth := len(cp.scope)
+	prev := cp.viaTo
+	cp.viaTo = n // the paths substituted below are n's (substed)
+	defer func() { cp.viaTo = prev }()
 	if n.Bind != "" {
 		n.Bind = cp.subst(n.Bind)
 		n.Attrs["bind"] = n.Bind
@@ -935,6 +945,7 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 		fr.refs = append(fr.refs, n)
 	}
 	b.content(n, r)
+	cp.viaTo = n // content built n's children, each of them its own target
 	w.Text = n.Text
 	n.Text = cp.substText(n.Text)
 	cp.popTo(depth)
@@ -967,7 +978,11 @@ func (t *templating) subst(p string) string {
 	return t.substed(p)
 }
 
-// substed is subst, charging nothing.
+// substed is subst, charging nothing. A path that went through a with
+// alias is recorded on viaTo (ir.Node.Vias), the element whose paths are
+// being substituted: its binding diagnostics name it as written and say
+// which use's alias it went through (SPEC v0.4b §6.18.5), and the
+// runtime reads its flags as optional props (decision 100).
 func (t *templating) substed(p string) string {
 	if len(t.scope) == 0 {
 		return p
@@ -977,10 +992,17 @@ func (t *templating) substed(p string) string {
 	if a == nil || a.path == "" {
 		return p
 	}
-	if !more {
-		return a.path
+	out := a.path
+	if more {
+		out = a.path + "." + rest
 	}
-	return a.path + "." + rest
+	if a.use != nil && t.viaTo != nil {
+		if t.viaTo.Vias == nil {
+			t.viaTo.Vias = map[string]*ir.Via{}
+		}
+		t.viaTo.Vias[out] = &ir.Via{Written: p, Base: a.path, Use: a.use}
+	}
+	return out
 }
 
 // growth is len(subst(p)) - len(p), computed without building it.

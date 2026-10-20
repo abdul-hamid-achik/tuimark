@@ -166,6 +166,57 @@ type Node struct {
 	// already resolved where the use stands (through the aliases in scope
 	// there); nil for every other node and for a use whose with is V011.
 	With []Each
+	// Vias says how the paths of an element of a copy (or of a <use> in
+	// one) that went through a with alias did (SPEC v0.4b §6.18.5), by
+	// the path as it stands after the substitution: what the runtime
+	// resolves, and what its binding diagnostics name. nil for every
+	// node with no such path, which is every node outside copies.
+	Vias map[string]*Via
+}
+
+// Via is a path of an element of a copy that went through a with alias
+// of Use (SPEC v0.4b §6.18.5): Written is the path as written in the
+// template, and Base the path the alias stands for, resolved where Use
+// stands (the path of its clause in Use.With). The path itself is Base
+// followed by Written's other segments.
+type Via struct {
+	Written, Base string
+	Use           *Node
+}
+
+// ViaOf is how the path p of n (as it stands after the substitution)
+// went through a with alias, or nil when it went through none.
+func (n *Node) ViaOf(p string) *Via {
+	if n == nil || n.Vias == nil {
+		return nil
+	}
+	return n.Vias[p]
+}
+
+// Suffix is what a B001, B002, or B003 about the path p, which went
+// through v, ends with in place of the placement suffix (SPEC v0.4b
+// §6.18.5 "Messages"): ` (P via <use id="U">)`, with P the path p
+// stands for (ShownPath) and the use named as a placement suffix names
+// it (`<use template="T">` without id).
+func (v *Via) Suffix(p string) string {
+	return " (" + ShownPath(p) + " via " + v.Use.describePlacer() + ")"
+}
+
+// ShownPath is a path a diagnostic quotes away from where it is written,
+// the P of a path through a with alias (Via.Suffix): every renamed alias
+// shown as written (Unmark) and cut as ShownID cuts an id, in time
+// bounded by MaxShownID however long p is. A path holds at most one
+// renamed alias, at its head: one AliasMark byte and the digits of an
+// int.
+func ShownPath(p string) string {
+	const room = MaxShownID + 22
+	if len(p) > room {
+		// Unmarked, the first room bytes keep more than MaxShownID bytes
+		// (a mark and its digits are at most 21), so ShownID cuts them
+		// where it would cut the whole path.
+		p = p[:room]
+	}
+	return ShownID(Unmark(p))
 }
 
 // Written is an element of a copy as written (Node.Written).
@@ -629,6 +680,19 @@ func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
 		d.File = n.FileName(file)
 		d.Msg += PlacedSuffix(n)
+	}
+	return d
+}
+
+// AtSuffix is At with suffix in place of the placement suffix: a message
+// that already names its placement (SPEC v0.4b §6.18.6), such as the
+// ` (P via <use id="U">)` of a path through a with alias, or one about a
+// <use> itself, which carries none ("" adds nothing).
+func AtSuffix(n *Node, file, sev, code, suffix, format string, args ...any) Diagnostic {
+	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...) + suffix, File: file}
+	if n != nil {
+		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
+		d.File = n.FileName(file)
 	}
 	return d
 }

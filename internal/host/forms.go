@@ -42,7 +42,7 @@ func (fb *builder) checkboxLabel(n *ir.Node, sc *scope) string {
 		}
 		v, found := sc.resolve(fb.a.store, sg.Path)
 		if !found {
-			fb.missingBind(n, sg.Path)
+			fb.missingBind(n, sg.Path, sc)
 			continue
 		}
 		b.WriteString(oneLineLabel(cleanText(Format(v))))
@@ -61,7 +61,7 @@ func (fb *builder) checkboxChecked(n *ir.Node, sc *scope) bool {
 	}
 	v, found := sc.resolve(fb.a.store, n.Bind)
 	if !found {
-		fb.missingBind(n, n.Bind)
+		fb.missingBind(n, n.Bind, sc)
 		return false
 	}
 	switch v := v.(type) {

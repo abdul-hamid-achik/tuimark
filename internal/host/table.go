@@ -245,7 +245,7 @@ func (fb *builder) tableRows(n *ir.Node, p *tablePlan, sc *scope, act tableActiv
 
 // add appends a diagnostic to the frame once.
 func (fb *builder) add(d ir.Diagnostic) {
-	k := d.String()
+	k := fb.a.diagKey(d)
 	if fb.seen[k] {
 		return
 	}
@@ -270,11 +270,8 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableAc
 	}
 	v, found := sc.resolve(a.store, p.each.Path)
 	arr, isArr := v.([]any)
-	switch {
-	case !found:
-		sub.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, p.each.Path)
-	case !isArr:
-		sub.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, p.each.Path, typeName(v))
+	if !found || !isArr {
+		sub.badEach(n, p.each.Path, v, found)
 	}
 	rows := len(arr)
 	td.rows = rows
@@ -302,7 +299,7 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableAc
 			if kv, ok := isc.resolve(a.store, p.keyPath); ok {
 				key = kv
 			} else {
-				sub.report(n, keySev, "B003", "key=%q is missing on row %d (its key is the index)", p.keyPath, i)
+				sub.missingKey(n, p.keyPath, isc, keySev, "key=%q is missing on row %d (its key is the index)", i)
 			}
 		}
 		isc.key = key
@@ -350,7 +347,7 @@ func (fb *builder) interpSegs(n *ir.Node, segs []ir.Segment, sc *scope) string {
 		}
 		v, ok := sc.resolve(fb.a.store, sg.Path)
 		if !ok {
-			fb.missingBind(n, sg.Path)
+			fb.missingBind(n, sg.Path, sc)
 			return ""
 		}
 		return cleanText(Format(v))
@@ -363,7 +360,7 @@ func (fb *builder) interpSegs(n *ir.Node, segs []ir.Segment, sc *scope) string {
 		}
 		v, ok := sc.resolve(fb.a.store, sg.Path)
 		if !ok {
-			fb.missingBind(n, sg.Path)
+			fb.missingBind(n, sg.Path, sc)
 			continue
 		}
 		b.WriteString(cleanText(Format(v)))
@@ -455,7 +452,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	if n.Bind != "" {
 		v, found := sc.resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind)
+			fb.missingBind(n, n.Bind, sc)
 		}
 		if found && v != nil {
 			if i := td.rowOf(v); i >= 0 {
