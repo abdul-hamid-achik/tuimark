@@ -213,7 +213,7 @@ func TestV005Messages(t *testing.T) {
 // The generated AGENTS.md's V005 row matches SPEC §14 (test 117), and the
 // catalog carries the same row.
 func TestV005RowMatchesSpec(t *testing.T) {
-	const want = "not well-formed XML; or not a Tuimark document: a root element other than `<tui>` (or the phase-0 alias `<app>`), or a `<tui>` with no `<screen>`; a file whose root is `<fragment>` given as a document, except to `validate`"
+	const want = "not well-formed XML; or not a Tuimark document: a root element other than `<tui>` (or the phase-0 alias `<app>`), or a `<tui>` with no `<screen>`; a file whose root is `<fragment>` given as a document, except to `validate` and `fmt`"
 	row := "| V005 | parse | " + want + " |"
 	if !strings.Contains(agentsdoc.Markdown(), row) {
 		t.Errorf("the briefing has no row %q", row)
