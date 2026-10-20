@@ -191,11 +191,13 @@ To use one, copy its file into your project. In Go, change `package kit` to your
 | `sortpage` | cycle the sort of a column (with an arrow in its title) and paginate (`1–50 of 340`) | the sorted rows of the page, and a meta object |
 | `form` | per-field rules (required, pattern, length, your own function) on change and on submit | `forms.<form>.<field>.error`, `forms.<form>.valid` |
 | `dialog` | `Confirm(instance, title, body, onConfirm)` opens a `k-confirm` copy and routes `dialog_confirm` / `dialog_cancel` by instance | `<instance>.open`, `.title`, `.body`, `.yes`, `.no`, `.result` |
-| `palette` | a registry of commands (title, key hint, function) behind the palette | `palette.commands`, `found`, `palette.open`, `.cur`, `.last` |
+| `palette` | a registry of commands (title, key hint, function) behind the palette | `palette.commands`, `found`, `palette.open`, `.query`, `.cur`, `.last`, and a default `.title` and `.placeholder` |
 | `async` | `Load(path, fn)` runs slow work off the handler | `<path>.loading`, `.error`, `.data` |
 | `format` | `Bytes`, `Duration`, `Relative`, `Percent`, `Thousands` | strings ready for `{path}` |
 
-The dialog's button labels are `Confirm` and `Cancel` unless the request names its own (`Yes` and `No` in Go, `yes` and `no` in TypeScript).
+The dialog's button labels are `Confirm` and `Cancel` unless the request names its own (`Yes` and `No` in Go, `yes` and `no` in TypeScript): an empty label means the default, and both are written on every open, so an earlier question's labels never stay. The dialog helper writes a dialog's data at the path named by its instance, the part of the event's source before the last `__`, which is the `<use>`'s id, so the use's `with` path is that id: `<use id="confirm" template="k-confirm" with="confirm as d"/>`.
+
+The palette helper writes the palette's state only where the store has none: its title is `Command palette` and its input's placeholder `type a command…` unless your data names others.
 
 The Go API has `Derive` and `Every` and the TypeScript host does not, so two things differ. In Go, `filter` and `sortpage` are derived values that follow every store write, and a toast expires on an `Every` tick. In TypeScript you call `recompute()` after a write, the palette's input fires `palette_query` on every change so the parent can, and `toasts.start()` runs the tick on a timer.
 
@@ -227,9 +229,11 @@ forms.Add("profile").
     Field("name", kit.Required("Name is required.")).
     Field("email", kit.Required("Email is required."), kit.Pattern(emailRE, "Enter a full address.")).
     OnSubmit(func(v map[string]string) error { return save(v) }).
-    Reset(nil)                      // creates forms.profile.* in the store
+    Reset(nil)                      // writes each field's value and error, and the form's valid
 forms.Register()                    // form_validate, form_submit
 ```
+
+`Reset` writes only `forms.profile.<field>.value` and `.error` and `forms.profile.valid`. What a field shows besides, its `label`, `placeholder`, and `help`, comes from your own data at `forms.profile.<field>`.
 
 A rule is a function from the value to the message to show (`""` when it is fine), so a custom rule is a plain function. Submitting shows every error and moves focus to the first invalid input.
 

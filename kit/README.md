@@ -283,8 +283,10 @@ exist, so bind host actions you want listed unconditionally.
 last child of the screen: a `modal` with class `k-dialog` showing `d.body`
 under the title `d.title`, and an action row `k-dialog-actions` of
 `height: 1` with the buttons `d.no` and `d.yes`. `d.open` is the path the host
-flips. The variant `danger` (or the flag `d.danger`) makes a destructive
-dialog. The dialog takes its content's size, up to 60 columns where the text
+flips. The [dialog helper](#dialog) writes all of them at the use's id, so with
+it `PATH` is that id (`with="confirm as d"`), and the labels are `Confirm` and
+`Cancel` unless the request names its own. The variant `danger` (or the flag
+`d.danger`) makes a destructive dialog. The dialog takes its content's size, up to 60 columns where the text
 wraps, and at most the screen. `focus` puts the cursor on the safe button so a
 stray `enter` cancels; `on:escape` cancels. Keep the labels short so the row
 fits 40 columns.
@@ -570,7 +572,9 @@ functions from the value to a message (`""` is fine): `Required`, `Pattern`,
 `MinLen`, `MaxLen`, or your own. `form_validate` checks the field that changed,
 and does not turn red a field the user has not reached; `form_submit` checks
 every field, focuses the first invalid input, and otherwise calls your
-`OnSubmit`.
+`OnSubmit`. `Reset` writes only each field's `forms.profile.<field>.value` and
+`.error` and the form's `forms.profile.valid`; a field's `label`,
+`placeholder` and `help` come from your own data under the same path.
 
 ```go
 forms := kit.NewForms(app)
@@ -578,7 +582,7 @@ forms.Add("profile").
     Field("name", kit.Required("Name is required.")).
     Field("email", kit.Required("Email is required."), kit.Pattern(emailRE, "Enter a full address.")).
     OnSubmit(func(v map[string]string) error { return save(v["name"], v["email"]) }).
-    Reset(map[string]string{"name": "Ada"}) // creates the paths
+    Reset(map[string]string{"name": "Ada"}) // writes .value, .error and valid
 forms.Register()                           // form_validate, form_submit
 ```
 ```ts
@@ -598,22 +602,40 @@ forms.register();
 `.result`) and routes `dialog_confirm` and `dialog_cancel` by instance, so one
 pair of handlers serves every dialog. The result is `confirmed` or
 `cancelled`. `Open` takes a `Request` with an `OnCancel` too, and its own
-labels (`Yes` and `No` in Go, `yes` and `no` in TypeScript; `Confirm` and
-`Cancel` when empty). You open the dialog from your own action (the trigger
-button's).
+labels (`Yes` and `No` in Go, `yes` and `no` in TypeScript). An empty label
+means `Confirm` or `Cancel`: both labels are written on every open, so the
+labels of an earlier question never stay on the buttons. You open the dialog
+from your own action (the trigger button's).
+
+The helper writes a dialog's data at the path named by its instance, and finds
+the instance of an answer as the part of the event's source before the last
+`__` (`confirm__yes` is the instance `confirm`), which is the `<use>`'s id. So
+the use's `with` path is its own id: `<use id="confirm" template="k-confirm"
+with="confirm as d"/>`. With `with="dialogs.confirm as d"` the helper would
+write `confirm.open` while the copy reads `dialogs.confirm.open`.
 
 ```go
 d := kit.NewDialogs(app)
 d.Register() // dialog_confirm, dialog_cancel
 app.On("dialog_open", func(ev tuimark.Event) error {
-    return d.Confirm(kit.Instance(ev.Source), "Delete project", "This cannot be undone.", func() error { return deleteProject() })
+    return d.Open(kit.Instance(ev.Source), kit.Request{ // confirm__open: confirm
+        Title: "Delete project", Body: "This cannot be undone.",
+        Yes: "Delete", OnConfirm: deleteProject,
+    })
 })
 ```
 ```ts
 const dialogs = createDialogs(ui);
 dialogs.register();
-ui.on("dialog_open", (ev) => dialogs.confirm(instance(ev.source), "Delete project", "This cannot be undone.", () => deleteProject()));
+ui.on("dialog_open", (ev) =>
+  dialogs.open(instance(ev.source), {
+    title: "Delete project", body: "This cannot be undone.",
+    yes: "Delete", onConfirm: () => deleteProject(),
+  }));
 ```
+
+Its labels are the ones `components/confirm.sample.json` holds: the buttons
+read `Cancel` and `Delete`.
 
 ### palette
 
@@ -621,7 +643,11 @@ A command registry behind `palette.tui`: commands have an id, a title, a key hin
 and a function. It writes `palette.commands`, keeps `found` with `filter`, and
 implements `palette_open` (resets the query and cursor), `palette_close`,
 `palette_run` (runs the command under the cursor, or the first match, and writes
-`palette.last`) and `palette_query`.
+`palette.last`) and `palette_query`. When the store has none of them yet, it
+also writes `palette.open`, `.query`, `.cur`, `.last`, the title
+`palette.title` (`Command palette`) and the input's placeholder
+`palette.placeholder` (`type a command…`), so what it writes is all the
+palette needs; put your own title or placeholder in your data to keep it.
 
 ```go
 p, _ := kit.NewPalette(app, kit.PaletteOptions{Mode: kit.Fuzzy},
@@ -675,13 +701,6 @@ await ui.set("disk.text", `${bytes(used)} of ${bytes(total)}`);
 
 These are plans, not promises.
 
-- **Fragments.** Today a component is markup you copy, and the repetition shows:
-  the gallery spells out the same `k-meter`, `k-stat`, `k-field` and `k-alert`
-  blocks several times. When the language gains composition (a `template` and
-  a `use` with an `id`), each component can become a fragment written once. The
-  conventions above are chosen for that: a `use id="confirm"` would generate the
-  ids `confirm__dialog`, `confirm__yes`, `confirm__no`, so hosts written today
-  would not change. The class vocabulary and both stylesheets stay as they are.
 - **Helpers as Tuimark Script.** The helpers above are host code in Go and
   TypeScript. When the language gains scripting, the same API (`on`, `set`,
   `derive`, `every`) can ship as scripts.

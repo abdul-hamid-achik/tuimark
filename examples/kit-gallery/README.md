@@ -60,8 +60,10 @@ the instance is the prefix of the event's `source` before the last `__`
 (`confirm__yes`, the `yes` button of `<use id="confirm" template="k-confirm">`,
 is the instance `confirm`; `toast__warn` is the level `warn` of the toast; the
 field `<use id="profile__email" template="k-field">` fires from
-`profile__email__input`, the form `profile` and its field `email`). `instanceOf` and `partOf` in `main.go` are the two small helpers
-that do it; they are meant to be copied into a host, not imported.
+`profile__email__input`, the form `profile` and its field `email`). `instanceOf`, `partOf` and `formFieldOf` in `main.go` are the
+three small helpers that do it (`formFieldOf` takes the field from the
+instance of an input's source: `profile__email__input` gives `email`); they
+are meant to be copied into a host, not imported.
 
 `sample.json` holds a literal snapshot of `found` and `detail` so `validate`,
 `dump` and `run --mock` work with no Go; a test keeps the snapshot from drifting
