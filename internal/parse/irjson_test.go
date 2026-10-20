@@ -34,7 +34,12 @@ func tokensFor(t *testing.T, doc *Document, dir string) map[string]string {
 	for _, s := range doc.Styles {
 		var sheet *css.Sheet
 		if s.Src != "" {
-			raw, err := os.ReadFile(filepath.Join(dir, s.Src))
+			// A <style> an include placed resolves against its fragment.
+			base := dir
+			if s.From != "" {
+				base = filepath.Dir(s.From)
+			}
+			raw, err := os.ReadFile(filepath.Join(base, s.Src))
 			if err != nil {
 				t.Fatalf("read style src %q: %v", s.Src, err)
 			}
@@ -200,7 +205,9 @@ func TestIRValidatesAgainstSchema(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			doc := Parse(src, f)
+			// With a loader over the disk, as Load reads it, so an example
+			// that includes a fragment (examples/kit-gallery) is expanded.
+			doc := ParseWith(src, f, osLoader(f))
 			if doc.Diags.HasErrors() {
 				t.Fatalf("%s has diagnostics, want a clean example: %v", f, doc.Diags)
 			}
