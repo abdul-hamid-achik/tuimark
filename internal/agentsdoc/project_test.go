@@ -65,7 +65,7 @@ func TestProjectMarkdown(t *testing.T) {
 
 // §14's V005 row (test 117) and the 0.4a section's claims.
 func TestV005RowAndV04aSection(t *testing.T) {
-	const want = "not well-formed XML; or not a Tuimark document: a root element other than `<tui>` (or the phase-0 alias `<app>`), or a `<tui>` with no `<screen>`"
+	const want = "not well-formed XML; or not a Tuimark document: a root element other than `<tui>` (or the phase-0 alias `<app>`), or a `<tui>` with no `<screen>`; a file whose root is `<fragment>` given as a document, except to `validate` and `fmt`"
 	var row string
 	for _, d := range DiagCodes() {
 		if d.Code == "V005" {
