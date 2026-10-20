@@ -1,0 +1,26 @@
+<tui>
+  <style>
+    #plan { height: auto; }
+    #plan > item:checked { bold: true; }
+    #actions { height: 1; gap: 2; }
+  </style>
+  <keymap>
+    <bind keys="ctrl+s" action="save" label="save"/>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <screen id="main" focus="#name">
+    <col gap="1" pad="1">
+      <input id="name" bind="profile.name" placeholder="your name"/>
+      <select id="tz" bind="profile.tz" each="zones as z" key="z.id" label="{z.name}" placeholder="time zone" on:change="tz_changed"/>
+      <checkbox id="news" bind="profile.news" label="Send me the newsletter" on:change="news_changed"/>
+      <checkbox id="dark" bind="profile.dark" label="Dark mode"/>
+      <list id="plan" each="plans as p" key="p.id" checked="profile.plan" single="true" mark="●" on:change="plan_changed">
+        <item><text>{p.name}</text></item>
+      </list>
+      <row id="actions">
+        <button id="save" label="Save ({profile.plan})" on:click="save"/>
+        <button id="cancel" label="Cancel" on:click="cancel"/>
+      </row>
+    </col>
+  </screen>
+</tui>

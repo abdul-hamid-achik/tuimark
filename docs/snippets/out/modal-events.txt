@@ -1,0 +1,3 @@
+$ tuimark play modal.tui --data data.json --cols 40 --rows 7 --input "set:help_open=true q ? esc"
+3 toggle_help help {} null
+4 help_closed help {} null

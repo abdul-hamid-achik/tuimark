@@ -1,0 +1,5 @@
+<tui>
+  <screen id="main">
+    <include src="a.tui"/>
+  </screen>
+</tui>

@@ -18,10 +18,10 @@ Widgets name actions in `on:*` attributes:
 | Attribute | On | Fires when |
 |---|---|---|
 | `on:select` | `list`, `table`, `tabs` | the cursor moves to another row, or another tab becomes active |
-| `on:change` | `input`; `list`, `table` with `checked` | the text changes; the set of checked rows changes |
+| `on:change` | `input`; `checkbox`, `select`; `list`, `table` with `checked` | the text changes; the box is toggled or an option is picked; the checked rows (or, with `single`, the chosen row) change |
 | `on:submit` | `input` | `enter` is pressed in it |
 | `on:click` | any node, `button` above all | `enter` or `space` on it while focused, or a mouse click |
-| `on:focus` | any focusable node | it receives focus |
+| `on:focus` | any focusable node, `checkbox` and `select` included | it receives focus |
 | `on:open`, `on:close` | `modal` | it opens or closes |
 | `on:escape` | `modal` | `esc` is pressed while it is the top modal |
 
@@ -41,6 +41,7 @@ Global keys live in one `<keymap>`. Each `<bind>` row maps one or more keys to a
 ```
 
 - `keys` is a comma-separated list of [key tokens](/reference/keys): `q`, `enter`, `ctrl+a`, `shift+tab`, `/`. Nothing is implicit: if you want `j` and `k` to move a list, bind them.
+- `ctrl+i`, `ctrl+j`, and `ctrl+m` are `V003` in the current language, because a terminal delivers them as `tab` and `enter` and they could never match; write `tab` or `enter`. A document that writes `version` still accepts them, and they never match there either.
 - `when` is a selector that must match for the row to apply. It is how a key means different things in different places.
 - Rows are tried in document order, and the first match wins, so put specific rows before general ones.
 - `label` (and `keycap`, the text shown instead of the key) make the row a key hint that [`<hints>`](/guide/widgets#hints) displays (version 2).
@@ -106,30 +107,49 @@ A built-in row only matches when its target can take it: `move-next` needs a lis
 
 One node has focus at a time, or none.
 
-- `input`, `list`, `button`, and `modal` (and in version 2 `table`) can take focus. Any other node can with `focusable="true"`; a `tabs` needs it to take `left` and `right`.
+- `input`, `list`, `button`, and `modal` (and in version 2 `table`) can take focus, and in the current language so do `checkbox`, `select`, and `tabs`. Any other node can with `focusable="true"`.
+- **A `tabs` strip is focusable by default** in the current language. `tab` reaches it, `left` and `right` switch the active tab, and **focus stays on the strip**, so the next `right` switches again. A document that writes `version` has to ask for it with `focusable="true"`, and there focus moves into the new tab.
 - A focusable node needs an `id` (`V012`).
 - `tab` and `shift+tab` cycle through focusable nodes in document order, skipping hidden and disabled ones.
 - `<screen focus="#id">` picks the first focused node; otherwise it is the first focusable one.
-- An open modal traps focus: `tab` cycles inside it, and a request to focus a node outside it does nothing. When it closes, focus returns to where it was.
+- An open modal traps focus: `tab` cycles inside it, and a request to focus a node outside it does nothing. When it closes, focus returns to where it was. In the current language it also [traps the keymap](#a-modal-traps-the-keymap).
 - The host moves focus with `Set("@focus", "#id")`, and a keymap row with `action="focus" to="#id"`.
 
 ## How a key is handled
 
 The same procedure serves the live terminal, `tuimark play`, and `<hints>`. For each key:
 
-1. **`esc` and a modal.** If the key is `esc` and the top open modal has `on:escape`, that fires and the key is used up.
+1. **`esc` and a modal.** If the key is `esc` and the top open modal has `on:escape`, that fires and the key is used up. In the current language a modal without `on:escape` is closed instead, by writing `false` at its `open` path (see [a modal](/guide/widgets#modal)), and the key is used up.
 2. **The focused widget.** A focused, enabled widget takes its own keys:
    - an `input` takes printable keys, `space`, `backspace`, `ctrl+h`, `ctrl+u`, `left`, `right`, `home`, `end`, `ctrl+a`, `ctrl+e`, and `enter` when it has `on:submit`;
+   - a `checkbox` takes only `space`, which toggles it; `enter` goes on to the keymap;
+   - a `select` takes `enter` and `space` to open its list, and, while the list is open, `up`, `down`, `home`, `end`, `pgup`, `pgdn`, `enter`, `space`, and `esc`; closed, it takes no arrow key;
    - a `list` or `table` with rows takes `up`, `down`, `home`, `end`, `pgup`, and `pgdn`;
    - a focusable `tabs` takes `left` and `right`;
    - another scrolling viewport takes the arrows and the paging keys;
    - any other node with `on:click` takes `enter` and `space`.
-3. **The keymap.** The first row whose keys, `when`, and (for a built-in) target all match fires.
+3. **The keymap.** The first row whose keys, `when`, and (for a built-in) target all match fires. While a modal is open, only the rows that [match inside it](#a-modal-traps-the-keymap) can.
 4. **The defaults.** `tab` and `shift+tab` move focus, and `ctrl+c` fires `quit`.
 
 Step 2 is why typing `q` into a search box types a `q` instead of quitting, and why `<hints>` hides the `q quit` hint while the box has focus.
 
 In version 2, each key sees the frame the previous key left, even when several arrive in one read (a fast typist, a paste): a `when` or a class guard that the first key changed applies to the second.
+
+## A modal traps the keymap
+
+In the current language an open modal also traps the keymap. A row fires under it only when its effective `when` matches the chain from the focused node up to the top modal: `when="#dlg"` matches inside the modal `dlg`, and `when="modal"` matches inside any modal. A row with no `when` is **not** tried, and neither is one whose `when` names something outside the modal. That is what stops `q` from quitting the app while a confirmation is open, with no `when` on the row. `tab`, `shift+tab`, and `ctrl+c` keep working, as do the keys the focused widget takes for itself, and `<hints>` shows only the rows that would fire.
+
+The way out for a key that should also work under a modal is `<keymap when="modal">`, a group whose rows all carry that `when`:
+
+<include cwd lang="tui">snippets/interaction/modal.tui</include>
+
+Replay it. `set:` stands in for the host opening the help; then `q` is pressed under the modal, then `?`, then `esc`:
+
+<include cwd lang="term">snippets/out/modal-events.txt</include>
+
+`q` fired nothing, `?` reached the `when="modal"` row, and `esc` closed the modal by itself, because `help_open` is a plain path the runtime can set to `false`: the host sees `help_closed` and nothing else. The numbers are the steps; step 0 is the first frame.
+
+A document that writes `version` has no trap: its rows with no `when` fire under a modal, as they always did.
 
 ## Events
 
@@ -140,7 +160,7 @@ A handler receives an `Event`:
 | `Action` | the action name |
 | `Source` | the `id` of the node that fired it |
 | `Keys` | the `each` aliases of the row involved, by key: `{"t": "t-12"}` |
-| `Value` | the input's text; the new `checked` array; a tab's id; otherwise usually `null` |
+| `Value` | the input's text; a checkbox's boolean; a select's chosen key; the new `checked` array (with `single`, the chosen key); a tab's id; otherwise usually `null` |
 
 A keymap row that fires a host action reports the **focused** node as its source, not the node its `when` matched, and the cursor row of a focused list or table as its `keys`. So `<bind keys="d" action="delete" when="#inbox:focus"/>` tells the handler exactly which ticket to delete.
 

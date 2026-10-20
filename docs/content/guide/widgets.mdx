@@ -1,6 +1,6 @@
 ---
 title: Widgets
-description: Tuimark's built-in widgets - list, input, button, progress, sparkline, table, tabs, hints and modal - with rendered examples, their events and the keys they take.
+description: Tuimark's built-in widgets - list, input, checkbox, select, button, progress and spinner, sparkline, table, tabs, hints and modal - with rendered examples, their events and the keys they take.
 ---
 
 Tuimark has a small, fixed set of widgets. Each one below is shown with a document you can copy and the frame it renders; the pictures come from `tuimark play` on exactly these files. All of them share one `data.json`:
@@ -25,7 +25,8 @@ A focusable list with a cursor. Its rows come from `each` over an array, or from
 - `bind` holds the cursor row's key; `on:select` fires when the cursor moves. A focused list takes `up`, `down`, `home`, `end`, `pgup`, and `pgdn`.
 - The cursor row is `:selected`, reversed by the built-in sheet (`list > item:selected { reverse: true; }`).
 - **Multi-select** (version 2): `checked="path"` holds the keys of the checked rows, an array the runtime reads and writes; `mark="✓"` reserves room for the mark at the start of every row; `on:change` fires with the new array. Checked rows match `:checked`. Bind the keys yourself with the `check-toggle`, `check-all`, and `check-none` built-ins.
-- Rows do not take focus: a row cannot hold an `input`, `button`, `list`, or `modal`. Act on the cursor row with `on:select`, or with a keymap row scoped to the list, whose event names the row.
+- **Single choice** (current language): `single="true"` on a list with `checked` makes it a radio group; see [single choice](#single-choice).
+- Rows do not take focus: a row cannot hold an `input`, `button`, `checkbox`, `select`, `list`, or `modal`. Act on the cursor row with `on:select`, or with a keymap row scoped to the list, whose event names the row.
 - Without a size, a list fits its rows into the space left and scrolls ([auto-fit](/guide/layout#auto-fit)); `scrollbar: auto` shows where you are.
 
 ## input
@@ -41,6 +42,71 @@ A single-line text field. `bind` holds its text.
 - A focused input takes printable keys, `space`, `backspace`, `left`, `right`, `home`, `end`, `ctrl+a`, `ctrl+e`, `ctrl+h`, and `ctrl+u` before the keymap sees them, so typing never triggers shortcuts. A paste arrives as one edit and one `on:change`.
 - An input is one row of text. With a border it is three rows tall, as above; a `height: 1` would leave the border no room.
 
+## checkbox and select
+
+Two form controls for the current language (a `<tui>` without `version`; in a document that writes `version` both tags are `V001`, with the hint `(requires a <tui> without version)`). Here they are in one form, with an `input`, a radio group made from a `list`, and two buttons:
+
+<include cwd lang="tui">snippets/forms/form.tui</include>
+
+<details>
+<summary>data.json</summary>
+
+
+<include cwd lang="json">snippets/forms/data.json</include>
+
+
+</details>
+
+<TermShot name="w-form" />
+
+### checkbox
+
+`<checkbox id="news" bind="profile.news" label="Send me the newsletter" on:change="news_changed"/>` paints `[x] label` or `[ ] label`.
+
+- **Only `space` toggles it** (and a mouse click). It writes `true` or `false` to `bind` and fires `on:change` with that boolean as the event's value. Without `bind`, the runtime keeps the value by `id`.
+- `enter` is not consumed: it goes on to the keymap, so a form's submit row (`<bind keys="enter" action="save"/>`) fires from a focused checkbox, and a keymap row fired while a checkbox has focus carries its value.
+- `label` is a template like a `<text>` body (`{path}`, no expressions). A `{…}` pair that holds more than a path is `V003`.
+- Style it with `:checked` and `:focus`. The built-in sheet reverses a focused one, and `checkbox` is `auto` by `auto` and truncates its label.
+- It needs an `id` (`V012`), takes no children (`V016`) and no `on:click` (`V002`), and cannot stand inside a list `<item>` or a container `each` template (`V001`).
+- If the value at `bind` is present and is not a boolean or `null`, it shows unchecked and a toggle writes `true` over it (`B011`, a warning). The `move-*` and `check-*` built-ins cannot name a checkbox (`B007`).
+
+### select
+
+`<select id="tz" bind="profile.tz" each="zones as z" key="z.id" label="{z.name}" placeholder="time zone" on:change="tz_changed"/>` is one row: the chosen option's label, or the dim placeholder, then `▾`.
+
+<TermShot name="w-select-open" />
+
+- The chosen option is the first whose `key` equals the bound value, compared with its JSON type. Without `label` an option shows its key. It needs `id`, `each`, and `key` (`V012`, `V017`).
+- `enter` or `space` (or a click) opens the option list below the row, or above it when there is more room there, over the screen and every modal. While it is open, `up`, `down`, `home`, `end`, `pgup`, and `pgdn` move its cursor without writing anything; `enter`, `space`, or a click picks; `esc` closes it. `tab`, `shift+tab`, and `ctrl+c` close it and then act as usual. Every other key does nothing while it is open, and a mouse event outside it closes it and is dropped.
+- Picking writes the option's key to `bind` (or keeps it by `id` without `bind`) and fires `on:change`, only when the choice changed. The event's `keys` is `{alias: key}` (`{"z": "cet"}` above) and its value is the key. A keymap row fired while a select has focus carries the chosen key, or `null`, as its value.
+- Closed, it takes no `up` or `down`, so it never steals the keys of a form around it. `move-*` and `check-*` on a select are `B007`.
+- Style the open list with `select > list` (the built-in sheet gives it `border: single; max-height: 12`) and its rows with `select > list > item`: `:selected` is the cursor, `:checked` the chosen option.
+- If the bound value is no option's key, nothing is chosen and the placeholder shows (`B012`, a warning, also for an empty options array). Like the checkbox, it cannot stand inside a list `<item>` or a container `each` template.
+
+### single choice
+
+`single="true"` on a `list` or a `table` that has `checked` (and so `each` and `key`) makes `checked` hold **one row key, or `null`**, instead of an array. That is a radio group, and the `plan` list above is one:
+
+```tui
+<list id="plan" each="plans as p" key="p.id" checked="profile.plan" single="true" mark="●" on:change="plan_changed">
+  <item><text>{p.name}</text></item>
+</list>
+```
+
+- A focused `single` widget takes `space` as `check-toggle` on its cursor row; choosing the already chosen row keeps it. `check-none` clears it, and `check-all` never applies (`B007` when a keymap row names such a widget).
+- `on:change` fires with the chosen key as its value, in its JSON type (`"pro"` above, `9921` for a table of process ids), and `keys` names the row.
+- `single` without `checked` is `V018`; a `checked` path that holds an array or an object is `B008`, shown as nothing chosen and never overwritten. In a document that writes `version`, `single` is `V002`.
+
+What the runtime says about data that does not fit these widgets, from `tuimark validate --data bad.json`, where `tz` is no zone, `news` is a string, and `plan` is an array:
+
+<include cwd lang="term">snippets/out/forms-bad.txt</include>
+
+And what a replay of the form fires, from the name input: `tab` to the select, `enter` to open it, `down enter` to pick the second zone, `tab space` to toggle the newsletter, `tab tab down space` to choose the Pro plan:
+
+<include cwd lang="term">snippets/out/forms-events.txt</include>
+
+The number at the start of each line is the step that fired it. `enter` on the checkbox fired nothing, because no keymap row claims it.
+
 ## button
 
 ```tui
@@ -48,7 +114,10 @@ A single-line text field. `bind` holds its text.
 <button id="approve" on:click="approve">Approve</button>
 ```
 
-The label comes from `label` or the body, painted as `[ Deploy ]`. A focused button fires `on:click` on `enter` or `space`, and on a mouse click. Show focus with `button:focus { reverse: true; }`.
+The label comes from `label` or the body, painted as `[ Deploy ]`. A focused button fires `on:click` on `enter` or `space`, and on a mouse click.
+
+- **Focus.** In the current language the built-in sheet already reverses a focused button, checkbox, or select (`button:focus, checkbox:focus, select:focus { reverse: true; }`), so a form needs no focus rule of its own. A rule of your own wins over the built-in sheet: write `reverse: false` in a `:focus` rule to replace the look with another. A document that writes `version` keeps the old sheet and writes the rule itself.
+- **`{path}` in a label or body.** In the current language the label is a template like a `<text>` body: `<button id="save" label="Save ({profile.plan})" on:click="save"/>` paints `[ Save (free) ]` and follows the store. A button's body works the same way when it has no `label` (the body of a button that writes `label` is never resolved). A missing path is `B003`, reported at the `<button>`, and resolves to the empty string; a line break in a resolved value becomes a space. An `auto` button is as wide as its resolved label, so it grows and shrinks with the data: write a `width` for one that must stay put. The label is not part of any event. In a document that writes `version`, `{path}` there is `V003`.
 
 ## progress and sparkline
 
@@ -61,7 +130,26 @@ A `progress` is a bar from 0 to 100, from `bind` or a literal `value`. A `sparkl
 - `bar: eighths` (version 2) fills eighths of a cell for a smoother bar; `bar: block`, the default, fills whole cells.
 - A sparkline is naturally one column per value and one row tall; give it a `height` for more levels. Values are right-aligned in the width it gets, `null` is a gap, and `min` and `max` fix the range (otherwise the shown values set it).
 - The bar color is the widget's `color`.
+- **A spinner** needs no value: `<progress indeterminate="true"/>` (current language) is one glyph that turns while something runs. See [the spinner](#the-spinner).
 - **`scale="NAME"`** (`version="3"`) shares a range across every sparkline of one frame that carries the same name: they all take `lo`/`hi` from the smallest and largest of their shown values together, so a group of related gauges reads on one scale. A sparkline's own `min`/`max` still wins for that one; an inactive tab's sparkline is not in the group.
+
+### The spinner
+
+`indeterminate="true"` makes a `progress` a one-glyph spinner for work with no known end. It takes no `bind` or `value`: together with either, the `progress` stays a bar and the attribute is `V003`, as is a value other than `true` or `false`. In a document that writes `version` the attribute is `V002`.
+
+<include cwd lang="tui">snippets/widgets/spinner.tui</include>
+
+<TermShot name="w-spinner" />
+
+The glyph turns through ten braille frames, one per 100 ms, starting at `⠋`. In a running terminal it turns by itself. `dump` and `validate` never advance a clock, so they always paint the first frame; to see the others, replay a clock with the `tick:DUR` step of [`tuimark play`](/guide/tools#play), which advances a virtual clock and is also what fires a Go host's `Every` functions. After `tick:300ms` the phase is 3, the fourth glyph:
+
+```sh
+tuimark play spinner.tui --data spinner.json --cols 30 --rows 1 --input tick:300ms
+```
+
+<include cwd lang="grid">snippets/out/spinner-tick.txt</include>
+
+Pair it with a text that says what is running, as above, and with an `if` that hides it when the work is over.
 
 ## table
 
@@ -132,8 +220,9 @@ A layer over the screen, open while `open` is truthy.
 
 <TermShot name="w-modal" />
 
-- A modal is centered, 80% by 80% of the screen unless sized, with a single border by default and its `title` on it.
+- A modal is centered, with a single border by default and its `title` on it. In the current language an unsized modal is **as big as its content**, capped by a written `max-width` or `max-height` (in cells or percent) and otherwise by 80% of the screen, and at least `width(title) + 6` wide when it has a border and a title. A document that writes `version` makes an unsized modal 80% by 80% of the screen.
 - It traps focus while open, gives it back when it closes, and fires `on:open`, `on:close`, and, on `esc`, `on:escape`.
+- **`esc` closes it** in the current language. A modal with no `on:escape` is closed by writing `false` at its `open` path (at its `bind` path when it has no `open`), and the next frame fires `on:close` and gives focus back. A modal whose `open` is a literal (`open="true"`) or a negated path (`open="!path"`) stays open, as does one whose path the host `Derive`s, because the runtime has nothing to write; a modal with `on:escape` leaves the choice to that action. See [the keymap and a modal](/guide/interaction#a-modal-traps-the-keymap).
 - A modal must be the last child of its screen (`L004`). Several can be open; the last one in the document is on top.
 - Give the button row `height: 1`. Rows stretch across the modal by default, and a focused `reverse` button would paint the whole stretched rect.
 - **`focus="#id"`** (`version="3"`) names the node that takes focus when the modal becomes the top one, instead of the first entry of its focus cycle; the target must be inside the modal. It also doubles as the fallback when the node focused inside the modal is lost (it leaves the frame or can no longer take focus): focus goes to it when it still can take focus, else to the first entry of the cycle as usual.

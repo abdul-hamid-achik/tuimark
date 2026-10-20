@@ -1,0 +1,12 @@
+<tui>
+  <style>
+    #spin { color: $accent; }
+  </style>
+  <screen id="main">
+    <row height="1" gap="1">
+      <progress id="spin" indeterminate="true"/>
+      <text if="busy">Deploying {service}…</text>
+      <text if="!busy">Idle</text>
+    </row>
+  </screen>
+</tui>

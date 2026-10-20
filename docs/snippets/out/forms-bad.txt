@@ -1,0 +1,4 @@
+$ tuimark validate form.tui --data bad.json
+warning B012 form.tui:14:7 /screen/col/select bind="profile.tz" holds "mars", which is no option's key; nothing is chosen, and a pick writes over it
+warning B011 form.tui:15:7 /screen/col/checkbox bind="profile.news" holds a string, not true, false, or null (shown unchecked; a toggle writes true over it)
+error B008 form.tui:17:7 /screen/col/list checked="profile.plan": "profile.plan" is an array, not a row key or null (single="true": shown as none checked; check-toggle and check-none leave it alone)

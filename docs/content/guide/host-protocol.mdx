@@ -9,7 +9,7 @@ This is different from shelling out to `dump`/`validate`/`play`: those are one-s
 
 ## When to reach for it
 
-- You want a Tuimark view in front of a program written in TypeScript, Python, Rust, or anything else, without a second host runtime for that language. (The SPEC only ever recognizes one host implementation, the Go one; a parent over this protocol is not a second host — it lays out and paints nothing itself.)
+- You want a Tuimark view in front of a program written in TypeScript, Python, Rust, or anything else, without a second host runtime for that language. (There is only one host implementation, the Go one; a parent over this protocol is not a second host — it lays out and paints nothing itself.)
 - You want a thin process boundary between "what the terminal shows" and "what has the data and the business logic" — the parent can be the same process that already talks to your database or your API.
 
 If your host is already Go, use [`Run`](/guide/go-api#run) directly; it is simpler and has no protocol to speak.

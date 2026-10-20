@@ -1,0 +1,11 @@
+<tui>
+  <style src="theme.tcss"/>
+  <include src="parts/keys.tui"/>
+  <screen id="main">
+    <include src="parts/header.tui"/>
+    <list id="tasks" each="tasks as t" key="t.id" bind="selected">
+      <item><text>{t.title}</text></item>
+    </list>
+    <include src="parts/footer.tui"/>
+  </screen>
+</tui>

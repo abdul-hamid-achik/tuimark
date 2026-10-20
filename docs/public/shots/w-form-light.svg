@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="450.4" height="348" viewBox="0 0 450.4 348" role="img" aria-label="a form: a name input with its placeholder, a select showing UTC, a checked and an unchecked checkbox, a radio group with Free chosen, and Save and Cancel buttons">
+<title>a form: a name input with its placeholder, a select showing UTC, a checked and an unchecked checkbox, a radio group with Free chosen, and Save and Cancel buttons</title>
+<rect width="450.4" height="348" rx="6" fill="#ffffff"/>
+<path fill="#1f2328" d="M23.6 194h403.2v20h-403.2z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="49" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">your</text>
+<text x="71.6" y="49" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">name</text>
+<text x="23.6" y="89" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">UTC</text>
+<text x="417.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">▾</text>
+<text x="23.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">[</text>
+<text x="42.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">]</text>
+<text x="62" y="129" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">Send</text>
+<text x="110" y="129" textLength="19.2" lengthAdjust="spacing" fill="#1f2328">me</text>
+<text x="138.8" y="129" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">the</text>
+<text x="177.2" y="129" textLength="96" lengthAdjust="spacing" fill="#1f2328">newsletter</text>
+<text x="23.6" y="169" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">[x]</text>
+<text x="62" y="169" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">Dark</text>
+<text x="110" y="169" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">mode</text>
+<text x="23.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#ffffff" font-weight="700">●</text>
+<text x="42.8" y="209" textLength="38.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">Free</text>
+<text x="42.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#1f2328">Pro</text>
+<text x="42.8" y="249" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">Team</text>
+<text x="23.6" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">[</text>
+<text x="42.8" y="289" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">Save</text>
+<text x="90.8" y="289" textLength="57.6" lengthAdjust="spacing" fill="#1f2328">(free)</text>
+<text x="158" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">]</text>
+<text x="186.8" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">[</text>
+<text x="206" y="289" textLength="57.6" lengthAdjust="spacing" fill="#1f2328">Cancel</text>
+<text x="273.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#1f2328">]</text>
+</g>
+</svg>

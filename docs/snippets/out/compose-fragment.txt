@@ -1,0 +1,2 @@
+$ tuimark validate parts/header.tui
+ok (fragment checked on its own)
