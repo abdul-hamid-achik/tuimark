@@ -125,28 +125,27 @@ func (fb *builder) saidNow(u *ir.Node, which int) {
 }
 
 // missKind is how a path that does not resolve reads (SPEC §7, v0.4b
-// §6.18.5): a value ({path}, bind, key, checked, a with path) is B003, a
-// flag or a guard (if, hidden, disabled, open, class:NAME) is B002 and
-// null, and an each array is B001.
+// §6.18.5): a value ({path}, bind, key, checked, a with path, an each
+// array) is B003 (B001 for an each), and a flag or a guard (if, hidden,
+// disabled, open, class:NAME) is B002 and null.
 type missKind uint8
 
 const (
 	missValue missKind = iota
 	missFlag
-	missArray
 )
 
 // pathMiss decides whether the path p of n, written in slot as its seg-th
 // path (ir.ViaKey), which does not resolve in sc, reports its B001, B002,
 // or B003, and returns how p went through a with alias (nil for none),
 // which the message then names (reportPath).
-// A path through an alias whose own path does not resolve either reports
-// no B002 or B003: its use's B003 covers it (decision 14). A flag or a
-// guard through an alias that stands for an object is an optional prop
-// (decision 100): missing, it is null, with no B002. A flag through an
-// alias that stands for anything else is B002, and a value B003, as
-// anywhere. An each array's B001 always reports, in the with format: the
-// SPEC exempts only B002 and B003 (§6.18.5).
+// A path through an alias whose own path does not resolve reports
+// nothing: its use's B003 is the only report (decision 14), and an each
+// through it has no rows and no B001 (the owner's ruling on the F3
+// erratum). A flag or a guard through an alias that stands for an object
+// is an optional prop (decision 100): missing, it is null, with no B002.
+// A flag through an alias that stands for anything else is B002, a value
+// B003, and an each B001, as anywhere.
 func (fb *builder) pathMiss(n *ir.Node, slot string, seg int, p string, sc *scope, kind missKind) (bool, *ir.Via) {
 	via := n.ViaOf(slot, seg)
 	if via == nil {
@@ -154,7 +153,7 @@ func (fb *builder) pathMiss(n *ir.Node, slot string, seg int, p string, sc *scop
 	}
 	base, found := sc.resolve(fb.a.store, via.Base)
 	if !found {
-		return kind == missArray, via
+		return false, via
 	}
 	if _, obj := base.(map[string]any); obj && kind == missFlag {
 		return false, via
@@ -162,17 +161,20 @@ func (fb *builder) pathMiss(n *ir.Node, slot string, seg int, p string, sc *scop
 	return true, via
 }
 
-// badEach reports the B001 of n's each, whose path p resolved to v, not
-// an array, or did not resolve (found false): the each as written and p
-// through a with alias name it as written (SPEC v0.4b §6.18.5).
-func (fb *builder) badEach(n *ir.Node, p string, v any, found bool) {
+// badEach reports the B001 of n's each, whose path p resolved in sc to v,
+// not an array, or did not resolve (found false): the each as written and
+// p through a with alias name it as written (SPEC v0.4b §6.18.5). A path
+// through an alias whose own path is missing reports nothing (pathMiss).
+func (fb *builder) badEach(n *ir.Node, p string, v any, found bool, sc *scope) {
 	via := n.ViaOf("each", 0)
 	each := n.Each
 	if via != nil && n.Written != nil {
 		each = n.Written.Each
 	}
 	if !found {
-		fb.reportPath(n, via, p, ir.Error, "B001", "each=%q: path %q is missing (want an array)", each, shownPath(p, via))
+		if ok, _ := fb.pathMiss(n, "each", 0, p, sc, missValue); ok {
+			fb.reportPath(n, via, p, ir.Error, "B001", "each=%q: path %q is missing (want an array)", each, shownPath(p, via))
+		}
 		return
 	}
 	fb.reportPath(n, via, p, ir.Error, "B001", "each=%q: %q is %s, not an array", each, shownPath(p, via), typeName(v))

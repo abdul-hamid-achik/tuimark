@@ -119,7 +119,7 @@ func (fb *builder) resolveOptions(n *ir.Node, sc *scope) *selectOptions {
 	v, found := sc.resolve(a.store, e.Path)
 	arr, isArr := v.([]any)
 	if !found || !isArr {
-		fb.badEach(n, e.Path, v, found)
+		fb.badEach(n, e.Path, v, found, sc)
 	}
 	keyPath, hasKey := n.Attr("key")
 	label, hasLabel := n.Attr("label")

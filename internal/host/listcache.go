@@ -275,7 +275,7 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box, slab *listSlab
 	v, found := (*scope)(nil).resolve(a.store, p.each.Path)
 	arr, isArr := v.([]any)
 	if !found || !isArr {
-		sub.badEach(n, p.each.Path, v, found)
+		sub.badEach(n, p.each.Path, v, found, nil)
 	}
 	scopes := make([]scope, len(arr))
 	r.keys = make([]any, len(arr))

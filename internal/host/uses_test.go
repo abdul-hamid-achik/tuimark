@@ -89,10 +89,10 @@ func TestMissingWithPathIsOneB003AtTheUse(t *testing.T) {
 // §6.18.5 "Messages": a B001, B002, or B003 about a path of a copy that
 // goes through a with alias quotes the path (and the attribute) as
 // written, then ` (P via <use id="U">)`; a path through a row alias keeps
-// the placement suffix. An each's B001 reports even when the alias's own
-// path is missing (§6.18.5 exempts B002 and B003 only), and a flag
-// through an alias that stands for something other than an object is
-// B002.
+// the placement suffix. When the alias's own path is missing, the use's
+// B003 is the only report, with no B001 for an each through it
+// (TestEachThroughAMissingAlias), and a flag through an alias that stands
+// for something other than an object is B002.
 func TestPathsThroughAWithAliasNameTheirUse(t *testing.T) {
 	const src = `<tui>
   <template id="t">
@@ -138,9 +138,73 @@ func TestPathsThroughAWithAliasNameTheirUse(t *testing.T) {
 	})
 	bindJSON(t, a, `{}`)
 	sameDiags(t, "missing", useDiags(a), []string{
-		`error B001 4:7 /screen/col/box each="f.items as it": path "f.items" is missing (want an array) (form.a.items via <use id="u">)`,
-		`error B001 8:7 /screen/col/list each="f.rows as r": path "f.rows" is missing (want an array) (form.a.rows via <use id="u">)`,
 		`warning B003 12:5 /screen/use with path "form.a" (alias f) is missing`,
+	})
+}
+
+// The owner's ruling on the F3 erratum (decision 14): when a with alias's
+// own path is missing, the use's B003 (an error under --strict) is the
+// only report, and an each through the alias (on a container, a list, a
+// table, or a select) has no rows and no B001. When the alias's path is
+// present and an each through it is not an array, B001 reports, in the
+// via format.
+func TestEachThroughAMissingAlias(t *testing.T) {
+	const src = `<tui>
+  <template id="t">
+    <col>
+      <box each="f as it"><text>{it}</text></box>
+      <box each="f.items as it"><text>{it}</text></box>
+      <list id="l" each="f.rows as r" key="r.id"><item><text>{r.id}</text></item></list>
+      <table id="tb" each="f.rows as r" key="r.id"><column>{r.id}</column></table>
+      <select id="s" each="f.rows as o" key="o.id"/>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="u" template="t" with="form.a as f"/>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{}`)
+	sameDiags(t, "missing", useDiags(a), []string{
+		`warning B003 12:5 /screen/use with path "form.a" (alias f) is missing`,
+	})
+	if got := texts(a); !reflect.DeepEqual(got, []string{}) {
+		t.Errorf("texts %q, want no rows", got)
+	}
+	a.SetStrict(true)
+	sameDiags(t, "missing, --strict", useDiags(a), []string{
+		`error B003 12:5 /screen/use with path "form.a" (alias f) is missing`,
+	})
+	a.SetStrict(false)
+	bindJSON(t, a, `{"form": {"a": 5}}`)
+	sameDiags(t, "not an array", useDiags(a), []string{
+		`error B001 4:7 /screen/col/box each="f as it": "f" is a number, not an array (form.a via <use id="u">)`,
+		`error B001 5:7 /screen/col/box each="f.items as it": path "f.items" is missing (want an array) (form.a.items via <use id="u">)`,
+		`error B001 6:7 /screen/col/list each="f.rows as r": path "f.rows" is missing (want an array) (form.a.rows via <use id="u">)`,
+		`error B001 7:7 /screen/col/table each="f.rows as r": path "f.rows" is missing (want an array) (form.a.rows via <use id="u">)`,
+		`error B001 8:7 /screen/col/select each="f.rows as o": path "f.rows" is missing (want an array) (form.a.rows via <use id="u">)`,
+	})
+	bindJSON(t, a, `{"form": {"a": {"items": "x", "rows": 3}}}`)
+	sameDiags(t, "members not arrays", useDiags(a), []string{
+		`error B001 4:7 /screen/col/box each="f as it": "f" is an object, not an array (form.a via <use id="u">)`,
+		`error B001 5:7 /screen/col/box each="f.items as it": "f.items" is a string, not an array (form.a.items via <use id="u">)`,
+		`error B001 6:7 /screen/col/list each="f.rows as r": "f.rows" is a number, not an array (form.a.rows via <use id="u">)`,
+		`error B001 7:7 /screen/col/table each="f.rows as r": "f.rows" is a number, not an array (form.a.rows via <use id="u">)`,
+		`error B001 8:7 /screen/col/select each="f.rows as o": "f.rows" is a number, not an array (form.a.rows via <use id="u">)`,
+	})
+
+	// The alias's path read in a row's scope: a row without it reports
+	// the use's B003 alone; a row with it and no array there, B001.
+	const rows = `<tui>
+  <template id="t"><box each="f.items as it"><text>{it}</text></box></template>
+  <screen id="main">
+    <list id="l" each="rows as r" key="r.id"><item><use template="t" with="r.x as f"/></item></list>
+  </screen>
+</tui>`
+	ra := useApp(t, rows, `{"rows": [{"id": 1}, {"id": 2, "x": {"items": 4}}, {"id": 3, "x": {}}]}`)
+	sameDiags(t, "rows", useDiags(ra), []string{
+		`error B001 2:20 /screen/list/item/box each="f.items as it": "f.items" is a number, not an array (r.x.items via <use template="t">)`,
+		`error B001 2:20 /screen/list/item/box each="f.items as it": path "f.items" is missing (want an array) (r.x.items via <use template="t">)`,
+		`warning B003 4:52 /screen/list/item/use with path "r.x" (alias f) is missing`,
 	})
 }
 

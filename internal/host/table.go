@@ -271,7 +271,7 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableAc
 	v, found := sc.resolve(a.store, p.each.Path)
 	arr, isArr := v.([]any)
 	if !found || !isArr {
-		sub.badEach(n, p.each.Path, v, found)
+		sub.badEach(n, p.each.Path, v, found, sc)
 	}
 	rows := len(arr)
 	td.rows = rows

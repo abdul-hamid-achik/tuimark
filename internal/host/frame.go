@@ -1053,7 +1053,7 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 	v, found := sc.resolve(a.store, e.Path)
 	arr, isArr := v.([]any)
 	if !found || !isArr {
-		fb.badEach(n, e.Path, v, found)
+		fb.badEach(n, e.Path, v, found, sc)
 		return
 	}
 	keyPath := n.Attrs["key"]
@@ -1305,7 +1305,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 		v, found := sc.resolve(a.store, e.Path)
 		arr, isArr := v.([]any)
 		if !found || !isArr {
-			fb.badEach(n, e.Path, v, found)
+			fb.badEach(n, e.Path, v, found, sc)
 		}
 		keyPath := n.Attrs["key"]
 		ls.alias, ls.each = e.Alias, true
