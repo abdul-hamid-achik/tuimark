@@ -25,10 +25,12 @@ import (
 // Request is a question to put to the user.
 type Request struct {
 	Title, Body string
+	OnConfirm   func() error // the yes answer
+	OnCancel    func() error // the no answer, esc included; optional
 	// Yes and No are the button labels; empty means "Confirm" and "Cancel".
-	Yes, No   string
-	OnConfirm func() error // the yes answer
-	OnCancel  func() error // the no answer, esc included; optional
+	// Open always writes both, so a label of an earlier question never
+	// stays on the buttons.
+	Yes, No string
 }
 
 // Dialogs routes the answers of the dialogs of one app.

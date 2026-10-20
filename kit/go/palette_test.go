@@ -93,3 +93,28 @@ func TestPaletteFuzzyAndAdd(t *testing.T) {
 		t.Errorf("commands = %v", rows)
 	}
 }
+
+// What NewPalette writes is all palette.tui needs: with no other data the
+// document reports nothing, and the open palette shows its title and the
+// input's placeholder. A title the store already has is kept.
+func TestPaletteDefaultsAreAllTheComponentNeeds(t *testing.T) {
+	app, _, _ := paletteApp(t, Substring)
+	for _, d := range app.Validate() {
+		t.Errorf("validate: %s", d)
+	}
+	res, text := play(t, app, "ctrl+k")
+	if !res.Dump.OK || len(res.Dump.Errors) > 0 {
+		t.Errorf("dump: ok %v, errors %v", res.Dump.OK, res.Dump.Errors)
+	}
+	contains(t, text, "Command palette")
+	contains(t, text, "type a command…")
+
+	app = loadComponent(t, "palette", `{"palette": {"title": "Run", "placeholder": "what to run"}}`)
+	if _, err := NewPalette(app, PaletteOptions{}, Command{ID: "deploy", Title: "Deploy"}); err != nil {
+		t.Fatal(err)
+	}
+	if getStr(t, app, "palette.title") != "Run" || getStr(t, app, "palette.placeholder") != "what to run" {
+		t.Errorf("title %q placeholder %q: the store's own values are kept",
+			getStr(t, app, "palette.title"), getStr(t, app, "palette.placeholder"))
+	}
+}

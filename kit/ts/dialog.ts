@@ -39,7 +39,11 @@ export interface Request {
 export function createDialogs(ui: Ui) {
   const pending = new Map<string, Request>(); // by instance
 
-  /** Opens the dialog `inst` with a question. Opening an instance that is already open replaces its question. */
+  /**
+   * Opens the dialog `inst` with a question. Both button labels are written on
+   * every open (an absent one is its default), so an earlier question's labels
+   * never stay. Opening an instance that is already open replaces its question.
+   */
   async function open(inst: string, r: Request): Promise<void> {
     pending.set(inst, r);
     await ui.batch([
