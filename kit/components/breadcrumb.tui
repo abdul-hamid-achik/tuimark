@@ -1,24 +1,18 @@
-<!-- k-breadcrumb · Contract: reads crumbs[] {id, label, last}, where; the host trims crumbs on breadcrumb_up · Actions: breadcrumb_up · Keys: backspace (up) · Requires: k-hints, k-muted -->
+<!-- k-breadcrumb · Contract: with="PATH as b", where PATH is an array of {id, label, last}; reads where; the host trims the array on breadcrumb_up · Actions: breadcrumb_up · Keys: backspace (up) · Requires: k-hints, k-muted -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <keymap>
     <bind keys="backspace" action="breadcrumb_up" label="up"/>
   </keymap>
   <screen id="demo">
     <col width="1fr" height="1fr" gap="1">
-      <!-- COPY: a breadcrumb is a `row` with class `k-breadcrumb` and `each`
-           over an array of {id, label, last}. Its children are the template,
-           repeated per element: the label (class `k-breadcrumb-item`, plus
-           `current` for the last one, by a class:NAME guard) and the
+      <!-- USE: the k-breadcrumb template over an array of {id, label, last}.
+           Each crumb is a label (marked `current` when it is the last) and a
            separator. The host builds the array from the current path and
-           trims it on `breadcrumb_up`. A template cannot hold anything
-           focusable, so the crumbs are display only; navigate with a keymap
+           trims it on `breadcrumb_up`. The crumbs are display only (a
+           repeated row holds nothing focusable): navigate with a keymap
            row. -->
-      <row class="k-breadcrumb" each="crumbs as c" key="c.id">
-        <text class="k-breadcrumb-item" class:current="c.last">{c.label}</text>
-        <text class="k-breadcrumb-sep" if="!c.last">›</text>
-      </row>
+      <use template="k-breadcrumb" with="crumbs as b"/>
       <text class="k-muted" pad="1">You are in {where}.</text>
       <hints class="k-hints"/>
     </col>

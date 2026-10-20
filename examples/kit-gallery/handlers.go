@@ -163,7 +163,7 @@ func (a *app) handlers() map[string]tuimark.Handler {
 		v, _ := ev.Value.(string)
 		name, email := str(a.ui.Get, "forms.profile.name.value"), str(a.ui.Get, "forms.profile.email.value")
 		var field, msg string
-		switch partOf(ev) { // profile__name, profile__email
+		switch formFieldOf(ev) { // profile__name__input, profile__email__input
 		case "name":
 			field, msg, name = "name", checkName(v), v
 		case "email":
@@ -295,9 +295,14 @@ func (a *app) logAppend() error {
 		lines = lines[len(lines)-maxLogLines:]
 	}
 	return a.ui.Batch(func(b *tuimark.Batch) error {
-		return errors.Join(b.Set("log.lines", lines), b.Set("log.count", float64(len(lines))))
+		return errors.Join(b.Set("log.lines", lines), b.Set("log.count", float64(len(lines))),
+			b.Set("log.title", logTitle(len(lines))))
 	})
 }
+
+// logTitle is the log panel's title, which the k-log template reads from
+// log.title.
+func logTitle(n int) string { return "build log · " + plural(n, "line", "lines") }
 
 func checkName(s string) string {
 	if strings.TrimSpace(s) == "" {
@@ -347,9 +352,9 @@ func (a *app) formSubmit() error {
 	}
 	switch {
 	case nameErr != "":
-		return a.ui.Set("@focus", "#profile__name")
+		return a.ui.Set("@focus", "#profile__name__input")
 	case emailErr != "":
-		return a.ui.Set("@focus", "#profile__email")
+		return a.ui.Set("@focus", "#profile__email__input")
 	}
 	return nil
 }

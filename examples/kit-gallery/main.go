@@ -7,8 +7,9 @@
 //	go run ./examples/kit-gallery -dump 120x40       # print Dump() as JSON and exit
 //	go run ./examples/kit-gallery -theme light       # Set("@theme", "light") before Run
 //
-// The view lives in app.tui and the kit's two stylesheets. This host holds
-// no layout code. It implements the named actions the document uses and
+// The view lives in app.tui, which includes kit/kit.tui (the kit's templates,
+// keymaps and stylesheets) and copies its components with <use>, and in
+// app.tcss. This host holds no layout code. It implements the named actions the document uses and
 // keeps what the markup reads:
 //
 //   - Derive: `found` (the palette's filtered commands) and `detail` (the
@@ -202,6 +203,15 @@ func instanceOf(ev tuimark.Event) string {
 func partOf(ev tuimark.Event) string {
 	_, part := splitID(ev.Source)
 	return part
+}
+
+// formFieldOf is the field a k-field event belongs to. The template's input is
+// FORM__FIELD__input (the use's id, then the template's own id), so the
+// field is the part of the source's instance: profile__email__input gives
+// email.
+func formFieldOf(ev tuimark.Event) string {
+	_, field := splitID(instanceOf(ev))
+	return field
 }
 
 func splitID(id string) (instance, part string) {

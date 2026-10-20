@@ -1,20 +1,29 @@
 package main
 
 import (
-	"github.com/abdul-hamid-achik/tuimark"
+	"bytes"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/abdul-hamid-achik/tuimark"
 )
 
 // The tests in this file hold the kit's conventions (kit/README.md) to the
 // files themselves, so a copied or renamed piece cannot drift from them.
+//
+// A document is checked as the runtime reads it: every <include> is
+// replaced by its fragment's content (expand), so the kit's templates,
+// keymaps and stylesheet links count wherever a document includes kit.tui.
 
 // modifiers are the short classes a component class takes as a second class
-// on the same node. They are only ever written compound with a k- class.
+// on the same node. They are only ever written compound with a k- class, or
+// as the variant of a <use>, which lands on its copy's k- root.
 var modifiers = map[string]bool{
 	"primary": true, "secondary": true, "danger": true, "ghost": true,
 	"ok": true, "warn": true, "info": true, "accent": true,
@@ -24,6 +33,9 @@ var modifiers = map[string]bool{
 // generated are the class names the runtime gives to nodes it generates; the
 // kit styles them only under a component class.
 var generated = map[string]bool{"tab-label": true, "hint-key": true, "hint-label": true}
+
+// kitFragment is the kit itself, which every kit document includes.
+const kitFragment = "../../kit/kit.tui"
 
 // docs are every document the kit ships: the components and the gallery.
 func docs(t *testing.T) []string {
@@ -48,26 +60,167 @@ func stripComments(s string) string {
 	return regexp.MustCompile(`(?s)/\*.*?\*/`).ReplaceAllString(s, "")
 }
 
-// Every class a document writes is a k- class, a modifier, or (for the
-// app's own sheet) nothing else; a modifier is written only next to a k-
-// class on the same node.
-func TestClassNamesFollowTheConvention(t *testing.T) {
-	for _, path := range docs(t) {
-		src := readFile(t, path)
-		for _, m := range classAttr.FindAllStringSubmatch(src, -1) {
-			names := strings.Fields(m[1])
-			hasK := false
-			for _, c := range names {
-				if strings.HasPrefix(c, "k-") {
-					hasK = true
-				}
+func stripXMLComments(s string) string {
+	return regexp.MustCompile(`(?s)<!--.*?-->`).ReplaceAllString(s, "")
+}
+
+// ---- includes ----
+
+var (
+	includeTag  = regexp.MustCompile(`<include\s+src="([^"]+)"\s*/>`)
+	fragmentRE  = regexp.MustCompile(`(?s)^\s*<fragment>(.*)</fragment>\s*$`)
+	templateRE  = regexp.MustCompile(`(?s)<template\s+id="([^"]+)"\s*>(.*?)</template>`)
+	useTag      = regexp.MustCompile(`<use\b[^>]*>`)
+	anyTag      = regexp.MustCompile(`<([a-z]+)\b[^>]*>`)
+	templateRef = regexp.MustCompile(`\btemplate="([^"]+)"`)
+)
+
+// fragmentBody is the content of a fragment file: what an <include> of it
+// inserts, comments dropped.
+func fragmentBody(t *testing.T, path string) string {
+	t.Helper()
+	m := fragmentRE.FindStringSubmatch(stripXMLComments(readFile(t, path)))
+	if m == nil {
+		t.Fatalf("%s: the root is not <fragment>", path)
+	}
+	return m[1]
+}
+
+// expand is path's markup, comments dropped, with every <include> replaced
+// by its fragment's content, recursively, resolved against the file that
+// holds it.
+func expand(t *testing.T, path string) string {
+	t.Helper()
+	return expandSrc(t, path, stripXMLComments(readFile(t, path)), map[string]bool{})
+}
+
+func expandSrc(t *testing.T, path, src string, chain map[string]bool) string {
+	t.Helper()
+	abs, _ := filepath.Abs(path)
+	if chain[abs] {
+		t.Fatalf("%s: include cycle", path)
+	}
+	chain[abs] = true
+	defer delete(chain, abs)
+	return includeTag.ReplaceAllStringFunc(src, func(tag string) string {
+		frag := filepath.Join(filepath.Dir(path), includeTag.FindStringSubmatch(tag)[1])
+		return expandSrc(t, frag, fragmentBody(t, frag), chain)
+	})
+}
+
+// sourcesOf is path and every fragment it includes, recursively, once each.
+func sourcesOf(t *testing.T, path string) []string {
+	t.Helper()
+	seen := map[string]bool{}
+	var out []string
+	var walk func(string)
+	walk = func(p string) {
+		p = filepath.Clean(p)
+		if seen[p] {
+			return
+		}
+		seen[p] = true
+		out = append(out, p)
+		for _, m := range includeTag.FindAllStringSubmatch(stripXMLComments(readFile(t, p)), -1) {
+			walk(filepath.Join(filepath.Dir(p), m[1]))
+		}
+	}
+	walk(path)
+	return out
+}
+
+// allSources are every file the kit's documents are made of: each document
+// and each fragment they include, once each.
+func allSources(t *testing.T) []string {
+	t.Helper()
+	seen := map[string]bool{}
+	var out []string
+	for _, d := range docs(t) {
+		for _, p := range sourcesOf(t, d) {
+			if !seen[p] {
+				seen[p] = true
+				out = append(out, p)
 			}
+		}
+	}
+	return out
+}
+
+// templates are kit.tui's templates: id to body.
+func templates(t *testing.T) map[string]string {
+	t.Helper()
+	out := map[string]string{}
+	for _, m := range templateRE.FindAllStringSubmatch(fragmentBody(t, kitFragment), -1) {
+		out[m[1]] = m[2]
+	}
+	if len(out) == 0 {
+		t.Fatal("kit.tui has no <template>")
+	}
+	return out
+}
+
+// rootTag is the first element of a template's body: the root of its copy.
+func rootTag(body string) string {
+	return anyTag.FindString(body)
+}
+
+// templateAt is the id of the <template> the offset i of src falls in, or "".
+func templateAt(src string, i int) string {
+	for _, m := range templateRE.FindAllStringSubmatchIndex(src, -1) {
+		if m[0] <= i && i < m[1] {
+			return src[m[2]:m[3]]
+		}
+	}
+	return ""
+}
+
+// inTemplate reports whether the offset i of src falls inside a <template>.
+func inTemplate(src string, i int) bool { return templateAt(src, i) != "" }
+
+func classesOf(tag string) []string {
+	if m := regexp.MustCompile(`\bclass="([^"]*)"`).FindStringSubmatch(tag); m != nil {
+		return strings.Fields(m[1])
+	}
+	return nil
+}
+
+// ---- classes ----
+
+// Every class a document writes is a k- class or a modifier; a modifier is
+// written only next to a k- class on the same node, or as a <use>'s
+// variant, which lands on a template root that has a k- class.
+func TestClassNamesFollowTheConvention(t *testing.T) {
+	tpl := templates(t)
+	for _, path := range docs(t) {
+		src := expand(t, path)
+		for _, tag := range anyTag.FindAllString(src, -1) {
+			names := classesOf(tag)
+			if strings.HasPrefix(tag, "<use") {
+				for _, c := range names {
+					if !modifiers[c] {
+						t.Errorf("%s: a <use> takes a variant (a modifier), not %q: %s", path, c, tag)
+					}
+				}
+				if len(names) == 0 {
+					continue
+				}
+				ref := templateRef.FindStringSubmatch(tag)
+				if ref == nil || tpl[ref[1]] == "" {
+					t.Errorf("%s: a <use> with a variant names no kit template: %s", path, tag)
+					continue
+				}
+				if !hasK(classesOf(rootTag(tpl[ref[1]]))) {
+					t.Errorf("%s: the variant of %s lands on a root with no k- class", path, tag)
+				}
+				continue
+			}
+			hasKClass := hasK(names)
 			for _, c := range names {
 				switch {
 				case strings.HasPrefix(c, "k-"):
 				case modifiers[c]:
-					if !hasK {
-						t.Errorf("%s: class %q stands alone in class=%q; a modifier goes with a k- class", path, c, m[1])
+					if !hasKClass {
+						t.Errorf("%s: class %q stands alone in %s; a modifier goes with a k- class", path, c, tag)
 					}
 				default:
 					t.Errorf("%s: class %q is neither a k- class nor a modifier", path, c)
@@ -86,6 +239,15 @@ func TestClassNamesFollowTheConvention(t *testing.T) {
 			}
 		}
 	}
+}
+
+func hasK(names []string) bool {
+	for _, c := range names {
+		if strings.HasPrefix(c, "k-") {
+			return true
+		}
+	}
+	return false
 }
 
 // No rule targets a bare modifier or a bare utility: in every selector, each
@@ -135,13 +297,13 @@ func TestNoRuleTargetsABareModifier(t *testing.T) {
 	}
 }
 
-// Every k- class the kit sheet defines is used by a document, so a rename
-// cannot leave a dead rule behind.
+// Every k- class the kit sheet defines is used by a document or by a
+// template of the kit, so a rename cannot leave a dead rule behind.
 func TestEveryKitClassIsUsed(t *testing.T) {
 	defined := classesStyled(t, "../../kit/theme.tcss", "../../kit/kit.tcss")
 	used := map[string]bool{}
 	for _, path := range docs(t) {
-		for c := range classesIn(readFile(t, path)) {
+		for c := range classesIn(expand(t, path)) {
 			used[c] = true
 		}
 	}
@@ -226,6 +388,7 @@ var (
 	idAttr     = regexp.MustCompile(`\bid="([^"]*)"`)
 	actionAttr = regexp.MustCompile(`\b(?:on:[a-z]+|action)="([^"]*)"`)
 	idPattern  = regexp.MustCompile(`^[a-z][a-z0-9-]*(__[a-z][a-z0-9-]*)?$`)
+	partID     = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 	actionName = regexp.MustCompile(`^[a-z]+_[a-z]+$`)
 )
 
@@ -237,18 +400,30 @@ var builtins = map[string]bool{
 	"check-none": true, "switch-to": true,
 }
 
-// An id is `instance` or `instance__part`; an action is `component_verb`,
-// and never a generic word.
+// A written id is `instance` or `instance__part`, and an id in a template is
+// a bare part: its <use> gives the instance (U__part). An action is
+// `component_verb`, and never a generic word.
 func TestIDsAndActionsFollowTheConvention(t *testing.T) {
 	generic := map[string]bool{
 		"cancel": true, "open": true, "save": true, "dismiss": true, "delete": true,
 		"skip": true, "search": true, "confirm": true, "close": true, "submit": true,
 	}
-	for _, path := range docs(t) {
-		src := stripComments(readFile(t, path))
-		for _, m := range idAttr.FindAllStringSubmatch(src, -1) {
-			if !idPattern.MatchString(m[1]) {
-				t.Errorf("%s: id %q is not `instance` or `instance__part`", path, m[1])
+	for _, path := range allSources(t) {
+		src := stripXMLComments(readFile(t, path))
+		for _, m := range idAttr.FindAllStringSubmatchIndex(src, -1) {
+			id := src[m[2]:m[3]]
+			tag := anyTag.FindString(src[strings.LastIndex(src[:m[0]], "<"):])
+			switch {
+			case strings.HasPrefix(tag, "<template"):
+				if !strings.HasPrefix(id, "k-") || !partID.MatchString(id) {
+					t.Errorf("%s: template id %q is not k-NAME", path, id)
+				}
+			case inTemplate(src, m[0]):
+				if !partID.MatchString(id) {
+					t.Errorf("%s: id %q in a template is not a bare part; its <use> gives the instance", path, id)
+				}
+			case !idPattern.MatchString(id):
+				t.Errorf("%s: id %q is not `instance` or `instance__part`", path, id)
 			}
 		}
 		for _, m := range actionAttr.FindAllStringSubmatch(src, -1) {
@@ -268,26 +443,42 @@ func TestIDsAndActionsFollowTheConvention(t *testing.T) {
 	}
 }
 
-// Every overlay (a modal) names its own parts `instance__part`, closes on
-// esc, and declares its keys in a keymap scoped to its own class.
+// Every overlay (a modal) has parts named `instance__part` (a template's
+// modal writes the part, and its use the instance), closes on esc through
+// on:escape, writes its size in its class, and declares its keys in a
+// keymap scoped to its own class. A template's overlay is checked in each
+// document that uses the template: its keymap is the kit's when its rows
+// name no id, and the document's otherwise (a row's `to` names the copy).
 func TestOverlaysAreSelfContained(t *testing.T) {
 	modal := regexp.MustCompile(`<modal\b[^>]*>`)
 	for _, path := range docs(t) {
-		src := stripComments(readFile(t, path))
-		for _, tag := range modal.FindAllString(src, -1) {
+		src := expand(t, path)
+		for _, loc := range modal.FindAllStringIndex(src, -1) {
+			tag := src[loc[0]:loc[1]]
+			tpl := templateAt(src, loc[0])
+			if tpl != "" && !regexp.MustCompile(`<use\b[^>]*\btemplate="`+tpl+`"`).MatchString(src) {
+				continue
+			}
 			id := idAttr.FindStringSubmatch(tag)
-			if id == nil || !strings.Contains(id[1], "__") {
+			switch {
+			case id == nil:
+				t.Errorf("%s: modal %s has no id", path, tag)
+			case tpl != "":
+				if !partID.MatchString(id[1]) {
+					t.Errorf("%s: modal %s in a template should write only its part", path, tag)
+				}
+			case !strings.Contains(id[1], "__"):
 				t.Errorf("%s: modal %s has no instance__part id", path, tag)
 			}
 			if !strings.Contains(tag, `on:escape="`) {
 				t.Errorf("%s: modal has no on:escape: %s", path, tag)
 			}
-			cls := regexp.MustCompile(`\bclass="([^"]*)"`).FindStringSubmatch(tag)
-			if cls == nil {
+			cls := classesOf(tag)
+			if len(cls) == 0 {
 				t.Errorf("%s: modal has no class: %s", path, tag)
 				continue
 			}
-			root := strings.Fields(cls[1])[0]
+			root := cls[0]
 			if !strings.Contains(src, `<keymap when=".`+root+`">`) {
 				t.Errorf("%s: no <keymap when=\".%s\"> for the overlay", path, root)
 			}
@@ -316,54 +507,151 @@ func ruleHas(t *testing.T, class string, props ...string) bool {
 	return true
 }
 
+// sized reports whether an element writes its width and height: both as
+// attributes, or both in the first rule of one of its k- classes.
+func sized(t *testing.T, tag string) bool {
+	t.Helper()
+	if strings.Contains(tag, `width="`) && strings.Contains(tag, `height="`) {
+		return true
+	}
+	for _, c := range classesOf(tag) {
+		if strings.HasPrefix(c, "k-") && ruleHas(t, c, "width", "height") {
+			return true
+		}
+	}
+	return false
+}
+
 // ---- surviving the next language cut ----
 
 // No document writes a version; a tabs says whether it takes focus; a
-// container that fills says so (by attribute or by its kit class); every
-// document starts with its contract.
+// container that fills says so (by attribute or by its kit class), in a
+// document and in the templates it includes.
 func TestDocumentsSurviveTheNextCut(t *testing.T) {
 	container := regexp.MustCompile(`<(row|col|box|scroll)\b[^>]*>`)
 	for _, path := range docs(t) {
-		src := readFile(t, path)
-		if strings.Contains(src, "version=") {
+		body := expand(t, path)
+		if strings.Contains(readFile(t, path), "version=") || strings.Contains(body, "version=") {
 			t.Errorf("%s writes a version; the current language needs none", path)
 		}
-		body := stripComments(src)
 		for _, tag := range regexp.MustCompile(`<tabs\b[^>]*>`).FindAllString(body, -1) {
 			if !strings.Contains(tag, "focusable=") {
 				t.Errorf("%s: tabs does not write focusable: %s", path, tag)
 			}
 		}
 		for _, tag := range container.FindAllString(body, -1) {
-			if strings.Contains(tag, `width="`) && strings.Contains(tag, `height="`) {
-				continue
-			}
-			sized := false
-			if cls := regexp.MustCompile(`\bclass="([^"]*)"`).FindStringSubmatch(tag); cls != nil {
-				for _, c := range strings.Fields(cls[1]) {
-					if strings.HasPrefix(c, "k-") && ruleHas(t, c, "width", "height") {
-						sized = true
-					}
-				}
-			}
-			if !sized {
+			if !sized(t, tag) {
 				t.Errorf("%s: container leaves its size to the default: %s", path, tag)
 			}
 		}
 	}
 }
 
+// ---- the kit fragment and its templates ----
+
+// Every template is named k-NAME, its root writes its own size (so a copy is
+// the same size in a screen, a tab, or a col), it is shown in use by
+// kit/components/NAME.tui, and the gallery uses it.
+func TestKitTemplates(t *testing.T) {
+	gallery := expand(t, "app.tui")
+	for id, body := range templates(t) {
+		root := rootTag(body)
+		if root == "" {
+			t.Errorf("template %s is empty", id)
+			continue
+		}
+		if !sized(t, root) {
+			t.Errorf("template %s: its root %s does not write a width and a height", id, root)
+		}
+		example := "../../kit/components/" + strings.TrimPrefix(id, "k-") + ".tui"
+		if _, err := os.Stat(example); err != nil {
+			t.Errorf("template %s has no example %s", id, example)
+		} else if !strings.Contains(expand(t, example), `template="`+id+`"`) {
+			t.Errorf("%s does not use the template %s", example, id)
+		}
+		if !strings.Contains(gallery, `template="`+id+`"`) {
+			t.Errorf("the gallery does not use the template %s", id)
+		}
+	}
+	// The kit's keymaps land in every document that includes it, so they
+	// name classes only: a row that named a copy's id would be B005 in a
+	// document without that copy.
+	for _, km := range regexp.MustCompile(`(?s)<keymap\b[^>]*>.*?</keymap>`).FindAllString(fragmentBody(t, kitFragment), -1) {
+		if strings.Contains(km, "#") {
+			t.Errorf("kit.tui: a keymap names an id: %s", km)
+		}
+	}
+}
+
+// The kit is a fragment: `tuimark validate` checks it on its own, with or
+// without data, and reports nothing; any other command refuses it as a
+// document.
+func TestKitFragmentValidatesOnItsOwn(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds the CLI")
+	}
+	cli := filepath.Join(t.TempDir(), "tuimark")
+	build := exec.Command("go", "build", "-o", cli, "./cmd/tuimark")
+	build.Dir = "../.."
+	if out, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("go build ./cmd/tuimark: %v\n%s", err, out)
+	}
+	for _, args := range [][]string{
+		{"validate", kitFragment},
+		{"validate", kitFragment, "--data", "sample.json"},
+	} {
+		out, code := runCLI(t, cli, args...)
+		if code != 0 || out != "ok (fragment checked on its own)\n" {
+			t.Errorf("tuimark %s: exit %d, %q", strings.Join(args, " "), code, out)
+		}
+	}
+	out, code := runCLI(t, cli, "dump", kitFragment)
+	if code != 2 || !strings.Contains(out, "V005") || !strings.Contains(out, "a <fragment> is not a document") {
+		t.Errorf("tuimark dump %s: exit %d, %q", kitFragment, code, out)
+	}
+}
+
+func runCLI(t *testing.T, cli string, args ...string) (string, int) {
+	t.Helper()
+	cmd := exec.Command(cli, args...)
+	var out bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &out, &out
+	err := cmd.Run()
+	var ee *exec.ExitError
+	switch {
+	case err == nil:
+		return out.String(), 0
+	case errors.As(err, &ee):
+		return out.String(), ee.ExitCode()
+	}
+	t.Fatalf("tuimark %s: %v", strings.Join(args, " "), err)
+	return "", -1
+}
+
+// ---- contracts ----
+
+// Every component example starts with its contract. It names the kit class
+// it shows or, for a template, the template, which it then uses.
 func TestEveryComponentStartsWithItsContract(t *testing.T) {
 	head := regexp.MustCompile(`^<!-- (k-[a-z-]+) · Contract: .+ · Actions: .+ · Keys: .+ · Requires: .+ -->\n<tui`)
 	kit := classesStyled(t, "../../kit/kit.tcss")
+	tpl := templates(t)
 	for _, path := range componentFiles(t) {
 		m := head.FindStringSubmatch(readFile(t, path))
 		if m == nil {
 			t.Errorf("%s: no `k-NAME · Contract: … · Actions: … · Keys: … · Requires: …` header", path)
 			continue
 		}
-		if !kit[m[1]] {
-			t.Errorf("%s: the header names %s, which kit.tcss does not style", path, m[1])
+		switch {
+		case tpl[m[1]] != "":
+			if !strings.Contains(readFile(t, path), `template="`+m[1]+`"`) {
+				t.Errorf("%s: the header names the template %s, which the document does not use", path, m[1])
+			}
+		case !kit[m[1]]:
+			t.Errorf("%s: the header names %s, which is neither a kit template nor a class kit.tcss styles", path, m[1])
+		}
+		if !strings.Contains(readFile(t, path), `<include src="../kit.tui"/>`) {
+			t.Errorf("%s does not include the kit", path)
 		}
 		first := strings.SplitN(readFile(t, path), "\n", 2)[0]
 		first = strings.TrimSuffix(strings.TrimPrefix(first, "<!--"), "-->")
@@ -373,10 +661,12 @@ func TestEveryComponentStartsWithItsContract(t *testing.T) {
 	}
 }
 
-// Overlay keymaps come before global ones: the first matching row wins.
+// Overlay keymaps come before global ones, in the order the runtime reads
+// the document (the kit's, from the include, first): the first matching
+// row wins.
 func TestOverlayKeymapsComeFirst(t *testing.T) {
 	for _, path := range docs(t) {
-		src := stripComments(readFile(t, path))
+		src := expand(t, path)
 		overlay := regexp.MustCompile(`<keymap when="\.k-`).FindAllStringIndex(src, -1)
 		global := regexp.MustCompile(`<keymap( when="#[a-z_-]+")?>`).FindAllStringIndex(src, -1)
 		if len(overlay) == 0 || len(global) == 0 {

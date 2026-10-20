@@ -13,7 +13,7 @@ var emailRE = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
 // profileForm is the form of kit/components/field.tui.
 func profileForm(t *testing.T, initial map[string]string) (*tuimark.App, *Forms, *[]map[string]string) {
 	t.Helper()
-	app := loadComponent(t, "field", "")
+	app := loadSample(t, "field")
 	forms := NewForms(app)
 	var submitted []map[string]string
 	forms.Add("profile").
@@ -33,7 +33,7 @@ func profileForm(t *testing.T, initial map[string]string) (*tuimark.App, *Forms,
 
 func TestFormValidatesAsYouType(t *testing.T) {
 	app, _, _ := profileForm(t, map[string]string{"name": "Ada", "email": ""})
-	// field.tui focuses profile__name; tab moves to profile__email.
+	// field.tui focuses profile__name__input; tab moves to profile__email__input.
 	_, text := play(t, app, "tab", "text:ada@")
 	if got := getStr(t, app, "forms.profile.email.error"); got != "Enter a full address like name@host." {
 		t.Fatalf("email error = %q", got)
@@ -72,8 +72,8 @@ func TestSubmitShowsEveryErrorAndFocusesTheFirst(t *testing.T) {
 	}
 	contains(t, text, "Name is required.")
 	contains(t, text, "Enter a full address like name@host.")
-	if res.Dump.Focus == nil || *res.Dump.Focus != "profile__name" {
-		t.Errorf("focus = %v, want profile__name", res.Dump.Focus)
+	if res.Dump.Focus == nil || *res.Dump.Focus != "profile__name__input" {
+		t.Errorf("focus = %v, want profile__name__input", res.Dump.Focus)
 	}
 }
 

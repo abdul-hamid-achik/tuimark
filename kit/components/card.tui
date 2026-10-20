@@ -1,7 +1,6 @@
 <!-- k-card · Contract: reads card.title, card.heading, card.text · Actions: card_open, card_dismiss · Keys: tab, enter · Requires: k-btn, k-title -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <screen id="demo" focus="#card__open">
     <col width="1fr" height="1fr" gap="1" pad="1">
       <text class="k-title">card / panel</text>

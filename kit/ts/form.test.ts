@@ -19,7 +19,7 @@ async function profile(initial: Record<string, string> = {}) {
 }
 
 describe("forms", () => {
-  test("the paths are the ones field.tui reads, and its ids are <form>__<field>", async () => {
+  test("the paths are the ones field.tui reads, and its inputs are <form>__<field>__input", async () => {
     const { store } = await profile({ name: "Ada", email: "" });
     expect(store.at("forms.profile")).toEqual({
       name: { value: "Ada", error: "" },
@@ -30,23 +30,23 @@ describe("forms", () => {
     for (const p of ["forms.profile.name.value", "forms.profile.name.error", "forms.profile.email.error"]) {
       expect(source).toContain(p);
     }
-    expect(source).toContain('id="profile__name"');
-    expect(source).toContain('id="profile__email"');
+    expect(source).toContain('id="profile__name__input"');
+    expect(source).toContain('id="profile__email__input"');
   });
 
   test("form_validate checks the field that changed", async () => {
     const { store } = await profile({ name: "Ada", email: "" });
-    await store.emit("form_validate", "profile__email", "ada@");
+    await store.emit("form_validate", "profile__email__input", "ada@");
     expect(store.at("forms.profile.email.error")).toBe("Enter a full address like name@host.");
     expect(store.at("forms.profile.valid")).toBe(false);
-    await store.emit("form_validate", "profile__email", "ada@x.io");
+    await store.emit("form_validate", "profile__email__input", "ada@x.io");
     expect(store.at("forms.profile.email.error")).toBe("");
     expect(store.at("forms.profile.valid")).toBe(true);
   });
 
   test("a field the user has not reached shows no error", async () => {
     const { store } = await profile();
-    await store.emit("form_validate", "profile__name", "A");
+    await store.emit("form_validate", "profile__name__input", "A");
     expect(store.at("forms.profile.email.error")).toBe("");
     expect(store.at("forms.profile.valid")).toBe(false);
   });
@@ -57,7 +57,7 @@ describe("forms", () => {
     expect(submitted).toEqual([]);
     expect(store.at("forms.profile.name.error")).toBe("Name is required.");
     expect(store.at("forms.profile.email.error")).toBe("Enter a full address like name@host.");
-    expect(store.at("@focus")).toBe("#profile__name");
+    expect(store.at("@focus")).toBe("#profile__name__input");
   });
 
   test("a valid submit calls onSubmit with the values (ctrl+s falls back to the only form)", async () => {

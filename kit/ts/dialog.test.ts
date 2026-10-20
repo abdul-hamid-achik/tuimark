@@ -8,10 +8,22 @@ describe("dialogs", () => {
     const dialogs = createDialogs(store.host);
     await dialogs.confirm("confirm", "Delete project", "This permanently deletes orbit-api.", () => {});
     expect(store.at("confirm")).toEqual({
-      open: true, title: "Delete project", message: "This permanently deletes orbit-api.", result: "none",
+      open: true, title: "Delete project", message: "This permanently deletes orbit-api.",
+      yes: "Confirm", no: "Cancel", result: "none",
     });
     const source = component("confirm");
-    for (const p of ["confirm.open", "confirm.title", "confirm.message", "confirm.result"]) expect(source).toContain(p);
+    for (const p of ["confirm.open", "confirm.title", "confirm.message", "confirm.yes", "confirm.no", "confirm.result"]) {
+      expect(source).toContain(p);
+    }
+    expect(source).toContain('id="confirm__yes"');
+    expect(source).toContain('focus="#confirm__no"');
+  });
+
+  test("open writes the button labels it is given", async () => {
+    const store = new FakeStore();
+    const dialogs = createDialogs(store.host);
+    await dialogs.open("c", { title: "Delete", body: "", yes: "Delete", no: "Keep" });
+    expect([store.at("c.yes"), store.at("c.no")]).toEqual(["Delete", "Keep"]);
   });
 
   test("dialog_confirm runs onConfirm; dialog_cancel and esc do not", async () => {

@@ -1,18 +1,24 @@
 /*
- * kit/kit.tcss: the component classes. Load it right after theme.tcss.
+ * kit/kit.tcss: the component classes. kit.tui loads it right after
+ * theme.tcss.
  *
  * Conventions
  *   - Every kit class starts with `k-`. A component is a root class
  *     (.k-card) plus parts that carry the root's name as a prefix
  *     (.k-card-title). TCSS has no descendant combinator, so every part
- *     gets its own class; copy the markup and you copy the names.
+ *     gets its own class; a template writes them for you.
  *   - A modifier is a second, short class on the same node (`.k-badge.ok`:
  *     primary, secondary, danger, ghost, ok, warn, info, accent, good, bad,
  *     invalid, current, muted). It is ONLY ever written compound with the
  *     component class, never alone; a compound selector outranks a single
  *     class, so a modifier wins over its base wherever it sits in the file.
+ *   - A template's variant is a static class on its <use>, which lands on
+ *     the copy's root only: the rules for its parts start from the root
+ *     (`.k-alert.warn > .k-alert-row > .k-alert-icon`). A flag from data is
+ *     a class:NAME guard on the part it changes.
  *   - Components that must fill a space say so with an explicit width or
  *     height, so they do not depend on what a bare row or col defaults to.
+ *     Every template root writes both.
  *   - Colors are always tokens from theme.tcss ($accent, ...); nothing here
  *     holds a literal color.
  *   - Selection and focus use bold, a border style, or a filled bar as well
@@ -66,10 +72,11 @@
 .k-alert.danger { border-color: $danger; title-color: $danger; }
 .k-alert-row { width: 1fr; height: auto; gap: 1; }
 .k-alert-icon { width: 1; bold: true; }
-.k-alert-icon.info { color: $info; }
-.k-alert-icon.ok { color: $ok; }
-.k-alert-icon.warn { color: $warn; }
-.k-alert-icon.danger { color: $danger; }
+/* The icon takes the alert's variant, which the <use> puts on the box. */
+.k-alert.info > .k-alert-row > .k-alert-icon { color: $info; }
+.k-alert.ok > .k-alert-row > .k-alert-icon { color: $ok; }
+.k-alert.warn > .k-alert-row > .k-alert-icon { color: $warn; }
+.k-alert.danger > .k-alert-row > .k-alert-icon { color: $danger; }
 .k-alert-text { width: 1fr; color: $fg; wrap: wrap; }
 
 /* ----------------------------------------------- app bar and status bar */
@@ -104,6 +111,9 @@
 
 .k-dialog { width: 52; max-width: 100%; height: auto; padding: 1 2; border: rounded; background: $panel; border-color: $accent; title-color: $accent; }
 .k-dialog.danger { border-color: $danger; title-color: $danger; }
+/* A danger dialog's confirm button is a danger button, focused or not. */
+.k-dialog.danger > .k-dialog-actions > .k-btn.primary { color: $on-danger; background: $danger; }
+.k-dialog.danger > .k-dialog-actions > .k-btn.primary:focus { color: $bg; background: $fg; }
 .k-dialog-text { width: 1fr; color: $fg; wrap: wrap; }
 .k-dialog-actions { width: 1fr; height: 1; gap: 2; margin: 1 0 0 0; }
 
@@ -175,6 +185,10 @@
 .k-meter-label { width: auto; color: $fg; }
 .k-meter-value { width: auto; color: $muted; }
 .k-meter-bar { width: 1fr; height: 1; color: $accent; background: $raised; bar: eighths; }
+/* The bar's color: a variant on the meter (the <use>), or a flag on the bar. */
+.k-meter.ok > .k-meter-bar { color: $ok; }
+.k-meter.warn > .k-meter-bar { color: $warn; }
+.k-meter.danger > .k-meter-bar { color: $danger; }
 .k-meter-bar.ok { color: $ok; }
 .k-meter-bar.warn { color: $warn; }
 .k-meter-bar.danger { color: $danger; }

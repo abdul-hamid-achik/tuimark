@@ -1,7 +1,6 @@
 <!-- k-btn · Contract: reads last · Actions: button_save, button_cancel, button_delete, button_skip · Keys: tab and shift+tab move focus, enter or space presses, q quits · Requires: k-title, k-subtitle, k-muted -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <keymap>
     <bind keys="ctrl+c,q" action="quit"/>
   </keymap>

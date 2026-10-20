@@ -1,0 +1,187 @@
+<!--
+  kit/kit.tui: the Tuimark kit as one fragment. Include it once, as the first
+  child of your <tui>, then load your own sheet after it:
+
+    <include src="kit/kit.tui"/>
+    <style src="app.tcss"/>
+
+  It brings the kit's two sheets (tokens, then component classes), the keys of
+  its overlays, and one <template> per component. Use a template with
+  <use template="k-NAME" with="PATH as ALIAS"/>:
+
+  - Parameters come through the `with` alias: every label, title and value a
+    copy shows is a path under it. Flags (the paths in `if`, `open`, and the
+    class:NAME guards) are optional members: a missing one reads as false.
+  - A variant is a static class on the <use> (`class="danger"`). It lands on
+    the copy's root, and the kit's rules style the parts from there.
+  - A template that holds ids needs an id on its <use>, which scopes them:
+    `<use id="del" template="k-confirm" …/>` makes del__dialog, del__no and
+    del__yes. The use id is the instance a host routes by (the part of an
+    event's source before the last "__").
+  - Every template root writes its own size, so a copy is the same size in a
+    screen, a tab, or a col.
+  - Keymap rows here name only classes, never ids: they land in every
+    document that includes the kit. Rows that must name a copy's id (the
+    palette's arrows) belong in your document.
+
+  Components with free content (card, split, tabs) or with columns, rows, or
+  actions that change per use (table, menu, button, badge, app bar, status
+  bar, hints) are classes in kit.tcss, not templates: Tuimark has no slots.
+  kit/components/NAME.tui shows each one in use.
+-->
+<fragment>
+  <style src="theme.tcss"/>
+  <style src="kit.tcss"/>
+
+  <!-- The overlays' own keys. Each holds while focus is inside that overlay
+       (its class is on the modal, which is in the focus chain), and a modal
+       traps every other key, so a key that must also work under an overlay
+       is repeated in your own <keymap when="modal">. -->
+  <keymap when=".k-dialog">
+    <bind keys="y" action="dialog_confirm" label="confirm"/>
+    <bind keys="n" action="dialog_cancel" label="cancel"/>
+  </keymap>
+  <keymap when=".k-help">
+    <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
+  </keymap>
+
+  <!-- k-alert: a callout. with="PATH as a": a.title, a.text, and a.icon
+       (optional). Variant: info, ok, warn, danger. -->
+  <template id="k-alert">
+    <box class="k-alert" title="{a.title}">
+      <row class="k-alert-row">
+        <text class="k-alert-icon" if="a.icon">{a.icon}</text>
+        <text class="k-alert-text">{a.text}</text>
+      </row>
+    </box>
+  </template>
+
+  <!-- k-stat: a KPI card. with="PATH as s": s.title, s.value, s.delta, s.hist
+       (an array of numbers); flags s.good and s.bad color the change. -->
+  <template id="k-stat">
+    <box class="k-stat" title="{s.title}">
+      <text class="k-stat-value">{s.value}</text>
+      <row class="k-stat-row">
+        <text class="k-stat-delta" class:good="s.good" class:bad="s.bad">{s.delta}</text>
+        <sparkline class="k-stat-spark" bind="s.hist"/>
+      </row>
+    </box>
+  </template>
+
+  <!-- k-meter: a labeled progress bar. with="PATH as m": m.label, m.text,
+       m.pct (0 to 100); flags m.ok, m.warn and m.danger color the bar from
+       data. Variant: ok, warn, danger. -->
+  <template id="k-meter">
+    <col class="k-meter">
+      <row class="k-meter-head">
+        <text class="k-meter-label">{m.label}</text>
+        <spacer/>
+        <text class="k-meter-value">{m.text}</text>
+      </row>
+      <progress class="k-meter-bar" class:ok="m.ok" class:warn="m.warn" class:danger="m.danger" bind="m.pct"/>
+    </col>
+  </template>
+
+  <!-- k-empty: an empty state, centered in the space left. with="PATH as e":
+       e.icon, e.title, e.text, and e.action, the label of an optional call
+       to action, which fires empty_create (source U__create). -->
+  <template id="k-empty">
+    <col class="k-empty">
+      <text class="k-empty-icon">{e.icon}</text>
+      <text class="k-empty-title">{e.title}</text>
+      <text class="k-empty-text">{e.text}</text>
+      <button id="create" class="k-btn primary" label="{e.action}" if="e.action" on:click="empty_create"/>
+    </col>
+  </template>
+
+  <!-- k-field: a form field. with="forms.FORM.FIELD as f": f.label,
+       f.placeholder, f.help, f.value (the input writes it), f.error ("" when
+       fine; the host writes it). Use it as <use id="FORM__FIELD" …/>: the
+       input is FORM__FIELD__input, and fires form_validate and form_submit. -->
+  <template id="k-field">
+    <col class="k-field">
+      <text class="k-field-label" class:invalid="f.error">{f.label}</text>
+      <input id="input" class="k-field-input" class:invalid="f.error" bind="f.value" placeholder="{f.placeholder}" on:change="form_validate" on:submit="form_submit"/>
+      <text class="k-field-help" if="!f.error">{f.help}</text>
+      <text class="k-field-error" if="f.error">{f.error}</text>
+    </col>
+  </template>
+
+  <!-- k-breadcrumb: the current path. with="PATH as b", where PATH is an
+       array of {id, label, last}. The host trims it on breadcrumb_up. -->
+  <template id="k-breadcrumb">
+    <row class="k-breadcrumb" each="b as crumb" key="crumb.id">
+      <text class="k-breadcrumb-item" class:current="crumb.last">{crumb.label}</text>
+      <text class="k-breadcrumb-sep" if="!crumb.last">›</text>
+    </row>
+  </template>
+
+  <!-- k-log: a scrolling log that follows its end. with="PATH as l": l.title
+       and l.lines, an array of {n, text, debug, info, warn, err}. Its scroll
+       is U__view: name it in your keymap (when="#U__view") to give it keys. -->
+  <template id="k-log">
+    <scroll id="view" class="k-log" stick="bottom" focusable="true" title="{l.title}">
+      <col class="k-log-lines" each="l.lines as line" key="line.n">
+        <text class="k-log-line" class:muted="line.debug" class:info="line.info" class:warn="line.warn" class:danger="line.err">{line.text}</text>
+      </col>
+    </scroll>
+  </template>
+
+  <!-- k-toast: a one-row notice that never moves the page. with="PATH as t":
+       t.show, t.text; flags t.is_ok, t.is_warn and t.is_danger (info when
+       none). The host clears t.show, and binds esc to toast_dismiss. -->
+  <template id="k-toast">
+    <row class="k-toast-slot">
+      <row class="k-toast" if="t.show" class:ok="t.is_ok" class:warn="t.is_warn" class:danger="t.is_danger">
+        <text class="k-toast-text">{t.text}</text>
+        <text class="k-toast-key">esc</text>
+      </row>
+    </row>
+  </template>
+
+  <!-- Overlays: a modal, so a <use> of one is the last child of a screen. -->
+
+  <!-- k-confirm: a confirm dialog that puts the cursor on the safe button.
+       with="PATH as d": d.open, d.title, d.message, d.no and d.yes (the
+       button labels); flag d.danger. Variant: danger. Fires dialog_confirm
+       and dialog_cancel (esc too), from U__yes, U__no or U__dialog. -->
+  <template id="k-confirm">
+    <modal id="dialog" class="k-dialog" class:danger="d.danger" open="d.open" title="{d.title}" focus="#no" on:escape="dialog_cancel">
+      <text class="k-dialog-text">{d.message}</text>
+      <row class="k-dialog-actions">
+        <spacer/>
+        <button id="no" class="k-btn secondary" label="{d.no}" on:click="dialog_cancel"/>
+        <button id="yes" class="k-btn primary" label="{d.yes}" on:click="dialog_confirm"/>
+      </row>
+    </modal>
+  </template>
+
+  <!-- k-palette: a command palette. with="PATH as p, FOUND as f": p.open,
+       p.title, p.placeholder, p.query (the input writes it), p.cur (the
+       list's cursor); f.any and f.items, an array of {id, label, hint} that
+       the host keeps (a Derive over p.query). Fires palette_query,
+       palette_run and palette_close (esc). Its arrows move U__list while the
+       input keeps focus: add the rows that name it to your keymap. -->
+  <template id="k-palette">
+    <modal id="dialog" class="k-palette" open="p.open" title="{p.title}" focus="#q" on:escape="palette_close">
+      <input id="q" class="k-palette-input" bind="p.query" placeholder="{p.placeholder}" on:change="palette_query" on:submit="palette_run"/>
+      <text class="k-palette-empty" if="!f.any">No command matches “{p.query}”.</text>
+      <list id="list" class="k-palette-list" each="f.items as cmd" key="cmd.id" bind="p.cur" focusable="false">
+        <item>
+          <row class="k-palette-row">
+            <text class="k-palette-label">{cmd.label}</text>
+            <text class="k-palette-hint">{cmd.hint}</text>
+          </row>
+        </item>
+      </list>
+    </modal>
+  </template>
+
+  <!-- k-help: a help overlay that lists every labeled key. with="PATH as h":
+       h.open, h.title. Fires help_close (esc, q, ?); the host writes h.open. -->
+  <template id="k-help">
+    <modal id="dialog" class="k-help" open="h.open" title="{h.title}" on:escape="help_close">
+      <hints class="k-hints k-help-keys" scope="all"/>
+    </modal>
+  </template>
+</fragment>

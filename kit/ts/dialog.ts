@@ -1,14 +1,17 @@
-// dialog: open kit/components/confirm.tui and route its answer.
+// dialog: open the kit's k-confirm template and route its answer
+// (kit/components/confirm.tui shows it in use).
 //
 // Copy this file into your project. It depends on @thelacanians/tuimark (types) and
 // on route.ts (instance): copy that file with this one.
 //
-// The component reads confirm.open, confirm.title and confirm.message and the
-// host writes confirm.open and confirm.result ("confirmed" or "cancelled").
-// Its actions are dialog_confirm and dialog_cancel, fired by whichever button
-// was pressed; one handler of each serves every dialog, told apart by the
-// instance of the event's source (confirm__yes: confirm). A dialog is opened by
-// your own code, from your own action, with confirm().
+// <use id="confirm" template="k-confirm" with="confirm as d"/> reads
+// confirm.open, confirm.title, confirm.message and the button labels
+// confirm.yes and confirm.no, which open() writes; the host also writes
+// confirm.result ("confirmed" or "cancelled"). Its actions are dialog_confirm
+// and dialog_cancel, fired by whichever button was pressed; one handler of
+// each serves every dialog, told apart by the instance of the event's source
+// (confirm__yes: confirm). A dialog is opened by your own code, from your own
+// action, with confirm().
 import type { Host, HostEvent } from "@thelacanians/tuimark";
 import { instance } from "./route.ts";
 
@@ -18,6 +21,10 @@ type Ui = Pick<Host, "batch" | "on">;
 export interface Request {
   title: string;
   body: string;
+  /** The yes button's label; "Confirm" when absent. */
+  yes?: string;
+  /** The no button's label; "Cancel" when absent. */
+  no?: string;
   /** The yes answer. */
   onConfirm?: () => unknown;
   /** The no answer, esc included. */
@@ -38,6 +45,8 @@ export function createDialogs(ui: Ui) {
     await ui.batch([
       { path: `${inst}.title`, value: r.title },
       { path: `${inst}.message`, value: r.body },
+      { path: `${inst}.yes`, value: r.yes || "Confirm" },
+      { path: `${inst}.no`, value: r.no || "Cancel" },
       { path: `${inst}.result`, value: "none" },
       { path: `${inst}.open`, value: true },
     ]);

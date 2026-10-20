@@ -7,7 +7,7 @@
 
 /* Viewports inside a scrolling page cannot be 1fr tall: give them rows. */
 #svc { height: 9; }
-#log { height: 10; }
+#log__view { height: 10; }
 #empty__card { height: 10; }
 #prefs { height: 6; }
 
