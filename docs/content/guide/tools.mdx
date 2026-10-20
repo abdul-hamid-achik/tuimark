@@ -72,6 +72,7 @@ Steps come from `--input "STEP STEP …"` (separated by spaces) or `--script FIL
 | `focus:#id` | `{"focus": "#id"}` | `Set("@focus", "#id")` |
 | `set:@theme="light"` | `{"theme": "light"}` | the host's theme |
 | `resize:100x30` | `{"resize": [100, 30]}` | the terminal is resized |
+| `tick:DUR` | `{"tick": "DUR"}` | advances the virtual clock by `DUR` (`250ms`, `1.5s`, `1m30s`), which turns a [spinner](/guide/widgets#the-spinner) and fires a Go host's `Every` |
 | `click:X,Y` | `{"click": [X, Y]}` | a left click at a cell (version 2, mouse on) |
 | `wheel-up:X,Y`, `wheel-down:X,Y` | `{"wheel": "up", "at": [X, Y]}` | one wheel step at a cell |
 

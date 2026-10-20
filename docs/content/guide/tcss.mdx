@@ -153,12 +153,13 @@ Good breakpoints are 40, 80, and 120 columns, the widths `validate` checks. A la
 
 ## The built-in sheet
 
-Every document starts from these rules; yours override them.
+Every document starts from these rules; yours override them. This is the sheet of the current language, a `<tui>` without `version`:
 
 ```tcss
 screen { layout: column; width: 100%; height: 100%; }
-col    { layout: column; width: 1fr; height: 1fr; }
-row    { layout: row;    width: 1fr; height: 1fr; }
+col    { layout: column; }
+row    { layout: row; }
+screen > col, screen > row, modal > col, modal > row, tab > col, tab > row { width: 1fr; height: 1fr; }
 box    { layout: column; }
 text   { width: auto; height: auto; }
 scroll { layout: column; }
@@ -175,11 +176,16 @@ tab    { layout: column; }
 sparkline { width: auto; height: auto; }
 hints  { layout: row; gap: 2; }
 hints > row { gap: 1; }
+checkbox, select { width: auto; height: auto; wrap: truncate; }
+select > list { border: single; max-height: 12; reverse: false; wrap: truncate; }
+button:focus, checkbox:focus, select:focus { reverse: true; }
 ```
+
+A document that writes `version` starts from the older sheet instead. It differs in two places: `col` and `row` are `1fr` by `1fr` everywhere (`col { layout: column; width: 1fr; height: 1fr; }`, and the same for `row`), and it has no `checkbox`, `select`, or focus rule, so it shows focus only where the stylesheet says to. `tuimark inspect` names the rule that set a property, `ua` for the built-in sheet, so it tells you which sheet a document got.
 
 ## Things that surprise people
 
 - **Only `modal` has a border by default.** `list:focus { border-color: $focus; }` changes nothing on a list without `border: single` (or `rounded`, `double`, `thick`).
 - **A border needs room.** It takes a cell on each side, so an `<input>` sized `height: 1` cannot show one. Leave its height `auto` (three rows with a border), or show focus with `color`, `background`, `bold`, or `reverse`.
-- **`reverse` paints the whole rect.** A focused button stretched to a tall row paints a tall block. Give action rows `height: 1`.
+- **`reverse` paints the whole rect.** A focused button stretched to a tall row paints a tall block. Give action rows `height: 1`. The current language reverses a focused `button`, `checkbox`, and `select` for you, so this applies to every form control. To show focus another way, write `reverse: false` in your own `:focus` rule.
 - **Rules on a `column` style its header cell only.** Body cells carry the column's `class`, so style them with `.num` or `#table > item > text`.

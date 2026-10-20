@@ -13,7 +13,7 @@ Arrays are reached only through `each`; `tickets.0.title` is not a path markup c
 
 ## Interpolation
 
-`{path}` inserts a value into text. It works in four places: the body of a `<text>`, a `title`, a `placeholder`, and the body of a `<column>` (the cell template of a [table](/guide/widgets#table)).
+`{path}` inserts a value into text. It works in the body of a `<text>`, in a `title`, in a `placeholder`, and in the body of a `<column>` (the cell template of a [table](/guide/widgets#table)). The current language adds the label and the body of a `<button>`, the `label` of a `<checkbox>`, and the `label` of a `<select>`, which is a template per option.
 
 ```tui
 <text>{done} of {total} done ({done})</text>
@@ -32,7 +32,14 @@ The value is formatted as text:
 | `null` | nothing |
 | an array or object | compact JSON, object members sorted: `[1,"a"]`, `{"a":2,"b":1}` |
 
-A path that does not resolve shows nothing and reports `B003`, a warning (`--strict` makes it an error). Anything between braces that is not a plain path, such as `{ folder }` or `{a + b}`, is `V003`. A `{` with no closing `}` is just text.
+```tui
+<button id="save" label="Save ({profile.plan})" on:click="save"/>
+<checkbox id="news" bind="profile.news" label="Mail {profile.email}"/>
+```
+
+A button's label is resolved every frame, so `[ Save (free) ]` becomes `[ Save (pro) ]` the frame after the store changes, and an `auto` button grows or shrinks with it; give it a `width` if it must not move. Only a plain path may stand between the braces of these labels: in a `<button>`, anything else (`{ plan }`, `{a + b}`) is `V003`. In a document that writes `version`, `{path}` in a button is `V003` too, with a message ending `(requires a <tui> without version)`, and the label stays literal.
+
+A path that does not resolve shows nothing and reports `B003`, a warning (`--strict` makes it an error). In a button that is reported once, at the `<button>`. Anything between braces that is not a plain path, such as `{ folder }` or `{a + b}`, is `V003`. A `{` with no closing `}` is just text.
 
 ## Widgets that write back
 
@@ -42,12 +49,14 @@ A path that does not resolve shows nothing and reports `B003`, a warning (`--str
 |---|---|---|
 | `input` | its text | the user types |
 | `list`, `table` | the key of the cursor row | the cursor moves |
+| `checkbox` | `true` or `false` | the user toggles it |
+| `select` | the key of the chosen option | the user picks one |
 | `tabs` | the id of the active tab | a tab is activated |
 | `progress` | a number from 0 to 100 | never (read only) |
 | `sparkline` | an array of numbers | never (read only) |
 | `modal` | truthy while open | never (read only) |
 
-So the host never has to track what is typed or selected: it is in the store, and the `on:change` or `on:select` event says when it moved. Setting the path from the host moves the widget.
+`checkbox` and `select` are in the current language only. A `list` or `table` with `checked` also writes its checked keys back, an array, or with `single="true"` one key or `null`. So the host never has to track what is typed or selected: it is in the store, and the `on:change` or `on:select` event says when it moved. Setting the path from the host moves the widget.
 
 ## Repeating with each
 
@@ -63,7 +72,7 @@ So the host never has to track what is typed or selected: it is in the store, an
 
 - `key="path"` names each row. The cursor, `bind`, checked rows, and the `keys` of every event use it, so a row keeps its identity when the array is re-sorted or filtered. Without `key`, rows are numbered by index and you get `B006`.
 - The path must be an array: a missing or non-array value is `B001`.
-- Nothing inside a list row can take focus. The list is the focusable unit and moves its own cursor; act on a row through `on:select` or a keymap row with `when="#tickets:focus"`, whose event names the row.
+- Nothing inside a list row can take focus (a `checkbox` or `select` there is `V001`). The list is the focusable unit and moves its own cursor; act on a row through `on:select` or a keymap row with `when="#tickets:focus"`, whose event names the row.
 
 In version 2, `each` also works on `col`, `row`, and `box`. The container is not repeated; its children are the template, inflated once per element:
 
@@ -73,7 +82,7 @@ In version 2, `each` also works on `col`, `row`, and `box`. The container is not
 </row>
 ```
 
-Such a template holds nothing that takes focus or keeps state (no `input`, `button`, `list`, `modal`, `table`, `tabs`, `tab`, no `focusable`, `on:click`, or `on:focus`) and no `id`, since it would repeat. An alias that shadows an enclosing one is `V011`. An empty array leaves the container empty, so it matches `:empty`.
+Such a template holds nothing that takes focus or keeps state (no `input`, `button`, `checkbox`, `select`, `list`, `modal`, `table`, `tabs`, `tab`, no `focusable`, `on:click`, or `on:focus`) and no `id`, since it would repeat. An alias that shadows an enclosing one is `V011`. An empty array leaves the container empty, so it matches `:empty`.
 
 ## Conditions
 

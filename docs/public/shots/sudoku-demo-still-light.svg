@@ -131,9 +131,7 @@
 <text x="503.6" y="409" textLength="38.4" lengthAdjust="spacing" fill="#6a737d">redo</text>
 <text x="580.4" y="409" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">hint</text>
 <text x="657.2" y="409" textLength="48" lengthAdjust="spacing" fill="#1f2328">check</text>
-<text x="23.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">?</text>
-<text x="42.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#6a737d">help</text>
-<text x="100.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">q</text>
-<text x="119.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#6a737d">quit</text>
+<text x="23.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#0b64c0" font-weight="700">q</text>
+<text x="42.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#6a737d">quit</text>
 </g>
 </svg>

@@ -1,0 +1,71 @@
+---
+title: Tuimark for frontend devs
+description: A map from the web to Tuimark for people who know HTML, CSS, and React or Vue - flex layout, stylesheets, components, form controls, focus, data binding, and events - and what Tuimark deliberately does not have.
+---
+
+If you build interfaces for the browser, most of Tuimark will be familiar, and a few things will not. You describe a screen in markup, style it with a stylesheet, bind it to data, and name the events. What changes is where the logic lives: a Tuimark view is **data in, named actions out**, and the program that hosts it (Go, or TypeScript on Bun) owns everything that is not drawing.
+
+## The map
+
+| On the web | In Tuimark | Read |
+|---|---|---|
+| `display: flex`, `flex-direction`, `gap`, `flex-grow` | `<col>` and `<row>`, `gap`, `justify`, `align`, and `fr` units (`width: 1fr`) | [Layout](/guide/layout) |
+| CSS grid | `layout: grid` with `grid-columns` and `grid-min-width` | [Layout](/guide/layout#grids) |
+| A stylesheet, classes, ids, specificity, custom properties | TCSS: `.class`, `#id`, `:focus`, the same cascade by specificity, and `$token` colors | [TCSS](/guide/tcss) |
+| Media queries | `@media (max-cols: 80)` | [Layout](/guide/layout#responsive-layouts) |
+| A component, with props | A file you `<include>`; a `<template>` you stamp with `<use template="…" with="path as alias"/>`; or a kit component you copy | [The .tui language](/guide/language#composing-a-document-from-files), [Kit](/guide/kit) |
+| `<input>`, checkbox, `<select>`, radio buttons, `<button>` | `<input>`, `<checkbox>`, `<select>`, a `<list>` with `single="true"`, `<button>` | [Widgets](/guide/widgets) |
+| `overflow: auto`, a scrolling `<div>` | `<scroll>`, or `overflow: scroll` | [Layout](/guide/layout#scrolling) |
+| A modal dialog | `<modal>`, which traps focus while it is open | [Widgets](/guide/widgets#modal) |
+| `:focus`, `tabindex`, the tab order | `:focus`, `focusable="true"`, `tab` and `shift+tab` in document order | [Keymap, actions and focus](/guide/interaction#focus) |
+| Keyboard shortcuts from a library | `<keymap>` with `<bind keys="…" action="…"/>` | [Keymap, actions and focus](/guide/interaction#the-keymap) |
+| `{{ value }}`, `v-model`, `value={state}` | `{path}` in text, and `bind="path"` on widgets that hold state | [Bindings and data](/guide/bindings) |
+| `v-for`, `items.map(…)` | `each="items as item"` with a `key` | [Bindings and data](/guide/bindings#repeating-with-each) |
+| `v-if`, `{cond && …}` | `if="path"` and `if="!path"` | [Bindings and data](/guide/bindings#conditions) |
+| `onClick`, `onChange`, `onSubmit` | `on:click`, `on:change`, `on:submit`: each names an **action** that the host handles | [Keymap, actions and focus](/guide/interaction#actions-are-names) |
+| A browser test (Playwright) | `tuimark play`, golden dumps, and Go tests | [Testing](/guide/testing) |
+
+## One screen, both halves
+
+The view names what can happen. It does not say what happens.
+
+```tui
+<col gap="1" pad="1">
+  <input id="query" bind="query" placeholder="search tickets"/>
+  <checkbox id="archived" bind="show_archived" label="Show archived"/>
+  <list id="tickets" each="tickets as t" key="t.id" bind="selected" on:select="open">
+    <item><text>{t.id} {t.title}</text></item>
+  </list>
+  <button id="new" label="New ticket" on:click="new_ticket"/>
+</col>
+```
+
+`query`, `show_archived`, and `selected` are paths in a JSON store. Typing in the input writes `query`; toggling the checkbox writes `show_archived`; the list's cursor writes `selected`. The program that hosts the view reacts to the actions, here with the TypeScript client:
+
+```ts
+ui.on("open", async (ev) => {
+  await ui.set("detail", await api.ticket(ev.keys.t)); // ev.keys.t is the row's key
+});
+ui.on("new_ticket", async () => {
+  await ui.set("tickets", await api.createTicket());
+});
+```
+
+There is no `useState`: the store is the state, widgets keep their own (a cursor, the text being typed) by `id`, and the host changes the rest with `set`. See [the TypeScript client](/guide/typescript) or [the Go API](/guide/go-api).
+
+## What is not there
+
+These are choices, and they will not change:
+
+- **No expressions in markup.** There is no `a + b`, no `count > 0`, no ternary, no filter, no format function, and no array index. A `{ x }` that holds more than a path is `V003`. When the view needs a derived value (a count, a label, the filtered rows), the host computes it and puts it in the store. A Go host can keep one with `Derive`, so the markup still reads a plain path.
+- **A closed vocabulary.** Tags, attributes, CSS properties, and units are a fixed catalog. There are no custom elements and no `<script>`. An unknown tag is `V001`, an unknown attribute `V002`, an unknown property or unit `V003`. You reuse markup with `<include>` and `<template>`, not by defining new tags.
+- **The host owns the logic.** An `on:*` attribute is a name, and nothing in the document says what it does. A name with no handler does nothing, so a view can be written and tested before its host exists.
+- **No `:hover`, and no pixels.** A terminal is a grid of cells, and the keyboard comes first. Sizes are cells, percentages, and `fr` shares; the mouse is off until you ask for it with `<tui mouse="…">`.
+
+## Habits that carry over, and one that does not
+
+- Layout is flex, and `fr` works like `flex-grow`. In the current language a nested `col` or `row` is **as big as its content** until you give it `width: 1fr` (or `height`), like a flex child with no `flex-grow`; see [the current language's defaults](/guide/layout#the-current-languages-defaults).
+- Forms are controls with a `bind`, and a control that is not a text field has its own keys: `space` toggles a checkbox, `enter` opens a select. Focus is always one node, and the look of the focused control comes from `:focus`.
+- Check your work the way you would in a browser, with a render. `tuimark dump` prints the frame and the geometry of every node, `tuimark play` replays keys and shows the actions that fired, and `tuimark inspect` says which rule set a property, the equivalent of the styles pane. All of it works with no terminal, which is also what makes a Tuimark view something a coding agent can build: see [Use Tuimark with AI agents](/guide/agents).
+
+Start with [Getting started](/guide/getting-started) for a first document, then [Layout](/guide/layout) and [Bindings and data](/guide/bindings).

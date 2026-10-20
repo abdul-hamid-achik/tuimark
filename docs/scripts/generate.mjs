@@ -116,7 +116,7 @@ function blocks(text) {
 const cell = (s) => s.replace(/\|/g, '\\|')
 const codeList = (items) => items.map((a) => `\`${a}\``).join(' ')
 
-const catalog = { tags: [], tagsV2: [], properties: 0, diagnostics: 0 }
+const catalog = { tags: [], tagsV2: [], tagsCurrent: [], properties: 0, diagnostics: 0 }
 
 function tagsPage() {
   const parts = blocks(section('### Attributes per tag'))
@@ -124,6 +124,7 @@ function tagsPage() {
   let tables = 0
   let v2Heading = false
   let v3Heading = false
+  let currentHeading = false
   for (const b of parts) {
     if (b.kind === 'para') {
       if (b.text.startsWith('Only in a `<tui version="2">` document')) {
@@ -133,6 +134,10 @@ function tagsPage() {
       if (b.text.startsWith('Only in a `<tui version="3">` document')) {
         body.push('## Added by `version="3"`', '')
         v3Heading = true
+      }
+      if (b.text.startsWith('Only in a `<tui>` without `version`')) {
+        body.push('## Added by the current language', '')
+        currentHeading = true
       }
       body.push(mdx(b.text), '')
       continue
@@ -148,6 +153,7 @@ function tagsPage() {
       const attrs = m[2] === '(no attributes)' ? '—' : codeList(m[2].split(', '))
       if (tables === 0) catalog.tags.push(m[1])
       else if (tables === 1 && !catalog.tags.includes(m[1])) catalog.tagsV2.push(m[1])
+      else if (tables === 3 && !catalog.tags.includes(m[1]) && !catalog.tagsV2.includes(m[1])) catalog.tagsCurrent.push(m[1])
       rows.push(`| \`<${m[1]}>\` | ${cell(attrs)} |`)
     }
     if (rows.length) {
@@ -155,23 +161,24 @@ function tagsPage() {
       if (tables === 1) body.push('## Every version', '')
       else if (tables === 2 && !v2Heading) throw new Error('generate: the version="2" attribute table has no introduction')
       else if (tables === 3 && !v3Heading) throw new Error('generate: the version="3" attribute table has no introduction')
+      else if (tables === 4 && !currentHeading) throw new Error('generate: the current-language attribute table has no introduction')
       body.push('| Tag | Attributes |', '|---|---|', ...rows, '')
     }
     if (rest.length) body.push(...rest.map(mdx), '')
   }
-  if (tables !== 3) throw new Error(`generate: expected 3 attribute tables in "Attributes per tag", found ${tables}`)
+  if (tables !== 4) throw new Error(`generate: expected 4 attribute tables in "Attributes per tag", found ${tables}`)
   emit(
     'content/reference/tags.mdx',
     [
       '---',
       'title: Tags and attributes',
-      'description: Every Tuimark tag and the exact attributes it accepts, and what older version="1" and version="2" documents leave out.',
+      'description: Every Tuimark tag and the exact attributes it accepts, and what a document that pins an older version leaves out.',
       'editLink: false',
       '---',
       '',
       GENERATED('`tuimark agents`'),
       '',
-      'The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. A document without `version` accepts every tag and attribute below; the last two sections are what an older `version="1"` (or `version="2"`) document leaves out. See [The .tui language](/guide/language) for what each tag does.',
+      'The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. A `<tui>` without `version` is the current language and accepts every tag and attribute below. The sections after the first mark what a document that pins `version="1"`, `"2"`, or `"3"` leaves out, and the last one what only the current language accepts: `checkbox`, `select`, `include`, `fragment`, `template`, `use`, `single`, and `indeterminate`. See [The .tui language](/guide/language) for what each tag does.',
       '',
       ...body,
     ].join('\n'),
@@ -370,6 +377,7 @@ emit('lib/generated/catalog.json', JSON.stringify(catalog, null, 2))
 // the command the page shows is exactly the command that produced the text.
 //   term:  "$ tuimark ARGS" + stdout, shown as a terminal session
 //   grid:  only the `=== grid ===` block of a text dump, shown as a frame
+//   events: only the `=== events ===` section of a play, under the command
 //   json:  stdout as JSON with the command as a leading // comment (jsonc)
 
 const OUTPUTS = [
@@ -400,6 +408,15 @@ const OUTPUTS = [
   { name: 'w-tabs-narrow', dir: 'widgets', kind: 'grid', args: ['dump', 'tabs.tui', '--data', 'data.json', '--cols', '24', '--rows', '2'] },
   { name: 'w-tabs-tiny', dir: 'widgets', kind: 'grid', args: ['dump', 'tabs.tui', '--data', 'data.json', '--cols', '16', '--rows', '2'] },
   { name: 'w-hints-filter', dir: 'widgets', kind: 'grid', args: ['play', 'hints.tui', '--data', 'data.json', '--cols', '44', '--rows', '8', '--input', '/'] },
+  // the current language: forms, the spinner, defaults, composition
+  { name: 'forms-events', dir: 'forms', kind: 'events', args: ['play', 'form.tui', '--data', 'data.json', '--cols', '44', '--rows', '16', '--input', 'tab enter down enter tab space enter tab tab down space'] },
+  { name: 'forms-bad', dir: 'forms', kind: 'term', args: ['validate', 'form.tui', '--data', 'bad.json'], exit: [2] },
+  { name: 'spinner-tick', dir: 'widgets', kind: 'grid', args: ['play', 'spinner.tui', '--data', 'spinner.json', '--cols', '30', '--rows', '1', '--input', 'tick:300ms'] },
+  { name: 'layout-panes', dir: 'layout', kind: 'grid', args: ['dump', 'panes.tui', '--cols', '40', '--rows', '8'] },
+  { name: 'modal-events', dir: 'interaction', kind: 'events', args: ['play', 'modal.tui', '--data', 'data.json', '--cols', '40', '--rows', '7', '--input', 'set:help_open=true q ? esc'] },
+  { name: 'compose-dump', dir: 'compose', kind: 'grid', args: ['dump', 'app.tui', '--data', 'data.json', '--cols', '40', '--rows', '6'] },
+  { name: 'compose-fragment', dir: 'compose', kind: 'term', args: ['validate', 'parts/header.tui'] },
+  { name: 'compose-cycle', dir: 'compose/cycle', kind: 'term', args: ['validate', 'app.tui'], exit: [2] },
 ]
 
 function pickJSON(text, keys) {
@@ -425,6 +442,11 @@ for (const o of OUTPUTS) {
   const cmd = `tuimark ${o.args.map(shellQuote).join(' ')}`
   if (o.kind === 'term') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n${out.replace(/[ \t]+$/gm, '')}`)
   else if (o.kind === 'grid') emit(`snippets/out/${o.name}.txt`, gridOf(out))
+  else if (o.kind === 'events') {
+    const events = out.split('=== events ===\n')[1]
+    if (events === undefined) throw new Error(`generate: ${o.name} printed no events section`)
+    emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n${events.replace(/[ \t]+$/gm, '')}`)
+  }
   else if (o.kind === 'json') {
     const note = o.pick ? `// excerpt: ${o.pick.map((k) => `"${k}"`).join(', ')}\n` : ''
     emit(`snippets/out/${o.name}.jsonc`, `// $ ${cmd}\n${note}${o.pick ? pickJSON(out, o.pick) : out}`)
@@ -454,6 +476,9 @@ const SHOTS = [
   { name: 'w-hints', dir: 'widgets', file: 'hints.tui', data: 'data.json', cols: 44, rows: 8, alt: 'key hints generated from the keymap along the bottom row' },
   { name: 'w-modal', dir: 'widgets', file: 'modal.tui', cols: 44, rows: 7, alt: 'a modal with a title and two buttons, the focused one reversed' },
   { name: 'w-input', dir: 'widgets', file: 'input.tui', data: 'data.json', cols: 40, rows: 3, alt: 'an empty input showing its placeholder' },
+  { name: 'w-form', dir: 'forms', file: 'form.tui', data: 'data.json', cols: 44, rows: 16, alt: 'a form: a name input with its placeholder, a select showing UTC, a checked and an unchecked checkbox, a radio group with Free chosen, and Save and Cancel buttons' },
+  { name: 'w-select-open', dir: 'forms', file: 'form.tui', data: 'data.json', cols: 44, rows: 16, input: 'tab enter', alt: 'the same form with the select open: a bordered option list under it, over the radio group, with the cursor on UTC' },
+  { name: 'w-spinner', dir: 'widgets', file: 'spinner.tui', data: 'spinner.json', cols: 30, rows: 1, input: 'tick:300ms', alt: 'a braille spinner glyph followed by the text Deploying billing' },
   { name: 'tour-narrow', dir: 'tour', file: 'app.tui', data: 'sample.json', cols: 56, rows: 14, alt: 'the tour document at 56 columns: an @media rule stacks the list above the detail pane' },
   { name: 'monitor-processes', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 120, rows: 26, input: 'space down space down', alt: 'monitor studio: the processes tab, a table with two marked rows, the tab strip and the key hints' },
   { name: 'monitor-overview', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 120, rows: 16, input: '1', alt: 'monitor studio: the overview tab, a grid of panels with gauges and sparklines' },

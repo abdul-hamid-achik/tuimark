@@ -1,0 +1,22 @@
+<tui>
+  <style>
+    #nav, #body { border: single; }
+    #body { width: 1fr; }
+  </style>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="/" action="search" label="search"/>
+  </keymap>
+  <screen id="main">
+    <row>
+      <col id="nav">
+        <text>inbox</text>
+        <text>sent</text>
+      </col>
+      <col id="body">
+        <text>3 unread messages</text>
+      </col>
+    </row>
+    <hints/>
+  </screen>
+</tui>
