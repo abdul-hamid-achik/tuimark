@@ -583,6 +583,42 @@ func TestKitTemplates(t *testing.T) {
 	}
 }
 
+// The confirm dialog's y and n have no label (nor keycap): the dialog's
+// buttons name the choices, and the keys work while it is open. So a help
+// overlay, which lists every labeled row, shows the help's own key and the
+// document's, never the dialog's, in a document with or without a dialog.
+func TestDialogKeysAreNotHints(t *testing.T) {
+	kms := regexp.MustCompile(`(?s)<keymap\b[^>]*when="\.k-dialog"[^>]*>.*?</keymap>`).FindAllString(fragmentBody(t, kitFragment), -1)
+	if len(kms) != 1 {
+		t.Fatalf("kit.tui: want one <keymap when=\".k-dialog\">, got %d", len(kms))
+	}
+	if strings.Contains(kms[0], "label=") || strings.Contains(kms[0], "keycap=") {
+		t.Errorf("kit.tui: a dialog key is a hint: %s", kms[0])
+	}
+	for _, path := range []string{"../../kit/components/help.tui", "app.tui"} {
+		ui, err := tuimark.Load(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := ui.Set("help", map[string]any{"open": true, "title": "Keys"}); err != nil {
+			t.Fatal(err)
+		}
+		d, err := ui.Dump(120, 30)
+		if err != nil {
+			t.Fatal(err)
+		}
+		grid := strings.Join(d.Grid, "\n")
+		if !strings.Contains(grid, "? close help") {
+			t.Errorf("%s: the help lists no \"? close help\":\n%s", path, grid)
+		}
+		for _, hint := range []string{"y confirm", "n cancel"} {
+			if strings.Contains(grid, hint) {
+				t.Errorf("%s: the help lists the dialog's %q:\n%s", path, hint, grid)
+			}
+		}
+	}
+}
+
 // The kit is a fragment: `tuimark validate` checks it on its own, with or
 // without data, and reports nothing; any other command refuses it as a
 // document.

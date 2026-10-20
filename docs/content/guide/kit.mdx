@@ -128,10 +128,12 @@ Selection and focus never rely on a background color alone. A cursor row is also
 
 ```tui
 <keymap when=".k-dialog">
-  <bind keys="y" action="dialog_confirm" label="confirm"/>
-  <bind keys="n" action="dialog_cancel" label="cancel"/>
+  <bind keys="y" action="dialog_confirm"/>
+  <bind keys="n" action="dialog_cancel"/>
 </keymap>
 ```
+
+The dialog's rows have no `label`: its buttons name the choices, and `y` and `n` work while it is open. So the help overlay, which lists every labeled row, never shows them.
 
 **Sizes are explicit.** Every template's root writes its own size, so a copy is the same size in a screen, a tab, or a column; a component that fills a space says so in its class; a `tabs` writes `focusable`. The confirm dialog takes the size of its content, up to 60 columns where its text wraps.
 

@@ -167,10 +167,14 @@ come first in every document that includes it:
 
 ```xml
 <keymap when=".k-dialog">
-  <bind keys="y" action="dialog_confirm" label="confirm"/>
-  <bind keys="n" action="dialog_cancel" label="cancel"/>
+  <bind keys="y" action="dialog_confirm"/>
+  <bind keys="n" action="dialog_cancel"/>
 </keymap>
 ```
+
+The dialog's rows have no `label`: its buttons name the choices, and `y` and
+`n` work while it is open, so no `<hints>` (the help overlay included) lists
+them.
 
 The first matching row, in document order, wins, so a global `q` row after it
 cannot steal the overlay's keys, and an open modal traps the keymap, so a key
@@ -411,9 +415,10 @@ there).
 screen: a `modal` with class `k-help` titled `h.title`, open while `h.open`,
 holding `<hints class="k-hints k-help-keys" scope="all"/>`: every labeled
 keymap row, stacked. Id: `help__dialog`. Actions: `help_open` (your `?`),
-`help_close` (`q`, `?` from the kit's keymap, and `esc`). The include brings
-the kit's own labeled rows into every document, so the list starts with the
-dialog's `y` and `n` and the help's `?` even where no dialog is used.
+`help_close` (`q`, `?` from the kit's keymap, and `esc`). The list starts
+with the kit's own labeled row, the help's `? close help`, then your keymap's
+labeled rows. The confirm dialog's `y` and `n` are not in it: the dialog's
+buttons name its choices, and the keys work while it is open.
 
 ### split pane / master-detail (`components/split.tui`)
 

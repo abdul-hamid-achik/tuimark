@@ -36,10 +36,12 @@
   <!-- The overlays' own keys. Each holds while focus is inside that overlay
        (its class is on the modal, which is in the focus chain), and a modal
        traps every other key, so a key that must also work under an overlay
-       is repeated in your own <keymap when="modal">. -->
+       is repeated in your own <keymap when="modal">. The dialog's rows have
+       no label: its buttons name the choices, and y and n work while it is
+       open, so a help overlay (or any <hints>) never lists them. -->
   <keymap when=".k-dialog">
-    <bind keys="y" action="dialog_confirm" label="confirm"/>
-    <bind keys="n" action="dialog_cancel" label="cancel"/>
+    <bind keys="y" action="dialog_confirm"/>
+    <bind keys="n" action="dialog_cancel"/>
   </keymap>
   <keymap when=".k-help">
     <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
@@ -144,8 +146,9 @@
   <!-- k-confirm: a confirm dialog that puts the cursor on the safe button,
        sized by its content (up to 60 columns, where the text wraps).
        with="PATH as d": d.open, d.title, d.body, d.no and d.yes (the
-       button labels); flag d.danger. Variant: danger. Fires dialog_confirm
-       and dialog_cancel (esc too), from U__yes, U__no or U__dialog. -->
+       button labels, which name the choices); flag d.danger. Variant:
+       danger. Fires dialog_confirm and dialog_cancel (esc too, and y and n
+       while it is open), from U__yes, U__no or U__dialog. -->
   <template id="k-confirm">
     <modal id="dialog" class="k-dialog" class:danger="d.danger" open="d.open" title="{d.title}" focus="#no" on:escape="dialog_cancel">
       <text class="k-dialog-text">{d.body}</text>
