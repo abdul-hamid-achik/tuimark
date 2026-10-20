@@ -145,6 +145,31 @@ func TestOpeningAFragmentRepublishesWhatItsReaderDrops(t *testing.T) {
 	_ = c.shutdown()
 }
 
+// A fragment's diagnostics, routed from every document that reads it,
+// are told apart as validate tells them apart, by what its cut drops too
+// (F3's diagnostic identity): two that read the same once cut stay two,
+// and the same one from two documents is one.
+func TestFragmentDiagnosticsKeepWhatACutMerged(t *testing.T) {
+	long := strings.Repeat("a", 70)
+	app := "<tui>\n  <screen id=\"main\">\n    <include src=\"kit.tui\"/>\n  </screen>\n</tui>\n"
+	kit := "<fragment>\n  <template id=\"t\"><text>{f." + long + "1} {f." + long + "2}</text></template>\n" +
+		"  <use id=\"u\" template=\"t\" with=\"x as f\"/>\n</fragment>\n"
+	dir := writeTree(t, map[string]string{"one.tui": app, "two.tui": app, "kit.tui": kit, "sample.json": `{"x": {}}`})
+	c := startServer(t, Options{})
+	c.initialize()
+	p := c.nextPublish(c.open(filepath.Join(dir, "kit.tui"), "tuimark", kit))
+	var b003 []lspDiagnostic
+	for _, d := range p.Diagnostics {
+		if d.Code == "B003" {
+			b003 = append(b003, d)
+		}
+	}
+	if len(b003) != 2 || b003[0].Message != b003[1].Message {
+		t.Errorf("kit.tui: %d B003 %+v, want 2 that read the same", len(b003), b003)
+	}
+	_ = c.shutdown()
+}
+
 // Two fragments read side by side by a closed app.tui: an id a.tui gains
 // makes b.tui's the second one, a V004 on b.tui, and losing it again
 // clears it.

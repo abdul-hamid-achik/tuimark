@@ -98,6 +98,30 @@ func TestV04bFragmentCheckedOnItsOwn(t *testing.T) {
 	}
 }
 
+// inspect's via names the elements a diagnostic at the same element names
+// (F3's final vias): a use without id, inside an each, by where it is
+// written, then the include that placed it.
+func TestV04bInspectViaAgreesWithDiagnostics(t *testing.T) {
+	dir := writeFiles(t, map[string]string{
+		"each.tui":       "<tui>\n  <template id=\"t\">\n    <text>x{f.missing}</text>\n  </template>\n  <screen id=\"main\">\n    <include src=\"parts/rows.tui\"/>\n  </screen>\n</tui>\n",
+		"parts/rows.tui": "<fragment>\n  <col each=\"rows as r\">\n    <use template=\"t\" with=\"r as f\"/>\n  </col>\n</fragment>\n",
+		"rows.json":      "{\"rows\": [{}, {}]}\n",
+	})
+	file, data := filepath.Join(dir, "each.tui"), filepath.Join(dir, "rows.json")
+	_, out, _ := runCLI("validate", file, "--data", data)
+	diag := `warning B003 each.tui:3:5 /screen/col/text bind path "f.missing" is missing (r.missing via <use template="t"> at parts/rows.tui:3:5, placed by <include> at each.tui:6:5)` + "\n"
+	if out != diag+"ok\n" {
+		t.Fatalf("validate: %q", out)
+	}
+	for _, at := range []string{"0,0", "0,1"} {
+		code, out, errw := runCLI("inspect", file, "--data", data, "--at", at)
+		want := "source each.tui:3:5\nvia <use template=\"t\"> parts/rows.tui:3:5\nvia <include src=\"parts/rows.tui\"> each.tui:6:5\n"
+		if code != 0 || !strings.HasSuffix(out, want) {
+			t.Errorf("inspect --at %s: exit %d\n%s%s\nwant it to end with\n%s", at, code, out, errw, want)
+		}
+	}
+}
+
 // A fragment given to inspect gets its V005 and exits 2, as under dump,
 // ir, play, and preview (§15.1), not a usage error for want of a node:
 // the diagnostic goes to stderr and nothing to stdout, as ir does. The
