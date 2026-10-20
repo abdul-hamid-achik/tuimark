@@ -31,6 +31,17 @@ func (fb *builder) usePruned(n *ir.Node, sc *scope) bool {
 	return fb.usesPruned(n.CopiedBy, sc, "")
 }
 
+// placeEmpty checks the uses whose copies placed nothing among n's
+// children (ir.Node.EmptyCopies) in sc, the scope n's children stand in:
+// each placement once, as one whose copy has elements is (usesPruned),
+// so an empty copy's use still reports its if, hidden, and with (the F3
+// review).
+func (fb *builder) placeEmpty(n *ir.Node, sc *scope) {
+	for _, chain := range n.EmptyCopies {
+		fb.usesPruned(chain, sc, "")
+	}
+}
+
 // usesPruned is usePruned over chain, the uses that placed an element
 // (CopiedBy, innermost first). A with clause whose path starts with
 // rowAlias is not checked here, where that alias is not in scope: the

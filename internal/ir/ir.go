@@ -156,6 +156,12 @@ type Node struct {
 	// and hidden decide, each frame, whether the element is in it. nil
 	// for every other element.
 	CopiedBy []*Node
+	// EmptyCopies are the uses whose copies placed no element among n's
+	// children (an empty template, or one whose body places nothing),
+	// each as the CopiedBy its elements would have had, innermost first:
+	// their if, hidden, and with are still checked once per placement,
+	// where n's children stand (the F3 review). nil for most nodes.
+	EmptyCopies [][]*Node
 	// Written is what an element of a copy (or a <use> in one) wrote,
 	// before its paths went through the with aliases in scope and its #id
 	// references were resolved (SPEC v0.4b §6.18.4, §6.18.5, decision

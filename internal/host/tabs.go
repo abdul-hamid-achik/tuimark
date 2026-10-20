@@ -99,6 +99,7 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 	}
 	if active != nil {
 		sc := fb.scopes[active]
+		fb.placeEmpty(active.Src, sc)
 		for _, c := range active.Src.Children {
 			cb := fb.inflate(c, active, sc, false)
 			if cb == nil || c.Kind == "modal" {

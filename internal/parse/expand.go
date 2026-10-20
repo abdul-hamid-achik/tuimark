@@ -650,7 +650,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	cp := b.comp
 	cp.used = true
 	savedOrg, savedChain, savedPrefix := b.org, cp.chain, cp.prefix
-	nChildren, nDroppedIn, nDropped := len(n.Children), len(b.droppedIn[n]), len(b.doc.dropped)
+	nChildren, nDroppedIn, nDropped, nEmpty := len(n.Children), len(b.droppedIn[n]), len(b.doc.dropped), len(n.EmptyCopies)
 	fr := &expFrame{bg: cp.active()}
 	nDiags, count, bytes := len(b.doc.Diags), fr.bg.count, fr.bg.bytes
 	nScope, nStack, nCopies, inTmpl := len(cp.scope), len(cp.stack), len(cp.copies), cp.inTmpl
@@ -673,6 +673,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 			panic(r)
 		}
 		n.Children = n.Children[:nChildren]
+		n.EmptyCopies = n.EmptyCopies[:nEmpty]
 		q.Children = nil
 		b.doc.dropped = b.doc.dropped[:nDropped]
 		if b.droppedIn != nil {
@@ -736,6 +737,15 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 			}
 		}
 		e.CopiedBy = append(e.CopiedBy, q)
+	}
+	// A use whose copy places nothing here is still checked where it
+	// stands (ir.Node.EmptyCopies): an inner use's empty copy is under q
+	// too, and q's own, when nothing else of it is.
+	for i := nEmpty; i < len(n.EmptyCopies); i++ {
+		n.EmptyCopies[i] = append(n.EmptyCopies[i], q)
+	}
+	if len(tops) == 0 && len(n.EmptyCopies) == nEmpty {
+		n.EmptyCopies = append(n.EmptyCopies, []*ir.Node{q})
 	}
 	left := resolveRefs(frame.refs, q, tops, prefix)
 	if nCopies > 0 && len(left) > 0 {

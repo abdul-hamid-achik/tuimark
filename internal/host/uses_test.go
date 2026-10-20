@@ -403,6 +403,53 @@ func TestTableUsesReadRowAliasPerRow(t *testing.T) {
 	}
 }
 
+// A use whose copy places nothing (an empty template, or one whose body is
+// another such use) is still checked where it stands (the F3 review): its
+// if (B002), then, unless it prunes, its with paths (B003), in the scope
+// of the element, row, or tab it stands in; an outer use that prunes keeps
+// the inner one from being checked; and a list row's cache follows its
+// paths.
+func TestEmptyCopiesAreChecked(t *testing.T) {
+	const src = `<tui>
+  <template id="e"></template>
+  <template id="outer"><use template="e" with="g.y as h"/></template>
+  <screen id="main">
+    <use template="e" with="nope as f" if="gone"/>
+    <use template="outer" with="cfg as g" if="on"/>
+    <box each="aa as r"><use template="e" with="r.x as f"/></box>
+    <box each="bb as r"><use template="e" with="r.x as f"/></box>
+    <list id="l" each="rows as r" key="r.id"><item><text>{r.id}</text><use template="e" with="pick.x as f"/></item></list>
+    <tabs id="tb"><tab id="a" label="A"><use template="e" with="tabv as f"/></tab></tabs>
+    <table id="t" each="rows as r" key="r.id"><column>{r.id}</column><use template="e" with="r.x as f"/></table>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{"aa": [{"x": 1}, {}], "bb": [{"x": 1}, {"x": 2}], "rows": [{"id": 1, "x": 1}, {"id": 2}]}`)
+	sameDiags(t, "validate", useDiags(a), []string{
+		`warning B002 5:5 /screen/use if="gone": path "gone" is missing`,
+		`warning B002 6:5 /screen/use if="on": path "on" is missing`,
+		`warning B003 7:25 /screen/box/use with path "r.x" (alias f) is missing`,
+		`warning B003 9:71 /screen/list/item/use with path "pick.x" (alias f) is missing`,
+		`warning B003 10:41 /screen/tabs/tab/use with path "tabv" (alias f) is missing`,
+		`warning B003 11:70 /screen/table/use with path "r.x" (alias f) is missing`,
+	})
+	if err := a.Set("pick", map[string]any{"x": 1.0}); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Set("on", true); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Set("cfg", map[string]any{}); err != nil {
+		t.Fatal(err)
+	}
+	sameDiags(t, "set", useDiags(a), []string{
+		`warning B003 3:24 /screen/use with path "g.y" (alias h) is missing (cfg.y via <use template="outer">)`,
+		`warning B002 5:5 /screen/use if="gone": path "gone" is missing`,
+		`warning B003 7:25 /screen/box/use with path "r.x" (alias f) is missing`,
+		`warning B003 10:41 /screen/tabs/tab/use with path "tabv" (alias f) is missing`,
+		`warning B003 11:70 /screen/table/use with path "r.x" (alias f) is missing`,
+	})
+}
+
 // A via is kept where its path is written (ir.ViaKey), not under the path
 // it stands for: {f.x} and {g.x}, with f and g standing for one path, name
 // each its own written path; a literal {a.x} beside them is a store path

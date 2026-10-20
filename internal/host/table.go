@@ -48,6 +48,9 @@ type tablePlan struct {
 	colIndex map[*ir.Node]int
 	segs     [][]ir.Segment
 	deps     []string
+	// empty is the table's EmptyCopies: the uses among its children
+	// whose copies placed nothing, still checked (tableActive).
+	empty [][]*ir.Node
 }
 
 // tableData is what a table reads from every row of its each array (SPEC
@@ -87,10 +90,13 @@ type tableData struct {
 type tableActive struct {
 	cols []bool
 	item bool
+	// empty says, per chain of the plan's empty, whether its uses keep
+	// it (their with paths through the row alias are then read per row).
+	empty []bool
 }
 
 func (x tableActive) same(y tableActive) bool {
-	return x.item == y.item && slices.Equal(x.cols, y.cols)
+	return x.item == y.item && slices.Equal(x.cols, y.cols) && slices.Equal(x.empty, y.empty)
 }
 
 // tableActive evaluates the guards of the uses that placed the columns
@@ -108,6 +114,12 @@ func (fb *builder) tableActive(p *tablePlan, sc *scope) tableActive {
 	}
 	if p.item != nil && len(p.item.CopiedBy) > 0 && fb.usesPruned(p.item.CopiedBy, sc, row) {
 		act.item = false
+	}
+	if len(p.empty) > 0 {
+		act.empty = make([]bool, len(p.empty))
+		for k, chain := range p.empty {
+			act.empty[k] = !fb.usesPruned(chain, sc, row)
+		}
 	}
 	return act
 }
@@ -147,7 +159,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 	if c := a.tables[n]; c != nil {
 		return c.plan
 	}
-	p := &tablePlan{keyPath: n.Attrs["key"], colIndex: map[*ir.Node]int{}}
+	p := &tablePlan{keyPath: n.Attrs["key"], colIndex: map[*ir.Node]int{}, empty: n.EmptyCopies}
 	if n.Each != "" {
 		if e, err := ir.ParseEachField(n.Each); err == nil {
 			p.each, p.ok = e, true
@@ -309,6 +321,11 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableAc
 	}
 	if act.item {
 		withs = rowWith(withs, p.item.CopiedBy, p.each.Alias)
+	}
+	for k, chain := range p.empty {
+		if act.empty[k] {
+			withs = rowWith(withs, chain, p.each.Alias)
+		}
 	}
 	for i, el := range arr {
 		isc := &scope{alias: p.each.Alias, value: el, parent: sc}

@@ -1014,6 +1014,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 			return b
 		}
 	}
+	fb.placeEmpty(n, sc)
 	for i, c := range n.Children {
 		cb := fb.inflate(c, b, sc, inItem)
 		if cb == nil {
@@ -1068,6 +1069,7 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 			}
 		}
 		isc.key = key
+		fb.placeEmpty(n, isc)
 		for _, c := range n.Children {
 			// The template holds nothing focusable or addressed by id
 			// (SPEC §6.8 item 8): it is inflated like a list row.
@@ -1271,6 +1273,7 @@ func keyEqual(a, b any) bool { return Format(a) == Format(b) && typeName(a) == t
 // inflateList expands each= (or static items) and marks the selection.
 func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	a := fb.a
+	fb.placeEmpty(n, sc)
 	if n.Each != "" && sc == nil && !a.noCache {
 		if p := a.listPlan(n); p.ok {
 			fb.inflateListCached(n, b, p)

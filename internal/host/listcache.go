@@ -219,16 +219,22 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 		}
 		guard(t.If)
 		guard(t.Bind)
-		for _, u := range t.CopiedBy {
-			// The guards of the uses that placed it, and the paths of
-			// their with, whose B003 a row reports (SPEC v0.4b §6.18.3,
-			// §6.18.5): a row whose guard flips, or whose with path comes
-			// or goes, is built again.
-			guard(u.If)
-			guard(u.Attrs["hidden"])
-			for _, cl := range u.With {
-				dep(cl.Path)
+		uses := func(chain []*ir.Node) {
+			for _, u := range chain {
+				// The guards of the uses that placed it, and the paths of
+				// their with, whose B003 a row reports (SPEC v0.4b
+				// §6.18.3, §6.18.5): a row whose guard flips, or whose
+				// with path comes or goes, is built again.
+				guard(u.If)
+				guard(u.Attrs["hidden"])
+				for _, cl := range u.With {
+					dep(cl.Path)
+				}
 			}
+		}
+		uses(t.CopiedBy)
+		for _, chain := range t.EmptyCopies {
+			uses(chain) // a use whose copy placed nothing among t's children
 		}
 		if t.Each != "" {
 			if te, err := ir.ParseEachField(t.Each); err == nil {
