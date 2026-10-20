@@ -3,7 +3,7 @@ title: MCP server
 description: tuimark mcp (0.3b) - a Model Context Protocol server that gives a coding agent the validate/dump/play authoring loop as five tools, over stdin/stdout.
 ---
 
-`tuimark mcp` (0.3b) is a [Model Context Protocol](https://modelcontextprotocol.io) server on stdin/stdout. It gives a coding agent the same [authoring loop](/guide/agents#the-loop) — `validate`, `dump`, `play`, plus `inspect` and the `AGENTS.md` briefing — as tool calls, for an agent that reaches Tuimark through an MCP gateway rather than a shell. It is standard library only, JSON-RPC 2.0, one message per line, and every result is exactly what the matching CLI command would print to stdout, byte for byte.
+`tuimark mcp` (0.3b) is a [Model Context Protocol](https://modelcontextprotocol.io) server on stdin/stdout. It gives a coding agent the same [authoring loop](/guide/agents#the-loop) — `validate`, `dump`, `play`, plus `inspect` and the `AGENTS.md` briefing — as tool calls, for an agent that reaches Tuimark through an MCP gateway rather than a shell. It is standard library only, JSON-RPC 2.0, one message per line, and every result is exactly what the matching CLI command would print to stdout, byte for byte (to stderr, for the one case below where an exit `2` prints nothing on stdout).
 
 If your agent already has a shell, the [CLI](/guide/tools) and this server do the same work; use whichever your environment gives you. They agree by construction — every tool call runs the same code path as its CLI command.
 
@@ -50,6 +50,7 @@ Every tool is marked `readOnlyHint: true`, and none of them writes a file or kee
 
 - When the underlying command would exit `0` (clean) or `2` (validation errors — data, not failure), the tool result is **not** an error, and its text is the command's stdout: the same JSON `tuimark dump --format json` would print, for instance, `"ok": false` included when there were diagnostics. Read `errors`/`ok` in the JSON to see the problems, the same way you would from the CLI.
 - When the command would exit `1` (a missing file, a bad flag value), the result has `isError: true`, and its text is the command's stderr line, such as `tuimark: open nope.tui: no such file or directory`.
+- When the command would exit `2` and print nothing on stdout, the result is not an error either, and its text is the command's stderr. That is `tuimark_inspect` on a [fragment](/guide/language#composing-a-document-from-files): the result is `error V005 … a <fragment> is not a document: check it through the document that includes it`, which tells the agent to inspect the document instead. `tuimark_validate` on a fragment is not an error at all: `"ok": true`, with only the checks its own elements give it.
 - **Argument errors** — a required argument missing, an argument the tool does not take, or a value of the wrong JSON type — are also `isError` results, checked before the command runs, so a mistake in the call never starts the CLI: `tuimark: missing argument "file"`, `tuimark: unknown argument "input"` (the CLI's flag name for `steps`, a common slip), `tuimark: cols: want integer`.
 
 An agent following the [authoring loop](/guide/agents#the-loop) reads these the same way it reads CLI output: fix every error `validate` reports, check the `dump` at 80 and 120 columns, and confirm the right action fired with `play`.

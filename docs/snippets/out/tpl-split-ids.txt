@@ -1,0 +1,7 @@
+$ tuimark dump app.tui --data data.json --cols 34 --rows 16
+=== nodes (those with an id) ===
+main                     screen  34x16 @(0,0)
+billing__street__input   input   30x1 @(2,3) focus
+billing__zip__input      input   30x1 @(2,5)
+shipping__street__input  input   30x1 @(2,10)
+shipping__zip__input     input   30x1 @(2,12)

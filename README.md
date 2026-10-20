@@ -302,13 +302,17 @@ takes over), proving the loop end to end. This one example touches:
 
 ## Document versions
 
-A `<tui>` needs no `version`: without one it is the current language,
-`version="3"`, with everything this section describes. The attribute
-remains for documents that already declare one, and each value keeps its
-meaning. A `version="1"` document keeps the vocabulary and meaning it has
+A `<tui>` needs no `version`: without one it is the current language, with
+everything this section describes plus the 0.4b additions in the Language
+notes below (composition, and a few defaults and key rules). It is
+not `version="3"`: a document that writes `version="1"`, `"2"`, or `"3"` is
+pinned to the meaning it had in 0.4.1, defaults included, and its dumps do
+not change; new vocabulary in a pinned document is a diagnostic that ends
+`(requires a <tui> without version)`. There is no `version="4"` (it is
+`V003`). A `version="1"` document keeps the vocabulary and meaning it has
 always had, and its dumps stay byte-identical. `version="2"` adds the 0.2b
-vocabulary (SPEC §5.1), and `version="3"` the 0.3 one, the same as writing
-no version. This build implements all of it:
+vocabulary (SPEC §5.1), and `version="3"` the 0.3 one. This build
+implements all of it:
 
 - **The version gate.** In a `version="1"` document each 0.2b tag is
   `V001`, each 0.2b attribute `V002`, and each 0.2b value, property,
@@ -563,7 +567,9 @@ no version. This build implements all of it:
   focused node as its `source`. `version="1"` keeps matching the focused
   node only.
 - **One key dispatch** serves `Run()`, `play`, and `<hints>`: `esc` fires
-  the top modal's `on:escape`; then the focused, enabled widget consumes
+  the top modal's `on:escape` (or, in a `<tui>` without `version`, closes a
+  modal that has none: see the key rules in the Language notes); then the
+  focused, enabled widget consumes
   its own keys (an input its typing and editing keys, a list or a table
   with rows `up`, `down`, `home`, `end`, `pgup`, `pgdn`, a focusable
   `tabs` with an enabled tab `left` and `right`, another viewport the
@@ -1456,8 +1462,10 @@ kept with the maintainer's project notes, outside this repository.
 
 - **Cross-axis stretch inside a modal** (SPEC §11.2, §11.3 pass 4, §6.5).
   `col`/`row` default to `1fr` on *both* axes, and by default children
-  stretch to fill the cross axis (`align: stretch`). A modal defaults to
-  80%×80% of the screen when unsized, so a `<row>` of buttons placed after
+  stretch to fill the cross axis (`align: stretch`). A modal in a
+  document that writes `version` defaults to 80%×80% of the screen when
+  unsized (in a `<tui>` without `version` it is as big as its content, and
+  the row below grows only to a `height` the modal writes), so a `<row>` of buttons placed after
   other content inside it — the common confirm-dialog shape — inherits all
   of the modal's leftover height on the main axis, and its buttons then
   stretch to match on the cross axis. This is easy to miss in a dump's text
@@ -1577,6 +1585,77 @@ kept with the maintainer's project notes, outside this repository.
   offset is kept under its element and the key of the row it is in, so
   it stays with that element when siblings before it come and go, and
   with that row when the rows are reordered. It starts at 0.
+
+- **Layout defaults of the current language.** A `<tui>` without `version`
+  lays out with defaults a pinned document does not have, so the common
+  shapes (a sidebar beside a body, a status bar, a confirm dialog) come out
+  right without sizes. `col` and `row` are `1fr` by `1fr` only as a direct
+  child of a `screen`, a `modal`, or a `tab`, and `auto` anywhere else: a
+  sidebar `col` beside a body `col` is as wide as its content, and the body
+  needs `width: 1fr`. A pinned document gives every `col` and `row` `1fr`
+  and splits such a row in equal halves. An unsized sibling of an `fr` child
+  becomes `1fr` only when it is a viewport (`scroll`, `list`, `table`, or
+  `overflow: scroll`); a `text` or a `button` stays `auto`. `fr` meets
+  `min-*` and `max-*` as in CSS: a child that a `max` clamps (or a `min`
+  lifts) is frozen at that size and the other `fr` children share what it
+  frees, so three `1fr` children in 40 columns with `max-width: 10` on the
+  first are 10, 15, and 15, where a pinned document splits first and clamps
+  after (10, 13, 14, leaving 3 columns empty). A `hints` is as big as its
+  items along their axis and drops the items that do not fit, with no
+  diagnostic. A `modal` with no size is as big as its content (wide enough
+  for its title), capped by a written `max-width` or `max-height` and
+  otherwise by 80% of the screen. An `input` with no width is
+  `max(width(placeholder) + 1, 20)` columns whatever its value. The
+  built-in sheet also gives `table` `wrap: truncate`, `checkbox` and
+  `select` `width: auto; height: auto; wrap: truncate`, `select > list`
+  `border: single; max-height: 12`, and `button:focus, checkbox:focus,
+  select:focus { reverse: true }`, so a focused button is reversed with no
+  author rule. `tuimark inspect` shows each of these rules as `ua`.
+
+- **Keys and focus of the current language.** In a `<tui>` without
+  `version`, `esc` closes the top open modal that has no `on:escape`, by
+  writing `false` at its `open` path (its `bind` path when it has no
+  `open`); the next frame fires `on:close` and gives focus back, and no
+  event fires for the key itself. A modal whose `open` is `true`, `false`,
+  or `!path`, or whose path a `Derive` computes, stays open, because the
+  runtime has nothing to write, and one with `on:escape` leaves the choice
+  to that action. An open modal also traps the keymap: a row fires only
+  when it has an effective `when` that matches the chain from the focused
+  node up to the top modal (`when="#dlg"` inside the modal `dlg`,
+  `when="modal"` inside any modal). A row with no `when`, or whose `when`
+  names something outside the modal, is not tried, so `q` cannot quit the
+  app while a confirmation is open. `tab`, `shift+tab`, `ctrl+c`, and the
+  keys the focused widget takes for itself still work, and `<hints/>`
+  shows only the rows that would fire. The way out for a key that should
+  also work under a modal is `<keymap when="modal">`, a group whose rows
+  all carry that `when`. A `tabs` is focusable without `focusable="true"`:
+  `tab` reaches it, `left` and `right` switch the tab, and focus on the
+  strip stays there when the active tab changes (`focusable="false"` turns
+  it off). `ctrl+i`, `ctrl+j`, and `ctrl+m` in a `keys` list are `V003`,
+  because a terminal delivers them as `tab` and `enter`. A pinned document
+  keeps the 0.4.1 behavior: its rows fire under a modal, `esc` does
+  nothing without `on:escape`, and `tabs` takes focus only with
+  `focusable="true"`.
+
+- **Composition.** In a `<tui>` without `version`, `<include src="FILE"/>`
+  places the elements of another file, whose root is `<fragment>`, where
+  the include stands, so a long document is split by the pieces a person
+  would name. `<template id="T">` holds a piece of markup, and
+  `<use template="T" id="U" with="path as alias"/>` places a copy of it:
+  the copy's ids are scoped by the use (`U__x`; outside the copy you write
+  the scoped id, inside it `#x` means the copy's own), and its data is
+  behind an alias, so an input in the copy reads and writes the path the
+  alias stands for. `if`, `hidden`, and a static `class` on a use apply to
+  the copy where the use stands, once per row inside a list or an `each`.
+  The dump, the keymap, focus, and events see the expanded document. The
+  expansions share a budget (100000 elements, 16 MiB of placed source, 256
+  levels: `V021`); a cycle of templates is `V019`; a diagnostic about an
+  element of a copy ends with `(P via <use …>)` or `, placed by <use …> at
+  FILE:LINE:COL`. `tuimark inspect` ends with the `source` of a node and a
+  `via` line for each use or include that placed it, and `tuimark ir`
+  gives each placed node a `from`. A fragment is not a document: `validate`
+  (`ok (fragment checked on its own)`) and `fmt` accept it, and the other
+  commands give it `V005`.
 
 ## Status per phase (SPEC §4)
 

@@ -677,6 +677,24 @@ func TestCutValuesStayApart(t *testing.T) {
 	sameDiags(t, "validate", useDiags(a), []string{b003, b003, b002, b002, with, with})
 }
 
+// The P of a via is cut too (ir.ShownPath), so two uses without an id
+// whose with paths differ only past the cut give two B003 that read the
+// same, not one: the dedupe keeps P whole (the SPEC promotion's check).
+// What every pass of Validate repeats is still one.
+func TestViaPathsStayApartPastTheCut(t *testing.T) {
+	long := "p" + strings.Repeat("a", 69)
+	src := `<tui>
+  <template id="t"><text>{x.name}</text></template>
+  <screen id="main">
+    <use template="t" with="` + long + `1 as x"/>
+    <use template="t" with="` + long + `2 as x"/>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{"`+long+`1": {}, "`+long+`2": {}}`)
+	b003 := `warning B003 2:20 /screen/text bind path "x.name" is missing (` + long[:64] + `… via <use template="t">)`
+	sameDiags(t, "validate", useDiags(a), []string{b003, b003})
+}
+
 // What a diagnostic quotes is cut only at an element of a copy: the same
 // path written once in the screen is quoted whole, as 0.4.1 quotes it,
 // and so is it in a pinned document.

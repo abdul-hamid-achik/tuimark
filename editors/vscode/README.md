@@ -9,12 +9,12 @@ Editor support for [Tuimark](https://github.com/abdul-hamid-achik/tuimark), the 
 
 **Syntax highlighting** for both languages, with no binary needed.
 
-- In `.tui`: the tags of the catalog, shown apart from names that are not in it; attributes; `on:*` action attributes and the built-in actions; `class:NAME` guards; `{path}` interpolations in text and in `title`, `placeholder`, `label`, and `short` (a brace pair that holds more than a path is marked, as `tuimark validate` reports it as `V003`); `each="path as alias"`; `if="!path"`; key tokens in `keys`; `#id` targets in `to`, `when`, and `focus`; entities; and the TCSS inside `<style>` and `style=""`.
+- In `.tui`: the tags of the catalog (including the 0.4b `include`, `fragment`, `template`, `use`, `checkbox`, and `select`), shown apart from names that are not in it; attributes (the `with="path as alias"` of a `use` and its `template=`, `single`, `indeterminate`); `on:*` action attributes and the built-in actions; `class:NAME` guards; `{path}` interpolations in text and in `title`, `placeholder`, `label`, and `short` (a brace pair that holds more than a path is marked, as `tuimark validate` reports it as `V003`); `each="path as alias"`; `if="!path"`; key tokens in `keys`; `#id` targets in `to`, `when`, and `focus`; entities; and the TCSS inside `<style>` and `style=""`.
 - In `.tcss`: selectors (`#id`, `.class`, tags, `>`, lists), the pseudo-classes `:focus`, `:selected`, `:disabled`, `:empty`, `:checked`, `:focus-within`, and `:root`; properties and their keywords; `$tokens` and `var(--x)`; colors (`#rgb`, `#rrggbb`, the 16 ANSI names); `@media` with `max-cols`, `min-cols`, `max-rows`, `min-rows`, and `theme`; comments.
 
 A property, pseudo-class, media feature, or tag that Tuimark does not have is marked as illegal, because the vocabulary is closed.
 
-**Snippets** for a document skeleton, a list with `each` and `key`, a table with columns, tabs, a modal, keymap rows, and the theme tokens. Type `tui`, `list`, `table`, `tabs`, `modal`, `bind`, or `root` and press Tab.
+**Snippets** for a document skeleton, a list with `each` and `key`, a table with columns, tabs, a modal, keymap rows, the form controls (`checkbox`, `select`, `radio`, `spinner`), composition (`include`, `fragment`, `template`, `use`), and the theme tokens. Type `tui`, `list`, `table`, `tabs`, `modal`, `bind`, `template`, `use`, or `root` and press Tab.
 
 **Language server.** When the `tuimark` binary is installed, the extension starts `tuimark lsp` over stdio. It gives the same diagnostics as `tuimark validate` as you type, completion, hover, go to definition, and formatting with `tuimark fmt`.
 

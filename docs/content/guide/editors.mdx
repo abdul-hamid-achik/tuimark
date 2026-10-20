@@ -25,14 +25,15 @@ bun install --frozen-lockfile && bun run build && bunx @vscode/vsce package
 
 **Highlighting** works with nothing else installed:
 
-- tags, attributes, and `on:*` actions;
+- tags (the 0.4b `include`, `fragment`, `template`, `use`, `checkbox`, and `select` among them), attributes, and `on:*` actions;
+- the `with="path as alias, …"` of a `use` and its `template=`;
 - `{path}` interpolations, `each="path as alias"`, and key tokens;
 - the TCSS inside `<style>` and `style=""`;
 - in `.tcss`: selectors, pseudo-classes, properties and their keywords, `$tokens`, colors, and `@media`.
 
 The vocabulary is closed, so a tag, property, pseudo-class, or media feature that Tuimark does not have is marked as illegal while you type. A brace pair that holds more than one path is marked too, since `validate` reports it as `V003`.
 
-**Snippets.** Type `tui`, `list`, `table`, `tabs`, `modal`, `bind`, or `root` and press Tab.
+**Snippets.** Type `tui`, `list`, `table`, `tabs`, `modal`, `bind`, `checkbox`, `select`, `include`, `template`, `use`, or `root` and press Tab.
 
 **Language server.** When `tuimark` is on your `PATH`, the extension starts `tuimark lsp`. If it cannot start the server, either because there is no `tuimark` or because it is a version without `lsp`, it shows one warning, and highlighting and snippets keep working.
 
@@ -48,6 +49,14 @@ The command **Tuimark: Restart Language Server** restarts the server, for exampl
 ## What the language server does
 
 `tuimark lsp` runs the same checks as `tuimark validate` on the text in your editor, saved or not, with the same codes and messages. A problem in a stylesheet shows in the stylesheet. A `sample.json` next to the document is used as its data. On top of the diagnostics it gives completion, hover, go to definition, and formatting. [Editor support](/guide/tools#editor-support-tuimark-lsp) in the tools guide lists exactly what each one covers.
+
+For documents built from [fragments and templates](/guide/composition) it also follows the composition across files:
+
+- **Diagnostics in a fragment.** Open a fragment and it shows what the documents that include it report for its file: the server looks for them among your open documents and the `.tui` files of the fragment's directory and its parent. A fragment that no document reads is checked on its own, as `tuimark validate` checks it, without a `V005`.
+- **Go to definition** on `template="field"` goes to the `<template>`, even in another file; on an `<include src>` it opens the fragment; on a scoped id such as `#billing__street__input` it goes to the element in the template, and on a use's own `#id` it goes to the `<use>`.
+- **Completion** in `template=` offers the templates of the expanded document, and the `#id` of `to`, `when`, and `focus` adds the scoped ids of every copy.
+- **Formatting** a fragment gives what `tuimark fmt` prints for it.
+
 
 ## Other editors
 

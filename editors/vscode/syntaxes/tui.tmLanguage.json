@@ -59,9 +59,9 @@
     "tag": {
       "patterns": [
         {
-          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags and the spike alias app).",
+          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags, the 0.4b tags checkbox, select, include, fragment, template and use, and the spike alias app).",
           "name": "meta.tag.tui",
-          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|app)(?![\\w:.-])",
+          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|include|fragment|template|use|app)(?![\\w:.-])",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.tui" },
             "2": { "name": "entity.name.tag.tui" }
@@ -134,6 +134,8 @@
         { "include": "#attr-action" },
         { "include": "#attr-class-guard" },
         { "include": "#attr-each" },
+        { "include": "#attr-with" },
+        { "include": "#attr-use-template" },
         { "include": "#attr-flag" },
         { "include": "#attr-path" },
         { "include": "#attr-template" },
@@ -218,6 +220,38 @@
         { "include": "#path-parts" }
       ]
     },
+    "attr-with": {
+      "comment": "with=\"form.email as f, form.phone as p\" on a <use> (0.4b): path-as-alias clauses separated by a comma and a space.",
+      "name": "meta.attribute.with.tui",
+      "begin": "(?<![\\w:.-])(with)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.with.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.with.tui",
+      "patterns": [
+        { "name": "keyword.control.each-as.tui", "match": "(?<=\\s)as(?=\\s)" },
+        { "name": "punctuation.separator.list.tui", "match": "," },
+        { "include": "#path-parts" }
+      ]
+    },
+    "attr-use-template": {
+      "comment": "template=\"field\" on a <use> (0.4b): the id of a <template>.",
+      "name": "meta.attribute.use-template.tui",
+      "begin": "(?<![\\w:.-])(template)(\\s*)(=)(\\s*)(\"|')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.use-template.tui" },
+        "3": { "name": "punctuation.separator.key-value.tui" },
+        "5": { "name": "punctuation.definition.string.begin.tui" }
+      },
+      "end": "\\5",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
+      "contentName": "string.quoted.tui meta.template-ref.tui",
+      "patterns": [{ "name": "entity.name.type.template.tui", "match": "[^\\s\"']+" }]
+    },
     "flag-value": {
       "patterns": [
         { "name": "keyword.operator.negation.tui", "match": "!" },
@@ -226,9 +260,9 @@
       ]
     },
     "attr-flag": {
-      "comment": "if, hidden, disabled, open, mouse: path, !path, true, false.",
+      "comment": "if, hidden, disabled, open, mouse: path, !path, true, false. single and indeterminate (0.4b) take true or false and read the same.",
       "name": "meta.attribute.flag.tui",
-      "begin": "(?<![\\w:.-])(if|hidden|disabled|open|mouse)(\\s*)(=)(\\s*)(\"|')",
+      "begin": "(?<![\\w:.-])(if|hidden|disabled|open|mouse|single|indeterminate)(\\s*)(=)(\\s*)(\"|')",
       "beginCaptures": {
         "1": { "name": "entity.other.attribute-name.flag.tui" },
         "3": { "name": "punctuation.separator.key-value.tui" },

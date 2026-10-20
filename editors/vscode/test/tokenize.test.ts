@@ -133,6 +133,14 @@ describe(".tui: what the runtime rejects is marked", () => {
   test("a known tag is not", () => {
     expect(scopesAt(tui, "<list id='a'/>", "list").join(" ")).not.toContain("invalid");
   });
+  test("the 0.4b tags are known; radio and option are not", () => {
+    for (const t of ["include", "fragment", "template", "use", "checkbox", "select"]) {
+      expect(illegal(tui, `<${t} id='a'/>`), t).toEqual([]);
+    }
+    for (const t of ["radio", "option"]) {
+      expect(illegal(tui, `<${t} id='a'/>`).length, t).toBe(1);
+    }
+  });
   test("braces that do not hold exactly a path (V003)", () => {
     expect(illegal(tui, "<text>{ folder }</text>").length).toBe(1);
     expect(illegal(tui, "<text>{a + b}</text>").length).toBe(1);
@@ -163,6 +171,9 @@ describe(".tcss: what the runtime rejects is marked", () => {
   test("an unknown property (V003)", () => {
     expect(illegal(tcss, "a { colour: red; }").length).toBeGreaterThan(0);
     expect(illegal(tcss, "text { color: red; }")).toEqual([]);
+  });
+  test("the form controls are tags", () => {
+    expect(illegal(tcss, "checkbox:focus { reverse: true; }\nselect > list { border: single; }")).toEqual([]);
   });
   test("forbidden selectors", () => {
     expect(illegal(tcss, "* { gap: 1; }").length).toBeGreaterThan(0);

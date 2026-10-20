@@ -95,7 +95,7 @@ A mock lets a prototype react without a backend. The file is one JSON object: ea
 
 ## Reload
 
-`run` watches the document, the stylesheets it loads with `<style src>`, `--data`, and `--mock`, every 150 ms, the way `preview --watch` does. Save a change and the session picks it up in place, with no restart. Changes seen in one look are one reload.
+`run` watches the document, the stylesheets it loads with `<style src>`, every fragment it includes with `<include>` (at any depth, and the ones a `<template>` includes), `--data`, and `--mock`, every 150 ms, the way `preview --watch` does. Save a change and the session picks it up in place, with no restart. Changes seen in one look are one reload.
 
 A reload succeeds when the document loads with no error diagnostic and the mock is valid for it. The session then goes on with the new document:
 
@@ -104,7 +104,7 @@ A reload succeeds when the document loads with no error diagnostic and the mock 
 - **Everything else** starts over. The first frame after a reload compares with the last one before it, so a modal that was open stays open without firing `on:open` again, and focus that had to move because its node is gone fires `on:focus` where it lands.
 - The strip gets a `reload` line, and the panel shows the new document's warnings, or goes away.
 
-When a reload fails, because the document no longer parses, has an error, or the mock or the data is invalid, the old document runs on unchanged and the panel shows why. Fix the file and the next save reloads it.
+When a reload fails, because the document no longer parses, has an error, or the mock or the data is invalid, the old document runs on unchanged and the panel shows why. Fix the file and the next save reloads it. A fragment that cannot be read, because it does not exist yet or is not well-formed, is such a failure: the panel shows its `V006` or `V005`, the fragment stays watched, and creating or fixing it reloads the document.
 
 ## Errors before the session
 

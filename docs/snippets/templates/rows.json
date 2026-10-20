@@ -1,0 +1,8 @@
+{
+  "show_badges": false,
+  "jobs": [
+    { "id": "a", "name": "build", "status": { "label": "ok" } },
+    { "id": "b", "name": "deploy", "status": { "label": "failed", "urgent": true } },
+    { "id": "c", "name": "lint", "status": { "label": "skipped" } }
+  ]
+}

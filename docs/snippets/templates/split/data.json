@@ -1,0 +1,15 @@
+{
+  "order": {
+    "ship_elsewhere": true,
+    "billing": {
+      "title": "Billing",
+      "street": { "label": "Street", "value": "1 Main St" },
+      "zip": { "label": "ZIP", "value": "94105" }
+    },
+    "shipping": {
+      "title": "Shipping",
+      "street": { "label": "Street", "value": "" },
+      "zip": { "label": "ZIP", "value": "" }
+    }
+  }
+}

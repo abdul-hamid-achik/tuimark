@@ -1,0 +1,5 @@
+$ tuimark inspect app.tui --data data.json --cols 34 --rows 16 --id shipping__zip__input
+…
+source parts/forms.tui:5:7
+via <use id="shipping__zip" template="field"> parts/forms.tui:11:7
+via <use id="shipping" template="address"> app.tui:6:7

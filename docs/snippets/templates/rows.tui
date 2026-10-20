@@ -1,0 +1,19 @@
+<tui>
+  <style>
+    .badge { reverse: true; }
+    .hot { bold: true; }
+  </style>
+  <template id="badge">
+    <text class="badge" class:hot="s.urgent">{s.label}</text>
+  </template>
+  <screen id="main" focus="#jobs">
+    <list id="jobs" each="jobs as j" key="j.id">
+      <item>
+        <row gap="1">
+          <text>{j.name}</text>
+          <use template="badge" with="j.status as s" if="show_badges" class="cell"/>
+        </row>
+      </item>
+    </list>
+  </screen>
+</tui>

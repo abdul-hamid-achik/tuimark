@@ -1,0 +1,13 @@
+<tui>
+  <template id="confirm">
+    <modal id="dlg" open="c.open">
+      <button id="no" label="No" on:click="no"/>
+    </modal>
+  </template>
+  <keymap>
+    <bind keys="n" action="focus" to="#no"/>
+  </keymap>
+  <screen id="main">
+    <use id="del" template="confirm" with="ui.del as c"/>
+  </screen>
+</tui>

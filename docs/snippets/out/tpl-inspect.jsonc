@@ -1,0 +1,18 @@
+// $ tuimark inspect field.tui --data field.json --cols 40 --rows 12 --id email__input --json
+// excerpt: "source"
+{
+  "source": {
+    "file": "field.tui",
+    "line": 9,
+    "col": 7,
+    "via": [
+      {
+        "use": "email",
+        "template": "field",
+        "file": "field.tui",
+        "line": 21,
+        "col": 7
+      }
+    ]
+  }
+}
