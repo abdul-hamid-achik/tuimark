@@ -118,6 +118,28 @@ func TestNestedUseClassesEachOnceInOrder(t *testing.T) {
 	}
 }
 
+// B006 quotes a list's or a table's each as written, as V011 does: an
+// element of a copy holds the path its use's with gives, which may be long
+// and is repeated in every element that names the alias.
+func TestB006QuotesTheEachAsWritten(t *testing.T) {
+	path := "d." + strings.Repeat("x", 1000)
+	d := Parse([]byte(`<tui>
+<template id="T"><list id="l" each="a.v as r"><item><text>{r}</text></item></list><table id="t" each="a.w as r"><column>{r}</column></table></template>
+<screen><use id="u" template="T" with="`+path+` as a"/></screen>
+</tui>`), "app.tui")
+	var got []string
+	for _, x := range d.Diags {
+		got = append(got, x.Code+" "+x.Msg)
+	}
+	want := []string{
+		`B006 <list each="a.v as r"> has no key=; selection follows the index, placed by <use id="u"> at app.tui:3:9`,
+		`B006 <table each="a.w as r"> has no key=; the cursor follows the row index, placed by <use id="u"> at app.tui:3:9`,
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("diagnostics:\n%q\nwant\n%q", got, want)
+	}
+}
+
 // The byte budget charges an element a copy places the descriptor of its
 // placement suffix, never its location (the F2 final check): a document
 // at the budget validates the same under a short and a 200-byte file

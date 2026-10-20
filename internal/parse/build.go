@@ -1953,7 +1953,8 @@ func (b *builder) checkNode(n *ir.Node) {
 				b.errN(n, "V013", "<list each=...> needs exactly one <item> template (found %d)", items)
 			}
 			if _, ok := n.Attr("key"); !ok {
-				b.warnN(n, "B006", "<list each=%q> has no key=; selection follows the index", n.Each)
+				// The each as written, as V011 quotes it (writtenEach).
+				b.warnN(n, "B006", "<list each=%q> has no key=; selection follows the index", writtenEach(n))
 			}
 		}
 	}
@@ -1995,6 +1996,11 @@ func (b *builder) checkTable(n *ir.Node) {
 		b.errN(n, "V017", "<table> needs at least one <column>")
 	}
 	if _, ok := n.Attr("key"); n.Each != "" && !ok && !nested {
+		if n.Written != nil {
+			// As written: an element of a copy holds its paths after the
+			// with aliases (Node.Written), as V011 says.
+			eachAttr = n.Written.Attrs["each"]
+		}
 		b.warnN(n, "B006", "<table each=%q> has no key=; the cursor follows the row index", eachAttr)
 	}
 }
