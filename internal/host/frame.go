@@ -113,7 +113,7 @@ func (a *App) FrameAt(cols, rows, phase int) *Frame {
 type builder struct {
 	a      *App
 	diags  ir.Diags
-	seen   map[string]bool
+	seen   map[diagID]bool
 	modals []*layout.Box
 	byID   map[string]*layout.Box
 	// tables holds the tables inflated in step 1, for step 7.
@@ -282,7 +282,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	kinds := a.kinds()
 	f.settled = false
 	for pass := 0; pass < 3; pass++ {
-		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
+		fb = &builder{a: a, seen: map[diagID]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
 		if a.slab != 0 {
 			a.passes++
 			fb.pass = a.passes
@@ -364,7 +364,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	}
 	// The static token check and the cascade can report the same V003.
 	var diags ir.Diags
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, ds := range []ir.Diags{static, casc.Diags, fb.diags, eng.Diags} {
 		for _, d := range ds {
 			if k := a.diagKey(d); !seen[k] {

@@ -268,7 +268,7 @@ func (fb *builder) add(d ir.Diagnostic) {
 // diagnostics never depend on the scroll offset. The caller holds a.mu.
 func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableActive) *tableData {
 	a := fb.a
-	sub := &builder{a: a, seen: map[string]bool{}}
+	sub := &builder{a: a, seen: map[diagID]bool{}}
 	k := len(p.cols)
 	td := &tableData{strict: a.strict, texts: make([][]string, k), on: make([][][]bool, k), measure: make([]int, k), act: act}
 	if !p.ok {

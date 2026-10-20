@@ -479,6 +479,35 @@ func TestViasAreKeptWhereWritten(t *testing.T) {
 	sameDiags(t, "slots", useDiags(sa), want)
 }
 
+// What a diagnostic at an element of a copy cuts (ir.CutArgs, ir.ShownAt)
+// still tells two diagnostics apart (the F3 review): two missing paths of
+// one element that differ only past the 64-byte cut are two B003, two
+// class guards whose names do two B002, and two with clauses whose
+// aliases do two B003 at the use; what every pass of Validate repeats is
+// still one.
+func TestCutValuesStayApart(t *testing.T) {
+	long := strings.Repeat("a", 70)
+	src := `<tui>
+  <template id="in"><text>x</text></template>
+  <template id="t">
+    <col>
+      <text>{f.` + long + `1} {f.` + long + `2}</text>
+      <text class:` + long + `1="f.q" class:` + long + `2="f.q">y</text>
+      <use template="in" with="z as ` + long + `1, z as ` + long + `2"/>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="u" template="t" with="x as f"/>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{"x": 5}`)
+	cut := strings.Repeat("a", 62) + "…"
+	b003 := `warning B003 5:7 /screen/col/text bind path "f.` + cut + `" is missing (x.` + cut + ` via <use id="u">)`
+	b002 := `warning B002 6:7 /screen/col/text class:` + strings.Repeat("a", 58) + `…="f.q": path "f.q" is missing (x.q via <use id="u">)`
+	with := `warning B003 7:7 /screen/col/use with path "z" (alias ` + strings.Repeat("a", 64) + `…) is missing`
+	sameDiags(t, "validate", useDiags(a), []string{b003, b003, b002, b002, with, with})
+}
+
 // What a diagnostic quotes is cut only at an element of a copy: the same
 // path written once in the screen is quoted whole, as 0.4.1 quotes it,
 // and so is it in a pinned document.

@@ -27,6 +27,26 @@ func TestAnalyzeChecksAFragmentOnItsOwn(t *testing.T) {
 	}
 }
 
+// Two diagnostics that read the same only once validate cuts them (at an
+// element of a copy) stay two in the editor, as validate prints them (the
+// F3 review).
+func TestDedupeKeepsWhatACutMerged(t *testing.T) {
+	dir := writeTree(t, map[string]string{"sample.json": `{"x": {}}`})
+	sn := &snapshot{open: map[string]string{}, byURI: map[string]*document{}}
+	long := strings.Repeat("a", 70)
+	src := `<tui><template id="t"><text>{f.` + long + `1} {f.` + long + `2}</text></template>` +
+		`<screen id="main"><use id="u" template="t" with="x as f"/></screen></tui>`
+	n := 0
+	for _, d := range dedupe(analyze(sn, filepath.Join(dir, "app.tui"), src).route("", true)) {
+		if d.Code == "B003" {
+			n++
+		}
+	}
+	if n != 2 {
+		t.Errorf("%d B003, want 2", n)
+	}
+}
+
 // A document that includes a fragment: its diagnostics in the fragment
 // carry the fragment's absolute path, so they are not mixed with the
 // document's own.

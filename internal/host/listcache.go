@@ -270,7 +270,7 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box, slab *listSlab
 	if r := c.rows; r != nil && r.strict == a.strict && r.disabled == b.Disabled && sameStamp(r.stamp, st) {
 		return r, nil
 	}
-	sub := &builder{a: a, seen: map[string]bool{}}
+	sub := &builder{a: a, seen: map[diagID]bool{}}
 	r = &listRows{stamp: st, strict: a.strict, disabled: b.Disabled}
 	v, found := (*scope)(nil).resolve(a.store, p.each.Path)
 	arr, isArr := v.([]any)

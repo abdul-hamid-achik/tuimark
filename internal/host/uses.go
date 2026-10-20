@@ -290,11 +290,19 @@ func writtenAttr(n *ir.Node, attr, v string, via *ir.Via) string {
 // placement (SPEC v0.4b §6.18.6, decision 16). The message already holds
 // what tells two placements apart: the placement suffix, or the
 // ` (P via <use …>)` of a path through a with alias.
-func (a *App) diagKey(d ir.Diagnostic) string {
+// Two diagnostics whose messages read the same only once cut (at an
+// element of a copy, ir.CutArgs) stay two: the key holds what was cut,
+// whole (the F3 review).
+func (a *App) diagKey(d ir.Diagnostic) diagID {
 	if a.doc.Composed {
 		d.Path = "" // a copy: d is the caller's diagnostic unchanged
 	}
-	return d.String()
+	return diagID{d.String(), ir.Whole(d)}
+}
+
+// diagID is a diagnostic's identity in a dedupe (diagKey).
+type diagID struct {
+	text, whole string
 }
 
 // bindSev is the severity of B003: a warning, an error under --strict.
