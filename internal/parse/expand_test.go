@@ -129,19 +129,20 @@ func TestUseExpansionLimitFanOut(t *testing.T) {
 // the 17th copy is V021.
 func TestUseByteBudgetBoundary(t *testing.T) {
 	const head, tail = `<template id="t"><text>a</text><!--`, "--></template>"
-	// The suffix ", placed by <use template="t"> at app.tui:1:COL", with
-	// a 7-digit column for every use.
-	suffix := len(`, placed by <use template="t"> at app.tui:1:`) + 7
+	// The <text> of each copy is charged the descriptor of its placement
+	// suffix, ", placed by <use template="t">", never its location.
+	suffix := len(`, placed by <use template="t">`)
 	tmpl := head + strings.Repeat("x", 1<<20-suffix-len(head)-len(tail)) + tail
-	if first, last := len("<tui>"+tmpl+"<screen>")+1, len("<tui>"+tmpl+"<screen>")+1+16*len(`<use template="t"/>`); len(fmt.Sprint(first)) != 7 || len(fmt.Sprint(last)) != 7 {
-		t.Fatalf("columns %d..%d", first, last)
-	}
 	place := func(n int) *parse.Document {
 		return parseDoc("<tui>" + tmpl + "<screen>" + strings.Repeat(`<use template="t"/>`, n) + "</screen></tui>")
 	}
 	d := place(16)
 	if got := v021(d); len(got) != 0 || len(screenOf(d).Children) != 16 {
 		t.Errorf("at the budget: V021 %v, %d children", got, len(screenOf(d).Children))
+	}
+	// One byte more in the template is over it: the boundary is exact.
+	if d := parseDoc("<tui>" + head + "x" + tmpl[len(head):] + "<screen>" + strings.Repeat(`<use template="t"/>`, 16) + "</screen></tui>"); len(v021(d)) != 1 {
+		t.Errorf("one byte over the budget: V021 %v", v021(d))
 	}
 	d = place(17)
 	if got := v021(d); len(got) != 1 || !strings.Contains(got[0], `use template="t" exceeds the expansion limit`) || len(screenOf(d).Children) != 16 {

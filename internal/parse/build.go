@@ -1,7 +1,9 @@
 package parse
 
 import (
+	"encoding/binary"
 	"fmt"
+	"hash/maphash"
 	"path"
 	"path/filepath"
 	"slices"
@@ -367,6 +369,76 @@ type builder struct {
 	// comp holds the state of composition (<include>); nil in a document
 	// that is not the current language.
 	comp *composer
+	// reported holds the diagnostics reported since an expansion made
+	// dedupeDiags apply, by what decides their text (diagKey), each with
+	// its arguments: a repeat, which dedupeDiags would drop at the end, is
+	// dropped before its message is formatted (the F2 final check), so one
+	// written element that many copies place costs one message. cutDiags
+	// clears it wherever doc.Diags loses entries.
+	reported map[diagKey][]any
+	seed     maphash.Seed
+}
+
+// diagKey is what decides a diagnostic's identity for dedupeDiags before
+// its message is formatted: with equal arguments, two equal keys give
+// equal severity, code, message, file, line, and column. placed is the
+// element whose placement suffix the message carries, nil for none; args
+// is the hash of the arguments (argsHash).
+type diagKey struct {
+	sev, code, file string
+	line, col       int
+	placed          *ir.Node
+	format          string
+	args            uint64
+}
+
+// argsHash hashes a diagnostic's arguments, each a string or an int,
+// copying nothing; ok is false for any other argument (its diagnostic is
+// formatted, and left to dedupeDiags).
+func argsHash(seed maphash.Seed, args []any) (uint64, bool) {
+	var h maphash.Hash
+	h.SetSeed(seed)
+	var buf [9]byte
+	for _, a := range args {
+		switch v := a.(type) {
+		case string:
+			binary.LittleEndian.PutUint64(buf[1:], uint64(len(v)))
+			buf[0] = 's'
+			h.Write(buf[:])
+			h.WriteString(v)
+		case int:
+			binary.LittleEndian.PutUint64(buf[1:], uint64(v))
+			buf[0] = 'i'
+			h.Write(buf[:])
+		default:
+			return 0, false
+		}
+	}
+	return h.Sum64(), true
+}
+
+// earlyDedupe turns the dedupe before formatting on (builder.reported); a
+// test turns it off to check that it keeps what dedupeDiags keeps.
+var earlyDedupe = true
+
+// sameArgs reports whether two argument lists argsHash took are equal.
+func sameArgs(a, b []any) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// cutDiags drops the diagnostics from index n on (those of an expansion
+// that is discarded, or set aside), and forgets what reported held.
+func (b *builder) cutDiags(n int) {
+	b.doc.Diags = b.doc.Diags[:n]
+	b.reported = nil
 }
 
 // droppedAt is an unknown-tag child content() kept out of its parent's
@@ -414,9 +486,15 @@ func (b *builder) currentHint(line, col int, n *ir.Node, code, format string, ar
 
 // listHint is the advice given for a focus target inside a list row.
 func listHint(item *ir.Node) string {
+	return listHintAt(nil, item)
+}
+
+// listHintAt is listHint in a diagnostic about the node at: the list's id
+// as ir.ShownIDAt shows it there.
+func listHintAt(at, item *ir.Node) string {
 	sel := "list"
 	if item != nil && item.Parent != nil && item.Parent.ID != "" {
-		sel = "#" + item.Parent.ID
+		sel = "#" + ir.ShownIDAt(at, item.Parent.ID)
 	}
 	return fmt.Sprintf(`list rows are navigated by their list; handle the row with the list's on:select, or a keymap <bind keys="..." action="..." when="%s:focus"/> (its event identifies the selected row)`, sel)
 }
@@ -432,13 +510,32 @@ func (b *builder) diag(sev, code string, line, col int, path, id, format string,
 // stands gets it, a self-check (what the element's own attributes and text
 // say) does not, since it holds wherever the element is placed.
 func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, col int, path, id, format string, args ...any) {
-	msg := fmt.Sprintf(format, ir.UnmarkArgs(args)...)
 	file := b.file
+	var placed *ir.Node
 	if org != nil {
 		file = org.File
-		if place && org.Placed != nil {
-			msg += org.PlacedSuffix()
+		if place {
+			placed = org.Placed
 		}
+	}
+	if b.comp != nil && b.comp.used && earlyDedupe {
+		// dedupeDiags applies (ParseWith): a repeat is dropped unformatted.
+		if b.reported == nil {
+			b.reported = map[diagKey][]any{}
+			b.seed = maphash.MakeSeed()
+		}
+		if h, ok := argsHash(b.seed, args); ok {
+			k := diagKey{sev, code, file, line, col, placed, format, h}
+			if first, seen := b.reported[k]; seen && sameArgs(first, args) {
+				return
+			} else if !seen {
+				b.reported[k] = args
+			}
+		}
+	}
+	msg := fmt.Sprintf(format, ir.UnmarkArgs(args)...)
+	if placed != nil {
+		msg += org.PlacedSuffix()
 	}
 	b.doc.Diags = append(b.doc.Diags, ir.Diagnostic{
 		Severity: sev, Code: code, Msg: msg,
@@ -924,11 +1021,11 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 	// them rather than render a widget that can never respond.
 	if needsID[tag] || statefulV2[tag] {
 		if it := listItem(parent); it != nil {
-			b.errN(n, "V001", "<%s> inside a list <item> can never take focus: %s", tag, listHint(it))
+			b.errN(n, "V001", "<%s> inside a list <item> can never take focus: %s", tag, listHintAt(n, it))
 		} else if c := b.eachContainer(n); c != nil {
 			// SPEC §6.8 item 8: the template is repeated per element, so
 			// nothing in it may take focus or keep per-node state.
-			b.errN(n, "V001", "<%s> inside an each template (%s) would repeat for every element and can never take focus or keep its state: %s", tag, describeNode(c), templateHint)
+			b.errN(n, "V001", "<%s> inside an each template (%s) would repeat for every element and can never take focus or keep its state: %s", tag, describeNodeAt(n, c), templateHint)
 		}
 	}
 }
@@ -969,8 +1066,16 @@ func isEachContainer(n *ir.Node) bool {
 // describeNode names a node in a diagnostic: <tag id="..."> or <tag> at
 // line:col.
 func describeNode(n *ir.Node) string {
+	return describeNodeAt(nil, n)
+}
+
+// describeNodeAt names n in a diagnostic about the node at: n's id as
+// ir.ShownIDAt shows it there, so an element of a copy, reported once per
+// copy, quotes a long id of an enclosing element shortened (the F2 final
+// check), and every other element keeps describeNode's 0.4.1 text.
+func describeNodeAt(at, n *ir.Node) string {
 	if n.ID != "" {
-		return fmt.Sprintf("<%s id=%q>", n.Tag, n.ID)
+		return fmt.Sprintf("<%s id=%q>", n.Tag, ir.ShownIDAt(at, n.ID))
 	}
 	return fmt.Sprintf("<%s> at %d:%d", n.Tag, n.Line, n.Col)
 }
@@ -1090,16 +1195,16 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		allowed, need := attrAllowed(tag, ptag, name)
 		if itemFocusAttrs[name] {
 			if it := listItem(n); it == n {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed on a list <item>: %s", name, listHint(it))
+				b.attrErr(n, a, "V002", "attribute %q is not allowed on a list <item>: %s", name, listHintAt(n, it))
 				return
 			} else if it != nil && !needsID[tag] {
 				// (An input/button/list/modal there is already V001 as a
 				// whole in checkTag; its own attributes add nothing.)
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item> (on <%s>): %s", name, tag, listHint(it))
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item> (on <%s>): %s", name, tag, listHintAt(n, it))
 				return
 			} else if c := b.eachContainer(n); it == nil && c != nil && !needsID[tag] && !statefulV2[tag] {
 				// SPEC §6.8 item 8, at any depth of a container template.
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (on <%s>, in %s): %s", name, tag, describeNode(c), templateHint)
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (on <%s>, in %s): %s", name, tag, describeNodeAt(n, c), templateHint)
 				return
 			}
 		}
@@ -1138,7 +1243,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
 				return
 			} else if c := b.eachContainer(n); c != nil {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNode(c))
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNodeAt(n, c))
 				return
 			}
 		}
@@ -1933,7 +2038,7 @@ func (b *builder) checkTabFocus(n *ir.Node) {
 	if n.Tag == "tab" {
 		if f, ok := n.Attr("focus"); ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
 			id := f[1:]
-			if why := b.idTarget(id); strings.HasPrefix(why, idMissing) {
+			if why := b.idTargetAt(n, id); strings.HasPrefix(why, idMissing) {
 				b.errN(n, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
 				b.errN(n, "B005", "focus=%q %s", f, why)
@@ -1974,7 +2079,7 @@ func (b *builder) checkModalFocus(n *ir.Node) {
 	if n.Tag == "modal" {
 		if f, ok := n.Attr("focus"); ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
 			id := f[1:]
-			if why := b.idTarget(id); strings.HasPrefix(why, idMissing) {
+			if why := b.idTargetAt(n, id); strings.HasPrefix(why, idMissing) {
 				b.errN(n, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
 				b.errN(n, "B005", "focus=%q %s", f, why)
@@ -2020,7 +2125,7 @@ func (b *builder) checkAliases(n *ir.Node) {
 		if pe, err := ir.ParseEachField(p.Each); err == nil && ir.Unmark(pe.Alias) == alias {
 			// The message quotes each each as written: an element of a
 			// copy holds its paths after the with aliases (Node.Written).
-			b.errN(n, "V011", "each=%q: the alias %q repeats the alias of the enclosing each=%q of %s; pick another name", writtenEach(n), alias, writtenEach(p), describeNode(p))
+			b.errN(n, "V011", "each=%q: the alias %q repeats the alias of the enclosing each=%q of %s; pick another name", writtenEach(n), alias, ir.ShownIDAt(n, writtenEach(p)), describeNodeAt(n, p))
 			return
 		}
 	}
@@ -2097,7 +2202,7 @@ func (b *builder) checkIDs(root *ir.Node) {
 			if inTemplate {
 				// SPEC §6.8 item 8: the template is inflated once per
 				// element, so its id would repeat.
-				b.errN(n, "V004", "id %q inside an each template (%s) would repeat for every element: %s", n.ID, describeNode(b.eachContainer(n)), templateHint)
+				b.errN(n, "V004", "id %q inside an each template (%s) would repeat for every element: %s", ir.ShownIDAt(n, n.ID), describeNodeAt(n, b.eachContainer(n)), templateHint)
 			}
 		}
 		if dropped {
@@ -2129,6 +2234,13 @@ const idMissing = "does not exist"
 // with templates, an id that is not a node may be a <use>'s or a
 // <template>'s, or one an element of a template writes (expand.go).
 func (b *builder) idTarget(id string) string {
+	return b.idTargetAt(nil, id)
+}
+
+// idTargetAt is idTarget for a diagnostic about the node at: the list a
+// reason names is shown as ir.ShownIDAt shows it there (a tab or a modal
+// of a copy is reported once per copy).
+func (b *builder) idTargetAt(at *ir.Node, id string) string {
 	n, ok := b.doc.IDs[id]
 	if !ok {
 		if b.comp != nil {
@@ -2138,7 +2250,7 @@ func (b *builder) idTarget(id string) string {
 	}
 	if !b.addressable[id] {
 		if it := listItem(n); it != nil {
-			return "is inside a list <item>, where nothing takes focus or is addressed by id: " + listHint(it)
+			return "is inside a list <item>, where nothing takes focus or is addressed by id: " + listHintAt(at, it)
 		}
 		return "is inside an each template, where nothing takes focus or is addressed by id: " + templateHint
 	}

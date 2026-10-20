@@ -103,6 +103,11 @@ type templating struct {
 	// that cyclic missed (expandUse): each is reported once, however many
 	// copies meet it (the F2 re-review), and never expands.
 	metCycle map[*RawNode]bool
+	// classed holds the elements a use's class was appended to, in
+	// classedOrder (copyTemplate): uniqueClasses leaves each name on
+	// them once when the expansion ends.
+	classed      map[*ir.Node]bool
+	classedOrder []*ir.Node
 	// useIDs and tmplIDs hold the first <use> and <template> of each id in
 	// the id space (checkIDs); written maps an id an element of a template
 	// writes to its first scoped id in document order (notANode).
@@ -288,7 +293,7 @@ func (b *builder) template(n *ir.Node, c *RawNode, outer *ir.Node) {
 			self = append(self, d)
 		}
 	}
-	b.doc.Diags = kept
+	b.doc.Diags, b.reported = kept, nil // set aside: forgotten by reported too
 	if cp.tmplOf == nil {
 		cp.tmplOf = map[*ir.Node]*tmpl{}
 	}
@@ -462,6 +467,7 @@ func (b *builder) expandUses() {
 		b.expandIn(b.doc.Root)
 		cp.expanding = false
 	}
+	cp.uniqueClasses()
 	for _, t := range cp.order {
 		if !t.used {
 			// No use copied it: its elements get only the checks an
@@ -592,7 +598,7 @@ func (b *builder) expandUse(n, q *ir.Node) {
 	if q.ID == "" && b.eachContainer(q) == nil {
 		if x := b.firstID(t); x != "" {
 			x = shownID(x) // written in the template, not at the use
-			b.errUse(q, "V012", "<use template=%q> needs an id: its template holds ids (#%s), which the use scopes as ID__%s", name, x, x)
+			b.errUse(q, "V012", "<use template=%q> needs an id: its template holds ids (#%s), which the use scopes as ID__%s", shownID(name), x, x)
 			return
 		}
 	}
@@ -664,11 +670,11 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 		if b.droppedIn != nil {
 			b.droppedIn[n] = b.droppedIn[n][:nDroppedIn]
 		}
-		b.doc.Diags = b.doc.Diags[:nDiags]
+		b.cutDiags(nDiags)
 		cp.unuse(nUsed) // a discarded copy makes no template used
 		fr.bg.count, fr.bg.bytes = count, bytes
 		fr.bg.dead = true
-		b.errUse(q, "V021", "%s", overflowMsg(fmt.Sprintf("use template=%q", q.Attrs["template"]), o))
+		b.errUse(q, "V021", "%s", overflowMsg(fmt.Sprintf("use template=%q", shownID(q.Attrs["template"])), o))
 	}()
 	b.chargeBytes(t.raw.Span) // before anything is built
 	b.countElement()          // the use itself, so it is the one that reports
@@ -708,19 +714,17 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	classes := len(q.Attrs["class"])
 	for _, e := range tops {
 		// Charged the use's class list on each element it lands on (the
-		// F2 re-review), and merged through a set, so the merge is linear
-		// in what the element ends up with.
+		// F2 re-review). The classes are merged once, when the expansion
+		// ends (uniqueClasses, from CopiedBy), so a class costs the same
+		// at every level of nested uses (the F2 final check).
 		if len(q.Classes) > 0 {
 			b.chargeBytes(classes)
-			has := make(map[string]bool, len(e.Classes)+len(q.Classes))
-			for _, c := range e.Classes {
-				has[c] = true
-			}
-			for _, c := range q.Classes {
-				if !has[c] {
-					has[c] = true
-					e.Classes = append(e.Classes, c)
+			if !cp.classed[e] {
+				if cp.classed == nil {
+					cp.classed = map[*ir.Node]bool{}
 				}
+				cp.classed[e] = true
+				cp.classedOrder = append(cp.classedOrder, e)
 			}
 		}
 		e.CopiedBy = append(e.CopiedBy, q)
@@ -752,12 +756,15 @@ func (cp *composer) stackCycle(t *tmpl) string {
 }
 
 // chargePlaced charges an element a copy places (the F2 re-review): its
-// scoped-id prefix, id or not, and its placement suffix as a diagnostic
-// shows it (ir.Origin.PlacedSuffix), less the bytes of the prefix the
-// suffix already shows (the id of the use that scoped it). Together they
-// bound the ids a copy makes, nested uses with long ids included, and
-// what every diagnostic about one of its elements may print, whether or
-// not one is printed.
+// scoped-id prefix, id or not, and the descriptor of its placement suffix
+// as a diagnostic shows it (ir.Origin.PlacedBy, `, placed by <use …>`),
+// less the bytes of the prefix the descriptor already shows (the id of
+// the use that scoped it). Together they bound the ids a copy makes,
+// nested uses with long ids included, and what every diagnostic about one
+// of its elements may print, whether or not one is printed. The
+// location, " at FILE:LINE:COL", is not charged (the F2 final check): the
+// same bytes validate the same under any file name, and the file system
+// bounds a name as the element cap bounds how often it is printed.
 func (b *builder) chargePlaced() {
 	cp := b.comp
 	if cp == nil || len(cp.copies) == 0 {
@@ -765,13 +772,45 @@ func (b *builder) chargePlaced() {
 	}
 	if cp.sufOrg != b.org || cp.sufPrefix != cp.prefix {
 		cp.sufOrg, cp.sufPrefix = b.org, cp.prefix
-		n := len(cp.prefix) + len(b.org.PlacedSuffix())
+		n := len(cp.prefix) + len(b.org.PlacedBy())
 		if p := b.org.Placed; p != nil && p.Kind == "use" && p.ID != "" && cp.prefix == p.ID+"__" {
 			n -= len(strings.TrimSuffix(shownID(p.ID), "…"))
 		}
 		cp.sufCharge = n
 	}
 	b.chargeBytes(cp.sufCharge)
+}
+
+// uniqueClasses gives every element a use's class lands on the classes of
+// the uses that copied it (decision 101): its own, then an inner use's,
+// then an outer one's (CopiedBy, innermost first), each name once, at its
+// first place. One pass when the expansion ends costs what the classes
+// cost, where a set rebuilt at every level of nested uses cost the square
+// of their depth (the F2 final check).
+func (cp *composer) uniqueClasses() {
+	seen := map[string]bool{}
+	for _, e := range cp.classedOrder {
+		n := len(e.Classes)
+		for _, q := range e.CopiedBy {
+			n += len(q.Classes)
+		}
+		clear(seen)
+		out := make([]string, 0, n)
+		add := func(cs []string) {
+			for _, c := range cs {
+				if !seen[c] {
+					seen[c] = true
+					out = append(out, c)
+				}
+			}
+		}
+		add(e.Classes)
+		for _, q := range e.CopiedBy {
+			add(q.Classes)
+		}
+		e.Classes = slices.Clip(out)
+	}
+	cp.classed, cp.classedOrder = nil, nil
 }
 
 // markUsed records that a use copied t; unuse(n) takes back what was

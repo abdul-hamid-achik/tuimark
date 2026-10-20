@@ -242,7 +242,45 @@ func (o *Origin) PlacedSuffix() string {
 	if o == nil || o.Placed == nil {
 		return ""
 	}
-	return ", placed by " + o.Placed.describePlacer() + " at " + o.Placed.Loc(true)
+	return o.PlacedBy() + " at " + o.Placed.Loc(true)
+}
+
+// PlacedBy is the part of o's placement suffix that does not depend on
+// where the files are or what they are called: `, placed by <use …>`,
+// without " at FILE:LINE:COL". It is what the expansion budget charges an
+// element a copy places (the F2 final check): the same document under a
+// longer file name, or with its uses further right, is charged the same.
+func (o *Origin) PlacedBy() string {
+	if o == nil || o.Placed == nil {
+		return ""
+	}
+	return ", placed by " + o.Placed.describePlacer()
+}
+
+// InCopy reports whether n is an element of a copy: a <use> is among the
+// elements that placed it (its Placer chain). A diagnostic about such an
+// element quotes every id written outside the element through ShownID
+// (ShownIDAt), since one written element there is reported once per copy;
+// an element written once, and every element of a pinned document, keeps
+// the text 0.4.1 gives.
+func (n *Node) InCopy() bool {
+	for p := n.Placer(); p != nil; p = p.Placer() {
+		if p.Kind == "use" {
+			return true
+		}
+	}
+	return false
+}
+
+// ShownIDAt is id as a diagnostic about the node at quotes it: ShownID(id)
+// for an element of a copy (InCopy) and for a <use> (a composition
+// diagnostic, which no pinned document has), id whole otherwise, as 0.4.1
+// quotes it.
+func ShownIDAt(at *Node, id string) string {
+	if at != nil && (at.Kind == "use" || at.InCopy()) {
+		return ShownID(id)
+	}
+	return id
 }
 
 // describePlacer names an <include> or a <use> the way a placement suffix

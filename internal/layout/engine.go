@@ -1140,10 +1140,21 @@ func (e *Engine) neverShown(v *Box, horizontal bool) string {
 			lo, hi = p.Content.X, p.Content.X+p.Content.W
 		}
 		if pos < lo || pos+length > hi {
-			return fmt.Sprintf("%s is clipped on %s by %s, which does not scroll, so part of its content can never be shown; give it a cells, %%, or fr %s, or more room in %s", v.Kind, axis, describe(p), size, describe(p))
+			return fmt.Sprintf("%s is clipped on %s by %s, which does not scroll, so part of its content can never be shown; give it a cells, %%, or fr %s, or more room in %s", v.Kind, axis, describeAt(v, p), size, describeAt(v, p))
 		}
 	}
 	return ""
+}
+
+// describeAt is describe in a message about the box at: b's id as
+// ir.ShownIDAt shows it there, so an element of a copy, reported once per
+// copy, quotes a long id of an enclosing box shortened (the F2 final
+// check), and every other box keeps describe's text.
+func describeAt(at, b *Box) string {
+	if b.ID != "" && at.Src.InCopy() {
+		return b.Tag + "#" + ir.ShownID(b.ID)
+	}
+	return describe(b)
 }
 
 // describe names a box for a message: its tag, plus #id when it has one.
@@ -1157,9 +1168,13 @@ func describe(b *Box) string {
 // clipRef names a child for the L009 message (SPEC v0.3 §14): #id, else
 // its tag and a 0-based index among its Laid siblings sharing that tag
 // (omitted when it is the only one), the way `tuimark inspect` names an
-// unidentified node.
-func clipRef(c *Box) string {
+// unidentified node. In a message about the box at, the id is shown as
+// ir.ShownIDAt shows it there (describeAt).
+func clipRef(at, c *Box) string {
 	if c.ID != "" {
+		if at.Src.InCopy() {
+			return "#" + ir.ShownID(c.ID)
+		}
 		return "#" + c.ID
 	}
 	if c.Parent == nil {
@@ -1268,7 +1283,7 @@ func (e *Engine) checkChildrenClip(n *Box) {
 // shown of total cells, and marks n Clipped "children".
 func (e *Engine) reportClip(n, c *Box, axis string, shown, total int) {
 	if e.clipFirst(n, "L009") {
-		e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; %s, or write overflow: hidden to keep the cut", clipRef(c), axis, shown, total, e.cutCause(c, axis == "x"))
+		e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; %s, or write overflow: hidden to keep the cut", clipRef(n, c), axis, shown, total, e.cutCause(n, c, axis == "x"))
 	}
 	n.Clipped = "children"
 }

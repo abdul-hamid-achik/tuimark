@@ -149,7 +149,7 @@ func (fb *builder) pickTab(t *layout.Box, visible []*layout.Box) *layout.Box {
 				}
 			}
 		}
-		fb.report(n, ir.Warning, "B010", "bind=%q holds %s, which is not the id of a visible tab of #%s; the first visible tab, #%s, is active", n.Bind, jsonText(v), n.ID, visible[0].ID)
+		fb.report(n, ir.Warning, "B010", "bind=%q holds %s, which is not the id of a visible tab of #%s; the first visible tab, #%s, is active", n.Bind, jsonText(v), ir.ShownIDAt(n, n.ID), ir.ShownIDAt(n, visible[0].ID))
 		return visible[0]
 	}
 	if id, ok := a.tabMem[t.ID]; ok && t.ID != "" {

@@ -452,7 +452,7 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 			delete(b.styleSeen, styleKey(st.File, st.Line, st.Col))
 		}
 		b.doc.Styles = b.doc.Styles[:nStyles]
-		b.doc.Diags = b.doc.Diags[:nDiags]
+		b.cutDiags(nDiags)
 		w.Children = nil
 		fr.bg.count, fr.bg.bytes = count, bytes
 		fr.bg.dead = true
