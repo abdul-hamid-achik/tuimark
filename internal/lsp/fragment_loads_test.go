@@ -227,7 +227,7 @@ func TestFragmentIncludersAreFoundCheaply(t *testing.T) {
 		return analyze(sn, path, text)
 	}
 	frag := filepath.Join(dir, "frag.tui")
-	var publish time.Duration
+	publish := time.Duration(1 << 62)
 	for gen := 1; gen <= 3; gen++ {
 		text := strings.Replace(files["frag.tui"], "frag", fmt.Sprintf("frag %d", gen), 1)
 		d := &document{uri: pathToURI(frag), path: frag, kind: kindTUI, text: text}
@@ -236,7 +236,7 @@ func TestFragmentIncludersAreFoundCheaply(t *testing.T) {
 		start := time.Now()
 		own := srv.analysisOf(sn, frag, text)
 		_, loads := srv.fragmentDiags(sn, frag, text, own)
-		publish = max(publish, time.Since(start))
+		publish = min(publish, time.Since(start))
 		// The fragment itself and reader.tui, nothing else.
 		if got := analyses.Load(); got != 2 {
 			t.Errorf("gen %d: %d analyses, want 2 (the fragment and reader.tui)", gen, got)
@@ -245,11 +245,17 @@ func TestFragmentIncludersAreFoundCheaply(t *testing.T) {
 			t.Errorf("gen %d: loads %v, want none (reader.tui reads only frag.tui)", gen, loads)
 		}
 	}
-	// One document's analysis, against which the publish is measured.
+	// One document's analysis, against which the publish is measured. Each
+	// side counts its fastest run, so a burst of load during one run does
+	// not fail the test, while analyzing every document is slow on every
+	// run (the analysis count above is the decisive check).
 	sn := &snapshot{gen: 99, byURI: map[string]*document{}, open: map[string]string{}}
-	start := time.Now()
-	analyze(sn, filepath.Join(dir, "doc000.tui"), doc)
-	one := time.Since(start)
+	one := time.Duration(1 << 62)
+	for range 2 {
+		start := time.Now()
+		analyze(sn, filepath.Join(dir, "doc000.tui"), doc)
+		one = min(one, time.Since(start))
+	}
 	if publish > one*n/4+50*time.Millisecond {
 		t.Errorf("a fragment's publish took %v; one analysis takes %v, and %d documents beside it read other fragments", publish, one, n)
 	}
