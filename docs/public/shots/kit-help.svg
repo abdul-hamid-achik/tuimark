@@ -11,8 +11,6 @@
 <text x="23.6" y="89" textLength="48" lengthAdjust="spacing" fill="#8b949e">press</text>
 <text x="81.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">?</text>
 <text x="119.6" y="89" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">Keys</text>
-<text x="33.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="52.4" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">clos</text>
 <text x="119.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
 <text x="138.8" y="129" textLength="48" lengthAdjust="spacing" fill="#8b949e">close</text>
 <text x="196.4" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">help</text>

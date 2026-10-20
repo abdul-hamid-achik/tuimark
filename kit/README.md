@@ -415,12 +415,15 @@ there).
 
 `<use id="help" template="k-help" with="help as h"/>`, the last child of the
 screen: a `modal` with class `k-help` titled `h.title`, open while `h.open`,
-holding `<hints class="k-hints k-help-keys" scope="all"/>`: every labeled
-keymap row, stacked. Id: `help__dialog`. Actions: `help_open` (your `?`),
-`help_close` (`q`, `?` from the kit's keymap, and `esc`). The list starts
-with the kit's own labeled row, the help's `? close help`, then your keymap's
-labeled rows. The confirm dialog's `y` and `n` are not in it: the dialog's
-buttons name its choices, and the keys work while it is open.
+holding a `? close help` line and, under it,
+`<hints class="k-hints k-help-keys" scope="all"/>`: every labeled keymap
+row, stacked. Id: `help__dialog`. Actions: `help_open` (your `?`),
+`help_close` (`q`, `?` from the kit's keymap, and `esc`). The list holds your
+keymap's labeled rows. The kit's own overlay keys have no label, so no
+`<hints>` lists them, and a document that includes the kit without using an
+overlay shows none of them: the help names its way out in its own `? close
+help` line, and the confirm dialog's buttons name its choices (its `y` and
+`n` work while it is open).
 
 ### split pane / master-detail (`components/split.tui`)
 

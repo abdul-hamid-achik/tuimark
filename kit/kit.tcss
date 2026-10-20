@@ -239,6 +239,11 @@
 /* The keys list is a `<hints>` too: it carries both classes, and this rule
  * comes later, so it wins where the two differ. */
 .k-help-keys { layout: column; gap: 0; width: 1fr; height: auto; padding: 0; }
+/* The help's own way out, above the list, drawn like one of its hints. It is
+ * markup, not a labeled keymap row, so no other <hints> shows it. */
+.k-help-close { width: 1fr; height: 1; gap: 1; }
+.k-help-close > .k-help-key { color: $accent; bold: true; }
+.k-help-close > .k-help-label { color: $muted; }
 
 /* ------------------------------------------------------- split / master */
 

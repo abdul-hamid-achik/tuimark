@@ -6,8 +6,8 @@ intent: |
     modal holds the kit's help overlay, every labeled key. `?` opens it; esc
     fires the modal's on:escape (help_close), the host writes the help's
     flag false, and the app comes back, still running, with `? help` in its
-    hint bar. `close help` is the `.k-help` keymap row, shown in the overlay
-    and in the hint bar only while the overlay is open.
+    hint bar. `close help` is the overlay's own line, shown only while the
+    overlay is open.
 target:
     cmd: ["${vars.kitgallery}"]
     cwd: "."
@@ -60,4 +60,4 @@ outcomes:
                 else
                   echo '{"ok": false, "evidence": "esc did not close the help, or the app did not come back"}'
                 fi
-contractHash: sha256:f2fa357edb3606ea5032c578655e683d8ee3d8605feee095776d486061de16c7
+contractHash: sha256:cc4a384d57614421246c7336a1172510dd6a07a4086c1bdfe3007670a127346a
