@@ -259,10 +259,14 @@ func (fb *builder) missingKey(n *ir.Node, k string, sc *scope, sev, format strin
 // v0.4b §6.18.5 "Messages"), which names its placement, so it carries no
 // placement suffix (§6.18.6); a diagnostic about a <use> carries none
 // either (placeUse). Any other carries the placement suffix (report).
+// The via's P is cut (ir.ShownPath), so it is kept whole beside the
+// message (ir.WithWhole): two copies whose P differ only past the cut
+// stay two diagnostics.
 func (fb *builder) reportPath(n *ir.Node, via *ir.Via, p string, sev, code, format string, args ...any) {
 	switch {
 	case via != nil:
-		fb.add(ir.AtSuffix(n, fb.a.file, sev, code, via.Suffix(p), format, args...))
+		d := ir.AtSuffix(n, fb.a.file, sev, code, via.Suffix(p), format, args...)
+		fb.add(ir.WithWhole(d, ir.Whole(d)+"\x00"+ir.Unmark(p)))
 	case n.Kind == "use":
 		fb.add(ir.AtSuffix(n, fb.a.file, sev, code, "", format, args...))
 	default:
