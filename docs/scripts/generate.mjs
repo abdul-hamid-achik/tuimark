@@ -475,7 +475,7 @@ function idsOf(text) {
 /** The nodes of a play/dump JSON that carry classes, one line each. */
 function classesOf(text) {
   const d = JSON.parse(text)
-  return d.nodes.filter((n) => n.classes?.length).map((n) => `${n.tag.padEnd(5)} ${n.x},${n.y}  [${n.classes.join(', ')}]`)
+  return d.nodes.filter((n) => n.classes?.length).map((n) => ({ tag: n.tag, x: n.x, y: n.y, classes: n.classes }))
 }
 
 /** A node of `tuimark ir`, cut to what the composition shows. */
@@ -514,7 +514,7 @@ for (const o of OUTPUTS) {
   if (o.kind === 'term') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n${cut(out)}`)
   else if (o.kind === 'err') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n${cut(err)}`)
   else if (o.kind === 'ids') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n=== nodes (those with an id) ===\n${idsOf(out).join('\n')}`)
-  else if (o.kind === 'classes') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n=== nodes (those with classes) ===\n${classesOf(out).join('\n')}`)
+  else if (o.kind === 'classes') emit(`snippets/out/${o.name}.jsonc`, `// $ ${cmd}\n// excerpt: the nodes that have classes\n[\n${classesOf(out).map((n) => '  ' + JSON.stringify(n)).join(',\n')}\n]`)
   else if (o.kind === 'ir-use') {
     const use = findUse(JSON.parse(out).root, o.use)
     if (!use) throw new Error(`generate: ${o.name}: no <use id="${o.use}"> in the IR`)

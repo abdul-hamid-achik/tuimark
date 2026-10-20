@@ -1,5 +1,0 @@
-$ tuimark play rows.tui --data rows.json --cols 24 --rows 3 --input set:show_badges=true --format json
-=== nodes (those with classes) ===
-text  6,0  [badge, cell]
-text  7,1  [badge, cell, hot]
-text  5,2  [badge, cell]

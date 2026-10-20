@@ -304,7 +304,7 @@ takes over), proving the loop end to end. This one example touches:
 
 A `<tui>` needs no `version`: without one it is the current language, with
 everything this section describes plus the 0.4b additions in the Language
-notes below (forms, composition, and a few defaults and key rules). It is
+notes below (composition, and a few defaults and key rules). It is
 not `version="3"`: a document that writes `version="1"`, `"2"`, or `"3"` is
 pinned to the meaning it had in 0.4.1, defaults included, and its dumps do
 not change; new vocabulary in a pinned document is a diagnostic that ends

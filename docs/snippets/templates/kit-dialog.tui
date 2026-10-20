@@ -15,7 +15,7 @@
     <bind keys="y" action="dialog_confirm" label="confirm"/>
     <bind keys="n" action="dialog_cancel" label="cancel"/>
   </keymap>
-  <screen id="demo" focus="#confirm__yes">
+  <screen id="demo">
     <col width="1fr" height="1fr" pad="1">
       <text class="k-title">confirm dialog</text>
     </col>

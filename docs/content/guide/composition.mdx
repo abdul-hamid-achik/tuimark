@@ -102,7 +102,7 @@ The badge exists only while `show_badges` is truthy. A copy that is not placed h
 - **Per placement.** The guard of a use in a list `<item>`, in the template of a container `each`, or in a table's row (below) is evaluated for each row, with the row's alias in scope. A guard whose path is missing is one `B002` at the use, not one per row.
 - **A static `class`** on a use is added to every top-level element of the copy, after the classes the template wrote and before its `class:NAME` guards. Style it like any class:
 
-<include cwd lang="term">snippets/out/tpl-classes.txt</include>
+<include cwd lang="jsonc">snippets/out/tpl-classes.jsonc</include>
 
   The `badge` comes from the template, `cell` from the use, and `hot` from the template's `class:hot="s.urgent"` guard, true for the `deploy` row only.
 
@@ -167,7 +167,7 @@ Each message names a simple cycle through the use, starting from its own templat
 
 <include cwd lang="term">snippets/out/tpl-long-cycle.txt</include>
 
-A cycle is reported whether or not any use reaches it, and whether it goes through a template body directly or through a copy that meets it by an include.
+A cycle is reported whether or not any use reaches it. One that only copies meet (possible once the template definitions' own `V021` has stopped a body) is reported once, at the use that closes it, however many copies meet it.
 
 ### Limits
 
