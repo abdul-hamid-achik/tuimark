@@ -1,0 +1,11 @@
+<tui>
+  <template id="bar">
+    <row class="bar">
+      <text>{b}</text>
+    </row>
+  </template>
+  <screen id="main">
+    <use template="bar" with="a as b"/>
+    <text id="after">after</text>
+  </screen>
+</tui>

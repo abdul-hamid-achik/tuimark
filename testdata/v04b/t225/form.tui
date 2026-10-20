@@ -1,0 +1,17 @@
+<tui>
+  <keymap when=".form">
+    <bind keys="ctrl+s" action="save" label="save"/>
+    <bind keys="enter" action="save"/>
+  </keymap>
+  <screen id="main">
+    <text>files</text>
+    <modal id="f" class="form" open="ui.form" title="new">
+      <input id="name" bind="draft.name" placeholder="name"/>
+      <checkbox id="news" bind="draft.news" label="News"/>
+      <select id="tz" bind="draft.tz" each="zones as z" key="z.id" label="{z.name}" placeholder="zone"/>
+      <list id="size" each="sizes as it" key="it.id" checked="draft.size" single="true" mark="●">
+        <item><text>{it.label}</text></item>
+      </list>
+    </modal>
+  </screen>
+</tui>

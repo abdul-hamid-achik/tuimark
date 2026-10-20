@@ -1,0 +1,12 @@
+<tui>
+  <include src="kit/kit.tui"/>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <screen id="main">
+    <text>files</text>
+    <hints id="h" scope="all"/>
+    <use id="del" template="k-confirm" with="ui.dialogs.del as d"/>
+    <use id="arc" template="k-confirm" with="ui.dialogs.arc as d"/>
+  </screen>
+</tui>

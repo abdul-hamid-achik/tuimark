@@ -1,0 +1,1 @@
+{"ui": {"form": true}, "draft": {"name": "", "news": false, "tz": null, "size": null}, "zones": [{"id": "utc", "name": "UTC"}, {"id": "lis", "name": "Lisbon"}], "sizes": [{"id": "s", "label": "Small"}, {"id": "m", "label": "Medium"}]}

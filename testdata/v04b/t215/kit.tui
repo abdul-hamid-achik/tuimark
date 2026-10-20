@@ -1,0 +1,12 @@
+<tui>
+  <template id="confirm">
+    <row style="height: 1">
+      <button id="ok" label="{c.verb} {c.count} tasks" on:click="confirm"/>
+      <button id="no" on:click="cancel">{c.cancel}</button>
+    </row>
+  </template>
+  <screen id="main">
+    <use id="del" template="confirm" with="dialogs.delete as c"/>
+    <use id="arc" template="confirm" with="dialogs.archive as c"/>
+  </screen>
+</tui>
