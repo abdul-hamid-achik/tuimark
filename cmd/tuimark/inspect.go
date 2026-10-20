@@ -15,7 +15,8 @@ import (
 
 // inspectJSON is the JSON output of `tuimark inspect --json` (SPEC v0.2b
 // §15.7), members in the order cols, rows, ok, node, path, cell, pseudo,
-// classes, style.
+// classes, style, and, for a <tui> without version only, source (SPEC
+// v0.4b §15.7, decision 19).
 type inspectJSON struct {
 	Cols    int              `json:"cols"`
 	Rows    int              `json:"rows"`
@@ -26,6 +27,7 @@ type inspectJSON struct {
 	Pseudo  []string         `json:"pseudo"`
 	Classes []host.ClassInfo `json:"classes"`
 	Style   []host.StyleInfo `json:"style"`
+	Source  *host.SourceInfo `json:"source,omitempty"`
 }
 
 // parseAt parses --at X,Y: two 0-based decimal cell coordinates.
@@ -109,7 +111,7 @@ func (c *cli) cmdInspect(args []string) int {
 	}
 	ok := !f.Diags.HasErrors()
 	if *asJSON {
-		out := inspectJSON{Cols: f.Cols, Rows: f.Rows, OK: ok, Node: in.Node, Path: in.Path, Cell: in.Cell, Pseudo: in.Pseudo, Classes: in.Classes, Style: in.Style}
+		out := inspectJSON{Cols: f.Cols, Rows: f.Rows, OK: ok, Node: in.Node, Path: in.Path, Cell: in.Cell, Pseudo: in.Pseudo, Classes: in.Classes, Style: in.Style, Source: in.Source}
 		b, err := json.MarshalIndent(out, "", "  ")
 		if err != nil {
 			return c.fail(err)
@@ -127,7 +129,9 @@ func (c *cli) cmdInspect(args []string) int {
 // inspectText is the informative text form of an inspection (SPEC v0.2b
 // §15.7): the node line of §13.3, then path, cell, pseudo, one line per
 // class, and one line per property whose origin is not initial, with its
-// winning rule and, indented under it, the rules it overrode.
+// winning rule and, indented under it, the rules it overrode; then, for a
+// <tui> without version, `source FILE:LINE:COL` and one line per element
+// that placed it (SPEC v0.4b §15.7).
 func inspectText(in *host.Inspection) string {
 	var b strings.Builder
 	b.WriteString(dump.NodeLine(in.Node, max(1, layout.Width(in.Node.ID)), len(in.Node.Tag)) + "\n")
@@ -179,7 +183,36 @@ func inspectText(in *host.Inspection) string {
 			fmt.Fprintf(&b, "    overrides %s  %s  %s\n", l.Value, l.Origin, ruleText(l.Rule))
 		}
 	}
+	if src := in.Source; src != nil {
+		fmt.Fprintf(&b, "source %s\n", fileLoc(src.File, src.Line, src.Col))
+		for _, v := range src.Via {
+			fmt.Fprintf(&b, "via %s %s\n", viaText(v), fileLoc(v.File, v.Line, v.Col))
+		}
+	}
 	return b.String()
+}
+
+// fileLoc is FILE:LINE:COL, with <input> for a document that has no file,
+// as a diagnostic's location is written.
+func fileLoc(file string, line, col int) string {
+	if file == "" {
+		file = "<input>"
+	}
+	return fmt.Sprintf("%s:%d:%d", file, line, col)
+}
+
+// viaText names an element of a via list as the text output of inspect
+// does (SPEC v0.4b §15.7): <use id="U" template="T">, <use template="T">
+// for a use without id (as a placement suffix names it), or
+// <include src="S">.
+func viaText(v host.ViaInfo) string {
+	switch {
+	case v.Include != nil:
+		return fmt.Sprintf("<include src=%q>", *v.Include)
+	case v.Use != nil && *v.Use != "":
+		return fmt.Sprintf("<use id=%q template=%q>", *v.Use, *v.Template)
+	}
+	return fmt.Sprintf("<use template=%q>", *v.Template)
 }
 
 func ruleText(r host.RuleInfo) string {

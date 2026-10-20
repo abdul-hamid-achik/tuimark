@@ -72,6 +72,9 @@ type KeyBind struct {
 	// Org is where the row is written when that is not the document
 	// itself (SPEC v0.4b §6.18.6): nil for a row of the document.
 	Org *ir.Origin
+	// Node is the <bind> element of the row: what `tuimark inspect` names
+	// as the source of the hint items the row gives (SPEC v0.4b §15.7).
+	Node *ir.Node
 }
 
 // Document is a parsed and validated .tui file.
@@ -1836,7 +1839,7 @@ func (b *builder) checkStructure() {
 					kb := KeyBind{
 						KeysRaw: k.Attrs["keys"], Action: k.Attrs["action"], When: rowWhen,
 						HasOwnWhen: hasOwnWhen, KeymapNode: c, EffectiveWhen: rowWhen,
-						To: k.Attrs["to"], Line: k.Line, Col: k.Col, Org: k.Org,
+						To: k.Attrs["to"], Line: k.Line, Col: k.Col, Org: k.Org, Node: k,
 					}
 					if !hasOwnWhen {
 						kb.EffectiveWhen = kmWhen

@@ -24,6 +24,9 @@ import (
 // hintItem is one item of a hints: the key text it shows and its label.
 type hintItem struct {
 	keycap, label string
+	// src is the row's <bind> element, the source inspect names for the
+	// item's nodes (SPEC v0.4b §15.7).
+	src *ir.Node
 }
 
 // keyOf is the key a key token delivers (SPEC §8.1, §15.4): a printable
@@ -69,7 +72,7 @@ func (a *App) hintItems(v keyView, all bool) []hintItem {
 			if kb.Keycap != "" {
 				keycap = kb.Keycap
 			}
-			out = append(out, hintItem{keycap, kb.Label})
+			out = append(out, hintItem{keycap, kb.Label, kb.Node})
 			continue
 		}
 		for _, tok := range kb.Keys {
@@ -81,7 +84,7 @@ func (a *App) hintItems(v keyView, all bool) []hintItem {
 				if kb.Keycap != "" {
 					keycap = kb.Keycap
 				}
-				out = append(out, hintItem{keycap, kb.Label})
+				out = append(out, hintItem{keycap, kb.Label, kb.Node})
 				break
 			}
 		}
@@ -130,9 +133,9 @@ func (fb *builder) buildHints(casc *css.Cascade, root *layout.Box) {
 		}
 		h.Children = h.Children[:0]
 		for _, it := range its {
-			row := &layout.Box{Tag: "row", Kind: "row", Role: layout.RoleHintItem, Parent: h, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
-			key := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintKey, Parent: row, Classes: []string{"hint-key"}, Text: it.keycap, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
-			label := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintLabel, Parent: row, Classes: []string{"hint-label"}, Text: it.label, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+			row := &layout.Box{Tag: "row", Kind: "row", Role: layout.RoleHintItem, Parent: h, GenFrom: it.src, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+			key := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintKey, Parent: row, GenFrom: it.src, Classes: []string{"hint-key"}, Text: it.keycap, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+			label := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintLabel, Parent: row, GenFrom: it.src, Classes: []string{"hint-label"}, Text: it.label, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
 			row.Children = []*layout.Box{key, label}
 			row.Style = newStyle(casc.Compute(row, h.Style, nil, nil))
 			key.Style = newStyle(casc.Compute(key, row.Style, nil, nil))
