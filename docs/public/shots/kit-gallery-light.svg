@@ -29,7 +29,7 @@
 <text x="849.2" y="29" textLength="57.6" lengthAdjust="spacing" fill="#59636e">switch</text>
 <text x="916.4" y="29" textLength="28.8" lengthAdjust="spacing" fill="#59636e">the</text>
 <text x="954.8" y="29" textLength="48" lengthAdjust="spacing" fill="#59636e">theme</text>
-<text x="1031.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#ffffff" font-weight="700">v0</text>
+<text x="1031.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#ffffff" font-weight="700">v1</text>
 <text x="14" y="49" textLength="19.2" lengthAdjust="spacing" fill="#0969da" font-weight="700">▸1</text>
 <rect x="14" y="51" width="19.2" height="1" fill="#0969da"/>
 <text x="42.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">basics</text>
@@ -138,6 +138,6 @@
 <text x="23.6" y="609" textLength="67.2" lengthAdjust="spacing" fill="#ffffff" font-weight="700">GALLERY</text>
 <text x="110" y="609" textLength="48" lengthAdjust="spacing" fill="#1f2328">ready</text>
 <text x="1002.8" y="609" textLength="28.8" lengthAdjust="spacing" fill="#59636e">kit</text>
-<text x="1041.2" y="609" textLength="19.2" lengthAdjust="spacing" fill="#59636e">v0</text>
+<text x="1041.2" y="609" textLength="19.2" lengthAdjust="spacing" fill="#59636e">v1</text>
 </g>
 </svg>

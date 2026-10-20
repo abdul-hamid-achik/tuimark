@@ -64,7 +64,7 @@
         <text class="k-appbar-title">component gallery</text>
         <spacer/>
         <text class="k-appbar-meta">press t to switch the theme</text>
-        <text class="k-badge accent">v0</text>
+        <text class="k-badge accent">v1</text>
       </row>
 
       <tabs id="nav" class="k-tabs" bind="view" mark="▸" focusable="true">

@@ -1,7 +1,7 @@
 {
   "view": "basics",
   "theme": { "name": "dark" },
-  "status": { "text": "ready", "right": "kit v0" },
+  "status": { "text": "ready", "right": "kit v1" },
   "toast": { "show": false, "text": "", "is_ok": false, "is_warn": false, "is_danger": false },
   "crumbs": [
     { "id": "prod", "label": "Production", "last": false },
