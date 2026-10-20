@@ -191,21 +191,22 @@ tasks:
       - go test -run '^$' -fuzz '^FuzzStylesheet$' -fuzztime {{.FUZZTIME}} .
 
   docs:
-    desc: Serve the VitePress documentation site in docs/ locally.
+    desc: Serve the documentation site in docs/ (Next.js) at http://localhost:3000.
     dir: docs
     cmds:
       - npm install
       - npm run dev
 
   docs-build:
-    desc: Build the documentation site into docs/.vitepress/dist, as Vercel does (fails on dead links).
+    desc: Build the documentation site as Vercel does, then check every link, anchor, and asset in the built pages.
     dir: docs
     cmds:
       - npm ci
       - npm run build
+      - npm run check-links
 
   docs-gen:
-    desc: Regenerate the docs' reference pages, command output, and screenshots from the tuimark CLI.
+    desc: Regenerate the docs' reference pages, command output, screenshots, and the landing page's hero from the tuimark CLI.
     cmds:
       - go build -o bin/tuimark ./cmd/tuimark
       - node docs/scripts/generate.mjs

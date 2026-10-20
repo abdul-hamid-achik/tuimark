@@ -1,0 +1,7 @@
+# Next.js build output and generated sources (npm run build / dev)
+/.next/
+/.source/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+node_modules/

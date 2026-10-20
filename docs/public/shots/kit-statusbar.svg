@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="719.2" height="148" viewBox="0 0 719.2 148" role="img" aria-label="a status bar docked at the bottom: the mode, the file, a synced mark and the cursor position">
+<title>a status bar docked at the bottom: the mode, the file, a synced mark and the cursor position</title>
+<rect width="719.2" height="148" rx="6" fill="#0d1117"/>
+<path fill="#58a6ff" d="M14 114h76.8v20h-76.8z"/>
+<path fill="#1c2128" d="M90.8 114h393.6v20h-393.6zM561.2 114h144v20h-144z"/>
+<path fill="#3fb950" d="M484.4 114h76.8v20h-76.8z"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="49" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">The</text>
+<text x="62" y="49" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">page</text>
+<text x="110" y="49" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">content</text>
+<text x="186.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">goes</text>
+<text x="234.8" y="49" textLength="48" lengthAdjust="spacing" fill="#8b949e">here.</text>
+<text x="23.6" y="129" textLength="57.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">NORMAL</text>
+<text x="100.4" y="129" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">deploy.yaml</text>
+<text x="494" y="129" textLength="57.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">synced</text>
+<text x="580.4" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">Ln</text>
+<text x="609.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">12,</text>
+<text x="647.6" y="129" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">Col</text>
+<text x="686" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">4</text>
+</g>
+</svg>

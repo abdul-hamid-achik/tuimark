@@ -1,0 +1,22 @@
+<tui>
+  <style src="theme.tcss"/>
+  <keymap>
+    <bind keys="enter" action="deploy" when="#services:focus" label="deploy"/>
+    <bind keys="q" action="quit" label="quit"/>
+  </keymap>
+  <screen focus="#services">
+    <row id="body">
+      <list id="services" title="services" each="services as s" key="s.id"
+            bind="selected" on:select="show">
+        <item class:down="s.down"><text>● {s.name}</text></item>
+      </list>
+      <col id="detail" title="{current.name}">
+        <text class="status" class:down="current.down" class:busy="current.busy">{current.status}</text>
+        <text class="meta">{current.version} · {current.region}</text>
+        <progress bind="current.rollout"/>
+        <sparkline id="p99" bind="current.latency" min="0"/>
+      </col>
+    </row>
+    <hints/>
+  </screen>
+</tui>

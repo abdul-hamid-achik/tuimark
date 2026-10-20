@@ -14,10 +14,8 @@
 # GoReleaser output (goreleaser release --snapshot / build)
 /dist/
 
-# Docs site (VitePress under docs/, deployed by Vercel)
+# Docs site (Next.js under docs/, deployed by Vercel; build output in docs/.gitignore)
 node_modules/
-/docs/.vitepress/cache/
-/docs/.vitepress/dist/
 .vercel
 
 # VS Code extension (editors/vscode): build output and packages

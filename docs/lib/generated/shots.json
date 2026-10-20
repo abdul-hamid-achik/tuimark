@@ -1,0 +1,520 @@
+[
+  {
+    "name": "tour",
+    "light": true,
+    "cols": 80,
+    "rows": 10,
+    "alt": "the tour document at 80 columns: a ticket list beside the selected ticket, key hints below",
+    "cmd": "tuimark play app.tui --data sample.json --cols 80 --rows 10"
+  },
+  {
+    "name": "w-list",
+    "light": true,
+    "cols": 40,
+    "rows": 6,
+    "alt": "a focused list with a ✓ on the checked row and the cursor row reversed",
+    "cmd": "tuimark play list.tui --data data.json --cols 40 --rows 6"
+  },
+  {
+    "name": "w-table",
+    "light": true,
+    "cols": 44,
+    "rows": 7,
+    "alt": "a table with a header row, right-aligned numbers, hot cells and the cursor row reversed",
+    "cmd": "tuimark play table.tui --data data.json --cols 44 --rows 7"
+  },
+  {
+    "name": "w-progress",
+    "light": true,
+    "cols": 40,
+    "rows": 5,
+    "alt": "progress bars in whole cells and in eighths, and a two-row sparkline",
+    "cmd": "tuimark play progress.tui --data data.json --cols 40 --rows 5"
+  },
+  {
+    "name": "w-tabs",
+    "light": true,
+    "cols": 44,
+    "rows": 2,
+    "alt": "a tab strip with the active tab marked and highlighted",
+    "cmd": "tuimark play tabs.tui --data data.json --cols 44 --rows 2"
+  },
+  {
+    "name": "w-hints",
+    "light": true,
+    "cols": 44,
+    "rows": 8,
+    "alt": "key hints generated from the keymap along the bottom row",
+    "cmd": "tuimark play hints.tui --data data.json --cols 44 --rows 8"
+  },
+  {
+    "name": "w-modal",
+    "light": true,
+    "cols": 44,
+    "rows": 7,
+    "alt": "a modal with a title and two buttons, the focused one reversed",
+    "cmd": "tuimark play modal.tui --cols 44 --rows 7"
+  },
+  {
+    "name": "w-input",
+    "light": true,
+    "cols": 40,
+    "rows": 3,
+    "alt": "an empty input showing its placeholder",
+    "cmd": "tuimark play input.tui --data data.json --cols 40 --rows 3"
+  },
+  {
+    "name": "tour-narrow",
+    "light": true,
+    "cols": 56,
+    "rows": 14,
+    "alt": "the tour document at 56 columns: an @media rule stacks the list above the detail pane",
+    "cmd": "tuimark play app.tui --data sample.json --cols 56 --rows 14"
+  },
+  {
+    "name": "monitor-processes",
+    "light": true,
+    "cols": 120,
+    "rows": 26,
+    "alt": "monitor studio: the processes tab, a table with two marked rows, the tab strip and the key hints",
+    "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 120 --rows 26 --input \"space down space down\""
+  },
+  {
+    "name": "monitor-overview",
+    "light": true,
+    "cols": 120,
+    "rows": 16,
+    "alt": "monitor studio: the overview tab, a grid of panels with gauges and sparklines",
+    "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 120 --rows 16 --input 1"
+  },
+  {
+    "name": "monitor-cpu",
+    "light": true,
+    "cols": 100,
+    "rows": 16,
+    "alt": "monitor studio: the cpu tab, a scrolling grid of per-core gauges with a scrollbar",
+    "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 100 --rows 16 --input 2"
+  },
+  {
+    "name": "monitor-narrow",
+    "light": true,
+    "cols": 56,
+    "rows": 16,
+    "alt": "monitor studio at 56 columns: only the active tab label, and a table that dropped its lowest-priority column",
+    "cmd": "tuimark play examples/monitor/studio.tui --data examples/monitor/sample.json --cols 56 --rows 16 --input down"
+  },
+  {
+    "name": "logs-live",
+    "light": true,
+    "cols": 110,
+    "rows": 22,
+    "alt": "logs: a live tail with per-level counts, a lines-per-second sparkline, and color-coded lines including an error with its stack trace",
+    "cmd": "tuimark play examples/logs/app.tui --data examples/logs/sample.json --cols 110 --rows 22"
+  },
+  {
+    "name": "tasks-board",
+    "light": true,
+    "cols": 100,
+    "rows": 22,
+    "alt": "tasks: a kanban board with Todo, Doing and Done lanes of cards with priority marks, colored tags and due dates",
+    "cmd": "tuimark play examples/tasks/app.tui --data examples/tasks/sample.json --cols 100 --rows 22"
+  },
+  {
+    "name": "tasks-marked",
+    "light": true,
+    "cols": 100,
+    "rows": 22,
+    "alt": "tasks: the Doing lane focused, two cards marked with a check to move together",
+    "cmd": "tuimark play examples/tasks/app.tui --data examples/tasks/sample.json --cols 100 --rows 22 --input \"right space down space\""
+  },
+  {
+    "name": "gitui-status",
+    "light": true,
+    "cols": 110,
+    "rows": 24,
+    "alt": "gitui: staged and unstaged files with colored status letters beside a colored diff preview",
+    "cmd": "tuimark play examples/gitui/app.tui --data examples/gitui/sample.json --cols 110 --rows 24"
+  },
+  {
+    "name": "gitui-commit",
+    "light": true,
+    "cols": 100,
+    "rows": 26,
+    "alt": "gitui: a commit opened from the log, with its author, message, stats and a scrolling colored diff",
+    "cmd": "tuimark play examples/gitui/app.tui --data examples/gitui/sample.json --cols 100 --rows 26 --input \"2 set:detail_open=true\""
+  },
+  {
+    "name": "http-client",
+    "light": true,
+    "cols": 110,
+    "rows": 24,
+    "alt": "http: a request collection, a POST request in the editor, and its 201 Created JSON response below",
+    "cmd": "tuimark play examples/http/app.tui --data examples/http/sample.json --cols 110 --rows 24"
+  },
+  {
+    "name": "http-headers",
+    "light": true,
+    "cols": 110,
+    "rows": 22,
+    "alt": "http: the response pane on its Headers tab, the response headers in a table",
+    "cmd": "tuimark play examples/http/app.tui --data examples/http/sample.json --cols 110 --rows 22 --input h"
+  },
+  {
+    "name": "kit-gallery",
+    "light": true,
+    "cols": 110,
+    "rows": 30,
+    "alt": "kit gallery: the basics tab with a breadcrumb, badges, buttons, alerts and stat cards in the kit components, under the tab strip and the key hints",
+    "cmd": "tuimark play examples/kit-gallery/app.tui --data examples/kit-gallery/sample.json --cols 110 --rows 30"
+  },
+  {
+    "name": "kit-gallery-data",
+    "light": true,
+    "cols": 100,
+    "rows": 28,
+    "alt": "kit gallery: the data tab, a focused table with its cursor row as an accent bar and a build log below",
+    "cmd": "tuimark play examples/kit-gallery/app.tui --data examples/kit-gallery/sample.json --cols 100 --rows 28 --input \"3 focus:#svc down\""
+  },
+  {
+    "name": "containers",
+    "light": true,
+    "cols": 110,
+    "rows": 26,
+    "alt": "containers: a table of twelve containers with status colors, CPU, memory, uptime and ports, two rows marked, over the key hints and a status bar that says the engine is degraded",
+    "cmd": "tuimark play examples/containers/app.tui --data examples/containers/sample.json --cols 110 --rows 26"
+  },
+  {
+    "name": "containers-detail",
+    "light": true,
+    "cols": 110,
+    "rows": 28,
+    "alt": "containers: the detail of one container, an overview card beside CPU and memory sparklines, and its log in a tab strip with environment and ports",
+    "cmd": "tuimark play examples/containers/app.tui --data examples/containers/sample.json --cols 110 --rows 28 --input 2"
+  },
+  {
+    "name": "inbox",
+    "light": false,
+    "cols": 100,
+    "rows": 20,
+    "alt": "inbox: a search box and a ticket list on the left, the selected ticket on the right",
+    "cmd": "tuimark play examples/inbox/app.tui --data examples/inbox/sample.json --cols 100 --rows 20 --input tab"
+  },
+  {
+    "name": "inbox-narrow",
+    "light": false,
+    "cols": 60,
+    "rows": 20,
+    "alt": "inbox at 60 columns: the list stacked above the detail pane by an @media rule",
+    "cmd": "tuimark play examples/inbox/app.tui --data examples/inbox/sample.json --cols 60 --rows 20 --input tab"
+  },
+  {
+    "name": "dashboard",
+    "light": false,
+    "cols": 100,
+    "rows": 20,
+    "alt": "deploy dashboard: pipeline steps, a progress bar and buttons beside a log panel",
+    "cmd": "tuimark play examples/dashboard/app.tui --data examples/dashboard/sample.json --cols 100 --rows 20"
+  },
+  {
+    "name": "agent",
+    "light": true,
+    "cols": 120,
+    "rows": 26,
+    "alt": "coding-agent chat: transcript, composer, tool activity and files panels",
+    "cmd": "tuimark play examples/agent/agent.tui --data examples/agent/sample.json --cols 120 --rows 26"
+  },
+  {
+    "name": "unicode",
+    "light": false,
+    "cols": 64,
+    "rows": 14,
+    "alt": "CJK, emoji and combining accents laid out in cells, borders intact",
+    "cmd": "tuimark play examples/unicode/app.tui --data examples/unicode/sample.json --cols 64 --rows 14"
+  },
+  {
+    "name": "spike",
+    "light": true,
+    "cols": 80,
+    "rows": 12,
+    "alt": "the original spike: two bordered boxes and a status line, no stylesheet",
+    "cmd": "tuimark play examples/spike/inbox.tui --cols 80 --rows 12"
+  },
+  {
+    "name": "kit-appbar",
+    "light": true,
+    "cols": 72,
+    "rows": 4,
+    "alt": "an app bar: the product mark and name, the page title, the signed-in user and an environment badge on one row",
+    "cmd": "tuimark play kit/components/appbar.tui --data kit/components/appbar.sample.json --cols 72 --rows 4"
+  },
+  {
+    "name": "kit-statusbar",
+    "light": true,
+    "cols": 72,
+    "rows": 6,
+    "alt": "a status bar docked at the bottom: the mode, the file, a synced mark and the cursor position",
+    "cmd": "tuimark play kit/components/statusbar.tui --data kit/components/statusbar.sample.json --cols 72 --rows 6"
+  },
+  {
+    "name": "kit-breadcrumb",
+    "light": true,
+    "cols": 72,
+    "rows": 7,
+    "alt": "a breadcrumb trail, Production › Services › billing › Settings, with a key hint to go up a level",
+    "cmd": "tuimark play kit/components/breadcrumb.tui --data kit/components/breadcrumb.sample.json --cols 72 --rows 7"
+  },
+  {
+    "name": "kit-tabs",
+    "light": true,
+    "cols": 72,
+    "rows": 8,
+    "alt": "a tab strip with the active tab marked and a count in a tab label, above the active tab’s panel",
+    "cmd": "tuimark play kit/components/tabs.tui --data kit/components/tabs.sample.json --cols 72 --rows 8"
+  },
+  {
+    "name": "kit-split",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a list of incidents beside a detail pane that shows the selected one",
+    "cmd": "tuimark play kit/components/split.tui --data kit/components/split.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "kit-hints",
+    "light": true,
+    "cols": 72,
+    "rows": 6,
+    "alt": "key hints generated from the keymap along the bottom row",
+    "cmd": "tuimark play kit/components/hints.tui --cols 72 --rows 6"
+  },
+  {
+    "name": "kit-card",
+    "light": true,
+    "cols": 72,
+    "rows": 12,
+    "alt": "a titled card with a heading, a line of text and two buttons, and two smaller cards side by side",
+    "cmd": "tuimark play kit/components/card.tui --data kit/components/card.sample.json --cols 72 --rows 12"
+  },
+  {
+    "name": "kit-alert",
+    "light": true,
+    "cols": 72,
+    "rows": 14,
+    "alt": "four alerts, info, success, warning and danger, each a titled frame with an icon and a message",
+    "cmd": "tuimark play kit/components/alert.tui --data kit/components/alert.sample.json --cols 72 --rows 14"
+  },
+  {
+    "name": "kit-badge",
+    "light": true,
+    "cols": 72,
+    "rows": 9,
+    "alt": "badges for states such as draft, new, passing, flaky and failed, and a build number",
+    "cmd": "tuimark play kit/components/badge.tui --data kit/components/badge.sample.json --cols 72 --rows 9"
+  },
+  {
+    "name": "kit-stat",
+    "light": true,
+    "cols": 72,
+    "rows": 8,
+    "alt": "two KPI cards, each with a value, a change marked up or down, and a sparkline",
+    "cmd": "tuimark play kit/components/stat.tui --data kit/components/stat.sample.json --cols 72 --rows 8"
+  },
+  {
+    "name": "kit-meter",
+    "light": true,
+    "cols": 72,
+    "rows": 11,
+    "alt": "three labeled progress bars with their values: an upload, disk use and tests",
+    "cmd": "tuimark play kit/components/meter.tui --data kit/components/meter.sample.json --cols 72 --rows 11"
+  },
+  {
+    "name": "kit-empty",
+    "light": true,
+    "cols": 72,
+    "rows": 15,
+    "alt": "an empty state: an icon, a title, a line of text and a button, centered",
+    "cmd": "tuimark play kit/components/empty.tui --data kit/components/empty.sample.json --cols 72 --rows 15"
+  },
+  {
+    "name": "kit-log",
+    "light": true,
+    "cols": 72,
+    "rows": 12,
+    "alt": "a bordered build log with timestamps, a warning and a failed test in color, over its scroll hints",
+    "cmd": "tuimark play kit/components/log.tui --data kit/components/log.sample.json --cols 72 --rows 12"
+  },
+  {
+    "name": "kit-table",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a data table of services with a header, state colors, right-aligned numbers and the cursor row as an accent bar",
+    "cmd": "tuimark play kit/components/table.tui --data kit/components/table.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "kit-menu",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a navigation menu with icons and key shortcuts, one row checked and the cursor row highlighted",
+    "cmd": "tuimark play kit/components/menu.tui --data kit/components/menu.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "kit-button",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "primary, secondary, danger, ghost and disabled buttons, the focused one inverted",
+    "cmd": "tuimark play kit/components/button.tui --data kit/components/button.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "kit-field",
+    "light": true,
+    "cols": 72,
+    "rows": 13,
+    "alt": "a form with a focused name field and an email field showing its error message",
+    "cmd": "tuimark play kit/components/field.tui --data kit/components/field.sample.json --cols 72 --rows 13"
+  },
+  {
+    "name": "kit-confirm",
+    "light": true,
+    "cols": 72,
+    "rows": 16,
+    "alt": "a confirm dialog over the page asking to delete a project, with Cancel and Delete buttons",
+    "cmd": "tuimark play kit/components/confirm.tui --data kit/components/confirm.sample.json --cols 72 --rows 16"
+  },
+  {
+    "name": "kit-help",
+    "light": true,
+    "cols": 72,
+    "rows": 17,
+    "alt": "a help overlay listing every labeled key binding",
+    "cmd": "tuimark play kit/components/help.tui --data kit/components/help.sample.json --cols 72 --rows 17"
+  },
+  {
+    "name": "kit-palette",
+    "light": true,
+    "cols": 72,
+    "rows": 14,
+    "alt": "a command palette with a query typed and the matching commands listed",
+    "cmd": "tuimark play kit/components/palette.tui --data kit/components/palette.sample.json --cols 72 --rows 14"
+  },
+  {
+    "name": "kit-toast",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a toast along the bottom row saying the settings were saved, with esc to dismiss",
+    "cmd": "tuimark play kit/components/toast.tui --data kit/components/toast.sample.json --cols 72 --rows 10"
+  },
+  {
+    "name": "snake-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "snake: the autopilot steering the snake to the food, the score, level and speed climbing in the stats panel",
+    "cmd": "go run ./examples/snake",
+    "animated": true,
+    "ms": 8345
+  },
+  {
+    "name": "chess-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "chess: Morphy's Opera Game replayed move by move, the last move highlighted on the board and the move list growing, ending on 17.Rd8 checkmate",
+    "cmd": "go run ./examples/chess",
+    "animated": true,
+    "ms": 10860
+  },
+  {
+    "name": "tetris-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "tetris: the autopilot rotating and dropping pieces, a four-line clear flashing before it collapses, the score and lines rising",
+    "cmd": "go run ./examples/tetris",
+    "animated": true,
+    "ms": 10900
+  },
+  {
+    "name": "minesweeper-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "minesweeper: a solver clearing an intermediate board, flagging proven mines and opening safe cells until the board is cleared",
+    "cmd": "go run ./examples/minesweeper",
+    "animated": true,
+    "ms": 10940
+  },
+  {
+    "name": "sudoku-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "sudoku: the logic solver filling an easy puzzle digit by digit, then the solved board and the win dialog",
+    "cmd": "go run ./examples/sudoku",
+    "animated": true,
+    "ms": 10150
+  },
+  {
+    "name": "2048-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "2048: the autopilot sliding tiles, merged tiles popping and new tiles lit up, the score climbing to a 512 tile",
+    "cmd": "go run ./examples/2048",
+    "animated": true,
+    "ms": 10800
+  },
+  {
+    "name": "pipeline-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "pipeline: CI jobs running in parallel with spinners and progress bars, the integration log streaming in, a failure, a retry, and the run ending green",
+    "cmd": "go run ./examples/pipeline",
+    "animated": true,
+    "ms": 10220
+  },
+  {
+    "name": "containers-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "containers: filtering the table, marking and stopping two containers through the confirm dialog, starting them again, sorting, the detail and its tabs, a restart from the command palette, a scripted crash in the events, and the help overlay",
+    "cmd": "go run ./examples/containers",
+    "animated": true,
+    "ms": 14780
+  },
+  {
+    "name": "music-demo",
+    "light": true,
+    "cols": 100,
+    "rows": 24,
+    "alt": "music: a track playing with a bouncing spectrum visualizer and a moving position bar, a skip to the queued track, then a pause that lets the bars fall",
+    "cmd": "go run ./examples/music",
+    "animated": true,
+    "ms": 9200
+  },
+  {
+    "name": "pomodoro-demo",
+    "light": true,
+    "cols": 90,
+    "rows": 24,
+    "alt": "pomodoro: big block digits counting down the last seconds of a work session, the colon blinking, a flash at zero, then the short break starting in green",
+    "cmd": "go run ./examples/pomodoro",
+    "animated": true,
+    "ms": 11500
+  },
+  {
+    "name": "hero",
+    "light": true,
+    "cols": 72,
+    "rows": 16,
+    "alt": "a service list and a detail pane: the cursor moves to a failing service, enter fires deploy, and the rollout bar fills as its latency comes back down",
+    "cmd": "tuimark play app.tui --data sample.json --cols 72 --rows 16 --script hero.ndjson --frames",
+    "animated": true,
+    "ms": 11660
+  }
+]
