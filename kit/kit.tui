@@ -36,15 +36,17 @@
   <!-- The overlays' own keys. Each holds while focus is inside that overlay
        (its class is on the modal, which is in the focus chain), and a modal
        traps every other key, so a key that must also work under an overlay
-       is repeated in your own <keymap when="modal">. The dialog's rows have
-       no label: its buttons name the choices, and y and n work while it is
-       open, so a help overlay (or any <hints>) never lists them. -->
+       is repeated in your own <keymap when="modal">. These rows have no
+       label, so no <hints> lists them, a help overlay included: an overlay
+       names its own way out. The dialog's buttons name the choices (and y
+       and n work while it is open), and the help shows "? close help" at
+       its top. -->
   <keymap when=".k-dialog">
     <bind keys="y" action="dialog_confirm"/>
     <bind keys="n" action="dialog_cancel"/>
   </keymap>
   <keymap when=".k-help">
-    <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
+    <bind keys="q,?" action="help_close"/>
   </keymap>
 
   <!-- k-alert: a callout. with="PATH as a": a.title, a.text, and a.icon
@@ -181,10 +183,15 @@
     </modal>
   </template>
 
-  <!-- k-help: a help overlay that lists every labeled key. with="PATH as h":
-       h.open, h.title. Fires help_close (esc, q, ?); the host writes h.open. -->
+  <!-- k-help: a help overlay that lists every labeled key, under its own
+       "? close help" line. with="PATH as h": h.open, h.title. Fires
+       help_close (esc, q, ?); the host writes h.open. -->
   <template id="k-help">
     <modal id="dialog" class="k-help" open="h.open" title="{h.title}" on:escape="help_close">
+      <row class="k-help-close">
+        <text class="k-help-key">?</text>
+        <text class="k-help-label">close help</text>
+      </row>
       <hints class="k-hints k-help-keys" scope="all"/>
     </modal>
   </template>

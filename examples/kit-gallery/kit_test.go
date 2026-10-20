@@ -583,17 +583,43 @@ func TestKitTemplates(t *testing.T) {
 	}
 }
 
-// The confirm dialog's y and n have no label (nor keycap): the dialog's
-// buttons name the choices, and the keys work while it is open. So a help
-// overlay, which lists every labeled row, shows the help's own key and the
-// document's, never the dialog's, in a document with or without a dialog.
-func TestDialogKeysAreNotHints(t *testing.T) {
-	kms := regexp.MustCompile(`(?s)<keymap\b[^>]*when="\.k-dialog"[^>]*>.*?</keymap>`).FindAllString(fragmentBody(t, kitFragment), -1)
-	if len(kms) != 1 {
-		t.Fatalf("kit.tui: want one <keymap when=\".k-dialog\">, got %d", len(kms))
+// The kit's overlay keys have no label (nor keycap): an overlay names its
+// own way out. The confirm dialog's buttons name its choices, and y and n
+// work while it is open; the help shows "? close help" at its top, as
+// markup. So a <hints> never lists them, the help's own list included, and
+// a document that includes the kit without using an overlay shows none of
+// them.
+func TestOverlayKeysAreNotHints(t *testing.T) {
+	for _, class := range []string{"k-dialog", "k-help"} {
+		kms := regexp.MustCompile(`(?s)<keymap\b[^>]*when="\.`+class+`"[^>]*>.*?</keymap>`).FindAllString(fragmentBody(t, kitFragment), -1)
+		if len(kms) != 1 {
+			t.Fatalf("kit.tui: want one <keymap when=\".%s\">, got %d", class, len(kms))
+		}
+		if strings.Contains(kms[0], "label=") || strings.Contains(kms[0], "keycap=") {
+			t.Errorf("kit.tui: a %s key is a hint: %s", class, kms[0])
+		}
 	}
-	if strings.Contains(kms[0], "label=") || strings.Contains(kms[0], "keycap=") {
-		t.Errorf("kit.tui: a dialog key is a hint: %s", kms[0])
+	// A document that includes the kit, has a labeled row of its own, and
+	// lists every labeled row, with no help overlay: only its own row shows.
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "app.tui"), []byte(`<tui>
+  <include src="`+filepath.ToSlash(mustAbs(t, kitFragment))+`"/>
+  <keymap><bind keys="x" action="do_it" label="do it"/></keymap>
+  <screen><hints class="k-hints" scope="all"/></screen>
+</tui>
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bare, err := tuimark.Load(filepath.Join(dir, "app.tui"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, err := bare.Dump(60, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row := strings.TrimSpace(d.Grid[0]); row != "x do it" {
+		t.Errorf("a document without overlays lists the kit's keys: got %q, want %q", row, "x do it")
 	}
 	for _, path := range []string{"../../kit/components/help.tui", "app.tui"} {
 		ui, err := tuimark.Load(path)
@@ -608,8 +634,8 @@ func TestDialogKeysAreNotHints(t *testing.T) {
 			t.Fatal(err)
 		}
 		grid := strings.Join(d.Grid, "\n")
-		if !strings.Contains(grid, "? close help") {
-			t.Errorf("%s: the help lists no \"? close help\":\n%s", path, grid)
+		if n := strings.Count(grid, "? close help"); n != 1 {
+			t.Errorf("%s: the help shows \"? close help\" %d times, want once (its own line):\n%s", path, n, grid)
 		}
 		for _, hint := range []string{"y confirm", "n cancel"} {
 			if strings.Contains(grid, hint) {
@@ -775,4 +801,13 @@ func tokenValue(t *testing.T, theme, name string) string {
 		t.Fatalf("no token %s in the %s palette", name, theme)
 	}
 	return strings.ToLower(m[1])
+}
+
+func mustAbs(t *testing.T, path string) string {
+	t.Helper()
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return abs
 }

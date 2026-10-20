@@ -7,6 +7,14 @@ line.
 
 ## [Unreleased]
 
+### Changed
+
+- The kit's help overlay shows "? close help" as its own line, above the
+  list of keys, and the kit's `.k-help` keymap row has no label any more.
+  So a `<hints scope="all">` in a document that includes the kit without
+  using the help no longer shows "? close help", and a hint bar under the
+  open help no longer repeats it. The overlay itself looks as before.
+
 ## [0.4.4] - 2026-10-20
 
 Kit v1: the component kit rebuilt on the composition of 0.4.3. A document

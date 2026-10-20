@@ -4,10 +4,10 @@
        (<keymap when=".k-help">) before they reach the global rows below,
        since the first matching row in document order wins. -->
   <include src="../kit.tui"/>
-  <!-- The help overlay lists every keymap row that has a `label`: the
-       kit's "? close help", then these. (The kit's dialog keys, y and n,
-       have no label, so they are not listed.) Give rows a `keycap` to show
-       "j/k" or "^S" instead of the raw key. -->
+  <!-- The help overlay shows its own "? close help" line, then every
+       keymap row that has a `label`: these. (The kit's overlay keys have no
+       label, so no <hints> lists them.) Give rows a `keycap` to show "j/k"
+       or "^S" instead of the raw key. -->
   <keymap>
     <bind keys="?" action="help_open" label="help"/>
     <bind keys="n" action="item_new" label="new item"/>
