@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 // SPEC v0.4b §24 tests of composition in the tools (phase F4), the parts
@@ -361,5 +364,153 @@ func TestV04bIRFromIsConstant(t *testing.T) {
 	// tree, written or placed.
 	if n := len(compactJSON(t, r.out)) - ids; n > 10*r.inputBytes {
 		t.Errorf("ir printed %d bytes besides the ids and the indentation for %d of input", n, r.inputBytes)
+	}
+}
+
+// reloadTree is test 151's tree: test 134's fixture without its two
+// errors, with ui/parts/body.tui also including deep.tui, and d.json.
+func reloadTree(t *testing.T) string {
+	t.Helper()
+	return writeFiles(t, map[string]string{
+		"ui/app.tui":        "<tui>\n  <screen id=\"main\">\n    <text>top</text>\n    <include src=\"parts/body.tui\"/>\n    <text>bottom</text>\n    <include src=\"../shared/foot.tui\"/>\n  </screen>\n</tui>\n",
+		"ui/parts/body.tui": "<fragment>\n  <text id=\"a\">alpha</text>\n  <text id=\"b\">beta</text>\n  <include src=\"deep.tui\"/>\n</fragment>\n",
+		"ui/parts/deep.tui": "<fragment>\n  <text>deep</text>\n</fragment>\n",
+		"shared/foot.tui":   "<fragment>\n  <text id=\"f\">foot</text>\n</fragment>\n",
+		"d.json":            "{}\n",
+	})
+}
+
+// lockedWriter is a writer a test reads while another goroutine writes.
+type lockedWriter struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (w *lockedWriter) Write(p []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.buf.Write(p)
+}
+
+func (w *lockedWriter) String() string {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.buf.String()
+}
+
+// previewWatch runs preview --watch in the background until stop.
+type previewWatch struct {
+	out  *lockedWriter
+	stop chan struct{}
+	code chan int
+}
+
+func startPreviewWatch(t *testing.T, args ...string) *previewWatch {
+	t.Helper()
+	p := &previewWatch{out: &lockedWriter{}, stop: make(chan struct{}), code: make(chan int, 1)}
+	c := &cli{stdout: p.out, stderr: p.out, watchStop: p.stop}
+	go func() { p.code <- c.run(append([]string{"preview", "--watch"}, args...)) }()
+	t.Cleanup(func() {
+		select {
+		case <-p.stop:
+		default:
+			close(p.stop)
+		}
+		select {
+		case <-p.code:
+		case <-time.After(5 * time.Second):
+			t.Error("preview --watch did not stop")
+		}
+	})
+	return p
+}
+
+// waitFor waits until the output holds n copies of s.
+func (p *previewWatch) waitFor(t *testing.T, s string, n int) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for strings.Count(p.out.String(), s) < n {
+		if time.Now().After(deadline) {
+			t.Fatalf("no %d× %q in:\n%s", n, s, p.out.String())
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// 151, the preview bullet: a write to a fragment two includes deep is one
+// re-render, showing it.
+func TestV04bPreviewWatchFragments(t *testing.T) {
+	dir := reloadTree(t)
+	p := startPreviewWatch(t, filepath.Join(dir, "ui/app.tui"), "--data", filepath.Join(dir, "d.json"), "--cols", "20", "--rows", "8")
+	p.waitFor(t, "deep", 1)
+	writeAtomic(t, filepath.Join(dir, "ui/parts/deep.tui"), "<fragment>\n  <text>abyss</text>\n</fragment>\n")
+	p.waitFor(t, "abyss", 1)
+	time.Sleep(600 * time.Millisecond) // four polls more
+	out := p.out.String()
+	if n := strings.Count(out, "=== reload "); n != 1 {
+		t.Errorf("%d re-renders, want 1:\n%s", n, out)
+	}
+	if after := out[strings.Index(out, "=== reload "):]; !strings.Contains(after, "abyss") || strings.Contains(after, "deep") {
+		t.Errorf("the re-render:\n%s", after)
+	}
+}
+
+// preview --watch watches what run watches: the fragments of the last load
+// that read the document far enough, even when a later one did not. While
+// the document is not well-formed, a write to a fragment still re-renders;
+// and a fragment that cannot be read yet is watched, so creating it does.
+func TestV04bPreviewWatchKeepsFragments(t *testing.T) {
+	dir := reloadTree(t)
+	app := filepath.Join(dir, "ui/app.tui")
+	p := startPreviewWatch(t, app, "--cols", "20", "--rows", "8")
+	p.waitFor(t, "deep", 1)
+	good, err := os.ReadFile(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeAtomic(t, app, "<tui><screen id=\"main\">")
+	p.waitFor(t, "=== reload ", 1)
+	p.waitFor(t, "V005", 1)
+	writeAtomic(t, filepath.Join(dir, "ui/parts/deep.tui"), "<fragment>\n  <text>abyss</text>\n</fragment>\n")
+	p.waitFor(t, "=== reload ", 2)
+	// A fragment that does not exist yet.
+	writeAtomic(t, app, strings.Replace(string(good), "<text>bottom</text>", "<include src=\"parts/later.tui\"/>", 1))
+	p.waitFor(t, "=== reload ", 3)
+	p.waitFor(t, "V006", 1)
+	writeAtomic(t, filepath.Join(dir, "ui/parts/later.tui"), "<fragment>\n  <text>later</text>\n</fragment>\n")
+	p.waitFor(t, "=== reload ", 4)
+	p.waitFor(t, "later", 2) // the V006 message names it once
+}
+
+// run watches the fragments of the last load, at any depth, the one a
+// template definition includes too, and one that cannot be read yet: the
+// reload that creating it brings succeeds.
+func TestV04bRunWatchesFragments(t *testing.T) {
+	dir := reloadTree(t)
+	r := &runner{file: filepath.Join(dir, "ui/app.tui")}
+	app, _, err := r.load(true, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.sheets = sheetsOf(app)
+	want := []string{filepath.Join(dir, "ui/parts/body.tui"), filepath.Join(dir, "ui/parts/deep.tui"), filepath.Join(dir, "shared/foot.tui")}
+	if !reflect.DeepEqual(r.sheets, want) {
+		t.Errorf("watched %q, want %q", r.sheets, want)
+	}
+	writeIn(t, dir, "ui/app.tui", "<tui>\n  <template id=\"t\"><include src=\"parts/kit.tui\"/></template>\n  <screen id=\"main\">\n    <include src=\"parts/later.tui\"/>\n  </screen>\n</tui>\n")
+	writeIn(t, dir, "ui/parts/kit.tui", "<fragment>\n  <text>kit</text>\n</fragment>\n")
+	sw, ok := r.reload(false)
+	if ok {
+		t.Fatal("a reload with a missing fragment succeeded")
+	}
+	sw.Applied()
+	later := filepath.Join(dir, "ui/parts/later.tui")
+	kit := filepath.Join(dir, "ui/parts/kit.tui")
+	if !strings.Contains(strings.Join(r.panel, "\n"), "V006") || !reflect.DeepEqual(r.sheets, []string{kit, later}) {
+		t.Fatalf("sheets %q panel %q, want kit.tui and later.tui watched and V006 shown", r.sheets, r.panel)
+	}
+	writeIn(t, dir, "ui/parts/later.tui", "<fragment>\n  <text>later</text>\n</fragment>\n")
+	if _, ok := r.reload(false); !ok {
+		t.Errorf("the reload after creating the fragment failed: %q", r.panel)
 	}
 }

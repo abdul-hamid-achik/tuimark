@@ -477,10 +477,18 @@ func (c *cli) cmdPreview(args []string) int {
 		}
 		return 0
 	}
+	// The files run watches (SPEC v0.4b §15.1, §15.9): the document, the
+	// fragments and stylesheets of the last load that read the document
+	// far enough to resolve them, even when that load failed later, and
+	// the data.
 	files := append(app.Files(), *data)
 	stamp := fingerprint(files)
 	for n := 1; ; n++ {
-		time.Sleep(150 * time.Millisecond)
+		select {
+		case <-c.watchStop:
+			return 0
+		case <-time.After(150 * time.Millisecond):
+		}
 		now := fingerprint(files)
 		if now == stamp {
 			continue
@@ -496,13 +504,15 @@ func (c *cli) cmdPreview(args []string) int {
 			fmt.Fprintln(c.stdout, "tuimark:", err)
 			continue
 		}
+		if next.Document().Root != nil {
+			files = append(next.Files(), *data)
+			stamp = fingerprint(files)
+		}
 		if err := applyTheme(next, *theme, themeSet, "--theme"); err != nil {
 			fmt.Fprintln(c.stdout, "tuimark:", err)
 			continue
 		}
 		app = next
-		files = append(app.Files(), *data)
-		stamp = fingerprint(files)
 		renderPreview(c.stdout, app, *cols, *rows, tty, prof)
 	}
 }

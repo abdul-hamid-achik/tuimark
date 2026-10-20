@@ -115,9 +115,12 @@ type Document struct {
 	// document (V005), but a file `tuimark validate` checks on its own
 	// (FragmentDiags; SPEC v0.4b §6.18.2, §15.1).
 	FragmentRoot bool
-	// Fragments are the files the document's <include> elements read, at
-	// any depth, in the order they were read, each once (SPEC v0.4b
-	// §6.18.2): what run and preview --watch watch.
+	// Fragments are the files the document's <include> elements name, at
+	// any depth, in the order they were first resolved, each once (SPEC
+	// v0.4b §6.18.2): what run and preview --watch watch (§15.9). A file
+	// that could not be read is listed too, so creating it reloads, as a
+	// missing <style src> does; one outside the file system, in a cycle,
+	// or ending in .tcss is never read and is not.
 	Fragments []FragmentRef
 	// Composed is set when an <include> or a <use> was expanded: one
 	// written element may then be placed more than once, and diagnostics
@@ -131,7 +134,7 @@ type Document struct {
 	dropped []*ir.Node
 }
 
-// FragmentRef is a file an <include> read: its path in the loader's file
+// FragmentRef is a file an <include> names: its path in the loader's file
 // system and the name diagnostics give it.
 type FragmentRef struct {
 	Path string

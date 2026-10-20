@@ -103,6 +103,10 @@ exit codes: 0 ok, 1 I/O or crash, 2 validation errors
 type cli struct {
 	stdout io.Writer
 	stderr io.Writer
+
+	// watchStop, when closed, ends a preview --watch loop at its next poll
+	// (exit 0): a test's hook. Nil, as main leaves it, never ends it.
+	watchStop <-chan struct{}
 }
 
 func main() {

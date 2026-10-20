@@ -374,7 +374,8 @@ func (a *App) tokenCheck(theme string) ir.Diags {
 	return ds
 }
 
-// Files returns the document path and every stylesheet path (for --watch).
+// Files returns the document path, then every fragment its includes name
+// at any depth, then every stylesheet path (for --watch).
 func (a *App) Files() []string {
 	var out []string
 	if a.path != "" {
