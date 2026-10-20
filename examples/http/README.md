@@ -92,7 +92,7 @@ a test checks that they agree with what the host computes.
 
 ## What it shows
 
-- `version="3"`, `theme="auto"`, a dark palette in `:root` and a light one in
+- No `version` (the current language), `theme="auto"`, a dark palette in `:root` and a light one in
   `@media (theme: light)`, `@media (max-cols: …)` for the sidebar, and
   `@media (min-rows: …)` for a taller header list.
 - `<tabs>` with `{path}` in v3 tab labels (`collection 10`, `history 3`,
