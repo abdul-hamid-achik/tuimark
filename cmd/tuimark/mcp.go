@@ -563,10 +563,16 @@ func runCapture(fn func(*cli) int) (stdout, stderr string, code int) {
 
 // mcpResultFromRun turns one command's captured run into a tool result:
 // exit 0 or 2 is data (SPEC §15.8: "An exit 2 is data, not a failure"),
-// exit 1 is isError with the stderr line.
+// exit 1 is isError with the stderr line. An exit 2 that prints nothing on
+// stdout (inspect given a fragment, which has no node to report, SPEC
+// v0.4b §15.1) said why on stderr: that is its text, still data, so the
+// agent reads the V005 instead of an empty result.
 func mcpResultFromRun(stdout, stderr string, code int) map[string]any {
 	if code == 1 {
 		return mcpToolText(stderr, true)
+	}
+	if code == 2 && stdout == "" {
+		return mcpToolText(stderr, false)
 	}
 	return mcpToolText(stdout, false)
 }
