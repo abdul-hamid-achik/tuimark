@@ -223,5 +223,288 @@
     "sizes": ["100x30"],
     "json": [],
     "frozen": false
+  },
+  {
+    "name": "inbox-041",
+    "file": "examples/inbox/app.tui",
+    "data": "examples/inbox/sample.json",
+    "sizes": ["80x24", "120x40"],
+    "json": ["80x24", "120x40"],
+    "frozen": true
+  },
+  {
+    "name": "monitor-041",
+    "file": "examples/monitor/studio.tui",
+    "data": "examples/monitor/sample.json",
+    "sizes": ["80x24", "120x40"],
+    "json": ["80x24", "120x40"],
+    "frozen": true
+  },
+  {
+    "name": "colrow-041",
+    "file": "specs/fixtures/v04b/twins/colrow.tui",
+    "sizes": ["20x3", "80x24"],
+    "json": ["20x3", "80x24"],
+    "frozen": true
+  },
+  {
+    "name": "t156-hints-col-041",
+    "file": "specs/fixtures/v04b/twins/hints-col.tui",
+    "sizes": ["20x6"],
+    "json": ["20x6"],
+    "frozen": true
+  },
+  {
+    "name": "t157-hints-row-041",
+    "file": "specs/fixtures/v04b/twins/hints-row.tui",
+    "sizes": ["30x1", "20x1"],
+    "json": ["30x1", "20x1"],
+    "frozen": true
+  },
+  {
+    "name": "t158-confirm-041",
+    "file": "specs/fixtures/v04b/twins/confirm.tui",
+    "sizes": ["40x12"],
+    "json": ["40x12"],
+    "frozen": true
+  },
+  {
+    "name": "t159-help-041",
+    "file": "specs/fixtures/v04b/twins/help.tui",
+    "sizes": ["40x12"],
+    "json": ["40x12"],
+    "frozen": true
+  },
+  {
+    "name": "t160-esc-041",
+    "file": "specs/fixtures/v04b/twins/esc.tui",
+    "data": "specs/fixtures/v04b/twins/esc.json",
+    "input": "esc",
+    "sizes": ["30x10"],
+    "json": ["30x10"],
+    "frozen": true
+  },
+  {
+    "name": "t162-esc-q-041",
+    "file": "specs/fixtures/v04b/twins/esc.tui",
+    "data": "specs/fixtures/v04b/twins/esc.json",
+    "input": "q",
+    "sizes": ["30x10"],
+    "json": ["30x10"],
+    "frozen": true
+  },
+  {
+    "name": "t162-esc-x-041",
+    "file": "specs/fixtures/v04b/twins/esc.tui",
+    "data": "specs/fixtures/v04b/twins/esc.json",
+    "input": "x",
+    "sizes": ["30x10"],
+    "json": ["30x10"],
+    "frozen": true
+  },
+  {
+    "name": "t162-esc-o-041",
+    "file": "specs/fixtures/v04b/twins/esc.tui",
+    "data": "specs/fixtures/v04b/twins/esc.json",
+    "input": "o",
+    "sizes": ["30x10"],
+    "json": ["30x10"],
+    "frozen": true
+  },
+  {
+    "name": "t162-esc-ctrlc-041",
+    "file": "specs/fixtures/v04b/twins/esc.tui",
+    "data": "specs/fixtures/v04b/twins/esc.json",
+    "input": "ctrl+c",
+    "sizes": ["30x10"],
+    "json": ["30x10"],
+    "frozen": true
+  },
+  {
+    "name": "t163-esc-041",
+    "file": "specs/fixtures/v04b/twins/esc.tui",
+    "data": "specs/fixtures/v04b/twins/esc.json",
+    "sizes": ["30x10"],
+    "json": ["30x10"],
+    "frozen": true
+  },
+  {
+    "name": "t164-tabs-041",
+    "file": "specs/fixtures/v04b/twins/tabs.tui",
+    "data": "specs/fixtures/v04b/twins/tabs.json",
+    "input": "right",
+    "sizes": ["30x6"],
+    "json": ["30x6"],
+    "frozen": true
+  },
+  {
+    "name": "t164-tabs-focusable-041",
+    "file": "specs/fixtures/v04b/twins/tabs-focusable.tui",
+    "data": "specs/fixtures/v04b/twins/tabs.json",
+    "input": "right right",
+    "sizes": ["30x6"],
+    "json": ["30x6"],
+    "frozen": true
+  },
+  {
+    "name": "t165-panes-041",
+    "file": "specs/fixtures/v04b/twins/panes.tui",
+    "sizes": ["30x8", "12x8"],
+    "json": ["30x8", "12x8"],
+    "frozen": true
+  },
+  {
+    "name": "t166-stack-041",
+    "file": "specs/fixtures/v04b/twins/stack.tui",
+    "sizes": ["30x8"],
+    "json": ["30x8"],
+    "frozen": true
+  },
+  {
+    "name": "t167-pct-041",
+    "file": "specs/fixtures/v04b/twins/pct.tui",
+    "sizes": ["30x8"],
+    "json": ["30x8"],
+    "frozen": true
+  },
+  {
+    "name": "t168-starve-d30-041",
+    "file": "specs/fixtures/v04b/twins/starve.tui",
+    "data": "specs/fixtures/v04b/twins/d30.json",
+    "sizes": ["20x10"],
+    "json": ["20x10"],
+    "frozen": true
+  },
+  {
+    "name": "t168-starve-d3-041",
+    "file": "specs/fixtures/v04b/twins/starve.tui",
+    "data": "specs/fixtures/v04b/twins/d3.json",
+    "sizes": ["20x10"],
+    "json": ["20x10"],
+    "frozen": true
+  },
+  {
+    "name": "t168-starve-app-d30-041",
+    "file": "specs/fixtures/v04b/twins/starve-app.tui",
+    "data": "specs/fixtures/v04b/twins/d30.json",
+    "sizes": ["20x10"],
+    "json": ["20x10"],
+    "frozen": true
+  },
+  {
+    "name": "t168-starve-app-d3-041",
+    "file": "specs/fixtures/v04b/twins/starve-app.tui",
+    "data": "specs/fixtures/v04b/twins/d3.json",
+    "sizes": ["20x10"],
+    "json": ["20x10"],
+    "frozen": true
+  },
+  {
+    "name": "t169-twopane-041",
+    "file": "specs/fixtures/v04b/twins/twopane.tui",
+    "sizes": ["40x6"],
+    "json": ["40x6"],
+    "frozen": true
+  },
+  {
+    "name": "t170-freeze-041",
+    "file": "specs/fixtures/v04b/twins/freeze.tui",
+    "sizes": ["30x24", "90x24", "10x24"],
+    "json": ["30x24", "90x24", "10x24"],
+    "frozen": true
+  },
+  {
+    "name": "t221-field-041",
+    "file": "specs/fixtures/v04b/twins/field.tui",
+    "data": "specs/fixtures/v04b/twins/t.json",
+    "sizes": ["40x12"],
+    "json": ["40x12"],
+    "frozen": true
+  },
+  {
+    "name": "t221-field-typed-041",
+    "file": "specs/fixtures/v04b/twins/field.tui",
+    "data": "specs/fixtures/v04b/twins/t.json",
+    "input": "text:abcdefgh",
+    "sizes": ["40x12"],
+    "json": ["40x12"],
+    "frozen": true
+  },
+  {
+    "name": "spinner",
+    "file": "testdata/v04b/spinner/S.tui",
+    "input": "tick:100ms",
+    "sizes": ["20x5"],
+    "json": ["20x5"],
+    "frozen": false
+  },
+  {
+    "name": "t174-checkbox",
+    "file": "testdata/v04b/174/checkbox.tui",
+    "data": "testdata/v04b/174/checkbox.json",
+    "sizes": ["20x3"],
+    "json": ["20x3"],
+    "frozen": false
+  },
+  {
+    "name": "t174-checkbox-space",
+    "file": "testdata/v04b/174/checkbox.tui",
+    "data": "testdata/v04b/174/checkbox.json",
+    "input": "tab space",
+    "sizes": ["20x3"],
+    "json": ["20x3"],
+    "frozen": false
+  },
+  {
+    "name": "t177-radio-space",
+    "file": "testdata/v04b/177/radio.tui",
+    "data": "testdata/v04b/177/radio.json",
+    "input": "space",
+    "sizes": ["20x3"],
+    "json": ["20x3"],
+    "frozen": false
+  },
+  {
+    "name": "t178-radio-table",
+    "file": "testdata/v04b/178/radio-table.tui",
+    "data": "testdata/v04b/177/radio.json",
+    "sizes": ["20x3"],
+    "json": ["20x3"],
+    "frozen": false
+  },
+  {
+    "name": "t179-select",
+    "file": "testdata/v04b/179/select.tui",
+    "data": "testdata/v04b/179/select.json",
+    "sizes": ["20x6"],
+    "json": ["20x6"],
+    "frozen": false
+  },
+  {
+    "name": "t180-select-open",
+    "file": "testdata/v04b/179/select.tui",
+    "data": "testdata/v04b/179/select.json",
+    "input": "enter",
+    "sizes": ["20x6"],
+    "json": ["20x6"],
+    "frozen": false
+  },
+  {
+    "name": "t181-select-up",
+    "file": "testdata/v04b/181/select-up.tui",
+    "data": "testdata/v04b/179/select.json",
+    "input": "enter",
+    "sizes": ["20x6", "20x4"],
+    "json": ["20x6", "20x4"],
+    "frozen": false
+  },
+  {
+    "name": "t182-select-modal",
+    "file": "testdata/v04b/182/modal.tui",
+    "data": "testdata/v04b/179/select.json",
+    "input": "enter",
+    "sizes": ["30x10"],
+    "json": ["30x10"],
+    "frozen": false
   }
 ]

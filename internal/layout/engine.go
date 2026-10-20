@@ -16,6 +16,11 @@ type Engine struct {
 	// V3 is set for a version="3" document (SPEC v0.3 §5.1): Layout also
 	// reports the clipping warnings L008 and L009 (§14, §30.2).
 	V3 bool
+	// Lang is the document's language (SPEC v0.4b §5.1): the rules 0.4b
+	// changes are read from it, so a pinned document keeps its 0.4.1
+	// layout. V3 stays the flag of the version="3" rules, which hold for
+	// Lang3 and the current language alike. 0 is read as Lang1.
+	Lang ir.Lang
 	// memo holds the intrinsic sizes that do not fit a box's own memo
 	// slots (Box.memo); gen is this engine's generation (generation).
 	memo map[memoKey]int
@@ -119,7 +124,9 @@ func resolveRoot(s ir.Scalar, full int) int {
 }
 
 // resolveModal sizes a modal on one axis: cells, % of the root, auto
-// (intrinsic; cross is the size on the other axis), or 80% when unsized.
+// (intrinsic; cross is the size on the other axis), or, when unsized, 80%
+// in a pinned document and its content size capped in the current
+// language (modalContentSize).
 func resolveModal(e *Engine, m *Box, horizontal bool, full, cross int) int {
 	s := m.Style.Height
 	if horizontal {
@@ -139,16 +146,26 @@ func resolveModal(e *Engine, m *Box, horizontal bool, full, cross int) int {
 		}
 		return e.intrinsic(m, horizontal, cross)
 	}
+	if e.Lang.V4() {
+		// Sized by its content, capped (SPEC v0.4b §11.3).
+		return e.modalContentSize(m, horizontal, full, cross)
+	}
 	return percent(full, ir.Scalar{Kind: ir.Pct, N: 80})
 }
 
 func (e *Engine) report(b *Box, sev, code, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	path, id, line, col := "", "", 0, 0
+	file := e.File
 	if b != nil {
 		id = b.ID
 		if b.Src != nil {
 			path, line, col = b.Src.Path, b.Src.Line, b.Src.Col
+			// An element written in a fragment is reported in its file,
+			// and one an include placed names the include (SPEC v0.4b
+			// §6.18.6).
+			file = b.Src.FileName(e.File)
+			msg += ir.PlacedSuffix(b.Src)
 		}
 		switch code {
 		case "L003":
@@ -168,7 +185,7 @@ func (e *Engine) report(b *Box, sev, code, format string, args ...any) {
 		return
 	}
 	e.seen[key] = true
-	e.Diags = append(e.Diags, ir.Diagnostic{Severity: sev, Code: code, Msg: msg, File: e.File, Line: line, Col: col, Path: path, ID: id})
+	e.Diags = append(e.Diags, ir.Diagnostic{Severity: sev, Code: code, Msg: msg, File: file, Line: line, Col: col, Path: path, ID: id})
 }
 
 func (e *Engine) place(b *Box, r Rect, clip Rect) {
@@ -554,7 +571,7 @@ func (e *Engine) crossSize(parent, k *Box, row bool, cross, mainSize int, fit, r
 	case ir.Pct:
 		if parentAuto {
 			if report {
-				e.report(k, ir.Error, "L002", "%s: %s is a percent of a parent sized by its content (auto); give the parent a size", axisName(horizontal), s)
+				e.reportPctOfAuto(parent, k, horizontal, s)
 			}
 			v = e.intrinsic(k, horizontal, max(mainSize, 0))
 		} else {
@@ -630,10 +647,15 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 	}
 	for i := range specs {
 		if specs[i].Kind == ir.Unset {
-			if anyFr {
+			if anyFr && e.siblingFr(kids[i]) {
 				specs[i] = ir.Scalar{Kind: ir.Fr, N: 1}
 			} else {
 				specs[i] = ir.Scalar{Kind: ir.Auto}
+				if report {
+					// Sized by its content by §11.2: L009 names the cause
+					// when it cuts this child (cutCause).
+					kids[i].markUnsized(horizontal)
+				}
 			}
 		}
 	}
@@ -659,7 +681,7 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 		}
 		if s.Kind == ir.Pct && parentAuto {
 			if report {
-				e.report(k, ir.Error, "L002", "%s: %s is a percent of a parent sized by its content (auto); give the parent a size", axisName(horizontal), s)
+				e.reportPctOfAuto(b, k, horizontal, s)
 			}
 			s = ir.Scalar{Kind: ir.Auto}
 		}
@@ -731,11 +753,18 @@ func (e *Engine) mainSizes(b *Box, kids []*Box, row bool, main int, crossSizes [
 				ws = append(ws, weights[i])
 			}
 		}
-		for j, take := range frSplit(remain, ws) {
-			k := kids[frs[j]]
-			ms, me := margins(k, horizontal)
-			inner := clampAxis(k, horizontal, max(0, take-ms-me), main)
-			sizes[frs[j]] = inner + ms + me
+		if e.Lang.V4() {
+			// min and max take part in the split (SPEC v0.4b §11.4).
+			frResolve(kids, frs, weights, sizes, remain, horizontal, main)
+		} else {
+			// A pinned document clamps each share after one split, and
+			// nothing is shared again (SPEC v0.4b §11.4, §29 item 23).
+			for j, take := range frSplit(remain, ws) {
+				k := kids[frs[j]]
+				ms, me := margins(k, horizontal)
+				inner := clampAxis(k, horizontal, max(0, take-ms-me), main)
+				sizes[frs[j]] = inner + ms + me
+			}
 		}
 	}
 	for i := range sizes {
@@ -1026,9 +1055,13 @@ func (b *Box) scrollsOn(horizontal bool) bool {
 // its other axes, holding a child that is (in flow or docked; modals are
 // never children). Leaves never are. Computed bottom-up once per frame.
 func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
-	if !b.IsContainer() || b.Kind == "hints" {
-		// A hints is a leaf for shrinking: its items never shrink (SPEC
-		// §6.12).
+	if b.Kind == "hints" {
+		// A hints is a leaf for shrinking in a pinned document (its items
+		// never shrink, SPEC §6.12), and shrinkable along its items' axis
+		// in the current language (v0.4b).
+		return e.hintsShrinkable(b, horizontal)
+	}
+	if !b.IsContainer() {
 		return false
 	}
 	if b.scrollsOn(horizontal) {
@@ -1107,10 +1140,21 @@ func (e *Engine) neverShown(v *Box, horizontal bool) string {
 			lo, hi = p.Content.X, p.Content.X+p.Content.W
 		}
 		if pos < lo || pos+length > hi {
-			return fmt.Sprintf("%s is clipped on %s by %s, which does not scroll, so part of its content can never be shown; give it a cells, %%, or fr %s, or more room in %s", v.Kind, axis, describe(p), size, describe(p))
+			return fmt.Sprintf("%s is clipped on %s by %s, which does not scroll, so part of its content can never be shown; give it a cells, %%, or fr %s, or more room in %s", v.Kind, axis, describeAt(v, p), size, describeAt(v, p))
 		}
 	}
 	return ""
+}
+
+// describeAt is describe in a message about the box at: b's id as
+// ir.ShownIDAt shows it there, so an element of a copy, reported once per
+// copy, quotes a long id of an enclosing box shortened (the F2 final
+// check), and every other box keeps describe's text.
+func describeAt(at, b *Box) string {
+	if b.ID != "" && at.Src.InCopy() {
+		return b.Tag + "#" + ir.ShownID(b.ID)
+	}
+	return describe(b)
 }
 
 // describe names a box for a message: its tag, plus #id when it has one.
@@ -1124,9 +1168,13 @@ func describe(b *Box) string {
 // clipRef names a child for the L009 message (SPEC v0.3 §14): #id, else
 // its tag and a 0-based index among its Laid siblings sharing that tag
 // (omitted when it is the only one), the way `tuimark inspect` names an
-// unidentified node.
-func clipRef(c *Box) string {
+// unidentified node. In a message about the box at, the id is shown as
+// ir.ShownIDAt shows it there (describeAt).
+func clipRef(at, c *Box) string {
 	if c.ID != "" {
+		if at.Src.InCopy() {
+			return "#" + ir.ShownID(c.ID)
+		}
 		return "#" + c.ID
 	}
 	if c.Parent == nil {
@@ -1235,7 +1283,7 @@ func (e *Engine) checkChildrenClip(n *Box) {
 // shown of total cells, and marks n Clipped "children".
 func (e *Engine) reportClip(n, c *Box, axis string, shown, total int) {
 	if e.clipFirst(n, "L009") {
-		e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; give it room, or write overflow: hidden to keep the cut", clipRef(c), axis, shown, total)
+		e.report(n, ir.Warning, "L009", "cuts %s on %s: %d of %d cells shown; %s, or write overflow: hidden to keep the cut", clipRef(n, c), axis, shown, total, e.cutCause(n, c, axis == "x"))
 	}
 	n.Clipped = "children"
 }
@@ -1247,11 +1295,11 @@ func (e *Engine) reportClip(n, c *Box, axis string, shown, total int) {
 // still gets Clipped. report's own dedup keys on the message, which
 // differs from row to row, so it cannot do this.
 func (e *Engine) clipFirst(n *Box, kind string) bool {
-	path, line, col := "", 0, 0
+	path, line, col, file := "", 0, 0, ""
 	if n.Src != nil {
-		path, line, col = n.Src.Path, n.Src.Line, n.Src.Col
+		path, line, col, file = n.Src.Path, n.Src.Line, n.Src.Col, n.Src.FileName("")
 	}
-	key := fmt.Sprintf("clip|%s|%s|%d|%d|%s", kind, path, line, col, n.ID)
+	key := fmt.Sprintf("clip|%s|%s|%d|%d|%s|%s", kind, path, line, col, n.ID, file)
 	if e.seen[key] {
 		return false
 	}
@@ -1386,7 +1434,7 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 		}
 	case "input":
 		if horizontal {
-			v = max(Width(InputShown(b)), Width(b.Placeholder)) + 1
+			v = e.inputWidth(b)
 		} else {
 			v = 1
 		}
@@ -1396,9 +1444,28 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 		} else {
 			v = 1
 		}
+	case "checkbox":
+		// SPEC v0.4b §6.16.3: one row, as wide as its glyph and label.
+		if horizontal {
+			v = CheckboxWidth(b.Text)
+		} else {
+			v = 1
+		}
+	case "select":
+		// SPEC v0.4b §11.5.2: one row, 2 + the widest of the placeholder
+		// and every option's label (Measure, set by the host), so the
+		// width does not change with the chosen option.
+		if horizontal {
+			v = 2 + b.Measure
+		} else {
+			v = 1
+		}
 	case "progress":
 		if horizontal {
 			v = 10
+			if b.IsSpinner() {
+				v = 1 // SPEC v0.4b §11.5: a spinner is one cell until given a size
+			}
 		} else {
 			v = 1
 		}
@@ -1434,6 +1501,11 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 			}
 			v = e.contentIntrinsic(b, horizontal, max(0, inner))
 		}
+	}
+	if horizontal {
+		// A modal's title counts in the current language (SPEC v0.4b
+		// §11.3 item 2): 0 otherwise.
+		return max(v+frame, e.modalTitleWidth(b))
 	}
 	return v + frame
 }

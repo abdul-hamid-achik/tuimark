@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -23,7 +24,7 @@ import (
 // Version is the runtime version the start record of TUIMARK_LOG carries
 // (SPEC v0.2b §26.12). Release builds set it with -ldflags "-X", like the
 // CLI's own version.
-var Version = "0.4.2"
+var Version = "0.4.3"
 
 // Event is the payload a handler receives (SPEC §8.2).
 type Event struct {
@@ -82,7 +83,10 @@ type App struct {
 	// path its cached rows read may have changed (tableData).
 	storeGen uint64
 	segGen   map[string]uint64
-	tables   map[*ir.Node]*tableCache
+	// placeChecks counts the <use> placements builders have checked
+	// (placeUse), for the tests that a placement is checked once.
+	placeChecks uint64
+	tables      map[*ir.Node]*tableCache
 	// checkedSets keeps, per list or table node, the key set of its
 	// checked array while the store member it reads is unchanged
 	// (checkedSet).
@@ -123,6 +127,10 @@ type App struct {
 	// parity. passes numbers the builder passes of the live builds.
 	slab   uint8
 	passes uint64
+	// phase is the spinner phase the frame under construction paints
+	// (SPEC v0.4b §12.6): set by FrameAt for a live frame, forced to 0 by
+	// Dump. It is an input of the frame (frameInputs).
+	phase int
 	// scratch is the memory every layout of this app cuts its work lists
 	// from (layout.Scratch): one Layout call at a time, under a.mu, and
 	// nothing it hands out outlives the call.
@@ -138,7 +146,17 @@ type App struct {
 	focusInit bool
 	lists     map[string]*listState
 	inputs    map[string]*inputState
-	scrolls   map[string][2]int
+	// checks is the value of each checkbox without bind, by its id (SPEC
+	// v0.4b §6.16.2): kept across frames, screens, and tab switches, as an
+	// input's text without bind is; a missing id is unchecked.
+	checks map[string]bool
+	// selects is the state of each select, by its id (SPEC v0.4b §6.17.2):
+	// the key chosen without bind, kept across frames, screens, and tab
+	// switches, and what the last render resolved. opts is the open
+	// option list, at most one (§6.17.3).
+	selects map[string]*selectState
+	opts    optionList
+	scrolls map[string][2]int
 	// stickMax is, per id of a scroll with stick="bottom" (version="3",
 	// SPEC v0.3b §11.4), the maximum y offset its last live layout
 	// computed (EXTENT - viewport): "that frame's maximum" the stick rule
@@ -183,6 +201,13 @@ type App struct {
 	everyMu   sync.Mutex
 	every     []*everyReg
 	everyKick chan struct{}
+	// vnow is the virtual clock of Play (SPEC v0.4b §15.4.1): app state,
+	// 0 when the app is created, advanced only by tick steps. Guarded by
+	// everyMu, with the registrations' virtual deadlines (everyReg.vnext).
+	vnow time.Duration
+	// clk is the clock of the Run session that drives the app (SPEC
+	// v0.4b §26.13), nil outside one; guarded by everyMu (runclock.go).
+	clk runClock
 	// press is the hit identity of a pending left press (SPEC v0.2b §8.5,
 	// §26.11): the next left release ends it. nil when none is pending.
 	press *hitIdentity
@@ -230,7 +255,7 @@ func Parse(r io.Reader) (*App, error) {
 func blankApp() *App {
 	return &App{
 		store: map[string]any{}, handlers: map[string]Handler{},
-		lists: map[string]*listState{}, inputs: map[string]*inputState{},
+		lists: map[string]*listState{}, inputs: map[string]*inputState{}, checks: map[string]bool{}, selects: map[string]*selectState{},
 		scrolls: map[string][2]int{}, stickMax: map[string]int{}, wake: make(chan struct{}, 1),
 		everyKick:  make(chan struct{}, 1),
 		tokenDiags: map[string]ir.Diags{},
@@ -247,9 +272,10 @@ func newApp(src []byte, path, dir string) *App {
 	if path == "" {
 		a.file = ""
 	}
-	a.doc = parse.Parse(src, path)
+	res := diskResolver(dir, path)
+	a.doc = parse.ParseWith(src, path, res.loader())
 	a.static = append(a.static, a.doc.Diags...)
-	a.loadStyles(diskResolver(dir, path))
+	a.loadStyles(res)
 	return a
 }
 
@@ -259,28 +285,31 @@ func newApp(src []byte, path, dir string) *App {
 func (a *App) loadStyles(res styleResolver) {
 	seen := map[string]bool{}
 	// A stylesheet is checked against the version of the document that
-	// loads it (SPEC §5.1, v0.3b).
-	v2, v3 := a.doc.V2, a.doc.V3
+	// loads it (SPEC §5.1, v0.3b, v0.4b).
+	lang := a.doc.Lang
 	for _, s := range a.doc.Styles {
+		// A <style> is reported in the file it is written in, which is a
+		// fragment's when an include brought it (SPEC v0.4b §6.18.6).
+		file := s.File
 		if s.Src == "" {
-			sh, diags := css.ParseInlineSheetIn(s.Body, a.file, s.BodyLine, s.BodyCol, v2, v3)
+			sh, diags := css.ParseInlineSheetLang(s.Body, file, s.BodyLine, s.BodyCol, lang)
 			a.static = append(a.static, diags...)
 			a.sheets = append(a.sheets, sh)
 			continue
 		}
-		d := ir.Diagnostic{Severity: ir.Error, Code: "V006", File: a.file, Line: s.Line, Col: s.Col, Path: "/style"}
-		resolved, outside := res.resolve(s.Src)
+		d := ir.Diagnostic{Severity: ir.Error, Code: "V006", File: file, Line: s.Line, Col: s.Col, Path: "/style"}
+		resolved, outside := res.resolve(s.From, s.Src)
 		if outside {
-			d.Msg = fmt.Sprintf("style src=%q is outside the file system", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q is outside the file system", s.Src)
 			a.static = append(a.static, d)
 			continue
 		}
 		canon := res.canon(resolved)
 		switch {
 		case canon == res.self || strings.HasSuffix(canon, ".tui"):
-			d.Msg = fmt.Sprintf("style src=%q includes a .tui document (include cycle)", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q includes a .tui document (include cycle)", s.Src)
 		case seen[canon]:
-			d.Msg = fmt.Sprintf("style src=%q is included twice (include cycle)", s.Src)
+			d.Msg = placedMsg(s.Org, "style src=%q is included twice (include cycle)", s.Src)
 		}
 		if d.Msg != "" {
 			a.static = append(a.static, d)
@@ -289,14 +318,28 @@ func (a *App) loadStyles(res styleResolver) {
 		seen[canon] = true
 		body, err := res.read(resolved)
 		if err != nil {
-			d.Msg = fmt.Sprintf("style src=%q cannot be read: %v", s.Src, unwrapOrSelf(err))
+			d.Msg = placedMsg(s.Org, "style src=%q cannot be read: %v", s.Src, unwrapOrSelf(err))
 			a.static = append(a.static, d)
 			continue
 		}
-		sh, diags := css.ParseSheetIn(string(body), res.base(resolved), v2, v3)
+		// A stylesheet is named by its base name, but one a fragment loads
+		// by its path relative to the document's directory: two kits'
+		// theme.tcss stay apart (SPEC v0.4b §6.18.6).
+		name := res.base(resolved)
+		if s.From != "" {
+			name = res.name(resolved)
+		}
+		sh, diags := css.ParseSheetLang(string(body), name, lang)
 		a.static = append(a.static, diags...)
 		a.sheets = append(a.sheets, sh)
 	}
+}
+
+// placedMsg is the message of a diagnostic about a <style> written in a
+// fragment: it ends with the placement suffix of the include (SPEC v0.4b
+// §6.18.6). For a <style> of the document itself it is the message alone.
+func placedMsg(org *ir.Origin, format string, args ...any) string {
+	return fmt.Sprintf(format, args...) + org.PlacedSuffix()
 }
 
 // unwrapOrSelf is errors.Unwrap(err), falling back to err itself when
@@ -331,17 +374,25 @@ func (a *App) tokenCheck(theme string) ir.Diags {
 	return ds
 }
 
-// Files returns the document path and every stylesheet path (for --watch).
+// Files returns the document path, then every fragment its includes name
+// at any depth, then every stylesheet path (for --watch).
 func (a *App) Files() []string {
 	var out []string
 	if a.path != "" {
 		out = append(out, a.path)
 	}
+	for _, f := range a.doc.Fragments {
+		out = append(out, f.Path)
+	}
 	for _, s := range a.doc.Styles {
 		if s.Src != "" {
 			p := s.Src
 			if !filepath.IsAbs(p) {
-				p = filepath.Join(a.dir, p)
+				d := a.dir
+				if s.From != "" {
+					d = filepath.Dir(s.From)
+				}
+				p = filepath.Join(d, p)
 			}
 			out = append(out, p)
 		}
@@ -621,7 +672,7 @@ func (a *App) CheckCatalog(known map[string]bool) ir.Diags {
 	}
 	for _, k := range a.doc.Keymap {
 		if k.Action != "" && !a.isBuiltin(k.Action) && !known[k.Action] {
-			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw), File: a.file, Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
+			out = append(out, ir.Diagnostic{Severity: ir.Warning, Code: "B004", Msg: fmt.Sprintf("action %q (keys %s) is not in the catalog", k.Action, k.KeysRaw) + k.Org.PlacedSuffix(), File: k.Org.FileOr(a.file), Line: k.Line, Col: k.Col, Path: "/keymap/bind"})
 		}
 	}
 	walkIR(a.doc.Root, func(n *ir.Node) {
@@ -650,14 +701,14 @@ func (a *App) Validate() ir.Diags {
 	defer a.restoreState(saved)
 	themes := a.validateThemes()
 	out := append(ir.Diags(nil), a.static...)
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, d := range out {
-		seen[d.String()] = true
+		seen[a.diagKey(d)] = true
 	}
 	add := func(ds ir.Diags) {
 		for _, d := range ds {
-			if !seen[d.String()] {
-				seen[d.String()] = true
+			if k := a.diagKey(d); !seen[k] {
+				seen[k] = true
 				out = append(out, d)
 			}
 		}
@@ -691,8 +742,11 @@ type savedState struct {
 	stickMax   map[string]int
 	lists      map[string]*listState
 	inputs     map[string]*inputState
+	checks     map[string]bool
 	tabMem     map[string]string
 	tabPrev    map[string]string
+	selects    map[string]*selectState
+	opts       optionList
 }
 
 func (a *App) saveState() savedState {
@@ -720,19 +774,31 @@ func (a *App) saveState() savedState {
 		c := *v
 		in[k] = &c
 	}
+	ck := make(map[string]bool, len(a.checks))
+	for k, v := range a.checks {
+		ck[k] = v
+	}
 	var req *focusRequest
 	if a.focusReq != nil {
 		r := *a.focusReq
 		req = &r
 	}
-	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, sm, ls, in, copyStrings(a.tabMem), copyStrings(a.tabPrev)}
+	// Rendering fills a select's keys and chosen index: keep copies.
+	sl := make(map[string]*selectState, len(a.selects))
+	for k, v := range a.selects {
+		c := *v
+		c.keys = append([]any(nil), v.keys...)
+		sl[k] = &c
+	}
+	return savedState{a.screen, a.focus, a.focusInit, req, om, ms, append([]Event(nil), a.pending...), a.last, sc, sm, ls, in, ck, copyStrings(a.tabMem), copyStrings(a.tabPrev), sl, a.opts}
 }
 
 func (a *App) restoreState(s savedState) {
 	a.screen, a.focus, a.focusInit, a.focusReq = s.screen, s.focus, s.focusInit, s.focusReq
 	a.openModals, a.modalStack, a.pending, a.last = s.openModals, s.modalStack, s.pending, s.last
-	a.scrolls, a.stickMax, a.lists, a.inputs = s.scrolls, s.stickMax, s.lists, s.inputs
+	a.scrolls, a.stickMax, a.lists, a.inputs, a.checks = s.scrolls, s.stickMax, s.lists, s.inputs, s.checks
 	a.tabMem, a.tabPrev = s.tabMem, s.tabPrev
+	a.selects, a.opts = s.selects, s.opts
 }
 
 func copyStrings(m map[string]string) map[string]string {

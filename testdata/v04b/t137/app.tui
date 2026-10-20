@@ -1,0 +1,8 @@
+<tui>
+  <include src="look.tui"/>
+  <include src="look.tui"/>
+  <screen id="main">
+    <include src="row.tui"/>
+    <include src="row.tui"/>
+  </screen>
+</tui>

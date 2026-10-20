@@ -141,13 +141,21 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 			// A copy: a handler that changes an object or array key
 			// must not change the store.
 			if ls.each {
-				ev.Keys[ls.alias] = deepCopyJSON(ls.keys[ls.index])
+				ev.Keys[ir.Unmark(ls.alias)] = deepCopyJSON(ls.keys[ls.index])
 			} else {
 				ev.Value = deepCopyJSON(ls.keys[ls.index])
 			}
 		}
 	case "input":
 		ev.Value = a.inputValue(b)
+	case "checkbox":
+		// A keymap row fired while a checkbox has focus carries its value
+		// (SPEC v0.4b §8.2, decision 65), keys {}.
+		ev.Value = a.checkboxValue(b)
+	case "select":
+		// Its chosen option's key, or null with none chosen (SPEC v0.4b
+		// §8.2), keys {}.
+		ev.Value = a.selectValue(b)
 	}
 	return ev
 }
@@ -385,14 +393,14 @@ func (a *App) Static() ir.Diags {
 	defer a.mu.Unlock()
 	themes := a.validateThemes()
 	out := append(ir.Diags(nil), a.static...)
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, d := range out {
-		seen[d.String()] = true
+		seen[a.diagKey(d)] = true
 	}
 	add := func(ds ir.Diags) {
 		for _, d := range ds {
-			if !seen[d.String()] {
-				seen[d.String()] = true
+			if k := a.diagKey(d); !seen[k] {
+				seen[k] = true
 				out = append(out, d)
 			}
 		}

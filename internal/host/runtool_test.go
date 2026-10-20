@@ -455,6 +455,95 @@ func TestSwapKeepsATableCursor(t *testing.T) {
 	}
 }
 
+const checkboxDoc = `<tui>
+<keymap><bind keys="ctrl+r" action="probe"/></keymap>
+<screen id="s" focus="#c">
+  <text>MARK</text>
+  <checkbox id="c" label="C"/>
+  <checkbox id="gone" label="G"/>
+</screen>
+</tui>`
+
+// A checkbox without bind keeps its value by id and tag across a reload
+// (SPEC v0.4b §15.9, decision 46); one that changed tag starts unchecked.
+func TestSwapKeepsACheckboxValue(t *testing.T) {
+	a := doc(t, strings.Replace(checkboxDoc, "MARK", "ONE", 1))
+	swaps := make(chan HostSwap)
+	r := startTool(t, a, 30, 8, HostHooks{Swap: swaps}, nil)
+	r.recordAll(a, "probe")
+	r.waitOut(t, "ONE")
+	r.send(t, " \t \x12") // check c, move to gone, check it
+	r.waitFor(t, "probe")
+	next := doc(t, strings.Replace(strings.Replace(checkboxDoc, "MARK", "TWO", 1), `<checkbox id="gone" label="G"/>`, `<text id="gone">G</text>`, 1))
+	r.recordAll(next, "probe")
+	swaps <- HostSwap{App: next, KeepStore: true}
+	r.send(t, "\x12")
+	r.waitFor(t, "probe", "probe")
+	r.waitOut(t, "[x] C")
+	next.mu.Lock()
+	c, gone := next.checks["c"], next.checks["gone"]
+	next.mu.Unlock()
+	if !c || gone {
+		t.Errorf("kept: c %v, gone %v; want true and false", c, gone)
+	}
+	r.in.Close()
+	if err := r.wait(t); err != nil {
+		t.Fatal(err)
+	}
+}
+
+const selectDoc = `<tui>
+<keymap><bind keys="ctrl+r" action="probe"/></keymap>
+<screen id="s" focus="#tz">
+  <text>MARK</text>
+  <select id="tz" each="zones as z" key="z" placeholder="zone"/>
+</screen>
+</tui>`
+
+// A reload closes an open option list, and a select without bind keeps
+// its key by id and tag (SPEC v0.4b §6.17.3, §15.9, test 188). An open
+// list takes ctrl+r itself, so the probe after the swap fires only once
+// the new app has the list closed.
+func TestSwapClosesTheOptionList(t *testing.T) {
+	a := doc(t, strings.Replace(selectDoc, "MARK", "ONE", 1))
+	_ = a.Bind("", map[string]any{"zones": []any{"utc", "lis", "tok"}})
+	swaps := make(chan HostSwap)
+	r := startTool(t, a, 30, 8, HostHooks{Swap: swaps}, nil)
+	r.recordAll(a, "probe")
+	r.waitOut(t, "ONE")
+	r.send(t, "\r\x1b[B\r\x12") // open, down, pick lis, probe
+	r.waitFor(t, "probe")
+	r.send(t, "\r") // open again
+	open := ""
+	for deadline := time.Now().Add(5 * time.Second); open != "tz" && time.Now().Before(deadline); time.Sleep(2 * time.Millisecond) {
+		a.mu.Lock()
+		open = a.opts.id
+		a.mu.Unlock()
+	}
+	if open != "tz" {
+		t.Fatalf("the list did not open again: %q", open)
+	}
+	next := doc(t, strings.Replace(selectDoc, "MARK", "TWO", 1))
+	r.recordAll(next, "probe")
+	swaps <- HostSwap{App: next, KeepStore: true}
+	r.send(t, "\x12")
+	r.waitFor(t, "probe", "probe")
+	next.mu.Lock()
+	open = next.opts.id
+	st := next.selects["tz"]
+	next.mu.Unlock()
+	if open != "" {
+		t.Errorf("the list is still open after the reload: %q", open)
+	}
+	if st == nil || !st.has || st.mem != "lis" {
+		t.Errorf("kept: %+v, want lis", st)
+	}
+	r.in.Close()
+	if err := r.wait(t); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // What is not kept by id and tag starts as on a first frame; without
 // KeepStore the new app keeps its own store.
 func TestSwapDropsWhatChangedTag(t *testing.T) {

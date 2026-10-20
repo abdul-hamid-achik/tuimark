@@ -1,0 +1,16 @@
+=== grid 20x4 ===
+┌──────────────────┐
+│Lisbon            │
+└──────────────────┘
+Lisbon             ▾
+=== nodes ===
+main  screen  20x4 @(0,0)
+-     spacer  20x3 @(0,0)
+tz    select  20x1 @(0,3) focus
+-     list    20x3 @(0,0)
+-     item    18x1 @(1,1) selected checked
+-     text    18x1 @(1,1)
+=== errors ===
+ok
+=== events ===
+none

@@ -1,0 +1,20 @@
+<tui>
+  <template id="confirm">
+    <modal id="dlg" open="ask" focus="#no">
+      <button id="yes" on:click="yes">Yes</button>
+      <button id="no" on:click="no">No</button>
+    </modal>
+  </template>
+  <template id="pane">
+    <tabs id="nav">
+      <tab id="one" label="One" focus="#q">
+        <input id="q" bind="q"/>
+      </tab>
+    </tabs>
+  </template>
+  <screen id="main">
+    <text id="no">x</text>
+    <use id="p" template="pane"/>
+    <use id="kill" template="confirm"/>
+  </screen>
+</tui>

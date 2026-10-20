@@ -1,0 +1,10 @@
+<tui>
+  <keymap>
+    <bind keys="q" action="quit"/>
+  </keymap>
+  <screen id="main" focus="#tz">
+    <select id="tz" bind="tz" each="zones as z" key="z.id" label="{z.name}"
+            placeholder="zone" on:change="tz_changed"/>
+    <checkbox id="c" label="C"/>
+  </screen>
+</tui>

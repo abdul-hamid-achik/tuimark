@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // Version is the source IR version `tuimark ir` emits for version="1"
@@ -119,9 +120,400 @@ type Node struct {
 	Text        string
 	Children    []*Node
 	Parent      *Node
+	// Source is the children of this element as they were written, when
+	// they include composition (SPEC v0.4b §6.18): the elements of
+	// Children plus the <include> nodes (and, later, <template> and
+	// <use> nodes) between them, each include holding the nodes it
+	// inserted in its own Children. nil when the element's children are
+	// exactly Children. Only `tuimark ir` reads it: layout, the cascade,
+	// the host, and the dump see the expanded Children.
+	Source []*Node
+
+	// Spinner is set by the parser on a <progress> of the current
+	// language that is a spinner: indeterminate="true", with neither bind
+	// nor value (SPEC v0.4b §6.4.1). In every other case, a pinned
+	// document's indeterminate included, the progress is a bar.
+	Spinner bool
+
+	// Single is set by the parser on a <list> or <table> of the current
+	// language that writes single="true" (SPEC v0.4b §6.14.1): its checked
+	// path then holds one row key, or null, instead of an array. In every
+	// other case, a pinned document's single included, the widget is a
+	// multi-select as in 0.4.1.
+	Single bool
 
 	Line, Col int
 	Path      string
+	// Org says where an element of an expanded document was written and
+	// which <include> placed it (SPEC v0.4b §6.18.6). nil for an element
+	// written in the document itself and placed by nothing, which is every
+	// element of a document without composition.
+	Org *Origin
+
+	// CopiedBy is set on a top-level element of a <use>'s copy (SPEC
+	// v0.4b §6.18.3): the uses whose copy it is a top-level element of,
+	// innermost first. Their static class is already in Classes; their if
+	// and hidden decide, each frame, whether the element is in it. nil
+	// for every other element.
+	CopiedBy []*Node
+	// EmptyCopies are the uses whose copies placed no element among n's
+	// children (an empty template, or one whose body places nothing),
+	// each as the CopiedBy its elements would have had, innermost first:
+	// their if, hidden, and with are still checked once per placement,
+	// where n's children stand (the F3 review). nil for most nodes.
+	EmptyCopies [][]*Node
+	// Written is what an element of a copy (or a <use> in one) wrote,
+	// before its paths went through the with aliases in scope and its #id
+	// references were resolved (SPEC v0.4b §6.18.4, §6.18.5, decision
+	// 18): `tuimark ir` shows it, and the messages that name a path as
+	// written read it. nil outside copies.
+	Written *Written
+	// With is a <use> node's with clauses (SPEC v0.4b §6.18.5), each path
+	// already resolved where the use stands (through the aliases in scope
+	// there); nil for every other node and for a use whose with is V011.
+	With []Each
+	// Vias says how the paths of an element of a copy (or of a <use> in
+	// one) that went through a with alias did (SPEC v0.4b §6.18.5), by
+	// where each is written (ViaKey): what its binding diagnostics name.
+	// nil for every node with no such path, which is every node outside
+	// copies.
+	Vias map[ViaKey]*Via
+}
+
+// ViaKey is where a path of an element is written: Slot is the name of
+// the attribute that holds it ("bind", "if", "hidden", "each", "key",
+// "class:NAME", "title", …), "" for the element's text, or "with" for a
+// <use>'s clauses; Seg is the path's index among the {path} segments of
+// a template string (its text, a title, a label, …) or among a use's
+// with clauses, and 0 for an attribute that holds one path. Two paths
+// written apart keep their own Via even when they stand for the same
+// path once substituted ({f.x} and {g.x} with f and g standing for one
+// path, or a literal {a.x} beside {f.x} with f standing for a).
+type ViaKey struct {
+	Slot string
+	Seg  int
+}
+
+// Via is a path of an element of a copy that went through a with alias
+// of Use (SPEC v0.4b §6.18.5): Written is the path as written in the
+// template, and Base the path the alias stands for, resolved where Use
+// stands (the path of its clause in Use.With). The path itself is Base
+// followed by Written's other segments. EachRel is set when Base starts
+// with an each alias in scope where Use stands (a row's or an element's),
+// not with a store member.
+type Via struct {
+	Written, Base string
+	Use           *Node
+	EachRel       bool
+}
+
+// ViaOf is how the path of n written in slot, as its seg-th path (see
+// ViaKey), went through a with alias, or nil when it went through none.
+func (n *Node) ViaOf(slot string, seg int) *Via {
+	if n == nil || n.Vias == nil {
+		return nil
+	}
+	return n.Vias[ViaKey{slot, seg}]
+}
+
+// Suffix is what a B001, B002, or B003 about the path p, which went
+// through v, ends with in place of the placement suffix (SPEC v0.4b
+// §6.18.5 "Messages"): ` (P via <use id="U">)`, with P the path p
+// stands for (ShownPath) and the use named as a placement suffix names
+// it (`<use template="T">` without id). When P starts with an each alias
+// (EachRel) and the use has no id, P reads the same in every each that
+// holds such a use, so the use is also named by where it is written, as
+// the placement suffix names it: ` (P via <use template="T"> at
+// FILE:LINE:COL)` (the owner's decision on the F3 review). A use written
+// in a template or a fragment stands at one FILE:LINE:COL in every copy
+// or include that places it, so its own placement suffix follows when
+// something placed it: ` (P via <use template="T"> at FILE:LINE:COL,
+// placed by <use id="U"> at FILE:LINE:COL)` (the coordinator's follow-up
+// to that decision). A P that starts with a store member says which data
+// it reads, and a use with an id is named by it, so neither adds a place.
+func (v *Via) Suffix(p string) string {
+	at := ""
+	if v.EachRel && v.Use.ID == "" {
+		at = " at " + v.Use.Loc(true) + PlacedSuffix(v.Use)
+	}
+	return " (" + ShownPath(p) + " via " + v.Use.describePlacer() + at + ")"
+}
+
+// ShownPath is a path, or any other value, a diagnostic at an element of
+// a copy quotes (ShownAt, CutArgs), and the P of a path through a with
+// alias (Via.Suffix): every renamed alias shown as written (Unmark), and
+// cut as ShownID cuts an id. It reads only as much of p as the cut needs:
+// a prefix of p that unmarks to more than MaxShownID bytes is cut where
+// the whole would be.
+func ShownPath(p string) string {
+	const room = MaxShownID + 22 // a mark and its digits are at most 21 bytes
+	end := min(len(p), room)
+	for {
+		u := Unmark(p[:end])
+		if end == len(p) || len(u) > MaxShownID {
+			return ShownID(u)
+		}
+		end = min(len(p), end+room)
+	}
+}
+
+// ShownAt is s, a value a diagnostic about the node at quotes with %s, as
+// it shows it: for an element of a copy (InCopy), whose diagnostics are
+// reported once per copy with a placement suffix (or the via of a path
+// through a with alias) that tells them apart, so that a long value would
+// print once per copy, a Shown that prints as ShownPath cuts it; s whole
+// otherwise, as 0.4.1 quotes it (an element written once, and every
+// element of a pinned document).
+func ShownAt(at *Node, s string) any {
+	if at != nil && len(s) > MaxShownID && at.InCopy() {
+		return Shown{s}
+	}
+	return s
+}
+
+// Shown is a value a diagnostic at an element of a copy quotes with %s
+// (ShownAt): it prints cut (String), and the diagnostic keeps it whole
+// (CutArgs, Diagnostic.whole), so two that differ only past the cut stay
+// two.
+type Shown struct{ Whole string }
+
+// String is s as a message shows it: ShownPath(s.Whole).
+func (s Shown) String() string { return ShownPath(s.Whole) }
+
+// CutArgs is args with every string a %q verb of format quotes cut by
+// ShownPath: what a diagnostic at an element of a copy quotes (a path, an
+// attribute's value, an action), which ShownAt explains. Other verbs keep
+// their arguments, and so does a format with an explicit argument index.
+// whole is what was cut, as written (Unmark), with the Whole of every
+// Shown among args (cut by ShownAt), joined by NUL ("" for nothing): what
+// tells apart two diagnostics whose messages read the same once cut
+// (Diagnostic.whole).
+func CutArgs(format string, args []any) (out []any, whole string) {
+	n := 0
+	keep := func(s string) {
+		if n == 0 {
+			whole = Unmark(s)
+		} else {
+			whole += "\x00" + Unmark(s)
+		}
+		n++
+	}
+	out = cutQuoted(format, args, keep)
+	for _, a := range args {
+		if s, ok := a.(Shown); ok {
+			keep(s.Whole)
+		}
+	}
+	return out, whole
+}
+
+// cutQuoted is CutArgs's cut, calling keep with each string it cuts.
+func cutQuoted(format string, args []any, keep func(string)) []any {
+	out, arg, copied := args, 0, false
+	for i := 0; i < len(format); i++ {
+		if format[i] != '%' {
+			continue
+		}
+		i++
+		for i < len(format) && strings.IndexByte("+-# 0123456789.*", format[i]) >= 0 {
+			if format[i] == '*' {
+				arg++
+			}
+			i++
+		}
+		if i >= len(format) || format[i] == '%' {
+			continue
+		}
+		if format[i] == '[' {
+			return args
+		}
+		if s, ok := argAt(args, arg); ok && format[i] == 'q' && len(s) > MaxShownID {
+			if !copied {
+				out, copied = append([]any(nil), args...), true
+			}
+			out[arg] = ShownPath(s)
+			keep(s)
+		}
+		arg++
+	}
+	return out
+}
+
+// argAt is args[i] when it is a string.
+func argAt(args []any, i int) (string, bool) {
+	if i >= len(args) {
+		return "", false
+	}
+	s, ok := args[i].(string)
+	return s, ok
+}
+
+// Written is an element of a copy as written (Node.Written).
+type Written struct {
+	Attrs                map[string]string
+	Bind, Each, If, Text string
+	Classes              []string
+}
+
+// Origin is where an element of an expanded document was written (SPEC
+// v0.4b §6.18.6): the file's name as diagnostics name it, and the
+// innermost <include> element that placed it. Every element placed by the
+// same include in the same file shares one Origin.
+type Origin struct {
+	// File is the display name of the file the element is written in.
+	File string
+	// Placed is the node of the innermost <include> that placed the
+	// element, whose own Org says where that include is written. nil
+	// when nothing placed the element (a document element that stands
+	// in its own file, or a node of a fragment checked on its own).
+	Placed *Node
+}
+
+// FileName is the display name of the file n is written in: its origin's,
+// else def (the document's own name).
+func (n *Node) FileName(def string) string {
+	if n == nil {
+		return def
+	}
+	return n.Org.FileOr(def)
+}
+
+// placer is the include that placed the elements of o, nil for no origin
+// or an origin nothing placed.
+func (o *Origin) placer() *Node {
+	if o == nil {
+		return nil
+	}
+	return o.Placed
+}
+
+// Placer is the innermost include that placed the node, nil if none; the
+// next one out is the Placer of that include.
+func (n *Node) Placer() *Node {
+	if n == nil {
+		return nil
+	}
+	return n.Org.placer()
+}
+
+// FileOr is the file name o says, or def for no origin (an element of the
+// document's own text).
+func (o *Origin) FileOr(def string) string {
+	if o != nil {
+		return o.File
+	}
+	return def
+}
+
+// PlacedSuffix is the suffix of a diagnostic about an element placed by an
+// include: `, placed by <include> at FILE:LINE:COL` (SPEC v0.4b §6.18.6),
+// naming the line the author wrote. It is "" for an element nothing
+// placed.
+func PlacedSuffix(n *Node) string {
+	if n == nil {
+		return ""
+	}
+	return n.Org.PlacedSuffix()
+}
+
+// PlacedSuffix is the placement suffix of an element written where o says
+// (see the function of the same name); "" for no origin or none placed.
+func (o *Origin) PlacedSuffix() string {
+	if o == nil || o.Placed == nil {
+		return ""
+	}
+	return o.PlacedBy() + " at " + o.Placed.Loc(true)
+}
+
+// PlacedBy is the part of o's placement suffix that does not depend on
+// where the files are or what they are called: `, placed by <use …>`,
+// without " at FILE:LINE:COL". It is what the expansion budget charges an
+// element a copy places (the F2 final check): the same document under a
+// longer file name, or with its uses further right, is charged the same.
+func (o *Origin) PlacedBy() string {
+	if o == nil || o.Placed == nil {
+		return ""
+	}
+	return ", placed by " + o.Placed.describePlacer()
+}
+
+// InCopy reports whether n is an element of a copy: a <use> is among the
+// elements that placed it (its Placer chain). A diagnostic about such an
+// element quotes every id written outside the element through ShownID
+// (ShownIDAt), since one written element there is reported once per copy;
+// an element written once, and every element of a pinned document, keeps
+// the text 0.4.1 gives.
+func (n *Node) InCopy() bool {
+	return n != nil && n.Org.InCopy()
+}
+
+// InCopy reports whether the elements written where o says are elements
+// of a copy (Node.InCopy): a <use> is among the elements that placed them.
+func (o *Origin) InCopy() bool {
+	for p := o.placer(); p != nil; p = p.Placer() {
+		if p.Kind == "use" {
+			return true
+		}
+	}
+	return false
+}
+
+// ShownIDAt is id as a diagnostic about the node at quotes it: ShownID(id)
+// for an element of a copy (InCopy) and for a <use> (a composition
+// diagnostic, which no pinned document has), id whole otherwise, as 0.4.1
+// quotes it.
+func ShownIDAt(at *Node, id string) string {
+	if at != nil && (at.Kind == "use" || at.InCopy()) {
+		return ShownID(id)
+	}
+	return id
+}
+
+// describePlacer names an <include> or a <use> the way a placement suffix
+// does, its id or template id as ShownID shows it.
+func (n *Node) describePlacer() string {
+	if n.ID != "" {
+		return fmt.Sprintf("<%s id=%q>", n.Tag, ShownID(n.ID))
+	}
+	if t, ok := n.Attrs["template"]; ok && n.Tag == "use" {
+		return fmt.Sprintf("<use template=%q>", ShownID(t))
+	}
+	return "<" + n.Tag + ">"
+}
+
+// MaxShownID is the longest id a composition diagnostic shows whole when
+// it quotes an id (or an include's file) written somewhere other than its
+// own site (the owner's decisions in the F2 re-review): a longer one is
+// shown as its first MaxShownID bytes, cut at a rune boundary, then "…"
+// (ShownID). It keeps what many diagnostics print about one long id
+// linear in the document: the placement suffix, V019, V012, V021, V006,
+// V011, and the reasons of an id that names no node.
+const MaxShownID = 64
+
+// ShownID is id as a composition diagnostic shows it (MaxShownID).
+func ShownID(id string) string {
+	if len(id) <= MaxShownID {
+		return id
+	}
+	cut := MaxShownID
+	for cut > 0 && !utf8.RuneStart(id[cut]) {
+		cut--
+	}
+	return id[:cut] + "…"
+}
+
+// Loc is the node's position in the file it is written in as LINE:COL, or
+// FILE:LINE:COL with file (an empty file is written <input>, as a
+// diagnostic's location is).
+func (n *Node) Loc(file bool) string {
+	if !file {
+		return fmt.Sprintf("%d:%d", n.Line, n.Col)
+	}
+	f := n.FileName("")
+	if f == "" {
+		f = "<input>"
+	}
+	return fmt.Sprintf("%s:%d:%d", f, n.Line, n.Col)
 }
 
 // ClassGuard is one class:NAME="guard" attribute: the class NAME is on the
@@ -362,6 +754,22 @@ type Diagnostic struct {
 	Col      int    `json:"col,omitempty"`
 	Path     string `json:"path,omitempty"`
 	ID       string `json:"id,omitempty"`
+	// whole is what the message cut at an element of a copy, whole
+	// (CutArgs): two diagnostics whose messages read the same once cut
+	// are still two when it differs (the F3 review). "" for a message that
+	// cut nothing, which is every diagnostic outside copies.
+	whole string
+}
+
+// Whole is what d's message cut, whole (Diagnostic.whole), for a dedupe:
+// two diagnostics are one when their text and Whole are equal.
+func Whole(d Diagnostic) string { return d.whole }
+
+// WithWhole is d with what its message cut set to whole (CutArgs), for a
+// diagnostic built outside At.
+func WithWhole(d Diagnostic, whole string) Diagnostic {
+	d.whole = whole
+	return d
 }
 
 func (d Diagnostic) String() string {
@@ -414,11 +822,38 @@ func (ds Diags) Sorted() Diags {
 	return out
 }
 
-// At builds a diagnostic located at a node.
+// At builds a diagnostic located at a node. file is the document's name;
+// an element written in a fragment is reported in its own file, and one an
+// include placed names the include (SPEC v0.4b §6.18.6). At an element of
+// a copy, what the message quotes with %q is cut, and kept whole beside
+// it (CutArgs).
 func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
-	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, args...), File: file}
+	var whole string
+	if n.InCopy() {
+		args, whole = CutArgs(format, args)
+	}
+	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...), File: file, whole: whole}
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
+		d.File = n.FileName(file)
+		d.Msg += PlacedSuffix(n)
+	}
+	return d
+}
+
+// AtSuffix is At with suffix in place of the placement suffix: a message
+// that already names its placement (SPEC v0.4b §6.18.6), such as the
+// ` (P via <use id="U">)` of a path through a with alias, or one about a
+// <use> itself, which carries none ("" adds nothing).
+func AtSuffix(n *Node, file, sev, code, suffix, format string, args ...any) Diagnostic {
+	var whole string
+	if n.InCopy() {
+		args, whole = CutArgs(format, args)
+	}
+	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...) + suffix, File: file, whole: whole}
+	if n != nil {
+		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
+		d.File = n.FileName(file)
 	}
 	return d
 }

@@ -1,0 +1,13 @@
+{
+  "profile": { "name": "", "tz": "utc", "news": false, "dark": true, "plan": "free" },
+  "zones": [
+    { "id": "utc", "name": "UTC" },
+    { "id": "cet", "name": "Central Europe (CET)" },
+    { "id": "pst", "name": "Pacific (PST)" }
+  ],
+  "plans": [
+    { "id": "free", "name": "Free" },
+    { "id": "pro", "name": "Pro" },
+    { "id": "team", "name": "Team" }
+  ]
+}

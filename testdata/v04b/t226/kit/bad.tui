@@ -1,0 +1,15 @@
+<fragment>
+  <include/>
+  <include src="missing.tui"/>
+  <keymap when=".k-dialog">
+    <bind keys="y" action="focus" to="#nowhere"/>
+  </keymap>
+  <template id="k-confirm">
+    <text>after</text>
+    <modal id="dialog" open="d.open" focus="#gone">
+      <zzz/>
+      <text bogus="1">{d.body}</text>
+      <button id="dialog" label="{d.no}"/>
+    </modal>
+  </template>
+</fragment>

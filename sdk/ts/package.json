@@ -1,6 +1,6 @@
 {
   "name": "@thelacanians/tuimark",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Tuimark for npm: the `tuimark` command (validate, dump, play, run terminal UIs written as .tui markup) and a TypeScript client to drive a view from Bun over `tuimark host`.",
   "type": "module",
   "license": "MIT",

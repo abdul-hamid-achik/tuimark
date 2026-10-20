@@ -1,0 +1,14 @@
+<tui>
+  <style>
+    .k-btn { bold: true; }
+    .danger { color: red; }
+  </style>
+  <screen id="main">
+    <button id="a__ok" class="k-btn danger wide" label="ok"/>
+    <text class="k-note inner danger wide">note</text>
+    <box class="k-box danger wide"><text>deep</text></box>
+    <button id="b__ok" class="k-btn danger" label="ok"/>
+    <text class="k-note inner">note</text>
+    <box class="k-box"><text>deep</text></box>
+  </screen>
+</tui>

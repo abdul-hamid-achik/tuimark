@@ -116,7 +116,7 @@ function blocks(text) {
 const cell = (s) => s.replace(/\|/g, '\\|')
 const codeList = (items) => items.map((a) => `\`${a}\``).join(' ')
 
-const catalog = { tags: [], tagsV2: [], properties: 0, diagnostics: 0 }
+const catalog = { tags: [], tagsV2: [], tagsCurrent: [], properties: 0, diagnostics: 0 }
 
 function tagsPage() {
   const parts = blocks(section('### Attributes per tag'))
@@ -124,6 +124,7 @@ function tagsPage() {
   let tables = 0
   let v2Heading = false
   let v3Heading = false
+  let currentHeading = false
   for (const b of parts) {
     if (b.kind === 'para') {
       if (b.text.startsWith('Only in a `<tui version="2">` document')) {
@@ -133,6 +134,10 @@ function tagsPage() {
       if (b.text.startsWith('Only in a `<tui version="3">` document')) {
         body.push('## Added by `version="3"`', '')
         v3Heading = true
+      }
+      if (b.text.startsWith('Only in a `<tui>` without `version`')) {
+        body.push('## Added by the current language', '')
+        currentHeading = true
       }
       body.push(mdx(b.text), '')
       continue
@@ -148,6 +153,7 @@ function tagsPage() {
       const attrs = m[2] === '(no attributes)' ? '—' : codeList(m[2].split(', '))
       if (tables === 0) catalog.tags.push(m[1])
       else if (tables === 1 && !catalog.tags.includes(m[1])) catalog.tagsV2.push(m[1])
+      else if (tables === 3 && !catalog.tags.includes(m[1]) && !catalog.tagsV2.includes(m[1])) catalog.tagsCurrent.push(m[1])
       rows.push(`| \`<${m[1]}>\` | ${cell(attrs)} |`)
     }
     if (rows.length) {
@@ -155,23 +161,24 @@ function tagsPage() {
       if (tables === 1) body.push('## Every version', '')
       else if (tables === 2 && !v2Heading) throw new Error('generate: the version="2" attribute table has no introduction')
       else if (tables === 3 && !v3Heading) throw new Error('generate: the version="3" attribute table has no introduction')
+      else if (tables === 4 && !currentHeading) throw new Error('generate: the current-language attribute table has no introduction')
       body.push('| Tag | Attributes |', '|---|---|', ...rows, '')
     }
     if (rest.length) body.push(...rest.map(mdx), '')
   }
-  if (tables !== 3) throw new Error(`generate: expected 3 attribute tables in "Attributes per tag", found ${tables}`)
+  if (tables !== 4) throw new Error(`generate: expected 4 attribute tables in "Attributes per tag", found ${tables}`)
   emit(
     'content/reference/tags.mdx',
     [
       '---',
       'title: Tags and attributes',
-      'description: Every Tuimark tag and the exact attributes it accepts, and what older version="1" and version="2" documents leave out.',
+      'description: Every Tuimark tag and the exact attributes it accepts, and what a document that pins an older version leaves out.',
       'editLink: false',
       '---',
       '',
       GENERATED('`tuimark agents`'),
       '',
-      'The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. A document without `version` accepts every tag and attribute below; the last two sections are what an older `version="1"` (or `version="2"`) document leaves out. See [The .tui language](/guide/language) for what each tag does.',
+      'The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. A `<tui>` without `version` is the current language and accepts every tag and attribute below. The sections after the first mark what a document that pins `version="1"`, `"2"`, or `"3"` leaves out, and the last one what only the current language accepts: `checkbox`, `select`, `include`, `fragment`, `template`, `use`, `single`, and `indeterminate`. See [The .tui language](/guide/language) for what each tag does.',
       '',
       ...body,
     ].join('\n'),
@@ -328,17 +335,17 @@ function cliPage() {
       '| Command | What it does | Guide |',
       '|---|---|---|',
       '| `dump` | Renders one frame: the grid, every node\'s geometry, and the diagnostics. Text by default, `--format json` for agents. | [Dumps and tools](/guide/tools#dump) |',
-      '| `validate` | Checks a document without printing a frame. Lays it out at 40, 80, and 120 columns to find layout and bind problems. | [Getting started](/guide/getting-started#check-it) |',
-      '| `preview` | The text dump, plus the frame painted in ANSI colors when stdout is a terminal. `--watch` re-renders on save. | [Getting started](/guide/getting-started#look-at-it) |',
+      '| `validate` | Checks a document without printing a frame. Lays it out at 40, 80, and 120 columns to find layout and bind problems. Checks a fragment on its own. | [Getting started](/guide/getting-started#check-it) |',
+      '| `preview` | The text dump, plus the frame painted in ANSI colors when stdout is a terminal. `--watch` re-renders when the document, its stylesheets, the fragments it includes, or the data change. | [Getting started](/guide/getting-started#look-at-it) |',
       '| `play` | Replays keys, typing, pastes, clicks, and store changes with no terminal, and prints the final frame plus every action that fired. | [Dumps and tools](/guide/tools#play) |',
-      '| `inspect` | Explains one cell or node: its layout path, classes, pseudo-classes, and which rule set each property. | [Dumps and tools](/guide/tools#inspect) |',
-      '| `fmt` | The canonical formatter. `--check` exits 2 when a file is not formatted. | [Dumps and tools](/guide/tools#fmt) |',
+      '| `inspect` | Explains one cell or node: its layout path, classes, pseudo-classes, and which rule set each property, and the uses and includes that placed it. | [Dumps and tools](/guide/tools#inspect) |',
+      '| `fmt` | The canonical formatter, for a document or a fragment. `--check` exits 2 when a file is not formatted. | [Dumps and tools](/guide/tools#fmt) |',
       '| `ir` | Prints the parsed document as JSON, before the stylesheet cascade. | [Dumps and tools](/guide/tools#ir) |',
       '| `test` | Compares dumps with the goldens a manifest lists; `--update` rewrites them. | [Testing](/guide/testing#golden-dumps) |',
       '| `agents` | Prints the `AGENTS.md` briefing, generated from the runtime\'s own catalogs. `--project` prints the briefing `new` writes into a project. | [Use Tuimark with AI agents](/guide/agents) |',
       '| `catalog` | Prints the closed vocabulary (tags, attributes, properties, keys, actions, diagnostic codes) as JSON, each item with the document version that accepts it. | [Dumps and tools](/guide/tools#catalog) |',
       '| `new` | Creates a project: `app.tui`, `theme.tcss`, `sample.json`, and `AGENTS.md`; `--go` or `--ts` adds the program that hosts it. | [Dumps and tools](/guide/tools#new) |',
-      '| `run` | Runs a document in the terminal with no host program: an event strip (`F12`), an `--events` log, `--mock` store writes, and reload on save. | [Running a document](/guide/run) |',
+      '| `run` | Runs a document in the terminal with no host program: an event strip (`F12`), an `--events` log, `--mock` store writes, and reload on save of the document, its fragments, stylesheets, or data. | [Running a document](/guide/run) |',
       '| `version` | Prints the version. | |',
       '',
       '## Exit codes',
@@ -370,6 +377,7 @@ emit('lib/generated/catalog.json', JSON.stringify(catalog, null, 2))
 // the command the page shows is exactly the command that produced the text.
 //   term:  "$ tuimark ARGS" + stdout, shown as a terminal session
 //   grid:  only the `=== grid ===` block of a text dump, shown as a frame
+//   events: only the `=== events ===` section of a play, under the command
 //   json:  stdout as JSON with the command as a leading // comment (jsonc)
 
 const OUTPUTS = [
@@ -400,6 +408,42 @@ const OUTPUTS = [
   { name: 'w-tabs-narrow', dir: 'widgets', kind: 'grid', args: ['dump', 'tabs.tui', '--data', 'data.json', '--cols', '24', '--rows', '2'] },
   { name: 'w-tabs-tiny', dir: 'widgets', kind: 'grid', args: ['dump', 'tabs.tui', '--data', 'data.json', '--cols', '16', '--rows', '2'] },
   { name: 'w-hints-filter', dir: 'widgets', kind: 'grid', args: ['play', 'hints.tui', '--data', 'data.json', '--cols', '44', '--rows', '8', '--input', '/'] },
+  // the current language: forms, the spinner, defaults, composition
+  { name: 'forms-events', dir: 'forms', kind: 'events', args: ['play', 'form.tui', '--data', 'data.json', '--cols', '44', '--rows', '16', '--input', 'tab enter down enter tab space enter tab tab down space'] },
+  { name: 'forms-bad', dir: 'forms', kind: 'term', args: ['validate', 'form.tui', '--data', 'bad.json'], exit: [2] },
+  { name: 'spinner-tick', dir: 'widgets', kind: 'grid', args: ['play', 'spinner.tui', '--data', 'spinner.json', '--cols', '30', '--rows', '1', '--input', 'tick:300ms'] },
+  { name: 'layout-panes', dir: 'layout', kind: 'grid', args: ['dump', 'panes.tui', '--cols', '40', '--rows', '8'] },
+  { name: 'modal-events', dir: 'interaction', kind: 'events', args: ['play', 'modal.tui', '--data', 'data.json', '--cols', '40', '--rows', '7', '--input', 'set:help_open=true q ? esc'] },
+  { name: 'compose-dump', dir: 'compose', kind: 'grid', args: ['dump', 'app.tui', '--data', 'data.json', '--cols', '40', '--rows', '6'] },
+  { name: 'compose-fragment', dir: 'compose', kind: 'term', args: ['validate', 'parts/header.tui'] },
+  { name: 'compose-cycle', dir: 'compose/cycle', kind: 'term', args: ['validate', 'app.tui'], exit: [2] },
+  // composition: <template> and <use>
+  { name: 'tpl-dump', dir: 'templates', kind: 'grid', args: ['dump', 'field.tui', '--data', 'field.json', '--cols', '40', '--rows', '12'] },
+  { name: 'tpl-ids', dir: 'templates', kind: 'ids', args: ['dump', 'field.tui', '--data', 'field.json', '--cols', '40', '--rows', '12'] },
+  { name: 'tpl-typed', dir: 'templates', kind: 'grid', args: ['play', 'field.tui', '--data', 'field.json', '--cols', '40', '--rows', '12', '--input', 'text:Ada ctrl+n text:x'] },
+  { name: 'tpl-events', dir: 'templates', kind: 'events', args: ['play', 'field.tui', '--data', 'field.json', '--cols', '40', '--rows', '12', '--input', 'text:Ada ctrl+n text:x enter ctrl+s'] },
+  { name: 'tpl-inspect', dir: 'templates', kind: 'json', args: ['inspect', 'field.tui', '--data', 'field.json', '--cols', '40', '--rows', '12', '--id', 'email__input', '--json'], pick: ['source'] },
+  { name: 'tpl-ir', dir: 'templates', kind: 'ir-use', args: ['ir', 'field.tui'], use: 'email' },
+  { name: 'tpl-confirm', dir: 'templates', kind: 'grid', args: ['dump', 'confirm.tui', '--data', 'confirm.json', '--cols', '30', '--rows', '8'] },
+  { name: 'tpl-confirm-events', dir: 'templates', kind: 'events', args: ['play', 'confirm.tui', '--data', 'confirm.json', '--cols', '30', '--rows', '8', '--input', 'y tab enter'] },
+  { name: 'tpl-ref-bad', dir: 'templates', kind: 'term', args: ['validate', 'ref-bad.tui'], exit: [2] },
+  { name: 'tpl-rows-off', dir: 'templates', kind: 'grid', args: ['dump', 'rows.tui', '--data', 'rows.json', '--cols', '24', '--rows', '3'] },
+  { name: 'tpl-rows-on', dir: 'templates', kind: 'grid', args: ['play', 'rows.tui', '--data', 'rows.json', '--cols', '24', '--rows', '3', '--input', 'set:show_badges=true'] },
+  { name: 'tpl-classes', dir: 'templates', kind: 'classes', args: ['play', 'rows.tui', '--data', 'rows.json', '--cols', '24', '--rows', '3', '--input', 'set:show_badges=true', '--format', 'json'] },
+  { name: 'tpl-table-on', dir: 'templates', kind: 'grid', args: ['dump', 'table.tui', '--data', 'table.json', '--cols', '24', '--rows', '4'] },
+  { name: 'tpl-table-off', dir: 'templates', kind: 'grid', args: ['play', 'table.tui', '--data', 'table.json', '--cols', '24', '--rows', '4', '--input', 'set:show_status=false'] },
+  { name: 'tpl-split-dump', dir: 'templates/split', kind: 'grid', args: ['dump', 'app.tui', '--data', 'data.json', '--cols', '34', '--rows', '16'] },
+  { name: 'tpl-split-ids', dir: 'templates/split', kind: 'ids', args: ['dump', 'app.tui', '--data', 'data.json', '--cols', '34', '--rows', '16'] },
+  { name: 'tpl-split-inspect', dir: 'templates/split', kind: 'term', args: ['inspect', 'app.tui', '--data', 'data.json', '--cols', '34', '--rows', '16', '--id', 'shipping__zip__input'], tail: 3 },
+  { name: 'tpl-split-validate', dir: 'templates/split', kind: 'term', args: ['validate', 'parts/forms.tui'] },
+  { name: 'tpl-inspect-fragment', dir: 'templates/split', kind: 'err', args: ['inspect', 'parts/forms.tui', '--id', 'field'], exit: [2] },
+  { name: 'tpl-cycle', dir: 'templates', kind: 'term', args: ['validate', 'cycle.tui'], exit: [2] },
+  { name: 'tpl-long-cycle', dir: 'templates', kind: 'term', args: ['validate', 'long-cycle.tui'], exit: [2], head: 1 },
+  { name: 'tpl-fan', dir: 'templates', kind: 'term', args: ['validate', 'fan.tui'], exit: [2] },
+  { name: 'tpl-missing', dir: 'templates', kind: 'term', args: ['validate', 'missing.tui', '--data', 'missing.json'] },
+  { name: 'tpl-rows-bad', dir: 'templates', kind: 'term', args: ['validate', 'rows.tui', '--data', 'rows-bad.json'] },
+  { name: 'tpl-long', dir: 'templates', kind: 'term', args: ['validate', 'long.tui', '--data', 'long.json'], exit: [2] },
+  { name: 'tpl-kit-events', dir: 'templates', kind: 'events', args: ['play', 'kit-dialog.tui', '--data', '../../../kit/components/confirm.sample.json', '--cols', '60', '--rows', '12', '--input', 'y'] },
 ]
 
 function pickJSON(text, keys) {
@@ -419,12 +463,69 @@ function gridOf(text) {
 
 const shellQuote = (a) => (/^[\w@%+=:,./#-]+$/.test(a) ? a : `"${a.replace(/(["\\$`])/g, '\\$1')}"`)
 
+/** The lines of a dump's `=== nodes ===` section that name a node (an id, not `-`). */
+function idsOf(text) {
+  const lines = text.split('\n')
+  const start = lines.findIndex((l) => l.startsWith('=== nodes'))
+  const end = lines.findIndex((l, i) => i > start && l.startsWith('=== '))
+  if (start < 0 || end < 0) throw new Error('generate: text dump without a nodes section')
+  return lines.slice(start + 1, end).filter((l) => !l.startsWith('-')).map((l) => l.replace(/\s+$/, ''))
+}
+
+/** The nodes of a play/dump JSON that carry classes, one line each. */
+function classesOf(text) {
+  const d = JSON.parse(text)
+  return d.nodes.filter((n) => n.classes?.length).map((n) => ({ tag: n.tag, x: n.x, y: n.y, classes: n.classes }))
+}
+
+/** A node of `tuimark ir`, cut to what the composition shows. */
+function pruneIR(n) {
+  const o = { kind: n.kind }
+  if (n.id) o.id = n.id
+  if (n.classes?.length) o.classes = n.classes
+  if (Object.keys(n.attrs ?? {}).length) o.attrs = n.attrs
+  if (n.bind) o.bind = n.bind
+  if (n.if) o.if = n.if
+  if (n.text) o.text = n.text
+  if (n.from) o.from = n.from
+  if (n.children?.length) o.children = n.children.map(pruneIR)
+  return o
+}
+
+function findUse(n, id) {
+  if (n.kind === 'use' && n.id === id) return n
+  for (const c of n.children ?? []) {
+    const f = findUse(c, id)
+    if (f) return f
+  }
+  return null
+}
+
 for (const o of OUTPUTS) {
   const cwd = join(SNIPPETS, o.dir)
-  const { out } = tuimark(o.args, { cwd, exit: o.exit ?? [0] })
+  const { out, err } = tuimark(o.args, { cwd, exit: o.exit ?? [0] })
   const cmd = `tuimark ${o.args.map(shellQuote).join(' ')}`
-  if (o.kind === 'term') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n${out.replace(/[ \t]+$/gm, '')}`)
+  const cut = (text) => {
+    let lines = text.replace(/[ \t]+$/gm, '').replace(/\n$/, '').split('\n')
+    if (o.head && lines.length > o.head) lines = [...lines.slice(0, o.head), `… (${lines.length - o.head} more lines)`]
+    if (o.tail && lines.length > o.tail) lines = ['…', ...lines.slice(-o.tail)]
+    return lines.join('\n')
+  }
+  if (o.kind === 'term') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n${cut(out)}`)
+  else if (o.kind === 'err') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n${cut(err)}`)
+  else if (o.kind === 'ids') emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n=== nodes (those with an id) ===\n${idsOf(out).join('\n')}`)
+  else if (o.kind === 'classes') emit(`snippets/out/${o.name}.jsonc`, `// $ ${cmd}\n// excerpt: the nodes that have classes\n[\n${classesOf(out).map((n) => '  ' + JSON.stringify(n)).join(',\n')}\n]`)
+  else if (o.kind === 'ir-use') {
+    const use = findUse(JSON.parse(out).root, o.use)
+    if (!use) throw new Error(`generate: ${o.name}: no <use id="${o.use}"> in the IR`)
+    emit(`snippets/out/${o.name}.jsonc`, `// $ ${cmd}\n// excerpt: the <use id="${o.use}"> node and what it placed\n${JSON.stringify(pruneIR(use), null, 2)}`)
+  }
   else if (o.kind === 'grid') emit(`snippets/out/${o.name}.txt`, gridOf(out))
+  else if (o.kind === 'events') {
+    const events = out.split('=== events ===\n')[1]
+    if (events === undefined) throw new Error(`generate: ${o.name} printed no events section`)
+    emit(`snippets/out/${o.name}.txt`, `$ ${cmd}\n${events.replace(/[ \t]+$/gm, '')}`)
+  }
   else if (o.kind === 'json') {
     const note = o.pick ? `// excerpt: ${o.pick.map((k) => `"${k}"`).join(', ')}\n` : ''
     emit(`snippets/out/${o.name}.jsonc`, `// $ ${cmd}\n${note}${o.pick ? pickJSON(out, o.pick) : out}`)
@@ -454,6 +555,9 @@ const SHOTS = [
   { name: 'w-hints', dir: 'widgets', file: 'hints.tui', data: 'data.json', cols: 44, rows: 8, alt: 'key hints generated from the keymap along the bottom row' },
   { name: 'w-modal', dir: 'widgets', file: 'modal.tui', cols: 44, rows: 7, alt: 'a modal with a title and two buttons, the focused one reversed' },
   { name: 'w-input', dir: 'widgets', file: 'input.tui', data: 'data.json', cols: 40, rows: 3, alt: 'an empty input showing its placeholder' },
+  { name: 'w-form', dir: 'forms', file: 'form.tui', data: 'data.json', cols: 44, rows: 16, alt: 'a form: a name input with its placeholder, a select showing UTC, a checked and an unchecked checkbox, a radio group with Free chosen, and Save and Cancel buttons' },
+  { name: 'w-select-open', dir: 'forms', file: 'form.tui', data: 'data.json', cols: 44, rows: 16, input: 'tab enter', alt: 'the same form with the select open: a bordered option list under it, over the radio group, with the cursor on UTC' },
+  { name: 'w-spinner', dir: 'widgets', file: 'spinner.tui', data: 'spinner.json', cols: 30, rows: 1, input: 'tick:300ms', alt: 'a braille spinner glyph followed by the text Deploying billing' },
   { name: 'tour-narrow', dir: 'tour', file: 'app.tui', data: 'sample.json', cols: 56, rows: 14, alt: 'the tour document at 56 columns: an @media rule stacks the list above the detail pane' },
   { name: 'monitor-processes', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 120, rows: 26, input: 'space down space down', alt: 'monitor studio: the processes tab, a table with two marked rows, the tab strip and the key hints' },
   { name: 'monitor-overview', file: 'examples/monitor/studio.tui', data: 'examples/monitor/sample.json', cols: 120, rows: 16, input: '1', alt: 'monitor studio: the overview tab, a grid of panels with gauges and sparklines' },

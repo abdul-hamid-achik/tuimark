@@ -76,7 +76,17 @@ type Grid struct {
 	// Cursor is the input cursor position, when an input is focused.
 	CursorX, CursorY int
 	CursorOn         bool
+	// Spinners is the side table of the visible spinners of the frame
+	// (SPEC v0.4b §12.6): the cell of each spinner's glyph that no node
+	// painted after it wrote again, in reading order. It is not part of
+	// the cells, so the frame diff, which compares whole cells, ignores
+	// it; Run uses it to know which cells take the ASCII glyphs and
+	// whether to arm the spinner timer (§26.13).
+	Spinners []SpinnerCell
 }
+
+// SpinnerCell is the position of a visible spinner's glyph (Grid.Spinners).
+type SpinnerCell struct{ X, Y int }
 
 // NewGrid returns a grid filled with spaces.
 func NewGrid(w, h int) *Grid {
@@ -128,6 +138,11 @@ func (g *Grid) HasComplex() bool {
 
 type painter struct {
 	g *Grid
+	// phase is the spinner phase of the frame (SPEC v0.4b §12.6).
+	phase int
+	// spin holds the cell index (y*W+x) of every spinner glyph painted
+	// and not yet written over by a later painter (Grid.Spinners).
+	spin map[int]struct{}
 }
 
 // inside reports whether (x, y) is inside both clip and the grid.
@@ -160,6 +175,12 @@ func (p *painter) put(clip layout.Rect, x, y int, r rune, ext string, w int, st 
 	p.unlink(x, y)
 	if w == 2 {
 		p.unlink(x+1, y)
+	}
+	if len(p.spin) > 0 {
+		delete(p.spin, y*p.g.W+x)
+		if w == 2 {
+			delete(p.spin, y*p.g.W+x+1)
+		}
 	}
 	c := p.g.At(x, y)
 	c.Ch, c.Ext, c.Wide, c.Cont = r, ext, w == 2, false
@@ -348,16 +369,58 @@ func attrsOf(s *css.Style) uint8 {
 	return a
 }
 
-// Paint paints root and then the modal layer into a fresh grid.
+// Paint paints root and then the modal layer into a fresh grid, with the
+// spinners at phase 0 (SPEC v0.4b §12.6).
 func Paint(root *layout.Box, modals []*layout.Box, cols, rows int) *Grid {
-	p := &painter{g: NewGrid(cols, rows)}
+	return PaintPhase(root, modals, cols, rows, 0)
+}
+
+// PaintPhase is Paint with the phase P of the frame's spinners (SPEC
+// v0.4b §12.6): every spinner paints the glyph P of the braille set. The
+// phase comes from the caller (Run's clock, play's virtual clock, or 0),
+// so the same layout paints a new frame at each phase without being built
+// again.
+func PaintPhase(root *layout.Box, modals []*layout.Box, cols, rows, phase int) *Grid {
+	return PaintFrame(root, modals, nil, cols, rows, phase)
+}
+
+// PaintFrame is PaintPhase with the open option list of a select (SPEC
+// v0.4b §12.5), nil when none is open: it is painted after every modal,
+// last of all, and its cells belong to its select's id (§6.17.6), the
+// nearest id-bearing node that painted them. Being Modal, it first fills
+// its outer rect with spaces in its own style, as a modal clears what is
+// under it; with visibility: hidden it paints nothing.
+func PaintFrame(root *layout.Box, modals []*layout.Box, options *layout.Box, cols, rows, phase int) *Grid {
+	p := &painter{g: NewGrid(cols, rows), phase: max(phase, 0)}
 	p.box(root, "")
 	for _, m := range modals {
 		p.box(m, "")
 	}
+	if options != nil && options.Parent != nil {
+		p.box(options, options.Parent.ID)
+	}
 	p.settle()
 	p.unjoin()
+	p.collectSpinners()
 	return p.g
+}
+
+// collectSpinners fills Grid.Spinners from the painter's table, keeping a
+// cell only while it still holds the spinner's glyph (unjoin may have
+// replaced it).
+func (p *painter) collectSpinners() {
+	if len(p.spin) == 0 {
+		return
+	}
+	g := Glyph(p.phase, false)
+	for i := range p.g.Cells {
+		if _, ok := p.spin[i]; !ok {
+			continue
+		}
+		if c := &p.g.Cells[i]; c.Ch == g && c.Ext == "" && !c.Cont && !c.Wide {
+			p.g.Spinners = append(p.g.Spinners, SpinnerCell{X: i % p.g.W, Y: i / p.g.W})
+		}
+	}
 }
 
 func ownerOf(b *layout.Box, inherited string) string {
@@ -601,12 +664,20 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		label := layout.ButtonLabel(b)
 		x := c.X + alignOffset(b.Style.ContentAlign, c.W, layout.Width(label))
 		p.text(clip, x, c.Y, label, st)
+	case "checkbox":
+		p.checkbox(b, clip, st)
+	case "select":
+		p.selectBox(b, clip, st)
 	case "input":
 		p.input(b, clip, st)
 	case "sparkline":
 		p.sparkline(b, clip, st)
 	case "progress":
 		if c.W <= 0 || c.H <= 0 {
+			return
+		}
+		if b.IsSpinner() {
+			p.spinner(b, clip, c, st)
 			return
 		}
 		v := b.Value
@@ -651,6 +722,22 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 			}
 		}
 	}
+}
+
+// spinner paints a spinner's one glyph (SPEC v0.4b §12.6): row 0 of the
+// content box, at the column content-align gives, in the node's style,
+// and nothing else. The glyph is clipped like any other cell; it is
+// recorded in the side table when it lands.
+func (p *painter) spinner(b *layout.Box, clip, c layout.Rect, st cellStyle) {
+	x := c.X + alignOffset(b.Style.ContentAlign, c.W, 1)
+	if !p.inside(clip, x, c.Y) {
+		return
+	}
+	p.set(clip, x, c.Y, Glyph(p.phase, false), st)
+	if p.spin == nil {
+		p.spin = map[int]struct{}{}
+	}
+	p.spin[c.Y*p.g.W+x] = struct{}{}
 }
 
 // sparkRamp holds the partial bars of a sparkline, level 1 (▁) to 7 (▇)

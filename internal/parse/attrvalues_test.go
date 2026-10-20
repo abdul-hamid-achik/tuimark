@@ -102,6 +102,8 @@ func attributeSince(tag, attr string) int {
 		return 2
 	case TagAttrsV3[tag][attr]:
 		return 3
+	case TagAttrsCurrent[tag][attr]:
+		return 4
 	}
 	return 99
 }

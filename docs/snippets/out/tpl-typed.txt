@@ -1,0 +1,11 @@
+
+ Hello, Ada
+
+ Name
+ Ada
+
+ Email
+ ada@x
+ not an email
+
+ ctrl+s save  ctrl+n email

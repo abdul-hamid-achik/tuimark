@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -29,6 +30,7 @@ const (
 	KindResize
 	KindClick // click:X,Y or {"click":[X,Y]} (SPEC v0.2b §15.4)
 	KindWheel // wheel-up:X,Y, wheel-down:X,Y, or {"wheel":…,"at":[X,Y]}
+	KindTick  // tick:DUR or {"tick":"DUR"} (SPEC v0.4b §15.4.1)
 )
 
 // Step is one parsed, validated step of a play session. Raw is "the step
@@ -39,14 +41,15 @@ type Step struct {
 	Kind  Kind
 	Raw   string
 	Key   host.Key
-	Text  string // KindText, KindPaste
-	Path  string // KindSet
-	Value any    // KindSet, decoded JSON
-	Focus string // KindFocus
-	Cols  int    // KindResize
-	Rows  int    // KindResize
-	X, Y  int    // KindClick, KindWheel: the 0-based cell
-	Dir   int    // KindWheel: -1 up, +1 down
+	Text  string        // KindText, KindPaste
+	Path  string        // KindSet
+	Value any           // KindSet, decoded JSON
+	Focus string        // KindFocus
+	Cols  int           // KindResize
+	Rows  int           // KindResize
+	X, Y  int           // KindClick, KindWheel: the 0-based cell
+	Dir   int           // KindWheel: -1 up, +1 down
+	Dur   time.Duration // KindTick: how far the virtual clock advances
 }
 
 // errNotKeyToken is ParseStep's error for a token that is neither a
@@ -90,7 +93,7 @@ func parseCell(s string) (x, y int, err error) {
 }
 
 // ParseStep parses one step of the §15.4 --input grammar: a key token, or
-// text:/paste:/set:/focus:/resize:/click:/wheel-up:/wheel-down:. It never
+// text:/paste:/set:/focus:/resize:/click:/wheel-up:/wheel-down:/tick:. It never
 // splits tok on spaces, so a caller that wants tuimark play's --input
 // splitting does that first (ParseStep is also what tuimark.Play parses
 // each of its variadic steps with).
@@ -106,6 +109,8 @@ func ParseStep(tok string) (Step, error) {
 		return Step{Kind: KindFocus, Raw: tok, Focus: strings.TrimPrefix(tok[len("focus:"):], "#")}, nil
 	case strings.HasPrefix(tok, "resize:"):
 		return parseResizeToken(tok)
+	case strings.HasPrefix(tok, "tick:"):
+		return TickStep(tok, tok[len("tick:"):])
 	case strings.HasPrefix(tok, "click:"), strings.HasPrefix(tok, "wheel-up:"), strings.HasPrefix(tok, "wheel-down:"):
 		// SPEC v0.2b §15.4: a left click (press and release) or one wheel
 		// report at cell (X, Y), 0-based as in the dump.

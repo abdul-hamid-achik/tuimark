@@ -1,0 +1,148 @@
+{
+  "cols": 40,
+  "rows": 12,
+  "ok": true,
+  "focus": "help",
+  "errors": [
+    {
+      "severity": "warning",
+      "code": "L009",
+      "msg": "cuts text[7] on y: 0 of 1 cells shown; give it room, or write overflow: hidden to keep the cut",
+      "file": "help.tui",
+      "line": 3,
+      "col": 5,
+      "path": "/screen/modal",
+      "id": "help"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 12
+    },
+    {
+      "id": "help",
+      "tag": "modal",
+      "x": 4,
+      "y": 1,
+      "w": 32,
+      "h": 9,
+      "focused": true,
+      "clipped": "children"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 2,
+      "w": 30,
+      "h": 1,
+      "text": "line 1"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 3,
+      "w": 30,
+      "h": 1,
+      "text": "line 2"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 4,
+      "w": 30,
+      "h": 1,
+      "text": "line 3"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 5,
+      "w": 30,
+      "h": 1,
+      "text": "line 4"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 6,
+      "w": 30,
+      "h": 1,
+      "text": "line 5"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 7,
+      "w": 30,
+      "h": 1,
+      "text": "line 6"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 8,
+      "w": 30,
+      "h": 1,
+      "text": "line 7"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 9,
+      "w": 30,
+      "h": 1,
+      "text": "line 8"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 10,
+      "w": 30,
+      "h": 1,
+      "text": "line 9"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 11,
+      "w": 30,
+      "h": 1,
+      "text": "line 10"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 12,
+      "w": 30,
+      "h": 1,
+      "text": "line 11"
+    },
+    {
+      "tag": "text",
+      "x": 5,
+      "y": 13,
+      "w": 30,
+      "h": 1,
+      "text": "line 12"
+    }
+  ],
+  "grid": [
+    "                                        ",
+    "    ┌─ a long help title here ─────┐    ",
+    "    │line 1                        │    ",
+    "    │line 2                        │    ",
+    "    │line 3                        │    ",
+    "    │line 4                        │    ",
+    "    │line 5                        │    ",
+    "    │line 6                        │    ",
+    "    │line 7                        │    ",
+    "    └──────────────────────────────┘    ",
+    "                                        ",
+    "                                        "
+  ]
+}

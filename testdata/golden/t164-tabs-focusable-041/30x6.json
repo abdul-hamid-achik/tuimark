@@ -1,0 +1,85 @@
+{
+  "cols": 30,
+  "rows": 6,
+  "ok": true,
+  "focus": "b2",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 6
+    },
+    {
+      "id": "nav",
+      "tag": "tabs",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 2
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 3,
+      "h": 1,
+      "text": "one",
+      "key": "one",
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 0,
+      "w": 3,
+      "h": 1,
+      "text": "two",
+      "key": "two",
+      "selected": true,
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "id": "two",
+      "tag": "tab",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 1
+    },
+    {
+      "id": "b2",
+      "tag": "button",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 1,
+      "text": "go",
+      "focused": true
+    }
+  ],
+  "grid": [
+    "onetwo                        ",
+    "[ go ]                        ",
+    "                              ",
+    "                              ",
+    "                              ",
+    "                              "
+  ],
+  "events": [
+    {
+      "step": 1,
+      "action": "changed",
+      "source": "nav",
+      "keys": {},
+      "value": "two"
+    }
+  ]
+}

@@ -176,7 +176,7 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 			break
 		}
 	}
-	e, err := ir.ParseEach(n.Each)
+	e, err := ir.ParseEachField(n.Each)
 	if err != nil || p.template == nil {
 		return p
 	}
@@ -190,12 +190,12 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 		}
 	}
 	guard := func(v string) {
-		if g, err := ir.ParseGuard(v); err == nil {
+		if g, err := ir.ParseGuardField(v); err == nil {
 			dep(g.Path)
 		}
 	}
 	interp := func(v string) {
-		segs, _ := ir.ParseInterp(v)
+		segs, _ := ir.ParseInterpField(v)
 		for _, sg := range segs {
 			if sg.Path != "" {
 				dep(sg.Path)
@@ -219,8 +219,25 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 		}
 		guard(t.If)
 		guard(t.Bind)
+		uses := func(chain []*ir.Node) {
+			for _, u := range chain {
+				// The guards of the uses that placed it, and the paths of
+				// their with, whose B003 a row reports (SPEC v0.4b
+				// §6.18.3, §6.18.5): a row whose guard flips, or whose
+				// with path comes or goes, is built again.
+				guard(u.If)
+				guard(u.Attrs["hidden"])
+				for _, cl := range u.With {
+					dep(cl.Path)
+				}
+			}
+		}
+		uses(t.CopiedBy)
+		for _, chain := range t.EmptyCopies {
+			uses(chain) // a use whose copy placed nothing among t's children
+		}
 		if t.Each != "" {
-			if te, err := ir.ParseEach(t.Each); err == nil {
+			if te, err := ir.ParseEachField(t.Each); err == nil {
 				dep(te.Path)
 			}
 		}
@@ -228,7 +245,7 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 		for _, v := range t.Attrs {
 			guard(v)
 			interp(v)
-			if te, err := ir.ParseEach(v); err == nil {
+			if te, err := ir.ParseEachField(v); err == nil {
 				dep(te.Path)
 			}
 		}
@@ -259,14 +276,12 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box, slab *listSlab
 	if r := c.rows; r != nil && r.strict == a.strict && r.disabled == b.Disabled && sameStamp(r.stamp, st) {
 		return r, nil
 	}
-	sub := &builder{a: a, seen: map[string]bool{}}
+	sub := &builder{a: a, seen: map[diagID]bool{}}
 	r = &listRows{stamp: st, strict: a.strict, disabled: b.Disabled}
 	v, found := (*scope)(nil).resolve(a.store, p.each.Path)
 	arr, isArr := v.([]any)
-	if !found {
-		sub.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, p.each.Path)
-	} else if !isArr {
-		sub.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, p.each.Path, typeName(v))
+	if !found || !isArr {
+		sub.badEach(n, p.each.Path, v, found, nil)
 	}
 	scopes := make([]scope, len(arr))
 	r.keys = make([]any, len(arr))
@@ -278,7 +293,7 @@ func (fb *builder) rowsOf(n *ir.Node, p *listPlan, b *layout.Box, slab *listSlab
 			if kv, ok := isc.resolve(a.store, p.keyPath); ok {
 				key = kv
 			} else {
-				sub.report(n, ir.Warning, "B003", "key=%q is missing on item %d", p.keyPath, i)
+				sub.missingKey(n, p.keyPath, isc, ir.Warning, "key=%q is missing on item %d", i)
 			}
 		}
 		isc.key = key

@@ -99,7 +99,9 @@ type keyStep int
 
 const (
 	stepNone       keyStep = iota // nothing takes the key: it does nothing
+	stepOptions                   // 0: the open option list takes it (SPEC v0.4b)
 	stepEscape                    // 1: the top modal's on:escape fires
+	stepEscClose                  // 1: esc closes the top modal (current language)
 	stepWidget                    // 2: the focused, enabled widget consumes it
 	stepKeymap                    // 3: a keymap row matches and fires
 	stepBuiltinKey                // 4: tab, shift+tab, or ctrl+c
@@ -113,25 +115,56 @@ type keyPlan struct {
 	// target is the node a built-in action of §8.4 acts on (stepKeymap on
 	// such a row; nil for switch-to, whose target is not in the frame).
 	target *layout.Box
+	// path is the top modal's visibility path esc writes false at
+	// (stepEscClose).
+	path string
+	// close is set when step 0 closes the open option list first (tab,
+	// shift+tab, or ctrl+c, SPEC v0.4b §8.6): the step that then takes
+	// the key is decided as if the list had not been open.
+	close bool
 }
 
 // planKey runs the key dispatch of SPEC §8.6 for k on v without side
 // effects and returns the step that takes k:
 //
-//  1. esc, while the top open modal has on:escape: that action;
+//  1. esc, while the top open modal has on:escape: that action; in a
+//     <tui> without version, else, while the top modal closes on esc
+//     (escClose): a false written at its visibility path;
 //  2. a focused, enabled node consumes the keys of its kind (consumes);
 //  3. the keymap rows in document order: the first row whose keys hold k,
 //     whose when matches (§8.1: the focused node in a version="1"
-//     document, the focus chain in a version="2" one), and, for a
-//     built-in of §8.4, whose target matches at run time;
+//     document, the focus chain in a version="2" one, the modal chain
+//     while a modal traps the keymap in a <tui> without version), and,
+//     for a built-in of §8.4, whose target matches at run time;
 //  4. tab and shift+tab cycle focus, ctrl+c fires quit.
+//
+// Before them all, step 0 (SPEC v0.4b): while the focused select's option
+// list is open it takes every key (optionsKey), except tab, shift+tab, and
+// ctrl+c, which close it and go on from step 1 on the same frame.
 //
 // Anything else does nothing. The caller holds a.mu.
 func (a *App) planKey(v keyView, k Key) keyPlan {
+	if a.optionsOpen(v.focused) {
+		switch k.Name {
+		case "tab", "shift+tab", "ctrl+c":
+			p := a.planSteps(v, k)
+			p.close = true
+			return p
+		}
+		return keyPlan{step: stepOptions}
+	}
+	return a.planSteps(v, k)
+}
+
+// planSteps is planKey from step 1 on.
+func (a *App) planSteps(v keyView, k Key) keyPlan {
 	if k.Name == "esc" {
 		if m := v.topModal(); m != nil && m.Src != nil {
 			if _, ok := m.Src.On["escape"]; ok {
 				return keyPlan{step: stepEscape}
+			}
+			if path, ok := a.escClose(v); ok {
+				return keyPlan{step: stepEscClose, path: path}
 			}
 		}
 	}
@@ -181,8 +214,12 @@ func containsKey(keys []string, name string) bool {
 // matches while nothing is focused. In a version="2" document it matches
 // when the selector matches at least one node of the focus chain, each
 // taken in turn as the subject (with > checked against that node's
-// parents as usual).
+// parents as usual). In a <tui> without version, while a modal is open,
+// the modal traps the keymap (trapMatches, SPEC v0.4b §8.1).
 func (a *App) whenMatches(sel *css.Selector, v keyView) bool {
+	if a.trapped(v) {
+		return trapMatches(sel, v)
+	}
 	if sel == nil {
 		return true
 	}
@@ -204,7 +241,8 @@ func (a *App) whenMatches(sel *css.Selector, v keyView) bool {
 //     ctrl+h, ctrl+u, left, right, home, end, ctrl+a, ctrl+e, and enter
 //     when it has on:submit;
 //   - a list or a table with at least one row: up, down, home, end, pgup,
-//     pgdn;
+//     pgdn, and, with single="true", space (SPEC v0.4b §6.14.1);
+//   - a checkbox: space, which toggles it (SPEC v0.4b §6.16.2);
 //   - a (focusable) tabs with at least one enabled visible tab: left and
 //     right;
 //   - any other viewport: up, down, left, right, pgup, pgdn, home, end;
@@ -231,11 +269,25 @@ func (a *App) consumes(b *layout.Box, k Key) bool {
 			switch k.Name {
 			case "up", "down", "home", "end", "pgup", "pgdn":
 				return true
+			case "space":
+				// A single widget applies check-toggle to its cursor
+				// row, and consumes space even when it cannot act (SPEC
+				// v0.4b §6.14.1, §8.6 step 2, decision 98).
+				return isSingle(b)
 			}
 		}
 		// A list never fires on:click from the keyboard (v1), nor does a
 		// table (SPEC §8.6).
 		return false
+	case "checkbox":
+		// space toggles it; enter goes on to the keymap (SPEC v0.4b
+		// §6.16.2, decision 97). It takes no on:click (decision 45).
+		return k.Name == "space"
+	case "select":
+		// enter and space open its option list when it has an option
+		// (SPEC v0.4b §6.17.3); closed, it never takes up or down
+		// (decision 62), and it takes no on:click (decision 45).
+		return (k.Name == "enter" || k.Name == "space") && b.Rows > 0
 	case "tabs":
 		// A focused (so focusable) tabs with an enabled visible tab
 		// consumes left and right (SPEC §6.10.4 item 8).
@@ -270,10 +322,17 @@ func (a *App) rows(b *layout.Box) int {
 func (a *App) handleKey(k Key) []Event {
 	v := a.liveView()
 	p := a.planKey(v, k)
+	if p.close {
+		a.closeOptions()
+	}
 	switch p.step {
+	case stepOptions:
+		return a.optionsKey(v.focused, k)
 	case stepEscape:
 		m := v.topModal()
 		return []Event{{Action: m.Src.On["escape"], Source: m.ID, Keys: map[string]any{}}}
+	case stepEscClose:
+		return a.closeOnEsc(p.path)
 	case stepWidget:
 		return a.widgetKey(v.focused, k)
 	case stepKeymap:
@@ -372,7 +431,16 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 			return a.moveList(b, func(i, _, p int) int { return i - p })
 		case "pgdn":
 			return a.moveList(b, func(i, _, p int) int { return i + p })
+		case "space":
+			// Only a single widget consumes it (consumes): check-toggle
+			// on the cursor row (SPEC v0.4b §6.14.1).
+			return a.check(b, "check-toggle")
 		}
+		return nil
+	case "checkbox":
+		return a.toggleCheckbox(b)
+	case "select":
+		a.openOptions(b)
 		return nil
 	case "tabs":
 		// left and right act as move-prev and move-next on it.
@@ -511,7 +579,9 @@ func isMove(action string) bool {
 // enabled visible tab (not for move-page-*), or a viewport that is none of
 // them; check-* a list or a table that has checked=, whose value is an
 // array or missing and writable (never B008; checkedArray), with at least
-// one row. The caller holds a.mu.
+// one row, or, with single="true", whose value is a key or null, or
+// missing and writable, never for check-all (singleCompatible). The
+// caller holds a.mu.
 func (a *App) compatible(action string, t *layout.Box) bool {
 	switch {
 	case isMove(action):
@@ -528,6 +598,9 @@ func (a *App) compatible(action string, t *layout.Box) bool {
 	case action == "check-toggle" || action == "check-all" || action == "check-none":
 		if (t.Kind != "list" && t.Kind != "table") || a.rows(t) == 0 {
 			return false
+		}
+		if isSingle(t) {
+			return a.singleCompatible(action, t)
 		}
 		arr, ok := a.checkedArray(t)
 		return ok && !a.derivedBlocked(t.Src.Attrs["checked"], append([]any{}, arr...))
@@ -560,7 +633,7 @@ func (a *App) checkedArray(b *layout.Box) (keys []any, ok bool) {
 		return nil, false
 	}
 	path, has := b.Src.Attr("checked")
-	if !has || !ir.IsPath(path) {
+	if !has || !ir.IsPathField(path) {
 		return nil, false
 	}
 	v, found := lookup(a.store, path)
@@ -710,6 +783,10 @@ func (a *App) moveViewport(b *layout.Box, action string) {
 // the path and on:change fires with the new array as its value; otherwise
 // nothing is written and nothing fires. The caller holds a.mu.
 func (a *App) check(b *layout.Box, action string) []Event {
+	if isSingle(b) {
+		// One key instead of an array (SPEC v0.4b §6.14.1).
+		return a.checkSingle(b, action)
+	}
 	ls := a.lists[b.ID]
 	old, ok := a.checkedArray(b)
 	if ls == nil || len(ls.keys) == 0 || !ok {

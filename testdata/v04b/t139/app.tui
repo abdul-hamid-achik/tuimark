@@ -1,0 +1,19 @@
+<tui>
+  <template id="field">
+    <row id="row">
+      <input id="in" bind="f.value"/>
+    </row>
+  </template>
+  <template id="card">
+    <box focusable="true"><text>card</text></box>
+  </template>
+  <screen id="main">
+    <text id="bill__in">x</text>
+    <use id="bill" template="field" with="form.bill as f"/>
+    <use id="bill" template="field" with="form.ship as f"/>
+    <box id="field"/>
+    <use template="field" with="form.bill as f"/>
+    <use template="card"/>
+    <use template="card"/>
+  </screen>
+</tui>

@@ -1,0 +1,113 @@
+{
+  "cols": 30,
+  "rows": 6,
+  "ok": true,
+  "focus": "l1",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 6
+    },
+    {
+      "id": "nav",
+      "tag": "tabs",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 3
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 3,
+      "h": 1,
+      "text": "one",
+      "key": "one",
+      "selected": true,
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 3,
+      "y": 0,
+      "w": 3,
+      "h": 1,
+      "text": "two",
+      "key": "two",
+      "classes": [
+        "tab-label"
+      ]
+    },
+    {
+      "id": "one",
+      "tag": "tab",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 2
+    },
+    {
+      "id": "l1",
+      "tag": "list",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 2,
+      "focused": true,
+      "scroll": {
+        "y": 0,
+        "h": 2
+      }
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 1,
+      "key": "a",
+      "selected": true
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 30,
+      "h": 1,
+      "text": "a"
+    },
+    {
+      "tag": "item",
+      "x": 0,
+      "y": 2,
+      "w": 30,
+      "h": 1,
+      "key": "b"
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 2,
+      "w": 30,
+      "h": 1,
+      "text": "b"
+    }
+  ],
+  "grid": [
+    "onetwo                        ",
+    "a                             ",
+    "b                             ",
+    "                              ",
+    "                              ",
+    "                              "
+  ],
+  "events": []
+}

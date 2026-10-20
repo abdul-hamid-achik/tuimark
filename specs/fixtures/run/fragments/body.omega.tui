@@ -1,0 +1,5 @@
+<fragment>
+  <text id="a">omega</text>
+  <text id="b">beta</text>
+  <include src="deep.tui"/>
+</fragment>

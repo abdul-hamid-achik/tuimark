@@ -1,0 +1,74 @@
+{
+  "cols": 40,
+  "rows": 6,
+  "ok": true,
+  "focus": null,
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 6
+    },
+    {
+      "id": "top",
+      "tag": "row",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 6
+    },
+    {
+      "id": "nav",
+      "tag": "col",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 6
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 1,
+      "text": "inbox"
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 20,
+      "h": 1,
+      "text": "sent"
+    },
+    {
+      "id": "body",
+      "tag": "col",
+      "x": 20,
+      "y": 0,
+      "w": 20,
+      "h": 6
+    },
+    {
+      "id": "para",
+      "tag": "text",
+      "x": 20,
+      "y": 0,
+      "w": 20,
+      "h": 4,
+      "text": "The quick brown fox jumps over the lazy dog and keeps running far away"
+    }
+  ],
+  "grid": [
+    "inbox               The quick brown fox ",
+    "sent                jumps over the lazy ",
+    "                    dog and keeps       ",
+    "                    running far away    ",
+    "                                        ",
+    "                                        "
+  ]
+}

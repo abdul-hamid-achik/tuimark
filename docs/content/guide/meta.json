@@ -5,6 +5,7 @@
   "pages": [
     "---Start---",
     "getting-started",
+    "frontend-devs",
     "agents",
     "---The language---",
     "language",
@@ -13,6 +14,7 @@
     "bindings",
     "interaction",
     "widgets",
+    "composition",
     "kit",
     "---Tools and hosts---",
     "tools",

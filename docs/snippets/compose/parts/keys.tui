@@ -1,0 +1,6 @@
+<fragment>
+  <keymap>
+    <bind keys="q,ctrl+c" action="quit" label="quit"/>
+    <bind keys="n" action="new_task" label="new"/>
+  </keymap>
+</fragment>

@@ -192,7 +192,7 @@ on every run (`TestDemo` runs it twice and compares).
 
 ## Tuimark features used
 
-`<tui version="3">`, container `each` (nested), `class:NAME` guards, `@media`
+No `version` (the current language), container `each` (nested), `class:NAME` guards, `@media`
 on columns, rows and theme, `row-gap`/`column-gap`, `<sparkline>`, `<hints>`
 (`scope="all"` in the help), `<modal>` with `<button>`s, keymap `label`/`keycap`,
 `App.Every`, `App.Derive`, `App.Batch`, `App.Play`, `RunWith` with `OnError`.

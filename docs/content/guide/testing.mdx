@@ -68,6 +68,31 @@ FAIL tasks 80x24 (json): update removes or changes /nodes/3/y
 
 When the change is deliberate (you moved the node), review it and run `tuimark test --update --allow-breaking` once. Accidental layout changes can no longer slip in with an update.
 
+## Time: the `tick` step
+
+Some views change on their own: a [spinner](/guide/widgets#the-spinner) turns, and a Go host's `Every` functions fire. `dump` and `play` never wait for a clock, so a test moves time itself with the `tick:DUR` step, which advances a virtual clock by `DUR`: `tick:250ms`, `tick:1.5s`, `tick:1m30s`, with the units `ms`, `s`, `m`, and `h`, a whole number of milliseconds from `1ms` to `1h`. In a `--script` file the step is `{"tick": "250ms"}`.
+
+```sh
+tuimark play spinner.tui --data spinner.json --cols 30 --rows 1 --input tick:300ms
+```
+
+<include cwd lang="grid">snippets/out/spinner-tick.txt</include>
+
+A spinner's glyph is `floor(V / 100ms)` frames into its cycle for a virtual time `V`, so `tick:300ms` is the fourth glyph and `tick:1s` is back at the first. A golden can pin a moment the same way, with `"input": "tick:300ms"` in its manifest entry, and `Play` takes the step as a string like any other: `ui.Play(tuimark.PlayOptions{Cols: 30, Rows: 1}, "tick:300ms")`. The clock is virtual: the step does not sleep, so a test of ten seconds takes no time.
+
+## Documents built from parts
+
+A document that is split into [fragments](/guide/language#composing-a-document-from-files) or built from [templates](/guide/composition) is expanded when it is read, so goldens, `play`, and Go tests all see the expanded document, and nothing in a test needs to know where a piece is written.
+
+- **Point the manifest at the document, not at a fragment.** A fragment has no screen, so a golden of one fails with `V005`. A fragment is checked through the documents that include it, and `tuimark validate` on the fragment checks its own elements.
+- **Moving a piece does not change the dump.** The document from [templates in a fragment](/guide/composition#templates-in-a-fragment) and the same document with `parts/forms.tui` written in its place produce byte-identical dumps. So a refactor into fragments or templates is a refactor a golden can protect.
+- **Steps name the scoped ids.** A copy's nodes have ids like `shipping__zip__input`, and so do the `focus:#shipping__zip__input` step, a golden's `"focus"` member, and the `source` of every event. Renaming a `<use id>` renames everything derived from it, so goldens and specs that mention those ids change with it.
+- **Events say which copy fired them.** Replay the field form from the [composition guide](/guide/composition#a-template-and-its-uses) and the `source` of the submit is the copy that had focus:
+
+<include cwd lang="term">snippets/out/tpl-events.txt</include>
+
+- **In Go,** `Load` and `LoadFS` give the same dump and diagnostics for the same tree (`LoadFS(os.DirFS(dir), "app.tui")` resolves includes inside that file system, and one that leaves it is `V006`), and `Play` returns events whose `Source` is the scoped id.
+
 ## Go tests
 
 In the host's own tests, `Validate`, `Dump`, and `Catalog` check the view with the real data types, without a terminal. `Dump` is a pure snapshot, so it is safe to call at many sizes in one test. The [Go API](/guide/go-api#dump-and-validate) page has a complete example; a check that every action has a handler is a few more lines:

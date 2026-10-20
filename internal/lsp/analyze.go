@@ -27,12 +27,22 @@ type analysis struct {
 	path   string // the document's path
 	text   string
 	sheets []host.Source // the stylesheets that were read
-	// loadPaths is every stylesheet the document names, read or not.
+	// loadPaths is every stylesheet the document names, read or not, its
+	// fragments' included.
 	loadPaths []string
+	// doc is the loaded document, its includes and uses expanded: what
+	// definition and completion read for templates and scoped ids.
+	doc *parse.Document
+	// fragment is set for a file whose root is <fragment>, checked on its
+	// own (diags) unless a document reads it (SPEC v0.4b §15.12).
+	fragment bool
+	// fragPaths is the absolute path of every fragment the document's
+	// includes name, at any depth, read or not (SPEC v0.4b §6.18.2).
+	fragPaths []string
 	diags     ir.Diags
 	hasData   bool
 	data      any // the decoded sample.json, nil without one
-	version   int // 1, 2, or 3
+	version   int // 1, 2, 3, or 4 (the current language)
 }
 
 // LSP severities (DiagnosticSeverity).
@@ -48,6 +58,9 @@ type lspDiagnostic struct {
 	Code     string `json:"code"`
 	Source   string `json:"source"`
 	Message  string `json:"message"`
+	// whole is what validate's message cut (ir.Whole), never sent: two
+	// diagnostics that read the same once cut stay two, as in validate.
+	whole string
 }
 
 // analyze runs validate's checks on the document at path whose text is
@@ -62,7 +75,9 @@ func analyze(sn *snapshot, path, text string) *analysis {
 		t, ok := sn.docText(abs)
 		return []byte(t), ok
 	})
-	a := &analysis{path: path, text: text, sheets: sheets, version: docVersion(app.Document()), loadPaths: loadedPaths(path, app.Document())}
+	doc := app.Document()
+	a := &analysis{path: path, text: text, sheets: sheets, version: docVersion(doc), loadPaths: loadedPaths(path, doc),
+		doc: doc, fragment: doc.FragmentRoot, fragPaths: fragmentPaths(doc)}
 	a.data, a.hasData = readSample(sn, path)
 	if a.hasData {
 		if err := app.Bind("", a.data); err != nil {
@@ -70,13 +85,20 @@ func analyze(sn *snapshot, path, text string) *analysis {
 		}
 	}
 	diags := app.Validate()
+	if doc.FragmentRoot {
+		// A file whose root is <fragment> is no document: it is checked
+		// on its own, as `tuimark validate` checks it, with no V005 (SPEC
+		// v0.4b §6.18.2, §15.12). Its URI gets these only when no
+		// document reads it (Server.fragmentDiags).
+		diags = parse.FragmentDiags(doc)
+	}
 	if !a.hasData {
 		// Without data every bind path is "missing": keep the data-free
 		// checks, as validate does (B007 is static).
 		var kept ir.Diags
 		for _, d := range diags {
 			switch d.Code {
-			case "B001", "B002", "B003", "B008", "B009", "B010":
+			case "B001", "B002", "B003", "B008", "B009", "B010", "B011", "B012":
 				continue
 			}
 			kept = append(kept, d)
@@ -87,10 +109,16 @@ func analyze(sn *snapshot, path, text string) *analysis {
 	return a
 }
 
-// docVersion is the document version the vocabulary is filtered by: 3 and
+// docVersion is the document version the vocabulary is filtered by: 4 for
+// a <tui> without version (the current language, SPEC v0.4b §5.1), 3 and
 // 2 for those documents, else 1 (any other version is read as 1).
 func docVersion(d *parse.Document) int {
 	switch {
+	case d.FragmentRoot:
+		// A fragment is always the current language (SPEC v0.4b §6.18.2).
+		return int(ir.LangCurrent)
+	case d.Lang.V4():
+		return int(ir.LangCurrent)
 	case d.V3:
 		return 3
 	case d.V2:
@@ -123,12 +151,60 @@ func readSample(sn *snapshot, path string) (any, bool) {
 }
 
 // loadedPaths is the absolute path of every stylesheet the document names,
-// whether or not it could be read.
+// whether or not it could be read: a <style src> written in a fragment
+// resolves against the fragment's directory (SPEC v0.4b §6.18.2).
 func loadedPaths(path string, doc *parse.Document) []string {
 	var out []string
 	for _, s := range doc.Styles {
 		if s.Src != "" {
-			out = append(out, resolveSrc(path, s.Src))
+			base := path
+			if s.From != "" {
+				base = s.From
+			}
+			out = append(out, resolveSrc(base, s.Src))
+		}
+	}
+	return out
+}
+
+// fragmentPaths is the absolute path of every fragment the document's
+// includes name, at any depth, whether or not it could be read.
+func fragmentPaths(doc *parse.Document) []string {
+	var out []string
+	for _, f := range doc.Fragments {
+		p, err := filepath.Abs(f.Path)
+		if err != nil {
+			p = filepath.Clean(f.Path)
+		}
+		out = append(out, p)
+	}
+	return out
+}
+
+// reads are the files the document reads besides itself: its stylesheets,
+// then its fragments, each named or read at any depth.
+func (a *analysis) reads() []string {
+	return append(append([]string(nil), a.loadPaths...), a.fragPaths...)
+}
+
+// fileOf is the absolute path of the file a diagnostic or an element of
+// the analysis names: the loader names a stylesheet and a fragment by
+// their absolute paths, and the document by its base name (an element of
+// the document by nothing), so any other name is the document's own.
+func (a *analysis) fileOf(name string) string {
+	if filepath.IsAbs(name) {
+		return name
+	}
+	return a.path
+}
+
+// routeFile returns the diagnostics whose file is the fragment at frag,
+// placed in the lines of its text.
+func (a *analysis) routeFile(frag string, lines []string) []lspDiagnostic {
+	var out []lspDiagnostic
+	for _, d := range a.diags {
+		if d.File == frag {
+			out = append(out, convertDiag(lines, d))
 		}
 	}
 	return out
@@ -203,7 +279,7 @@ func convertDiag(lines []string, d ir.Diagnostic) lspDiagnostic {
 	if d.Line >= 1 && d.Line <= len(lines) {
 		end.Character = tokenEnd(lines[start.Line], start.Character)
 	}
-	return lspDiagnostic{Range: Range{Start: start, End: end}, Severity: sev, Code: d.Code, Source: "tuimark", Message: d.Msg}
+	return lspDiagnostic{Range: Range{Start: start, End: end}, Severity: sev, Code: d.Code, Source: "tuimark", Message: d.Msg, whole: ir.Whole(d)}
 }
 
 // tokenEnd is the UTF-16 offset where the token starting at offset start
@@ -245,17 +321,18 @@ func isWordRune(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsDigit(r) || strings.ContainsRune("_-:.#$@%", r)
 }
 
-// dedupe drops a diagnostic whose code, position, and message an earlier
-// one already has, keeping the order of first appearance.
+// dedupe drops a diagnostic whose code, position, and message (and what
+// the message cut, whole) an earlier one already has, keeping the order of
+// first appearance.
 func dedupe(in []lspDiagnostic) []lspDiagnostic {
 	type key struct {
-		code, msg string
-		pos       Position
+		code, msg, whole string
+		pos              Position
 	}
 	seen := map[key]bool{}
 	out := make([]lspDiagnostic, 0, len(in))
 	for _, d := range in {
-		k := key{d.Code, d.Message, d.Range.Start}
+		k := key{d.Code, d.Message, d.whole, d.Range.Start}
 		if !seen[k] {
 			seen[k] = true
 			out = append(out, d)

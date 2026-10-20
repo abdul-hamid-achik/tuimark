@@ -7,6 +7,7 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/catalog"
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 )
 
 // CompletionItemKind values the server uses.
@@ -50,6 +51,12 @@ type completer struct {
 	off   int
 	start int
 	items []completionItem
+	// rng is the range of the items added while start was rngStart: one
+	// request may offer a copy's every scoped id, so it is computed once,
+	// not once per item.
+	rng      Range
+	rngStart int
+	rngSet   bool
 }
 
 // at starts a completion that replaces text[start:off], keeping only the
@@ -69,11 +76,15 @@ func (c *completer) add(label string, kind int, detail, insert string, snippet b
 	if insert == "" {
 		insert = label
 	}
+	if !c.rngSet || c.rngStart != c.start {
+		c.rng = Range{Start: positionAt(c.text, c.start), End: positionAt(c.text, c.off)}
+		c.rngStart, c.rngSet = c.start, true
+	}
 	it := completionItem{
 		Label: label, Kind: kind, Detail: detail,
 		SortText: strconv.Itoa(len(c.items) + 1000)[1:],
 		TextEdit: &textEdit{
-			Range:   Range{Start: positionAt(c.text, c.start), End: positionAt(c.text, c.off)},
+			Range:   c.rng,
 			NewText: insert,
 		},
 	}
@@ -91,11 +102,20 @@ func (c *completer) list() *completionList {
 }
 
 func sinceDetail(since int) string {
-	if since <= 1 {
+	switch {
+	case since <= 1:
 		return ""
+	case since >= int(ir.LangCurrent):
+		// There is no version="4" (SPEC v0.4b §5.1): an item since the
+		// current language exists only in a <tui> without version.
+		return currentDetail
 	}
 	return "version " + strconv.Itoa(since)
 }
+
+// currentDetail names the current language, a <tui> without version, in
+// a completion's detail and a hover (sinceSuffix).
+const currentDetail = "a <tui> without version"
 
 // complete answers textDocument/completion (SPEC §15.12 "Completion").
 func (s *Server) complete(sn *snapshot, doc *document, pos Position) *completionList {
@@ -213,6 +233,17 @@ func (s *Server) completeValue(sn *snapshot, doc *document, ctx tuiCtx, off, ver
 		for _, id := range idsOf(doc.text) {
 			c.add("#"+id, kindReference, "id", "", false)
 		}
+		if ver == int(ir.LangCurrent) {
+			// The scoped ids of copies (SPEC v0.4b §15.12 "Composition").
+			for _, id := range s.copyIDs(sn, doc) {
+				c.add("#"+id, kindReference, "id", "", false)
+			}
+		}
+	case attr == "template" && ctx.tag == "use" && ver == int(ir.LangCurrent):
+		// The template ids of the expanded document.
+		for _, id := range s.templateIDs(sn, doc) {
+			c.add(id, kindReference, "template", "", false)
+		}
 	case attr == "each":
 		if !strings.Contains(ctx.prefix, " ") {
 			s.addPaths(c, sn, doc, ctx, true)
@@ -234,6 +265,37 @@ func (s *Server) completeValue(sn *snapshot, doc *document, ctx tuiCtx, off, ver
 		}
 	}
 	return c.list()
+}
+
+// copyIDs are the scoped ids of the copies in the expanded documents
+// composedDocs names, sorted, each once: the ids a use gives the elements
+// of its copy (SPEC v0.4b §6.18.4). The expansion limit bounds how many
+// there are and how long (ADR 0034).
+func (s *Server) copyIDs(sn *snapshot, doc *document) []string {
+	var out []string
+	for _, a := range s.composedDocs(sn, doc) {
+		for id, n := range a.doc.IDs {
+			if n.InCopy() {
+				out = append(out, id)
+			}
+		}
+	}
+	return uniqueSorted(out)
+}
+
+// templateIDs are the ids of the <template> elements of the expanded
+// documents composedDocs names, in whichever file each is written, sorted.
+func (s *Server) templateIDs(sn *snapshot, doc *document) []string {
+	var out []string
+	for _, a := range s.composedDocs(sn, doc) {
+		walkWritten(a.doc, func(n *ir.Node) bool {
+			if n.Kind == "template" && n.ID != "" {
+				out = append(out, n.ID)
+			}
+			return true
+		})
+	}
+	return uniqueSorted(out)
 }
 
 // addActions offers the built-in actions the version knows and the host
@@ -478,6 +540,12 @@ func (s *Server) completeSelector(doc *document, loaders []parsedDoc, ver, off i
 		var ids []string
 		for _, l := range loaders {
 			ids = append(ids, idsOf(l.text)...)
+			if l.expanded {
+				// Its fragments' ids and its copies' scoped ids too.
+				for id := range l.doc.IDs {
+					ids = append(ids, id)
+				}
+			}
 		}
 		for _, id := range uniqueSorted(ids) {
 			c.add(id, kindReference, "id", "", false)
@@ -486,6 +554,14 @@ func (s *Server) completeSelector(doc *document, loaders []parsedDoc, ver, off i
 		var classes []string
 		for _, l := range loaders {
 			classes = append(classes, classesOf(l.text)...)
+			if l.expanded {
+				walkNodes(l.doc, func(n *ir.Node) {
+					classes = append(classes, n.Classes...)
+					for _, g := range n.ClassGuards {
+						classes = append(classes, g.Name)
+					}
+				})
+			}
 		}
 		for _, cl := range uniqueSorted(classes) {
 			c.add(cl, kindClass, "class", "", false)

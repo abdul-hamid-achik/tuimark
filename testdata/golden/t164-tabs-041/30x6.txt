@@ -1,0 +1,22 @@
+=== grid 30x6 ===
+onetwo                        
+a                             
+b                             
+                              
+                              
+                              
+=== nodes ===
+main  screen  30x6 @(0,0)
+nav   tabs    30x3 @(0,0)
+-     text    3x1 @(0,0) selected
+-     text    3x1 @(3,0)
+one   tab     30x2 @(0,1)
+l1    list    30x2 @(0,1) focus
+-     item    30x1 @(0,1) selected
+-     text    30x1 @(0,1)
+-     item    30x1 @(0,2)
+-     text    30x1 @(0,2)
+=== errors ===
+ok
+=== events ===
+none

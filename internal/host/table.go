@@ -1,6 +1,7 @@
 package host
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
@@ -47,6 +48,9 @@ type tablePlan struct {
 	colIndex map[*ir.Node]int
 	segs     [][]ir.Segment
 	deps     []string
+	// empty is the table's EmptyCopies: the uses among its children
+	// whose copies placed nothing, still checked (tableActive).
+	empty [][]*ir.Node
 }
 
 // tableData is what a table reads from every row of its each array (SPEC
@@ -69,6 +73,55 @@ type tableData struct {
 	// first maps a key (keyID) to the first row that has it, built on the
 	// first rowOf and kept with the rows.
 	first map[string]int
+	// act is the set of columns and the row template the rows were
+	// resolved for (tableActive): a column or a row template that a
+	// guarded <use> placed and prunes this frame is not resolved, so the
+	// rows are resolved again when the set changes.
+	act tableActive
+}
+
+// tableActive is which of a table's columns, and whether its row
+// template, are in the frame: each is, unless a <use> that placed it
+// prunes it with its if or hidden (SPEC v0.4b §6.18.3). A pruned column
+// is absent from the table altogether (no header cell, no body cells, no
+// share of the intrinsic width, no say in whether the header row shows),
+// unlike a column priority hides; a pruned row template leaves the rows
+// with no classes of their own.
+type tableActive struct {
+	cols []bool
+	item bool
+	// empty says, per chain of the plan's empty, whether its uses keep
+	// it (their with paths through the row alias are then read per row).
+	empty []bool
+}
+
+func (x tableActive) same(y tableActive) bool {
+	return x.item == y.item && slices.Equal(x.cols, y.cols) && slices.Equal(x.empty, y.empty)
+}
+
+// tableActive evaluates the guards of the uses that placed the columns
+// and the row template of the table plan p, in the table's scope sc. The
+// with paths of those uses that go through the row alias are not read
+// there but on every row (resolveTable).
+func (fb *builder) tableActive(p *tablePlan, sc *scope) tableActive {
+	act := tableActive{cols: make([]bool, len(p.cols)), item: p.item != nil}
+	row := ""
+	if p.ok {
+		row = p.each.Alias
+	}
+	for j, c := range p.cols {
+		act.cols[j] = len(c.CopiedBy) == 0 || !fb.usesPruned(c.CopiedBy, sc, row)
+	}
+	if p.item != nil && len(p.item.CopiedBy) > 0 && fb.usesPruned(p.item.CopiedBy, sc, row) {
+		act.item = false
+	}
+	if len(p.empty) > 0 {
+		act.empty = make([]bool, len(p.empty))
+		for k, chain := range p.empty {
+			act.empty[k] = !fb.usesPruned(chain, sc, row)
+		}
+	}
+	return act
 }
 
 // rowOf returns the index of the first row, in array order, whose key
@@ -95,6 +148,9 @@ type tableFrame struct {
 	data    *tableData
 	checked keySet
 	sel     int
+	// item is the row template in the frame, nil when there is none or a
+	// guarded <use> prunes it (tableActive).
+	item *ir.Node
 }
 
 // tablePlan parses the templates of table node n once. The caller holds
@@ -103,9 +159,9 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 	if c := a.tables[n]; c != nil {
 		return c.plan
 	}
-	p := &tablePlan{keyPath: n.Attrs["key"], colIndex: map[*ir.Node]int{}}
+	p := &tablePlan{keyPath: n.Attrs["key"], colIndex: map[*ir.Node]int{}, empty: n.EmptyCopies}
 	if n.Each != "" {
-		if e, err := ir.ParseEach(n.Each); err == nil {
+		if e, err := ir.ParseEachField(n.Each); err == nil {
 			p.each, p.ok = e, true
 		}
 	}
@@ -114,7 +170,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 		case c.Kind == "item" && p.item == nil:
 			p.item = c
 		case c.Kind == "column":
-			segs, _ := ir.ParseInterp(c.Text)
+			segs, _ := ir.ParseInterpField(c.Text)
 			p.colIndex[c] = len(p.cols)
 			p.cols = append(p.cols, c)
 			p.segs = append(p.segs, segs)
@@ -139,7 +195,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 				return
 			}
 			for _, cg := range n.ClassGuards {
-				if g, err := ir.ParseGuard(cg.Guard); err == nil {
+				if g, err := ir.ParseGuardField(cg.Guard); err == nil {
 					dep(g.Path, true)
 				}
 			}
@@ -186,14 +242,14 @@ func sameStamp(a, b []uint64) bool {
 // store paths they read are unchanged, else resolved again. A table in an
 // enclosing each scope (which is V001) is resolved every frame. The
 // caller holds a.mu.
-func (fb *builder) tableRows(n *ir.Node, p *tablePlan, sc *scope) *tableData {
+func (fb *builder) tableRows(n *ir.Node, p *tablePlan, sc *scope, act tableActive) *tableData {
 	a := fb.a
 	c := a.tables[n]
 	var td *tableData
-	if sc == nil && !a.noCache && c.data != nil && c.data.strict == a.strict && sameStamp(c.data.stamp, a.stamp(p.deps)) {
+	if sc == nil && !a.noCache && c.data != nil && c.data.strict == a.strict && c.data.act.same(act) && sameStamp(c.data.stamp, a.stamp(p.deps)) {
 		td = c.data
 	} else {
-		td = fb.resolveTable(n, p, sc)
+		td = fb.resolveTable(n, p, sc, act)
 		if sc == nil && !a.noCache {
 			td.stamp = a.stamp(p.deps)
 			c.data = td
@@ -207,7 +263,7 @@ func (fb *builder) tableRows(n *ir.Node, p *tablePlan, sc *scope) *tableData {
 
 // add appends a diagnostic to the frame once.
 func (fb *builder) add(d ir.Diagnostic) {
-	k := d.String()
+	k := fb.a.diagKey(d)
 	if fb.seen[k] {
 		return
 	}
@@ -222,37 +278,54 @@ func (fb *builder) add(d ir.Diagnostic) {
 // row, visible or not, and a missing path reports B002 (guard) or B003
 // (cell template) once per template or guard and path, so the
 // diagnostics never depend on the scroll offset. The caller holds a.mu.
-func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope) *tableData {
+func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableActive) *tableData {
 	a := fb.a
-	sub := &builder{a: a, seen: map[string]bool{}}
+	sub := &builder{a: a, seen: map[diagID]bool{}}
 	k := len(p.cols)
-	td := &tableData{strict: a.strict, texts: make([][]string, k), on: make([][][]bool, k), measure: make([]int, k)}
+	td := &tableData{strict: a.strict, texts: make([][]string, k), on: make([][][]bool, k), measure: make([]int, k), act: act}
 	if !p.ok {
 		return td
 	}
 	v, found := sc.resolve(a.store, p.each.Path)
 	arr, isArr := v.([]any)
-	switch {
-	case !found:
-		sub.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, p.each.Path)
-	case !isArr:
-		sub.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, p.each.Path, typeName(v))
+	if !found || !isArr {
+		sub.badEach(n, p.each.Path, v, found, sc)
 	}
 	rows := len(arr)
 	td.rows = rows
 	td.keys = make([]any, rows)
 	for j, c := range p.cols {
+		if !act.cols[j] {
+			continue
+		}
 		td.texts[j] = make([]string, rows)
 		if len(c.ClassGuards) > 0 {
 			td.on[j] = make([][]bool, rows)
 		}
 	}
-	if p.item != nil && len(p.item.ClassGuards) > 0 {
+	if act.item && len(p.item.ClassGuards) > 0 {
 		td.rowOn = make([][]bool, rows)
 	}
 	keySev := ir.Warning
 	if a.strict {
 		keySev = ir.Error
+	}
+	// The with paths through the row alias of the uses that placed the
+	// columns and the row template in the frame (tableActive): each is
+	// read on every row, in the row's scope, and reported once.
+	var withs []useClause
+	for j, c := range p.cols {
+		if act.cols[j] {
+			withs = rowWith(withs, c.CopiedBy, p.each.Alias)
+		}
+	}
+	if act.item {
+		withs = rowWith(withs, p.item.CopiedBy, p.each.Alias)
+	}
+	for k, chain := range p.empty {
+		if act.empty[k] {
+			withs = rowWith(withs, chain, p.each.Alias)
+		}
 	}
 	for i, el := range arr {
 		isc := &scope{alias: p.each.Alias, value: el, parent: sc}
@@ -261,16 +334,22 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope) *tableData 
 			if kv, ok := isc.resolve(a.store, p.keyPath); ok {
 				key = kv
 			} else {
-				sub.report(n, keySev, "B003", "key=%q is missing on row %d (its key is the index)", p.keyPath, i)
+				sub.missingKey(n, p.keyPath, isc, keySev, "key=%q is missing on row %d (its key is the index)", i)
 			}
 		}
 		isc.key = key
+		for _, w := range withs {
+			sub.checkWith(w.use, w.i, isc)
+		}
 		td.keys[i] = key
 		if td.rowOn != nil {
 			td.rowOn[i] = sub.guardsOn(p.item, isc)
 		}
 		for j, c := range p.cols {
-			text := sub.interpSegs(c, p.segs[j], isc)
+			if !act.cols[j] {
+				continue
+			}
+			text := sub.interpSegs(c, "", p.segs[j], isc)
 			td.texts[j][i] = text
 			if w := layout.MaxWidth(text); w > td.measure[j] {
 				td.measure[j] = w
@@ -295,10 +374,11 @@ func (fb *builder) guardsOn(n *ir.Node, sc *scope) []bool {
 	return on
 }
 
-// interpSegs is interp over a template parsed once: literal text and the
-// value of each {path} in scope sc, formatted as text without control
-// characters; a missing path renders empty and reports B003.
-func (fb *builder) interpSegs(n *ir.Node, segs []ir.Segment, sc *scope) string {
+// interpSegs is interp over a template parsed once, written in slot (see
+// interp): literal text and the value of each {path} in scope sc,
+// formatted as text without control characters; a missing path renders
+// empty and reports B003.
+func (fb *builder) interpSegs(n *ir.Node, slot string, segs []ir.Segment, sc *scope) string {
 	if len(segs) == 1 {
 		sg := segs[0]
 		if sg.Path == "" {
@@ -306,20 +386,22 @@ func (fb *builder) interpSegs(n *ir.Node, segs []ir.Segment, sc *scope) string {
 		}
 		v, ok := sc.resolve(fb.a.store, sg.Path)
 		if !ok {
-			fb.missingBind(n, sg.Path)
+			fb.missingBind(n, slot, 0, sg.Path, sc)
 			return ""
 		}
 		return cleanText(Format(v))
 	}
 	var b strings.Builder
+	k := 0
 	for _, sg := range segs {
 		if sg.Path == "" {
 			b.WriteString(sg.Lit)
 			continue
 		}
+		k++
 		v, ok := sc.resolve(fb.a.store, sg.Path)
 		if !ok {
-			fb.missingBind(n, sg.Path)
+			fb.missingBind(n, slot, k-1, sg.Path, sc)
 			continue
 		}
 		b.WriteString(cleanText(Format(v)))
@@ -381,15 +463,19 @@ func guardClasses(n *ir.Node, on []bool) []string {
 func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	a := fb.a
 	p := a.tablePlan(n)
-	td := fb.tableRows(n, p, sc)
-	b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
+	act := fb.tableActive(p, sc)
+	td := fb.tableRows(n, p, sc, act)
+	b.Placeholder = fb.interp(n, "placeholder", n.Attrs["placeholder"], sc)
 	for j, c := range p.cols {
+		if !act.cols[j] {
+			continue // pruned by the guard of the <use> that placed it
+		}
 		cb := &layout.Box{
 			Tag: c.Tag, Kind: c.Kind, ID: c.ID, Classes: c.Classes, Parent: b, Src: c,
 			Hints: a.hintsOf(c), Inline: a.inlineOf(c), Follow: -1, Index: -1,
 			Fixed: true, Disabled: b.Disabled,
 		}
-		cb.Title = fb.interp(c, c.Attrs["title"], sc)
+		cb.Title = fb.interp(c, "title", c.Attrs["title"], sc)
 		cb.Text = cb.Title
 		cb.Measure = max(layout.MaxWidth(cb.Text), td.measure[j])
 		if c.ID != "" {
@@ -407,7 +493,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	if n.Bind != "" {
 		v, found := sc.resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind)
+			fb.missingBind(n, "bind", 0, n.Bind, sc)
 		}
 		if found && v != nil {
 			if i := td.rowOf(v); i >= 0 {
@@ -424,7 +510,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	// SPEC §6.14: the checked row keys, and the mark channel of every
 	// row, the header row's too (§6.9.3).
 	var checked keySet
-	if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
+	if path, ok := n.Attr("checked"); ok && ir.IsPathField(path) {
 		keys, _ := fb.checkedKeys(n, path, sc)
 		checked = fb.checkedSet(n, path, keys, sc)
 		if m, ok := n.Attr("mark"); ok {
@@ -441,7 +527,11 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	if fb.tables == nil {
 		fb.tables = map[*layout.Box]*tableFrame{}
 	}
-	fb.tables[b] = &tableFrame{plan: p, data: td, checked: checked, sel: sel}
+	item := p.item
+	if !act.item {
+		item = nil
+	}
+	fb.tables[b] = &tableFrame{plan: p, data: td, checked: checked, sel: sel, item: item}
 }
 
 // placeTableRows is step 7 of SPEC §18: after layout, for each laid-out
@@ -495,9 +585,9 @@ func (fb *builder) placeRows(casc *css.Cascade, t *layout.Box) {
 			rowOn = td.rowOn[i]
 		}
 		row := &layout.Box{
-			Tag: "item", Kind: "item", Parent: t, Src: p.item, Follow: -1, Index: i,
+			Tag: "item", Kind: "item", Parent: t, Src: tf.item, Follow: -1, Index: i,
 			Fixed: true, Disabled: t.Disabled, Mark: t.Mark,
-			Classes: guardClasses(p.item, rowOn), GuardOn: rowOn,
+			Classes: guardClasses(tf.item, rowOn), GuardOn: rowOn,
 			Selected: i == tf.sel, Checked: tf.checked.has(td.keys[i]), Key: Format(td.keys[i]),
 		}
 		for _, col := range cols {

@@ -21,7 +21,9 @@ const (
 // UASheet is the built-in stylesheet, SPEC §10.6 as a whole: the v1
 // defaults, then the 0.2b rules for the version="2" tags, which never
 // match in a version="1" document (it cannot contain those tags). The
-// built-in sheet is exempt from the version gate (SPEC §5.1).
+// built-in sheet is exempt from the version gate (SPEC §5.1). It is the
+// sheet of every document that writes version and of the spike root
+// <app>; a <tui> without version uses UASheetCurrent (SPEC v0.4b §10.6).
 const UASheet = `
 screen { layout: column; width: 100%; height: 100%; }
 col    { layout: column; width: 1fr; height: 1fr; }
@@ -50,7 +52,8 @@ const UAFile = "<ua>"
 
 var uaSheet *Sheet
 
-// UA returns the parsed built-in sheet (read-only).
+// UA returns the parsed built-in sheet of a pinned document (read-only):
+// UALang(ir.Lang1).
 func UA() *Sheet { return uaSheet }
 
 // EffectiveTheme maps a theme name to the built-in theme it selects:
@@ -104,8 +107,16 @@ type Cascade struct {
 	share *shareMemo
 }
 
-// NewCascade prepares the rule set for a terminal size and theme.
+// NewCascade prepares the rule set for a terminal size and theme, with the
+// built-in sheet of a pinned document: NewCascadeLang with ir.Lang1.
 func NewCascade(sheets []*Sheet, env Env) *Cascade {
+	return NewCascadeLang(sheets, env, ir.Lang1)
+}
+
+// NewCascadeLang prepares the rule set for a terminal size and theme in a
+// document of language l (SPEC v0.4b §5.1), which picks the built-in
+// sheet (UALang); 0 is read as Lang1.
+func NewCascadeLang(sheets []*Sheet, env Env, l ir.Lang) *Cascade {
 	c := &Cascade{Tokens: map[string]string{}, seen: map[string]bool{}}
 	for k, v := range Themes[EffectiveTheme(env.Theme)] {
 		c.Tokens[k] = v
@@ -145,7 +156,7 @@ func NewCascade(sheets []*Sheet, env Env) *Cascade {
 			}
 		}
 	}
-	add(uaSheet, OriginUA)
+	add(UALang(l), OriginUA)
 	for _, sh := range sheets {
 		add(sh, OriginAuthor)
 	}

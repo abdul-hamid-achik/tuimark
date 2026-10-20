@@ -1,0 +1,8 @@
+<tui>
+  <template id="t">
+    <text id="a" bogus="1">{x.y}</text>
+    <zzz/>
+    <text id="a">dup</text>
+  </template>
+  <screen id="main"><text>s</text></screen>
+</tui>

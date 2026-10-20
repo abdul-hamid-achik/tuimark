@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="316" height="48" viewBox="0 0 316 48" role="img" aria-label="a braille spinner glyph followed by the text Deploying billing">
+<title>a braille spinner glyph followed by the text Deploying billing</title>
+<rect width="316" height="48" rx="6" fill="#0d1117"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="14" y="29" textLength="9.6" lengthAdjust="spacing" fill="#39c5cf">⠸</text>
+<text x="33.2" y="29" textLength="86.4" lengthAdjust="spacing" fill="#e6edf3">Deploying</text>
+<text x="129.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">billing…</text>
+</g>
+</svg>

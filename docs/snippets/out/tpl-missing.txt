@@ -1,0 +1,4 @@
+$ tuimark validate missing.tui --data missing.json
+warning B003 missing.tui:7:7 /screen/col/text bind path "f.help" is missing (form.email.help via <use id="email">)
+warning B003 missing.tui:12:5 /screen/use with path "form.phone" (alias f) is missing
+ok

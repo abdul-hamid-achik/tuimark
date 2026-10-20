@@ -1,0 +1,30 @@
+=== grid 40x12 ===
+                                        
+    ┌─ a long help title here ─────┐    
+    │line 1                        │    
+    │line 2                        │    
+    │line 3                        │    
+    │line 4                        │    
+    │line 5                        │    
+    │line 6                        │    
+    │line 7                        │    
+    └──────────────────────────────┘    
+                                        
+                                        
+=== nodes ===
+main  screen  40x12 @(0,0)
+help  modal   32x9 @(4,1) focus clipped
+-     text    30x1 @(5,2)
+-     text    30x1 @(5,3)
+-     text    30x1 @(5,4)
+-     text    30x1 @(5,5)
+-     text    30x1 @(5,6)
+-     text    30x1 @(5,7)
+-     text    30x1 @(5,8)
+-     text    30x1 @(5,9)
+-     text    30x1 @(5,10)
+-     text    30x1 @(5,11)
+-     text    30x1 @(5,12)
+-     text    30x1 @(5,13)
+=== errors ===
+warning L009 help.tui:3:5 /screen/modal cuts text[7] on y: 0 of 1 cells shown; give it room, or write overflow: hidden to keep the cut

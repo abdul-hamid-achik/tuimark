@@ -1,0 +1,13 @@
+=== grid 20x6 ===
+Lisbon             ▾
+[ ] C               
+                    
+                    
+                    
+                    
+=== nodes ===
+main  screen    20x6 @(0,0)
+tz    select    20x1 @(0,0) focus
+c     checkbox  20x1 @(0,1)
+=== errors ===
+ok

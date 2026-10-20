@@ -1,0 +1,64 @@
+version: 1
+name: help_esc_2048
+intent: |
+    examples/2048 writes no version, so it is the current language, where
+    esc closes the top modal (SPEC v0.4b §31.7, test 172). Its help modal
+    holds the key list and three tips over the board. `?` opens it; esc
+    fires the modal's on:escape (help_close), the host writes the help's
+    flag false, and the app comes back, still running, with `? help` in its
+    hint bar. Its hint bar is trapped while the help is open (the keys
+    repeated in `<keymap when="modal">` have no label), so `? help` coming
+    back shows the trap released.
+target:
+    cmd: ["${vars.ex2048}"]
+    cwd: "."
+terminal:
+    cols: 120
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "◆ 2048"
+        timeoutMs: 5000
+    - press: "?"
+    - wait:
+        screen:
+            contains: "Equal tiles merge once a move."
+        timeoutMs: 3000
+    - snapshot: help_open
+    - press: esc
+    - wait:
+        screen:
+            notContains: "Equal tiles merge once a move."
+        timeoutMs: 3000
+    - wait:
+        screen:
+            contains: "? help"
+        timeoutMs: 3000
+    - snapshot: help_closed
+outcomes:
+    - id: question_mark_opens_the_help
+      description: "? opens the help modal"
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/help_open.txt"
+                if grep -qF 'Equal tiles merge once a move.' "$f"; then
+                  echo '{"ok": true, "evidence": "the help_open snapshot shows the help"}'
+                else
+                  echo '{"ok": false, "evidence": "? did not open the help"}'
+                fi
+    - id: esc_closes_the_help
+      description: esc closes the help through on:escape; the app and its hint bar are back
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/help_closed.txt"
+                if ! grep -qF 'Equal tiles merge once a move.' "$f" && grep -qF '◆ 2048' "$f" && grep -qF '? help' "$f"; then
+                  echo '{"ok": true, "evidence": "the help_closed snapshot shows the app and its hint bar without the help"}'
+                else
+                  echo '{"ok": false, "evidence": "esc did not close the help, or the app did not come back"}'
+                fi
+contractHash: sha256:0dc71f88712c28cc02f78265e4b6c87882d236d1db280faae5d1447c49335673

@@ -1,0 +1,5 @@
+{
+  "profile": { "name": "", "tz": "mars", "news": "yes", "dark": true, "plan": ["free"] },
+  "zones": [{ "id": "utc", "name": "UTC" }],
+  "plans": [{ "id": "free", "name": "Free" }]
+}

@@ -1,0 +1,13 @@
+<tui>
+  <screen id="main" focus="#billing__line__in">
+    <text>Order</text>
+    <col id="billing__box">
+      <text>{order.billing.city}</text>
+      <input id="billing__line__in" bind="order.billing.street"/>
+    </col>
+    <col id="shipping__box">
+      <text>{order.shipping.city}</text>
+      <input id="shipping__line__in" bind="order.shipping.street"/>
+    </col>
+  </screen>
+</tui>

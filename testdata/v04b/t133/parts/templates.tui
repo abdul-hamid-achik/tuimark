@@ -1,0 +1,11 @@
+<fragment>
+  <template id="address">
+    <col id="box">
+      <text>{a.city}</text>
+      <use id="line" template="field" with="a.street as f"/>
+    </col>
+  </template>
+  <template id="field">
+    <input id="in" bind="f"/>
+  </template>
+</fragment>

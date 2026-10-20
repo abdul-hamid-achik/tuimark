@@ -1,0 +1,16 @@
+<tui>
+  <keymap>
+    <bind keys="q" action="quit" label="quit"/>
+    <bind keys="?" action="toggle_help" label="help"/>
+  </keymap>
+  <keymap when="modal">
+    <bind keys="?" action="toggle_help" label="close"/>
+  </keymap>
+  <screen id="main">
+    <text>The inbox is empty.</text>
+    <modal id="help" open="help_open" title="Help" on:close="help_closed">
+      <text>q quits from the main view.</text>
+      <hints/>
+    </modal>
+  </screen>
+</tui>

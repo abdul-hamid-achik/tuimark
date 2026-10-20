@@ -25,8 +25,14 @@ import (
 // or document versions does not (SPEC v0.4a §15.10).
 const Format = 1
 
-// Versions lists the document versions this build accepts.
+// Versions lists the document versions this build accepts as version
+// values.
 var Versions = []int{1, 2, 3}
+
+// Current is the number of the current language, a <tui> without version
+// (SPEC v0.4b §5.1, §15.10): not a writable value, and the since of every
+// item only such a document accepts.
+const Current = int(ir.LangCurrent)
 
 // Item is a named entry with the lowest document version that accepts it.
 type Item struct {
@@ -75,6 +81,9 @@ type Keys struct {
 	Ctrl       string   `json:"ctrl"`
 	Printable  bool     `json:"printable"`
 	NeverMatch []string `json:"never_match"`
+	// RejectedSince is the first language whose keymaps reject NeverMatch
+	// with V003 (SPEC v0.4b §8.1, §15.10).
+	RejectedSince int `json:"rejected_since"`
 }
 
 // Action is a built-in action. KeymapOnly marks the hyphenated ones, which
@@ -99,6 +108,7 @@ type Catalog struct {
 	Catalog       int          `json:"catalog"`
 	Tuimark       string       `json:"tuimark"`
 	Versions      []int        `json:"versions"`
+	Current       int          `json:"current"`
 	Tags          []Tag        `json:"tags"`
 	Properties    []Property   `json:"properties"`
 	PseudoClasses []Item       `json:"pseudo_classes"`
@@ -126,15 +136,17 @@ func Build(tuimark string) Catalog {
 		Catalog:       Format,
 		Tuimark:       tuimark,
 		Versions:      append([]int(nil), Versions...),
+		Current:       Current,
 		Tags:          tags(),
 		Properties:    properties(),
 		PseudoClasses: pseudoClasses(),
 		Media:         media(),
 		Keys: Keys{
-			Named:      append([]string(nil), ir.NamedKeys...),
-			Ctrl:       "a-z",
-			Printable:  true,
-			NeverMatch: append([]string(nil), agentsdoc.NeverMatchKeys...),
+			Named:         append([]string(nil), ir.NamedKeys...),
+			Ctrl:          "a-z",
+			Printable:     true,
+			NeverMatch:    append([]string(nil), agentsdoc.NeverMatchKeys...),
+			RejectedSince: int(ir.KeysRejectedSince),
 		},
 		Actions:     actions(),
 		Diagnostics: diagnostics(),
@@ -149,6 +161,9 @@ func tags() []Tag {
 	for _, k := range ir.KindsV2 {
 		since[k] = 2
 	}
+	for _, k := range ir.KindsCurrent {
+		since[k] = Current
+	}
 	names := make([]string, 0, len(since))
 	for k := range since {
 		names = append(names, k)
@@ -162,9 +177,11 @@ func tags() []Tag {
 }
 
 // attrs lists a tag's attributes alphabetically: those of the version="1"
-// table, then what version="2" and version="3" add, each with the first
-// version whose table has it. An attribute of a tag that is itself
-// version="2" is at least 2 (the tag's rows live in the version="2" table).
+// table, then what version="2", version="3", and the current language add,
+// each with the first version whose table has it (Current for the current
+// language's table, SPEC v0.4b §15.10). An attribute of a tag that is
+// itself version="2" is at least 2 (the tag's rows live in the version="2"
+// table).
 func attrs(tag string) []Attr {
 	since := map[string]int{}
 	for name := range parse.TagAttrs[tag] {
@@ -180,6 +197,11 @@ func attrs(tag string) []Attr {
 			since[name] = 3
 		}
 	}
+	for name := range parse.TagAttrsCurrent[tag] {
+		if _, ok := since[name]; !ok {
+			since[name] = Current
+		}
+	}
 	names := make([]string, 0, len(since)+1)
 	for name := range since {
 		names = append(names, name)
@@ -192,7 +214,14 @@ func attrs(tag string) []Attr {
 	if parse.TakesClassGuard(tag) {
 		// class:NAME sorts after "class" and before "disabled" ('c' < 'd'),
 		// so it goes in order.
-		out = append(out, Attr{Name: ClassGuardAttr, Since: 2, Pattern: ClassGuardPattern, Keywords: []Item{}})
+		// It is version="2" vocabulary, so on a tag of the current
+		// language (checkbox) it is as new as the tag (SPEC v0.4b §15.10:
+		// every attribute of a 0.4b tag has since 4).
+		guardSince := 2
+		if ir.IsKindCurrent(tag) {
+			guardSince = Current
+		}
+		out = append(out, Attr{Name: ClassGuardAttr, Since: guardSince, Pattern: ClassGuardPattern, Keywords: []Item{}})
 		sort.SliceStable(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	}
 	return out

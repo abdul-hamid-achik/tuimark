@@ -8,17 +8,22 @@ import (
 	"testing"
 )
 
-// --- D8: schema/ir.v0.1.json, ir.v0.2.json, ir.v0.3.json, dump.v0.2.json --
+// --- D8: schema/ir.v0.1.json to ir.v0.4.json, dump.v0.2.json and its frozen copy --
 
 const (
 	irV01Schema   = "../../schema/ir.v0.1.json"
 	irV02Schema   = "../../schema/ir.v0.2.json"
 	irV03Schema   = "../../schema/ir.v0.3.json"
+	irV04Schema   = "../../schema/ir.v0.4.json"
 	dumpV02Schema = "../../schema/dump.v0.2.json"
+	// dumpV02Frozen is schema/dump.v0.2.json as tuimark 0.4.1 shipped it,
+	// frozen before 0.4b widens its tag enum: the dump of a pinned
+	// document validates against it (SPEC v0.4b test 189).
+	dumpV02Frozen = "testdata/dump.v0.2-0.3a.json"
 )
 
 func TestSchemaFilesAreValidJSON(t *testing.T) {
-	for _, p := range []string{irV01Schema, irV02Schema, irV03Schema, dumpV02Schema} {
+	for _, p := range []string{irV01Schema, irV02Schema, irV03Schema, irV04Schema, dumpV02Schema, dumpV02Frozen} {
 		raw, err := os.ReadFile(p)
 		if err != nil {
 			t.Fatal(err)

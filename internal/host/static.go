@@ -50,9 +50,9 @@ func (a *App) checkDocks(themes []string) ir.Diags {
 	if a.doc.Root == nil {
 		return out
 	}
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, env := range dockEnvs(themes) {
-		casc := css.NewCascade(a.sheets, env)
+		casc := css.NewCascadeLang(a.sheets, env, a.doc.Lang)
 		var walk func(n *ir.Node, parent *staticEl, ps *css.Style)
 		walk = func(n *ir.Node, parent *staticEl, ps *css.Style) {
 			switch n.Kind {
@@ -65,7 +65,7 @@ func (a *App) checkDocks(themes []string) ir.Diags {
 				return
 			}
 			el := &staticEl{n: n, parent: parent}
-			st := casc.Compute(el, ps, a.toDecls(n.Hints), a.toDecls(n.Inline))
+			st := casc.Compute(el, ps, a.toDecls(n, n.Hints), a.toDecls(n, n.Inline))
 			// A table's columns and row template ignore dock (SPEC
 			// §6.9.3), and so does a tab (§6.10.4): their widget
 			// places them.
@@ -73,8 +73,8 @@ func (a *App) checkDocks(themes []string) ir.Diags {
 				row := (&layout.Box{Kind: parent.n.Kind, Style: ps}).Direction() == "row"
 				if layout.DockConflict(st, row) {
 					d := ir.At(n, a.file, ir.Error, "V010", "%s", layout.DockConflictMsg(st.Dock))
-					if !seen[d.String()] {
-						seen[d.String()] = true
+					if k := a.diagKey(d); !seen[k] {
+						seen[k] = true
 						out = append(out, d)
 					}
 				}

@@ -1,0 +1,25 @@
+<tui>
+  <style>
+    .label { bold: true; }
+    .invalid { color: red; }
+  </style>
+  <template id="field">
+    <col>
+      <text class="label" class:invalid="f.error">{f.label}</text>
+      <input id="input" bind="f.value" placeholder="{f.hint}" on:submit="submit"/>
+      <text class="invalid" if="f.error">{f.error}</text>
+    </col>
+  </template>
+  <keymap>
+    <bind keys="ctrl+s" action="save" label="save"/>
+    <bind keys="ctrl+n" action="focus" to="#email__input" label="email"/>
+  </keymap>
+  <screen id="main" focus="#name__input">
+    <col gap="1" pad="1">
+      <text>Hello, {form.name.value}</text>
+      <use id="name" template="field" with="form.name as f"/>
+      <use id="email" template="field" with="form.email as f"/>
+      <hints/>
+    </col>
+  </screen>
+</tui>

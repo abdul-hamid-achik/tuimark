@@ -64,6 +64,30 @@
     "cmd": "tuimark play input.tui --data data.json --cols 40 --rows 3"
   },
   {
+    "name": "w-form",
+    "light": true,
+    "cols": 44,
+    "rows": 16,
+    "alt": "a form: a name input with its placeholder, a select showing UTC, a checked and an unchecked checkbox, a radio group with Free chosen, and Save and Cancel buttons",
+    "cmd": "tuimark play form.tui --data data.json --cols 44 --rows 16"
+  },
+  {
+    "name": "w-select-open",
+    "light": true,
+    "cols": 44,
+    "rows": 16,
+    "alt": "the same form with the select open: a bordered option list under it, over the radio group, with the cursor on UTC",
+    "cmd": "tuimark play form.tui --data data.json --cols 44 --rows 16 --input \"tab enter\""
+  },
+  {
+    "name": "w-spinner",
+    "light": true,
+    "cols": 30,
+    "rows": 1,
+    "alt": "a braille spinner glyph followed by the text Deploying billing",
+    "cmd": "tuimark play spinner.tui --data spinner.json --cols 30 --rows 1 --input tick:300ms"
+  },
+  {
     "name": "tour-narrow",
     "light": true,
     "cols": 56,

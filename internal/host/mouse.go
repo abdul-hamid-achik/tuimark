@@ -152,6 +152,14 @@ func (a *App) HandleMouse(m Mouse) (evs []Event, on bool) {
 		a.press = nil
 		return nil, false
 	}
+	if l := f.Options; l != nil && !l.Clip.Contains(m.X, m.Y) {
+		// Step 0 (SPEC v0.4b §8.5): an event outside the open option list
+		// (its outer rect clipped to the grid) closes it without change,
+		// and is dropped, forgetting a pending press.
+		a.closeOptions()
+		a.press = nil
+		return nil, true
+	}
 	h, root, id := a.hit(f, m.X, m.Y)
 	switch m.Kind {
 	case MousePress:
@@ -175,7 +183,7 @@ func (a *App) HandleMouse(m Mouse) (evs []Event, on bool) {
 		if m.Kind == MouseWheelUp {
 			dir = -1
 		}
-		return a.wheel(h, root, m.X, m.Y, dir), true
+		return a.wheel(f, h, root, m.X, m.Y, dir), true
 	}
 	return nil, true
 }
@@ -184,13 +192,21 @@ func (a *App) HandleMouse(m Mouse) (evs []Event, on bool) {
 // the cell is outside the grid, or outside the top modal while one is open
 // (focus is trapped there); else the hit node (HitNode, steps 2 and 3),
 // the root of its layer (the screen, or the modal), and the hit identity
-// (step 4). The caller holds a.mu.
+// (step 4). While a select's option list is open it is the top layer
+// (step 0, SPEC v0.4b): a cell inside it hits it or one of its rows, with
+// the list as the layer's root, and the layer named by its select's
+// element; HandleMouse drops a cell outside it before. The caller holds
+// a.mu.
 func (a *App) hit(f *Frame, x, y int) (h, root *layout.Box, id *hitIdentity) {
 	grid := layout.Rect{W: f.Cols, H: f.Rows}
 	if !grid.Contains(x, y) {
 		return nil, nil, nil
 	}
-	if n := len(f.Modals); n > 0 {
+	if l := f.Options; l != nil {
+		if !l.Clip.Contains(x, y) {
+			return nil, nil, nil
+		}
+	} else if n := len(f.Modals); n > 0 {
 		top := f.Modals[n-1]
 		if !top.Laid || !top.Outer().Intersect(grid).Contains(x, y) {
 			return nil, nil, nil
@@ -223,7 +239,13 @@ func (a *App) hit(f *Frame, x, y int) (h, root *layout.Box, id *hitIdentity) {
 	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
 		path[i], path[j] = path[j], path[i]
 	}
-	return h, root, &hitIdentity{layer: root.Src, path: path}
+	layer := root.Src
+	if root == f.Options {
+		// The option list has no element of its own: its select's names
+		// the layer (SPEC v0.4b §8.5 step 4).
+		layer = root.Parent.Src
+	}
+	return h, root, &hitIdentity{layer: layer, path: path}
 }
 
 // stopsWalk is rule 0 of the click and wheel walks (SPEC v0.2b §8.5): a
@@ -247,6 +269,12 @@ func inCycle(f *Frame, b *layout.Box) bool {
 	return false
 }
 
+// optionRow reports whether b is a row of the open option list l (SPEC
+// v0.4b §6.17.4).
+func optionRow(b, l *layout.Box) bool {
+	return l != nil && b.Kind == "item" && b.Parent == l
+}
+
 // rowWidget returns the list or table b is a row of, or nil.
 func rowWidget(b *layout.Box) *layout.Box {
 	if b.Kind != "item" || b.Parent == nil {
@@ -268,6 +296,13 @@ func rowWidget(b *layout.Box) *layout.Box {
 //  2. a row of a list or a table: the widget takes focus when it is in the
 //     focus cycle and not focused (its on:focus), then its cursor moves to
 //     that row as a user move (on:select when it changed);
+//     1a. a row of the open option list (SPEC v0.4b): its cursor moves to
+//     that row and the option is picked, as enter picks;
+//     2a. a checkbox (SPEC v0.4b): it takes focus when it is in the focus
+//     cycle and not focused (its on:focus), then it toggles;
+//     2b. a select with at least one option (SPEC v0.4b): it takes focus
+//     when it is in the focus cycle and not focused (its on:focus), then
+//     its option list opens; one with no option is left to rule 5;
 //  3. a column with on:click: that action fires; focus does not move;
 //  4. a node with on:click: it takes focus when it is in the focus cycle
 //     and not focused (on:focus), then its on:click fires;
@@ -282,6 +317,11 @@ func (a *App) click(f *Frame, h, root *layout.Box) []Event {
 		switch {
 		case b.Role == layout.RoleTabLabel:
 			return a.activateTab(b.Parent, b.For)
+		case optionRow(b, f.Options):
+			// Rule 1a, before rule 2, which would take the row as a
+			// list's.
+			a.opts.cursor = b.Index
+			return a.pickOption(f.Options.Parent, b.Index)
 		case rowWidget(b) != nil:
 			w := rowWidget(b)
 			var evs []Event
@@ -289,6 +329,22 @@ func (a *App) click(f *Frame, h, root *layout.Box) []Event {
 				evs = append(evs, a.focusTo(w.ID)...)
 			}
 			return append(evs, a.moveList(w, func(_, _, _ int) int { return b.Index })...)
+		case b.Kind == "checkbox":
+			// Rule 2a (SPEC v0.4b §8.5): focus it when it is in the focus
+			// cycle and not focused, then toggle it.
+			var evs []Event
+			if inCycle(f, b) && a.focus != b.ID {
+				evs = append(evs, a.focusTo(b.ID)...)
+			}
+			return append(evs, a.toggleCheckbox(b)...)
+		case b.Kind == "select" && b.Rows > 0:
+			// Rule 2b (SPEC v0.4b §8.5).
+			var evs []Event
+			if inCycle(f, b) && a.focus != b.ID {
+				evs = append(evs, a.focusTo(b.ID)...)
+			}
+			a.openOptions(b)
+			return evs
 		case b.Kind == "column":
 			if act, ok := b.Src.On["click"]; ok {
 				return []Event{{Action: act, Source: b.ID, Keys: map[string]any{}}}
@@ -318,6 +374,9 @@ func (a *App) click(f *Frame, h, root *layout.Box) []Event {
 //
 //  1. a tab label, or the tabs node itself when the cell is on its strip
 //     row: move-prev (up) or move-next (down) on that tabs;
+//     1a. the open option list, or a row of it (SPEC v0.4b): its cursor
+//     moves by dir, clamped, and its offset follows; nothing is written
+//     and nothing fires;
 //  2. a list or a table with at least one row, or a row of one: the
 //     cursor moves by dir as a user move, clamped, with on:select when it
 //     changed; focus does not move;
@@ -326,7 +385,7 @@ func (a *App) click(f *Frame, h, root *layout.Box) []Event {
 //     clamped.
 //
 // The caller holds a.mu.
-func (a *App) wheel(h, root *layout.Box, x, y, dir int) []Event {
+func (a *App) wheel(f *Frame, h, root *layout.Box, x, y, dir int) []Event {
 	move := "move-next"
 	if dir < 0 {
 		move = "move-prev"
@@ -336,6 +395,10 @@ func (a *App) wheel(h, root *layout.Box, x, y, dir int) []Event {
 			return nil
 		}
 		switch {
+		case f.Options != nil && (b == f.Options || optionRow(b, f.Options)):
+			// Rule 1a, before rule 2, which would take it as a list.
+			a.moveOptions(f.Options.Parent, func(c, _, _ int) int { return c + dir })
+			return nil
 		case b.Role == layout.RoleTabLabel:
 			return a.activateTab(b.Parent, stepTab(b.Parent, move))
 		case b.Kind == "tabs" && onStrip(b, x, y):

@@ -1,0 +1,8 @@
+<tui version="3">
+  <screen id="main">
+    <col id="app">
+      <list id="l" each="xs as x" key="x"><item><text>{x}</text></item></list>
+      <col id="detail"><text>detail</text></col>
+    </col>
+  </screen>
+</tui>

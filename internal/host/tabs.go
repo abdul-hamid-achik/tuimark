@@ -75,9 +75,9 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 			// alias is in scope), each LF the resolved value brings
 			// becomes a space, since a label is one row.
 			sc := fb.tabsScope(t)
-			full = oneLineLabel(fb.interp(v.Src, full, sc))
+			full = oneLineLabel(fb.interp(v.Src, "label", full, sc))
 			if ok {
-				short = oneLineLabel(fb.interp(v.Src, short, sc))
+				short = oneLineLabel(fb.interp(v.Src, "short", short, sc))
 			}
 		}
 		// S(t) is short when it is not empty, else the label (§6.10.4);
@@ -99,6 +99,7 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 	}
 	if active != nil {
 		sc := fb.scopes[active]
+		fb.placeEmpty(active.Src, sc)
 		for _, c := range active.Src.Children {
 			cb := fb.inflate(c, active, sc, false)
 			if cb == nil || c.Kind == "modal" {
@@ -136,7 +137,7 @@ func (fb *builder) pickTab(t *layout.Box, visible []*layout.Box) *layout.Box {
 	if n.Bind != "" {
 		v, found := fb.tabsScope(t).resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind)
+			fb.missingBind(n, "bind", 0, n.Bind, fb.tabsScope(t))
 			return visible[0]
 		}
 		if v == nil {
@@ -149,7 +150,7 @@ func (fb *builder) pickTab(t *layout.Box, visible []*layout.Box) *layout.Box {
 				}
 			}
 		}
-		fb.report(n, ir.Warning, "B010", "bind=%q holds %s, which is not the id of a visible tab of #%s; the first visible tab, #%s, is active", n.Bind, jsonText(v), n.ID, visible[0].ID)
+		fb.report(n, ir.Warning, "B010", "bind=%q holds %s, which is not the id of a visible tab of #%s; the first visible tab, #%s, is active", n.Bind, ir.ShownAt(n, jsonText(v)), ir.ShownIDAt(n, n.ID), ir.ShownIDAt(n, visible[0].ID))
 		return visible[0]
 	}
 	if id, ok := a.tabMem[t.ID]; ok && t.ID != "" {
@@ -273,13 +274,17 @@ func (fb *builder) tabFocus(root *layout.Box, list []*layout.Box) (string, bool)
 
 // focusWasOn reports whether focus (the id focused when the render
 // started) was, in the last frame, on the tabs node tabs, on its tab
-// prevTab or inside it, or nowhere (SPEC §6.10.3). The caller holds a.mu.
+// prevTab or inside it, or nowhere (SPEC §6.10.3). In a <tui> without
+// version, focus on the tabs node itself stays on its strip when its
+// active tab changes (SPEC v0.4b §6.10.3, the ARIA tabs pattern): the
+// rule applies only when focus was on prevTab, inside it, or nowhere. The
+// caller holds a.mu.
 func (a *App) focusWasOn(tabs, prevTab, focus string) bool {
 	if focus == "" {
 		return true
 	}
 	if focus == tabs {
-		return true
+		return !a.doc.Lang.V4()
 	}
 	if a.last == nil || prevTab == "" {
 		return false

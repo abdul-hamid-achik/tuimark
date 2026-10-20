@@ -7,6 +7,7 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
+	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 )
 
@@ -30,6 +31,40 @@ type Inspection struct {
 	Pseudo  []string    `json:"pseudo"`
 	Classes []ClassInfo `json:"classes"`
 	Style   []StyleInfo `json:"style"`
+	// Source is the element the node was built from and the includes and
+	// uses that placed it (SPEC v0.4b §15.7); nil for a document that
+	// writes version, whose inspect output is 0.4.1's (decision 19).
+	Source *SourceInfo `json:"source,omitempty"`
+}
+
+// SourceInfo is where the element a node was built from is written (SPEC
+// v0.4b §15.7): its file, named as diagnostics name it (§6.18.6), line,
+// and column, and Via, the <use> and <include> elements that placed it,
+// innermost first ([] for an element written in the document).
+type SourceInfo struct {
+	File string    `json:"file"`
+	Line int       `json:"line"`
+	Col  int       `json:"col"`
+	Via  []ViaInfo `json:"via"`
+}
+
+// ViaInfo is one element that placed another (SPEC v0.4b §15.7): a use,
+// {"use", "template", "file", "line", "col"}, with Use its id in the
+// expanded document ("" without one) and Template its template's id; or
+// an include, {"include", "file", "line", "col"}, with Include its src as
+// written. Use is cut as a composition diagnostic cuts an id
+// (ir.ShownID): a use's scoped id holds the ids of every use around it,
+// so whole they would make a via list grow with the square of the
+// nesting. Template is cut the same way, as a placement suffix names a
+// use's template, though the templates of one chain are distinct and
+// their total is bounded by the document.
+type ViaInfo struct {
+	Use      *string `json:"use,omitempty"`
+	Template *string `json:"template,omitempty"`
+	Include  *string `json:"include,omitempty"`
+	File     string  `json:"file"`
+	Line     int     `json:"line"`
+	Col      int     `json:"col"`
 }
 
 // ClassInfo is one class the node could have: from "class" (its class
@@ -112,7 +147,54 @@ func (a *App) Inspect(f *Frame, t InspectTarget) (*Inspection, error) {
 	in.Pseudo = pseudoOf(b, f.V2)
 	in.Classes = a.classInfo(b)
 	in.Style = a.styleInfo(f, b)
+	if a.doc.Lang.V4() {
+		in.Source = a.sourceInfo(b)
+	}
 	return in, nil
+}
+
+// builtFrom is the element b was built from (SPEC v0.4b §15.7): its own
+// for a node written in a file (Src, which a node of an each row, a table
+// cell, header cell, or row with an item template also holds: the
+// template element, the column, or the item); a tab label's tab; a table
+// row's table when the table has no item; a hint item's <bind> row
+// (GenFrom). Any other generated node is named by the nearest ancestor
+// that has one.
+func builtFrom(b *layout.Box) *ir.Node {
+	for n := b; n != nil; n = n.Parent {
+		switch {
+		case n.Src != nil:
+			return n.Src
+		case n.GenFrom != nil:
+			return n.GenFrom
+		case n.Role == layout.RoleTabLabel && n.For != nil && n.For.Src != nil:
+			return n.For.Src
+		}
+	}
+	return nil
+}
+
+// sourceInfo is the source member of b's inspection (SPEC v0.4b §15.7).
+// The caller holds a.mu.
+func (a *App) sourceInfo(b *layout.Box) *SourceInfo {
+	n := builtFrom(b)
+	if n == nil {
+		return nil
+	}
+	s := &SourceInfo{File: n.FileName(a.file), Line: n.Line, Col: n.Col, Via: []ViaInfo{}}
+	for p := n.Placer(); p != nil; p = p.Placer() {
+		v := ViaInfo{File: p.FileName(a.file), Line: p.Line, Col: p.Col}
+		switch p.Kind {
+		case "use":
+			id, tpl := ir.ShownID(p.ID), ir.ShownID(p.Attrs["template"])
+			v.Use, v.Template = &id, &tpl
+		default:
+			src := p.Attrs["src"]
+			v.Include = &src
+		}
+		s.Via = append(s.Via, v)
+	}
+	return s
 }
 
 // HitNode is the hit node of cell (x, y) of f, steps 2 and 3 of the SPEC
@@ -128,6 +210,12 @@ func (a *App) Inspect(f *Frame, t InspectTarget) (*Inspection, error) {
 // it, which shows through when the modal does not paint its rect
 // (visibility: hidden), counts as none, so the start is the top modal.
 func HitNode(f *Frame, x, y int) *layout.Box {
+	if l := f.Options; l != nil && l.Laid && l.Clip.Contains(x, y) {
+		// The open option list is the top layer (SPEC v0.4b §8.5 step 0):
+		// S is the list, and the descent reaches a row's text, its item,
+		// or the list itself.
+		return descend(l, x, y)
+	}
 	var top *layout.Box
 	if n := len(f.Modals); n > 0 {
 		m := f.Modals[n-1]
@@ -155,6 +243,13 @@ func HitNode(f *Frame, x, y int) *layout.Box {
 			s = top
 		}
 	}
+	return descend(s, x, y)
+}
+
+// descend is step 3 of SPEC v0.2b §8.5: from s, move to the last child in
+// document order that has no id, is laid out, and whose clipped outer
+// rect contains the cell, while there is one.
+func descend(s *layout.Box, x, y int) *layout.Box {
 	for s != nil {
 		var next *layout.Box
 		for _, c := range s.Children {
@@ -261,7 +356,7 @@ func pseudoOf(b *layout.Box, v2 bool) []string {
 // class:NAME guards in attribute order, then (for a generated node) the
 // classes the runtime gave it. The caller holds a.mu.
 func (a *App) classInfo(b *layout.Box) []ClassInfo {
-	sheets := append(append([]*css.Sheet(nil), a.sheets...), css.UA())
+	sheets := append(append([]*css.Sheet(nil), a.sheets...), css.UALang(a.doc.Lang))
 	used := func(name string) bool { return css.NamesClass(sheets, name) }
 	out := []ClassInfo{}
 	if b.Src == nil {
@@ -275,7 +370,7 @@ func (a *App) classInfo(b *layout.Box) []ClassInfo {
 	}
 	for i, g := range b.Src.ClassGuards {
 		on := i < len(b.GuardOn) && b.GuardOn[i]
-		out = append(out, ClassInfo{Name: g.Name, From: "class:" + g.Name, Guard: g.Guard, Active: on, Used: used(g.Name)})
+		out = append(out, ClassInfo{Name: g.Name, From: "class:" + g.Name, Guard: ir.Unmark(g.Guard), Active: on, Used: used(g.Name)})
 	}
 	return out
 }
@@ -290,7 +385,7 @@ func ruleOf(d css.DeclSource) RuleInfo {
 // styleInfo explains every TCSS property of b, in the order of SPEC §10.2
 // then §10.3, re-running the frame's cascade on it. The caller holds a.mu.
 func (a *App) styleInfo(f *Frame, b *layout.Box) []StyleInfo {
-	casc := css.NewCascade(a.sheets, css.Env{Cols: f.Cols, Rows: f.Rows, Theme: f.Theme})
+	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: f.Cols, Rows: f.Rows, Theme: f.Theme}, f.Lang)
 	var parent *css.Style
 	if b.Parent != nil {
 		parent = b.Parent.Style

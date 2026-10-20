@@ -367,7 +367,7 @@ func (e *Engine) grid(b *Box, kids []*Box, area Rect, clip Rect) {
 	}
 	for _, k := range kids {
 		if what := gridIgnored(k); what != "" {
-			e.report(k, ir.Warning, "L007", "%s is ignored in a layout: grid container (%s); its column sets its width and its content its height", what, describe(b))
+			e.report(k, ir.Warning, "L007", "%s is ignored in a layout: grid container (%s); its column sets its width and its content its height", what, describeAt(k, b))
 		}
 	}
 	rows := e.gridRows(kids, n, widths)
@@ -419,4 +419,64 @@ func gridIgnored(k *Box) string {
 		return fmt.Sprintf("height: %s", st.Height)
 	}
 	return ""
+}
+
+// CheckboxWidth is the intrinsic content width of a checkbox whose
+// resolved label is label (SPEC v0.4b §6.16.3, §11.5.2): 3, its glyph
+// alone, when the label is empty, else 4 + width(label), the glyph, a
+// space, and the label.
+func CheckboxWidth(label string) int {
+	if label == "" {
+		return 3
+	}
+	return 4 + Width(label)
+}
+
+// CheckboxShown is what a checkbox paints from its content origin in a
+// content box w columns wide (SPEC v0.4b §12.5): its glyph, [x] when it is
+// checked and [ ] when not, and, when its label is not empty, a space and
+// the label cut to max(0, w − 4) columns by its computed wrap (CutByWrap).
+// The painter clips the rest at the content box.
+func CheckboxShown(b *Box, w int) string {
+	glyph := "[ ]"
+	if b.Checked {
+		glyph = "[x]"
+	}
+	if b.Text == "" {
+		return glyph
+	}
+	return glyph + " " + CutByWrap(b.Text, max(0, w-4), b.Style.Wrap)
+}
+
+// SelectShown is what a select paints from its content origin in a
+// content box w columns wide (SPEC v0.4b §12.5), without its ▾: the shown
+// text cut to max(0, w − 2) columns by its computed wrap. The host puts
+// the chosen option's label in Text and leaves Placeholder empty, or,
+// with no chosen option, leaves Text empty and puts the placeholder in
+// Placeholder, which is painted dim (dim reports it).
+func SelectShown(b *Box, w int) (s string, dim bool) {
+	s = b.Text
+	if s == "" && b.Placeholder != "" {
+		s, dim = b.Placeholder, true
+	}
+	return CutByWrap(s, max(0, w-2), b.Style.Wrap), dim
+}
+
+// CutByWrap cuts s to n columns by a computed wrap, as a table cell is cut
+// (SPEC §6.9.4, v0.4b §12.5): truncate, truncate-start, and
+// truncate-middle cut that way, wrap is painted as truncate, and nowrap
+// (or no value) is clipped with no ellipsis.
+func CutByWrap(s string, n int, wrap string) string {
+	if n <= 0 {
+		return ""
+	}
+	switch wrap {
+	case "truncate", "wrap":
+		return Truncate(s, n)
+	case "truncate-start":
+		return TruncateStart(s, n)
+	case "truncate-middle":
+		return TruncateMiddle(s, n)
+	}
+	return Cut(s, n)
 }

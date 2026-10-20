@@ -18,6 +18,7 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/paint"
+	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
 // parseArgs parses flags that may appear before or after positionals.
@@ -288,27 +289,35 @@ func (c *cli) cmdValidate(args []string) int {
 	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
 		return c.fail(err)
 	}
+	// The flags are judged before the file's kind, so a fragment checked
+	// on its own has the usage errors a document has (--theme auto, a
+	// --catalog that cannot be read), though neither adds a check there.
+	var known map[string]bool
+	if *catalog != "" {
+		if known, err = readCatalog(*catalog); err != nil {
+			return c.fail(err)
+		}
+	}
+	if doc := app.Document(); doc.FragmentRoot {
+		return c.validateFragment(file, *data, doc, *asJSON)
+	}
 	app.SetStrict(*strict)
 	diags := app.Validate()
 	if *data == "" {
 		// Without data every bind path is "missing"; report only data-free
-		// checks: B001-B003 and B008-B010 depend on the data, B007 is
+		// checks: B001-B003 and B008-B012 depend on the data, B007 is
 		// static (SPEC §14).
 		var kept ir.Diags
 		for _, d := range diags {
 			switch d.Code {
-			case "B001", "B002", "B003", "B008", "B009", "B010":
+			case "B001", "B002", "B003", "B008", "B009", "B010", "B011", "B012":
 				continue
 			}
 			kept = append(kept, d)
 		}
 		diags = kept
 	}
-	if *catalog != "" {
-		known, err := readCatalog(*catalog)
-		if err != nil {
-			return c.fail(err)
-		}
+	if known != nil {
 		diags = append(diags, app.CheckCatalog(known)...).Sorted()
 	}
 	ok := !diags.HasErrors()
@@ -328,13 +337,43 @@ func (c *cli) cmdValidate(args []string) int {
 			fmt.Fprintln(c.stdout, d.String())
 		}
 		if ok {
-			// Without --data, B001-B003 and B008-B010 were not checked
+			// Without --data, B001-B003 and B008-B012 were not checked
 			// (SPEC v0.4a §15.1).
 			if *data == "" {
 				fmt.Fprintln(c.stdout, "ok (bindings not checked: no --data)")
 			} else {
 				fmt.Fprintln(c.stdout, "ok")
 			}
+		}
+	}
+	if !ok {
+		return 2
+	}
+	return 0
+}
+
+// validateFragment checks a file whose root is <fragment> on its own (SPEC
+// v0.4b §6.18.2, §15.1): only the checks an element gets from itself, plus
+// the root's own, with its includes' files unread and nothing that depends
+// on a place, an id, or the data. It is what lets an agent that edits a
+// fragment run the Loop on the file it edits.
+func (c *cli) validateFragment(file, data string, doc *parse.Document, asJSON bool) int {
+	diags := parse.FragmentDiags(doc)
+	ok := !diags.HasErrors()
+	if asJSON {
+		var dataArg any
+		if data != "" {
+			dataArg = data
+		}
+		out := map[string]any{"ok": ok, "file": file, "data": dataArg, "diagnostics": diagsOrEmpty(diags), "actions": []host.ActionSpec{}}
+		b, _ := json.MarshalIndent(out, "", "  ")
+		fmt.Fprintln(c.stdout, string(b))
+	} else {
+		for _, d := range diags {
+			fmt.Fprintln(c.stdout, d.String())
+		}
+		if ok {
+			fmt.Fprintln(c.stdout, "ok (fragment checked on its own)")
 		}
 	}
 	if !ok {
@@ -389,7 +428,7 @@ func (c *cli) cmdPreview(args []string) int {
 	cols := fs.Int("cols", 80, "terminal columns")
 	rows := fs.Int("rows", 24, "terminal rows")
 	data := fs.String("data", "", "JSON file bound as the data store")
-	watch := fs.Bool("watch", false, "re-render when the document, stylesheets, or data change")
+	watch := fs.Bool("watch", false, "re-render when the document, its fragments and stylesheets, or the data change")
 	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
 	color := fs.String("color", "", "truecolor, 256, 16, or none; the ANSI grid's color profile")
 	pos, err := parseArgs(fs, args)
@@ -438,10 +477,18 @@ func (c *cli) cmdPreview(args []string) int {
 		}
 		return 0
 	}
+	// The files run watches (SPEC v0.4b §15.1, §15.9): the document, the
+	// fragments and stylesheets of the last load that read the document
+	// far enough to resolve them, even when that load failed later, and
+	// the data.
 	files := append(app.Files(), *data)
 	stamp := fingerprint(files)
 	for n := 1; ; n++ {
-		time.Sleep(150 * time.Millisecond)
+		select {
+		case <-c.watchStop:
+			return 0
+		case <-time.After(150 * time.Millisecond):
+		}
 		now := fingerprint(files)
 		if now == stamp {
 			continue
@@ -457,13 +504,15 @@ func (c *cli) cmdPreview(args []string) int {
 			fmt.Fprintln(c.stdout, "tuimark:", err)
 			continue
 		}
+		if next.Document().Root != nil {
+			files = append(next.Files(), *data)
+			stamp = fingerprint(files)
+		}
 		if err := applyTheme(next, *theme, themeSet, "--theme"); err != nil {
 			fmt.Fprintln(c.stdout, "tuimark:", err)
 			continue
 		}
 		app = next
-		files = append(app.Files(), *data)
-		stamp = fingerprint(files)
 		renderPreview(c.stdout, app, *cols, *rows, tty, prof)
 	}
 }

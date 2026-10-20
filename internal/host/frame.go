@@ -40,9 +40,18 @@ type Frame struct {
 	// V3 is set when the document is version="3": the layout pass reports
 	// L008/L009, and dumps of the frame carry clipped (SPEC v0.3 §13.2).
 	V3 bool
+	// Lang is the document's language (SPEC v0.4b §5.1), from which the
+	// frame's 0.4b behavior is read; V2 and V3 are Lang.V2() and
+	// Lang.V3().
+	Lang ir.Lang
 	// Mouse is the value of the document's mouse attribute on this frame
 	// (SPEC v0.2b §8.5): mouse events act only while it is true.
 	Mouse bool
+	// Options is the open option list of a select (SPEC v0.4b §6.17.4),
+	// placed in step 7a above the screen and every modal, or nil. It is
+	// not in Root's tree, in Modals, or in ByID: it is never part of "the
+	// frame" of §6.12 and §8.4.
+	Options *layout.Box
 	// settled is set when the render that built the frame reached a pass
 	// that moved neither focus nor a tab (renderOnce), so building it again
 	// from the state it left behind gives the same frame (liveFrame).
@@ -56,7 +65,7 @@ type Frame struct {
 // Dump returns the frame's dump (SPEC §13.2), with the --cells map when
 // cells is set.
 func (f *Frame) Dump(cells bool) *dump.Dump {
-	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2, V3: f.V3})
+	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2, V3: f.V3, Lang: f.Lang, Options: f.Options})
 }
 
 // Dump renders the current state at cols×rows (negative sizes clamp to 0)
@@ -69,8 +78,9 @@ func (f *Frame) Dump(cells bool) *dump.Dump {
 func (a *App) Dump(cols, rows int, cells bool) *dump.Dump {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	saved := a.saveState()
-	defer a.restoreState(saved)
+	saved, phase := a.saveState(), a.phase
+	defer func() { a.restoreState(saved); a.phase = phase }()
+	a.phase = 0 // SPEC v0.4b §12.6: Dump paints every spinner at phase 0
 	if verifyFrames {
 		return a.verifiedRender(cols, rows, a.toolTheme()).Dump(cells)
 	}
@@ -81,9 +91,18 @@ func (a *App) Dump(cols, rows int, cells bool) *dump.Dump {
 // tests). Its theme is frameTheme: while Run runs, TUIMARK_THEME and the
 // theme Run resolved for auto take part.
 func (a *App) Frame(cols, rows int) *Frame {
+	return a.FrameAt(cols, rows, 0)
+}
+
+// FrameAt is Frame with the phase of the frame's spinners (SPEC v0.4b
+// §12.6, §26.13): the caller's clock decides it, Run's while running and
+// play's virtual clock in a Play. Frame is FrameAt at phase 0, which is
+// what dump, inspect, and preview paint.
+func (a *App) FrameAt(cols, rows, phase int) *Frame {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.dirty = false // the live frame is fresh again (TakeDirty)
+	a.phase = max(phase, 0)
 	theme := a.frameTheme()
 	if verifyFrames {
 		return a.verifiedFrame(cols, rows, theme)
@@ -94,7 +113,7 @@ func (a *App) Frame(cols, rows int) *Frame {
 type builder struct {
 	a      *App
 	diags  ir.Diags
-	seen   map[string]bool
+	seen   map[diagID]bool
 	modals []*layout.Box
 	byID   map[string]*layout.Box
 	// tables holds the tables inflated in step 1, for step 7.
@@ -115,6 +134,16 @@ type builder struct {
 	// list's rows then go into its listSlab, slabFor); 0 for every other
 	// builder, which allocates fresh memory.
 	pass uint64
+	// open holds the options of the select whose option list is open, as
+	// step 1 resolved them, for step 7a (SPEC v0.4b §18); nil otherwise.
+	open *selectOptions
+	// placed holds the places of <use> elements this pass has checked,
+	// with whether each prunes its copy (usePruned): each is checked
+	// once (SPEC v0.4b §6.18.3, decision 107). nil until the first.
+	placed map[placement]bool
+	// useSaid holds the messages about a <use> this pass reported
+	// (placeUse), so that each is formatted once. nil until the first.
+	useSaid map[useMsg]bool
 }
 
 // newBox returns a zeroed box for inflate, cut from a chunk the builder
@@ -210,7 +239,7 @@ func (a *App) modalOpenOn(req *focusRequest, cols, rows int, theme string) bool 
 func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	cols, rows = max(cols, 0), max(rows, 0)
 	theme = css.EffectiveTheme(theme)
-	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, settled: true, slab: a.slab}
+	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, Lang: a.doc.Lang, settled: true, slab: a.slab}
 	static := a.staticFor(theme)
 	if a.doc.Root == nil {
 		f.Diags = append(f.Diags, static...)
@@ -242,7 +271,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 			initFocus = a.focus
 		}
 	}
-	casc := css.NewCascade(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: theme})
+	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: cols, Rows: rows, Theme: theme}, a.doc.Lang)
 	if !a.noCache {
 		casc.EnableSharing()
 	}
@@ -253,7 +282,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	kinds := a.kinds()
 	f.settled = false
 	for pass := 0; pass < 3; pass++ {
-		fb = &builder{a: a, seen: map[string]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
+		fb = &builder{a: a, seen: map[diagID]bool{}, byID: map[string]*layout.Box{}, rc: rc, chain: a.focusChainIR()}
 		if a.slab != 0 {
 			a.passes++
 			fb.pass = a.passes
@@ -273,6 +302,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	} else {
 		a.tabPrev = map[string]string{}
 	}
+	fb.closeOptionsIn(rootBox) // the end of step 4 (SPEC v0.4b §18)
 	// screen@focus gives initial focus like any other focus change: on:focus
 	// fires once (resolveFocus reports the case where it had to pick another
 	// target).
@@ -288,7 +318,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	if kinds.hints {
 		fb.buildHints(casc, rootBox) // step 5
 	}
-	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Scratch: &a.scratch}
+	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Lang: a.doc.Lang, Scratch: &a.scratch}
 	if rootBox == nil {
 		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: newStyle(css.Initial())}
 	}
@@ -309,8 +339,22 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	if len(fb.tables) > 0 || a.noCache {
 		fb.placeTableRows(casc, rootBox) // step 7
 	}
+	options, closed := fb.placeOptions(casc, f) // step 7a (SPEC v0.4b §18)
+	if closed {
+		// Step 7a closed the option list (its select was not laid out or
+		// shows no cell, §6.17.3), but steps 1-7 built this frame with
+		// it open: the hints of step 5 came from a dispatch in which the
+		// list takes every key. The frame is built again with the list
+		// closed, so it is the frame a build with the list closed from
+		// the start gives. The list stays closed, so this happens at most
+		// once; what the first build already did (an initial on:focus, a
+		// modal's on:open, a focus move) is state the second build starts
+		// from and does not repeat.
+		return a.renderOnce(cols, rows, theme)
+	}
+	f.Options = options
 	f.Root, f.Modals = rootBox, fb.modals
-	f.Grid = paint.Paint(rootBox, fb.modals, cols, rows) // step 8
+	f.Grid = paint.PaintFrame(rootBox, fb.modals, f.Options, cols, rows, a.phase) // step 8
 	f.ByID = fb.byID
 	f.Focus = a.focus
 	// Remember scroll offsets clamped by layout.
@@ -320,10 +364,10 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	}
 	// The static token check and the cascade can report the same V003.
 	var diags ir.Diags
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, ds := range []ir.Diags{static, casc.Diags, fb.diags, eng.Diags} {
 		for _, d := range ds {
-			if k := d.String(); !seen[k] {
+			if k := a.diagKey(d); !seen[k] {
 				seen[k] = true
 				diags = append(diags, d)
 			}
@@ -720,11 +764,13 @@ func (t tabSubject) HasPseudo(p string) bool {
 	return t.Box.HasPseudo(p)
 }
 
-// toDecls converts a node's hints or style="" declarations for the cascade.
-func (a *App) toDecls(ps []ir.Prop) []css.Decl {
+// toDecls converts a node's hints or style="" declarations for the
+// cascade, each in the file the node is written in (SPEC v0.4b §6.18.6).
+func (a *App) toDecls(n *ir.Node, ps []ir.Prop) []css.Decl {
 	out := make([]css.Decl, len(ps))
+	file := n.FileName(a.file)
 	for i, p := range ps {
-		out[i] = css.Decl{Prop: p.Name, Value: p.Value, Line: p.Line, Col: p.Col, File: a.file, Attr: p.Attr}
+		out[i] = css.Decl{Prop: p.Name, Value: p.Value, Line: p.Line, Col: p.Col, File: file, Attr: p.Attr}
 	}
 	return out
 }
@@ -741,29 +787,39 @@ func (fb *builder) flag(n *ir.Node, attr string, sc *scope) bool {
 	case "false", "":
 		return false
 	}
-	g, err := ir.ParseGuard(v)
+	g, err := ir.ParseGuardField(v)
 	if err != nil {
 		return false
 	}
 	val, found := sc.resolve(fb.a.store, g.Path)
 	if !found {
-		fb.report(n, ir.Warning, "B002", "%s=%q: path %q is missing", attr, v, g.Path)
+		fb.missingFlag(n, attr, v, g.Path, sc)
 	}
 	return ir.Truthy(val) != g.Neg
 }
 
-// missingBind reports B003 for a path absent from the store (an error with
-// --strict).
-func (fb *builder) missingBind(n *ir.Node, path string) {
-	sev := ir.Warning
-	if fb.a.strict {
-		sev = ir.Error
+// missingFlag reports B002 for the path p of a flag or a guard, written v
+// in attribute attr, absent from the store; it counts as null (SPEC §7).
+// Through a with alias it is an optional prop (pathMiss).
+func (fb *builder) missingFlag(n *ir.Node, attr, v, p string, sc *scope) {
+	if ok, via := fb.pathMiss(n, attr, 0, p, sc, missFlag); ok {
+		fb.reportPath(n, via, p, ir.Warning, "B002", "%s=%q: path %q is missing", ir.ShownAt(n, attr), writtenAttr(n, attr, v, via), shownPath(p, via))
 	}
-	fb.report(n, sev, "B003", "bind path %q is missing", path)
 }
 
-// interp resolves {path} segments; missing paths render empty (B003).
-func (fb *builder) interp(n *ir.Node, s string, sc *scope) string {
+// missingBind reports B003 for path, written in slot as its seg-th path
+// (ir.ViaKey), absent from the store in sc (an error with --strict):
+// through a with alias whose own path is missing, it reports nothing
+// (pathMiss).
+func (fb *builder) missingBind(n *ir.Node, slot string, seg int, path string, sc *scope) {
+	if ok, via := fb.pathMiss(n, slot, seg, path, sc, missValue); ok {
+		fb.reportPath(n, via, path, fb.bindSev(), "B003", "bind path %q is missing", shownPath(path, via))
+	}
+}
+
+// interp resolves the {path} segments of s, n's attribute slot ("" for
+// its text); missing paths render empty (B003).
+func (fb *builder) interp(n *ir.Node, slot, s string, sc *scope) string {
 	if fb.a.doc.Spike || s == "" {
 		return s
 	}
@@ -771,7 +827,7 @@ func (fb *builder) interp(n *ir.Node, s string, sc *scope) string {
 	if !ok {
 		return s
 	}
-	return fb.interpSegs(n, segs, sc)
+	return fb.interpSegs(n, slot, segs, sc)
 }
 
 // focusableByDefault reports the kinds that take focus without
@@ -793,12 +849,15 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	case "tui", "style", "keymap", "bind":
 		return nil
 	}
+	if len(n.CopiedBy) > 0 && fb.usePruned(n, sc) {
+		return nil // SPEC v0.4b §6.18.3 (uses.go)
+	}
 	if n.If != "" {
-		g, err := ir.ParseGuard(n.If)
+		g, err := ir.ParseGuardField(n.If)
 		if err == nil {
 			v, found := sc.resolve(a.store, g.Path)
 			if !found {
-				fb.report(n, ir.Warning, "B002", "if=%q: path %q is missing", n.If, g.Path)
+				fb.missingFlag(n, "if", n.If, g.Path, sc)
 			}
 			if ir.Truthy(v) == g.Neg {
 				return nil
@@ -816,7 +875,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		} else if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind)
+				fb.missingBind(n, "bind", 0, n.Bind, sc)
 			}
 			open = ir.Truthy(v)
 		}
@@ -836,7 +895,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	}
 	// disabled covers the whole subtree, like a disabled <fieldset>.
 	b.Disabled = fb.flag(n, "disabled", sc) || (parent != nil && parent.Disabled)
-	b.Title = fb.interp(n, n.Attrs["title"], sc)
+	b.Title = fb.interp(n, "title", n.Attrs["title"], sc)
 	if n.ID != "" && n.ID == a.focus && !inItem {
 		b.Focused = true
 	}
@@ -845,21 +904,27 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	}
 	switch n.Kind {
 	case "text":
-		b.Text = fb.interp(n, n.Text, sc)
+		b.Text = fb.interp(n, "", n.Text, sc)
 	case "button":
-		if l, ok := n.Attr("label"); ok {
-			b.Text = l
-		} else {
-			b.Text = n.Text
-		}
+		b.Text = fb.buttonText(n, sc)
+	case "checkbox":
+		fb.inflateCheckbox(n, b, sc)
+	case "select":
+		// Inside a list item or a container each template it is V001
+		// (SPEC v0.4b §6.8 item 12), and inflateSelect leaves it with its
+		// placeholder alone. inItem is exactly that case: inflateList
+		// inflates a row, and inflateEach a template, with inItem set. A
+		// scope alone is not: a scope that only binds names (an alias a
+		// <use with=…> may bring) leaves a select a working widget.
+		fb.inflateSelect(n, b, sc, inItem)
 	case "input":
-		b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
+		b.Placeholder = fb.interp(n, "placeholder", n.Attrs["placeholder"], sc)
 		b.Secret = n.Attrs["secret"] == "true"
 		st := a.input(n.ID)
 		if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind)
+				fb.missingBind(n, "bind", 0, n.Bind, sc)
 			}
 			b.Text = Format(v)
 		} else {
@@ -876,12 +941,13 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind)
+				fb.missingBind(n, "bind", 0, n.Bind, sc)
 			}
 			if f, ok := v.(float64); ok {
 				b.Value = f
 			} else if found && v != nil {
-				fb.report(n, ir.Warning, "B003", "progress bind %q is %s, want a number 0-100", n.Bind, typeName(v))
+				via := n.ViaOf("bind", 0)
+				fb.reportPath(n, via, n.Bind, ir.Warning, "B003", "progress bind %q is %s, want a number 0-100", shownPath(n.Bind, via), typeName(v))
 			}
 		} else if s, ok := n.Attr("value"); ok {
 			b.Value, _ = strconv.ParseFloat(s, 64)
@@ -948,6 +1014,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 			return b
 		}
 	}
+	fb.placeEmpty(n, sc)
 	for i, c := range n.Children {
 		cb := fb.inflate(c, b, sc, inItem)
 		if cb == nil {
@@ -980,18 +1047,14 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 // the element gives the index and B003); their descendants do not.
 func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 	a := fb.a
-	e, err := ir.ParseEach(n.Each)
+	e, err := ir.ParseEachField(n.Each)
 	if err != nil {
 		return
 	}
 	v, found := sc.resolve(a.store, e.Path)
 	arr, isArr := v.([]any)
-	if !found {
-		fb.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, e.Path)
-		return
-	}
-	if !isArr {
-		fb.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, e.Path, typeName(v))
+	if !found || !isArr {
+		fb.badEach(n, e.Path, v, found, sc)
 		return
 	}
 	keyPath := n.Attrs["key"]
@@ -1002,14 +1065,11 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 			if kv, ok := isc.resolve(a.store, keyPath); ok {
 				key = kv
 			} else {
-				sev := ir.Warning
-				if a.strict {
-					sev = ir.Error
-				}
-				fb.report(n, sev, "B003", "key=%q is missing on element %d (its key is the index)", keyPath, i)
+				fb.missingKey(n, keyPath, isc, fb.bindSev(), "key=%q is missing on element %d (its key is the index)", i)
 			}
 		}
 		isc.key = key
+		fb.placeEmpty(n, isc)
 		for _, c := range n.Children {
 			// The template holds nothing focusable or addressed by id
 			// (SPEC §6.8 item 8): it is inflated like a list row.
@@ -1027,12 +1087,25 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 // checkedKeys reads the checked= array of a list or table (SPEC §6.14): a
 // missing path counts as [] and reports B003; a value that is not an array
 // is B008 (an error), counts as [] for display, and ok is false, so the
-// check-* actions never overwrite it.
+// check-* actions never overwrite it. With single="true" (SPEC v0.4b
+// §6.14.1) the path holds one key: a missing path or null checks no row
+// (a missing one reports B003), an array or an object is B008, and any
+// other value is the one checked key.
 func (fb *builder) checkedKeys(n *ir.Node, path string, sc *scope) (keys []any, ok bool) {
 	v, found := sc.resolve(fb.a.store, path)
 	if !found {
-		fb.missingBind(n, path)
+		fb.missingBind(n, "checked", 0, path, sc)
 		return nil, true
+	}
+	if n.Single {
+		switch v.(type) {
+		case nil:
+			return nil, true
+		case []any, map[string]any:
+			fb.report(n, ir.Error, "B008", "checked=%q: %q is %s, not a row key or null (single=\"true\": shown as none checked; check-toggle and check-none leave it alone)", path, path, typeName(v))
+			return nil, false
+		}
+		return []any{v}, true
 	}
 	arr, isArr := v.([]any)
 	if !isArr {
@@ -1148,13 +1221,13 @@ func (fb *builder) classes(n *ir.Node, sc *scope) (out []string, on []bool) {
 // ! applies, as for if, hidden, disabled, open, and mouse (SPEC §7): path
 // is false and !path is true.
 func (fb *builder) guard(n *ir.Node, attr, v string, sc *scope) bool {
-	g, err := ir.ParseGuard(v)
+	g, err := ir.ParseGuardField(v)
 	if err != nil {
 		return false
 	}
 	val, found := sc.resolve(fb.a.store, g.Path)
 	if !found {
-		fb.report(n, ir.Warning, "B002", "%s=%q: path %q is missing", attr, v, g.Path)
+		fb.missingFlag(n, attr, v, g.Path, sc)
 	}
 	return ir.Truthy(val) != g.Neg
 }
@@ -1200,6 +1273,7 @@ func keyEqual(a, b any) bool { return Format(a) == Format(b) && typeName(a) == t
 // inflateList expands each= (or static items) and marks the selection.
 func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	a := fb.a
+	fb.placeEmpty(n, sc)
 	if n.Each != "" && sc == nil && !a.noCache {
 		if p := a.listPlan(n); p.ok {
 			fb.inflateListCached(n, b, p)
@@ -1227,16 +1301,14 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	}
 	var entries []entry
 	if n.Each != "" {
-		e, err := ir.ParseEach(n.Each)
+		e, err := ir.ParseEachField(n.Each)
 		if err != nil || template == nil {
 			return
 		}
 		v, found := sc.resolve(a.store, e.Path)
 		arr, isArr := v.([]any)
-		if !found {
-			fb.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, e.Path)
-		} else if !isArr {
-			fb.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, e.Path, typeName(v))
+		if !found || !isArr {
+			fb.badEach(n, e.Path, v, found, sc)
 		}
 		keyPath := n.Attrs["key"]
 		ls.alias, ls.each = e.Alias, true
@@ -1247,7 +1319,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 				if kv, ok := isc.resolve(a.store, keyPath); ok {
 					key = kv
 				} else {
-					fb.report(n, ir.Warning, "B003", "key=%q is missing on item %d", keyPath, i)
+					fb.missingKey(n, keyPath, isc, ir.Warning, "key=%q is missing on item %d", i)
 				}
 			}
 			isc.key = key
@@ -1271,7 +1343,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	if n.Bind != "" {
 		v, found := sc.resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind)
+			fb.missingBind(n, "bind", 0, n.Bind, sc)
 		}
 		if found && v != nil {
 			for i, k := range ls.keys {
@@ -1319,7 +1391,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 // has checked and mark.
 func (fb *builder) listMarks(n *ir.Node, sc *scope) (checked keySet, chanW int, mark string) {
 	if fb.a.doc.V2 {
-		if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
+		if path, ok := n.Attr("checked"); ok && ir.IsPathField(path) {
 			keys, _ := fb.checkedKeys(n, path, sc)
 			checked = fb.checkedSet(n, path, keys, sc)
 			if m, ok := n.Attr("mark"); ok {
@@ -1353,7 +1425,7 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 	if n.Bind != "" {
 		v, found := (*scope)(nil).resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind)
+			fb.missingBind(n, "bind", 0, n.Bind, nil)
 		}
 		if found && v != nil {
 			if i := r.rowOf(v); i >= 0 {
@@ -1434,18 +1506,23 @@ func (fb *builder) tabFocusOf(root *layout.Box, list []*layout.Box) (string, boo
 	return fb.tabFocus(root, list)
 }
 
-// isFocusable reports whether a laid-out box can take focus.
-func isFocusable(b *layout.Box) bool {
+// isFocusable reports whether a laid-out box of a document of language l
+// can take focus: focusable= when written, else the kinds focusable by
+// default in l (focusableIn: a tabs in a <tui> without version).
+func isFocusable(b *layout.Box, l ir.Lang) bool {
 	if b.ID == "" || b.Disabled || b.Style.Visibility == "hidden" {
 		return false
 	}
 	if v, ok := b.Src.Attr("focusable"); ok {
 		return v == "true"
 	}
-	return focusableByDefault(b.Kind)
+	return focusableIn(b.Kind, l)
 }
 
-func collectFocusables(b *layout.Box, out *[]*layout.Box) {
+// collectFocusables appends the nodes of b that can take focus, in
+// document order (a node before its children, so a tabs comes before its
+// labels and its active tab: SPEC v0.4b §6.10.3), to out.
+func collectFocusables(b *layout.Box, l ir.Lang, out *[]*layout.Box) {
 	if b == nil {
 		return
 	}
@@ -1454,11 +1531,11 @@ func collectFocusables(b *layout.Box, out *[]*layout.Box) {
 		// each template takes focus (SPEC §6.8 item 8).
 		return
 	}
-	if isFocusable(b) {
+	if isFocusable(b, l) {
 		*out = append(*out, b)
 	}
 	for _, c := range b.Children {
-		collectFocusables(c, out)
+		collectFocusables(c, l, out)
 	}
 }
 
@@ -1508,13 +1585,13 @@ func (a *App) resolveFocus(f *Frame, fb *builder, root *layout.Box) bool {
 			a.modalStack = append(a.modalStack, modalEntry{node: top.Src, ret: ret})
 		}
 		for _, c := range top.Children {
-			collectFocusables(c, &list)
+			collectFocusables(c, a.doc.Lang, &list)
 		}
-		if len(list) == 0 && isFocusable(top) {
+		if len(list) == 0 && isFocusable(top, a.doc.Lang) {
 			list = append(list, top)
 		}
 	} else {
-		collectFocusables(root, &list)
+		collectFocusables(root, a.doc.Lang, &list)
 	}
 	f.Focusables = list
 	focusable := func(id string) bool {

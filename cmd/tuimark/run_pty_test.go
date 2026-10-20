@@ -166,3 +166,44 @@ func TestRunEventsTerminalRefused(t *testing.T) {
 		t.Errorf("exit %d stdout %q stderr %q", code, stdout, stderr)
 	}
 }
+
+// SPEC v0.4b test 188, "tuimark run": space toggles the checkbox, its
+// on:change applies the mock, and the strip and --events carry the new
+// boolean with empty keys.
+func TestRunPtyCheckboxMock(t *testing.T) {
+	dir := t.TempDir()
+	file := writeIn(t, dir, "checkbox.tui", `<tui>
+  <screen id="main" focus="#dark">
+    <checkbox id="dark" bind="settings.dark" label="Dark mode" on:change="dark_changed"/>
+    <checkbox id="beta" label="Beta"/>
+    <text>RUNAPP {saved}</text>
+  </screen>
+</tui>`)
+	data := writeIn(t, dir, "checkbox.json", `{"settings": {"dark": true}, "saved": false}`)
+	mock := writeIn(t, dir, "mock.json", `{"dark_changed": [{"path": "saved", "value": true}]}`)
+	ev := filepath.Join(dir, "ev.ndjson")
+	r := startRun(t, hostOpts{cols: 60, rows: 12}, file, "--data", data, "--mock", mock, "--events", ev, "--strip")
+	if strings.Contains(r.screen.String(), "true") {
+		t.Fatalf("the first frame already shows true; %s", runDescribe(r))
+	}
+	r.write(t, " ")
+	// The diff rewrites only the cells that changed: "false" becomes "true ".
+	if !r.waitFor(r.screen, "true", 5*slowdown*time.Second) {
+		t.Fatalf("the mock was not applied; %s", runDescribe(r))
+	}
+	if !r.waitFor(r.screen, "dark_changed dark {} false", 5*slowdown*time.Second) {
+		t.Fatalf("no strip line; %s", runDescribe(r))
+	}
+	r.write(t, "\x03")
+	if code := r.exit(t, 5*slowdown*time.Second); code != 0 {
+		t.Fatalf("ctrl+c exited %d; %s", code, runDescribe(r))
+	}
+	r.assertRestored(t)
+	raw, err := os.ReadFile(ev)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"seq":1,"action":"dark_changed","source":"dark","keys":{},"value":false}` + "\n"; string(raw) != want {
+		t.Errorf("--events:\n%s\nwant:\n%s", raw, want)
+	}
+}

@@ -1,0 +1,45 @@
+=== grid 90x24 ===
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+=== nodes ===
+main  screen  90x24 @(0,0)
+r1    row     90x1 @(0,0)
+a1    box     5x1 @(0,0)
+b1    box     30x1 @(5,0)
+c1x   box     30x1 @(35,0)
+r3    row     90x1 @(0,1)
+a3    box     40x1 @(0,1)
+b3    box     20x1 @(40,1)
+c3    box     30x1 @(60,1)
+r4    row     90x1 @(0,2)
+a4    box     30x1 @(0,2)
+b4    box     30x1 @(30,2)
+c4    box     2x1 @(60,2)
+c1    col     90x20 @(0,3) clipped
+a2    box     90x6 @(0,3)
+b2    box     90x12 @(0,9)
+c2    box     90x8 @(0,21)
+=== errors ===
+warning L009 freeze.tui:14:5 /screen/col cuts #c2 on y: 2 of 8 cells shown; give it room, or write overflow: hidden to keep the cut

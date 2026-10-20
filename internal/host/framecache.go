@@ -34,11 +34,11 @@ type nodeDecls struct {
 // style sharing keys on its identity (css.DeclKey). The caller holds a.mu.
 func (a *App) declsOf(n *ir.Node) *nodeDecls {
 	if a.noCache {
-		return &nodeDecls{a.toDecls(n.Hints), a.toDecls(n.Inline)}
+		return &nodeDecls{a.toDecls(n, n.Hints), a.toDecls(n, n.Inline)}
 	}
 	d := a.decls[n]
 	if d == nil {
-		d = &nodeDecls{a.toDecls(n.Hints), a.toDecls(n.Inline)}
+		d = &nodeDecls{a.toDecls(n, n.Hints), a.toDecls(n, n.Inline)}
 		a.decls[n] = d
 	}
 	return d
@@ -97,8 +97,10 @@ func (a *App) renderLive(cols, rows int, theme string) *Frame {
 // effective theme, --strict, the store (by its write counters: every
 // write goes through wrote), the screen, focus, the modals and their
 // stack, the active and remembered tabs, every viewport offset and stick
-// maximum, every list's and table's cursor state, and every input's
-// state. The caller holds a.mu.
+// maximum, every list's and table's cursor state, every input's
+// state, the value of every checkbox without bind (SPEC v0.4b decision
+// 106), and every select's remembered key and the open option list. The
+// caller holds a.mu.
 func (a *App) frameInputs(cols, rows int, theme string) string {
 	b := make([]byte, 0, 256)
 	num := func(n int64) { b = strconv.AppendInt(b, n, 10); b = append(b, ',') }
@@ -114,6 +116,7 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 	num(int64(rows))
 	str(css.EffectiveTheme(theme))
 	flag(a.strict)
+	num(int64(a.phase)) // SPEC v0.4b §26.13: the spinner phase is an input of the frame
 	num(int64(a.storeGen))
 	num(int64(a.writes))
 	num(int64(a.screen))
@@ -166,6 +169,25 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 		num(int64(st.cursor))
 		flag(st.init)
 	}
+	b = append(b, "|c"...)
+	for _, k := range sortedKeys(a.checks) {
+		str(k)
+		flag(a.checks[k])
+	}
+	// A select's key chosen without bind, and the open option list with
+	// its cursor and offset (SPEC v0.4b §6.17).
+	b = append(b, "|x"...)
+	for _, k := range sortedKeys(a.selects) {
+		st := a.selects[k]
+		str(k)
+		flag(st.has)
+		if st.has {
+			str(keyID(st.mem))
+		}
+	}
+	str(a.opts.id)
+	num(int64(a.opts.cursor))
+	num(int64(a.opts.offset))
 	return string(b)
 }
 
@@ -182,7 +204,7 @@ func (a *App) segsOf(s string) ([]ir.Segment, bool) {
 	if e, ok := a.interps[s]; ok {
 		return e.segs, e.ok
 	}
-	segs, err := ir.ParseInterp(s)
+	segs, err := ir.ParseInterpField(s)
 	e := interpEntry{segs, err == nil}
 	if !a.noCache {
 		if a.interps == nil {
@@ -203,13 +225,18 @@ type docKinds struct {
 	tabs  bool
 	hints bool
 	scale bool
+	// spinner is set when the document holds a spinner (SPEC v0.4b
+	// §6.4.1): only then does the spinner phase take part in a Run frame
+	// (App.HasSpinner), so a document without one keeps the frame skip
+	// as the phase moves.
+	spinner bool
 }
 
 // kinds returns the docKinds of the current document, computed once per
 // document. With noCache every step runs. The caller holds a.mu.
 func (a *App) kinds() docKinds {
 	if a.noCache {
-		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true}
+		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true, spinner: true}
 	}
 	if a.docKinds.doc == a.doc {
 		return a.docKinds
@@ -222,6 +249,10 @@ func (a *App) kinds() docKinds {
 			k.tabs = true
 		case "hints":
 			k.hints = true
+		case "progress":
+			if n.Spinner {
+				k.spinner = true
+			}
 		case "sparkline":
 			if _, ok := n.Attr("scale"); ok {
 				k.scale = true

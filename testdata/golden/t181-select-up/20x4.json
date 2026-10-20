@@ -1,0 +1,70 @@
+{
+  "cols": 20,
+  "rows": 4,
+  "ok": true,
+  "focus": "tz",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "main",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 4
+    },
+    {
+      "tag": "spacer",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 3
+    },
+    {
+      "id": "tz",
+      "tag": "select",
+      "x": 0,
+      "y": 3,
+      "w": 20,
+      "h": 1,
+      "text": "Lisbon",
+      "focused": true
+    },
+    {
+      "tag": "list",
+      "x": 0,
+      "y": 0,
+      "w": 20,
+      "h": 3,
+      "scroll": {
+        "y": 1,
+        "h": 3
+      }
+    },
+    {
+      "tag": "item",
+      "x": 1,
+      "y": 1,
+      "w": 18,
+      "h": 1,
+      "key": "lis",
+      "selected": true,
+      "checked": true
+    },
+    {
+      "tag": "text",
+      "x": 1,
+      "y": 1,
+      "w": 18,
+      "h": 1,
+      "text": "Lisbon"
+    }
+  ],
+  "grid": [
+    "┌──────────────────┐",
+    "│Lisbon            │",
+    "└──────────────────┘",
+    "Lisbon             ▾"
+  ],
+  "events": []
+}

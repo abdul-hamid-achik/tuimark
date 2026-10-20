@@ -101,6 +101,10 @@ type Box struct {
 	Clipped string
 
 	autoW, autoH bool // size on this axis came from content (for L002)
+	// unsized marks, per axis (bit axisIndex), a child with no size on
+	// its parent's main axis that §11.2 sized by its content (markUnsized,
+	// for L009's message).
+	unsized uint8
 
 	// The engine's memo of this box (Engine.intrinsic, Engine.shrinkable),
 	// kept on the box instead of in maps keyed by it, valid only for the
@@ -152,6 +156,11 @@ type Box struct {
 	// two and can come back in the third.
 	AllColumns []*Box
 
+	// GenFrom is, on a generated box with no Src (a hint item's row and
+	// its two texts), the element it is generated from: the keymap's
+	// <bind> row, which `tuimark inspect` names as its source (SPEC v0.4b
+	// §15.7). Nothing else reads it.
+	GenFrom *ir.Node
 	// Role names what the runtime generated a box for (SPEC §6.10.4,
 	// §6.12): a tab label (RoleTabLabel), a hint item row (RoleHintItem),
 	// or one of its two texts (RoleHintKey, RoleHintLabel); "" for a node
@@ -195,7 +204,7 @@ type Box struct {
 func (b *Box) ResetOutputs() {
 	b.X, b.Y, b.W, b.H = 0, 0, 0, 0
 	b.Content, b.Clip = Rect{}, Rect{}
-	b.Laid, b.Modal, b.autoW, b.autoH = false, false, false, false
+	b.Laid, b.Modal, b.autoW, b.autoH, b.unsized = false, false, false, false, 0
 	b.Clipped = ""
 	b.ScrollX, b.ScrollY, b.ContentW, b.ContentH = 0, 0, 0, 0
 	b.GroupLo, b.GroupHi, b.HasGroupLo, b.HasGroupHi = 0, 0, false, false
@@ -206,6 +215,12 @@ func (b *Box) ResetOutputs() {
 type memoSlot struct {
 	avail, v int32
 }
+
+// IsSpinner reports whether b is a <progress indeterminate="true"> of the
+// current language, a spinner (SPEC v0.4b §6.4.1): the parser decides
+// (ir.Node.Spinner), and a box of a list row, cached or not, keeps its
+// source node.
+func (b *Box) IsSpinner() bool { return b.Kind == "progress" && b.Src != nil && b.Src.Spinner }
 
 // Outer returns the outer rectangle.
 func (b *Box) Outer() Rect { return Rect{b.X, b.Y, b.W, b.H} }

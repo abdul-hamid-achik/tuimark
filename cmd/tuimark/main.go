@@ -37,12 +37,12 @@ import (
 // release this source tree is; release builds set all three at link time
 // (see .goreleaser.yaml):
 //
-//	go build -ldflags "-X main.version=0.4.2 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
+//	go build -ldflags "-X main.version=0.4.3 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
 //
 // A plain `go build` or `go install` leaves commit and date empty, and
 // `tuimark version` then prints the version alone.
 var (
-	version = "0.4.2"
+	version = "0.4.3"
 	commit  = ""
 	date    = ""
 )
@@ -103,6 +103,10 @@ exit codes: 0 ok, 1 I/O or crash, 2 validation errors
 type cli struct {
 	stdout io.Writer
 	stderr io.Writer
+
+	// watchStop, when closed, ends a preview --watch loop at its next poll
+	// (exit 0): a test's hook. Nil, as main leaves it, never ends it.
+	watchStop <-chan struct{}
 }
 
 func main() {

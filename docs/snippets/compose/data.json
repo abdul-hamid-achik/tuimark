@@ -1,0 +1,7 @@
+{
+  "selected": "t1",
+  "tasks": [
+    { "id": "t1", "title": "write the docs" },
+    { "id": "t2", "title": "ship it" }
+  ]
+}

@@ -488,6 +488,28 @@ func TestQuitKeys(t *testing.T) {
 	}
 }
 
+// esc leaves the game over modal open: its open= is state.over, a derived
+// path the runtime cannot write, so a <tui> without version does not close
+// it on esc (SPEC v0.4b §8.6 step 1, §18.2). r and q, which it names,
+// still work under it.
+func TestEscKeepsGameOver(t *testing.T) {
+	r := newRig(t)
+	r.step(12)
+	if !r.a.g.over {
+		t.Fatal("the snake did not hit the wall")
+	}
+	res := r.play("esc")
+	if len(res.Events) != 0 || r.get("over") != true {
+		t.Errorf("esc: events %+v, over %v", res.Events, r.get("over"))
+	}
+	if g := strings.Join(res.Dump.Grid, "\n"); !strings.Contains(g, "r restart") {
+		t.Errorf("esc closed the game over modal:\n%s", g)
+	}
+	if res := r.play("r"); len(res.Events) != 1 || res.Events[0].Action != "restart" || r.a.g.over {
+		t.Errorf("r after esc: events %+v, over %v", res.Events, r.a.g.over)
+	}
+}
+
 func TestAutopilotKey(t *testing.T) {
 	r := newRig(t)
 	r.play("A")

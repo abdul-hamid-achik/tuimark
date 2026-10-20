@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -59,6 +60,10 @@ type IRNode struct {
 	Style    map[string]string `json:"style"`
 	Text     string            `json:"text"`
 	Children []*IRNode         `json:"children"`
+	// From is FILE:LINE of the element a node was built from, for every
+	// node inside an include (IR 0.4, SPEC v0.4b §13.1, §6.18.6); it is
+	// the node's last member and absent outside every include.
+	From string `json:"from,omitempty"`
 }
 
 // structuralAttrs are raw attributes represented by a structured IRNode
@@ -72,9 +77,11 @@ var structuralAttrs = map[string]bool{
 // BuildIR converts a parsed Document into the source IR (SPEC §13.1):
 // version "0.1" for a version="1" document and the spike, "0.2" for a
 // version="2" document (IR 0.2 adds the six kinds, app.mouse, and the
-// keymap's label and keycap; class:NAME stays in attrs, §13.1), and "0.3"
+// keymap's label and keycap; class:NAME stays in attrs, §13.1), "0.3"
 // for a version="3" document (IR 0.3 has exactly the shape of IR 0.2 in
-// 0.3a, SPEC v0.3 §23.4).
+// 0.3a, SPEC v0.3 §23.4), and "0.4" for a <tui> without version (SPEC
+// v0.4b §23.6; schema/ir.v0.4.json starts as ir.v0.3.json with that
+// version, and gains its 0.4b kinds with the phases that implement them).
 //
 // tokens is the resolved theme token table: the built-in theme's tokens
 // overridden by any :root custom properties in the document's stylesheets
@@ -85,6 +92,9 @@ var structuralAttrs = map[string]bool{
 func BuildIR(doc *Document, tokens map[string]string) *IR {
 	version := ir.Version
 	switch {
+	case doc.Lang.V4():
+		// A <tui> without version: IR 0.4 (SPEC v0.4b §5.1, §13.1, §23.6).
+		version = ir.VersionV4
 	case doc.V3:
 		version = ir.VersionV3
 	case doc.V2:
@@ -111,7 +121,11 @@ func BuildIR(doc *Document, tokens map[string]string) *IR {
 func stylesheetPaths(styles []StyleRef) []string {
 	out := []string{}
 	for _, s := range styles {
-		if s.Src != "" {
+		switch {
+		case s.Rel != "":
+			// Written in a fragment: joined to the fragment's directory.
+			out = append(out, s.Rel)
+		case s.Src != "":
 			out = append(out, s.Src)
 		}
 	}
@@ -151,7 +165,13 @@ func buildKeymap(kb []KeyBind) []IRBind {
 }
 
 func buildIRNode(n *ir.Node) *IRNode {
-	classes := n.Classes
+	// A node of a copy shows what its element wrote, its scoped id aside
+	// (SPEC v0.4b §13.1): a reader resolves its aliases through the with
+	// of the enclosing use nodes, and adds their classes.
+	attrs, bind, each, cond, text, classes := n.Attrs, n.Bind, n.Each, n.If, n.Text, n.Classes
+	if w := n.Written; w != nil {
+		attrs, bind, each, cond, text, classes = w.Attrs, w.Bind, w.Each, w.If, w.Text, w.Classes
+	}
 	if classes == nil {
 		classes = []string{}
 	}
@@ -159,22 +179,43 @@ func buildIRNode(n *ir.Node) *IRNode {
 	if on == nil {
 		on = map[string]string{}
 	}
-	children := make([]*IRNode, 0, len(n.Children))
-	for _, c := range n.Children {
+	// The root tree keeps the composition as written (SPEC v0.4b §13.1):
+	// an element with includes lists its children with the include nodes
+	// in their places, each holding the nodes it inserted.
+	kids := n.Children
+	if n.Source != nil {
+		kids = n.Source
+	}
+	children := make([]*IRNode, 0, len(kids))
+	for _, c := range kids {
 		children = append(children, buildIRNode(c))
 	}
 	return &IRNode{
-		ID: n.ID, Kind: n.Kind, Classes: classes, Attrs: nodeAttrs(n),
-		Bind: n.Bind, Each: n.Each, If: n.If, On: on,
-		Style: nodeStyle(n), Text: n.Text, Children: children,
+		ID: n.ID, Kind: n.Kind, Classes: classes, Attrs: nodeAttrs(attrs),
+		Bind: bind, Each: each, If: cond, On: on,
+		Style: nodeStyle(n), Text: text, Children: children,
+		From: irFrom(n),
 	}
+}
+
+// irFrom is a node's `from` member: FILE:LINE for a node placed by an
+// include, "" for every other.
+func irFrom(n *ir.Node) string {
+	if n.Org == nil || n.Org.Placed == nil {
+		return ""
+	}
+	f := n.Org.File
+	if f == "" {
+		f = "<input>"
+	}
+	return fmt.Sprintf("%s:%d", f, n.Line)
 }
 
 // nodeAttrs is every attribute as written, minus the ones already
 // represented by a structured field (see structuralAttrs) and on:* events.
-func nodeAttrs(n *ir.Node) map[string]string {
+func nodeAttrs(attrs map[string]string) map[string]string {
 	out := map[string]string{}
-	for k, v := range n.Attrs {
+	for k, v := range attrs {
 		if structuralAttrs[k] || strings.HasPrefix(k, "on:") {
 			continue
 		}

@@ -11,6 +11,14 @@
     <bind keys="r" action="restart" label="new"/>
     <bind keys="A,t" action="autopilot" keycap="A" label="auto"/>
   </keymap>
+  <!-- A modal traps the keymap: the keys that also act under one are
+       repeated here, without labels, so the help lists each key once. -->
+  <keymap when="modal">
+    <bind keys="?" action="help_open"/>
+    <bind keys="q,ctrl+c" action="quit"/>
+    <bind keys="u" action="undo"/>
+    <bind keys="r" action="restart"/>
+  </keymap>
   <screen id="main">
     <col id="app">
       <row id="top">

@@ -1,0 +1,17 @@
+<tui>
+  <template id="field">
+    <col class="k-field">
+      <text class="k-label" class:invalid="f.error">{f.label}</text>
+      <text if="!f.error">{f.help}</text>
+      <text if="f.error">{f.error}</text>
+      <text hidden="f.meta.hide">{f.label}!</text>
+    </col>
+  </template>
+  <template id="tip">
+    <modal id="m" open="f.open"><text>{f.help}</text></modal>
+  </template>
+  <screen id="main">
+    <use id="email" template="field" with="form.email as f"/>
+    <use id="hint" template="tip" with="form.email as f"/>
+  </screen>
+</tui>

@@ -1,0 +1,4 @@
+<fragment>
+  <text id="a">a</text>
+  <include src="b.tui"/>
+</fragment>

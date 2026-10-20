@@ -1,0 +1,6 @@
+<tui version="3">
+  <screen id="main">
+    <list id="l" each="xs as x" key="x"><item><text>{x}</text></item></list>
+    <col id="detail"><text>detail</text></col>
+  </screen>
+</tui>

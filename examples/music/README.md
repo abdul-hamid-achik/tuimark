@@ -55,9 +55,10 @@ screen is the same on every machine.
 | `s` | shuffle on / off |
 | `r` | repeat: off, all, one |
 | `+` (`=`) / `-` | volume up / down by 5 |
-| `←` / `→` | seek 5 s back / forward (the tables do not consume left and right) |
+| `←` / `→` | seek 5 s back / forward (the tables do not consume left and right; on the tab strip they switch tabs) |
 | `/` | focus the filter (every word must match title, artist, or album); `enter` keeps it, `esc` clears it |
 | `1` `2` `3` | library, queue, albums tabs |
+| `tab` / `shift+tab` | move the focus: the table, the tab strip, the filter |
 | `up`, `down`, `home`, `end`, `pgup`, `pgdn` | move the cursor |
 | `?` | the help modal (all keys); `esc`, `?`, `enter`, or `q` closes it |
 | `q`, `ctrl+c` | quit |
@@ -104,7 +105,7 @@ To see the whole thing move without a terminal, use `-demo`.
   playing and settles to zero when paused. All arithmetic is integer, so the
   bars are the same on every machine, CPU architecture included.
 - **`<progress>` with `bar: eighths`** for the track position and the volume.
-- **`<tabs>` with v3 templated labels** (`label="queue {counts.queue}"`) and a
+- **`<tabs>` with templated labels** (`label="queue {counts.queue}"`) and a
   `short` form for narrow terminals; `switch-to` on `1 2 3`.
 - **`<table>`** for the library, queue, and albums, with `<column priority>`
   so a narrow terminal drops the album column first and then the artist, a

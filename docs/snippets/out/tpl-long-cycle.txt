@@ -1,0 +1,3 @@
+$ tuimark validate long-cycle.tui
+error V019 long-cycle.tui:2:21 /template/use <use template="t1"> in <template id="t0"> makes a cycle of templates: t0 → t1 → t2 → t3 → t4 → t5 → t6 → t7 → … (2 more) → t0
+… (9 more lines)

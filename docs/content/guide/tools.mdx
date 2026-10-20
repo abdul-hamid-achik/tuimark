@@ -72,6 +72,7 @@ Steps come from `--input "STEP STEP …"` (separated by spaces) or `--script FIL
 | `focus:#id` | `{"focus": "#id"}` | `Set("@focus", "#id")` |
 | `set:@theme="light"` | `{"theme": "light"}` | the host's theme |
 | `resize:100x30` | `{"resize": [100, 30]}` | the terminal is resized |
+| `tick:DUR` | `{"tick": "DUR"}` | advances the virtual clock by `DUR` (`250ms`, `1.5s`, `1m30s`), which turns a [spinner](/guide/widgets#the-spinner) and fires a Go host's `Every` |
 | `click:X,Y` | `{"click": [X, Y]}` | a left click at a cell (version 2, mouse on) |
 | `wheel-up:X,Y`, `wheel-down:X,Y` | `{"wheel": "up", "at": [X, Y]}` | one wheel step at a cell |
 
@@ -88,6 +89,10 @@ Steps come from `--input "STEP STEP …"` (separated by spaces) or `--script FIL
 
 It prints the node, its layout path, and its pseudo-classes, then one line per property that is not at its initial value: the computed value, where it came from (`ua` for the built-in sheet, `attribute`, `author`, `inline`, or `inherited`), the winning rule with its file, line, selector, and specificity, and the rules it overrode. `--json` prints the same as JSON, plus every class the node could have, with the guard behind it and whether any rule uses it: the quickest way to find a class that no selector matches.
 
+When the document is built from [fragments or templates](/guide/composition), the output ends with where the node came from: a `source` line with the file, line, and column of the element it was built from, then one `via` line for each `<use>` or `<include>` that placed it, innermost first. In `--json` these are the `source` member, `{"file", "line", "col", "via": [...]}`, with `use` and `template` (or `include`) in each `via` entry. A node the document wrote itself has no `via` line, and a document that writes `version` has no `source` at all.
+
+<include cwd lang="term">snippets/out/tpl-split-inspect.txt</include>
+
 ## validate
 
 `tuimark validate FILE` reports every diagnostic without printing a frame. It checks the whole document, including other screens, closed modals, and false `if` branches, and lays it out at 40, 80, and 120 columns to find layout problems at the sizes that matter (under both themes, for `theme="auto"`).
@@ -101,6 +106,8 @@ tuimark validate app.tui --json                   # diagnostics and the action c
 ```
 
 Bind checks need data: without `--data`, every path would read as missing, so they are skipped, and the text output ends with `ok (bindings not checked: no --data)` instead of `ok`. With `--data` the line stays `ok`, and warnings are still printed before it. `--json` has the members `actions`, `data`, `diagnostics`, `file`, and `ok`, where `data` is the `--data` argument as given, or `null` without it. `--catalog` takes a JSON array of action names, or `{"actions": [...]}`.
+
+`validate` also takes a [fragment](/guide/language#composing-a-document-from-files). It checks that one file with the checks its elements give themselves (tags, attributes, units, ids), reads no file its `<include>` elements name, and ends with `ok (fragment checked on its own)`, with or without `--data`, since the data and the uses live in the documents that include it. The flags that change what is checked (`--strict`, `--catalog`) have no effect on it; a bad `--theme` or an unreadable `--catalog` is still a usage error (exit `1`).
 
 ## catalog
 
@@ -127,15 +134,27 @@ A `--ts` project depends on [`@thelacanians/tuimark`](/guide/typescript), which 
 
 ## preview
 
-`tuimark preview FILE` prints the text dump and, when stdout is a terminal, paints the frame with ANSI colors first. `--watch` repaints whenever the document, its stylesheets, or the data file change. `--color truecolor|256|16|none` picks the color depth; otherwise it follows `TUIMARK_COLOR`, then the terminal's own capabilities.
+`tuimark preview FILE` prints the text dump and, when stdout is a terminal, paints the frame with ANSI colors first. `--watch` repaints whenever the document, its stylesheets, the fragments it includes (at any depth), or the data file change. `--color truecolor|256|16|none` picks the color depth; otherwise it follows `TUIMARK_COLOR`, then the terminal's own capabilities.
 
 ## fmt
 
-`tuimark fmt FILE` prints the document in canonical form; `--write` rewrites it and `--check` exits 2 when it is not formatted. See [formatting](/guide/language#formatting).
+`tuimark fmt FILE` prints the document in canonical form; `--write` rewrites it and `--check` exits 2 when it is not formatted. See [formatting](/guide/language#formatting). It formats a fragment exactly as it formats a document, with `<fragment>` as the root, and never reads the files its `<include>` elements name; `--write` rewrites only the file you named.
 
 ## ir
 
-`tuimark ir FILE` prints the parsed document as JSON: every node with its attributes, bindings, actions, and its own inline style, before any stylesheet is applied, plus the keymap and the resolved theme tokens. It is the document's structure as the runtime understands it. A schema for it ships in `schema/`.
+`tuimark ir FILE` prints the parsed document as JSON: every node with its attributes, bindings, actions, and its own inline style, before any stylesheet is applied, plus the keymap and the resolved theme tokens. It is the document's structure as the runtime understands it. A schema for it ships in `schema/`. For a document built from [fragments or templates](/guide/composition#seeing-what-a-copy-produced), the root tree keeps the composition as written: an `include` or `use` node holds what it placed, and each placed node has a `from` member, `FILE:LINE`.
+
+## Composition in the tools
+
+A document built from [fragments and templates](/guide/composition) is expanded when it is read, so `dump`, `play`, `validate`, and `test` work on the expanded document with no flag. The commands that say more, or that act on a fragment:
+
+- **`inspect`** names the element a node was built from and every use and include that placed it (above).
+- **`validate`, `fmt`** accept a fragment (above). Every other command that renders (`dump`, `play`, `preview`, `inspect`, `ir`) refuses one with `V005` and exit `2`, since a fragment has no screen: check it through the document that includes it. `inspect` writes that error to stderr and nothing to stdout:
+
+<include cwd lang="term">snippets/out/tpl-inspect-fragment.txt</include>
+
+- **`run` and `preview --watch`** watch the fragments the document includes, at any depth (the ones a template includes too), as well as its stylesheets and data. Saving any of them reloads once. A fragment that does not exist yet is watched, so creating it reloads, and while the document does not parse, saving a fragment still reloads. See [reload](/guide/run#reload).
+- **`tuimark mcp`** gives the same results: `tuimark_validate` on a fragment returns its JSON with `"ok": true` and no diagnostics, and `tuimark_inspect` on a fragment returns the `V005` text above as its result, as data, not as `isError`.
 
 ## Editor support (tuimark lsp)
 
@@ -149,6 +168,7 @@ What it offers:
 - **Completion.** In a `.tui`: tag names, the attributes of the tag, the keywords of an enumerated attribute, `#id` targets for `to`, `when`, and `focus`, action names (the built-in ones and the ones the document already uses), key tokens in `keys`, and the paths of `sample.json` in `{path}`, `each`, `bind`, and `if`. In a `.tcss`: property names and their keywords, `$tokens`, pseudo-classes, `@media` features, and the `#id`s and `.class`es of the documents that load it. Everything is filtered by the document's `version`; a stylesheet takes the newest version among the documents that load it.
 - **Hover.** The catalog entry of the tag, attribute, property, keyword, or diagnostic code under the cursor: its value syntax or keywords, and the version that introduced it.
 - **Go to definition.** An `#id` (in a selector, `to`, `when`, or `focus`) goes to its element, a `.class` to every element that has it, `<style src>` to its file, and a `$token` to where `:root` declares it.
+- **Fragments and templates.** A fragment gets the diagnostics the documents that include it give its file, found among the open documents and the `.tui` files of its directory and its parent; a fragment no document reads is checked on its own, with no `V005`. Go to definition follows `<include src>`, `template="…"`, and a scoped `#id` (`#billing__street__input`) across files, and a use's `#id` goes to the `<use>`. Completion in `template=` offers the document's templates, and the `#id` targets (`to`, `when`, `focus`) add the scoped ids of every copy. A fragment is formatted as `tuimark fmt` formats it. A pinned document keeps the older behavior: no `template=`.
 - **Formatting.** For a `.tui`, one edit with what `tuimark fmt` prints; none when the file is already formatted or is not well-formed XML. A `.tcss` has no formatter.
 
 A stylesheet is "loaded by" every open `.tui` that names it, and every `.tui` in its directory that does. Rename, code actions, semantic tokens, and workspace symbols are not offered. Positions are the protocol's: a 0-based line and a UTF-16 offset, converted from the 1-based line and code-point column `validate` prints. The server exits 0 on `exit` after `shutdown` (or when its input ends after one), and 1 otherwise.
