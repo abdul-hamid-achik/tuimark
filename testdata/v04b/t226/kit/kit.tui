@@ -1,0 +1,15 @@
+<fragment>
+  <style src="kit.tcss"/>
+  <keymap when=".k-dialog">
+    <bind keys="y" action="dialog_confirm" label="yes"/>
+  </keymap>
+  <template id="k-confirm">
+    <modal id="dialog" class="k-dialog" open="d.open" title="{d.title}" focus="#no" on:close="dialog_closed">
+      <text>{d.body}</text>
+      <row style="height: 1">
+        <button id="no" label="no" on:click="dialog_cancel"/>
+        <button id="yes" label="yes" on:click="dialog_confirm"/>
+      </row>
+    </modal>
+  </template>
+</fragment>

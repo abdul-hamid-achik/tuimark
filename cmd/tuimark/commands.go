@@ -286,11 +286,20 @@ func (c *cli) cmdValidate(args []string) int {
 	if err != nil {
 		return c.fail(err)
 	}
-	if doc := app.Document(); doc.FragmentRoot {
-		return c.validateFragment(file, *data, doc, *asJSON)
-	}
 	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
 		return c.fail(err)
+	}
+	// The flags are judged before the file's kind, so a fragment checked
+	// on its own has the usage errors a document has (--theme auto, a
+	// --catalog that cannot be read), though neither adds a check there.
+	var known map[string]bool
+	if *catalog != "" {
+		if known, err = readCatalog(*catalog); err != nil {
+			return c.fail(err)
+		}
+	}
+	if doc := app.Document(); doc.FragmentRoot {
+		return c.validateFragment(file, *data, doc, *asJSON)
 	}
 	app.SetStrict(*strict)
 	diags := app.Validate()
@@ -308,11 +317,7 @@ func (c *cli) cmdValidate(args []string) int {
 		}
 		diags = kept
 	}
-	if *catalog != "" {
-		known, err := readCatalog(*catalog)
-		if err != nil {
-			return c.fail(err)
-		}
+	if known != nil {
 		diags = append(diags, app.CheckCatalog(known)...).Sorted()
 	}
 	ok := !diags.HasErrors()
