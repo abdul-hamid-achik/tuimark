@@ -562,3 +562,245 @@ func TestV04bTemplateSelectInACopy(t *testing.T) {
 		t.Errorf("options %v", options)
 	}
 }
+
+// SPEC v0.4b §24 tests of the binding semantics of copies (phase F3): 141,
+// 144, 149, 218, and 227. The Go API parts of 141 and 144 are the root
+// package's conformance_v04b_templates_test.go.
+
+// strictDiags runs validate --json --strict on file with data and returns
+// its diagnostics as vdiags does.
+func strictDiags(t *testing.T, file, data string) []string {
+	t.Helper()
+	_, out, errw := runCLI("validate", file, "--json", "--strict", "--data", data)
+	var v struct {
+		Diagnostics []ir.Diagnostic `json:"diagnostics"`
+	}
+	if err := json.Unmarshal([]byte(out), &v); err != nil {
+		t.Fatalf("validate %s: %v\n%s%s", file, err, out, errw)
+	}
+	got := []string{}
+	for _, d := range v.Diagnostics {
+		got = append(got, d.Severity+" "+d.Code+" "+d.File+":"+strconv.Itoa(d.Line)+":"+strconv.Itoa(d.Col)+" "+d.Path+" id="+d.ID+" "+d.Msg)
+	}
+	return got
+}
+
+// 141. with: a missing with path is one B003 at the use (an error under
+// --strict), and the copy's paths through it, the nested with included,
+// report nothing; the messages of paths through an alias name the path it
+// stands for and the use; the V011 bullets. The Play/Get bullet and the
+// use-site aliases bullet are the root package's.
+func TestV04bTemplate141With(t *testing.T) {
+	dir := composeFixtures + "t141/"
+	app := dir + "app.tui"
+	sameLines(t, "validate", vdiags(t, app, dir+"d.json"), []string{
+		`warning B003 app.tui:16:5 /screen/use id=ship with path "order.ship" (alias a) is missing`,
+	})
+	sameLines(t, "--strict", strictDiags(t, app, dir+"d.json"), []string{
+		`error B003 app.tui:16:5 /screen/use id=ship with path "order.ship" (alias a) is missing`,
+	})
+	inputsOf := func(nodes []map[string]any) []string {
+		var out []string
+		for _, n := range nodes {
+			if n["tag"] == "input" {
+				out = append(out, n["id"].(string))
+			}
+		}
+		return out
+	}
+	nodes, focus := dumpNodes(t, app, "--data", dir+"d.json")
+	if got := inputsOf(nodes); !reflect.DeepEqual(got, []string{"bill__zip__in", "ship__zip__in"}) || focus != "bill__zip__in" {
+		t.Errorf("inputs %v, focus %v", got, focus)
+	}
+	sameLines(t, "both", vdiags(t, app, dir+"both.json"), []string{
+		`warning B003 app.tui:4:7 /screen/col/row/text id= bind path "f.label" is missing (order.bill.zip.label via <use id="bill__zip">)`,
+		`warning B003 app.tui:4:7 /screen/col/row/text id= bind path "f.label" is missing (order.ship.zip.label via <use id="ship__zip">)`,
+		`warning B003 app.tui:5:7 /screen/col/row/input id=bill__zip__in bind path "f.value" is missing (order.bill.zip.value via <use id="bill__zip">)`,
+		`warning B003 app.tui:5:7 /screen/col/row/input id=ship__zip__in bind path "f.value" is missing (order.ship.zip.value via <use id="ship__zip">)`,
+	})
+
+	// V011: one at the use, which inserts nothing (the dump keeps the
+	// inputs of bill and ship only).
+	const last = "  </screen>"
+	for with, msg := range map[string]string{
+		"x as f,y as g":   `with="x as f,y as g": want "path as alias", separated by ", "`,
+		"x as f,  y as g": `with="x as f,  y as g": want "path as alias", separated by ", "`,
+		"x as f, ":        `with="x as f, ": want "path as alias", separated by ", "`,
+		"x as f,, y as g": `with="x as f,, y as g": want "path as alias", separated by ", "`,
+		"":                `with="": want "path as alias", separated by ", "`,
+		"x as f, y as f":  `with alias "f" appears twice`,
+	} {
+		v := variant(t, app, last, "    <use id=\"u\" template=\"field\" with=\""+with+"\"/>\n"+last)
+		sameLines(t, "with="+with, vdiags(t, v, ""), []string{`error V011 app.tui:17:5 /screen/use id=u ` + msg})
+		if nodes, _ := dumpNodes(t, v); !reflect.DeepEqual(inputsOf(nodes), []string{"bill__zip__in", "ship__zip__in"}) {
+			t.Errorf("with=%q inserted something: %v", with, inputsOf(nodes))
+		}
+	}
+	list := writeTemp(t, "app.tui", `<tui><template id="t"><text>{r.city}</text></template><screen id="main"><list id="l" each="rows as r" key="r.id"><item><use template="t" with="r.addr as r"/></item></list></screen></tui>`)
+	if got := vdiags(t, list, ""); len(got) != 1 || !strings.HasPrefix(got[0], "error V011 ") || !strings.HasSuffix(got[0], ` with alias "r" repeats an alias in scope`) {
+		t.Errorf("a with alias repeating a row alias: %v", got)
+	}
+	raw, err := os.ReadFile(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := strings.Replace(string(raw), "  <screen id=\"main\">", "  <template id=\"t2\"><box each=\"a.items as a\"><text>{a}</text></box></template>\n  <screen id=\"main\">", 1)
+	each := writeTemp(t, "app.tui", strings.Replace(src, last, "    <use id=\"u\" template=\"t2\" with=\"data as a\"/>\n"+last, 1))
+	sameLines(t, "each alias", vdiags(t, each, ""), []string{
+		`error V011 app.tui:14:21 /screen/box id= each alias "a" repeats the with alias of <use id="u"> at app.tui:18:5`,
+	})
+	nodes, _ = dumpNodes(t, each, "--data", writeTemp(t, "d.json", `{"data": {"items": ["p", "q"]}}`))
+	var got []string
+	for _, n := range nodes {
+		if s, ok := n["text"].(string); ok && n["tag"] == "text" && (s == "p" || s == "q") {
+			got = append(got, s)
+		}
+	}
+	if !reflect.DeepEqual(got, []string{"p", "q"}) {
+		t.Errorf("the copy of t2: texts %v", got)
+	}
+}
+
+// 144. if on a use: the copy is in the frame while the guard holds, and a
+// missing path is one B002 at the use, read where the use stands (b is
+// not in scope).
+func TestV04bTemplate144UseIf(t *testing.T) {
+	dir := composeFixtures + "t144/"
+	app, data := dir+"app.tui", dir+"d.json"
+	sameLines(t, "validate", vdiags(t, app, data), []string{})
+	nodesOf := func(what string, args ...string) {
+		t.Helper()
+		want := args[len(args)-1]
+		_, out, _ := runCLI(append([]string{args[0], app, "--data", data, "--cols", "10", "--rows", "3", "--format", "json"}, args[1:len(args)-1]...)...)
+		var d struct {
+			Nodes any `json:"nodes"`
+		}
+		var w any
+		if err := json.Unmarshal([]byte(out), &d); err != nil {
+			t.Fatal(err)
+		}
+		_ = json.Unmarshal([]byte(want), &w)
+		if !reflect.DeepEqual(d.Nodes, w) {
+			t.Errorf("%s: nodes %v", what, d.Nodes)
+		}
+	}
+	nodesOf("dump", "dump", `[{"id": "main", "tag": "screen", "x": 0, "y": 0, "w": 10, "h": 3}, {"tag": "text", "x": 0, "y": 0, "w": 10, "h": 1, "text": "after"}]`)
+	nodesOf("play", "play", "--input", "set:show=true", `[{"id": "main", "tag": "screen", "x": 0, "y": 0, "w": 10, "h": 3}, {"id": "top__msg", "tag": "text", "x": 0, "y": 0, "w": 10, "h": 1, "text": "hi"}, {"tag": "text", "x": 0, "y": 1, "w": 10, "h": 1, "text": "after"}]`)
+	v := variant(t, app, `if="show"`, `if="b.text"`)
+	sameLines(t, "if=b.text", vdiags(t, v, data), []string{`warning B002 app.tui:6:5 /screen/use id=top if="b.text": path "b.text" is missing`})
+	if nodes, _ := dumpNodes(t, v, "--data", data, "--cols", "10", "--rows", "3"); len(nodes) != 2 {
+		t.Errorf("if=b.text: the copy is in the frame: %v", nodes)
+	}
+}
+
+// 149. Once per written element: the V002 of the template's text and the
+// B003 of the two copies through b, which say the same thing, are one
+// each; no V012, since the template has no id.
+func TestV04bTemplate149OncePerElement(t *testing.T) {
+	dir := composeFixtures + "t149/"
+	sameLines(t, "validate", vdiags(t, dir+"app.tui", dir+"d.json"), []string{
+		`warning B003 app.tui:3:5 /screen/text id= bind path "x.name" is missing (b.name via <use template="t">)`,
+		`error V002 app.tui:3:11 /screen/text id= attribute "bogus" is not allowed on <text>`,
+	})
+}
+
+// 218. Optional flags through with: a flag read through an alias that
+// stands for an object is null when missing, open included, while text
+// keeps B003; a missing alias path is the use's B003; an alias that
+// stands for anything else gives each flag its B002; a store flag is an
+// ordinary one.
+func TestV04bTemplate218OptionalFlags(t *testing.T) {
+	dir := composeFixtures + "t218/"
+	opt := dir + "opt.tui"
+	texts := func(data string) []string {
+		t.Helper()
+		nodes, _ := dumpNodes(t, opt, "--data", data, "--cols", "30", "--rows", "6")
+		var out []string
+		for _, n := range nodes {
+			switch n["tag"] {
+			case "text":
+				b, _ := json.Marshal(n["classes"])
+				out = append(out, n["text"].(string)+" "+string(b))
+			case "modal":
+				out = append(out, "modal "+n["id"].(string))
+			}
+		}
+		return out
+	}
+	sameLines(t, "validate", vdiags(t, opt, dir+"opt.json"), []string{})
+	sameLines(t, "dump", texts(dir+"opt.json"), []string{`Email ["k-label"]`, `We never share it null`, `Email! null`})
+
+	data := func(more string) string {
+		return writeTemp(t, "opt.json", `{"form": {"email": {"label": "Email", "help": "We never share it"`+more+`}}}`)
+	}
+	withError := data(`, "error": "Not an email"`)
+	sameLines(t, "error", vdiags(t, opt, withError), []string{})
+	sameLines(t, "error dump", texts(withError), []string{`Email ["k-label","invalid"]`, `Not an email null`, `Email! null`})
+	open := data(`, "open": true`)
+	sameLines(t, "open", vdiags(t, opt, open), []string{})
+	sameLines(t, "open dump", texts(open), []string{`Email ["k-label"]`, `We never share it null`, `Email! null`, `modal hint__m`, `We never share it null`})
+
+	sameLines(t, "no help", vdiags(t, opt, writeTemp(t, "opt.json", `{"form": {"email": {"label": "Email"}}}`)), []string{
+		`warning B003 opt.tui:5:7 /screen/col/text id= bind path "f.help" is missing (form.email.help via <use id="email">)`,
+	})
+	sameLines(t, "{}", vdiags(t, opt, writeTemp(t, "opt.json", `{}`)), []string{
+		`warning B003 opt.tui:14:5 /screen/use id=email with path "form.email" (alias f) is missing`,
+		`warning B003 opt.tui:15:5 /screen/use id=hint with path "form.email" (alias f) is missing`,
+	})
+	sameLines(t, "a string", vdiags(t, opt, writeTemp(t, "opt.json", `{"form": {"email": "x"}}`)), []string{
+		`warning B002 opt.tui:4:7 /screen/col/text id= class:invalid="f.error": path "f.error" is missing (form.email.error via <use id="email">)`,
+		`warning B003 opt.tui:4:7 /screen/col/text id= bind path "f.label" is missing (form.email.label via <use id="email">)`,
+		`warning B002 opt.tui:5:7 /screen/col/text id= if="!f.error": path "f.error" is missing (form.email.error via <use id="email">)`,
+		`warning B003 opt.tui:5:7 /screen/col/text id= bind path "f.help" is missing (form.email.help via <use id="email">)`,
+		`warning B002 opt.tui:6:7 /screen/col/text id= if="f.error": path "f.error" is missing (form.email.error via <use id="email">)`,
+		`warning B002 opt.tui:7:7 /screen/col/text id= hidden="f.meta.hide": path "f.meta.hide" is missing (form.email.meta.hide via <use id="email">)`,
+		`warning B003 opt.tui:7:7 /screen/col/text id= bind path "f.label" is missing (form.email.label via <use id="email">)`,
+		`warning B002 opt.tui:11:5 /screen/modal id=hint__m open="f.open": path "f.open" is missing (form.email.open via <use id="hint">)`,
+	})
+	raw, err := os.ReadFile(opt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := writeTemp(t, "opt.tui", strings.Replace(string(raw), `hidden="f.meta.hide"`, `hidden="debug"`, 1))
+	sameLines(t, "a store flag", vdiags(t, store, dir+"opt.json"), []string{
+		`warning B002 opt.tui:7:7 /screen/col/text id= hidden="debug": path "debug" is missing, placed by <use id="email"> at opt.tui:14:5`,
+	})
+}
+
+// 227. A use's guard in a list row: each row is built again when the
+// guard flips (if, and hidden the other way round), and a missing guard
+// path is one B002 at the use, not one per row.
+func TestV04bTemplate227UseGuardInRow(t *testing.T) {
+	dir := composeFixtures + "t227/"
+	rows, data := dir+"rows.tui", dir+"rows.json"
+	plain := []string{"alpha               ", "beta                "}
+	shown := []string{"alpha [new]         ", "beta [old]          "}
+	check := func(what, file string) {
+		t.Helper()
+		code, out, errw := runCLI("play", file, "--data", data, "--cols", "20", "--rows", "2", "--frames", "--input", "set:show=true set:show=false", "--format", "json")
+		if code != 0 {
+			t.Fatalf("%s: play exit %d %s", what, code, errw)
+		}
+		p := decodePlay(t, out)
+		if len(p.Events) != 0 || len(p.Frames) != 3 {
+			t.Fatalf("%s: events %v, %d frames", what, p.Events, len(p.Frames))
+		}
+		for i, want := range [][]string{plain, shown, plain} {
+			f := p.Frames[i].Dump
+			badges := 0
+			for _, n := range f.Nodes {
+				if n.Tag == "text" && reflect.DeepEqual(n.Classes, []string{"k-badge"}) {
+					badges++
+				}
+			}
+			if !reflect.DeepEqual(f.Grid, want) || badges != 2*(i%2) {
+				t.Errorf("%s step %d: grid %q, %d badges", what, i, f.Grid, badges)
+			}
+		}
+	}
+	check("if", rows)
+	check("hidden", variant(t, rows, `if="show"`, `hidden="!show"`))
+	sameLines(t, "no show", vdiags(t, rows, writeTemp(t, "rows.json", `{"rows": [{"id": "a", "name": "alpha", "tag": "new"}, {"id": "b", "name": "beta", "tag": "old"}]}`)), []string{
+		`warning B002 rows.tui:10:11 /screen/list/item/row/use id= if="show": path "show" is missing`,
+	})
+}

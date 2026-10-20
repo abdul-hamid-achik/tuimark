@@ -1,0 +1,18 @@
+<tui>
+  <template id="field">
+    <row>
+      <text>{f.label}</text>
+      <input id="in" bind="f.value"/>
+    </row>
+  </template>
+  <template id="address">
+    <col>
+      <text>{a.city}</text>
+      <use id="zip" template="field" with="a.zip as f"/>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="bill" template="address" with="order.bill as a"/>
+    <use id="ship" template="address" with="order.ship as a"/>
+  </screen>
+</tui>

@@ -11,10 +11,11 @@ import (
 	"github.com/abdul-hamid-achik/tuimark"
 )
 
-// SPEC v0.4b §24 conformance tests of composition, phase F2: <template>
-// and <use> (tests 133 and 138), the parts the Go API observes. The CLI
-// parts are cmd/tuimark's conformance_v04b_templates_test.go; the fixtures
-// are testdata/v04b/t133 and t138.
+// SPEC v0.4b §24 conformance tests of composition, phases F2 and F3:
+// <template> and <use> (tests 133, 138, 141, and 144), the parts the Go API
+// observes. The CLI parts are cmd/tuimark's
+// conformance_v04b_templates_test.go; the fixtures are testdata/v04b/t133,
+// t138, and t141.
 
 // loadWith loads a fixture and binds its JSON data at the root.
 func loadWith(t *testing.T, doc, data string) *tuimark.App {
@@ -165,5 +166,55 @@ func TestTemplateUseIf(t *testing.T) {
 	app = parseApp(t, strings.Replace(doc, "IF", `hidden="!show"`, 1), data)
 	if d, _ := app.Dump(10, 3); len(d.Nodes) != 2 {
 		t.Errorf("hidden=!show: the copy is in the frame: %+v", d.Nodes)
+	}
+}
+
+// 141 (phase F3), the Play bullet: the input of the copy whose with path
+// is missing writes the path its alias stands for, creating it, as a
+// written input bound to that path would.
+func TestTemplateCopyWritesAMissingWithPath(t *testing.T) {
+	dir := filepath.Join("testdata", "v04b", "t141")
+	app := loadWith(t, filepath.Join(dir, "app.tui"), filepath.Join(dir, "d.json"))
+	if _, err := app.Play(tuimark.PlayOptions{}, "text:69", "focus:#ship__zip__in", "text:75"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := app.Get("order.bill.zip.value"); got != "69" {
+		t.Errorf("order.bill.zip.value = %v", got)
+	}
+	if got, _ := app.Get("order.ship"); !reflect.DeepEqual(got, map[string]any{"zip": map[string]any{"value": "75"}}) {
+		t.Errorf("order.ship = %v", got)
+	}
+}
+
+// A modal a copy places closes with esc: the built-in writes false to the
+// path its open stands for through the with alias (SPEC §8.6).
+func TestTemplateCopiedModalClosesWithEsc(t *testing.T) {
+	app := parseApp(t, `<tui>
+  <template id="dlg">
+    <modal id="m" open="d.open"><button id="ok" on:click="ok">OK</button></modal>
+  </template>
+  <screen id="main">
+    <text>bg</text>
+    <use id="del" template="dlg" with="ui.dialogs.del as d"/>
+  </screen>
+</tui>`, map[string]any{"ui": map[string]any{"dialogs": map[string]any{"del": map[string]any{"open": true}}}})
+	d, err := app.Dump(20, 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Focus == nil || *d.Focus != "del__ok" {
+		t.Fatalf("focus %v, want the copied modal's button", d.Focus)
+	}
+	res, err := app.Play(tuimark.PlayOptions{Cols: 20, Rows: 4}, "esc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := app.Get("ui.dialogs.del.open"); got != false {
+		t.Errorf("ui.dialogs.del.open = %v", got)
+	}
+	for _, n := range res.Dump.Nodes {
+		if n.Tag == "modal" {
+			t.Errorf("the modal is still in the frame: %+v", res.Dump.Nodes)
+		}
 	}
 }

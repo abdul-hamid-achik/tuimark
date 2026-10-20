@@ -1,0 +1,10 @@
+<tui>
+  <template id="t">
+    <text bogus="1">{x.name}</text>
+  </template>
+  <screen id="main">
+    <use template="t" with="a as x"/>
+    <use template="t" with="b as x"/>
+    <use template="t" with="b as x"/>
+  </screen>
+</tui>

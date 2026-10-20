@@ -1,0 +1,15 @@
+<tui>
+  <template id="badge">
+    <text class="k-badge">[{b.tag}]</text>
+  </template>
+  <screen id="main" focus="#l">
+    <list id="l" each="rows as r" key="r.id">
+      <item>
+        <row style="gap: 1">
+          <text>{r.name}</text>
+          <use template="badge" with="r as b" if="show"/>
+        </row>
+      </item>
+    </list>
+  </screen>
+</tui>

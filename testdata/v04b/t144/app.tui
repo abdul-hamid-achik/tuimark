@@ -1,0 +1,9 @@
+<tui>
+  <template id="banner">
+    <text id="msg">{b.text}</text>
+  </template>
+  <screen id="main">
+    <use id="top" template="banner" with="note as b" if="show"/>
+    <text>after</text>
+  </screen>
+</tui>
