@@ -1,0 +1,2 @@
+$ tuimark validate ref-bad.tui
+error B005 ref-bad.tui:8:5 /keymap/bind to="#no" refers to an id that does not exist; ids in a <template> are scoped by their <use>: #del__no

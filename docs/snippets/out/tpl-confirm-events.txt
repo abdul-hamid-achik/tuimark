@@ -1,0 +1,3 @@
+$ tuimark play confirm.tui --data confirm.json --cols 30 --rows 8 --input "y tab enter"
+1 yes_pressed del__no {} null
+3 yes del__yes {} null

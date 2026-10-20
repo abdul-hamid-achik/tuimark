@@ -1,0 +1,3 @@
+$ tuimark validate long.tui --data long.json
+warning B003 long.tui:3:5 /screen/text bind path "f.settings.profile.preferences.notifications.email.digest.freque…" is missing (user.settings.profile.preferences.notifications.email.digest.fre… via <use id="u">)
+error V019 long.tui:7:5 /screen/use <use template="another_template_whose_name_is_longer_than_sixty_four_bytes_so_n…"> names no <template>

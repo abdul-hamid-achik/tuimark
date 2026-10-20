@@ -1,0 +1,2 @@
+$ tuimark validate parts/forms.tui
+ok (fragment checked on its own)

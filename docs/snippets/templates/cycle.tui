@@ -1,0 +1,14 @@
+<tui>
+  <template id="menu">
+    <col>
+      <text>menu</text>
+      <use template="submenu"/>
+    </col>
+  </template>
+  <template id="submenu"><use template="menu"/></template>
+  <template id="self"><use template="self"/></template>
+  <screen id="main">
+    <use template="menu"/>
+    <use template="nope"/>
+  </screen>
+</tui>

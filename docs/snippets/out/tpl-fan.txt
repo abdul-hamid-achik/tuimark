@@ -1,0 +1,2 @@
+$ tuimark validate fan.tui
+error V021 fan.tui:8:81 /screen/use use template="t7" exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands

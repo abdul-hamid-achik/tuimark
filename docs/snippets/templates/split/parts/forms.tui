@@ -1,0 +1,14 @@
+<fragment>
+  <template id="field">
+    <col>
+      <text>{f.label}</text>
+      <input id="input" bind="f.value"/>
+    </col>
+  </template>
+  <template id="address">
+    <box title="{a.title}" border="rounded">
+      <use id="street" template="field" with="a.street as f"/>
+      <use id="zip" template="field" with="a.zip as f"/>
+    </box>
+  </template>
+</fragment>

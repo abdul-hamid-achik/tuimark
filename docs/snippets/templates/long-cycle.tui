@@ -1,0 +1,13 @@
+<tui>
+  <template id="t0"><use template="t1"/></template>
+  <template id="t1"><use template="t2"/></template>
+  <template id="t2"><use template="t3"/></template>
+  <template id="t3"><use template="t4"/></template>
+  <template id="t4"><use template="t5"/></template>
+  <template id="t5"><use template="t6"/></template>
+  <template id="t6"><use template="t7"/></template>
+  <template id="t7"><use template="t8"/></template>
+  <template id="t8"><use template="t9"/></template>
+  <template id="t9"><use template="t0"/></template>
+  <screen id="main"><text>hi</text></screen>
+</tui>

@@ -1,0 +1,223 @@
+---
+title: Templates and composition
+description: Reuse markup in a Tuimark document - split it into files with include and fragment, repeat a piece with template and use, scope its ids, bind each copy to its own data with with, and read the diagnostics and tool output for what a copy produced.
+---
+
+A document that grows has two problems: it gets long, and the same few lines appear again and again. The current language (a `<tui>` without `version`) has a tool for each, and both are expanded when the document is read, so nothing about them exists at run time. The dump, the keymap, focus, and the events see the expanded document, as if you had written every copy by hand.
+
+| You want | Use | Result |
+|---|---|---|
+| to split a long document by the pieces a person would name | [`<include>` and `<fragment>`](/guide/language#composing-a-document-from-files) | the contents of a file placed where the include stands |
+| to repeat a piece, each time with its own data | `<template>` and `<use>` (this page) | a copy of the template at every `<use>`, with scoped ids and its data behind an alias |
+
+The two combine: a fragment can hold templates, so a team keeps its form fields in one file and every document includes it. A pinned document (one that writes `version="1"`, `"2"`, or `"3"`) has none of these tags; they are `V001`, "requires a `<tui>` without version".
+
+## A template and its uses
+
+A `<template id="…">` holds a piece of markup. It is never drawn by itself. Each `<use template="…"/>` places a copy of it where the `use` stands:
+
+<include cwd lang="tui">snippets/templates/field.tui</include>
+
+`field` has a label, an input, and an error line, and the form uses it twice. Each `<use>` names its template, gives the copy an `id`, and says which data the copy reads with `with`. Both fields come out of the same markup:
+
+<include cwd lang="grid">snippets/out/tpl-dump.txt</include>
+
+- **Where a template stands.** As a direct child of `<tui>` or `<screen>`, in the document or in a fragment it includes; anywhere else is `V001`. It may stand before or after the uses that name it. Its `id` is required (`V012`) and unique among templates (`V004`).
+- **What it holds.** Any elements, one or several. Not `<tui>`, `<screen>`, `<style>`, `<keymap>`, `<bind>`, `<fragment>`, or another `<template>` at any depth (`V001`), and no loose text (`V013`: wrap it in a `<text>`). A template can hold `<use>` elements of other templates, so a template can build on a smaller one.
+- **What a `<use>` takes.** `template` (required), `id`, `with`, `if`, `hidden`, and a static `class`. Any other attribute is `V002`, and the message says where it goes instead: on the template's element, or as a class. A `<use>` takes no content, because there are no slots (`V013`).
+- **What a copy is.** The same elements as the template, built where the use stands, checked as if you had written them there. A `<use>` is not a node: it takes no space in the layout, and `to="#email"` naming one is `B005`.
+
+The first `<use>` in the example is `name`, and the second is `email`. Type into the first field, move to the second with `ctrl+n`, type, submit, and save:
+
+<include cwd lang="grid">snippets/out/tpl-typed.txt</include>
+
+<include cwd lang="term">snippets/out/tpl-events.txt</include>
+
+The heading reads `Hello, Ada` because the first copy's input wrote what you typed to `form.name.value`. The events say which copy fired them: `email__input`. Both of those follow from the two sections below.
+
+## Scoped ids
+
+Two copies of one template cannot both have an input called `input`, so a copy's ids are prefixed with the id of its use and two underscores: the input of `<use id="email">` is `email__input`. This is the same `instance__part` shape the [kit](/guide/kit#conventions) uses for its ids, and it is what your own references use:
+
+<include cwd lang="term">snippets/out/tpl-ids.txt</include>
+
+- **Outside the copy, write the scoped id.** The keymap row `<bind keys="ctrl+n" action="focus" to="#email__input"/>`, the screen's `focus="#name__input"`, a stylesheet rule `#email__input { … }`, and `play`'s `focus:#email__input` all name the copy's element. The host sees the scoped id too: the `source` of an event is `email__input`, and a host that routes by the part before the last `__` gets `email`.
+- **Inside the copy, write the id as the template has it.** In a template, `focus="#no"` on a modal means the `no` button of the same copy, and each copy resolves it to its own: `del__no` for `<use id="del">`.
+- **A reference to the unscoped id from outside is `B005`**, and the message names the one you want:
+
+<include cwd lang="tui">snippets/templates/ref-bad.tui</include>
+
+<include cwd lang="term">snippets/out/tpl-ref-bad.txt</include>
+
+- **A use needs an `id` when its template has ids** (`V012`: the message lists them and the scoped form they take). A template with no ids can be used without one.
+- **Nesting adds a prefix.** A template that uses another one scopes the inner ids by both uses: `billing__street__input` below.
+- **A use's id is an id of the document**, so it must not repeat another (`V004`). A copy's ids never clash with another copy's.
+
+A confirmation dialog is a good template, because its ids, the modal's `focus`, and its keys all stay inside the copy. Here the keymap row reaches the copy's modal by its scoped id, and `y`, `tab`, and `enter` act on it:
+
+<include cwd lang="tui">snippets/templates/confirm.tui</include>
+
+<include cwd lang="term">snippets/out/tpl-confirm-events.txt</include>
+
+The `y` row fired with `del__no` as the source, the button the modal's `focus="#no"` selected; then `tab` and `enter` clicked `del__yes`. Pressing `esc` would close the modal, because `open="c.open"` is a path the runtime can write through the alias.
+
+## What `with` does
+
+`with="path as alias"` makes `alias` stand for `path` inside the copy. Every path in the copy that starts with the alias goes to that path in the store: `{f.label}` reads `form.email.label`, and `bind="f.value"` reads and **writes** `form.email.value`. That is why the typed text above reached `form.name.value`. Nothing is copied; the alias is a name for the path, so an input in a copy edits the same data a `{form.name.value}` anywhere else shows.
+
+- **Several clauses** are separated by exactly a comma and a space: `with="form.one as x, form.two as y"`. Anything else is `V011`, as is an alias written twice in one `with`.
+- **The target may not exist yet.** An input in the copy creates the path when you type. The use reports one `B003` for the missing path, and nothing more from the copy (see [a missing `with` path](#a-missing-with-path-and-optional-flags)).
+- **Nested uses compose.** In `parts/forms.tui` below, `address` reads `a.street` and passes it on as `f` to `field`; the input ends up bound to `order.billing.street.value`.
+- **A copy sees the aliases in scope where its use stands.** A use inside a list row or an `each` container can read the row's alias without being given it, and a `with` path can start with it: `with="j.status as s"`. The template then depends on where it is used, so give a reusable template a `with` for everything it reads.
+- **An inner `each` can reuse the name of a use-site alias.** In the template, `each="g.items as r"` shadows the `r` of the surrounding list while the copy is built, and `g` still reads through `with="r.group as g"`. An inner `each` alias that repeats a `with` alias, though, is `V011` at that element. The copy is still placed.
+
+### Templates in a fragment
+
+The two files of this example are the usual split. `parts/forms.tui` holds the templates; the document includes it and uses them twice:
+
+<include cwd lang="tui" meta='tab="app.tui"'>snippets/templates/split/app.tui</include>
+
+<include cwd lang="tui" meta='tab="parts/forms.tui"'>snippets/templates/split/parts/forms.tui</include>
+
+<include cwd lang="grid">snippets/out/tpl-split-dump.txt</include>
+
+<include cwd lang="term">snippets/out/tpl-split-ids.txt</include>
+
+`shipping` has an `if`, which is the next section. A fragment that holds templates is [checked on its own](/guide/tools#validate) with only the checks its elements give themselves, because the data and the uses are in the documents that include it.
+
+<include cwd lang="term">snippets/out/tpl-split-validate.txt</include>
+
+## Guards and classes on a use
+
+`if` and `hidden` on a `<use>` decide whether its copy exists in the frame, and they are read **where the use stands**: the `with` of the same use is not in scope for them (`if="s.urgent"` would read a path the use itself defines, which is `B002`), but an `each` alias is. The same use in a list row is decided once per row.
+
+<include cwd lang="tui">snippets/templates/rows.tui</include>
+
+The badge exists only while `show_badges` is truthy. A copy that is not placed has no ids, no focus, and no events, as if the use were not written:
+
+<include cwd lang="grid">snippets/out/tpl-rows-off.txt</include>
+
+<include cwd lang="grid">snippets/out/tpl-rows-on.txt</include>
+
+- **Per placement.** The guard of a use in a list `<item>`, in the template of a container `each`, or in a table's row (below) is evaluated for each row, with the row's alias in scope. A guard whose path is missing is one `B002` at the use, not one per row.
+- **A static `class`** on a use is added to every top-level element of the copy, after the classes the template wrote and before its `class:NAME` guards. Style it like any class:
+
+<include cwd lang="term">snippets/out/tpl-classes.txt</include>
+
+  The `badge` comes from the template, `cell` from the use, and `hot` from the template's `class:hot="s.urgent"` guard, true for the `deploy` row only.
+
+### Tables
+
+A `<column>` holds its cell as text and cannot hold a `<use>` (`V016`). To reuse a column, make the whole `<column>` the template, and put the `<use>` where the column would stand, directly in the `<table>`. The template's `<item>` row template can be placed the same way.
+
+<include cwd lang="tui">snippets/templates/table.tui</include>
+
+<include cwd lang="grid">snippets/out/tpl-table-on.txt</include>
+
+A `with` path that starts with the table's row alias (`j.status as s`) is read for every row. The use's `if` and `hidden` stay per table: setting `show_status` to false takes the column away for all rows, header included:
+
+<include cwd lang="grid">snippets/out/tpl-table-off.txt</include>
+
+## Seeing what a copy produced
+
+The expanded document is what every tool shows, so a copy is checked the way any element is. Three places tell you where it came from.
+
+**The dump.** A copy's nodes appear in the node list with their scoped ids, as in the lists above. `tuimark play` and `dump` need no special flag.
+
+**`inspect`.** Besides the cascade, `tuimark inspect` ends with the element a node was built from and the uses and includes that placed it, innermost first:
+
+<include cwd lang="term">snippets/out/tpl-split-inspect.txt</include>
+
+The input `shipping__zip__input` was written at `parts/forms.tui:5:7`, placed by the `zip` use inside `address` (line 11), which the `shipping` use placed (`app.tui`, line 6). With `--json` the same information is the `source` member:
+
+<include cwd lang="jsonc">snippets/out/tpl-inspect.jsonc</include>
+
+A node the document writes itself has `"via": []`, and a document that writes `version` has no `source` at all. A use without an `id` is listed as `<use template="…">`.
+
+**`ir`.** `tuimark ir` keeps the composition as written: a `use` node holds the copy it placed, in the template's own words (`f.value`, `{f.label}`), with the scoped `id` and a `from` member, `FILE:LINE` of the element the node came from. Read the aliases through the `with` of the enclosing `use`:
+
+<include cwd lang="jsonc">snippets/out/tpl-ir.jsonc</include>
+
+`from` is on every node a use or an include placed, and absent on a node the document wrote in its own file.
+
+## Diagnostics
+
+The codes a template can raise, with the page's examples where there is one. The [diagnostics reference](/reference/diagnostics) has the full text.
+
+| Code | When |
+|---|---|
+| `V019` | a `<use>` without `template`, or one that names no template; or one that closes a [cycle](#cycles) |
+| `V021` | the [limits](#limits): elements, source bytes, nesting depth |
+| `V011` | a `with` that is malformed, repeats an alias, or uses one already in scope; an inner `each` alias equal to a `with` alias |
+| `V012` | a `<template>` without `id`; a `<use>` without `id` whose template has ids |
+| `V013` | text directly in a `<template>`; content in a `<use>` |
+| `V001`, `V002`, `V004` | a template in the wrong place; an attribute a `<use>` does not take; a duplicate template or use id |
+| `B002`, `B003` | a missing `if`/`hidden` path at a use; a [missing `with` path](#a-missing-with-path-and-optional-flags) or a missing path in a copy |
+| `B005` | a `to=`, `when=`, or `focus=` that names a use, or names an id only the template writes |
+
+### Cycles
+
+A template that reaches itself through the uses in its body would never stop expanding, so each use on the cycle is `V019`, and none of them expands. A reference to a template that does not exist is `V019` too:
+
+<include cwd lang="tui">snippets/templates/cycle.tui</include>
+
+<include cwd lang="term">snippets/out/tpl-cycle.txt</include>
+
+Each message names a simple cycle through the use, starting from its own template, so the one you read is the loop that use closes. A long one is cut: up to 8 templates are named whole, and a longer cycle shows its first 8, then `… (N more)`, then the template it returns to. A cycle of ten templates reports ten uses, each starting at its own template:
+
+<include cwd lang="term">snippets/out/tpl-long-cycle.txt</include>
+
+A cycle is reported whether or not any use reaches it, and whether it goes through a template body directly or through a copy that meets it by an include.
+
+### Limits
+
+Because a copy of a copy of a copy grows fast, expansion has a budget, shared with `<include>`. A document that would pass any of these is `V021`:
+
+- **100000 elements** inserted by includes and uses, counted once per copy, at every depth;
+- **16 MiB of placed source**, counting the fragments and templates copied, the scoped-id prefixes, and the `with` paths substituted into each copy;
+- **256 levels** of nesting in the resulting tree, counting each `<include>` and `<use>` as a level.
+
+The use that would go over inserts nothing, and no later include or use expands, so the rest of the document is still reported. Five uses of a template in each of seven templates, one inside another, is 5⁷ leaves:
+
+<include cwd lang="tui">snippets/templates/fan.tui</include>
+
+<include cwd lang="term">snippets/out/tpl-fan.txt</include>
+
+The error is at the use that went over, `t7` in `t6`, with the line and column of that use. A fragment included inside a `<template>` has a budget of its own, so a template whose include would fan out is reported even when no use copies it: the message ends `exceeds the expansion limit for template definitions`, and the template is checked without that include.
+
+### Messages about a copy
+
+An element that a use placed is written once in the template and exists once per copy, so a diagnostic about it is reported at the template's line and has to say which copy it means. There are two forms.
+
+**A path that went through a `with` alias** ends with the path it stands for and the use that gave it: `(P via <use …>)`. In the form below the template reads `f.help` and the use `email` made that `form.email.help`; the `phone` use has no `form.phone`, so the use is the problem, and the copy says nothing more:
+
+<include cwd lang="tui">snippets/templates/missing.tui</include>
+
+<include cwd lang="term">snippets/out/tpl-missing.txt</include>
+
+A use with an `id` is named by it (`<use id="email">`). A use without one is named by its template (`<use template="badge">`), and when the path starts with an `each` alias, which reads the same in every row, the message adds where the use is written, so you can find it: ` at FILE:LINE:COL`.
+
+<include cwd lang="term">snippets/out/tpl-rows-bad.txt</include>
+
+**Any other diagnostic about a copy** (a `V012` at a copied box, a store flag that is missing) ends with `, placed by <use …> at FILE:LINE:COL`, naming the use that placed the element, and its file, line, and column. A use inside another template is named by its scoped id (`<use id="top__in">`), and its location is the line where it is written in the template. An element placed by an `<include>` ends with `, placed by <include> at FILE:LINE:COL` in the same way.
+
+### A missing `with` path and optional flags
+
+- **A `with` path that is missing is one `B003` at the use**, a warning (an error under `--strict`), as above for `phone`. The copy's own paths are not reported, because each one would say the same thing, so you fix the one line. The copy is still placed, and an input in it still writes the path.
+- **A flag in the copy is optional.** When the alias stands for an object, `if`, `hidden`, `disabled`, `open`, and `class:NAME` guards read through it are `null` if the member is missing, without a `B002`: `if="f.error"` is how a form field shows an error only when the host has written one, and `missing.tui` above does not report `f.error`. A `{path}` or a `bind` is still `B003` when missing. When the alias stands for something that is not an object, every flag reports.
+- **A store flag is an ordinary one.** A path that does not start with an alias (`hidden="debug"`) is `B002` when missing, once per copy: `, placed by <use id="email"> at …`.
+
+### Long ids and paths
+
+A message quotes at most 64 bytes of an id or a path, cut at a character boundary and followed by `…`, so one very long name cannot make a diagnostic unreadable. Both the path in the copy and the path it stands for are cut, and so is a template name:
+
+<include cwd lang="term">snippets/out/tpl-long.txt</include>
+
+`--json` carries the message as printed. The full names are in the source.
+
+## Tools and templates
+
+- [`validate`, `fmt`, `inspect`, `run`, and `preview --watch`](/guide/tools#composition-in-the-tools) know about fragments and copies.
+- [The language server](/guide/editors#what-the-language-server-does) checks a fragment through the documents that include it and follows `template=` and scoped ids across files.
+- [`play` and `dump`](/guide/testing#documents-built-from-parts) in a test see the expanded document, so a golden does not change when you move a piece into a fragment, as long as the expansion is the same.
+- The [kit](/guide/kit#kit-components-as-templates) is copy-and-paste markup; a component you paste several times in one document is a good template.

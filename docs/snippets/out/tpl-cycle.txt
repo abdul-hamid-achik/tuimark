@@ -1,0 +1,5 @@
+$ tuimark validate cycle.tui
+error V019 cycle.tui:5:7 /template/col/use <use template="submenu"> in <template id="menu"> makes a cycle of templates: menu → submenu → menu
+error V019 cycle.tui:8:26 /template/use <use template="menu"> in <template id="submenu"> makes a cycle of templates: submenu → menu → submenu
+error V019 cycle.tui:9:23 /template/use <use template="self"> in <template id="self"> makes a cycle of templates: self → self
+error V019 cycle.tui:12:5 /screen/use <use template="nope"> names no <template>

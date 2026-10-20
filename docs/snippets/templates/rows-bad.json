@@ -1,0 +1,7 @@
+{
+  "show_badges": true,
+  "jobs": [
+    { "id": "a", "name": "build", "status": { "label": "ok" } },
+    { "id": "b", "name": "deploy", "status": {} }
+  ]
+}
