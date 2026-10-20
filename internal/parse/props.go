@@ -777,6 +777,12 @@ func (pn *propNode) restore(b *builder, n *ir.Node, r *RawNode) {
 		n.Attrs[a.Name] = a.Value
 		n.Order = append(n.Order, a.Name)
 		switch {
+		case a.Name == "bind":
+			n.Bind = a.Value
+		case a.Name == "each":
+			n.Each = a.Value
+		case a.Name == "if":
+			n.If = a.Value
 		case a.Name == "class":
 			n.Classes = append(n.Classes, strings.Fields(a.Value)...)
 		case strings.HasPrefix(a.Name, "on:"):

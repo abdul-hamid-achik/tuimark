@@ -1,0 +1,16 @@
+<tui>
+  <template id="a" props="p k">
+    <col>
+      <text>{{$p}}</text>
+      <text title="{x.{$p}}">t</text>
+      <text>{f.{$k}} {$p}}</text>
+    </col>
+  </template>
+  <template id="b" props="label"><text>{$label}}</text></template>
+  <template id="fw" props="label"><use template="b" label="{$label}"/></template>
+  <screen id="main">
+    <use template="a" p="user" k="name"/>
+    <use template="fw" label="{n"/>
+    <use template="b" label="{$q}"/>
+  </screen>
+</tui>

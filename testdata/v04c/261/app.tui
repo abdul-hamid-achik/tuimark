@@ -1,0 +1,12 @@
+<tui>
+  <template id="p" props="a b c d e f s">
+    <col>
+      <text title="{$c} {$d}">{$a}{$b}</text>
+      <text>{x{$e}{$f}</text>
+      <text style="{$s}">s</text>
+    </col>
+  </template>
+  <screen id="main">
+    <use template="p" a="{" b="x}" c="{p}" d="{q}" e="}" f="}" s="{x}"/>
+  </screen>
+</tui>

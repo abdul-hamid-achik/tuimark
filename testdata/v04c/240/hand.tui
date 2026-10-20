@@ -1,0 +1,12 @@
+<tui>
+  <screen id="main">
+    <col>
+      <text>x={a}</text>
+      <text>x (n)={b}</text>
+    </col>
+    <col>
+      <text>={a}</text>
+      <text> ()={b}</text>
+    </col>
+  </screen>
+</tui>

@@ -1,0 +1,10 @@
+<tui>
+  <template id="k" props="max tone">
+    <sparkline class="{$tone}" bind="h" max="{$max}"/>
+  </template>
+  <screen id="main">
+    <use id="a" template="k" max="lots" with="hist as h"/>
+    <use id="b" template="k" max="lots" tone="9x" with="hist as h"/>
+    <use id="c" template="k" max="5" with="hist as h"/>
+  </screen>
+</tui>

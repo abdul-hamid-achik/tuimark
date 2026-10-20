@@ -329,7 +329,7 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		b.at.on, b.mute.on = false, false
 	}
 	if pn != nil {
-		pn.restore(b, w, c)
+		defer pn.restore(b, w, c) // once nothing reads src any more
 	}
 	if cp.selfCheck && cp.defDecl != nil {
 		cp.defDecl.include = true // a template's body that holds an include (decision 195)

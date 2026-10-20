@@ -396,6 +396,9 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 	info := &useInfo{raw: c, depth: b.depth + 1, lvl: len(cp.copies)}
 	// Its {$name} and its props (SPEC v0.4c §6.18.9, props.go).
 	pn := b.useProps(q, c, info)
+	if pn != nil {
+		defer pn.restore(b, q, c) // once every check has read the use
+	}
 	for i, a := range c.Attrs {
 		if pn != nil && !pn.inAttrs(q, i, a) {
 			continue

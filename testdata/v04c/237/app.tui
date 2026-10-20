@@ -1,0 +1,11 @@
+<tui>
+  <template id="a" props="ok  Bad ok id">
+    <box title="{$nope}" focusable="{$ok}" width="{$ok}">
+      <text>{$Ok}</text>
+      <input id="{$ok}" bind="{$ok}"/>
+    </box>
+  </template>
+  <screen id="main">
+    <text>{$ok}</text>
+  </screen>
+</tui>
