@@ -1,0 +1,2 @@
+$ tuimark validate app.tui
+error V006 b.tui:3:3 /screen/include include src="a.tui" is an include cycle: app.tui → a.tui → b.tui → a.tui

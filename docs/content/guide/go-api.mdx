@@ -186,7 +186,7 @@ func TestTasksFit(t *testing.T) {
 
 ## Play
 
-`Play` (0.3) is `Run` without a terminal, for Go tests. Each step is one step of [`tuimark play`](/guide/tools): a key, `text:…`, `paste:…`, `set:…`, `focus:…`, `resize:…`, `click:X,Y`, or `wheel-up:X,Y`/`wheel-down:X,Y`. A step may contain spaces (`"text:hello world"`).
+`Play` (0.3) is `Run` without a terminal, for Go tests. Each step is one step of [`tuimark play`](/guide/tools): a key, `text:…`, `paste:…`, `set:…`, `focus:…`, `resize:…`, `click:X,Y`, `wheel-up:X,Y`/`wheel-down:X,Y`, or `tick:DUR` (a virtual clock; see [Timers](#timers-every-04)). A step may contain spaces (`"text:hello world"`).
 
 ```go
 res, err := ui.Play(tuimark.PlayOptions{Cols: 120, Rows: 30}, "7", "/", "text:fire", "enter", "K")
@@ -273,7 +273,7 @@ defer stop()
 - **Late ticks.** A tick that falls due while the loop is busy runs once when the loop is free. Ticks are never queued, as with `time.Ticker`.
 - **Lifetime.** Registrations persist across `Run` calls until `stop` is called. `stop` is safe from any goroutine, `fn` included, and never waits.
 - **Errors.** An error from `fn` is a handler error with no event. It goes to `OnError`, or it ends `Run` without it.
-- **Testing.** `Dump`, `Validate`, and `Play` never call `fn`, so a test drives time-based state with `set:` steps.
+- **Testing.** `Dump` and `Validate` never call `fn`, and `Play` calls it only for a `tick:DUR` step, which advances a virtual clock by `DUR` and runs every call that falls due in it (`tick:1s` runs an `Every(250ms)` four times; a single step stops with an error past 10000 calls). Without a `tick`, a test drives time-based state with `set:` steps. The clock is virtual, so no test waits.
 
 ## Derived values: Derive (0.4)
 

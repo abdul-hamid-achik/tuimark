@@ -53,17 +53,18 @@ function dumpExcerpt() {
   ].join('\n');
 }
 
-const tagCount = catalog.tags.length + catalog.tagsV2.length;
+const tagCount = catalog.tags.length + catalog.tagsV2.length + catalog.tagsCurrent.length;
 
 // The closed vocabulary, grouped by role.
 const roles: Record<string, string[]> = {
   document: ['tui', 'style', 'keymap', 'bind', 'screen'],
   layout: ['col', 'row', 'box', 'scroll', 'spacer', 'tabs', 'tab'],
   content: ['text', 'rule', 'sparkline', 'hints'],
-  interactive: ['list', 'item', 'input', 'button', 'progress', 'table', 'column'],
+  interactive: ['list', 'item', 'input', 'button', 'progress', 'table', 'column', 'checkbox', 'select'],
   overlay: ['modal'],
+  composition: ['include', 'fragment', 'template', 'use'],
 };
-const allTags = [...catalog.tags, ...catalog.tagsV2];
+const allTags = [...catalog.tags, ...catalog.tagsV2, ...catalog.tagsCurrent];
 const grouped = new Set(Object.values(roles).flat());
 const vocabulary = [
   ...Object.entries(roles).map(([group, tags]) => ({ group, tags: tags.filter((t) => allTags.includes(t)) })),

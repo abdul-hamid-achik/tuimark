@@ -1034,10 +1034,6 @@
 <text x="503.6" y="409" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">redo</text>
 <text x="580.4" y="409" textLength="38.4" lengthAdjust="spacing" fill="#d7dce2">hint</text>
 <text x="657.2" y="409" textLength="48" lengthAdjust="spacing" fill="#d7dce2">check</text>
-<text x="23.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="42.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">help</text>
-<text x="100.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
-<text x="119.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">quit</text>
 <g class="a a19" visibility="hidden">
 <text x="494" y="229" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">cell</text>
 <text x="570.8" y="249" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
@@ -1047,6 +1043,10 @@
 <text x="570.8" y="289" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
 <text x="599.6" y="289" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
 <text x="628.4" y="289" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
+<text x="23.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
+<text x="42.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">help</text>
+<text x="100.4" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
+<text x="119.6" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">quit</text>
 <text x="177.2" y="489" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">↑↓←→</text>
 <text x="225.2" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">move</text>
 <text x="282.8" y="489" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">1-9</text>
@@ -1677,6 +1677,8 @@
 <text x="465.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2">[</text>
 <text x="484.4" y="289" textLength="48" lengthAdjust="spacing" fill="#d7dce2">close</text>
 <text x="542" y="289" textLength="9.6" lengthAdjust="spacing" fill="#d7dce2">]</text>
+<text x="23.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
+<text x="42.8" y="489" textLength="38.4" lengthAdjust="spacing" fill="#7d8590">quit</text>
 </g>
 </g>
 </svg>

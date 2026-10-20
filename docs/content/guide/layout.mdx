@@ -53,18 +53,23 @@ With the default `align: stretch`, children fill the cross axis. That is usually
 
 ## Default sizes
 
+These are the sizes an element has when nothing sets them. The current language (a `<tui>` without `version`) and a document that writes `version` differ in a few rows, marked below; [The current language's defaults](#the-current-languages-defaults) says why it matters.
+
 | Tag | Width | Height |
 |---|---|---|
 | `screen` | 100% | 100% |
-| `col`, `row` | `1fr` | `1fr` |
+| `col`, `row` | `1fr`; in the current language only as a direct child of `screen`, `modal`, or `tab`, and `auto` anywhere else | the same |
 | `box` in a `row` | `auto` | `1fr` |
 | `box` in a `col` | `1fr` | `auto` |
-| `text`, `input`, `button`, `progress`, `rule` | `auto` | `auto` |
+| `text`, `button`, `progress`, `rule` | `auto` | `auto` |
+| `input` | `auto`: in the current language `max(width(placeholder) + 1, 20)` columns whatever its value, before it stretches | `auto` |
+| `checkbox`, `select` (current language) | `auto`, truncating the label | `auto` |
 | `list`, `scroll`, `table` in a `col` | `1fr` | `auto`, fit to the space left |
 | `sparkline` | one column per value | 1 |
-| `modal` | 80% of the screen | 80% of the screen |
+| `hints` | `auto`, along the axis of its items | 1 |
+| `modal` | the current language: its content size, capped by a written `max-width` or `max-height` and otherwise by 80% of the screen. With `version`: 80% of the screen | the same |
 
-If any sibling on an axis has an `fr` size, siblings with no size on that axis become `1fr` too.
+If a sibling on an axis has an `fr` size, an unsized sibling on that axis becomes `1fr` too: in the current language only when it is a viewport (`scroll`, `list`, `table`, or `overflow: scroll`); other unsized siblings stay `auto`. In a document that writes `version`, every unsized sibling becomes `1fr`.
 
 ## How space is shared
 
@@ -76,7 +81,7 @@ Along the main axis, a container hands out its content size in this order:
 4. viewports sized `auto`, at their content size but capped by what is left ([auto-fit](#auto-fit));
 5. what remains, split between the `fr` children by weight.
 
-`min-width`, `max-width`, `min-height`, and `max-height` clamp a child after its percentage and before the `fr` split. There is no flex-wrap: a row that does not fit is clipped.
+`min-width`, `max-width`, `min-height`, and `max-height` clamp a child after its percentage and before the `fr` split. In the current language an `fr` child that a `max` clamps (or a `min` lifts) is frozen at that size, and the other `fr` children share what it frees, as in CSS: three `1fr` columns in 40 cells, the first with `max-width: 10`, come out 10, 15, and 15. A document that writes `version` splits first and clamps after, giving 10, 13, and 14, and leaves 3 cells empty. There is no flex-wrap: a row that does not fit is clipped.
 
 ## Docks
 
@@ -128,6 +133,25 @@ In version 2, `layout: grid` places a container's children in equal columns, row
 </div>
 
 `gap` separates both columns and rows. A row is as tall as its tallest child, and `align` places shorter ones. A child's `width`, `min-width`, `max-width`, `flex`, and any `fr` or `%` height are ignored in a grid (`L007` warns). A grid never shrinks to fit: put it in a `<scroll>` (or make it `overflow: scroll`) to scroll its rows when they do not fit.
+
+## The current language's defaults
+
+A `<tui>` without `version` lays out with a handful of defaults that a pinned document does not have. They exist so that the common shapes (a sidebar next to a body, a status bar, a confirm dialog) come out right without sizes, and so that content-sized things stay content-sized.
+
+- **A nested `col` or `row` is as big as its content.** `col` and `row` are `1fr` by `1fr` only as direct children of a `screen`, a `modal`, or a `tab`. Inside any other container they are `auto`. A sidebar `col` beside a body `col` is therefore as wide as its text, and the body needs `width: 1fr` to take the rest. A pinned document gives every `col` and `row` `1fr`, which splits a row in equal halves.
+- **Only a viewport joins an `fr` sibling.** An unsized `scroll`, `list`, `table`, or `overflow: scroll` box next to an `fr` sibling becomes `1fr`; a `text` or a `button` stays one line.
+- **`fr` meets `min` and `max` the way CSS does** (see [how space is shared](#how-space-is-shared)).
+- **A `hints` is as big as its items** along their axis, and drops the items that do not fit, with no diagnostic. A status bar is a row with a text, a `spacer`, and the hints: the text and the hints keep their size and the spacer takes the rest.
+- **A `modal` is as big as its content**, capped by a written `max-width` or `max-height` and otherwise by 80% of the screen, and wide enough for its title.
+- **An `input` is wide enough to type in**: `max(width(placeholder) + 1, 20)` columns, whatever its value, so it does not grow as the text does.
+
+<include cwd lang="tui">snippets/layout/panes.tui</include>
+
+<include cwd lang="grid">snippets/out/layout-panes.txt</include>
+
+`#nav` is as wide as `inbox` plus its border, `#body` has `width: 1fr` and takes the rest, and the `row` that holds them is a direct child of the `screen`, so it is `1fr` tall and leaves one row for `<hints/>`. Delete the `width: 1fr` rule and `#body` shrinks to its text. The same file with `version="3"` splits the row in two equal halves and gives the `hints` half the height: a pinned document gives `<hints/>` an `fr` sibling and so makes it `1fr`.
+
+Two diagnostics point at the cause when this goes wrong. A `%` size inside a container sized by its content is `L002`, and the message ends with the fix, `(width: 1fr fills it)`. A container sized by its content that cuts its child is `L009`, a warning, which says to give it room or to write `overflow: hidden` to keep the cut.
 
 ## Responsive layouts
 

@@ -42,18 +42,34 @@ Control characters and ANSI escapes are removed from bound data before it is pai
 
 ## Versions
 
-You don't write a version. A `<tui>` without `version` is the current language: everything in these guides and in the [reference](/reference/tags) is available to it, and so are two layout warnings about content a dump shows as gone:
+You don't write a version. A `<tui>` without `version` is the **current language**: everything in these guides and in the [reference](/reference/tags) is available to it. Tools that need a number for it use 4 (the `current` member of `tuimark catalog`, `"version": "0.4"` in `tuimark ir`), but there is no `version="4"`: like any value other than 1, 2, or 3 it is `V003`, and the document is read as `version="1"`.
+
+A document that writes `version="1"`, `"2"`, or `"3"` is **pinned** to the meaning it had in tuimark 0.4.1, defaults included, and its dumps do not change. Two kinds of thing are only in the current language.
+
+**New vocabulary.** A pinned document that uses it gets a diagnostic that ends in `(requires a <tui> without version)`, and the construct does nothing:
+
+- the tags `checkbox` and `select`, the attribute `single` on `list` and `table`, and `indeterminate` on `progress` (see [widgets](/guide/widgets));
+- `{path}` in a `<button>`'s label and body (see [bindings](/guide/bindings));
+- the tags `include`, `fragment`, `template`, and `use` ([composition](#composing-a-document-from-files), below).
+
+**Changed behavior.** A pinned document is not diagnosed here; it simply keeps the old behavior, and writes by hand what the current language does for you:
+
+- the defaults: [layout](/guide/layout#the-current-languages-defaults) and the [built-in sheet](/guide/tcss#the-built-in-sheet) with its focus look;
+- the [key and focus rules](/guide/interaction#a-modal-traps-the-keymap): `esc` closes a modal, a modal traps the keymap, and `tabs` is focusable;
+- `ctrl+i`, `ctrl+j`, and `ctrl+m` in a keymap are `V003` in the current language, because a terminal delivers them as `tab` and `enter`. A pinned document still accepts them, and they never match there either.
+
+The current language also reports `L008` and `L009`, two layout warnings about content a dump shows as gone:
 
 - `L008`: a text cut without an ellipsis;
 - `L009`: a node that cuts a child on an axis it does not scroll.
 
 The dump marks the node with `clipped`. When a cut is intended, write `wrap: nowrap` or `overflow: hidden` and the warning goes away.
 
-The `version` attribute remains for documents that already declare one, and each value keeps the meaning it had:
+The pinned versions keep the vocabulary they had:
 
 - **`version="1"`** is the original vocabulary. Its meaning, and its dumps, never change.
 - **`version="2"`** accepts everything `version="1"` does, with the same meaning, plus the 0.2 additions: the tags `table`, `column`, `tabs`, `tab`, `sparkline`, and `hints`; `each` on containers; multi-select; `class:NAME`; `theme="auto"`; `@media (theme: …)`; `layout: grid`; scrollbars; `bar: eighths`; the built-in `move-*`, `check-*`, and `switch-to` actions; the mouse; and `when` matching over the focus chain.
-- **`version="3"`** is the current language, the same as writing no version: `version="2"` plus `L008`/`L009` and the 0.3 additions, all additive. `row-gap` and `column-gap` split `gap` into its two axes; `wrap: truncate-start` and `truncate-middle` join `truncate`; `<column priority="N">` hides a table column by priority instead of `@media`; `<sparkline scale="NAME">` shares a value range across the sparklines of one frame; a `<tab>`'s `label` and `short` become `{path}` templates; `<scroll stick="bottom">` keeps a growing viewport pinned to its end; `<modal focus="#id">` names the node a modal focuses on open; and `<keymap when="SEL">` gives every row inside it that `when`. Several `<keymap>` elements work in every version. See [layout](/guide/layout), [widgets](/guide/widgets), [keymap, actions and focus](/guide/interaction), and the [Go API](/guide/go-api) for each in its usual place, and the [tags](/reference/tags), [CSS properties](/reference/css), and [diagnostics](/reference/diagnostics) reference for the exact rules.
+- **`version="3"`** is `version="2"` plus `L008`/`L009` and the 0.3 additions, all additive: `row-gap` and `column-gap`; `wrap: truncate-start` and `truncate-middle`; `<column priority="N">`; `<sparkline scale="NAME">`; `{path}` in a `<tab>`'s `label` and `short`; `<scroll stick="bottom">`; `<modal focus="#id">`; and `<keymap when="SEL">`. Several `<keymap>` elements work in every version. See [layout](/guide/layout), [widgets](/guide/widgets), [keymap, actions and focus](/guide/interaction), and the [Go API](/guide/go-api) for each in its usual place, and the [tags](/reference/tags), [CSS properties](/reference/css), and [diagnostics](/reference/diagnostics) reference for the exact rules.
 
 In a `version="1"` document each 0.2 addition is still recognized, and reported with a message that ends in `(requires version="2")`; in a `version="1"` or `version="2"` one, each 0.3 addition ends in `(requires version="3")`. Removing the attribute gives the document the whole language. A `.tcss` file has no version of its own: it is checked against the document that loads it.
 
@@ -78,10 +94,14 @@ The vocabulary is closed: an unknown tag is `V001`, not a new widget. The [tags 
 | | `hints` | key hints generated from the keymap (version 2) |
 | Interactive | `list`, `item` | a focusable list with a cursor; `item` is its row |
 | | `input` | a single-line text field |
+| | `checkbox` | a toggle with a label (current language) |
+| | `select` | one choice from a dropdown list (current language) |
 | | `button` | a focusable action |
-| | `progress` | a 0–100 bar |
+| | `progress` | a 0–100 bar, or a spinner with `indeterminate` |
 | | `table`, `column` | rows of an array in columns, with a cursor (version 2) |
 | Overlay | `modal` | a layer above the screen that traps focus |
+| Composition | `include`, `fragment` | a file placed into the document, and the root of that file (current language) |
+| | `template`, `use` | a reusable piece of markup and the places it is stamped (current language; see below) |
 
 [Widgets](/guide/widgets) shows each interactive tag with a rendered example.
 
@@ -91,7 +111,7 @@ Most tags share these:
 
 | Attribute | Meaning |
 |---|---|
-| `id` | a unique name (`V004` on a duplicate). Required on focusable widgets: `list`, `input`, `button`, `modal`, and in version 2 `table`, `tabs`, `tab` (`V012`) |
+| `id` | a unique name (`V004` on a duplicate). Required on focusable widgets: `list`, `input`, `button`, `modal`, and in version 2 `table`, `tabs`, `tab`, and in the current language `checkbox` and `select` (`V012`) |
 | `class` | space-separated class names for [TCSS](/guide/tcss) selectors |
 | `title` | text painted on the node's top border, when it has one; may interpolate `{path}` |
 | `if` | `path` or `!path`: the node exists only while it is truthy |
@@ -118,7 +138,7 @@ An attribute a tag does not take is `V002`.
 - `wrap` is `nowrap` (the default: the line is cut at the edge), `wrap` (word-wrap to the width), or `truncate` (cut with `…` at the end); in `version="3"`, also `truncate-start` (`…` at the start, keeping the end of the line — useful for a path) and `truncate-middle` (`…` in the middle, keeping both ends).
 - Width is measured in terminal columns by grapheme cluster: CJK and emoji take two columns, combining accents take none, and a cluster is never split.
 
-`<button>` takes its label from `label` or from its body; `title` and `placeholder` are templates too. See [bindings](/guide/bindings) for how paths resolve.
+`<button>` takes its label from `label` or from its body; `title` and `placeholder` are templates too, and in the current language so is a button's label or body (`label="Save ({plan})"`). See [bindings](/guide/bindings) for how paths resolve.
 
 ## Screens and modals
 
@@ -126,10 +146,50 @@ A document with several screens shows one at a time. Only the active screen and 
 
 A modal is open while its `open` attribute is truthy: `true`, `false`, a path, or `!path` (never `{path}`). `bind` on a modal is a shorthand for the same thing; if both are present, `open` wins. An open modal:
 
-- is laid out above its screen, centered, 80% × 80% unless you size it, with a single border by default;
+- is laid out above its screen, centered, with a single border by default. Unsized, it is as big as its content in the current language, and 80% × 80% of the screen in a document that writes `version`;
 - traps focus: `tab` cycles inside it, and a focus request for a node outside it does nothing;
-- fires `on:open` when it opens and `on:close` when it closes, and `on:escape` when `esc` is pressed;
+- fires `on:open` when it opens and `on:close` when it closes, and `on:escape` when `esc` is pressed. In the current language `esc` on a modal without `on:escape` closes it;
 - gives focus back to where it was when it closes.
+
+## Composing a document from files
+
+Past a screen or two, one file gets long. In the current language an `<include src="…"/>` places the contents of another file where it stands, so a document can be split by the pieces a person would name: the header, the footer, the keymap.
+
+The included file is a **fragment**: its root is `<fragment>`, and the children of that root are what the include inserts. The `src` is a path relative to the file that writes the include.
+
+<include cwd lang="tui" meta='tab="app.tui"'>snippets/compose/app.tui</include>
+
+<include cwd lang="tui" meta='tab="parts/header.tui"'>snippets/compose/parts/header.tui</include>
+
+<include cwd lang="tui" meta='tab="parts/footer.tui"'>snippets/compose/parts/footer.tui</include>
+
+<include cwd lang="tui" meta='tab="parts/keys.tui"'>snippets/compose/parts/keys.tui</include>
+
+The document then renders as if the fragments' elements were written in place. The styles, the data, and the ids are shared, so `#title` in `header.tui` is the same `#title` a stylesheet or a `to="#title"` sees:
+
+<include cwd lang="grid">snippets/out/compose-dump.txt</include>
+
+- **Where an include can stand.** Under `<tui>` (the `keys.tui` above), in a `<screen>`, inside a container, or inside a `<keymap>` for a fragment of `<bind>` rows. A fragment may hold several elements, and may include other fragments.
+- **Nothing is global.** The fragment carries no attributes of its own (any attribute on a `<fragment>`, `version` included, is `V002`), and a `<fragment>` anywhere but the root of an included file is `V001`.
+- **A fragment checked on its own is checked alone.** `tuimark validate parts/header.tui` checks that one file, with its own elements and attributes, and prints `ok (fragment checked on its own)`. The `<include>` elements inside it are checked for their attributes, but no file they name is read, so a broken include is reported when you validate the document that places it. A fragment is not a document: `dump` on one reports `V005`, "check it through the document that includes it".
+
+<include cwd lang="term">snippets/out/compose-fragment.txt</include>
+
+What can go wrong with an include, all reported where the include stands:
+
+| Code | When |
+|---|---|
+| `V006` | the include is a cycle, is outside the file system a `LoadFS` host gave the document, or cannot be read |
+| `V020` | the file is a stylesheet (use `<style src>`), or its root is not `<fragment>` (a whole `<tui>` document is not a fragment) |
+| `V021` | the expansions would pass the limits: 100000 elements, 16 MiB of placed source, or 256 levels of nesting |
+
+An include that fails inserts nothing, and the rest of the document is still checked. A cycle names the files in the loop:
+
+<include cwd lang="term">snippets/out/compose-cycle.txt</include>
+
+The limit is there to stop an include that fans out into a tree of includes from filling the memory: it counts what the includes insert, and the first one that would go over inserts nothing and stops later ones from expanding.
+
+`<template>` and `<use>` go one step further than a file: a `<template id="…">` directly under `<tui>` or `<screen>` holds a piece of markup, and each `<use template="…" with="path as alias"/>` stamps a copy of it, with the data bound to an alias and its ids scoped to the use. That is for a piece that repeats, such as a group of fields. Their attributes are in the [tags reference](/reference/tags#added-by-the-current-language), and a template that reaches itself is `V019` in the [diagnostics](/reference/diagnostics#v019).
 
 ## What is not in the language
 
