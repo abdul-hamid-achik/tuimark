@@ -428,7 +428,7 @@ func (c *cli) cmdPreview(args []string) int {
 	cols := fs.Int("cols", 80, "terminal columns")
 	rows := fs.Int("rows", 24, "terminal rows")
 	data := fs.String("data", "", "JSON file bound as the data store")
-	watch := fs.Bool("watch", false, "re-render when the document, stylesheets, or data change")
+	watch := fs.Bool("watch", false, "re-render when the document, its fragments and stylesheets, or the data change")
 	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
 	color := fs.String("color", "", "truecolor, 256, 16, or none; the ANSI grid's color profile")
 	pos, err := parseArgs(fs, args)

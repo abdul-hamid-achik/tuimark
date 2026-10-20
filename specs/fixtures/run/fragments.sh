@@ -48,7 +48,7 @@ step() {
 (
   step 1 "$fx/body.omega.tui" ui/parts/body.tui
   step 2 "$fx/deep.abyss.tui" ui/parts/deep.tui
-  step 3 "$fx/deep.broken.tui" ui/parts/deep.tui
+  step 3 "$fx/deep.broken.txt" ui/parts/deep.tui
   step 4 "$fx/deep.abyss.tui" ui/parts/deep.tui
 ) &
 editor=$!
