@@ -23,7 +23,6 @@ var projectEdits = []projectEdit{
 	{"`examples/host-ts` is a Bun parent: it passes", "A parent written for Bun passes"},
 	{" (the SPEC itself is not edited; see README.md's \"Language notes\" section for the same points in more detail)", ""},
 	{"the SPEC §17 inbox fixture's `theme.tcss` (`list:focus`/`input:focus { border-color: $focus; }`) has", "a stylesheet rule such as `list:focus`/`input:focus { border-color: $focus; }` has"},
-	{" (as `button:focus { reverse: true; }` does in `examples/agent`/`examples/dashboard`)", " (for example `button:focus { reverse: true; }`)"},
 	{" (as `examples/agent`'s `#composer`/`#transcript` and `examples/dashboard`'s bordered panels do)", ""},
 }
 
