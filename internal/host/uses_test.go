@@ -348,6 +348,61 @@ func TestListRowsFollowTheirUsesWithPaths(t *testing.T) {
 	sameDiags(t, "removed", useDiags(a), b003)
 }
 
+// The columns and the row template of a table stand in the table's scope,
+// but a with path through its row alias is read on every row (the F3
+// review): `with="r as c"` on a use that places a column is no B003, and
+// `with="r.sub as c"` is one B003 at the use, once, for the rows that lack
+// it. It holds for a table in a copy too, whose row alias is renamed.
+func TestTableUsesReadRowAliasPerRow(t *testing.T) {
+	const data = `{"rows": [{"id": "a", "tag": "x", "sub": {"tag": "s"}}, {"id": "b", "tag": "y"}]}`
+	table := func(with string) string {
+		return `<tui>
+  <template id="col"><column title="T">{c.tag}</column></template>
+  <template id="row"><item class:hot="c.tag"/></template>
+  <screen id="main">
+    <table id="t" each="rows as r" key="r.id">
+      <use template="row" with="` + with + `"/>
+      <column title="N">{r.id}</column>
+      <use template="col" with="` + with + `"/>
+    </table>
+  </screen>
+</tui>`
+	}
+	a := useApp(t, table("r as c"), data)
+	a.SetStrict(true)
+	sameDiags(t, "r as c", useDiags(a), []string{})
+	if got := texts(a); !reflect.DeepEqual(got, []string{"a", "x", "b", "y"}) {
+		t.Errorf("texts %q", got)
+	}
+	a = useApp(t, table("r.sub as c"), data)
+	a.SetStrict(true)
+	sameDiags(t, "r.sub as c", useDiags(a), []string{
+		`error B003 6:7 /screen/table/use with path "r.sub" (alias c) is missing`,
+		`error B003 8:7 /screen/table/use with path "r.sub" (alias c) is missing`,
+	})
+	if got := texts(a); !reflect.DeepEqual(got, []string{"a", "s", "b", ""}) {
+		t.Errorf("texts %q", got)
+	}
+	inCopy := `<tui>
+  <template id="col"><column title="T">{c.tag}</column></template>
+  <template id="tbl">
+    <table id="t" each="f.rows as r" key="r.id">
+      <column title="N">{r.id}</column>
+      <use template="col" with="r as c"/>
+    </table>
+  </template>
+  <screen id="main">
+    <use id="u" template="tbl" with="d as f"/>
+  </screen>
+</tui>`
+	a = useApp(t, inCopy, `{"d": `+data+`}`)
+	a.SetStrict(true)
+	sameDiags(t, "in a copy", useDiags(a), []string{})
+	if got := texts(a); !reflect.DeepEqual(got, []string{"a", "x", "b", "y"}) {
+		t.Errorf("texts in a copy %q", got)
+	}
+}
+
 // A via is kept where its path is written (ir.ViaKey), not under the path
 // it stands for: {f.x} and {g.x}, with f and g standing for one path, name
 // each its own written path; a literal {a.x} beside them is a store path

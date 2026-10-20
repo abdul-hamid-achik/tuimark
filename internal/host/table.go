@@ -94,13 +94,19 @@ func (x tableActive) same(y tableActive) bool {
 }
 
 // tableActive evaluates the guards of the uses that placed the columns
-// and the row template of the table plan p, in the table's scope sc.
+// and the row template of the table plan p, in the table's scope sc. The
+// with paths of those uses that go through the row alias are not read
+// there but on every row (resolveTable).
 func (fb *builder) tableActive(p *tablePlan, sc *scope) tableActive {
 	act := tableActive{cols: make([]bool, len(p.cols)), item: p.item != nil}
-	for j, c := range p.cols {
-		act.cols[j] = len(c.CopiedBy) == 0 || !fb.usePruned(c, sc)
+	row := ""
+	if p.ok {
+		row = p.each.Alias
 	}
-	if p.item != nil && len(p.item.CopiedBy) > 0 && fb.usePruned(p.item, sc) {
+	for j, c := range p.cols {
+		act.cols[j] = len(c.CopiedBy) == 0 || !fb.usesPruned(c.CopiedBy, sc, row)
+	}
+	if p.item != nil && len(p.item.CopiedBy) > 0 && fb.usesPruned(p.item.CopiedBy, sc, row) {
 		act.item = false
 	}
 	return act
@@ -292,6 +298,18 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableAc
 	if a.strict {
 		keySev = ir.Error
 	}
+	// The with paths through the row alias of the uses that placed the
+	// columns and the row template in the frame (tableActive): each is
+	// read on every row, in the row's scope, and reported once.
+	var withs []useClause
+	for j, c := range p.cols {
+		if act.cols[j] {
+			withs = rowWith(withs, c.CopiedBy, p.each.Alias)
+		}
+	}
+	if act.item {
+		withs = rowWith(withs, p.item.CopiedBy, p.each.Alias)
+	}
 	for i, el := range arr {
 		isc := &scope{alias: p.each.Alias, value: el, parent: sc}
 		var key any = float64(i)
@@ -303,6 +321,9 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableAc
 			}
 		}
 		isc.key = key
+		for _, w := range withs {
+			sub.checkWith(w.use, w.i, isc)
+		}
 		td.keys[i] = key
 		if td.rowOn != nil {
 			td.rowOn[i] = sub.guardsOn(p.item, isc)
