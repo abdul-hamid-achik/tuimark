@@ -1,0 +1,39 @@
+<!-- SYNTAX TEST "text.tui" "the 0.4b tags and attributes: include, fragment, template, use with, checkbox, select, single, indeterminate"
+<tui>
+      <include src="parts/header.tui"/>
+<!--   ^^^^^^^ entity.name.tag.tui
+<!--           ^^^ entity.other.attribute-name.src.tui
+      <fragment>
+<!--   ^^^^^^^^ entity.name.tag.tui
+      <template id="field">
+<!--   ^^^^^^^^ entity.name.tag.tui
+<!--                ^^^^^ entity.name.selector.id.tui
+      <use id="email" template="field" with="form.email as f, form.phone as p" if="show"/>
+<!--   ^^^ entity.name.tag.tui
+<!--                  ^^^^^^^^ entity.other.attribute-name.use-template.tui
+<!--                            ^^^^^ entity.name.type.template.tui
+<!--                                   ^^^^ entity.other.attribute-name.with.tui
+<!--                                         ^^^^ variable.other.path.tui
+<!--                                                    ^^ keyword.control.each-as.tui
+<!--                                                        ^ punctuation.separator.list.tui
+<!--                                                                           ^^ entity.other.attribute-name.flag.tui
+      <checkbox id="dark" bind="settings.dark" label="Dark {mode}" on:change="dark_changed"/>
+<!--   ^^^^^^^^ entity.name.tag.tui
+<!--                      ^^^^ entity.other.attribute-name.path.tui
+<!--                                                       ^ punctuation.section.interpolation.begin.tui
+<!--                                                                          ^^^^^^^^^^^^ entity.name.function.action.tui
+      <select id="tz" bind="tz" each="zones as z" key="z.id" label="{z.name}" placeholder="zone"/>
+<!--   ^^^^^^ entity.name.tag.tui
+<!--                                        ^^ keyword.control.each-as.tui
+<!--                                              ^^^ entity.other.attribute-name.path.tui
+      <list id="plan" each="plans as p" key="p.id" checked="plan" single="true"/>
+<!--                                                              ^^^^^^ entity.other.attribute-name.flag.tui
+<!--                                                                      ^^^^ constant.language.boolean.tui
+      <progress indeterminate="true"/>
+<!--            ^^^^^^^^^^^^^ entity.other.attribute-name.flag.tui
+<!--                           ^^^^ constant.language.boolean.tui
+      </template>
+<!--    ^^^^^^^^ entity.name.tag.tui
+      </fragment>
+<!--    ^^^^^^^^ entity.name.tag.tui
+</tui>
