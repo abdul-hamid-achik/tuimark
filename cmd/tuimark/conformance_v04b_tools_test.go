@@ -98,6 +98,22 @@ func TestV04bFragmentCheckedOnItsOwn(t *testing.T) {
 	}
 }
 
+// 146, the ir bullet, as the command line can check it: on its errors ir
+// exits 2 and prints no IR, as 0.4.1 does for a pinned document (§15.1),
+// so "no include, template, or use node" holds of the command; the IR
+// such a document would have is checked through BuildIR
+// (TestV04bTemplate146Pinned).
+func TestV04bIRPinned146(t *testing.T) {
+	app := composeFixtures + "t146/app.tui"
+	for _, v := range []string{"1", "2", "3"} {
+		f := variant(t, app, `version="3"`, `version="`+v+`"`)
+		code, out, errw := runCLI("ir", f)
+		if code != 2 || out != "" || strings.Count(errw, "error V001 ") != 3 || strings.Contains(errw, "V006") {
+			t.Errorf("ir, version=%s: exit %d %q %q", v, code, out, errw)
+		}
+	}
+}
+
 // 152, the orphan bullet's validate half: the two diagnostics the language
 // server gives orphan.tui, and exit 2.
 func TestV04bValidateOrphanFragment(t *testing.T) {
