@@ -373,11 +373,12 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 	ff := cp.files[canon]
 	if ff == nil {
 		ff = &fragFile{}
+		// Listed whether or not it reads, so the tools watch it (§15.9).
+		b.doc.Fragments = append(b.doc.Fragments, FragmentRef{Path: resolved, Name: name})
 		data, err := cp.ld.Read(resolved)
 		if err != nil {
 			ff.readErr = err
 		} else {
-			b.doc.Fragments = append(b.doc.Fragments, FragmentRef{Path: resolved, Name: name})
 			ff.size = len(data)
 			ff.root, _, _, ff.syntax = ParseXML(data)
 		}

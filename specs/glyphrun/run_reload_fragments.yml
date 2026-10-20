@@ -1,0 +1,127 @@
+version: 1
+name: run_reload_fragments
+intent: |
+    run watches the fragments a document includes, at any depth (SPEC
+    v0.4b §15.9, test 151): on test 134's fixture without its errors, where
+    ui/parts/body.tui also includes deep.tui, an edit to body.tui and one
+    to deep.tui each reload the document; an edit that makes deep.tui not
+    well-formed shows its V005 in the panel while the old document runs on;
+    restoring the file reloads it again. The fixture script makes each edit
+    when the session records another "edit" action (ctrl+r, a keymap row
+    the harness adds to ui/app.tui).
+target:
+    cmd: ["sh", "specs/fixtures/run/fragments.sh", "${vars.tuimark}"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 16
+steps:
+    - wait:
+        screen:
+            contains: "alpha"
+        timeoutMs: 5000
+    - wait:
+        screen:
+            contains: "deep"
+        timeoutMs: 5000
+    - snapshot: start
+    - press: ctrl+r
+    - wait:
+        screen:
+            contains: "omega"
+        timeoutMs: 5000
+    - snapshot: body_edited
+    - press: ctrl+r
+    - wait:
+        screen:
+            contains: "abyss"
+        timeoutMs: 5000
+    - snapshot: deep_edited
+    - press: ctrl+r
+    - wait:
+        screen:
+            contains: "V005"
+        timeoutMs: 5000
+    - snapshot: broken
+    - press: ctrl+r
+    - wait:
+        screen:
+            notContains: "V005"
+        timeoutMs: 5000
+    - wait:
+        screen:
+            contains: "abyss"
+        timeoutMs: 5000
+    - snapshot: restored
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+outcomes:
+    - id: starts_with_both_fragments
+      description: the first frame shows body.tui's alpha and deep.tui's deep, placed between top and bottom
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/start.txt"
+                if grep -q "^top" "$f" && grep -q "^alpha" "$f" && grep -q "^deep" "$f" && grep -q "^bottom" "$f" && grep -q "^foot" "$f"; then
+                  echo '{"ok": true, "evidence": "top, alpha, deep, bottom, foot shown"}'
+                else
+                  echo '{"ok": false, "evidence": "the included fragments are not all shown"}'
+                fi
+    - id: body_edit_reloads
+      description: rewriting ui/parts/body.tui reloads the document, showing omega in place of alpha
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/body_edited.txt"
+                if grep -q "^omega" "$f" && ! grep -q "alpha" "$f" && grep -q "^deep" "$f"; then
+                  echo '{"ok": true, "evidence": "omega replaced alpha"}'
+                else
+                  echo '{"ok": false, "evidence": "the edit to body.tui did not reload"}'
+                fi
+    - id: deep_edit_reloads
+      description: rewriting ui/parts/deep.tui, two includes deep, reloads the document, showing abyss in place of deep
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/deep_edited.txt"
+                if grep -q "^abyss" "$f" && ! grep -q "^deep" "$f" && grep -q "^omega" "$f"; then
+                  echo '{"ok": true, "evidence": "abyss replaced deep"}'
+                else
+                  echo '{"ok": false, "evidence": "the edit to deep.tui did not reload"}'
+                fi
+    - id: broken_fragment_keeps_old_document
+      description: after deep.tui is made not well-formed the panel shows its V005 and the old document, omega included, still runs
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/broken.txt"
+                if grep -q "^error V005 parts/deep.tui:" "$f" && grep -q "^omega" "$f" && grep -q "^abyss" "$f"; then
+                  echo '{"ok": true, "evidence": "V005 in the panel over the old document"}'
+                else
+                  echo '{"ok": false, "evidence": "no V005 panel, or the old document is gone"}'
+                fi
+    - id: restore_reloads
+      description: restoring deep.tui reloads the document and the panel goes away
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/restored.txt"
+                if grep -q "^abyss" "$f" && ! grep -q "V005" "$f" && head -n 1 "$f" | grep -q "^top"; then
+                  echo '{"ok": true, "evidence": "reloaded, panel gone"}'
+                else
+                  echo '{"ok": false, "evidence": "the restore did not reload, or the panel stayed"}'
+                fi
+    - id: exits_zero
+      description: ctrl+c exits 0
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:059a76b076fd8719501c7bf88c8eeb8c18116fc8fe24645f9a71d6a6c6996d8c

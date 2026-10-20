@@ -286,11 +286,20 @@ func (c *cli) cmdValidate(args []string) int {
 	if err != nil {
 		return c.fail(err)
 	}
-	if doc := app.Document(); doc.FragmentRoot {
-		return c.validateFragment(file, *data, doc, *asJSON)
-	}
 	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
 		return c.fail(err)
+	}
+	// The flags are judged before the file's kind, so a fragment checked
+	// on its own has the usage errors a document has (--theme auto, a
+	// --catalog that cannot be read), though neither adds a check there.
+	var known map[string]bool
+	if *catalog != "" {
+		if known, err = readCatalog(*catalog); err != nil {
+			return c.fail(err)
+		}
+	}
+	if doc := app.Document(); doc.FragmentRoot {
+		return c.validateFragment(file, *data, doc, *asJSON)
 	}
 	app.SetStrict(*strict)
 	diags := app.Validate()
@@ -308,11 +317,7 @@ func (c *cli) cmdValidate(args []string) int {
 		}
 		diags = kept
 	}
-	if *catalog != "" {
-		known, err := readCatalog(*catalog)
-		if err != nil {
-			return c.fail(err)
-		}
+	if known != nil {
 		diags = append(diags, app.CheckCatalog(known)...).Sorted()
 	}
 	ok := !diags.HasErrors()
@@ -423,7 +428,7 @@ func (c *cli) cmdPreview(args []string) int {
 	cols := fs.Int("cols", 80, "terminal columns")
 	rows := fs.Int("rows", 24, "terminal rows")
 	data := fs.String("data", "", "JSON file bound as the data store")
-	watch := fs.Bool("watch", false, "re-render when the document, stylesheets, or data change")
+	watch := fs.Bool("watch", false, "re-render when the document, its fragments and stylesheets, or the data change")
 	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
 	color := fs.String("color", "", "truecolor, 256, 16, or none; the ANSI grid's color profile")
 	pos, err := parseArgs(fs, args)
@@ -472,10 +477,18 @@ func (c *cli) cmdPreview(args []string) int {
 		}
 		return 0
 	}
+	// The files run watches (SPEC v0.4b §15.1, §15.9): the document, the
+	// fragments and stylesheets of the last load that read the document
+	// far enough to resolve them, even when that load failed later, and
+	// the data.
 	files := append(app.Files(), *data)
 	stamp := fingerprint(files)
 	for n := 1; ; n++ {
-		time.Sleep(150 * time.Millisecond)
+		select {
+		case <-c.watchStop:
+			return 0
+		case <-time.After(150 * time.Millisecond):
+		}
 		now := fingerprint(files)
 		if now == stamp {
 			continue
@@ -491,13 +504,15 @@ func (c *cli) cmdPreview(args []string) int {
 			fmt.Fprintln(c.stdout, "tuimark:", err)
 			continue
 		}
+		if next.Document().Root != nil {
+			files = append(next.Files(), *data)
+			stamp = fingerprint(files)
+		}
 		if err := applyTheme(next, *theme, themeSet, "--theme"); err != nil {
 			fmt.Fprintln(c.stdout, "tuimark:", err)
 			continue
 		}
 		app = next
-		files = append(app.Files(), *data)
-		stamp = fingerprint(files)
 		renderPreview(c.stdout, app, *cols, *rows, tty, prof)
 	}
 }

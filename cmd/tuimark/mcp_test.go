@@ -491,13 +491,61 @@ func mcpCall(t *testing.T, params string) (string, bool) {
 
 // cliResult is what an MCP tool result must hold for one CLI run (SPEC
 // §15.8 "Results"): stdout for exit 0 or 2, the stderr text (isError)
-// for exit 1.
+// for exit 1, and the stderr text (not isError) for an exit 2 with
+// nothing on stdout.
 func cliResult(args ...string) (string, bool) {
 	code, out, errw := runCLI(args...)
 	if code == 1 {
 		return errw, true
 	}
+	if code == 2 && out == "" {
+		return errw, false
+	}
 	return out, false
+}
+
+// tuimark_inspect given a fragment returns the V005 inspect writes to
+// stderr, not an empty text, and not as isError: an exit 2 is data (SPEC
+// v0.4b §15.1). Every other exit 2 prints its report on stdout, and the
+// result stays that report: for a pinned document and for a document
+// with ordinary errors, each tool's text is the command's stdout, byte
+// for byte, as before.
+func TestMCPExit2WithoutStdout(t *testing.T) {
+	q := func(s string) string { b, _ := json.Marshal(s); return string(b) }
+	kit := writeTemp(t, "kit.tui", "<fragment>\n  <text id=\"a\">x</text>\n</fragment>\n")
+	for _, extra := range []string{`"at":"0,0"`, `"id":"a"`} {
+		got, isErr := mcpCall(t, `{"name":"tuimark_inspect","arguments":{"file":`+q(kit)+`,`+extra+`}}`)
+		want := "error V005 kit.tui:1:1 / a <fragment> is not a document: check it through the document that includes it\n"
+		if got != want || isErr {
+			t.Errorf("tuimark_inspect kit.tui {%s}: isError %v %q, want %q", extra, isErr, got, want)
+		}
+	}
+	dup := "  <screen id=\"main\">\n    <text id=\"a\">x</text>\n    <text id=\"a\">y</text>\n  </screen>\n</tui>\n"
+	for _, c := range []struct {
+		name, doc string
+		code      int
+	}{
+		{"pinned.tui", "<tui version=\"3\">\n  <screen id=\"main\">\n    <text id=\"a\">x</text>\n  </screen>\n</tui>\n", 0},
+		{"pinned-dup.tui", "<tui version=\"2\">\n" + dup, 2},
+		{"dup.tui", "<tui>\n" + dup, 2},
+	} {
+		f := writeTemp(t, c.name, c.doc)
+		for _, tool := range []struct {
+			name, extra string
+			argv        []string
+		}{
+			{"tuimark_validate", "", []string{"validate", f, "--json"}},
+			{"tuimark_dump", "", []string{"dump", f, "--format", "json"}},
+			{"tuimark_play", "", []string{"play", f, "--format", "json"}},
+			{"tuimark_inspect", `,"at":"0,0"`, []string{"inspect", f, "--at", "0,0", "--json"}},
+		} {
+			code, out, _ := runCLI(tool.argv...)
+			got, isErr := mcpCall(t, `{"name":"`+tool.name+`","arguments":{"file":`+q(f)+tool.extra+`}}`)
+			if code != c.code || out == "" || got != out || isErr {
+				t.Errorf("%s %s: exit %d (want %d), isError %v, text equals stdout %v (%q)", tool.name, c.name, code, c.code, isErr, got == out, tail(got, 200))
+			}
+		}
+	}
 }
 
 // tuimark_play builds its command line exactly as the other tools do and

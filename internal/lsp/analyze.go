@@ -27,8 +27,18 @@ type analysis struct {
 	path   string // the document's path
 	text   string
 	sheets []host.Source // the stylesheets that were read
-	// loadPaths is every stylesheet the document names, read or not.
+	// loadPaths is every stylesheet the document names, read or not, its
+	// fragments' included.
 	loadPaths []string
+	// doc is the loaded document, its includes and uses expanded: what
+	// definition and completion read for templates and scoped ids.
+	doc *parse.Document
+	// fragment is set for a file whose root is <fragment>, checked on its
+	// own (diags) unless a document reads it (SPEC v0.4b §15.12).
+	fragment bool
+	// fragPaths is the absolute path of every fragment the document's
+	// includes name, at any depth, read or not (SPEC v0.4b §6.18.2).
+	fragPaths []string
 	diags     ir.Diags
 	hasData   bool
 	data      any // the decoded sample.json, nil without one
@@ -65,7 +75,9 @@ func analyze(sn *snapshot, path, text string) *analysis {
 		t, ok := sn.docText(abs)
 		return []byte(t), ok
 	})
-	a := &analysis{path: path, text: text, sheets: sheets, version: docVersion(app.Document()), loadPaths: loadedPaths(path, app.Document())}
+	doc := app.Document()
+	a := &analysis{path: path, text: text, sheets: sheets, version: docVersion(doc), loadPaths: loadedPaths(path, doc),
+		doc: doc, fragment: doc.FragmentRoot, fragPaths: fragmentPaths(doc)}
 	a.data, a.hasData = readSample(sn, path)
 	if a.hasData {
 		if err := app.Bind("", a.data); err != nil {
@@ -73,11 +85,11 @@ func analyze(sn *snapshot, path, text string) *analysis {
 		}
 	}
 	diags := app.Validate()
-	if doc := app.Document(); doc.FragmentRoot {
+	if doc.FragmentRoot {
 		// A file whose root is <fragment> is no document: it is checked
 		// on its own, as `tuimark validate` checks it, with no V005 (SPEC
-		// v0.4b §6.18.2, §15.12). Routing its diagnostics through the
-		// documents that include it is F4's.
+		// v0.4b §6.18.2, §15.12). Its URI gets these only when no
+		// document reads it (Server.fragmentDiags).
 		diags = parse.FragmentDiags(doc)
 	}
 	if !a.hasData {
@@ -139,12 +151,60 @@ func readSample(sn *snapshot, path string) (any, bool) {
 }
 
 // loadedPaths is the absolute path of every stylesheet the document names,
-// whether or not it could be read.
+// whether or not it could be read: a <style src> written in a fragment
+// resolves against the fragment's directory (SPEC v0.4b §6.18.2).
 func loadedPaths(path string, doc *parse.Document) []string {
 	var out []string
 	for _, s := range doc.Styles {
 		if s.Src != "" {
-			out = append(out, resolveSrc(path, s.Src))
+			base := path
+			if s.From != "" {
+				base = s.From
+			}
+			out = append(out, resolveSrc(base, s.Src))
+		}
+	}
+	return out
+}
+
+// fragmentPaths is the absolute path of every fragment the document's
+// includes name, at any depth, whether or not it could be read.
+func fragmentPaths(doc *parse.Document) []string {
+	var out []string
+	for _, f := range doc.Fragments {
+		p, err := filepath.Abs(f.Path)
+		if err != nil {
+			p = filepath.Clean(f.Path)
+		}
+		out = append(out, p)
+	}
+	return out
+}
+
+// reads are the files the document reads besides itself: its stylesheets,
+// then its fragments, each named or read at any depth.
+func (a *analysis) reads() []string {
+	return append(append([]string(nil), a.loadPaths...), a.fragPaths...)
+}
+
+// fileOf is the absolute path of the file a diagnostic or an element of
+// the analysis names: the loader names a stylesheet and a fragment by
+// their absolute paths, and the document by its base name (an element of
+// the document by nothing), so any other name is the document's own.
+func (a *analysis) fileOf(name string) string {
+	if filepath.IsAbs(name) {
+		return name
+	}
+	return a.path
+}
+
+// routeFile returns the diagnostics whose file is the fragment at frag,
+// placed in the lines of its text.
+func (a *analysis) routeFile(frag string, lines []string) []lspDiagnostic {
+	var out []lspDiagnostic
+	for _, d := range a.diags {
+		if d.File == frag {
+			out = append(out, convertDiag(lines, d))
 		}
 	}
 	return out

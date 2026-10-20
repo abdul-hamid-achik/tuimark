@@ -156,6 +156,11 @@ type Box struct {
 	// two and can come back in the third.
 	AllColumns []*Box
 
+	// GenFrom is, on a generated box with no Src (a hint item's row and
+	// its two texts), the element it is generated from: the keymap's
+	// <bind> row, which `tuimark inspect` names as its source (SPEC v0.4b
+	// §15.7). Nothing else reads it.
+	GenFrom *ir.Node
 	// Role names what the runtime generated a box for (SPEC §6.10.4,
 	// §6.12): a tab label (RoleTabLabel), a hint item row (RoleHintItem),
 	// or one of its two texts (RoleHintKey, RoleHintLabel); "" for a node

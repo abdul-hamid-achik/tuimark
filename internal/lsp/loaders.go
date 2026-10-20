@@ -6,17 +6,66 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
-// parsedDoc is a .tui that loads a stylesheet, parsed and not checked.
+// parsedDoc is a .tui that loads a stylesheet, parsed and not checked;
+// one in the current language that has an <include> is loaded with its
+// includes and uses expanded (expanded), so the stylesheets its fragments
+// load, and the ids its fragments and copies give, count as its own (SPEC
+// v0.4b §6.18.2).
 type parsedDoc struct {
-	path string
-	text string
-	doc  *parse.Document
+	path     string
+	text     string
+	doc      *parse.Document
+	expanded bool
+}
+
+// parseLoader parses the .tui at path whose text is text for parsedDoc.
+func parseLoader(sn *snapshot, path, text string) parsedDoc {
+	doc := parse.Parse([]byte(text), path)
+	if !doc.Lang.V4() || doc.FragmentRoot || !strings.Contains(text, "<include") {
+		return parsedDoc{path, text, doc, false}
+	}
+	app, _ := host.LoadBuffers(path, []byte(text), func(abs string) ([]byte, bool) {
+		t, ok := sn.docText(abs)
+		return []byte(t), ok
+	})
+	return parsedDoc{path, text, app.Document(), true}
+}
+
+// includeSrcRE finds the src of each <include> of a .tui text, the
+// element's other attributes skipped whole (a quoted value may hold '>').
+var includeSrcRE = regexp.MustCompile(`<include\b(?:[^>"']|"[^"]*"|'[^']*')*?\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)')`)
+
+// xmlEntities decodes the named entities an attribute value may hold.
+var xmlEntities = strings.NewReplacer("&lt;", "<", "&gt;", ">", "&quot;", `"`, "&apos;", "'", "&amp;", "&")
+
+// mayRead reports whether the .tui at path, whose text is text, may read
+// the fragment at frag: whether an <include src> in it names frag, or
+// names a file that may read it, followed through the texts alone, each
+// file once (seen). It over-approximates (an include in a comment counts,
+// and so does one in a pinned document, which never reads it), so
+// includers expands only the documents it accepts.
+func mayRead(sn *snapshot, path, text, frag string, seen map[string]bool) bool {
+	for _, m := range includeSrcRE.FindAllStringSubmatch(text, -1) {
+		p := resolveSrc(path, xmlEntities.Replace(m[1]+m[2]))
+		if p == frag {
+			return true
+		}
+		if seen[p] {
+			continue
+		}
+		seen[p] = true
+		if t, ok := readText(sn, p); ok && mayRead(sn, p, t, frag, seen) {
+			return true
+		}
+	}
+	return false
 }
 
 // readText is the text of the file at path: its open buffer, else the file
@@ -44,9 +93,8 @@ func parsedLoaders(sn *snapshot, sheet string) []parsedDoc {
 			return
 		}
 		seen[path] = true
-		doc := parse.Parse([]byte(text), path)
-		if contains(loadedPaths(path, doc), sheet) {
-			out = append(out, parsedDoc{path, text, doc})
+		if pd := parseLoader(sn, path, text); contains(loadedPaths(path, pd.doc), sheet) {
+			out = append(out, pd)
 		}
 	}
 	var open []string

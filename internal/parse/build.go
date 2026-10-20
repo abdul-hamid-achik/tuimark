@@ -72,6 +72,9 @@ type KeyBind struct {
 	// Org is where the row is written when that is not the document
 	// itself (SPEC v0.4b §6.18.6): nil for a row of the document.
 	Org *ir.Origin
+	// Node is the <bind> element of the row: what `tuimark inspect` names
+	// as the source of the hint items the row gives (SPEC v0.4b §15.7).
+	Node *ir.Node
 }
 
 // Document is a parsed and validated .tui file.
@@ -112,9 +115,12 @@ type Document struct {
 	// document (V005), but a file `tuimark validate` checks on its own
 	// (FragmentDiags; SPEC v0.4b §6.18.2, §15.1).
 	FragmentRoot bool
-	// Fragments are the files the document's <include> elements read, at
-	// any depth, in the order they were read, each once (SPEC v0.4b
-	// §6.18.2): what run and preview --watch watch.
+	// Fragments are the files the document's <include> elements name, at
+	// any depth, in the order they were first resolved, each once (SPEC
+	// v0.4b §6.18.2): what run and preview --watch watch (§15.9). A file
+	// that could not be read is listed too, so creating it reloads, as a
+	// missing <style src> does; one outside the file system, in a cycle,
+	// or ending in .tcss is never read and is not.
 	Fragments []FragmentRef
 	// Composed is set when an <include> or a <use> was expanded: one
 	// written element may then be placed more than once, and diagnostics
@@ -128,7 +134,7 @@ type Document struct {
 	dropped []*ir.Node
 }
 
-// FragmentRef is a file an <include> read: its path in the loader's file
+// FragmentRef is a file an <include> names: its path in the loader's file
 // system and the name diagnostics give it.
 type FragmentRef struct {
 	Path string
@@ -1839,7 +1845,7 @@ func (b *builder) checkStructure() {
 					kb := KeyBind{
 						KeysRaw: k.Attrs["keys"], Action: k.Attrs["action"], When: rowWhen,
 						HasOwnWhen: hasOwnWhen, KeymapNode: c, EffectiveWhen: rowWhen,
-						To: k.Attrs["to"], Line: k.Line, Col: k.Col, Org: k.Org,
+						To: k.Attrs["to"], Line: k.Line, Col: k.Col, Org: k.Org, Node: k,
 					}
 					if !hasOwnWhen {
 						kb.EffectiveWhen = kmWhen

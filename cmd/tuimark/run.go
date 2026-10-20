@@ -7,9 +7,9 @@ package main
 // recorded in the strip and in --events), F12 shows or hides the event
 // strip, the panel lists the document's static diagnostics, two ctrl+c
 // within a second always end the session, and a watcher reloads the
-// document, its stylesheets, --data, and --mock when they change,
-// handing the new app to the loop. internal/host lays out, paints, and
-// decides everything else.
+// document, its fragments and stylesheets, --data, and --mock when they
+// change, handing the new app to the loop. internal/host lays out, paints,
+// and decides everything else.
 
 import (
 	"encoding/json"
@@ -95,10 +95,10 @@ type runner struct {
 	file, data, mockPath, theme string
 	setTheme                    bool
 
-	// The watcher's own state: the stylesheets of the last load that read
-	// the document far enough to resolve its <style src>, the fingerprint
-	// of --data when it was last bound, and the watched files' stamps the
-	// watcher starts from.
+	// The watcher's own state: the fragments and stylesheets of the last
+	// load that read the document far enough to resolve them, the
+	// fingerprint of --data when it was last bound, and the watched files'
+	// stamps the watcher starts from.
 	sheets    []string
 	dataStamp string
 	seen      map[string]string
@@ -390,8 +390,8 @@ func errLines(err error) []string {
 	return []string{"tuimark: " + hostErrText(err)}
 }
 
-// sheetsOf is the stylesheets app's load named: Files lists the document
-// first (Load always has its path), then every <style src>.
+// sheetsOf is the fragments and stylesheets app's load named, at any
+// depth: Files lists the document first (Load always has its path).
 func sheetsOf(app *host.App) []string {
 	files := app.Files()
 	if len(files) > 0 {
@@ -400,8 +400,8 @@ func sheetsOf(app *host.App) []string {
 	return files
 }
 
-// watched is every file a reload looks at: FILE, the stylesheets of the
-// last load that resolved them, --data, and --mock.
+// watched is every file a reload looks at: FILE, the fragments and
+// stylesheets of the last load that resolved them, --data, and --mock.
 func (r *runner) watched() []string {
 	files := append([]string{r.file}, r.sheets...)
 	return append(files, r.data, r.mockPath)

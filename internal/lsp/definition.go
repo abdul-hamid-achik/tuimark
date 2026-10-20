@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -70,8 +71,11 @@ func (s *Server) definitionTUI(sn *snapshot, doc *document, off int) []location 
 		return nil
 	}
 	value := ctx.prefix + doc.text[off:off+valueRest(doc.text, off)]
+	// Composition is the current language's, which a fragment always is
+	// (SPEC v0.4b §15.12 "Definition").
+	composed := docVersionOf(doc.text) == int(ir.LangCurrent)
 	switch {
-	case ctx.tag == "style" && ctx.attr == "src":
+	case ctx.tag == "style" && ctx.attr == "src", composed && ctx.tag == "include" && ctx.attr == "src":
 		if doc.path == "" || value == "" {
 			return nil
 		}
@@ -80,6 +84,13 @@ func (s *Server) definitionTUI(sn *snapshot, doc *document, off int) []location 
 			return nil
 		}
 		return []location{{URI: s.uriOfPath(sn, doc, p)}}
+	case composed && ctx.tag == "use" && ctx.attr == "template":
+		// The <template id> in whichever file holds it.
+		for _, a := range s.composedDocs(sn, doc) {
+			if n := findWritten(a.doc, func(n *ir.Node) bool { return n.Kind == "template" && n.ID == value }); n != nil {
+				return []location{s.locationIn(sn, doc, a, n)}
+			}
+		}
 	case ctx.attr == "to", ctx.attr == "focus", ctx.attr == "when":
 		word, _, _ := wordAt(doc.text, off)
 		i := strings.LastIndexByte(word, '#')
@@ -87,11 +98,135 @@ func (s *Server) definitionTUI(sn *snapshot, doc *document, off int) []location 
 			return nil
 		}
 		id, _, _ := strings.Cut(word[i+1:], ":")
+		if composed {
+			// An element, a copy's included (its scoped id names the
+			// template's element it was copied from), else a <use>.
+			for _, a := range s.composedDocs(sn, doc) {
+				if n := a.doc.IDs[id]; n != nil {
+					return []location{s.locationIn(sn, doc, a, n)}
+				}
+				if n := findWritten(a.doc, func(n *ir.Node) bool { return n.Kind == "use" && n.ID == id }); n != nil {
+					return []location{s.locationIn(sn, doc, a, n)}
+				}
+			}
+		}
 		if n := parseText(doc).IDs[id]; n != nil {
 			return []location{s.nodeLocation(sn, doc, doc.path, doc.text, n)}
 		}
 	}
 	return nil
+}
+
+// composedDocs are the analyses whose expanded documents a definition or
+// a completion in doc reads: doc's own, or, for a fragment, those of the
+// documents that read it (SPEC v0.4b §15.12), else, when none does, the
+// fragment's own (orphanOf).
+func (s *Server) composedDocs(sn *snapshot, doc *document) []*analysis {
+	a := s.analysisOf(sn, doc.path, doc.text)
+	if !a.fragment {
+		return []*analysis{a}
+	}
+	if doc.path == "" {
+		return nil
+	}
+	if inc := s.includers(sn, doc.path); len(inc) > 0 {
+		return inc
+	}
+	if o := s.orphanOf(sn, doc.path, a.doc); o != nil {
+		return []*analysis{o}
+	}
+	return nil
+}
+
+// srcEscape escapes a file name for an attribute value.
+var srcEscape = strings.NewReplacer("&", "&amp;", "<", "&lt;", `"`, "&quot;")
+
+// orphanOf is the fragment at frag, which no document reads, as the one
+// thing a document holds: the expanded document of a <tui> that includes
+// it where its elements belong (at the <tui> when it holds a <screen>,
+// else in a <screen>), so definition and completion find its own
+// templates and ids, the copies its uses make, and what its includes
+// bring, as a document that read it would give them. fd is the fragment's
+// own parse. Nothing is checked: its diagnostics stay its own check's.
+func (s *Server) orphanOf(sn *snapshot, frag string, fd *parse.Document) *analysis {
+	if fd == nil || fd.Raw == nil {
+		return nil
+	}
+	inc := `<include src="` + srcEscape.Replace(filepath.Base(frag)) + `"/>`
+	text := "<tui><screen>" + inc + "</screen></tui>"
+	for _, c := range fd.Raw.Children {
+		if c.Type == parse.RawElement && c.Name == "screen" {
+			text = "<tui>" + inc + "</tui>"
+			break
+		}
+	}
+	// A name beside the fragment, which nothing reads: the include
+	// resolves against its directory.
+	path := filepath.Join(filepath.Dir(frag), ".orphan."+filepath.Base(frag))
+	pd := s.expandedOf(sn, path, text)
+	if !pd.expanded {
+		return nil
+	}
+	return &analysis{path: path, text: text, doc: pd.doc, version: int(ir.LangCurrent)}
+}
+
+// locationIn is the location of an element of a's expanded document, in
+// the file it is written in.
+func (s *Server) locationIn(sn *snapshot, self *document, a *analysis, n *ir.Node) location {
+	return s.writtenLocation(sn, self, a.path, a.text, n)
+}
+
+// writtenLocation is the location of an element of the document at path,
+// whose text is text, in the file it is written in: the loader names a
+// fragment by its absolute path, and the document by its base name, or
+// by nothing for an element written in it.
+func (s *Server) writtenLocation(sn *snapshot, self *document, path, text string, n *ir.Node) location {
+	if f := n.Org.FileOr(""); filepath.IsAbs(f) && f != path {
+		path = f
+		text, _ = readText(sn, f)
+	}
+	return s.nodeLocation(sn, self, path, text, n)
+}
+
+// findWritten is the first element of the document as written, in
+// document order, that match accepts: its <template>, <use>, and
+// <include> elements included, which only the written children
+// (ir.Node.Source) hold.
+func findWritten(doc *parse.Document, match func(*ir.Node) bool) *ir.Node {
+	var found *ir.Node
+	walkWritten(doc, func(n *ir.Node) bool {
+		if match(n) {
+			found = n
+			return false
+		}
+		return true
+	})
+	return found
+}
+
+// walkWritten calls fn for every element of the document as written, in
+// document order, until it returns false.
+func walkWritten(doc *parse.Document, fn func(*ir.Node) bool) {
+	var walk func(n *ir.Node) bool
+	walk = func(n *ir.Node) bool {
+		if n == nil {
+			return true
+		}
+		if !fn(n) {
+			return false
+		}
+		kids := n.Children
+		if n.Source != nil {
+			kids = n.Source
+		}
+		for _, c := range kids {
+			if !walk(c) {
+				return false
+			}
+		}
+		return true
+	}
+	walk(doc.Root)
 }
 
 // valueRest is the length of the rest of an attribute value after byte
@@ -125,12 +260,12 @@ func (s *Server) definitionTCSS(sn *snapshot, doc *document, off int) []location
 			switch sigil {
 			case '#':
 				if n := l.doc.IDs[name]; n != nil {
-					locs = append(locs, s.nodeLocation(sn, doc, l.path, l.text, n))
+					locs = append(locs, s.writtenLocation(sn, doc, l.path, l.text, n))
 				}
 			case '.':
 				walkNodes(l.doc, func(n *ir.Node) {
 					if hasClass(n, name) {
-						locs = append(locs, s.nodeLocation(sn, doc, l.path, l.text, n))
+						locs = append(locs, s.writtenLocation(sn, doc, l.path, l.text, n))
 					}
 				})
 			}
