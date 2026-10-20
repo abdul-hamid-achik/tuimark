@@ -48,6 +48,9 @@ type lspDiagnostic struct {
 	Code     string `json:"code"`
 	Source   string `json:"source"`
 	Message  string `json:"message"`
+	// whole is what validate's message cut (ir.Whole), never sent: two
+	// diagnostics that read the same once cut stay two, as in validate.
+	whole string
 }
 
 // analyze runs validate's checks on the document at path whose text is
@@ -216,7 +219,7 @@ func convertDiag(lines []string, d ir.Diagnostic) lspDiagnostic {
 	if d.Line >= 1 && d.Line <= len(lines) {
 		end.Character = tokenEnd(lines[start.Line], start.Character)
 	}
-	return lspDiagnostic{Range: Range{Start: start, End: end}, Severity: sev, Code: d.Code, Source: "tuimark", Message: d.Msg}
+	return lspDiagnostic{Range: Range{Start: start, End: end}, Severity: sev, Code: d.Code, Source: "tuimark", Message: d.Msg, whole: ir.Whole(d)}
 }
 
 // tokenEnd is the UTF-16 offset where the token starting at offset start
@@ -258,17 +261,18 @@ func isWordRune(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsDigit(r) || strings.ContainsRune("_-:.#$@%", r)
 }
 
-// dedupe drops a diagnostic whose code, position, and message an earlier
-// one already has, keeping the order of first appearance.
+// dedupe drops a diagnostic whose code, position, and message (and what
+// the message cut, whole) an earlier one already has, keeping the order of
+// first appearance.
 func dedupe(in []lspDiagnostic) []lspDiagnostic {
 	type key struct {
-		code, msg string
-		pos       Position
+		code, msg, whole string
+		pos              Position
 	}
 	seen := map[key]bool{}
 	out := make([]lspDiagnostic, 0, len(in))
 	for _, d := range in {
-		k := key{d.Code, d.Message, d.Range.Start}
+		k := key{d.Code, d.Message, d.whole, d.Range.Start}
 		if !seen[k] {
 			seen[k] = true
 			out = append(out, d)

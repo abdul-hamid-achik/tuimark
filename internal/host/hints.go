@@ -166,7 +166,7 @@ func (fb *builder) inflateSparkline(n *ir.Node, b *layout.Box, sc *scope) {
 	}
 	v, found := sc.resolve(fb.a.store, n.Bind)
 	if !found {
-		fb.missingBind(n, n.Bind)
+		fb.missingBind(n, "bind", 0, n.Bind, sc)
 		return
 	}
 	arr, ok := v.([]any)

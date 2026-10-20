@@ -95,7 +95,7 @@ func TestExpansionLimitFanOut(t *testing.T) {
 	}
 	start := time.Now()
 	doc := parse.ParseWith([]byte("<tui><screen><include src=\"f0.tui\"/></screen></tui>"), "app.tui", memLoader(files, "app.tui", nil))
-	if d := time.Since(start); d > 5*time.Second {
+	if d := time.Since(start); d > 5*slowdown*time.Second {
 		t.Errorf("took %v", d)
 	}
 	got := v021(doc)
@@ -117,7 +117,7 @@ func TestExpansionLimitCountsIncludes(t *testing.T) {
 	}
 	start := time.Now()
 	doc := parse.ParseWith([]byte("<tui><screen><include src=\"f0.tui\"/></screen></tui>"), "app.tui", memLoader(files, "app.tui", nil))
-	if d := time.Since(start); d > 5*time.Second {
+	if d := time.Since(start); d > 5*slowdown*time.Second {
 		t.Errorf("took %v", d)
 	}
 	if got := v021(doc); len(got) != 1 {

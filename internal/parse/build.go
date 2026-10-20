@@ -116,6 +116,12 @@ type Document struct {
 	// any depth, in the order they were read, each once (SPEC v0.4b
 	// §6.18.2): what run and preview --watch watch.
 	Fragments []FragmentRef
+	// Composed is set when an <include> or a <use> was expanded: one
+	// written element may then be placed more than once, and diagnostics
+	// equal in severity, code, message, file, line, and column are one,
+	// with the path and id of the first placement (SPEC v0.4b §6.18.6,
+	// decision 16). Every pinned document leaves it false.
+	Composed bool
 
 	// dropped holds the subtrees rooted at an unknown tag: validated, kept
 	// out of Root (see builder.tagKnown), in document order.
@@ -533,14 +539,24 @@ func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, co
 			}
 		}
 	}
+	var whole string
+	if placed != nil && org.InCopy() {
+		// One per copy, each told apart by its placement suffix: what it
+		// quotes with %q is cut, as the runtime's are (ir.At), and kept
+		// whole beside it, so the repeat dropped above, and the dedupes
+		// after (dedupeDiags, the host's), compare it whole. A self-check
+		// (no suffix) is the same in every copy and in the template's own
+		// body, and is reported once, whole.
+		args, whole = ir.CutArgs(format, args)
+	}
 	msg := fmt.Sprintf(format, ir.UnmarkArgs(args)...)
 	if placed != nil {
 		msg += org.PlacedSuffix()
 	}
-	b.doc.Diags = append(b.doc.Diags, ir.Diagnostic{
+	b.doc.Diags = append(b.doc.Diags, ir.WithWhole(ir.Diagnostic{
 		Severity: sev, Code: code, Msg: msg,
 		File: file, Line: line, Col: col, Path: path, ID: id,
-	})
+	}, whole))
 }
 
 // diagPlaced is diag for a check that depends on where the element stands:
@@ -660,8 +676,9 @@ func ParseWith(src []byte, file string, ld *Loader) *Document {
 	b.checkKeymap()
 	if b.comp != nil && b.comp.used {
 		// One written element placed more than once reports once (SPEC
-		// v0.4b §6.18.6).
+		// v0.4b §6.18.6), at render time too (Composed).
 		doc.Diags = dedupeDiags(doc.Diags)
+		doc.Composed = true
 	}
 	sort.SliceStable(doc.Diags, func(i, j int) bool {
 		if doc.Diags[i].Line != doc.Diags[j].Line {

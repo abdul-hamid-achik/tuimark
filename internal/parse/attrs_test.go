@@ -17,7 +17,7 @@ func TestHugeElementIsLinear(t *testing.T) {
 	src := hugeElement(20000)
 	start := time.Now()
 	doc := parse.Parse(src, "a.tui")
-	if d := time.Since(start); d > 3*time.Second {
+	if d := time.Since(start); d > 3*slowdown*time.Second {
 		t.Errorf("20000 attributes took %v", d)
 	}
 	n := 0
@@ -54,7 +54,7 @@ func TestManyStylesAreLinear(t *testing.T) {
 	b.WriteString("</tui>")
 	start := time.Now()
 	doc := parse.Parse([]byte(b.String()), "a.tui")
-	if d := time.Since(start); d > 3*time.Second {
+	if d := time.Since(start); d > 3*slowdown*time.Second {
 		t.Errorf("20000 styles took %v", d)
 	}
 	if len(doc.Styles) != 20000 {

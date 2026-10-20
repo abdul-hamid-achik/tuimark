@@ -82,6 +82,11 @@ type templating struct {
 	heads  map[string]int
 	// renamed counts the each aliases renamed so far (ir.MarkAlias).
 	renamed int
+	// viaTo is the element of a copy (or the <use> in one) whose paths
+	// are being substituted: substedAt records on it each path that goes
+	// through a with alias (ir.Node.Vias), where it is written. nil
+	// records nothing.
+	viaTo *ir.Node
 	// charge charges the expansion under way the bytes a substitution
 	// adds (builder.chargeBytes; nil charges nothing).
 	charge func(n int)
@@ -158,6 +163,9 @@ type useInfo struct {
 type alias struct {
 	name, path string
 	use        *ir.Node
+	// eachRel is set for a with alias whose path starts with an each
+	// alias in scope at its use (ir.Via.EachRel).
+	eachRel bool
 }
 
 // push brings a into scope, innermost.
@@ -406,15 +414,18 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 	}
 	if len(cp.copies) > 0 {
 		q.Written = &ir.Written{Attrs: maps.Clone(q.Attrs), If: q.If, Classes: slices.Clone(q.Classes)}
+		prev := cp.viaTo
+		cp.viaTo = q
+		defer func() { cp.viaTo = prev }()
 		if q.If != "" {
-			q.If = cp.substGuard(q.If)
+			q.If = cp.substGuard("if", q.If)
 			q.Attrs["if"] = q.If
 		}
 		if v, ok := q.Attrs["hidden"]; ok {
-			q.Attrs["hidden"] = cp.substFlag(v)
+			q.Attrs["hidden"] = cp.substFlag("hidden", v)
 		}
 		for i := range clauses {
-			clauses[i].Path = cp.subst(clauses[i].Path)
+			clauses[i].Path = cp.substAt("with", i, clauses[i].Path)
 		}
 	}
 	q.With = clauses
@@ -642,7 +653,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	cp := b.comp
 	cp.used = true
 	savedOrg, savedChain, savedPrefix := b.org, cp.chain, cp.prefix
-	nChildren, nDroppedIn, nDropped := len(n.Children), len(b.droppedIn[n]), len(b.doc.dropped)
+	nChildren, nDroppedIn, nDropped, nEmpty := len(n.Children), len(b.droppedIn[n]), len(b.doc.dropped), len(n.EmptyCopies)
 	fr := &expFrame{bg: cp.active()}
 	nDiags, count, bytes := len(b.doc.Diags), fr.bg.count, fr.bg.bytes
 	nScope, nStack, nCopies, inTmpl := len(cp.scope), len(cp.stack), len(cp.copies), cp.inTmpl
@@ -665,6 +676,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 			panic(r)
 		}
 		n.Children = n.Children[:nChildren]
+		n.EmptyCopies = n.EmptyCopies[:nEmpty]
 		q.Children = nil
 		b.doc.dropped = b.doc.dropped[:nDropped]
 		if b.droppedIn != nil {
@@ -689,7 +701,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	}
 	cp.prefix = prefix
 	for _, cl := range q.With {
-		cp.push(alias{name: cl.Alias, path: cl.Path, use: q})
+		cp.push(alias{name: cl.Alias, path: cl.Path, use: q, eachRel: eachRelAt(q, cl.Path)})
 	}
 	cp.stack = append(cp.stack, t)
 	t.onStack++
@@ -728,6 +740,15 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 			}
 		}
 		e.CopiedBy = append(e.CopiedBy, q)
+	}
+	// A use whose copy places nothing here is still checked where it
+	// stands (ir.Node.EmptyCopies): an inner use's empty copy is under q
+	// too, and q's own, when nothing else of it is.
+	for i := nEmpty; i < len(n.EmptyCopies); i++ {
+		n.EmptyCopies[i] = append(n.EmptyCopies[i], q)
+	}
+	if len(tops) == 0 && len(n.EmptyCopies) == nEmpty {
+		n.EmptyCopies = append(n.EmptyCopies, []*ir.Node{q})
 	}
 	left := resolveRefs(frame.refs, q, tops, prefix)
 	if nCopies > 0 && len(left) > 0 {
@@ -869,30 +890,33 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 	w := &ir.Written{Attrs: maps.Clone(n.Attrs), Bind: n.Bind, Each: n.Each, If: n.If, Classes: slices.Clone(n.Classes)}
 	n.Written = w
 	depth := len(cp.scope)
+	prev := cp.viaTo
+	cp.viaTo = n // the paths substituted below are n's (substedAt)
+	defer func() { cp.viaTo = prev }()
 	if n.Bind != "" {
-		n.Bind = cp.subst(n.Bind)
+		n.Bind = cp.substAt("bind", 0, n.Bind)
 		n.Attrs["bind"] = n.Bind
 	}
 	if n.If != "" {
-		n.If = cp.substGuard(n.If)
+		n.If = cp.substGuard("if", n.If)
 		n.Attrs["if"] = n.If
 	}
 	for _, k := range [...]string{"hidden", "disabled", "open"} {
 		if v, ok := n.Attrs[k]; ok {
-			n.Attrs[k] = cp.substFlag(v)
+			n.Attrs[k] = cp.substFlag(k, v)
 		}
 	}
 	if v, ok := n.Attrs["checked"]; ok {
-		n.Attrs["checked"] = cp.subst(v)
+		n.Attrs["checked"] = cp.substAt("checked", 0, v)
 	}
 	for _, k := range [...]string{"title", "placeholder", "label", "short"} {
 		if v, ok := n.Attrs[k]; ok && !(k == "label" && n.Tag == "select") {
-			n.Attrs[k] = cp.substText(v)
+			n.Attrs[k] = cp.substText(k, v)
 		}
 	}
 	for i := range n.ClassGuards {
 		g := &n.ClassGuards[i]
-		g.Guard = cp.substGuard(g.Guard)
+		g.Guard = cp.substGuard(ClassGuardPrefix+g.Name, g.Guard)
 		n.Attrs[ClassGuardPrefix+g.Name] = g.Guard
 	}
 	if n.Each != "" {
@@ -909,7 +933,7 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 				name = ir.MarkAlias(e.Alias, cp.renamed)
 			}
 			cp.grow(cp.growth(e.Path) + len(name) - len(e.Alias))
-			n.Each = cp.substed(e.Path) + " as " + name
+			n.Each = cp.substedAt("each", 0, e.Path) + " as " + name
 			n.Attrs["each"] = n.Each
 			if a := cp.lookup(e.Alias); a != nil && a.use != nil {
 				// Reported at the element; the copy is still inserted,
@@ -925,18 +949,19 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 	}
 	// Per row, inside the each alias: a key, and a select's option label.
 	if v, ok := n.Attrs["key"]; ok {
-		n.Attrs["key"] = cp.subst(v)
+		n.Attrs["key"] = cp.substAt("key", 0, v)
 	}
 	if v, ok := n.Attrs["label"]; ok && n.Tag == "select" {
-		n.Attrs["label"] = cp.substText(v)
+		n.Attrs["label"] = cp.substText("label", v)
 	}
 	if f, ok := n.Attrs["focus"]; ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
 		fr := cp.copies[len(cp.copies)-1]
 		fr.refs = append(fr.refs, n)
 	}
 	b.content(n, r)
+	cp.viaTo = n // content built n's children, each of them its own target
 	w.Text = n.Text
-	n.Text = cp.substText(n.Text)
+	n.Text = cp.substText("", n.Text)
 	cp.popTo(depth)
 }
 
@@ -957,18 +982,25 @@ func (t *templating) lookup(name string) *alias {
 	return &t.scope[s[len(s)-1]]
 }
 
-// subst is the path p as it resolves in the copies being built: a path
-// whose first segment is a with alias in scope (not shadowed by an each
-// alias) stands for the alias's path followed by the other segments, and
-// one whose first segment is a renamed each alias takes its new name. The
-// bytes it adds are charged to the expansion under way (grow).
-func (t *templating) subst(p string) string {
+// substAt is the path p, written in slot as its seg-th path (ir.ViaKey),
+// as it resolves in the copies being built: a path whose first segment is
+// a with alias in scope (not shadowed by an each alias) stands for the
+// alias's path followed by the other segments, and one whose first
+// segment is a renamed each alias takes its new name. The bytes it adds
+// are charged to the expansion under way (grow).
+func (t *templating) substAt(slot string, seg int, p string) string {
 	t.grow(t.growth(p))
-	return t.substed(p)
+	return t.substedAt(slot, seg, p)
 }
 
-// substed is subst, charging nothing.
-func (t *templating) substed(p string) string {
+// substedAt is substAt, charging nothing. A path that went through a with
+// alias is recorded on viaTo (ir.Node.Vias) under where it is written
+// (slot, seg), not under what it becomes, so two paths written apart that
+// stand for one path keep their own: its binding diagnostics name it as
+// written and say which use's alias it went through (SPEC v0.4b
+// §6.18.5), and the runtime reads its flags as optional props (decision
+// 100).
+func (t *templating) substedAt(slot string, seg int, p string) string {
 	if len(t.scope) == 0 {
 		return p
 	}
@@ -977,10 +1009,34 @@ func (t *templating) substed(p string) string {
 	if a == nil || a.path == "" {
 		return p
 	}
-	if !more {
-		return a.path
+	out := a.path
+	if more {
+		out = a.path + "." + rest
 	}
-	return a.path + "." + rest
+	if a.use != nil && t.viaTo != nil {
+		if t.viaTo.Vias == nil {
+			t.viaTo.Vias = map[ir.ViaKey]*ir.Via{}
+		}
+		t.viaTo.Vias[ir.ViaKey{Slot: slot, Seg: seg}] = &ir.Via{Written: p, Base: a.path, Use: a.use, EachRel: a.eachRel}
+	}
+	return out
+}
+
+// eachRelAt reports whether path p, a with path of the use q resolved
+// where q stands, starts with an each alias in scope there: that of an
+// element around q (a container each, a list, or a table, the copy's own
+// elements included, whose renamed alias p then holds).
+func eachRelAt(q *ir.Node, p string) bool {
+	head, _, _ := strings.Cut(p, ".")
+	for n := q.Parent; n != nil; n = n.Parent {
+		if n.Each == "" {
+			continue
+		}
+		if e, err := ir.ParseEachField(n.Each); err == nil && e.Alias == head {
+			return true
+		}
+	}
+	return false
 }
 
 // growth is len(subst(p)) - len(p), computed without building it.
@@ -1006,26 +1062,28 @@ func (t *templating) grow(n int) {
 	}
 }
 
-// substGuard is subst for path or !path.
-func (t *templating) substGuard(g string) string {
+// substGuard is substAt for path or !path, written in attribute slot.
+func (t *templating) substGuard(slot, g string) string {
 	if rest, neg := strings.CutPrefix(g, "!"); neg {
-		return "!" + t.subst(rest)
+		return "!" + t.substAt(slot, 0, rest)
 	}
-	return t.subst(g)
+	return t.substAt(slot, 0, g)
 }
 
-// substFlag is subst for true, false, path, or !path.
-func (t *templating) substFlag(f string) string {
+// substFlag is substAt for true, false, path, or !path, written in
+// attribute slot.
+func (t *templating) substFlag(slot, f string) string {
 	if f == "true" || f == "false" {
 		return f
 	}
-	return t.substGuard(f)
+	return t.substGuard(slot, f)
 }
 
-// substText is subst for each {path} of a template string. A string that
-// is not a valid template (V003) is left as written. What the whole string
-// grows by is charged before it is built (grow).
-func (t *templating) substText(s string) string {
+// substText is substAt for each {path} of a template string written in
+// slot ("" for an element's text), its k-th path as segment k. A string
+// that is not a valid template (V003) is left as written. What the whole
+// string grows by is charged before it is built (grow).
+func (t *templating) substText(slot, s string) string {
 	if len(t.scope) == 0 || !strings.Contains(s, "{") {
 		return s
 	}
@@ -1041,12 +1099,14 @@ func (t *templating) substText(s string) string {
 	}
 	t.grow(n)
 	var out strings.Builder
+	k := 0
 	for _, sg := range segs {
 		if sg.Path == "" {
 			out.WriteString(sg.Lit)
 			continue
 		}
-		out.WriteString("{" + t.substed(sg.Path) + "}")
+		out.WriteString("{" + t.substedAt(slot, k, sg.Path) + "}")
+		k++
 	}
 	return out.String()
 }

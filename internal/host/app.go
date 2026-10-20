@@ -83,7 +83,10 @@ type App struct {
 	// path its cached rows read may have changed (tableData).
 	storeGen uint64
 	segGen   map[string]uint64
-	tables   map[*ir.Node]*tableCache
+	// placeChecks counts the <use> placements builders have checked
+	// (placeUse), for the tests that a placement is checked once.
+	placeChecks uint64
+	tables      map[*ir.Node]*tableCache
 	// checkedSets keeps, per list or table node, the key set of its
 	// checked array while the store member it reads is unchanged
 	// (checkedSet).
@@ -697,14 +700,14 @@ func (a *App) Validate() ir.Diags {
 	defer a.restoreState(saved)
 	themes := a.validateThemes()
 	out := append(ir.Diags(nil), a.static...)
-	seen := map[string]bool{}
+	seen := map[diagID]bool{}
 	for _, d := range out {
-		seen[d.String()] = true
+		seen[a.diagKey(d)] = true
 	}
 	add := func(ds ir.Diags) {
 		for _, d := range ds {
-			if !seen[d.String()] {
-				seen[d.String()] = true
+			if k := a.diagKey(d); !seen[k] {
+				seen[k] = true
 				out = append(out, d)
 			}
 		}

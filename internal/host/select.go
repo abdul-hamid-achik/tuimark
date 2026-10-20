@@ -77,7 +77,7 @@ func (a *App) selectState(id string) *selectState {
 // a.mu.
 func (fb *builder) inflateSelect(n *ir.Node, b *layout.Box, sc *scope, nested bool) {
 	a := fb.a
-	ph := oneLineLabel(fb.interp(n, n.Attrs["placeholder"], sc))
+	ph := oneLineLabel(fb.interp(n, "placeholder", n.Attrs["placeholder"], sc))
 	b.Measure = layout.Width(ph)
 	if nested || n.ID == "" {
 		b.Placeholder = ph
@@ -118,11 +118,8 @@ func (fb *builder) resolveOptions(n *ir.Node, sc *scope) *selectOptions {
 	o.alias = e.Alias
 	v, found := sc.resolve(a.store, e.Path)
 	arr, isArr := v.([]any)
-	switch {
-	case !found:
-		fb.report(n, ir.Error, "B001", "each=%q: path %q is missing (want an array)", n.Each, e.Path)
-	case !isArr:
-		fb.report(n, ir.Error, "B001", "each=%q: %q is %s, not an array", n.Each, e.Path, typeName(v))
+	if !found || !isArr {
+		fb.badEach(n, e.Path, v, found, sc)
 	}
 	keyPath, hasKey := n.Attr("key")
 	label, hasLabel := n.Attr("label")
@@ -147,14 +144,14 @@ func (fb *builder) resolveOptions(n *ir.Node, sc *scope) *selectOptions {
 			if kv, ok := isc.resolve(a.store, keyPath); ok {
 				key = kv
 			} else {
-				fb.report(n, keySev, "B003", "key=%q is missing on option %d (its key is the index)", keyPath, i)
+				fb.missingKey(n, keyPath, isc, keySev, "key=%q is missing on option %d (its key is the index)", i)
 			}
 		}
 		isc.key = key
 		o.keys[i] = key
 		var text string
 		if hasLabel {
-			text = fb.interpSegs(n, segs, isc)
+			text = fb.interpSegs(n, "label", segs, isc)
 		} else {
 			text = cleanText(Format(key))
 		}
@@ -182,7 +179,7 @@ func (fb *builder) chosenOption(n *ir.Node, sc *scope, o *selectOptions, st *sel
 	}
 	v, found := sc.resolve(fb.a.store, n.Bind)
 	if !found {
-		fb.missingBind(n, n.Bind)
+		fb.missingBind(n, "bind", 0, n.Bind, sc)
 		return -1
 	}
 	if v == nil {
@@ -190,7 +187,7 @@ func (fb *builder) chosenOption(n *ir.Node, sc *scope, o *selectOptions, st *sel
 	}
 	i := optionOf(o.keys, v)
 	if i < 0 {
-		fb.report(n, ir.Warning, "B012", "bind=%q holds %s, which is no option's key; nothing is chosen, and a pick writes over it", n.Bind, jsonText(v))
+		fb.report(n, ir.Warning, "B012", "bind=%q holds %s, which is no option's key; nothing is chosen, and a pick writes over it", n.Bind, ir.ShownAt(n, jsonText(v)))
 	}
 	return i
 }
