@@ -98,6 +98,27 @@ func TestV04bFragmentCheckedOnItsOwn(t *testing.T) {
 	}
 }
 
+// A fragment given to inspect gets its V005 and exits 2, as under dump,
+// ir, play, and preview (§15.1), not a usage error for want of a node:
+// the diagnostic goes to stderr and nothing to stdout, as ir does. The
+// flags are still judged first.
+func TestV04bInspectFragment(t *testing.T) {
+	file := writeTemp(t, "kit.tui", "<fragment>\n  <text id=\"a\">x</text>\n</fragment>\n")
+	want := "error V005 kit.tui:1:1 / a <fragment> is not a document: check it through the document that includes it\n"
+	for _, args := range [][]string{{"--id", "a"}, {"--id", "nope"}, {"--at", "0,0"}, {"--at", "79,23", "--json"}, {"--at", "0,0", "--theme", "light", "--strict"}} {
+		code, out, errw := runCLI(append([]string{"inspect", file}, args...)...)
+		if code != 2 || out != "" || errw != want {
+			t.Errorf("inspect kit.tui %q: exit %d %q %q", args, code, out, errw)
+		}
+	}
+	for _, args := range [][]string{{"--at", "80,0"}, {"--at", "0,0", "--theme", "auto"}, {"--at", "x"}, {}} {
+		code, out, errw := runCLI(append([]string{"inspect", file}, args...)...)
+		if code != 1 || out != "" || !strings.HasPrefix(errw, "tuimark: ") {
+			t.Errorf("inspect kit.tui %q: exit %d %q %q", args, code, out, errw)
+		}
+	}
+}
+
 // 146, the ir bullet, as the command line can check it: on its errors ir
 // exits 2 and prints no IR, as 0.4.1 does for a pinned document (§15.1),
 // so "no include, template, or use node" holds of the command; the IR

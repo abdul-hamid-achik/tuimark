@@ -103,6 +103,19 @@ func (c *cli) cmdInspect(args []string) int {
 	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
 		return c.fail(err)
 	}
+	if app.Document().FragmentRoot {
+		// A fragment is not a document (SPEC v0.4b §15.1): its frame has
+		// no node, which is its V005, not a usage error. The flags are
+		// judged first, a cell outside the grid included. As `ir` does,
+		// the diagnostics go to stderr and nothing to stdout.
+		if target.At && (target.X >= *cols || target.Y >= *rows) {
+			return c.fail(fmt.Errorf("inspect: --at %d,%d is outside the %dx%d grid", target.X, target.Y, *cols, *rows))
+		}
+		for _, d := range app.Static().Sorted() {
+			fmt.Fprintln(c.stderr, d.String())
+		}
+		return 2
+	}
 	app.SetStrict(*strict)
 	f := app.Frame(*cols, *rows)
 	in, err := app.Inspect(f, target)
