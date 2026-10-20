@@ -303,7 +303,8 @@ func TestV04bDiagnosticsAtCopiesAreLinearInLongIDs(t *testing.T) {
 }
 
 // nestedClassUses is a document of depth templates, each a use of the one
-// below it with k classes of its own, the innermost holding w texts, used
+// below it with k classes of its own (no class attribute when k is 0),
+// the innermost holding w texts, used
 // once: each text ends up with depth*k classes, of three letters each (the
 // class bytes charged then stay under the byte budget).
 func nestedClassUses(depth, k, w int) string {
@@ -341,8 +342,10 @@ func nestedClassUses(depth, k, w int) string {
 // (for k1_20000 one use with 250 classes is over the byte budget, V021,
 // since it is charged 1000 class bytes an element where each level is
 // charged 3). The case may take at most maxRatio times the control, and
-// never more than maxScaled: they took about 2x and 0.9x of it, against
-// 30x and 28x for the quadratic merge.
+// never more than maxScaled: they took about 2x and 0.9x of it, and 35x
+// and 25x (7.3 s and 5.6 s) with the quadratic merge put back. The case
+// runs twice and its faster run counts, so a burst of load during one run
+// does not fail it, while a quadratic merge is slow on every run.
 func TestV04bNestedUseClassesAreLinear(t *testing.T) {
 	for _, c := range []struct {
 		name     string
@@ -366,13 +369,16 @@ func TestV04bNestedUseClassesAreLinear(t *testing.T) {
 				}
 				control += ctl.took
 			}
-			r := runProbe(t, map[string]string{"app.tui": nestedClassUses(250, c.k, c.w)}, "validate", "FILE")
-			t.Logf("%s: %v (control %v), %d MiB allocated", c.name, r.took, control, r.allocated>>20)
+			doc := nestedClassUses(250, c.k, c.w)
+			r := runProbe(t, map[string]string{"app.tui": doc}, "validate", "FILE")
+			again := runProbe(t, map[string]string{"app.tui": doc}, "validate", "FILE")
+			took := min(r.took, again.took)
+			t.Logf("%s: %v and %v (control %v), %d MiB allocated", c.name, r.took, again.took, control, r.allocated>>20)
 			if !validated(r) {
 				t.Fatalf("exit %d: %.300s", r.code, r.out)
 			}
-			if r.took > maxRatio*control || r.took > maxScaled {
-				t.Errorf("took %v, control %v", r.took, control)
+			if took > maxRatio*control || took > maxScaled {
+				t.Errorf("took %v, control %v", took, control)
 			}
 			if r.allocated > c.allocMiB<<20 {
 				t.Errorf("allocated %d MiB", r.allocated>>20)
