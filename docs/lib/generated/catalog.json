@@ -27,6 +27,15 @@
     "table",
     "tabs"
   ],
+  "tagsCurrent": [
+    "checkbox",
+    "fragment",
+    "include",
+    "select",
+    "table",
+    "template",
+    "use"
+  ],
   "properties": 35,
-  "diagnostics": 36
+  "diagnostics": 41
 }

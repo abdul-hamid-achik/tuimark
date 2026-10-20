@@ -116,7 +116,7 @@ function blocks(text) {
 const cell = (s) => s.replace(/\|/g, '\\|')
 const codeList = (items) => items.map((a) => `\`${a}\``).join(' ')
 
-const catalog = { tags: [], tagsV2: [], properties: 0, diagnostics: 0 }
+const catalog = { tags: [], tagsV2: [], tagsCurrent: [], properties: 0, diagnostics: 0 }
 
 function tagsPage() {
   const parts = blocks(section('### Attributes per tag'))
@@ -124,6 +124,7 @@ function tagsPage() {
   let tables = 0
   let v2Heading = false
   let v3Heading = false
+  let currentHeading = false
   for (const b of parts) {
     if (b.kind === 'para') {
       if (b.text.startsWith('Only in a `<tui version="2">` document')) {
@@ -133,6 +134,10 @@ function tagsPage() {
       if (b.text.startsWith('Only in a `<tui version="3">` document')) {
         body.push('## Added by `version="3"`', '')
         v3Heading = true
+      }
+      if (b.text.startsWith('Only in a `<tui>` without `version`')) {
+        body.push('## Added by the current language', '')
+        currentHeading = true
       }
       body.push(mdx(b.text), '')
       continue
@@ -148,6 +153,7 @@ function tagsPage() {
       const attrs = m[2] === '(no attributes)' ? '—' : codeList(m[2].split(', '))
       if (tables === 0) catalog.tags.push(m[1])
       else if (tables === 1 && !catalog.tags.includes(m[1])) catalog.tagsV2.push(m[1])
+      else if (tables === 3 && !catalog.tags.includes(m[1])) catalog.tagsCurrent.push(m[1])
       rows.push(`| \`<${m[1]}>\` | ${cell(attrs)} |`)
     }
     if (rows.length) {
@@ -155,23 +161,24 @@ function tagsPage() {
       if (tables === 1) body.push('## Every version', '')
       else if (tables === 2 && !v2Heading) throw new Error('generate: the version="2" attribute table has no introduction')
       else if (tables === 3 && !v3Heading) throw new Error('generate: the version="3" attribute table has no introduction')
+      else if (tables === 4 && !currentHeading) throw new Error('generate: the current-language attribute table has no introduction')
       body.push('| Tag | Attributes |', '|---|---|', ...rows, '')
     }
     if (rest.length) body.push(...rest.map(mdx), '')
   }
-  if (tables !== 3) throw new Error(`generate: expected 3 attribute tables in "Attributes per tag", found ${tables}`)
+  if (tables !== 4) throw new Error(`generate: expected 4 attribute tables in "Attributes per tag", found ${tables}`)
   emit(
     'content/reference/tags.mdx',
     [
       '---',
       'title: Tags and attributes',
-      'description: Every Tuimark tag and the exact attributes it accepts, and what older version="1" and version="2" documents leave out.',
+      'description: Every Tuimark tag and the exact attributes it accepts, and what a document that pins an older version leaves out.',
       'editLink: false',
       '---',
       '',
       GENERATED('`tuimark agents`'),
       '',
-      'The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. A document without `version` accepts every tag and attribute below; the last two sections are what an older `version="1"` (or `version="2"`) document leaves out. See [The .tui language](/guide/language) for what each tag does.',
+      'The vocabulary is closed: a tag outside this page is `V001`, and an attribute a tag does not list is `V002`. This page is generated from the same catalog the runtime validates against. A `<tui>` without `version` is the current language and accepts every tag and attribute below. The sections after the first mark what a document that pins `version="1"`, `"2"`, or `"3"` leaves out, and the last one what only the current language accepts: `checkbox`, `select`, `include`, `fragment`, `template`, `use`, `single`, and `indeterminate`. See [The .tui language](/guide/language) for what each tag does.',
       '',
       ...body,
     ].join('\n'),
