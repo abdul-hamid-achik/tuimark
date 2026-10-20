@@ -142,6 +142,8 @@ type composer struct {
 	files map[string]*fragFile
 	// templating is the state of <template> and <use> (expand.go).
 	templating
+	// propsState is the state of props (SPEC v0.4c §6.18.9, props.go).
+	propsState
 }
 
 // fragFile is a fragment read once: its parsed root, or why it has none.
@@ -306,13 +308,31 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		Line: c.Line, Col: c.Col, Path: childPath(n, "include"),
 		Org: b.wrapperOrg(),
 	}
-	for _, a := range c.Attrs {
+	// A {$name} in its src (SPEC v0.4c §6.18.9, props.go).
+	pn := b.propNode(w, c)
+	for i, a := range c.Attrs {
+		if pn != nil && !pn.inAttrs(w, i, a) {
+			continue
+		}
 		w.Attrs[a.Name] = a.Value
 		w.Order = append(w.Order, a.Name)
 	}
 	writeInto(n, outer, w)
-	for _, a := range c.Attrs {
+	for i, a := range c.Attrs {
+		if pn != nil {
+			var ok bool
+			if a, ok = pn.check(b, i, a); !ok {
+				continue
+			}
+		}
 		b.attr(w, a)
+		b.at.on, b.mute.on = false, false
+	}
+	if pn != nil {
+		pn.restore(b, w, c)
+	}
+	if cp.selfCheck && cp.defDecl != nil {
+		cp.defDecl.include = true // a template's body that holds an include (decision 195)
 	}
 	// An include takes no content: Tuimark has no slots.
 	for _, cc := range c.Children {
@@ -324,8 +344,13 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 	}
 	src := w.Attrs["src"]
 	if src == "" {
-		b.errInc(w, "V003", `<include> needs src="FILE"`)
+		if !b.wrote(w, "src") { // an ignored src counts as written (v0.4c, decision 157)
+			b.errInc(w, "V003", `<include> needs src="FILE"`)
+		}
 		return
+	}
+	if cp.noLoad[w] {
+		return // a src that holds a {$name} outside a template (v0.4c, decision 184)
 	}
 	if cp.selfOnly || cp.active().dead {
 		return
@@ -419,6 +444,10 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 	fr := &expFrame{bg: cp.active()}
 	nStyles, nDiags, count, bytes := len(b.doc.Styles), len(b.doc.Diags), fr.bg.count, fr.bg.bytes
 	nScope, nUsed, depth := len(cp.scope), len(cp.usedLog), b.depth
+	nOwn, nWUses, nFirst, nSites := len(cp.own), len(cp.wuses), len(cp.firstLog), 0
+	if cp.defDecl != nil {
+		nSites = len(cp.defDecl.sites)
+	}
 	nList := len(n.Source)
 	if outer != nil {
 		nList = len(outer.Children)
@@ -437,6 +466,12 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 		}
 		b.org = saved
 		cp.unuse(nUsed)
+		cp.own = cp.own[:nOwn] // what a discarded expansion gave (v0.4c)
+		cp.forgetUses(nWUses, nFirst)
+		if cp.defDecl != nil {
+			cp.defDecl.sites = cp.defDecl.sites[:nSites]
+		}
+		b.at.on, b.mute.on, b.pbody = false, false, nil
 		cp.chain = cp.chain[:chainLen]
 		cp.popTo(nScope) // an element of a copy left mid-build
 		n.Children = n.Children[:nChildren]
@@ -525,6 +560,9 @@ func FragmentDiags(doc *Document) ir.Diags {
 		}
 		b.attach(holder, nil, b.node(c, holder))
 	}
+	// Each written use against a template of the fragment (v0.4c, decision
+	// 187): one the fragment does not write is not known here.
+	b.checkWrittenUses(func(name string) *propDecl { return b.comp.fragDecls[name] })
 	return dedupeDiags(out.Diags).Sorted()
 }
 

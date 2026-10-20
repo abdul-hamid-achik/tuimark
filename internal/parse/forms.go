@@ -108,10 +108,10 @@ func (b *builder) checkSelect(n *ir.Node) {
 	if listItem(n.Parent) != nil || b.eachContainer(n) != nil {
 		return
 	}
-	if _, ok := n.Attr("each"); !ok {
+	if !b.wrote(n, "each") {
 		b.errN(n, "V017", "<select> needs each=\"path as alias\": its options are the elements of an array")
 	}
-	if _, ok := n.Attr("key"); !ok {
+	if !b.wrote(n, "key") {
 		b.errN(n, "V017", "<select> needs key=\"path\": bind holds the chosen option's key, which an index would not keep when the array changes")
 	}
 }

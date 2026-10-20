@@ -57,6 +57,10 @@ type Tag struct {
 	Name  string `json:"name"`
 	Since int    `json:"since"`
 	Attrs []Attr `json:"attrs"`
+	// OpenAttrs names the attributes a tag takes besides those it lists:
+	// "props" on <use>, which takes the props its template declares (SPEC
+	// v0.4c §15.10, §6.18.9, decision 179); "" (absent) on every other.
+	OpenAttrs string `json:"open_attrs,omitempty"`
 }
 
 // Property is one TCSS property. Syntax is its value syntax as AGENTS.md
@@ -171,7 +175,11 @@ func tags() []Tag {
 	sort.Strings(names)
 	out := make([]Tag, 0, len(names))
 	for _, name := range names {
-		out = append(out, Tag{Name: name, Since: since[name], Attrs: attrs(name)})
+		t := Tag{Name: name, Since: since[name], Attrs: attrs(name)}
+		if name == "use" {
+			t.OpenAttrs = "props"
+		}
+		out = append(out, t)
 	}
 	return out
 }
