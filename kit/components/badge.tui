@@ -1,8 +1,8 @@
 <!-- k-badge · Contract: reads build.number, build.status, build.ok · Actions: none · Keys: none · Requires: k-title -->
 <tui theme="auto">
-  <!-- Every kit document loads the sheets in this order: tokens, components, then your own. -->
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <!-- The kit: its sheets, its overlay keys and its templates. Your own
+       sheet, if any, comes after it. -->
+  <include src="../kit.tui"/>
   <screen id="demo">
     <col width="1fr" height="1fr" gap="1" pad="1">
       <text class="k-title">badge</text>

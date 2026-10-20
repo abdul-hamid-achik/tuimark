@@ -7,6 +7,67 @@ line.
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-10-20
+
+Kit v1: the component kit rebuilt on the composition of 0.4.3. A document
+includes `kit/kit.tui` once and uses its templates with `<use>`, instead of
+copying each component's markup. The language and the runtime do not
+change: only the kit's files, its helpers, and the documents that load the
+kit's stylesheets do.
+
+### Added
+
+- `kit/kit.tui`: the kit as one fragment to include. It loads the kit's
+  stylesheets, holds the keys of its overlays, and has eleven templates
+  (`k-alert`, `k-stat`, `k-meter`, `k-empty`, `k-field`, `k-breadcrumb`,
+  `k-log`, `k-toast`, `k-confirm`, `k-palette`, `k-help`) used as
+  `<use template="k-…" with="path as x">`, with a variant as a `class` on the
+  `<use>`, labels from data, and ids scoped by the use (`ID__part`).
+- The kit's dialog helpers take button labels: `Request.Yes`/`Request.No`
+  (Go) and `yes`/`no` (TypeScript); empty means `Confirm` and `Cancel`, and
+  both labels are written on every open, so an earlier question's labels
+  never stay.
+- The `/kit` page shows each template's source next to the document that
+  uses it; the kit guide shows how to include the kit, pass data with
+  `with`, and pick a variant with `class`.
+
+### Changed
+
+- Every `kit/components/*.tui` includes `../kit.tui` instead of loading the
+  two stylesheets; the eleven components that have a template now show it in
+  use, and the markup of the ten class-only components is otherwise
+  unchanged.
+- The templates read from data the text the old component documents wrote
+  as literals: an alert's title, text, and icon, a stat's title, a meter's
+  label, a field's label, placeholder and help, the empty state's icon and
+  call to action, the log's title, the palette's title and placeholder, the
+  help's title, and the dialog's button labels. Data written for the old
+  documents shows these blank, and leaves out the optional ones (the
+  alert's icon, the empty state's button).
+- The palette helpers write a default `title` (`Command palette`) and
+  `placeholder` (`type a command…`) when the store has none.
+- The confirm dialog reads `body`, `yes`, and `no` (it read `message`, with
+  fixed labels), and the dialog helpers write `body`, `yes`, and `no`
+  instead of `message`. `.k-dialog` takes the size of its content, up to 60
+  columns (it was 52 wide), so every dialog with that class changes,
+  `examples/containers`' included.
+- The confirm dialog's yes button is `k-btn primary`, painted red in a
+  `danger` dialog (the variant or `d.danger`); it was `k-btn danger` in
+  every dialog.
+- The confirm dialog's `y` and `n` keys have no label, so no `<hints>` lists
+  them: the dialog's buttons name the choices, and the keys work while it
+  is open.
+- A kit field's input is `FORM__FIELD__input`, and the log's scroll is
+  `ID__view`. The kit's form helpers route the new ids and focus
+  `FORM__FIELD__input` on a failed submit.
+- The alert's icon takes its color from the alert's variant, so the
+  `.k-alert-icon.info|ok|warn|danger` rules are gone; the meter's bar also
+  takes the meter's variant (its `.k-meter-bar.ok|warn|danger` flag rules
+  stay).
+- `examples/kit-gallery` is built from the kit's templates. Its help overlay
+  no longer lists `y confirm` and `n cancel`, and its hint bar no longer
+  shows them while the confirm dialog is open.
+
 ## [0.4.3] - 2026-10-19
 
 The 0.4b release. It extends the current language, the language of a
@@ -914,7 +975,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.4
 [0.4.3]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.3
 [0.4.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.2
 [0.4.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.1

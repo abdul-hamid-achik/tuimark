@@ -1,9 +1,12 @@
 # kit-gallery
 
 Every component of the [Tuimark kit](../../kit/README.md) in one app, on five
-tabs. It is the kit's showroom and its integration test: the document is built
-only from the kit's classes, loads `kit/theme.tcss` and `kit/kit.tcss`, and has
-a small stylesheet of its own (`app.tcss`) for the sizes a page decides.
+tabs. It is the kit's showroom and its integration test: the document includes
+`kit/kit.tui` (which loads `kit/theme.tcss` and `kit/kit.tcss`), copies the
+kit's templates with `<use>` (alert, stat, meter, field, log, empty state,
+toast, confirm dialog, command palette, help), builds the rest from the kit's
+classes, and has a small stylesheet of its own (`app.tcss`) for the sizes a
+page decides.
 
 ```sh
 go build -o bin/tuimark ./cmd/tuimark
@@ -54,9 +57,13 @@ actions and keep two derived values:
 
 The kit's actions are generic (`dialog_confirm`, `toast_show`, `form_validate`);
 the instance is the prefix of the event's `source` before the last `__`
-(`confirm__yes` is the instance `confirm`; `toast__warn` is the level `warn` of
-the toast). `instanceOf` and `partOf` in `main.go` are the two small helpers
-that do it; they are meant to be copied into a host, not imported.
+(`confirm__yes`, the `yes` button of `<use id="confirm" template="k-confirm">`,
+is the instance `confirm`; `toast__warn` is the level `warn` of the toast; the
+field `<use id="profile__email" template="k-field">` fires from
+`profile__email__input`, the form `profile` and its field `email`). `instanceOf`, `partOf` and `formFieldOf` in `main.go` are the
+three small helpers that do it (`formFieldOf` takes the field from the
+instance of an input's source: `profile__email__input` gives `email`); they
+are meant to be copied into a host, not imported.
 
 `sample.json` holds a literal snapshot of `found` and `detail` so `validate`,
 `dump` and `run --mock` work with no Go; a test keeps the snapshot from drifting
@@ -73,9 +80,13 @@ values).
   out, so a clean first screen proves little);
 - every class a document writes has a rule, so a typo is not silent, and every
   kit class has a use, so a rename leaves no dead rule;
-- the conventions hold in every document and sheet (`kit_test.go`): classes are
-  `k-` plus short modifiers used only next to a `k-` class, ids are
-  `instance__part`, actions are `component_verb`, tokens used are defined for
+- the conventions hold in every document and sheet (`kit_test.go`), read as the
+  runtime reads them, with every `<include>` replaced by its fragment: classes
+  are `k-` plus short modifiers used only next to a `k-` class or as a `<use>`'s
+  variant, ids are `instance__part` (a template writes only the part), every
+  template's root writes its size and is shown by `kit/components/NAME.tui` and
+  used by the gallery, the kit's keymaps name no id, `kit/kit.tui` validates on
+  its own, actions are `component_verb`, tokens used are defined for
   both themes (and the runtime's ten required ones are kept), no sheet outside
   `theme.tcss` holds a literal color, every overlay has `on:escape`, a size and a
   keymap scoped to its own class that comes first, every container writes its

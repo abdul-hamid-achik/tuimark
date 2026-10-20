@@ -1,30 +1,24 @@
-<!-- k-log · Contract: reads log.count, log.lines[] {n, text, debug, info, warn, err}; the host appends lines · Actions: log_append (the host's key) · Keys: j and k scroll, g top, G follow · Requires: k-hints -->
+<!-- k-log · Contract: with="PATH as l" reads l.title and l.lines[] {n, text, debug, info, warn, err}; the host appends lines and writes the title · Actions: log_append (the host's key) · Keys: j and k scroll, g top, G follow · Requires: k-hints -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
-  <keymap when="#log">
+  <include src="../kit.tui"/>
+  <!-- The log's scroll is log__view (the use's id, then the template's
+       `view`): a keymap names it to give it keys. -->
+  <keymap when="#log__view">
     <bind keys="j" action="move-next" keycap="j/k" label="scroll"/>
     <bind keys="k" action="move-prev"/>
     <bind keys="G" action="move-last" label="follow"/>
     <bind keys="g" action="move-first" label="top"/>
   </keymap>
-  <screen id="demo" focus="#log">
+  <screen id="demo" focus="#log__view">
     <col width="1fr" height="1fr" gap="0">
-      <!-- COPY: a log panel is a `scroll` with class `k-log` and
+      <!-- USE: the k-log template is a focusable scroll with
            `stick="bottom"`: it follows the end of its content as lines are
            appended, until you scroll up to read; `move-last` (or scrolling
-           to the end) makes it follow again. It needs an `id` and must be
-           focusable to take the keys. The lines are a `col` with
-           `each` and a `key`; `height: auto` (the class) lets the column
-           be as tall as its lines, which is what the scroll measures.
-           Color a line with class:NAME guards: every line carries all the
-           flags (a missing path is B002), `false` for the ones it is not.
-           The host appends lines to the array (see examples/kit-gallery). -->
-      <scroll id="log" class="k-log" stick="bottom" focusable="true" title="build log · {log.count} lines">
-        <col class="k-log-lines" each="log.lines as l" key="l.n">
-          <text class="k-log-line" class:muted="l.debug" class:info="l.info" class:warn="l.warn" class:danger="l.err">{l.text}</text>
-        </col>
-      </scroll>
+           to the end) makes it follow again. Each line is colored by its
+           flags (debug, info, warn, err): every line carries all four,
+           `false` for the ones it is not. The host appends lines to the
+           array and writes the title (see examples/kit-gallery). -->
+      <use id="log" template="k-log" with="log as l"/>
       <hints class="k-hints"/>
     </col>
   </screen>

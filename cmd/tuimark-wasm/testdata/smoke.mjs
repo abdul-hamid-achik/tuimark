@@ -5,8 +5,8 @@
 //
 // --wasm-exec defaults to the lib/wasm/wasm_exec.js of `go env GOROOT` (the
 // file must come from the Go that built the wasm; `task wasm` copies it next
-// to the wasm, and then it is found there first). With --cli, every .tui under
-// examples/ and kit/components/ is also rendered at 80x24 and 120x40 and its
+// to the wasm, and then it is found there first). With --cli, every document under
+// examples/ and kit/ (not a <fragment>) is also rendered at 80x24 and 120x40 and its
 // dump is compared, member for member, with `tuimark dump --format json
 // --styles --cells` (the native-vs-wasm parity of ADR 0033).
 //
@@ -163,7 +163,13 @@ if (cliArg) {
   }
   walk('examples')
   walk('kit')
-  const entries = Object.keys(files).filter((p) => p.endsWith('.tui')).sort()
+  // A file whose root is <fragment> (kit/kit.tui) is for documents to include,
+  // not a document to open: it is checked through the documents that include
+  // it (examples/kit-gallery), as the CLI's validate checks it on its own.
+  const isFragment = (src) =>
+    /^<fragment[\s>/]/.test(src.replace(/<!--[\s\S]*?-->/g, '').replace(/<\?[\s\S]*?\?>/g, '').trimStart())
+  assert.ok(isFragment(files['kit/kit.tui']), 'kit/kit.tui is a fragment')
+  const entries = Object.keys(files).filter((p) => p.endsWith('.tui') && !isFragment(files[p])).sort()
   assert.ok(entries.length >= 40, `only ${entries.length} presets`)
   const sampleOf = (e) => {
     for (const s of [e.replace(/\.tui$/, '.sample.json'), e.slice(0, e.lastIndexOf('/')) + '/sample.json']) if (files[s]) return s

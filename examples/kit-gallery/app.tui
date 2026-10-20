@@ -1,23 +1,20 @@
 <tui theme="auto">
-  <!-- The kit's tokens, then its components, then this app's own sheet last
-       (a place to rebrand: re-declare any token there). -->
-  <style src="../../kit/theme.tcss"/>
-  <style src="../../kit/kit.tcss"/>
+  <!-- The kit first: its sheets (tokens, then component classes), the keys
+       of its overlays (y/n in a dialog, q/? in the help), and its
+       templates. Then this app's own sheet, last (a place to rebrand:
+       re-declare any token there). -->
+  <include src="../../kit/kit.tui"/>
   <style src="app.tcss"/>
 
   <!-- Overlay keys come first: the first matching row in document order
        wins, and each overlay is scoped to its own component class, so a
-       row fires only while focus is inside that overlay. -->
-  <keymap when=".k-dialog">
-    <bind keys="y" action="dialog_confirm" label="confirm"/>
-    <bind keys="n" action="dialog_cancel" label="cancel"/>
-  </keymap>
+       row fires only while focus is inside that overlay. The kit's own
+       overlay rows came with the include, before these. The palette's
+       arrows name its list, palette__list, so they live here, in the
+       document that uses the palette as `palette`. -->
   <keymap when=".k-palette">
     <bind keys="down,ctrl+n" action="move-next" to="#palette__list"/>
     <bind keys="up,ctrl+p" action="move-prev" to="#palette__list"/>
-  </keymap>
-  <keymap when=".k-help">
-    <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
   </keymap>
 
   <!-- Global keys. `when="#app"` holds while focus is anywhere inside the
@@ -43,7 +40,7 @@
     <bind keys="k" action="move-prev"/>
     <bind keys="enter" action="table_open" label="open"/>
   </keymap>
-  <keymap when="#log">
+  <keymap when="#log__view">
     <bind keys="j" action="move-next" keycap="j/k" label="scroll"/>
     <bind keys="k" action="move-prev"/>
     <bind keys="G" action="move-last" label="follow"/>
@@ -67,7 +64,7 @@
         <text class="k-appbar-title">component gallery</text>
         <spacer/>
         <text class="k-appbar-meta">press t to switch the theme</text>
-        <text class="k-badge accent">v0</text>
+        <text class="k-badge accent">v1</text>
       </row>
 
       <tabs id="nav" class="k-tabs" bind="view" mark="▸" focusable="true">
@@ -75,10 +72,7 @@
         <tab id="basics" label="1 basics" short="1 bas">
           <scroll id="basics__page" class="k-page" focusable="true">
             <col class="k-page-body">
-              <row class="k-breadcrumb" each="crumbs as c" key="c.id">
-                <text class="k-breadcrumb-item" class:current="c.last">{c.label}</text>
-                <text class="k-breadcrumb-sep" if="!c.last">›</text>
-              </row>
+              <use template="k-breadcrumb" with="crumbs as b"/>
               <row class="k-cols">
                 <box class="k-card" title="Badges">
                   <row class="k-card-row">
@@ -105,74 +99,21 @@
                 </box>
               </row>
               <row class="k-cols">
-                <box class="k-alert info" title="Heads up">
-                  <row class="k-alert-row">
-                    <text class="k-alert-icon info">i</text>
-                    <text class="k-alert-text">Deploys are paused until 09:00 UTC.</text>
-                  </row>
-                </box>
-                <box class="k-alert ok" title="Saved">
-                  <row class="k-alert-row">
-                    <text class="k-alert-icon ok">✓</text>
-                    <text class="k-alert-text">Your changes are live everywhere.</text>
-                  </row>
-                </box>
+                <use template="k-alert" class="info" with="alerts.info as a"/>
+                <use template="k-alert" class="ok" with="alerts.ok as a"/>
               </row>
               <row class="k-cols">
-                <box class="k-alert warn" title="Quota">
-                  <row class="k-alert-row">
-                    <text class="k-alert-icon warn">!</text>
-                    <text class="k-alert-text">92% of this month's build minutes used.</text>
-                  </row>
-                </box>
-                <box class="k-alert danger" title="Build failed">
-                  <row class="k-alert-row">
-                    <text class="k-alert-icon danger">✗</text>
-                    <text class="k-alert-text">Step 3 exited with code 1.</text>
-                  </row>
-                </box>
+                <use template="k-alert" class="warn" with="alerts.warn as a"/>
+                <use template="k-alert" class="danger" with="alerts.danger as a"/>
               </row>
               <row class="k-cols">
-                <box class="k-stat" title="Requests">
-                  <text class="k-stat-value">{stats.req.value}</text>
-                  <row class="k-stat-row">
-                    <text class="k-stat-delta" class:good="stats.req.good" class:bad="!stats.req.good">{stats.req.delta}</text>
-                    <sparkline class="k-stat-spark" bind="stats.req.hist"/>
-                  </row>
-                </box>
-                <box class="k-stat" title="Errors">
-                  <text class="k-stat-value">{stats.err.value}</text>
-                  <row class="k-stat-row">
-                    <text class="k-stat-delta" class:good="stats.err.good" class:bad="!stats.err.good">{stats.err.delta}</text>
-                    <sparkline class="k-stat-spark" bind="stats.err.hist"/>
-                  </row>
-                </box>
+                <use template="k-stat" with="stats.req as s"/>
+                <use template="k-stat" with="stats.err as s"/>
               </row>
               <box class="k-card" title="Progress">
-                <col class="k-meter">
-                  <row class="k-meter-head">
-                    <text class="k-meter-label">Upload</text>
-                    <spacer/>
-                    <text class="k-meter-value">{meters.upload.text}</text>
-                  </row>
-                  <progress class="k-meter-bar" bind="meters.upload.pct"/>
-                </col>
-                <col class="k-meter">
-                  <row class="k-meter-head">
-                    <text class="k-meter-label">Disk</text>
-                    <spacer/>
-                    <text class="k-meter-value">{meters.disk.text}</text>
-                  </row>
-                  <progress class="k-meter-bar" class:warn="meters.disk.warn" class:danger="meters.disk.crit" bind="meters.disk.pct"/>
-                </col>
-                <col class="k-meter">
-                  <row class="k-meter-head">
-                    <text class="k-meter-label">Tests</text>
-                    <spacer/>
-                    <text class="k-meter-value">{meters.tests.text}</text>
-                  </row>
-                  <progress class="k-meter-bar ok" bind="meters.tests.pct"/>
-                </col>
+                <use template="k-meter" with="meters.upload as m"/>
+                <use template="k-meter" with="meters.disk as m"/>
+                <use template="k-meter" class="ok" with="meters.tests as m"/>
               </box>
             </col>
           </scroll>
@@ -184,18 +125,8 @@
             <col class="k-page-body">
               <row class="k-cols">
                 <box class="k-card" title="Profile">
-                  <col class="k-field">
-                    <text class="k-field-label" class:invalid="forms.profile.name.error">Name</text>
-                    <input id="profile__name" class="k-field-input" class:invalid="forms.profile.name.error" bind="forms.profile.name.value" placeholder="your name" on:change="form_validate" on:submit="form_submit"/>
-                    <text class="k-field-help" if="!forms.profile.name.error">Shown on your profile.</text>
-                    <text class="k-field-error" if="forms.profile.name.error">{forms.profile.name.error}</text>
-                  </col>
-                  <col class="k-field">
-                    <text class="k-field-label" class:invalid="forms.profile.email.error">Email</text>
-                    <input id="profile__email" class="k-field-input" class:invalid="forms.profile.email.error" bind="forms.profile.email.value" placeholder="you@example.com" on:change="form_validate" on:submit="form_submit"/>
-                    <text class="k-field-help" if="!forms.profile.email.error">We never share it.</text>
-                    <text class="k-field-error" if="forms.profile.email.error">{forms.profile.email.error}</text>
-                  </col>
+                  <use id="profile__name" template="k-field" with="forms.profile.name as f"/>
+                  <use id="profile__email" template="k-field" with="forms.profile.email as f"/>
                   <row class="k-card-actions">
                     <button id="profile__save" class="k-btn primary" label="Save" on:click="form_submit"/>
                     <button id="profile__reset" class="k-btn ghost" label="Reset" on:click="button_press"/>
@@ -227,18 +158,9 @@
                 <column id="svc__p95" class="k-num" title="P95 MS" width="8" priority="3">{s.p95}</column>
               </table>
               <row class="k-cols">
-                <scroll id="log" class="k-log" stick="bottom" focusable="true" title="build log · {log.count} lines">
-                  <col class="k-log-lines" each="log.lines as l" key="l.n">
-                    <text class="k-log-line" class:muted="l.debug" class:info="l.info" class:warn="l.warn" class:danger="l.err">{l.text}</text>
-                  </col>
-                </scroll>
+                <use id="log" template="k-log" with="log as l"/>
                 <box id="empty__card" class="k-card" title="Empty state">
-                  <col class="k-empty">
-                    <text class="k-empty-icon">◌</text>
-                    <text class="k-empty-title">No deployments yet</text>
-                    <text class="k-empty-text">Push a commit or create one.</text>
-                    <button id="empty__create" class="k-btn primary" label="New deployment" on:click="empty_create"/>
-                  </col>
+                  <use id="empty" template="k-empty" with="empty as e"/>
                 </box>
               </row>
             </col>
@@ -302,12 +224,7 @@
       <hints class="k-hints"/>
 
       <!-- toast: always one row, so nothing jumps when it appears -->
-      <row class="k-toast-slot">
-        <row class="k-toast" if="toast.show" class:ok="toast.is_ok" class:warn="toast.is_warn" class:danger="toast.is_danger">
-          <text class="k-toast-text">{toast.text}</text>
-          <text class="k-toast-key">esc</text>
-        </row>
-      </row>
+      <use template="k-toast" with="toast as t"/>
 
       <!-- status bar, docked to the bottom -->
       <row class="k-statusbar">
@@ -318,31 +235,11 @@
       </row>
     </col>
 
-    <!-- modals: always the last children of the screen -->
-    <modal id="confirm__dialog" class="k-dialog danger" open="confirm.open" title="{confirm.title}" focus="#confirm__no" on:escape="dialog_cancel">
-      <text class="k-dialog-text">{confirm.message}</text>
-      <row class="k-dialog-actions">
-        <spacer/>
-        <button id="confirm__no" class="k-btn secondary" label="Cancel" on:click="dialog_cancel"/>
-        <button id="confirm__yes" class="k-btn danger" label="Delete" on:click="dialog_confirm"/>
-      </row>
-    </modal>
-
-    <modal id="palette__dialog" class="k-palette" open="palette.open" title="Command palette" focus="#palette__q" on:escape="palette_close">
-      <input id="palette__q" class="k-palette-input" bind="palette.query" placeholder="type a command…" on:change="palette_query" on:submit="palette_run"/>
-      <text class="k-palette-empty" if="!found.any">No command matches “{palette.query}”.</text>
-      <list id="palette__list" class="k-palette-list" each="found.items as r" key="r.id" bind="palette.cur" focusable="false">
-        <item>
-          <row class="k-palette-row">
-            <text class="k-palette-label">{r.label}</text>
-            <text class="k-palette-hint">{r.hint}</text>
-          </row>
-        </item>
-      </list>
-    </modal>
-
-    <modal id="help__dialog" class="k-help" open="help.open" title="Keys" on:escape="help_close">
-      <hints class="k-hints k-help-keys" scope="all"/>
-    </modal>
+    <!-- modals: always the last children of the screen. A use id is the
+         instance the handlers route by: confirm__no and confirm__yes belong
+         to `confirm`, whose state is under confirm. -->
+    <use id="confirm" template="k-confirm" class="danger" with="confirm as d"/>
+    <use id="palette" template="k-palette" with="palette as p, found as f"/>
+    <use id="help" template="k-help" with="help as h"/>
   </screen>
 </tui>

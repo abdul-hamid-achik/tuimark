@@ -1,4 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { component, FakeStore } from "./fake-store.ts";
 import { createPalette } from "./palette.ts";
 
@@ -93,8 +97,59 @@ describe("palette", () => {
   });
 
   test("an existing palette.last is not overwritten", async () => {
-    const store = new FakeStore({ palette: { last: "none" } });
+    const store = new FakeStore({ palette: { last: "none", title: "Run", placeholder: "what to run" } });
     await createPalette(store.host, {}, { id: "a", title: "A" });
     expect(store.at("palette.last")).toBe("none");
+    expect([store.at("palette.title"), store.at("palette.placeholder")]).toEqual(["Run", "what to run"]);
   });
+
+  test("what it writes is every path palette.tui reads", async () => {
+    const { store } = await setup();
+    expect([store.at("palette.title"), store.at("palette.placeholder")]).toEqual([
+      "Command palette",
+      "type a command…",
+    ]);
+    // The paths of the component, as its copy reads them: {path} templates and
+    // the attributes that read the store (an each alias, cmd., is per row).
+    const source = component("palette");
+    const paths = new Set<string>();
+    for (const m of source.matchAll(/\{([^}\s]+)\}/g)) paths.add(m[1]!);
+    for (const m of source.matchAll(/\s(?:bind|open|if|hidden|each|class:[a-z_][a-z0-9_-]*)="!?([^"\s]+)/g)) paths.add(m[1]!);
+    const read = [...paths].filter((p) => p.startsWith("palette.") || p.startsWith("found."));
+    expect(read).toEqual(expect.arrayContaining(["palette.title", "palette.placeholder", "palette.query", "found.items"]));
+    for (const p of read) expect({ path: p, found: (await store.get(p)).found }).toEqual({ path: p, found: true });
+  });
+
+  // The real runtime over exactly what the helper wrote: no diagnostic, and
+  // the open palette shows its title and placeholder. It builds the CLI, so
+  // it needs Go; the Go helper's test checks the same with the runtime.
+  test.skipIf(!Bun.which("go"))(
+    "palette.tui over the helper's store: no diagnostic, title and placeholder shown",
+    async () => {
+      const { store } = await setup();
+      await store.emit("palette_open");
+      const root = fileURLToPath(new URL("../..", import.meta.url));
+      const dir = mkdtempSync(join(tmpdir(), "kit-palette-"));
+      try {
+        const bin = join(dir, "tuimark");
+        const build = Bun.spawnSync(["go", "build", "-o", bin, "./cmd/tuimark"], { cwd: root });
+        if (build.exitCode !== 0) throw new Error(`go build ./cmd/tuimark: ${build.stderr.toString()}`);
+        const data = join(dir, "store.json");
+        writeFileSync(data, JSON.stringify(store.data));
+        const doc = fileURLToPath(new URL("../components/palette.tui", import.meta.url));
+        const validate = JSON.parse(Bun.spawnSync([bin, "validate", "--json", "--data", data, doc]).stdout.toString());
+        expect(validate.diagnostics).toEqual([]);
+        const dump = JSON.parse(
+          Bun.spawnSync([bin, "dump", doc, "--data", data, "--cols", "100", "--rows", "30", "--format", "json"]).stdout.toString(),
+        );
+        expect(dump.errors).toEqual([]);
+        const grid = (dump.grid as string[]).join("\n");
+        expect(grid).toContain("Command palette");
+        expect(grid).toContain("type a command…");
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    },
+    180_000,
+  );
 });

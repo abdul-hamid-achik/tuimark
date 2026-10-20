@@ -1,6 +1,8 @@
 {
   "palette": {
     "open": true,
+    "title": "Command palette",
+    "placeholder": "type a command…",
     "query": "dep",
     "cur": "deploy",
     "last": "none",

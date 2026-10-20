@@ -1,15 +1,13 @@
-<!-- k-help · Contract: reads help.open; lists every keymap row that has a label · Actions: help_open, help_close (the demo also names item_new, item_delete, item_next, item_prev, item_save) · Keys: ? opens, q and ? close · Requires: k-hints, k-title, k-muted -->
+<!-- k-help · Contract: with="PATH as h" reads h.open and h.title; lists every keymap row that has a label · Actions: help_open, help_close (the demo also names item_new, item_delete, item_next, item_prev, item_save) · Keys: ? opens, q and ? close · Requires: k-hints, k-title, k-muted -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
-  <!-- The overlay's own keys come first (the first matching row in document
-       order wins), so q and ? close the help instead of reaching the global
-       rows below. `when=".k-help"` holds while the help modal is on top. -->
-  <keymap when=".k-help">
-    <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
-  </keymap>
-  <!-- COPY: the help overlay lists every keymap row that has a `label`.
-       Give rows a `keycap` to show "j/k" or "^S" instead of the raw key. -->
+  <!-- The kit comes first, with its overlay keys: q and ? close the help
+       (<keymap when=".k-help">) before they reach the global rows below,
+       since the first matching row in document order wins. -->
+  <include src="../kit.tui"/>
+  <!-- The help overlay lists every keymap row that has a `label`: the
+       kit's "? close help", then these. (The kit's dialog keys, y and n,
+       have no label, so they are not listed.) Give rows a `keycap` to show
+       "j/k" or "^S" instead of the raw key. -->
   <keymap>
     <bind keys="?" action="help_open" label="help"/>
     <bind keys="n" action="item_new" label="new item"/>
@@ -25,12 +23,10 @@
       <text class="k-muted">press ? for the keys</text>
       <hints class="k-hints"/>
     </col>
-    <!-- COPY: a modal with class `k-help` that holds `<hints scope="all">`.
-         `scope="all"` lists every labeled row, not only the ones that would
-         fire right now. `k-help-keys` stacks them in a column. The class
-         writes the modal's size (56 columns, as tall as its content). -->
-    <modal id="help__dialog" class="k-help" open="help.open" title="Keys" on:escape="help_close">
-      <hints class="k-hints k-help-keys" scope="all"/>
-    </modal>
+    <!-- USE: the k-help template, as the last child of the screen: a modal
+         that holds `<hints scope="all">`, every labeled row, not only the
+         ones that would fire right now. It is 56 columns wide and as tall
+         as its content. -->
+    <use id="help" template="k-help" with="help as h"/>
   </screen>
 </tui>

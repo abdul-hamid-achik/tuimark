@@ -1,7 +1,6 @@
 <!-- k-hints · Contract: reads nothing from the store; shows the keymap rows that have a label · Actions: none of its own (the demo names item_new, item_open, item_next, item_prev, item_search) · Keys: whatever the keymap binds · Requires: k-muted -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <!-- COPY: every keymap row with a `label` becomes a hint. `keycap` is the
        text shown instead of the key (use it for "j/k" or "^S"). A row
        without a label is bound but not shown. -->

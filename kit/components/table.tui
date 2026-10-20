@@ -1,7 +1,6 @@
 <!-- k-table · Contract: reads services[] {id, name, state, ok, region, rps, p95} and count; reads and writes cur (the cursor row's id) · Actions: table_select, table_open · Keys: j and k move, enter opens · Requires: k-hints -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <keymap when="#svc">
     <bind keys="j" action="move-next"/>
     <bind keys="k" action="move-prev"/>

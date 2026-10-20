@@ -1283,10 +1283,11 @@ the app's `-demo` mode).
   ```
 
 - `kit/` and `examples/kit-gallery` — a copy-paste component kit in the
-  spirit of shadcn (design tokens, `k-` component classes, and 21 small
+  spirit of shadcn (`kit/kit.tui`, a fragment of templates you include and
+  copy with `<use>`; design tokens and `k-` component classes; and 21 small
   documents, one per component, under `kit/components/`) and an app that
-  shows every component on five tabs. You copy what you need into your
-  project and own it; the kit adds no tag, attribute, or property. Its host
+  shows every component on five tabs. You copy the kit into your project and
+  own it; the kit adds no tag, attribute, or property. Its host
   helpers do what markup cannot (toasts that expire, filter, sort and pages,
   form validation, dialog routing, the palette's commands, async loads,
   formatting), as files to copy too: `kit/go` (a nested module, not for

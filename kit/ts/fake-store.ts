@@ -74,11 +74,37 @@ export class FakeStore {
   }
 }
 
+const stripComments = (s: string) => s.replace(/<!--[\s\S]*?-->/g, "");
+
+/** The kit's templates (kit/kit.tui): id to body, comments removed. */
+function templates(): Map<string, string> {
+  const kit = stripComments(readFileSync(new URL("../kit.tui", import.meta.url), "utf8"));
+  const out = new Map<string, string>();
+  for (const m of kit.matchAll(/<template\s+id="([^"]+)"\s*>([\s\S]*?)<\/template>/g)) out.set(m[1]!, m[2]!);
+  return out;
+}
+
 /**
  * The markup of a kit component document with its comments removed, for
  * checking that the paths a helper writes are ones the markup reads (a header
- * comment lists paths too, and would make any such check pass).
+ * comment lists paths too, and would make any such check pass). Each
+ * `<use template="k-NAME" with="PATH as a">` is replaced by the template's
+ * body from kit/kit.tui as its copy reads: every `a.` is written `PATH.` and
+ * every id `x` (and `#x`) is the use's `ID__x`.
  */
 export function component(name: string): string {
-  return readFileSync(new URL(`../components/${name}.tui`, import.meta.url), "utf8").replace(/<!--[\s\S]*?-->/g, "");
+  const tpl = templates();
+  const src = stripComments(readFileSync(new URL(`../components/${name}.tui`, import.meta.url), "utf8"));
+  return src.replace(/<use\b[^>]*\/>/g, (tag) => {
+    const attr = (n: string) => new RegExp(`\\b${n}="([^"]*)"`).exec(tag)?.[1];
+    let body = tpl.get(attr("template") ?? "");
+    if (body === undefined) throw new Error(`${name}.tui: ${tag} names no kit template`);
+    for (const pair of (attr("with") ?? "").split(",")) {
+      const [path, alias] = pair.trim().split(" as ");
+      if (path && alias) body = body.replace(new RegExp(`(?<=[{"\\s!])${alias}\\.`, "g"), `${path}.`);
+    }
+    const id = attr("id");
+    if (id) body = body.replace(/\bid="([^"]+)"/g, `id="${id}__$1"`).replace(/="#([^"]+)"/g, `="#${id}__$1"`);
+    return body;
+  });
 }

@@ -1,20 +1,15 @@
-<!-- k-empty · Contract: reads empty.title, empty.text · Actions: empty_create · Keys: enter on the button · Requires: k-btn, k-title -->
+<!-- k-empty · Contract: with="PATH as e" reads e.icon, e.title, e.text, and e.action, the label of the call to action (no button without it) · Actions: empty_create · Keys: enter on the button · Requires: k-btn, k-title -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <screen id="demo" focus="#empty__create">
     <col width="1fr" height="1fr" pad="1">
       <text class="k-title">empty state</text>
-      <!-- COPY: an empty state is a `col` with class `k-empty` (it fills the
-           space left and centers its children), an icon, a title, one line
-           of help, and the call to action (a button label is literal text).
-           Show it with `if="!items.any"` next to the list it replaces. -->
-      <col class="k-empty">
-        <text class="k-empty-icon">◌</text>
-        <text class="k-empty-title">{empty.title}</text>
-        <text class="k-empty-text">{empty.text}</text>
-        <button id="empty__create" class="k-btn primary" label="New deployment" on:click="empty_create"/>
-      </col>
+      <!-- USE: the k-empty template fills the space left and centers an
+           icon, a title, one line of help, and an optional call to action
+           (its label is e.action; leave it out for no button). The button
+           is empty__create and fires empty_create. Show it with
+           `if="!items.any"` on the <use>, next to the list it replaces. -->
+      <use id="empty" template="k-empty" with="empty as e"/>
     </col>
   </screen>
 </tui>

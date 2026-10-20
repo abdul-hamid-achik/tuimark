@@ -5,6 +5,7 @@ package playground
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"io/fs"
 	"os"
@@ -180,11 +181,46 @@ func firstDiff(a, b []byte) string {
 	return "lengths differ: " + strconv.Itoa(len(la)) + " vs " + strconv.Itoa(len(lb)) + " lines"
 }
 
+// isFragment reports whether a .tui file's root element is <fragment>: a
+// file for documents to include (kit/kit.tui), not a document to open.
+func isFragment(src string) bool {
+	d := xml.NewDecoder(strings.NewReader(src))
+	for {
+		tok, err := d.Token()
+		if err != nil {
+			return false
+		}
+		if se, ok := tok.(xml.StartElement); ok {
+			return se.Name.Local == "fragment"
+		}
+	}
+}
+
+func TestIsFragment(t *testing.T) {
+	for src, want := range map[string]bool{
+		"<!-- a <tui> comment -->\n<fragment><template id=\"x\"><text>x</text></template></fragment>": true,
+		"<?xml version=\"1.0\"?>\n<fragment/>":                                                        true,
+		"<!-- <fragment> -->\n<tui><screen id=\"s\"/></tui>":                                          false,
+		"<app><text>x</text></app>":                                                                   false,
+		"":                                                                                            false,
+	} {
+		if got := isFragment(src); got != want {
+			t.Errorf("isFragment(%q) = %v, want %v", src, got, want)
+		}
+	}
+	if files := repoFiles(t); !isFragment(files["kit/kit.tui"]) {
+		t.Error("kit/kit.tui is a fragment")
+	}
+}
+
 func TestDumpParityWithCLI(t *testing.T) {
 	files := repoFiles(t)
 	var entries []string
 	for p := range files {
-		if strings.HasSuffix(p, ".tui") {
+		// A fragment is checked through the documents that include it
+		// (examples/kit-gallery includes kit/kit.tui); opened on its own it
+		// is V005 in both, but the CLI's validate checks it as a fragment.
+		if strings.HasSuffix(p, ".tui") && !isFragment(files[p]) {
 			entries = append(entries, p)
 		}
 	}

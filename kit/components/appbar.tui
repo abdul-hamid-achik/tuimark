@@ -1,7 +1,6 @@
 <!-- k-appbar · Contract: reads app.name, app.page, app.user, app.env · Actions: none · Keys: none · Requires: k-badge -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <screen id="demo">
     <col id="app" width="1fr" height="1fr">
       <!-- COPY: the app bar is a one-row `row` with class `k-appbar`. The

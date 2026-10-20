@@ -1,11 +1,14 @@
-// form: per-field validation rules for kit/components/field.tui.
+// form: per-field validation rules for the kit's k-field template
+// (kit/components/field.tui shows it in use).
 //
 // Copy this file into your project and change the package name. It depends
 // on github.com/abdul-hamid-achik/tuimark, and on route.go (Instance, Part):
 // copy that file with this one.
 //
-// A form is named by the id prefix of its inputs: the form "profile" owns
-// the inputs profile__name and profile__email and the store object
+// A form is named by the id prefix of its fields: the form "profile" owns the
+// fields <use id="profile__name" template="k-field"> and
+// <use id="profile__email" template="k-field"> (their inputs are
+// profile__name__input and profile__email__input) and the store object
 // forms.profile:
 //
 //	forms.profile.<field>.value   written by the input's bind
@@ -14,7 +17,7 @@
 //
 // The component's actions are form_validate (the inputs' on:change) and
 // form_submit (on:submit, the Save button, ctrl+s). One handler of each serves
-// every form, routed by the instance of the event's source.
+// every form, routed by the form the event's source names.
 package kit
 
 import (
@@ -97,7 +100,8 @@ type Form struct {
 }
 
 // Add creates the form called name (the id prefix of its inputs). Describe it
-// with Field and OnSubmit, then call Reset to create its paths.
+// with Field and OnSubmit, then call Reset to write its values, errors and
+// valid (a field's label, placeholder and help are the app's own data).
 func (fs *Forms) Add(name string) *Form {
 	f := &Form{fs: fs, name: name, rules: map[string][]Rule{}}
 	fs.mu.Lock()
@@ -176,13 +180,25 @@ func (f *Form) valid(values map[string]string) bool {
 	return true
 }
 
-// formFor is the form an event belongs to: the one named by the instance of
-// its source, else the only form there is (ctrl+s fires with whatever has
-// focus as its source).
+// formField splits the source of a form's event into the form and the field.
+// A field's input fires as <form>__<field>__input (the use's id, then the
+// template's input): profile__email__input is the form profile and the field
+// email. Any other source is <form>__<part>: profile__save is the form
+// profile.
+func formField(source string) (form, field string) {
+	if Part(source) == "input" {
+		source = Instance(source)
+	}
+	return Instance(source), Part(source)
+}
+
+// formFor is the form an event belongs to: the one its source names, else the
+// only form there is (ctrl+s fires with whatever has focus as its source).
 func (fs *Forms) formFor(source string) (*Form, error) {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()
-	if f, ok := fs.forms[Instance(source)]; ok {
+	name, _ := formField(source)
+	if f, ok := fs.forms[name]; ok {
 		return f, nil
 	}
 	if len(fs.forms) == 1 {
@@ -194,7 +210,8 @@ func (fs *Forms) formFor(source string) (*Form, error) {
 }
 
 // Validate is the handler of form_validate: it checks the field that changed
-// (its name is the part of the source id), shows or clears its error, and
+// (named by the source: profile__email__input is the field email), shows or
+// clears its error, and
 // updates valid. Other fields' errors are left alone, so a field the user
 // has not reached yet does not turn red.
 func (fs *Forms) Validate(ev tuimark.Event) error {
@@ -202,7 +219,7 @@ func (fs *Forms) Validate(ev tuimark.Event) error {
 	if err != nil {
 		return nil // not ours: an error from a handler would end Run
 	}
-	field := Part(ev.Source)
+	_, field := formField(ev.Source)
 	value, _ := ev.Value.(string)
 	if _, ok := f.rules[field]; !ok {
 		return nil // an input of the form that has no rules
@@ -218,7 +235,7 @@ func (fs *Forms) Validate(ev tuimark.Event) error {
 
 // Submit is the handler of form_submit: it checks every field and shows every
 // error. With none, it calls the form's OnSubmit. Otherwise it moves focus to
-// the first field that failed (the input <form>__<field>).
+// the first field that failed (its input, <form>__<field>__input).
 func (fs *Forms) Submit(ev tuimark.Event) error {
 	f, err := fs.formFor(ev.Source)
 	if err != nil {
@@ -241,7 +258,7 @@ func (fs *Forms) Submit(ev tuimark.Event) error {
 		return err
 	}
 	if first != "" {
-		return fs.app.Set("@focus", "#"+f.name+"__"+first)
+		return fs.app.Set("@focus", "#"+f.name+"__"+first+"__input")
 	}
 	if f.onSubmit != nil {
 		return f.onSubmit(values)

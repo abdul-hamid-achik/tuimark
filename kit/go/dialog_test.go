@@ -8,7 +8,7 @@ import (
 
 func confirmApp(t *testing.T) (*tuimark.App, *Dialogs, *int) {
 	t.Helper()
-	app := loadComponent(t, "confirm", `{"confirm": {"open": false, "title": "", "message": "", "result": "none"}}`)
+	app := loadComponent(t, "confirm", `{"confirm": {"open": false, "title": "", "body": "", "result": "none"}}`)
 	d := NewDialogs(app)
 	d.Register()
 	deleted := 0
@@ -28,6 +28,9 @@ func TestConfirmOpensTheDialogAndYRunsOnConfirm(t *testing.T) {
 	_, text := play(t, app, "enter") // the screen focuses #confirm__open
 	contains(t, text, "Delete project")
 	contains(t, text, "This permanently deletes orbit-api.")
+	// The template's buttons read their labels: Confirm writes the defaults.
+	contains(t, text, "[ Cancel ]")
+	contains(t, text, "[ Confirm ]")
 	if !getBool(t, app, "confirm.open") {
 		t.Fatal("the dialog should be open")
 	}
@@ -78,6 +81,19 @@ func TestAnswersRouteByInstance(t *testing.T) {
 	_ = d.Confirmed(tuimark.Event{Source: "two__yes"})
 	if len(got) != 2 {
 		t.Errorf("a repeated answer ran a callback: %v", got)
+	}
+}
+
+func TestOpenWritesTheButtonLabels(t *testing.T) {
+	app := bareApp(t)
+	d := NewDialogs(app)
+	_ = d.Open("c", Request{Title: "Delete", Yes: "Delete", No: "Keep"})
+	if getStr(t, app, "c.yes") != "Delete" || getStr(t, app, "c.no") != "Keep" {
+		t.Errorf("labels %q / %q", getStr(t, app, "c.yes"), getStr(t, app, "c.no"))
+	}
+	_ = d.Confirm("c", "Again", "", nil)
+	if getStr(t, app, "c.yes") != "Confirm" || getStr(t, app, "c.no") != "Cancel" {
+		t.Errorf("default labels %q / %q", getStr(t, app, "c.yes"), getStr(t, app, "c.no"))
 	}
 }
 

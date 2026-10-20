@@ -1,10 +1,14 @@
-// form: per-field validation rules for kit/components/field.tui.
+// form: per-field validation rules for the kit's k-field template
+// (kit/components/field.tui shows it in use).
 //
 // Copy this file into your project. It depends on @thelacanians/tuimark (types) and
 // on route.ts (instance, part): copy that file with this one.
 //
-// A form is named by the id prefix of its inputs: the form "profile" owns the
-// inputs profile__name and profile__email and the store object forms.profile:
+// A form is named by the id prefix of its fields: the form "profile" owns the
+// fields <use id="profile__name" template="k-field"> and
+// <use id="profile__email" template="k-field"> (their inputs are
+// profile__name__input and profile__email__input) and the store object
+// forms.profile:
 //
 //   forms.profile.<field>.value   written by the input's bind
 //   forms.profile.<field>.error   "" or the first failing rule's message
@@ -12,11 +16,22 @@
 //
 // The component's actions are form_validate (the inputs' on:change) and
 // form_submit (on:submit, the Save button, ctrl+s). One handler of each serves
-// every form, routed by the instance of the event's source.
+// every form, routed by the form the event's source names.
 import type { Host, HostEvent } from "@thelacanians/tuimark";
 import { instance, part } from "./route.ts";
 
 type Ui = Pick<Host, "batch" | "get" | "set" | "on">;
+
+/**
+ * The form and the field the source of a form's event names. A field's input
+ * fires as <form>__<field>__input (the use's id, then the template's input):
+ * profile__email__input is the form profile and the field email. Any other
+ * source is <form>__<part>: profile__save is the form profile.
+ */
+function formField(source: string): { form: string; field: string } {
+  const id = part(source) === "input" ? instance(source) : source;
+  return { form: instance(id), field: part(id) };
+}
 
 /**
  * Checks a value and returns the message to show, or "" when it is fine.
@@ -119,20 +134,21 @@ export function createForms(ui: Ui) {
   }
 
   /**
-   * The form an event belongs to: the one named by the instance of its
-   * source, else the only form there is (ctrl+s fires with whatever has focus
-   * as its source), else none.
+   * The form an event belongs to: the one its source names, else the only
+   * form there is (ctrl+s fires with whatever has focus as its source), else
+   * none.
    */
   function formFor(source: string): (Entry & { name: string }) | undefined {
-    let name = instance(source);
+    let name = formField(source).form;
     let entry = forms.get(name);
     if (!entry && forms.size === 1) [name, entry] = [...forms][0]!;
     return entry && { name, ...entry };
   }
 
   /**
-   * The handler of form_validate: checks the field that changed (its name is
-   * the part of the source id), shows or clears its error, and updates valid.
+   * The handler of form_validate: checks the field that changed (named by the
+   * source: profile__email__input is the field email), shows or clears its
+   * error, and updates valid.
    * Other fields' errors are left alone, so a field the user has not reached
    * yet does not turn red.
    */
@@ -140,7 +156,7 @@ export function createForms(ui: Ui) {
     const found = formFor(ev.source);
     if (!found) return; // not ours: a handler that throws ends the session
     const { name, form, rules, path, valid, values } = found;
-    const field = part(ev.source);
+    const { field } = formField(ev.source);
     if (!rules.has(field)) return; // an input of the form that has no rules
     const value = typeof ev.value === "string" ? ev.value : "";
     const vs = await values({ [field]: value });
@@ -153,7 +169,7 @@ export function createForms(ui: Ui) {
   /**
    * The handler of form_submit: checks every field and shows every error.
    * With none, it calls the form's onSubmit. Otherwise it moves focus to the
-   * first field that failed (the input <form>__<field>).
+   * first field that failed (its input, <form>__<field>__input).
    */
   async function submit(ev: HostEvent): Promise<void> {
     const found = formFor(ev.source);
@@ -166,7 +182,7 @@ export function createForms(ui: Ui) {
       { path: `forms.${name}.valid`, value: first === undefined },
     ]);
     if (first !== undefined) {
-      await ui.set("@focus", `#${name}__${first}`);
+      await ui.set("@focus", `#${name}__${first}__input`);
       return;
     }
     await onSubmit()?.(vs);

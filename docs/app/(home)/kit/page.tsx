@@ -18,14 +18,17 @@ export const metadata: Metadata = pageMetadata({
 const THEMES = { light: 'github-light-default', dark: 'github-dark-default' } as const;
 
 const HEAD = `<tui theme="auto">
-  <style src="theme.tcss"/>
-  <style src="kit.tcss"/>
-  <style src="app.tcss"/>   <!-- yours, last: token overrides -->
-  …
+  <include src="kit/kit.tui"/>  <!-- the kit: sheets, keys, templates -->
+  <style src="app.tcss"/>       <!-- yours, after it: token overrides -->
+  <screen id="main">
+    …
+    <use template="k-alert" class="warn" with="quota as a"/>
+  </screen>
 </tui>`;
 
 const GET = `git clone --depth 1 https://github.com/abdul-hamid-achik/tuimark
-cp tuimark/kit/theme.tcss tuimark/kit/kit.tcss my-app/`;
+mkdir -p my-app/kit
+cp tuimark/kit/kit.tui tuimark/kit/theme.tcss tuimark/kit/kit.tcss my-app/kit/`;
 
 /** `code` spans in a one-line summary, as the kit guide writes them. */
 function inline(text: string) {
@@ -66,8 +69,22 @@ function Component({ c }: { c: KitComponent }) {
       </p>
       <TermShot name={c.shot} />
       <Contract c={c} />
+      {c.template && (
+        <details className="kit-markup">
+          <summary>Template: {c.cls} in kit.tui</summary>
+          <ServerCodeBlock
+            code={c.template.replace(/\n+$/, '')}
+            lang="xml"
+            themes={THEMES}
+            defaultColor={false}
+            codeblock={{ title: 'kit/kit.tui' }}
+          />
+        </details>
+      )}
       <details className="kit-markup">
-        <summary>Markup: {c.file.replace(/^kit\//, '')}</summary>
+        <summary>
+          {c.template ? 'In use' : 'Markup'}: {c.file.replace(/^kit\//, '')}
+        </summary>
         <ServerCodeBlock
           code={c.source.replace(/\n+$/, '')}
           lang="xml"
@@ -130,20 +147,23 @@ export default function KitPage() {
         <div className="kit-start">
           <div className="tf">
             <span className="tf-title">
-              <b>1</b> copy the two stylesheets
+              <b>1</b> copy the kit
             </span>
             <p>
-              <code>theme.tcss</code> holds the dark and light tokens, <code>kit.tcss</code> the <code>k-</code>{' '}
-              classes. Load them first and your own sheet last, so a token you re-declare rebrands the whole kit.
+              <code>kit.tui</code> holds a template per component and the overlays’ keys, and loads{' '}
+              <code>theme.tcss</code> (the dark and light tokens) and <code>kit.tcss</code> (the <code>k-</code>{' '}
+              classes) from its own folder. Keep the three files together.
             </p>
             <ServerCodeBlock code={GET} lang="sh" themes={THEMES} defaultColor={false} />
           </div>
           <div className="tf">
             <span className="tf-title">
-              <b>2</b> load them, then copy a component
+              <b>2</b> include it, then use a component
             </span>
             <p>
-              Take the markup of any component below; its first line is a contract comment that says which store
+              Include the kit first and your own sheet after it, so a token you re-declare rebrands the whole kit. Use a
+              template with <code>&lt;use&gt;</code>, passing your data with <code>with</code> and a variant with{' '}
+              <code>class</code>; a class component’s markup is below, to copy. Each one’s contract says which store
               paths, actions, and keys it needs.
             </p>
             <ServerCodeBlock code={HEAD} lang="xml" themes={THEMES} defaultColor={false} />

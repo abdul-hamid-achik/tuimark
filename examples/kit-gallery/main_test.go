@@ -183,7 +183,7 @@ func TestEveryBindingComponentHasASample(t *testing.T) {
 		src, _ := os.ReadFile(path)
 		_, err := os.Stat(strings.TrimSuffix(path, ".tui") + ".sample.json")
 		if strings.Contains(string(src), "{") && strings.Contains(string(src), "=\"") {
-			binds := regexp.MustCompile(`\{[a-z_.]+\}|bind="|if="|each="|class:[a-z-]+="`).MatchString(string(src))
+			binds := regexp.MustCompile(`\{[a-z_.]+\}|bind="|if="|each="|with="|class:[a-z-]+="`).MatchString(string(src))
 			if binds && err != nil {
 				t.Errorf("%s binds data but has no sample.json", path)
 			}
@@ -232,8 +232,8 @@ func classesStyled(t *testing.T, paths ...string) map[string]bool {
 	return out
 }
 
-// Every class a document writes is styled by the kit (or by the app's own
-// sheet): a typo in a class name is otherwise silent.
+// Every class a document or the kit's fragment writes is styled by the kit
+// (or by the app's own sheet): a typo in a class name is otherwise silent.
 func TestEveryClassIsStyled(t *testing.T) {
 	kit := classesStyled(t, "../../kit/theme.tcss", "../../kit/kit.tcss")
 	own := classesStyled(t, "../../kit/theme.tcss", "../../kit/kit.tcss", "app.tcss")
@@ -251,6 +251,8 @@ func TestEveryClassIsStyled(t *testing.T) {
 	for _, path := range componentFiles(t) {
 		check(path, kit)
 	}
+	// The kit's templates write the classes their copies carry.
+	check(kitFragment, kit)
 	check("app.tui", own)
 }
 
@@ -486,7 +488,7 @@ func TestHelpOverlayListsTheKeys(t *testing.T) {
 
 func TestFormValidatesAsYouType(t *testing.T) {
 	a := newApp(t)
-	res := play(t, a, "2", "focus:#profile__email", "ctrl+u", "text:ada@")
+	res := play(t, a, "2", "focus:#profile__email__input", "ctrl+u", "text:ada@")
 	if got := getStr(t, a, "forms.profile.email.error"); got == "" {
 		t.Fatalf("a half-typed address should be invalid; events %v", actions(res))
 	}
@@ -518,12 +520,12 @@ func TestFormValidatesAsYouType(t *testing.T) {
 
 func TestSubmitFocusesTheFirstInvalidField(t *testing.T) {
 	a := newApp(t)
-	res := play(t, a, "2", "focus:#profile__name", "ctrl+u", "focus:#profile__save", "enter")
+	res := play(t, a, "2", "focus:#profile__name__input", "ctrl+u", "focus:#profile__save", "enter")
 	if getStr(t, a, "forms.profile.name.error") != "Name is required." {
 		t.Fatalf("name_error = %q", getStr(t, a, "forms.profile.name.error"))
 	}
-	if focusOf(res) != "profile__name" {
-		t.Errorf("focus = %q, want profile__name", focusOf(res))
+	if focusOf(res) != "profile__name__input" {
+		t.Errorf("focus = %q, want profile__name__input", focusOf(res))
 	}
 	if !getBool(t, a, "toast.is_danger") || !strings.Contains(getStr(t, a, "toast.text"), "1 field needs attention") {
 		t.Errorf("toast = %q danger=%v", getStr(t, a, "toast.text"), getBool(t, a, "toast.is_danger"))
@@ -532,7 +534,7 @@ func TestSubmitFocusesTheFirstInvalidField(t *testing.T) {
 
 func TestLogPanelFollowsAppendedLines(t *testing.T) {
 	a := newApp(t)
-	res := play(t, a, "3", "focus:#log", "a", "a", "a")
+	res := play(t, a, "3", "focus:#log__view", "a", "a", "a")
 	if n, _ := get(t, a, "log.count").(float64); n != 9 {
 		t.Fatalf("log.count = %v, want 9", get(t, a, "log.count"))
 	}
@@ -640,16 +642,16 @@ func TestInputBorderShowsFocus(t *testing.T) {
 		return ""
 	}
 	idle := playAt(t, a, opts, "2", "focus:#profile__save")
-	focused := playAt(t, a, opts, "focus:#profile__name")
-	if borderFG(idle, "profile__name") == borderFG(focused, "profile__name") {
-		t.Errorf("the input border keeps its color when focused: %s", borderFG(idle, "profile__name"))
+	focused := playAt(t, a, opts, "focus:#profile__name__input")
+	if borderFG(idle, "profile__name__input") == borderFG(focused, "profile__name__input") {
+		t.Errorf("the input border keeps its color when focused: %s", borderFG(idle, "profile__name__input"))
 	}
 	// An invalid input keeps a danger border.
 	if err := a.ui.Set("forms.profile.name.error", "Name is required."); err != nil {
 		t.Fatal(err)
 	}
 	invalid := playAt(t, a, opts, "focus:#profile__save")
-	if borderFG(invalid, "profile__name") == borderFG(idle, "profile__name") {
+	if borderFG(invalid, "profile__name__input") == borderFG(idle, "profile__name__input") {
 		t.Errorf("an invalid input should have a different border color")
 	}
 }

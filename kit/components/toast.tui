@@ -1,7 +1,6 @@
-<!-- k-toast · Contract: reads toast.show, toast.text, toast.is_ok, toast.is_warn, toast.is_danger; the host clears toast.show after a few seconds · Actions: toast_show, toast_dismiss · Keys: esc dismisses · Requires: k-btn, k-title -->
+<!-- k-toast · Contract: with="PATH as t" reads t.show, t.text, and the flags t.is_ok, t.is_warn and t.is_danger; the host clears t.show after a few seconds · Actions: toast_show, toast_dismiss · Keys: esc dismisses · Requires: k-btn, k-title -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <keymap>
     <bind keys="esc" action="toast_dismiss" label="dismiss"/>
   </keymap>
@@ -12,21 +11,15 @@
         <button id="toast__show" class="k-btn primary" label="Save" on:click="toast_show"/>
       </row>
       <spacer/>
-      <!-- COPY: a toast is a one-row strip. `k-toast-slot` is a row that is
-           always one row high, so the page never jumps when the toast
-           appears; the `k-toast` row inside shows only while `toast.show`
-           is true. Info is the default; guard the modifiers `ok`, `warn`,
-           `danger` with class:NAME. The HOST clears it: set `toast.show`
-           back to false from an `Every` tick (see
+      <!-- USE: the k-toast template is a one-row slot that is always there,
+           so the page never jumps when the toast appears; the toast inside
+           shows only while t.show is true. Info is the default; the flags
+           t.is_ok, t.is_warn and t.is_danger pick another level. The HOST
+           clears it: set t.show back to false from an `Every` tick (see
            examples/kit-gallery/main.go). The slot is not docked, so it can
            sit above a docked status bar (only one bottom-docked bar per
            container, L005). -->
-      <row class="k-toast-slot">
-        <row class="k-toast" if="toast.show" class:ok="toast.is_ok" class:warn="toast.is_warn" class:danger="toast.is_danger">
-          <text class="k-toast-text">{toast.text}</text>
-          <text class="k-toast-key">esc</text>
-        </row>
-      </row>
+      <use template="k-toast" with="toast as t"/>
     </col>
   </screen>
 </tui>

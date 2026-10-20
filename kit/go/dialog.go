@@ -1,15 +1,18 @@
-// dialog: open kit/components/confirm.tui and route its answer.
+// dialog: open the kit's k-confirm template and route its answer
+// (kit/components/confirm.tui shows it in use).
 //
 // Copy this file into your project and change the package name. It depends
 // on github.com/abdul-hamid-achik/tuimark, and on route.go (Instance): copy
 // that file with this one.
 //
-// The component reads confirm.open, confirm.title and confirm.message and the
-// host writes confirm.open and confirm.result ("confirmed" or "cancelled").
-// Its actions are dialog_confirm and dialog_cancel, fired by whichever button
-// was pressed; one handler of each serves every dialog, told apart by the
-// instance of the event's source (confirm__yes: confirm). A dialog is opened
-// by your own code, from your own action, with Confirm.
+// <use id="confirm" template="k-confirm" with="confirm as d"/> reads
+// confirm.open, confirm.title, confirm.body and the button labels
+// confirm.yes and confirm.no, which Open writes; the host also writes
+// confirm.result ("confirmed" or "cancelled"). Its actions are dialog_confirm
+// and dialog_cancel, fired by whichever button was pressed; one handler of
+// each serves every dialog, told apart by the instance of the event's source
+// (confirm__yes: confirm). A dialog is opened by your own code, from your own
+// action, with Confirm.
 package kit
 
 import (
@@ -24,6 +27,10 @@ type Request struct {
 	Title, Body string
 	OnConfirm   func() error // the yes answer
 	OnCancel    func() error // the no answer, esc included; optional
+	// Yes and No are the button labels; empty means "Confirm" and "Cancel".
+	// Open always writes both, so a label of an earlier question never
+	// stays on the buttons.
+	Yes, No string
 }
 
 // Dialogs routes the answers of the dialogs of one app.
@@ -59,9 +66,17 @@ func (d *Dialogs) Open(inst string, r Request) error {
 	d.mu.Lock()
 	d.pending[inst] = r
 	d.mu.Unlock()
+	yes, no := r.Yes, r.No
+	if yes == "" {
+		yes = "Confirm"
+	}
+	if no == "" {
+		no = "Cancel"
+	}
 	return d.app.Batch(func(b *tuimark.Batch) error {
 		return errors.Join(
-			b.Set(inst+".title", r.Title), b.Set(inst+".message", r.Body),
+			b.Set(inst+".title", r.Title), b.Set(inst+".body", r.Body),
+			b.Set(inst+".yes", yes), b.Set(inst+".no", no),
 			b.Set(inst+".result", "none"), b.Set(inst+".open", true),
 		)
 	})

@@ -1,6 +1,8 @@
 {
   "empty": {
+    "icon": "◌",
     "title": "No deployments yet",
-    "text": "Push a commit or create one by hand."
+    "text": "Push a commit or create one by hand.",
+    "action": "New deployment"
   }
 }

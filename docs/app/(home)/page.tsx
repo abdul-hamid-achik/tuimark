@@ -475,8 +475,8 @@ export default async function HomePage() {
         title="Components you copy and own."
         lede={
           <>
-            Buttons, cards, alerts, a data table, a command palette, dialogs, toasts, and more, as small documents and two
-            stylesheets. Like shadcn, you copy what you need into your project: no package, no new tags, every color a
+            Buttons, cards, alerts, a data table, a command palette, dialogs, toasts, and more, as one file of templates you
+            include and two stylesheets. Like shadcn, you copy the kit into your project: no package, no new tags, every color a
             token you can rebrand. Small helpers in Go and TypeScript do the host’s part: toasts that expire, form
             validation, dialog routing, the palette’s filter.
           </>

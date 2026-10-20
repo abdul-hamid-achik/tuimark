@@ -1,37 +1,17 @@
-<!-- k-alert · Contract: reads alert.message · Actions: none · Keys: none · Requires: k-title -->
+<!-- k-alert · Contract: with="PATH as a" reads a.title, a.text, and a.icon when there is one · Actions: none · Keys: none · Requires: k-title -->
 <tui theme="auto">
-  <style src="../theme.tcss"/>
-  <style src="../kit.tcss"/>
+  <include src="../kit.tui"/>
   <screen id="demo">
     <col width="1fr" height="1fr" gap="0" pad="1">
       <text class="k-title">alert / callout</text>
-      <!-- COPY: an alert is a `box` with class `k-alert` plus a modifier
-           (info, ok, warn, danger). The title is the box title; the body
-           wraps. `k-alert-icon` takes the same modifier so it matches. -->
-      <box class="k-alert info" title="Heads up">
-        <row class="k-alert-row">
-          <text class="k-alert-icon info">i</text>
-          <text class="k-alert-text">Deploys are paused until 09:00 UTC.</text>
-        </row>
-      </box>
-      <box class="k-alert ok" title="Saved">
-        <row class="k-alert-row">
-          <text class="k-alert-icon ok">✓</text>
-          <text class="k-alert-text">Your changes are live in every region.</text>
-        </row>
-      </box>
-      <box class="k-alert warn" title="Quota">
-        <row class="k-alert-row">
-          <text class="k-alert-icon warn">!</text>
-          <text class="k-alert-text">You have used 92% of this month's build minutes.</text>
-        </row>
-      </box>
-      <box class="k-alert danger" title="Build failed">
-        <row class="k-alert-row">
-          <text class="k-alert-icon danger">✗</text>
-          <text class="k-alert-text">{alert.message}</text>
-        </row>
-      </box>
+      <!-- USE: one <use> of the k-alert template per alert, with its
+           variant as the use's class (info, ok, warn, danger) and its data
+           through `with`. The title is the box title; the text wraps; the
+           variant colors the frame and the icon. -->
+      <use template="k-alert" class="info" with="alerts.info as a"/>
+      <use template="k-alert" class="ok" with="alerts.ok as a"/>
+      <use template="k-alert" class="warn" with="alerts.warn as a"/>
+      <use template="k-alert" class="danger" with="alerts.danger as a"/>
     </col>
   </screen>
 </tui>
