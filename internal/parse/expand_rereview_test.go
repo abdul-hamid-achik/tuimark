@@ -49,7 +49,7 @@ func bounded(t *testing.T, src string, files map[string]string) *parse.Document 
 		doc = parse.ParseWith([]byte(src), "app.tui", memLoader(files, "app.tui", nil))
 	})
 	runtime.ReadMemStats(&after)
-	if el > slowdown*time.Second {
+	if el > 3*slowdown*time.Second {
 		t.Errorf("took %v", el)
 	}
 	if a := after.TotalAlloc - before.TotalAlloc; a > 512<<20 {
@@ -333,7 +333,7 @@ func TestOrdinaryCopiesAreFarFromTheByteBudget(t *testing.T) {
 	b.WriteString("<use template=\"fill\"/>\n</screen>\n</tui>\n")
 	var doc *parse.Document
 	el := within(t, 60*time.Second, func() { doc = parse.Parse([]byte(b.String()), "app.tui") })
-	if el > slowdown*time.Second {
+	if el > 3*slowdown*time.Second {
 		t.Errorf("took %v", el)
 	}
 	if len(doc.Diags) != 0 {

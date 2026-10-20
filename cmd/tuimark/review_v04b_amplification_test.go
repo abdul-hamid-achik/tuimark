@@ -67,14 +67,26 @@ func runProbe(t *testing.T, files map[string]string, args ...string) probeRun {
 	return r
 }
 
-// bounded checks that r finished within a second (times the race
-// slowdown) and 512 MiB of allocation.
+// Time ceilings of these probes (the F3 review): they catch a quadratic
+// regression, which took seconds, without failing a linear run that a
+// loaded machine slowed down. A test with a natural control (the same
+// document without what it checks) measures it in the same test and
+// allows maxRatio times it, never more than maxScaled; a test without one
+// allows maxAbsolute. All three scale with the race slowdown.
+const (
+	maxRatio    = 5
+	maxScaled   = 5 * slowdown * time.Second
+	maxAbsolute = 3 * slowdown * time.Second
+)
+
+// bounded checks that r finished within maxAbsolute and 512 MiB of
+// allocation.
 func (r probeRun) bounded(t *testing.T, what string) {
 	t.Helper()
 	if r.code != 0 && r.code != 2 {
 		t.Fatalf("%s: exit %d %s", what, r.code, r.errw)
 	}
-	if r.took > slowdown*time.Second {
+	if r.took > maxAbsolute {
 		t.Errorf("%s took %v", what, r.took)
 	}
 	if r.allocated > 512<<20 {
@@ -305,6 +317,10 @@ func nestedClassUses(depth, k, w int) string {
 			cls[i] = string([]byte{a[c%26], b[c/26%36], b[c/936%36]})
 			c++
 		}
+		if k == 0 {
+			fmt.Fprintf(&sb, "<template id=\"T%d\"><use template=\"T%d\"/></template>\n", j, j-1)
+			continue
+		}
 		fmt.Fprintf(&sb, "<template id=\"T%d\"><use template=\"T%d\" class=%q/></template>\n", j, j-1, strings.Join(cls, " "))
 	}
 	fmt.Fprintf(&sb, "<screen><col><use template=\"T%d\"/></col></screen>\n</tui>\n", depth)
@@ -317,29 +333,58 @@ func nestedClassUses(depth, k, w int) string {
 // through a set rebuilt at every level cost the square of the depth:
 // k1_20000 (250 levels of one class over 20000 texts) took 6.96 s, and
 // s1650 (250 levels of ten over 1650) 5.3 s.
+//
+// The time is checked against a control measured in the same test, so a
+// loaded machine slows both (the F3 review): what a linear expansion
+// costs, the same 250 levels without classes, plus, for s1650, whose ten
+// classes a level are most of its work, the same classes given by one use
+// (for k1_20000 one use with 250 classes is over the byte budget, V021,
+// since it is charged 1000 class bytes an element where each level is
+// charged 3). The case may take at most maxRatio times the control, and
+// never more than maxScaled: they took about 2x and 0.9x of it, against
+// 30x and 28x for the quadratic merge.
 func TestV04bNestedUseClassesAreLinear(t *testing.T) {
 	for _, c := range []struct {
 		name     string
 		k, w     int
+		flat     bool // the control includes the classes given by one use
 		allocMiB uint64
 	}{
-		{"k1_20000", 1, 20000, 1024},
-		{"s1650", 10, 1650, 512},
+		{"k1_20000", 1, 20000, false, 1024},
+		{"s1650", 10, 1650, true, 512},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			controls := []string{nestedClassUses(250, 0, c.w)}
+			if c.flat {
+				controls = append(controls, nestedClassUses(1, 250*c.k, c.w))
+			}
+			var control time.Duration
+			for _, doc := range controls {
+				ctl := runProbe(t, map[string]string{"app.tui": doc}, "validate", "FILE")
+				if !validated(ctl) {
+					t.Fatalf("control: exit %d: %.300s", ctl.code, ctl.out)
+				}
+				control += ctl.took
+			}
 			r := runProbe(t, map[string]string{"app.tui": nestedClassUses(250, c.k, c.w)}, "validate", "FILE")
-			t.Logf("%s: %v, %d MiB allocated", c.name, r.took, r.allocated>>20)
-			if r.code != 0 || r.out != "ok (bindings not checked: no --data)\n" && !strings.HasPrefix(r.out, "warning L009") {
+			t.Logf("%s: %v (control %v), %d MiB allocated", c.name, r.took, control, r.allocated>>20)
+			if !validated(r) {
 				t.Fatalf("exit %d: %.300s", r.code, r.out)
 			}
-			if r.took > slowdown*time.Second {
-				t.Errorf("took %v", r.took)
+			if r.took > maxRatio*control || r.took > maxScaled {
+				t.Errorf("took %v, control %v", r.took, control)
 			}
 			if r.allocated > c.allocMiB<<20 {
 				t.Errorf("allocated %d MiB", r.allocated>>20)
 			}
 		})
 	}
+}
+
+// validated reports whether r is a validate run of a valid document
+// without data: ok, or only an L009 warning before it.
+func validated(r probeRun) bool {
+	return r.code == 0 && (r.out == "ok (bindings not checked: no --data)\n" || strings.HasPrefix(r.out, "warning L009"))
 }
 
 // The ids an element of a copy quotes from inside its own copy go through

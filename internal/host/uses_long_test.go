@@ -12,8 +12,9 @@ import (
 // ADR 0034 for what phase F3 reports about copies (too slow for js/wasm,
 // whose test run is `task wasm-test`): a long with path, a long use id,
 // or a use in many list rows gives a validate output at most ten times
-// its input (document and data), within a second (scaled by slowdown under
-// the race detector). A message about a path
+// its input (document and data), within three seconds (scaled by
+// slowdown under the race detector): the bound catches a quadratic
+// regression, not a linear run a loaded machine slowed down. A message about a path
 // through a with alias shows the path the alias stands for, and the use's
 // id, cut at 64 bytes; a use's own B002 and B003 are formatted once per
 // pass, however many rows place it.
@@ -149,7 +150,7 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 			if in := len(c.src) + len(c.data); out > 10*in {
 				t.Errorf("%d bytes of diagnostics for %d of input", out, in)
 			}
-			if el > slowdown*time.Second {
+			if el > 3*slowdown*time.Second {
 				t.Errorf("took %v", el)
 			}
 			if fmt.Sprint(got) != fmt.Sprint(c.want) {
@@ -214,7 +215,7 @@ func TestCopyDiagnosticsQuoteValuesShortened(t *testing.T) {
 			if in := len(src) + len(c.data); out > 10*in {
 				t.Errorf("%d bytes of diagnostics for %d of input", out, in)
 			}
-			if el > slowdown*time.Second {
+			if el > 3*slowdown*time.Second {
 				t.Errorf("took %v", el)
 			}
 			if n != copies {

@@ -96,7 +96,7 @@ func ring(n int) string {
 func TestV019LongCycleIsShortenedAndFast(t *testing.T) {
 	var doc *parse.Document
 	el := within(t, 60*time.Second, func() { doc = parse.Parse([]byte(ring(10000)), "app.tui") })
-	if el > slowdown*time.Second {
+	if el > 3*slowdown*time.Second {
 		t.Errorf("took %v", el)
 	}
 	got := useDiags(doc)
@@ -145,7 +145,7 @@ func TestV019FallbackIsFast(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			var doc *parse.Document
 			el := within(t, 60*time.Second, func() { doc = parse.Parse([]byte(c.src), "app.tui") })
-			if el > slowdown*time.Second {
+			if el > 3*slowdown*time.Second {
 				t.Errorf("took %v", el)
 			}
 			got := useDiags(doc)

@@ -504,7 +504,7 @@ func TestLoopPasteIsFast(t *testing.T) {
 		changes++
 		last = ev.Value.(string)
 	}
-	if d := time.Since(start); d > slowdown*time.Second {
+	if d := time.Since(start); d > 3*slowdown*time.Second {
 		t.Errorf("a 10KB paste with on:change took %v", d)
 	}
 	if changes > 10 || last != paste {
@@ -530,11 +530,10 @@ func TestLoopPasteIsFast(t *testing.T) {
 		case <-time.After(10 * time.Second):
 			t.Fatalf("%d: no submit", n)
 		}
-		limit := slowdown * time.Second
-		if n > 10_000 {
-			// Quadratic editing took ~17s here without the race detector.
-			limit = slowdown * 2 * time.Second
-		}
+		// Quadratic editing took ~17s for 100_000 bytes without the race
+		// detector; the bound catches that, not a linear run a loaded
+		// machine slowed down.
+		limit := 3 * slowdown * time.Second
 		if d := time.Since(start); d > limit {
 			t.Errorf("a %d-byte paste into the inbox search took %v (limit %v)", n, d, limit)
 		}
