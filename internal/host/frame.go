@@ -802,22 +802,24 @@ func (fb *builder) flag(n *ir.Node, attr string, sc *scope) bool {
 // in attribute attr, absent from the store; it counts as null (SPEC §7).
 // Through a with alias it is an optional prop (pathMiss).
 func (fb *builder) missingFlag(n *ir.Node, attr, v, p string, sc *scope) {
-	if ok, via := fb.pathMiss(n, p, sc, missFlag); ok {
-		fb.reportPath(n, via, p, ir.Warning, "B002", "%s=%q: path %q is missing", written(attr, via), writtenAttr(n, attr, v, via), shownPath(p, via))
+	if ok, via := fb.pathMiss(n, attr, 0, p, sc, missFlag); ok {
+		fb.reportPath(n, via, p, ir.Warning, "B002", "%s=%q: path %q is missing", ir.ShownAt(n, attr), writtenAttr(n, attr, v, via), shownPath(p, via))
 	}
 }
 
-// missingBind reports B003 for a path absent from the store (an error with
-// --strict), in sc: through a with alias whose own path is missing, it
-// reports nothing (pathMiss).
-func (fb *builder) missingBind(n *ir.Node, path string, sc *scope) {
-	if ok, via := fb.pathMiss(n, path, sc, missValue); ok {
+// missingBind reports B003 for path, written in slot as its seg-th path
+// (ir.ViaKey), absent from the store in sc (an error with --strict):
+// through a with alias whose own path is missing, it reports nothing
+// (pathMiss).
+func (fb *builder) missingBind(n *ir.Node, slot string, seg int, path string, sc *scope) {
+	if ok, via := fb.pathMiss(n, slot, seg, path, sc, missValue); ok {
 		fb.reportPath(n, via, path, fb.bindSev(), "B003", "bind path %q is missing", shownPath(path, via))
 	}
 }
 
-// interp resolves {path} segments; missing paths render empty (B003).
-func (fb *builder) interp(n *ir.Node, s string, sc *scope) string {
+// interp resolves the {path} segments of s, n's attribute slot ("" for
+// its text); missing paths render empty (B003).
+func (fb *builder) interp(n *ir.Node, slot, s string, sc *scope) string {
 	if fb.a.doc.Spike || s == "" {
 		return s
 	}
@@ -825,7 +827,7 @@ func (fb *builder) interp(n *ir.Node, s string, sc *scope) string {
 	if !ok {
 		return s
 	}
-	return fb.interpSegs(n, segs, sc)
+	return fb.interpSegs(n, slot, segs, sc)
 }
 
 // focusableByDefault reports the kinds that take focus without
@@ -873,7 +875,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		} else if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind, sc)
+				fb.missingBind(n, "bind", 0, n.Bind, sc)
 			}
 			open = ir.Truthy(v)
 		}
@@ -893,7 +895,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	}
 	// disabled covers the whole subtree, like a disabled <fieldset>.
 	b.Disabled = fb.flag(n, "disabled", sc) || (parent != nil && parent.Disabled)
-	b.Title = fb.interp(n, n.Attrs["title"], sc)
+	b.Title = fb.interp(n, "title", n.Attrs["title"], sc)
 	if n.ID != "" && n.ID == a.focus && !inItem {
 		b.Focused = true
 	}
@@ -902,7 +904,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	}
 	switch n.Kind {
 	case "text":
-		b.Text = fb.interp(n, n.Text, sc)
+		b.Text = fb.interp(n, "", n.Text, sc)
 	case "button":
 		b.Text = fb.buttonText(n, sc)
 	case "checkbox":
@@ -916,13 +918,13 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		// <use with=…> may bring) leaves a select a working widget.
 		fb.inflateSelect(n, b, sc, inItem)
 	case "input":
-		b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
+		b.Placeholder = fb.interp(n, "placeholder", n.Attrs["placeholder"], sc)
 		b.Secret = n.Attrs["secret"] == "true"
 		st := a.input(n.ID)
 		if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind, sc)
+				fb.missingBind(n, "bind", 0, n.Bind, sc)
 			}
 			b.Text = Format(v)
 		} else {
@@ -939,12 +941,12 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)
 			if !found {
-				fb.missingBind(n, n.Bind, sc)
+				fb.missingBind(n, "bind", 0, n.Bind, sc)
 			}
 			if f, ok := v.(float64); ok {
 				b.Value = f
 			} else if found && v != nil {
-				via := n.ViaOf(n.Bind)
+				via := n.ViaOf("bind", 0)
 				fb.reportPath(n, via, n.Bind, ir.Warning, "B003", "progress bind %q is %s, want a number 0-100", shownPath(n.Bind, via), typeName(v))
 			}
 		} else if s, ok := n.Attr("value"); ok {
@@ -1090,7 +1092,7 @@ func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 func (fb *builder) checkedKeys(n *ir.Node, path string, sc *scope) (keys []any, ok bool) {
 	v, found := sc.resolve(fb.a.store, path)
 	if !found {
-		fb.missingBind(n, path, sc)
+		fb.missingBind(n, "checked", 0, path, sc)
 		return nil, true
 	}
 	if n.Single {
@@ -1338,7 +1340,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	if n.Bind != "" {
 		v, found := sc.resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind, sc)
+			fb.missingBind(n, "bind", 0, n.Bind, sc)
 		}
 		if found && v != nil {
 			for i, k := range ls.keys {
@@ -1420,7 +1422,7 @@ func (fb *builder) inflateListCached(n *ir.Node, b *layout.Box, p *listPlan) {
 	if n.Bind != "" {
 		v, found := (*scope)(nil).resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind, nil)
+			fb.missingBind(n, "bind", 0, n.Bind, nil)
 		}
 		if found && v != nil {
 			if i := r.rowOf(v); i >= 0 {

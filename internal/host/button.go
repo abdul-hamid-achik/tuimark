@@ -17,9 +17,9 @@ import (
 // 0.4.1.
 func (fb *builder) buttonText(n *ir.Node, sc *scope) string {
 	label, hasLabel := n.Attr("label")
-	text := n.Text
+	text, slot := n.Text, ""
 	if hasLabel {
-		text = label
+		text, slot = label, "label"
 	}
 	if !fb.a.doc.Lang.V4() || fb.a.doc.Spike || text == "" {
 		return text
@@ -29,14 +29,16 @@ func (fb *builder) buttonText(n *ir.Node, sc *scope) string {
 		return text
 	}
 	var b strings.Builder
+	k := 0
 	for _, sg := range segs {
 		if sg.Path == "" {
 			b.WriteString(sg.Lit)
 			continue
 		}
+		k++
 		v, found := sc.resolve(fb.a.store, sg.Path)
 		if !found {
-			fb.missingBind(n, sg.Path, sc)
+			fb.missingBind(n, slot, k-1, sg.Path, sc)
 			continue
 		}
 		b.WriteString(oneLineLabel(cleanText(Format(v))))

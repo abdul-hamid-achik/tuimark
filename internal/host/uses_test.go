@@ -283,3 +283,56 @@ func TestListRowsFollowTheirUsesWithPaths(t *testing.T) {
 	}
 	sameDiags(t, "removed", useDiags(a), b003)
 }
+
+// A via is kept where its path is written (ir.ViaKey), not under the path
+// it stands for: {f.x} and {g.x}, with f and g standing for one path, name
+// each its own written path; a literal {a.x} beside them is a store path
+// with the placement suffix; and a store flag next to a guard through an
+// alias for the same path stays a store flag (B002), while the guard is
+// an optional prop.
+func TestViasAreKeptWhereWritten(t *testing.T) {
+	const src = `<tui>
+  <template id="t">
+    <col>
+      <text>{f.x} {g.x} {a.x}</text>
+      <text if="!a.on" class:k="f.on">y</text>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="u" template="t" with="a as f, a as g"/>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{"a": {}}`)
+	sameDiags(t, "validate", useDiags(a), []string{
+		`warning B003 4:7 /screen/col/text bind path "f.x" is missing (a.x via <use id="u">)`,
+		`warning B003 4:7 /screen/col/text bind path "g.x" is missing (a.x via <use id="u">)`,
+		`warning B003 4:7 /screen/col/text bind path "a.x" is missing, placed by <use id="u"> at app.tui:9:5`,
+		`warning B002 5:7 /screen/col/text if="!a.on": path "a.on" is missing, placed by <use id="u"> at app.tui:9:5`,
+	})
+	if got := texts(a); !reflect.DeepEqual(got, []string{"  ", "y"}) {
+		t.Errorf("texts %q", got)
+	}
+}
+
+// What a diagnostic quotes is cut only at an element of a copy: the same
+// path written once in the screen is quoted whole, as 0.4.1 quotes it,
+// and so is it in a pinned document.
+func TestWrittenElementsQuoteWhole(t *testing.T) {
+	path := "st.m" + strings.Repeat("y", 66) // 70 bytes
+	src := `<tui>
+  <template id="t">
+    <text>{` + path + `}</text>
+  </template>
+  <screen id="main">
+    <text>{` + path + `}</text>
+    <use id="u" template="t"/>
+  </screen>
+</tui>`
+	a := useApp(t, src, `{"st": {}}`)
+	sameDiags(t, "validate", useDiags(a), []string{
+		`warning B003 3:5 /screen/text bind path "st.m` + strings.Repeat("y", 60) + `…" is missing, placed by <use id="u"> at app.tui:7:5`,
+		`warning B003 6:5 /screen/text bind path "` + path + `" is missing`,
+	})
+	pinned := useApp(t, `<tui version="3"><screen id="main"><text>{`+path+`}</text></screen></tui>`, `{"st": {}}`)
+	sameDiags(t, "pinned", useDiags(pinned), []string{`warning B003 1:36 /screen/text bind path "` + path + `" is missing`})
+}

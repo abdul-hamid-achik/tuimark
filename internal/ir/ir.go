@@ -168,10 +168,24 @@ type Node struct {
 	With []Each
 	// Vias says how the paths of an element of a copy (or of a <use> in
 	// one) that went through a with alias did (SPEC v0.4b §6.18.5), by
-	// the path as it stands after the substitution: what the runtime
-	// resolves, and what its binding diagnostics name. nil for every
-	// node with no such path, which is every node outside copies.
-	Vias map[string]*Via
+	// where each is written (ViaKey): what its binding diagnostics name.
+	// nil for every node with no such path, which is every node outside
+	// copies.
+	Vias map[ViaKey]*Via
+}
+
+// ViaKey is where a path of an element is written: Slot is the name of
+// the attribute that holds it ("bind", "if", "hidden", "each", "key",
+// "class:NAME", "title", …), "" for the element's text, or "with" for a
+// <use>'s clauses; Seg is the path's index among the {path} segments of
+// a template string (its text, a title, a label, …) or among a use's
+// with clauses, and 0 for an attribute that holds one path. Two paths
+// written apart keep their own Via even when they stand for the same
+// path once substituted ({f.x} and {g.x} with f and g standing for one
+// path, or a literal {a.x} beside {f.x} with f standing for a).
+type ViaKey struct {
+	Slot string
+	Seg  int
 }
 
 // Via is a path of an element of a copy that went through a with alias
@@ -184,13 +198,13 @@ type Via struct {
 	Use           *Node
 }
 
-// ViaOf is how the path p of n (as it stands after the substitution)
-// went through a with alias, or nil when it went through none.
-func (n *Node) ViaOf(p string) *Via {
+// ViaOf is how the path of n written in slot, as its seg-th path (see
+// ViaKey), went through a with alias, or nil when it went through none.
+func (n *Node) ViaOf(slot string, seg int) *Via {
 	if n == nil || n.Vias == nil {
 		return nil
 	}
-	return n.Vias[p]
+	return n.Vias[ViaKey{slot, seg}]
 }
 
 // Suffix is what a B001, B002, or B003 about the path p, which went
@@ -202,22 +216,78 @@ func (v *Via) Suffix(p string) string {
 	return " (" + ShownPath(p) + " via " + v.Use.describePlacer() + ")"
 }
 
-// ShownPath is a path a diagnostic quotes away from where it is written,
-// the P of a path through a with alias (Via.Suffix), and what such a
-// diagnostic quotes from the template (the path as written, an
-// attribute's name and value, an alias): every renamed alias shown as
-// written (Unmark) and cut as ShownID cuts an id, in time bounded by
-// MaxShownID however long p is. A path holds at most one renamed alias,
-// at its head: one AliasMark byte and the digits of an int.
+// ShownPath is a path, or any other value, a diagnostic at an element of
+// a copy quotes (ShownAt, CutQuoted), and the P of a path through a with
+// alias (Via.Suffix): every renamed alias shown as written (Unmark), and
+// cut as ShownID cuts an id. It reads only as much of p as the cut needs:
+// a prefix of p that unmarks to more than MaxShownID bytes is cut where
+// the whole would be.
 func ShownPath(p string) string {
-	const room = MaxShownID + 22
-	if len(p) > room {
-		// Unmarked, the first room bytes keep more than MaxShownID bytes
-		// (a mark and its digits are at most 21), so ShownID cuts them
-		// where it would cut the whole path.
-		p = p[:room]
+	const room = MaxShownID + 22 // a mark and its digits are at most 21 bytes
+	end := min(len(p), room)
+	for {
+		u := Unmark(p[:end])
+		if end == len(p) || len(u) > MaxShownID {
+			return ShownID(u)
+		}
+		end = min(len(p), end+room)
 	}
-	return ShownID(Unmark(p))
+}
+
+// ShownAt is s, a value a diagnostic about the node at quotes, as it
+// shows it: ShownPath(s) for an element of a copy (InCopy), whose
+// diagnostics are reported once per copy with a placement suffix (or the
+// via of a path through a with alias) that tells them apart, so a long
+// value would print once per copy; s whole otherwise, as 0.4.1 quotes it
+// (an element written once, and every element of a pinned document).
+func ShownAt(at *Node, s string) string {
+	if at != nil && at.InCopy() {
+		return ShownPath(s)
+	}
+	return s
+}
+
+// CutQuoted is args with every string a %q verb of format quotes cut by
+// ShownPath: what a diagnostic at an element of a copy quotes (a path, an
+// attribute's value, an action), which ShownAt explains. Other verbs keep
+// their arguments, and so does a format with an explicit argument index.
+func CutQuoted(format string, args []any) []any {
+	out, arg, copied := args, 0, false
+	for i := 0; i < len(format); i++ {
+		if format[i] != '%' {
+			continue
+		}
+		i++
+		for i < len(format) && strings.IndexByte("+-# 0123456789.*", format[i]) >= 0 {
+			if format[i] == '*' {
+				arg++
+			}
+			i++
+		}
+		if i >= len(format) || format[i] == '%' {
+			continue
+		}
+		if format[i] == '[' {
+			return args
+		}
+		if s, ok := argAt(args, arg); ok && format[i] == 'q' && len(s) > MaxShownID {
+			if !copied {
+				out, copied = append([]any(nil), args...), true
+			}
+			out[arg] = ShownPath(s)
+		}
+		arg++
+	}
+	return out
+}
+
+// argAt is args[i] when it is a string.
+func argAt(args []any, i int) (string, bool) {
+	if i >= len(args) {
+		return "", false
+	}
+	s, ok := args[i].(string)
+	return s, ok
 }
 
 // Written is an element of a copy as written (Node.Written).
@@ -316,7 +386,13 @@ func (o *Origin) PlacedBy() string {
 // an element written once, and every element of a pinned document, keeps
 // the text 0.4.1 gives.
 func (n *Node) InCopy() bool {
-	for p := n.Placer(); p != nil; p = p.Placer() {
+	return n != nil && n.Org.InCopy()
+}
+
+// InCopy reports whether the elements written where o says are elements
+// of a copy (Node.InCopy): a <use> is among the elements that placed them.
+func (o *Origin) InCopy() bool {
+	for p := o.placer(); p != nil; p = p.Placer() {
 		if p.Kind == "use" {
 			return true
 		}
@@ -674,8 +750,12 @@ func (ds Diags) Sorted() Diags {
 
 // At builds a diagnostic located at a node. file is the document's name;
 // an element written in a fragment is reported in its own file, and one an
-// include placed names the include (SPEC v0.4b §6.18.6).
+// include placed names the include (SPEC v0.4b §6.18.6). At an element of
+// a copy, what the message quotes with %q is cut (CutQuoted).
 func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
+	if n.InCopy() {
+		args = CutQuoted(format, args)
+	}
 	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...), File: file}
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
@@ -690,6 +770,9 @@ func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
 // ` (P via <use id="U">)` of a path through a with alias, or one about a
 // <use> itself, which carries none ("" adds nothing).
 func AtSuffix(n *Node, file, sev, code, suffix, format string, args ...any) Diagnostic {
+	if n.InCopy() {
+		args = CutQuoted(format, args)
+	}
 	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...) + suffix, File: file}
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID

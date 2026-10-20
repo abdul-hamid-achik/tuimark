@@ -133,3 +133,64 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 		})
 	}
 }
+
+// Every diagnostic at an element of a copy that quotes a value (a store
+// path, an attribute, an action, a store value) cuts it at 64 bytes:
+// each copy reports it with its own placement suffix, so 150 uses of a
+// template that quotes a 100 KB path printed 15 MB before (the F3
+// review). Each code reachable at a copy that quotes such a value is
+// checked here, through the uses' placements alone (no with).
+func TestCopyDiagnosticsQuoteValuesShortened(t *testing.T) {
+	long := "p" + strings.Repeat("x", 100000)
+	value := strings.Repeat("v", 100000)
+	const copies = 150
+	var uses strings.Builder
+	for i := 0; i < copies; i++ {
+		fmt.Fprintf(&uses, `<use id="u%d" template="t"/>`, i)
+	}
+	doc := func(body string) string {
+		return `<tui><template id="t">` + body + `</template><screen id="main"><scroll>` + uses.String() + `</scroll></screen></tui>`
+	}
+	for _, c := range []struct {
+		code, body, data string
+	}{
+		{"B001", `<box each="st.` + long + ` as it"><text>{it}</text></box>`, `{"st": {}}`},
+		{"B002", `<text if="st.` + long + `">x</text>`, `{"st": {}}`},
+		{"B003", `<text>{st.` + long + `}</text>`, `{"st": {}}`},
+		{"B003", `<box each="rows as r" key="r.` + long + `"><text>x</text></box>`, `{"rows": [{}]}`},
+		{"B004", `<button id="b" on:click="` + long + `">x</button>`, `{}`},
+		{"B006", `<list id="l" each="st.` + long + ` as r"><item><text>x</text></item></list>`, `{"st": {"` + long + `": []}}`},
+		{"B008", `<list id="l" each="rows as r" key="r.id" checked="st.` + long + `"><item><text>x</text></item></list>`, `{"rows": [{"id": "a"}], "st": {"` + long + `": 5}}`},
+		{"B009", `<sparkline bind="st.` + long + `"/>`, `{"st": {"` + long + `": "x"}}`},
+		{"B010", `<tabs id="tb" bind="st.` + long + `"><tab id="a" label="A"><text>a</text></tab></tabs>`, `{"st": {"` + long + `": "` + value + `"}}`},
+		{"B011", `<checkbox id="c" bind="st.` + long + `"/>`, `{"st": {"` + long + `": 5}}`},
+		{"B012", `<select id="s" bind="st.` + long + `" each="opts as o" key="o.id" label="{o.n}"/>`, `{"opts": [{"id": "a", "n": "A"}], "st": {"` + long + `": "` + value + `"}}`},
+	} {
+		t.Run(c.code, func(t *testing.T) {
+			src := doc(c.body)
+			start := time.Now()
+			a := useApp(t, src, c.data)
+			ds := a.Validate()
+			if c.code == "B004" {
+				ds = append(ds, a.CheckCatalog(map[string]bool{})...)
+			}
+			el := time.Since(start)
+			out, n := 0, 0
+			for _, d := range ds {
+				out += len(d.String())
+				if d.Code == c.code {
+					n++
+				}
+			}
+			if in := len(src) + len(c.data); out > 10*in {
+				t.Errorf("%d bytes of diagnostics for %d of input", out, in)
+			}
+			if el > time.Second {
+				t.Errorf("took %v", el)
+			}
+			if n != copies {
+				t.Errorf("%d %s, want one per copy", n, c.code)
+			}
+		})
+	}
+}

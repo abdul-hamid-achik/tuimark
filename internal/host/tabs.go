@@ -75,9 +75,9 @@ func (fb *builder) activate(casc *css.Cascade, t *layout.Box) {
 			// alias is in scope), each LF the resolved value brings
 			// becomes a space, since a label is one row.
 			sc := fb.tabsScope(t)
-			full = oneLineLabel(fb.interp(v.Src, full, sc))
+			full = oneLineLabel(fb.interp(v.Src, "label", full, sc))
 			if ok {
-				short = oneLineLabel(fb.interp(v.Src, short, sc))
+				short = oneLineLabel(fb.interp(v.Src, "short", short, sc))
 			}
 		}
 		// S(t) is short when it is not empty, else the label (§6.10.4);
@@ -136,7 +136,7 @@ func (fb *builder) pickTab(t *layout.Box, visible []*layout.Box) *layout.Box {
 	if n.Bind != "" {
 		v, found := fb.tabsScope(t).resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind, fb.tabsScope(t))
+			fb.missingBind(n, "bind", 0, n.Bind, fb.tabsScope(t))
 			return visible[0]
 		}
 		if v == nil {
@@ -149,7 +149,7 @@ func (fb *builder) pickTab(t *layout.Box, visible []*layout.Box) *layout.Box {
 				}
 			}
 		}
-		fb.report(n, ir.Warning, "B010", "bind=%q holds %s, which is not the id of a visible tab of #%s; the first visible tab, #%s, is active", n.Bind, jsonText(v), ir.ShownIDAt(n, n.ID), ir.ShownIDAt(n, visible[0].ID))
+		fb.report(n, ir.Warning, "B010", "bind=%q holds %s, which is not the id of a visible tab of #%s; the first visible tab, #%s, is active", n.Bind, ir.ShownAt(n, jsonText(v)), ir.ShownIDAt(n, n.ID), ir.ShownIDAt(n, visible[0].ID))
 		return visible[0]
 	}
 	if id, ok := a.tabMem[t.ID]; ok && t.ID != "" {

@@ -311,7 +311,7 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableAc
 			if !act.cols[j] {
 				continue
 			}
-			text := sub.interpSegs(c, p.segs[j], isc)
+			text := sub.interpSegs(c, "", p.segs[j], isc)
 			td.texts[j][i] = text
 			if w := layout.MaxWidth(text); w > td.measure[j] {
 				td.measure[j] = w
@@ -336,10 +336,11 @@ func (fb *builder) guardsOn(n *ir.Node, sc *scope) []bool {
 	return on
 }
 
-// interpSegs is interp over a template parsed once: literal text and the
-// value of each {path} in scope sc, formatted as text without control
-// characters; a missing path renders empty and reports B003.
-func (fb *builder) interpSegs(n *ir.Node, segs []ir.Segment, sc *scope) string {
+// interpSegs is interp over a template parsed once, written in slot (see
+// interp): literal text and the value of each {path} in scope sc,
+// formatted as text without control characters; a missing path renders
+// empty and reports B003.
+func (fb *builder) interpSegs(n *ir.Node, slot string, segs []ir.Segment, sc *scope) string {
 	if len(segs) == 1 {
 		sg := segs[0]
 		if sg.Path == "" {
@@ -347,20 +348,22 @@ func (fb *builder) interpSegs(n *ir.Node, segs []ir.Segment, sc *scope) string {
 		}
 		v, ok := sc.resolve(fb.a.store, sg.Path)
 		if !ok {
-			fb.missingBind(n, sg.Path, sc)
+			fb.missingBind(n, slot, 0, sg.Path, sc)
 			return ""
 		}
 		return cleanText(Format(v))
 	}
 	var b strings.Builder
+	k := 0
 	for _, sg := range segs {
 		if sg.Path == "" {
 			b.WriteString(sg.Lit)
 			continue
 		}
+		k++
 		v, ok := sc.resolve(fb.a.store, sg.Path)
 		if !ok {
-			fb.missingBind(n, sg.Path, sc)
+			fb.missingBind(n, slot, k-1, sg.Path, sc)
 			continue
 		}
 		b.WriteString(cleanText(Format(v)))
@@ -424,7 +427,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	p := a.tablePlan(n)
 	act := fb.tableActive(p, sc)
 	td := fb.tableRows(n, p, sc, act)
-	b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
+	b.Placeholder = fb.interp(n, "placeholder", n.Attrs["placeholder"], sc)
 	for j, c := range p.cols {
 		if !act.cols[j] {
 			continue // pruned by the guard of the <use> that placed it
@@ -434,7 +437,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 			Hints: a.hintsOf(c), Inline: a.inlineOf(c), Follow: -1, Index: -1,
 			Fixed: true, Disabled: b.Disabled,
 		}
-		cb.Title = fb.interp(c, c.Attrs["title"], sc)
+		cb.Title = fb.interp(c, "title", c.Attrs["title"], sc)
 		cb.Text = cb.Title
 		cb.Measure = max(layout.MaxWidth(cb.Text), td.measure[j])
 		if c.ID != "" {
@@ -452,7 +455,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	if n.Bind != "" {
 		v, found := sc.resolve(a.store, n.Bind)
 		if !found {
-			fb.missingBind(n, n.Bind, sc)
+			fb.missingBind(n, "bind", 0, n.Bind, sc)
 		}
 		if found && v != nil {
 			if i := td.rowOf(v); i >= 0 {

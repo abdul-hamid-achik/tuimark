@@ -524,6 +524,13 @@ func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, co
 			placed = org.Placed
 		}
 	}
+	if placed != nil && org.InCopy() {
+		// One per copy, each told apart by its placement suffix: what it
+		// quotes with %q is cut, as the runtime's are (ir.At). A
+		// self-check (no suffix) is the same in every copy and in the
+		// template's own body, and is reported once, whole.
+		args = ir.CutQuoted(format, args)
+	}
 	if b.comp != nil && b.comp.used && earlyDedupe {
 		// dedupeDiags applies (ParseWith): a repeat is dropped unformatted.
 		if b.reported == nil {

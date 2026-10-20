@@ -66,8 +66,8 @@ func (fb *builder) placeUse(u *ir.Node, sc *scope) bool {
 		if _, found := sc.resolve(fb.a.store, cl.Path); found || fb.said(u, i) {
 			continue
 		}
-		if ok, via := fb.pathMiss(u, cl.Path, sc, missValue); ok {
-			fb.reportPath(u, via, cl.Path, fb.bindSev(), "B003", "with path %q (alias %s) is missing", shownPath(cl.Path, via), written(cl.Alias, via))
+		if ok, via := fb.pathMiss(u, "with", i, cl.Path, sc, missValue); ok {
+			fb.reportPath(u, via, cl.Path, fb.bindSev(), "B003", "with path %q (alias %s) is missing", shownPath(cl.Path, via), ir.ShownAt(u, cl.Alias))
 			fb.saidNow(u, i)
 		}
 	}
@@ -94,7 +94,7 @@ func (fb *builder) useGuard(u *ir.Node, attr, v string, sc *scope, flag bool) bo
 		which = -2
 	}
 	if !found && !fb.said(u, which) {
-		if ok, via := fb.pathMiss(u, g.Path, sc, missFlag); ok {
+		if ok, via := fb.pathMiss(u, attr, 0, g.Path, sc, missFlag); ok {
 			fb.reportPath(u, via, g.Path, ir.Warning, "B002", "%s=%q: path %q is missing", attr, writtenAttr(u, attr, v, via), shownPath(g.Path, via))
 			fb.saidNow(u, which)
 		}
@@ -136,9 +136,10 @@ const (
 	missArray
 )
 
-// pathMiss decides whether the path p of n, which does not resolve in
-// sc, reports its B001, B002, or B003, and returns how p went through a
-// with alias (nil for none), which the message then names (reportPath).
+// pathMiss decides whether the path p of n, written in slot as its seg-th
+// path (ir.ViaKey), which does not resolve in sc, reports its B001, B002,
+// or B003, and returns how p went through a with alias (nil for none),
+// which the message then names (reportPath).
 // A path through an alias whose own path does not resolve either reports
 // no B002 or B003: its use's B003 covers it (decision 14). A flag or a
 // guard through an alias that stands for an object is an optional prop
@@ -146,8 +147,8 @@ const (
 // alias that stands for anything else is B002, and a value B003, as
 // anywhere. An each array's B001 always reports, in the with format: the
 // SPEC exempts only B002 and B003 (§6.18.5).
-func (fb *builder) pathMiss(n *ir.Node, p string, sc *scope, kind missKind) (bool, *ir.Via) {
-	via := n.ViaOf(p)
+func (fb *builder) pathMiss(n *ir.Node, slot string, seg int, p string, sc *scope, kind missKind) (bool, *ir.Via) {
+	via := n.ViaOf(slot, seg)
 	if via == nil {
 		return true, nil
 	}
@@ -165,10 +166,10 @@ func (fb *builder) pathMiss(n *ir.Node, p string, sc *scope, kind missKind) (boo
 // an array, or did not resolve (found false): the each as written and p
 // through a with alias name it as written (SPEC v0.4b §6.18.5).
 func (fb *builder) badEach(n *ir.Node, p string, v any, found bool) {
-	via := n.ViaOf(p)
+	via := n.ViaOf("each", 0)
 	each := n.Each
 	if via != nil && n.Written != nil {
-		each = written(n.Written.Each, via)
+		each = n.Written.Each
 	}
 	if !found {
 		fb.reportPath(n, via, p, ir.Error, "B001", "each=%q: path %q is missing (want an array)", each, shownPath(p, via))
@@ -180,7 +181,7 @@ func (fb *builder) badEach(n *ir.Node, p string, v any, found bool) {
 // missingKey reports the B003 of a key= path k of n missing on row i, in
 // the row's scope sc; format quotes key= and names the row.
 func (fb *builder) missingKey(n *ir.Node, k string, sc *scope, sev, format string, i int) {
-	if ok, via := fb.pathMiss(n, k, sc, missValue); ok {
+	if ok, via := fb.pathMiss(n, "key", 0, k, sc, missValue); ok {
 		fb.reportPath(n, via, k, sev, "B003", format, writtenAttr(n, "key", k, via), i)
 	}
 }
@@ -202,39 +203,25 @@ func (fb *builder) reportPath(n *ir.Node, via *ir.Via, p string, sev, code, form
 }
 
 // shownPath is the path p of a message: as written when it went through
-// a with alias (via), cut (written), else p itself.
+// a with alias (via), else p itself. At an element of a copy, which every
+// via is, the message cuts it (ir.At, ir.CutQuoted).
 func shownPath(p string, via *ir.Via) string {
 	if via != nil {
-		return written(via.Written, via)
+		return via.Written
 	}
 	return p
 }
 
 // writtenAttr is the value of n's attribute attr a message quotes: as
-// written, cut (written), when the path in it went through a with alias
-// (via), else v, the value the runtime reads.
+// written when the path in it went through a with alias (via), else v,
+// the value the runtime reads (cut at a copy, as shownPath).
 func writtenAttr(n *ir.Node, attr, v string, via *ir.Via) string {
 	if via != nil && n.Written != nil {
 		if w, ok := n.Written.Attrs[attr]; ok {
-			return written(w, via)
+			return w
 		}
 	}
 	return v
-}
-
-// written is s, a path, an attribute's name or value, or an alias that a
-// message about a path through a with alias (via) quotes from where it
-// is written: cut at 64 bytes as P is (ir.ShownPath). Each copy through a
-// with path of its own says it again, in a message of its own (P tells
-// them apart), so the whole of s would make the output grow with the
-// copies times its length (ADR 0034). Without via s is quoted whole, as
-// in 0.4.1: a message without a via is the same in every copy, or names
-// its placement, as F2 left it.
-func written(s string, via *ir.Via) string {
-	if via != nil {
-		return ir.ShownPath(s)
-	}
-	return s
 }
 
 // diagKey is what makes two diagnostics one (the dedupe of a frame's and

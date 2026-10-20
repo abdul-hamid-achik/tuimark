@@ -77,7 +77,7 @@ func (a *App) selectState(id string) *selectState {
 // a.mu.
 func (fb *builder) inflateSelect(n *ir.Node, b *layout.Box, sc *scope, nested bool) {
 	a := fb.a
-	ph := oneLineLabel(fb.interp(n, n.Attrs["placeholder"], sc))
+	ph := oneLineLabel(fb.interp(n, "placeholder", n.Attrs["placeholder"], sc))
 	b.Measure = layout.Width(ph)
 	if nested || n.ID == "" {
 		b.Placeholder = ph
@@ -151,7 +151,7 @@ func (fb *builder) resolveOptions(n *ir.Node, sc *scope) *selectOptions {
 		o.keys[i] = key
 		var text string
 		if hasLabel {
-			text = fb.interpSegs(n, segs, isc)
+			text = fb.interpSegs(n, "label", segs, isc)
 		} else {
 			text = cleanText(Format(key))
 		}
@@ -179,7 +179,7 @@ func (fb *builder) chosenOption(n *ir.Node, sc *scope, o *selectOptions, st *sel
 	}
 	v, found := sc.resolve(fb.a.store, n.Bind)
 	if !found {
-		fb.missingBind(n, n.Bind, sc)
+		fb.missingBind(n, "bind", 0, n.Bind, sc)
 		return -1
 	}
 	if v == nil {
@@ -187,7 +187,7 @@ func (fb *builder) chosenOption(n *ir.Node, sc *scope, o *selectOptions, st *sel
 	}
 	i := optionOf(o.keys, v)
 	if i < 0 {
-		fb.report(n, ir.Warning, "B012", "bind=%q holds %s, which is no option's key; nothing is chosen, and a pick writes over it", n.Bind, jsonText(v))
+		fb.report(n, ir.Warning, "B012", "bind=%q holds %s, which is no option's key; nothing is chosen, and a pick writes over it", n.Bind, ir.ShownAt(n, jsonText(v)))
 	}
 	return i
 }
