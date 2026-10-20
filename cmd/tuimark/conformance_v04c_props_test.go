@@ -399,3 +399,68 @@ func TestV04cPropsCatalog(t *testing.T) {
 		t.Errorf("catalog: exit %d, open_attrs missing", code)
 	}
 }
+
+// Regressions of C1's implementation choices, beyond the draft's tests.
+func TestV04cPropsImplementation(t *testing.T) {
+	write := func(dir, name, s string) string {
+		p := filepath.Join(dir, name)
+		if err := os.WriteFile(p, []byte(s), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	// Decision 194: a diagnostic at an element names the outermost writer
+	// among its substituted values, else the use that copied it.
+	t.Run("element suffix", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"b\" props=\"t c\"><button title=\"{$t}\" class=\"{$c}\">x</button></template>\n  <template id=\"fw\" props=\"t\"><use template=\"b\" t=\"{$t}\" c=\"k\"/></template>\n  <screen id=\"main\">\n    <use template=\"b\" t=\"T\" c=\"k\"/>\n    <use template=\"fw\" t=\"U\"/>\n    <use template=\"fw\"/>\n  </screen>\n</tui>\n")
+		const v012 = `error V012 a.tui:2:32 /screen/button id= <button> is focusable and needs an id, placed by `
+		sameLines(t, "validate", vdiags(t, f, ""), []string{
+			v012 + `<use template="b"> at a.tui:5:5`,
+			v012 + `<use template="fw"> at a.tui:6:5`,
+			v012 + `<use template="b"> at a.tui:3:31`,
+		})
+	})
+	// Decision 160: a prop is reported once, with the first pair it brings
+	// a brace to, however many values of the body hold it.
+	t.Run("one pair per prop", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"d\" props=\"p\"><col><text>{$p}</text><text style=\"{$p}\">x</text></col></template>\n  <screen id=\"main\"><use template=\"d\" p=\"{a}\"/></screen>\n</tui>\n")
+		sameLines(t, "validate", vdiags(t, f, ""), []string{
+			`error V003 a.tui:3:39 /screen/use id= prop "p" makes the pair "{a}": a prop is text; pass a path with with="…"`,
+		})
+	})
+	// A fragment checked on its own: outside its templates a {$name} is not
+	// known to be outside one (it may be included in a template's body),
+	// while its templates and the uses of them are checked. Included
+	// outside every template, the same {$name} is V003.
+	t.Run("fragment", func(t *testing.T) {
+		dir := t.TempDir()
+		frag := write(dir, "frag.tui", "<fragment>\n  <template id=\"f\" props=\"x\"><text>{$x}{$z}</text></template>\n  <text>{$y}</text>\n  <use template=\"f\" x=\"1\" w=\"2\"><text>c</text></use>\n  <use template=\"g\" w=\"2\"/>\n</fragment>\n")
+		inc := write(dir, "inc.tui", "<tui>\n  <screen id=\"main\">\n    <include src=\"frag.tui\"/>\n  </screen>\n</tui>\n")
+		const w = `attribute "w" is not allowed on <use>: a <use> is not a node; give this copy a static class="…" and style that class, put the attribute on the template's element, or declare it in the template's props`
+		sameLines(t, "frag.tui", vdiags(t, frag, ""), []string{
+			`error V003 frag.tui:2:36 /template/text id= {$z} names no prop of <template id="f">; declare it in props="…"`,
+			`error V002 frag.tui:4:27 /use id= ` + w,
+			`error V013 frag.tui:4:33 /use id= <template id="f"> has no <slot/>`,
+		})
+		sameLines(t, "inc.tui", vdiags(t, inc, ""), []string{
+			`error V003 frag.tui:2:36 /screen/template/text id= {$z} names no prop of <template id="f">; declare it in props="…"`,
+			`error V003 frag.tui:3:9 /screen/text id= {$y} is outside a <template>: props exist only in a template's body`,
+			`error V002 frag.tui:4:27 /screen/use id= ` + w,
+			`error V013 frag.tui:4:33 /screen/use id= <template id="f"> has no <slot/>`,
+			`error V019 frag.tui:5:3 /screen/use id= <use template="g"> names no <template>`,
+		})
+	})
+	// A fragment that an include places in a template's body reads the
+	// template's props, and so does a list's row template.
+	t.Run("include and rows", func(t *testing.T) {
+		dir := t.TempDir()
+		write(dir, "part.tui", "<fragment>\n  <text title=\"{$t}\">{$t}!</text>\n</fragment>\n")
+		app := write(dir, "b.tui", "<tui>\n  <template id=\"k\" props=\"t lab\">\n    <col>\n      <include src=\"part.tui\"/>\n      <list id=\"l\" each=\"items as r\" key=\"r.id\"><item><text>{$lab}: {r.name}</text></item></list>\n    </col>\n  </template>\n  <screen id=\"main\">\n    <use id=\"u\" template=\"k\" t=\"T\" lab=\"L\"/>\n  </screen>\n</tui>\n")
+		data := write(dir, "b.json", `{"items":[{"id":1,"name":"a"},{"id":2,"name":"b"}]}`)
+		sameLines(t, "validate", vdiags(t, app, data), []string{})
+		nodes, _ := dumpNodes(t, app, "--data", data, "--cols", "20", "--rows", "5")
+		if got, want := textsOf(nodes), []string{"T!", "L: a", "L: b"}; !reflect.DeepEqual(got, want) {
+			t.Errorf("texts %q, want %q", got, want)
+		}
+	})
+}

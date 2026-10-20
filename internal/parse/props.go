@@ -609,15 +609,21 @@ func (b *builder) propNode(n *ir.Node, r *RawNode) *propNode {
 	}
 	var pn *propNode
 	id := ""
+	start := func() {
+		pn = &propNode{def: mode == pmDef}
+		if v, ok := rawAttr(r, "id"); ok && !strings.Contains(v, "{$") {
+			id = cp.prefix + v // the id a diagnostic names
+		}
+	}
 	for i, a := range r.Attrs {
 		if !strings.Contains(a.Value, "{$") || !b.attrGate(n, a, false) {
 			continue // none, or checked no further (decision 157)
 		}
 		if pn == nil {
-			pn = &propNode{attrs: make([]pattr, len(r.Attrs)), def: mode == pmDef}
-			if v, ok := rawAttr(r, "id"); ok && !strings.Contains(v, "{$") {
-				id = cp.prefix + v
-			}
+			start()
+		}
+		if pn.attrs == nil {
+			pn.attrs = make([]pattr, len(r.Attrs))
 		}
 		pn.attrs[i] = b.propValue(n.Tag, n.Path, id, a.Name, a.Value, a.Line, a.Col, mode)
 		switch p := pn.attrs[i]; {
@@ -636,7 +642,7 @@ func (b *builder) propNode(n *ir.Node, r *RawNode) *propNode {
 	if r.Name == "text" || r.Name == "button" || r.Name == "column" {
 		if body, line, col, ok := propBody(r); ok {
 			if pn == nil {
-				pn = &propNode{def: mode == pmDef}
+				start()
 			}
 			pn.body = b.propValue(n.Tag, n.Path, id, "", body, line, col, mode)
 			pn.hasBody = pn.body.st != psAsIs
@@ -648,7 +654,11 @@ func (b *builder) propNode(n *ir.Node, r *RawNode) *propNode {
 	// The use a diagnostic at the element names (decision 194).
 	var best *pwriter
 	held := false
-	for _, p := range append(pn.attrs, pn.body) {
+	for i := 0; i <= len(pn.attrs); i++ {
+		p := &pn.body
+		if i < len(pn.attrs) {
+			p = &pn.attrs[i]
+		}
 		held = held || p.held
 		if p.w != nil && (best == nil || p.w.lvl < best.lvl) {
 			best = p.w
@@ -1060,7 +1070,12 @@ func (b *builder) checkBraces(fr *propFrame) {
 	if !braced {
 		return
 	}
+	// Each prop is reported once, with the first pair it brings a brace
+	// to, at each attribute that writes one of its braces (decision 160),
+	// over every value of the body.
 	drop := map[string]bool{}
+	first := map[string]string{}
+	done := map[*pwriter]bool{}
 	for i := range fr.decl.sites {
 		site := &fr.decl.sites[i]
 		s, segs := fr.render(site)
@@ -1090,13 +1105,11 @@ func (b *builder) checkBraces(fr *propFrame) {
 				drop[sg.prop] = true
 			}
 		}
-		first := map[string]string{}
 		for _, h := range hits {
 			if _, ok := first[h.prop]; !ok {
 				first[h.prop] = s[h.pair[0] : h.pair[1]+1]
 			}
 		}
-		done := map[*pwriter]bool{}
 		for _, h := range hits {
 			if h.w == nil || done[h.w] {
 				continue
