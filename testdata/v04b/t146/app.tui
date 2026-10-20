@@ -1,0 +1,7 @@
+<tui version="3">
+  <template id="t"/>
+  <screen id="main">
+    <include src="missing.tui"/>
+    <use id="u" template="t"/>
+  </screen>
+</tui>

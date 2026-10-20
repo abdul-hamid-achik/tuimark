@@ -135,7 +135,7 @@ func (a *App) singleValue(b *layout.Box) (v any, ok bool) {
 		return nil, false
 	}
 	path, has := b.Src.Attr("checked")
-	if !has || !ir.IsPath(path) {
+	if !has || !ir.IsPathField(path) {
 		return nil, false
 	}
 	v, found := lookup(a.store, path)

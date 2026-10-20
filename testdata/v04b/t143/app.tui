@@ -1,0 +1,20 @@
+<tui>
+  <template id="field">
+    <row id="row">
+      <text>{f.label}</text>
+      <input id="in" bind="f.value" on:submit="save"/>
+    </row>
+  </template>
+  <style>#bill__in { bold: true; }</style>
+  <keymap>
+    <bind keys="ctrl+s" action="save_all" when="#ship__in:focus"/>
+    <bind keys="a" action="focus" to="#bill"/>
+    <bind keys="b" action="focus" to="#field"/>
+    <bind keys="c" action="focus" to="#in"/>
+    <bind keys="d" action="go" when="#bill"/>
+  </keymap>
+  <screen id="main" focus="#bill__in">
+    <use id="bill" template="field" with="form.bill as f"/>
+    <use id="ship" template="field" with="form.ship as f"/>
+  </screen>
+</tui>

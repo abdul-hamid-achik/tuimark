@@ -165,7 +165,13 @@ func buildKeymap(kb []KeyBind) []IRBind {
 }
 
 func buildIRNode(n *ir.Node) *IRNode {
-	classes := n.Classes
+	// A node of a copy shows what its element wrote, its scoped id aside
+	// (SPEC v0.4b §13.1): a reader resolves its aliases through the with
+	// of the enclosing use nodes, and adds their classes.
+	attrs, bind, each, cond, text, classes := n.Attrs, n.Bind, n.Each, n.If, n.Text, n.Classes
+	if w := n.Written; w != nil {
+		attrs, bind, each, cond, text, classes = w.Attrs, w.Bind, w.Each, w.If, w.Text, w.Classes
+	}
 	if classes == nil {
 		classes = []string{}
 	}
@@ -185,9 +191,9 @@ func buildIRNode(n *ir.Node) *IRNode {
 		children = append(children, buildIRNode(c))
 	}
 	return &IRNode{
-		ID: n.ID, Kind: n.Kind, Classes: classes, Attrs: nodeAttrs(n),
-		Bind: n.Bind, Each: n.Each, If: n.If, On: on,
-		Style: nodeStyle(n), Text: n.Text, Children: children,
+		ID: n.ID, Kind: n.Kind, Classes: classes, Attrs: nodeAttrs(attrs),
+		Bind: bind, Each: each, If: cond, On: on,
+		Style: nodeStyle(n), Text: text, Children: children,
 		From: irFrom(n),
 	}
 }
@@ -207,9 +213,9 @@ func irFrom(n *ir.Node) string {
 
 // nodeAttrs is every attribute as written, minus the ones already
 // represented by a structured field (see structuralAttrs) and on:* events.
-func nodeAttrs(n *ir.Node) map[string]string {
+func nodeAttrs(attrs map[string]string) map[string]string {
 	out := map[string]string{}
-	for k, v := range n.Attrs {
+	for k, v := range attrs {
 		if structuralAttrs[k] || strings.HasPrefix(k, "on:") {
 			continue
 		}

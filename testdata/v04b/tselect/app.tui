@@ -1,0 +1,8 @@
+<tui>
+  <template id="picker">
+    <select id="s" bind="p.choice" each="p.opts as o" key="o.id" label="{o.name}" placeholder="{p.hint}" on:change="picked"/>
+  </template>
+  <screen id="main" focus="#tz__s">
+    <use id="tz" template="picker" with="prefs as p"/>
+  </screen>
+</tui>

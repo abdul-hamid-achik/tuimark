@@ -1,0 +1,8 @@
+<tui>
+  <include src="parts/templates.tui"/>
+  <screen id="main" focus="#billing__line__in">
+    <text>Order</text>
+    <use id="billing" template="address" with="order.billing as a"/>
+    <use id="shipping" template="address" with="order.shipping as a"/>
+  </screen>
+</tui>

@@ -37,7 +37,7 @@ func escPath(m *layout.Box) (string, bool) {
 		case "true", "false", "":
 			return "", false
 		}
-		g, err := ir.ParseGuard(v)
+		g, err := ir.ParseGuardField(v)
 		if err != nil || g.Neg {
 			return "", false
 		}

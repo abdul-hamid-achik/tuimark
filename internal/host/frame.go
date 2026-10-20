@@ -780,7 +780,7 @@ func (fb *builder) flag(n *ir.Node, attr string, sc *scope) bool {
 	case "false", "":
 		return false
 	}
-	g, err := ir.ParseGuard(v)
+	g, err := ir.ParseGuardField(v)
 	if err != nil {
 		return false
 	}
@@ -832,8 +832,11 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	case "tui", "style", "keymap", "bind":
 		return nil
 	}
+	if len(n.CopiedBy) > 0 && fb.usePruned(n, sc) {
+		return nil // SPEC v0.4b §6.18.3 (uses.go)
+	}
 	if n.If != "" {
-		g, err := ir.ParseGuard(n.If)
+		g, err := ir.ParseGuardField(n.If)
 		if err == nil {
 			v, found := sc.resolve(a.store, g.Path)
 			if !found {
@@ -1025,7 +1028,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 // the element gives the index and B003); their descendants do not.
 func (fb *builder) inflateEach(n *ir.Node, b *layout.Box, sc *scope) {
 	a := fb.a
-	e, err := ir.ParseEach(n.Each)
+	e, err := ir.ParseEachField(n.Each)
 	if err != nil {
 		return
 	}
@@ -1206,7 +1209,7 @@ func (fb *builder) classes(n *ir.Node, sc *scope) (out []string, on []bool) {
 // ! applies, as for if, hidden, disabled, open, and mouse (SPEC §7): path
 // is false and !path is true.
 func (fb *builder) guard(n *ir.Node, attr, v string, sc *scope) bool {
-	g, err := ir.ParseGuard(v)
+	g, err := ir.ParseGuardField(v)
 	if err != nil {
 		return false
 	}
@@ -1285,7 +1288,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 	}
 	var entries []entry
 	if n.Each != "" {
-		e, err := ir.ParseEach(n.Each)
+		e, err := ir.ParseEachField(n.Each)
 		if err != nil || template == nil {
 			return
 		}
@@ -1377,7 +1380,7 @@ func (fb *builder) inflateList(n *ir.Node, b *layout.Box, sc *scope) {
 // has checked and mark.
 func (fb *builder) listMarks(n *ir.Node, sc *scope) (checked keySet, chanW int, mark string) {
 	if fb.a.doc.V2 {
-		if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
+		if path, ok := n.Attr("checked"); ok && ir.IsPathField(path) {
 			keys, _ := fb.checkedKeys(n, path, sc)
 			checked = fb.checkedSet(n, path, keys, sc)
 			if m, ok := n.Attr("mark"); ok {

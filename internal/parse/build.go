@@ -1,7 +1,9 @@
 package parse
 
 import (
+	"encoding/binary"
 	"fmt"
+	"hash/maphash"
 	"path"
 	"path/filepath"
 	"slices"
@@ -264,6 +266,10 @@ var TagAttrsV3 = map[string]map[string]bool{
 var TagAttrsCurrent = map[string]map[string]bool{
 	"include":  only("src"),
 	"fragment": only(),
+	// SPEC v0.4b §6.18.3; a <use>'s attributes are decision 9's.
+	"template": only("id"),
+	"use":      only("id", "template", "with", "if", "hidden", "class"),
+
 	"progress": only("indeterminate"), // SPEC v0.4b §6.4.1: the spinner
 	"checkbox": checkboxAttrs(),       // SPEC v0.4b §6.16 (forms.go)
 	"select":   selectAttrs(),         // SPEC v0.4b §6.17 (forms.go)
@@ -276,7 +282,7 @@ var TagAttrsCurrent = map[string]map[string]bool{
 var tableItemAttrs = only("class")
 
 // noClassGuard are the tags that take no class:NAME (SPEC §6.13).
-var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true}
+var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true, "template": true, "use": true}
 
 // ClassGuardPrefix starts every class:NAME attribute (SPEC §6.13).
 const ClassGuardPrefix = "class:"
@@ -350,6 +356,9 @@ type builder struct {
 	// elements while one is (SPEC v0.4b §6.18.6). Every diagnostic made
 	// while building an element names its file.
 	org *ir.Origin
+	// depth is the depth of the element being built in the tree being
+	// built, the root's 1 (checkDepth bounds what an expansion nests).
+	depth int
 	// attrNames and attrCands cache what attrSuggestion looks up: the
 	// names every tag takes, and the sorted attributes of each tag.
 	// styleSeen holds the places of the <style> elements recorded in
@@ -360,13 +369,86 @@ type builder struct {
 	// comp holds the state of composition (<include>); nil in a document
 	// that is not the current language.
 	comp *composer
+	// reported holds the diagnostics reported since an expansion made
+	// dedupeDiags apply, by what decides their text (diagKey), each with
+	// its arguments: a repeat, which dedupeDiags would drop at the end, is
+	// dropped before its message is formatted (the F2 final check), so one
+	// written element that many copies place costs one message. cutDiags
+	// clears it wherever doc.Diags loses entries.
+	reported map[diagKey][]any
+	seed     maphash.Seed
+}
+
+// diagKey is what decides a diagnostic's identity for dedupeDiags before
+// its message is formatted: with equal arguments, two equal keys give
+// equal severity, code, message, file, line, and column. placed is the
+// element whose placement suffix the message carries, nil for none; args
+// is the hash of the arguments (argsHash).
+type diagKey struct {
+	sev, code, file string
+	line, col       int
+	placed          *ir.Node
+	format          string
+	args            uint64
+}
+
+// argsHash hashes a diagnostic's arguments, each a string or an int,
+// copying nothing; ok is false for any other argument (its diagnostic is
+// formatted, and left to dedupeDiags).
+func argsHash(seed maphash.Seed, args []any) (uint64, bool) {
+	var h maphash.Hash
+	h.SetSeed(seed)
+	var buf [9]byte
+	for _, a := range args {
+		switch v := a.(type) {
+		case string:
+			binary.LittleEndian.PutUint64(buf[1:], uint64(len(v)))
+			buf[0] = 's'
+			h.Write(buf[:])
+			h.WriteString(v)
+		case int:
+			binary.LittleEndian.PutUint64(buf[1:], uint64(v))
+			buf[0] = 'i'
+			h.Write(buf[:])
+		default:
+			return 0, false
+		}
+	}
+	return h.Sum64(), true
+}
+
+// earlyDedupe turns the dedupe before formatting on (builder.reported); a
+// test turns it off to check that it keeps what dedupeDiags keeps.
+var earlyDedupe = true
+
+// sameArgs reports whether two argument lists argsHash took are equal.
+func sameArgs(a, b []any) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// cutDiags drops the diagnostics from index n on (those of an expansion
+// that is discarded, or set aside), and forgets what reported held.
+func (b *builder) cutDiags(n int) {
+	b.doc.Diags = b.doc.Diags[:n]
+	b.reported = nil
 }
 
 // droppedAt is an unknown-tag child content() kept out of its parent's
-// Children, with the number of Children before it.
+// Children, with the number of Children before it. A ghost entry is a
+// <template> or a <use> instead (expand.go): never a node, but where it
+// stands is its place in the id space.
 type droppedAt struct {
-	at   int
-	node *ir.Node
+	at    int
+	node  *ir.Node
+	ghost ghostKind
 }
 
 // listItem returns the list <item> that n is or is inside (the nearest
@@ -404,9 +486,15 @@ func (b *builder) currentHint(line, col int, n *ir.Node, code, format string, ar
 
 // listHint is the advice given for a focus target inside a list row.
 func listHint(item *ir.Node) string {
+	return listHintAt(nil, item)
+}
+
+// listHintAt is listHint in a diagnostic about the node at: the list's id
+// as ir.ShownIDAt shows it there.
+func listHintAt(at, item *ir.Node) string {
 	sel := "list"
 	if item != nil && item.Parent != nil && item.Parent.ID != "" {
-		sel = "#" + item.Parent.ID
+		sel = "#" + ir.ShownIDAt(at, item.Parent.ID)
 	}
 	return fmt.Sprintf(`list rows are navigated by their list; handle the row with the list's on:select, or a keymap <bind keys="..." action="..." when="%s:focus"/> (its event identifies the selected row)`, sel)
 }
@@ -422,13 +510,32 @@ func (b *builder) diag(sev, code string, line, col int, path, id, format string,
 // stands gets it, a self-check (what the element's own attributes and text
 // say) does not, since it holds wherever the element is placed.
 func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, col int, path, id, format string, args ...any) {
-	msg := fmt.Sprintf(format, args...)
 	file := b.file
+	var placed *ir.Node
 	if org != nil {
 		file = org.File
-		if place && org.Placed != nil {
-			msg += org.PlacedSuffix()
+		if place {
+			placed = org.Placed
 		}
+	}
+	if b.comp != nil && b.comp.used && earlyDedupe {
+		// dedupeDiags applies (ParseWith): a repeat is dropped unformatted.
+		if b.reported == nil {
+			b.reported = map[diagKey][]any{}
+			b.seed = maphash.MakeSeed()
+		}
+		if h, ok := argsHash(b.seed, args); ok {
+			k := diagKey{sev, code, file, line, col, placed, format, h}
+			if first, seen := b.reported[k]; seen && sameArgs(first, args) {
+				return
+			} else if !seen {
+				b.reported[k] = args
+			}
+		}
+	}
+	msg := fmt.Sprintf(format, ir.UnmarkArgs(args)...)
+	if placed != nil {
+		msg += org.PlacedSuffix()
 	}
 	b.doc.Diags = append(b.doc.Diags, ir.Diagnostic{
 		Severity: sev, Code: code, Msg: msg,
@@ -540,12 +647,14 @@ func ParseWith(src []byte, file string, ld *Loader) *Document {
 				selfPath = ld.SelfPath
 			}
 			b.comp = &composer{ld: ld, chain: []chainFile{{canon: self, name: b.docName(), real: selfPath}}}
+			b.comp.charge = b.chargeBytes
 		}
 	default:
 		b.diag(ir.Error, "V005", raw.Line, raw.Col, "/", "", "document root must be <tui> (or the phase-0 alias <app>), got <%s>", raw.Name)
 		return doc
 	}
 	doc.Root = b.node(raw, nil)
+	b.expandUses() // SPEC v0.4b §6.18.1 steps 2 and 3 (expand.go)
 	b.checkStructure()
 	b.checkIDs(doc.Root)
 	b.checkKeymap()
@@ -576,6 +685,8 @@ func childPath(parent *ir.Node, tag string) string {
 // node converts a raw element (recursively) into an IR node.
 func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 	b.countElement()
+	b.depth++
+	b.checkDepth(b.depth)
 	n := &ir.Node{
 		Tag: r.Name, Kind: r.Name, Parent: parent,
 		Attrs: map[string]string{}, On: map[string]string{},
@@ -589,14 +700,23 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 		n.Attrs[a.Name] = a.Value
 		n.Order = append(n.Order, a.Name)
 	}
+	b.chargePlaced()
 	if id, ok := n.Attrs["id"]; ok {
 		n.ID = id
+		if b.comp != nil && b.comp.prefix != "" {
+			n.ID = b.comp.prefix + id // scoped by its use (SPEC v0.4b §6.18.4)
+		}
 	}
 	b.checkTag(n, parent)
 	for _, a := range r.Attrs {
 		b.attr(n, a)
 	}
-	b.content(n, r)
+	if b.comp != nil && len(b.comp.copies) > 0 {
+		b.copyContent(n, r) // an element of a copy (expand.go)
+	} else {
+		b.content(n, r)
+	}
+	b.depth--
 	return n
 }
 
@@ -621,7 +741,6 @@ var htmlTagHints = map[string]string{
 	"option":    "a <list> with on:select picks one row",
 	"radio":     "a <list> with on:select picks one row",
 	"textarea":  "not in the vocabulary yet; use <input>",
-	"template":  "Tuimark has no components or includes; only <style src> loads another file",
 	"slot":      "Tuimark has no components or includes; only <style src> loads another file",
 	"component": "Tuimark has no components or includes; only <style src> loads another file",
 	"import":    "Tuimark has no components or includes; only <style src> loads another file",
@@ -832,10 +951,11 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 		b.errSelf(n, "V001", "unknown tag <%s>%s", tag, b.tagSuggestion(tag))
 		return
 	}
-	if b.comp != nil && b.comp.selfOnly {
-		// A fragment checked on its own: where an element stands is not
-		// known, so only the checks an element gets from itself (SPEC
-		// v0.4b §6.18.3, "An unused template").
+	if b.comp != nil && (b.comp.selfOnly || b.comp.selfCheck) {
+		// A fragment checked on its own, or a template's body as written:
+		// where an element stands is not known, so only the checks an
+		// element gets from itself (SPEC v0.4b §6.18.3, "An unused
+		// template").
 		return
 	}
 	ptag := ""
@@ -901,11 +1021,11 @@ func (b *builder) checkTag(n *ir.Node, parent *ir.Node) {
 	// them rather than render a widget that can never respond.
 	if needsID[tag] || statefulV2[tag] {
 		if it := listItem(parent); it != nil {
-			b.errN(n, "V001", "<%s> inside a list <item> can never take focus: %s", tag, listHint(it))
+			b.errN(n, "V001", "<%s> inside a list <item> can never take focus: %s", tag, listHintAt(n, it))
 		} else if c := b.eachContainer(n); c != nil {
 			// SPEC §6.8 item 8: the template is repeated per element, so
 			// nothing in it may take focus or keep per-node state.
-			b.errN(n, "V001", "<%s> inside an each template (%s) would repeat for every element and can never take focus or keep its state: %s", tag, describeNode(c), templateHint)
+			b.errN(n, "V001", "<%s> inside an each template (%s) would repeat for every element and can never take focus or keep its state: %s", tag, describeNodeAt(n, c), templateHint)
 		}
 	}
 }
@@ -946,8 +1066,16 @@ func isEachContainer(n *ir.Node) bool {
 // describeNode names a node in a diagnostic: <tag id="..."> or <tag> at
 // line:col.
 func describeNode(n *ir.Node) string {
+	return describeNodeAt(nil, n)
+}
+
+// describeNodeAt names n in a diagnostic about the node at: n's id as
+// ir.ShownIDAt shows it there, so an element of a copy, reported once per
+// copy, quotes a long id of an enclosing element shortened (the F2 final
+// check), and every other element keeps describeNode's 0.4.1 text.
+func describeNodeAt(at, n *ir.Node) string {
 	if n.ID != "" {
-		return fmt.Sprintf("<%s id=%q>", n.Tag, n.ID)
+		return fmt.Sprintf("<%s id=%q>", n.Tag, ir.ShownIDAt(at, n.ID))
 	}
 	return fmt.Sprintf("<%s> at %d:%d", n.Tag, n.Line, n.Col)
 }
@@ -1067,16 +1195,16 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		allowed, need := attrAllowed(tag, ptag, name)
 		if itemFocusAttrs[name] {
 			if it := listItem(n); it == n {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed on a list <item>: %s", name, listHint(it))
+				b.attrErr(n, a, "V002", "attribute %q is not allowed on a list <item>: %s", name, listHintAt(n, it))
 				return
 			} else if it != nil && !needsID[tag] {
 				// (An input/button/list/modal there is already V001 as a
 				// whole in checkTag; its own attributes add nothing.)
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item> (on <%s>): %s", name, tag, listHint(it))
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item> (on <%s>): %s", name, tag, listHintAt(n, it))
 				return
 			} else if c := b.eachContainer(n); it == nil && c != nil && !needsID[tag] && !statefulV2[tag] {
 				// SPEC §6.8 item 8, at any depth of a container template.
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (on <%s>, in %s): %s", name, tag, describeNode(c), templateHint)
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (on <%s>, in %s): %s", name, tag, describeNodeAt(n, c), templateHint)
 				return
 			}
 		}
@@ -1115,7 +1243,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
 				return
 			} else if c := b.eachContainer(n); c != nil {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNode(c))
+				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNodeAt(n, c))
 				return
 			}
 		}
@@ -1539,13 +1667,13 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<%s> cannot contain elements (found <%s>)", n.Tag, c.Name)
 				continue
 			}
-			if c.Name == "include" && b.comp != nil {
-				// SPEC v0.4b §6.18.1: the elements of the fragment take the
-				// include's place, built here as if written here. This
-				// comes after the rules above: in an element that takes no
-				// element children, an include is reported by that rule and
-				// its file is not read (§6.18.2).
-				b.include(n, c, nil)
+			if b.comp != nil && b.compose(n, c, nil) {
+				// SPEC v0.4b §6.18.1: the elements of a fragment, or of a
+				// template's copy, take the include's or the use's place,
+				// built here as if written here (expand.go). This comes
+				// after the rules above: in an element that takes no
+				// element children, an include or a use is reported by
+				// that rule and not expanded (§6.18.2, §6.18.3).
 				continue
 			}
 			// An unknown kind still gets its subtree validated (V001 plus
@@ -1734,27 +1862,40 @@ func (b *builder) checkStructure() {
 // itself is never passed to fn (its attributes, id included, are not
 // validated: V001 is all it gets).
 func (b *builder) walkAll(n *ir.Node, dropped bool, fn func(n *ir.Node, dropped bool)) {
+	b.walkSeq(n, dropped, false, fn)
+}
+
+// walkSeq is walkAll that, with ghosts, also passes fn the <template> and
+// <use> elements where they stand (expand.go), without walking into them:
+// the id space holds their ids, in document order (SPEC v0.4b §6.18.4).
+func (b *builder) walkSeq(n *ir.Node, dropped, ghosts bool, fn func(n *ir.Node, dropped bool)) {
 	if b.tagKnown(n.Tag) {
 		fn(n, dropped)
 	}
-	kids := n.Children
-	if extra := b.droppedIn[n]; len(extra) > 0 {
-		// Merge by the index content() recorded: a source position says
-		// nothing about the order of nodes read from different files.
-		kids = make([]*ir.Node, 0, len(n.Children)+len(extra))
-		j := 0
-		for i := 0; i <= len(n.Children); i++ {
-			for j < len(extra) && extra[j].at == i {
-				kids = append(kids, extra[j].node)
-				j++
-			}
-			if i < len(n.Children) {
-				kids = append(kids, n.Children[i])
-			}
+	extra := b.droppedIn[n]
+	if len(extra) == 0 {
+		for _, c := range n.Children {
+			b.walkSeq(c, dropped || !b.tagKnown(c.Tag), ghosts, fn)
 		}
+		return
 	}
-	for _, c := range kids {
-		b.walkAll(c, dropped || !b.tagKnown(c.Tag), fn)
+	// Merge by the index content() recorded: a source position says
+	// nothing about the order of nodes read from different files.
+	j := 0
+	for i := 0; i <= len(n.Children); i++ {
+		for j < len(extra) && extra[j].at == i {
+			switch e := extra[j]; {
+			case e.ghost == 0:
+				b.walkSeq(e.node, true, ghosts, fn)
+			case ghosts:
+				fn(e.node, dropped)
+			}
+			j++
+		}
+		if i < len(n.Children) {
+			c := n.Children[i]
+			b.walkSeq(c, dropped || !b.tagKnown(c.Tag), ghosts, fn)
+		}
 	}
 }
 
@@ -1812,7 +1953,8 @@ func (b *builder) checkNode(n *ir.Node) {
 				b.errN(n, "V013", "<list each=...> needs exactly one <item> template (found %d)", items)
 			}
 			if _, ok := n.Attr("key"); !ok {
-				b.warnN(n, "B006", "<list each=%q> has no key=; selection follows the index", n.Each)
+				// The each as written, as V011 quotes it (writtenEach).
+				b.warnN(n, "B006", "<list each=%q> has no key=; selection follows the index", writtenEach(n))
 			}
 		}
 	}
@@ -1854,6 +1996,11 @@ func (b *builder) checkTable(n *ir.Node) {
 		b.errN(n, "V017", "<table> needs at least one <column>")
 	}
 	if _, ok := n.Attr("key"); n.Each != "" && !ok && !nested {
+		if n.Written != nil {
+			// As written: an element of a copy holds its paths after the
+			// with aliases (Node.Written), as V011 says.
+			eachAttr = n.Written.Attrs["each"]
+		}
 		b.warnN(n, "B006", "<table each=%q> has no key=; the cursor follows the row index", eachAttr)
 	}
 }
@@ -1897,8 +2044,8 @@ func (b *builder) checkTabFocus(n *ir.Node) {
 	if n.Tag == "tab" {
 		if f, ok := n.Attr("focus"); ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
 			id := f[1:]
-			if why := b.idTarget(id); why == idMissing {
-				b.errN(n, "B005", "focus=%q refers to an id that does not exist", f)
+			if why := b.idTargetAt(n, id); strings.HasPrefix(why, idMissing) {
+				b.errN(n, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
 				b.errN(n, "B005", "focus=%q %s", f, why)
 			} else if !inside(b.doc.IDs[id], n) {
@@ -1938,8 +2085,8 @@ func (b *builder) checkModalFocus(n *ir.Node) {
 	if n.Tag == "modal" {
 		if f, ok := n.Attr("focus"); ok && strings.HasPrefix(f, "#") && isIDName(f[1:]) {
 			id := f[1:]
-			if why := b.idTarget(id); why == idMissing {
-				b.errN(n, "B005", "focus=%q refers to an id that does not exist", f)
+			if why := b.idTargetAt(n, id); strings.HasPrefix(why, idMissing) {
+				b.errN(n, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
 				b.errN(n, "B005", "focus=%q %s", f, why)
 			} else if !inside(b.doc.IDs[id], n) {
@@ -1969,19 +2116,34 @@ func (b *builder) checkAliases(n *ir.Node) {
 	if n.Each == "" {
 		return
 	}
-	e, err := ir.ParseEach(n.Each)
+	e, err := ir.ParseEachField(n.Each)
 	if err != nil {
 		return
 	}
+	// An alias the parser renamed in a copy (ir.MarkAlias) compares as
+	// written: renaming keeps a with path from being captured, it does not
+	// change what §6.8 says about two aliases.
+	alias := ir.Unmark(e.Alias)
 	for p := n.Parent; p != nil; p = p.Parent {
 		if p.Each == "" {
 			continue
 		}
-		if pe, err := ir.ParseEach(p.Each); err == nil && pe.Alias == e.Alias {
-			b.errN(n, "V011", "each=%q: the alias %q repeats the alias of the enclosing each=%q of %s; pick another name", n.Each, e.Alias, p.Each, describeNode(p))
+		if pe, err := ir.ParseEachField(p.Each); err == nil && ir.Unmark(pe.Alias) == alias {
+			// The message quotes each each as written: an element of a
+			// copy holds its paths after the with aliases (Node.Written).
+			b.errN(n, "V011", "each=%q: the alias %q repeats the alias of the enclosing each=%q of %s; pick another name", writtenEach(n), alias, ir.ShownIDAt(n, writtenEach(p)), describeNodeAt(n, p))
 			return
 		}
 	}
+}
+
+// writtenEach is n's each as the document wrote it: what an element of a
+// copy wrote before its paths went through the with aliases in scope.
+func writtenEach(n *ir.Node) string {
+	if n.Written != nil {
+		return n.Written.Each
+	}
+	return n.Each
 }
 
 // checkMultiSelect applies the V018 rules of SPEC §6.14 and §6.10.1:
@@ -2030,23 +2192,30 @@ func (b *builder) checkMultiSelect(n *ir.Node) {
 // tree but never becomes addressable.
 func (b *builder) checkIDs(root *ir.Node) {
 	seen := map[string]*ir.Node{}
-	b.walkAll(root, false, func(n *ir.Node, dropped bool) {
+	// The <template> and <use> elements are in the id space too (SPEC
+	// v0.4b §6.18.4): walkSeq passes them where they stand.
+	b.walkSeq(root, false, b.comp != nil, func(n *ir.Node, dropped bool) {
 		if n.ID == "" {
 			return
 		}
 		inTemplate := b.eachContainer(n) != nil
 		if prev, ok := seen[n.ID]; ok {
-			b.dupID(n, prev)
+			if !sameIDCopies(n, prev) {
+				b.dupID(n, prev)
+			}
 		} else {
 			seen[n.ID] = n
 			if inTemplate {
 				// SPEC §6.8 item 8: the template is inflated once per
 				// element, so its id would repeat.
-				b.errN(n, "V004", "id %q inside an each template (%s) would repeat for every element: %s", n.ID, describeNode(b.eachContainer(n)), templateHint)
+				b.errN(n, "V004", "id %q inside an each template (%s) would repeat for every element: %s", ir.ShownIDAt(n, n.ID), describeNodeAt(n, b.eachContainer(n)), templateHint)
 			}
 		}
 		if dropped {
 			return
+		}
+		if b.ghostID(n) {
+			return // not a node (expand.go)
 		}
 		if _, ok := b.doc.IDs[n.ID]; !ok {
 			b.doc.IDs[n.ID] = n
@@ -2066,14 +2235,28 @@ const idMissing = "does not exist"
 // exist, or it exists only inside a list <item>, where nothing is focused
 // or addressed by id at run time (the host inflates rows without an id
 // index). It returns "" when the id is a valid target.
+//
+// A missing id's reason starts with idMissing and may go on: in a document
+// with templates, an id that is not a node may be a <use>'s or a
+// <template>'s, or one an element of a template writes (expand.go).
 func (b *builder) idTarget(id string) string {
+	return b.idTargetAt(nil, id)
+}
+
+// idTargetAt is idTarget for a diagnostic about the node at: the list a
+// reason names is shown as ir.ShownIDAt shows it there (a tab or a modal
+// of a copy is reported once per copy).
+func (b *builder) idTargetAt(at *ir.Node, id string) string {
 	n, ok := b.doc.IDs[id]
 	if !ok {
+		if b.comp != nil {
+			return b.notANode(id)
+		}
 		return idMissing
 	}
 	if !b.addressable[id] {
 		if it := listItem(n); it != nil {
-			return "is inside a list <item>, where nothing takes focus or is addressed by id: " + listHint(it)
+			return "is inside a list <item>, where nothing takes focus or is addressed by id: " + listHintAt(at, it)
 		}
 		return "is inside an each template, where nothing takes focus or is addressed by id: " + templateHint
 	}
@@ -2222,8 +2405,8 @@ func (b *builder) checkKeymap() {
 				b.errKB(k, "V003", path, "to=%q: want #id", k.To)
 			} else {
 				k.To = k.To[1:]
-				if why := b.idTarget(k.To); why == idMissing {
-					b.errKB(k, "B005", path, "to=\"#%s\" refers to an id that does not exist", k.To)
+				if why := b.idTarget(k.To); strings.HasPrefix(why, idMissing) {
+					b.errKB(k, "B005", path, "to=\"#%s\" refers to an id that %s", k.To, why)
 				} else if why != "" {
 					b.errKB(k, "B005", path, "to=\"#%s\" %s", k.To, why)
 				} else {
@@ -2240,8 +2423,8 @@ func (b *builder) checkKeymap() {
 	}
 	for _, s := range b.doc.Screens {
 		if f, ok := s.Attr("focus"); ok && strings.HasPrefix(f, "#") {
-			if why := b.idTarget(f[1:]); why == idMissing {
-				b.errN(s, "B005", "focus=%q refers to an id that does not exist", f)
+			if why := b.idTarget(f[1:]); strings.HasPrefix(why, idMissing) {
+				b.errN(s, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
 				b.errN(s, "B005", "focus=%q %s", f, why)
 			}

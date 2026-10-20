@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // Version is the source IR version `tuimark ir` emits for version="1"
@@ -148,6 +149,30 @@ type Node struct {
 	// written in the document itself and placed by nothing, which is every
 	// element of a document without composition.
 	Org *Origin
+
+	// CopiedBy is set on a top-level element of a <use>'s copy (SPEC
+	// v0.4b §6.18.3): the uses whose copy it is a top-level element of,
+	// innermost first. Their static class is already in Classes; their if
+	// and hidden decide, each frame, whether the element is in it. nil
+	// for every other element.
+	CopiedBy []*Node
+	// Written is what an element of a copy (or a <use> in one) wrote,
+	// before its paths went through the with aliases in scope and its #id
+	// references were resolved (SPEC v0.4b §6.18.4, §6.18.5, decision
+	// 18): `tuimark ir` shows it, and the messages that name a path as
+	// written read it. nil outside copies.
+	Written *Written
+	// With is a <use> node's with clauses (SPEC v0.4b §6.18.5), each path
+	// already resolved where the use stands (through the aliases in scope
+	// there); nil for every other node and for a use whose with is V011.
+	With []Each
+}
+
+// Written is an element of a copy as written (Node.Written).
+type Written struct {
+	Attrs                map[string]string
+	Bind, Each, If, Text string
+	Classes              []string
 }
 
 // Origin is where an element of an expanded document was written (SPEC
@@ -217,19 +242,78 @@ func (o *Origin) PlacedSuffix() string {
 	if o == nil || o.Placed == nil {
 		return ""
 	}
-	return ", placed by " + o.Placed.describePlacer() + " at " + o.Placed.Loc(true)
+	return o.PlacedBy() + " at " + o.Placed.Loc(true)
 }
 
-// describePlacer names an <include> (and, in a later phase, a <use>) the
-// way a placement suffix does.
+// PlacedBy is the part of o's placement suffix that does not depend on
+// where the files are or what they are called: `, placed by <use …>`,
+// without " at FILE:LINE:COL". It is what the expansion budget charges an
+// element a copy places (the F2 final check): the same document under a
+// longer file name, or with its uses further right, is charged the same.
+func (o *Origin) PlacedBy() string {
+	if o == nil || o.Placed == nil {
+		return ""
+	}
+	return ", placed by " + o.Placed.describePlacer()
+}
+
+// InCopy reports whether n is an element of a copy: a <use> is among the
+// elements that placed it (its Placer chain). A diagnostic about such an
+// element quotes every id written outside the element through ShownID
+// (ShownIDAt), since one written element there is reported once per copy;
+// an element written once, and every element of a pinned document, keeps
+// the text 0.4.1 gives.
+func (n *Node) InCopy() bool {
+	for p := n.Placer(); p != nil; p = p.Placer() {
+		if p.Kind == "use" {
+			return true
+		}
+	}
+	return false
+}
+
+// ShownIDAt is id as a diagnostic about the node at quotes it: ShownID(id)
+// for an element of a copy (InCopy) and for a <use> (a composition
+// diagnostic, which no pinned document has), id whole otherwise, as 0.4.1
+// quotes it.
+func ShownIDAt(at *Node, id string) string {
+	if at != nil && (at.Kind == "use" || at.InCopy()) {
+		return ShownID(id)
+	}
+	return id
+}
+
+// describePlacer names an <include> or a <use> the way a placement suffix
+// does, its id or template id as ShownID shows it.
 func (n *Node) describePlacer() string {
 	if n.ID != "" {
-		return fmt.Sprintf("<%s id=%q>", n.Tag, n.ID)
+		return fmt.Sprintf("<%s id=%q>", n.Tag, ShownID(n.ID))
 	}
 	if t, ok := n.Attrs["template"]; ok && n.Tag == "use" {
-		return fmt.Sprintf("<use template=%q>", t)
+		return fmt.Sprintf("<use template=%q>", ShownID(t))
 	}
 	return "<" + n.Tag + ">"
+}
+
+// MaxShownID is the longest id a composition diagnostic shows whole when
+// it quotes an id (or an include's file) written somewhere other than its
+// own site (the owner's decisions in the F2 re-review): a longer one is
+// shown as its first MaxShownID bytes, cut at a rune boundary, then "…"
+// (ShownID). It keeps what many diagnostics print about one long id
+// linear in the document: the placement suffix, V019, V012, V021, V006,
+// V011, and the reasons of an id that names no node.
+const MaxShownID = 64
+
+// ShownID is id as a composition diagnostic shows it (MaxShownID).
+func ShownID(id string) string {
+	if len(id) <= MaxShownID {
+		return id
+	}
+	cut := MaxShownID
+	for cut > 0 && !utf8.RuneStart(id[cut]) {
+		cut--
+	}
+	return id[:cut] + "…"
 }
 
 // Loc is the node's position in the file it is written in as LINE:COL, or
@@ -540,7 +624,7 @@ func (ds Diags) Sorted() Diags {
 // an element written in a fragment is reported in its own file, and one an
 // include placed names the include (SPEC v0.4b §6.18.6).
 func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
-	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, args...), File: file}
+	d := Diagnostic{Severity: sev, Code: code, Msg: fmt.Sprintf(format, UnmarkArgs(args)...), File: file}
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
 		d.File = n.FileName(file)

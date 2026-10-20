@@ -1,6 +1,7 @@
 package host
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
@@ -69,6 +70,40 @@ type tableData struct {
 	// first maps a key (keyID) to the first row that has it, built on the
 	// first rowOf and kept with the rows.
 	first map[string]int
+	// act is the set of columns and the row template the rows were
+	// resolved for (tableActive): a column or a row template that a
+	// guarded <use> placed and prunes this frame is not resolved, so the
+	// rows are resolved again when the set changes.
+	act tableActive
+}
+
+// tableActive is which of a table's columns, and whether its row
+// template, are in the frame: each is, unless a <use> that placed it
+// prunes it with its if or hidden (SPEC v0.4b §6.18.3). A pruned column
+// is absent from the table altogether (no header cell, no body cells, no
+// share of the intrinsic width, no say in whether the header row shows),
+// unlike a column priority hides; a pruned row template leaves the rows
+// with no classes of their own.
+type tableActive struct {
+	cols []bool
+	item bool
+}
+
+func (x tableActive) same(y tableActive) bool {
+	return x.item == y.item && slices.Equal(x.cols, y.cols)
+}
+
+// tableActive evaluates the guards of the uses that placed the columns
+// and the row template of the table plan p, in the table's scope sc.
+func (fb *builder) tableActive(p *tablePlan, sc *scope) tableActive {
+	act := tableActive{cols: make([]bool, len(p.cols)), item: p.item != nil}
+	for j, c := range p.cols {
+		act.cols[j] = len(c.CopiedBy) == 0 || !fb.usePruned(c, sc)
+	}
+	if p.item != nil && len(p.item.CopiedBy) > 0 && fb.usePruned(p.item, sc) {
+		act.item = false
+	}
+	return act
 }
 
 // rowOf returns the index of the first row, in array order, whose key
@@ -95,6 +130,9 @@ type tableFrame struct {
 	data    *tableData
 	checked keySet
 	sel     int
+	// item is the row template in the frame, nil when there is none or a
+	// guarded <use> prunes it (tableActive).
+	item *ir.Node
 }
 
 // tablePlan parses the templates of table node n once. The caller holds
@@ -105,7 +143,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 	}
 	p := &tablePlan{keyPath: n.Attrs["key"], colIndex: map[*ir.Node]int{}}
 	if n.Each != "" {
-		if e, err := ir.ParseEach(n.Each); err == nil {
+		if e, err := ir.ParseEachField(n.Each); err == nil {
 			p.each, p.ok = e, true
 		}
 	}
@@ -114,7 +152,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 		case c.Kind == "item" && p.item == nil:
 			p.item = c
 		case c.Kind == "column":
-			segs, _ := ir.ParseInterp(c.Text)
+			segs, _ := ir.ParseInterpField(c.Text)
 			p.colIndex[c] = len(p.cols)
 			p.cols = append(p.cols, c)
 			p.segs = append(p.segs, segs)
@@ -139,7 +177,7 @@ func (a *App) tablePlan(n *ir.Node) *tablePlan {
 				return
 			}
 			for _, cg := range n.ClassGuards {
-				if g, err := ir.ParseGuard(cg.Guard); err == nil {
+				if g, err := ir.ParseGuardField(cg.Guard); err == nil {
 					dep(g.Path, true)
 				}
 			}
@@ -186,14 +224,14 @@ func sameStamp(a, b []uint64) bool {
 // store paths they read are unchanged, else resolved again. A table in an
 // enclosing each scope (which is V001) is resolved every frame. The
 // caller holds a.mu.
-func (fb *builder) tableRows(n *ir.Node, p *tablePlan, sc *scope) *tableData {
+func (fb *builder) tableRows(n *ir.Node, p *tablePlan, sc *scope, act tableActive) *tableData {
 	a := fb.a
 	c := a.tables[n]
 	var td *tableData
-	if sc == nil && !a.noCache && c.data != nil && c.data.strict == a.strict && sameStamp(c.data.stamp, a.stamp(p.deps)) {
+	if sc == nil && !a.noCache && c.data != nil && c.data.strict == a.strict && c.data.act.same(act) && sameStamp(c.data.stamp, a.stamp(p.deps)) {
 		td = c.data
 	} else {
-		td = fb.resolveTable(n, p, sc)
+		td = fb.resolveTable(n, p, sc, act)
 		if sc == nil && !a.noCache {
 			td.stamp = a.stamp(p.deps)
 			c.data = td
@@ -222,11 +260,11 @@ func (fb *builder) add(d ir.Diagnostic) {
 // row, visible or not, and a missing path reports B002 (guard) or B003
 // (cell template) once per template or guard and path, so the
 // diagnostics never depend on the scroll offset. The caller holds a.mu.
-func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope) *tableData {
+func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope, act tableActive) *tableData {
 	a := fb.a
 	sub := &builder{a: a, seen: map[string]bool{}}
 	k := len(p.cols)
-	td := &tableData{strict: a.strict, texts: make([][]string, k), on: make([][][]bool, k), measure: make([]int, k)}
+	td := &tableData{strict: a.strict, texts: make([][]string, k), on: make([][][]bool, k), measure: make([]int, k), act: act}
 	if !p.ok {
 		return td
 	}
@@ -242,12 +280,15 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope) *tableData 
 	td.rows = rows
 	td.keys = make([]any, rows)
 	for j, c := range p.cols {
+		if !act.cols[j] {
+			continue
+		}
 		td.texts[j] = make([]string, rows)
 		if len(c.ClassGuards) > 0 {
 			td.on[j] = make([][]bool, rows)
 		}
 	}
-	if p.item != nil && len(p.item.ClassGuards) > 0 {
+	if act.item && len(p.item.ClassGuards) > 0 {
 		td.rowOn = make([][]bool, rows)
 	}
 	keySev := ir.Warning
@@ -270,6 +311,9 @@ func (fb *builder) resolveTable(n *ir.Node, p *tablePlan, sc *scope) *tableData 
 			td.rowOn[i] = sub.guardsOn(p.item, isc)
 		}
 		for j, c := range p.cols {
+			if !act.cols[j] {
+				continue
+			}
 			text := sub.interpSegs(c, p.segs[j], isc)
 			td.texts[j][i] = text
 			if w := layout.MaxWidth(text); w > td.measure[j] {
@@ -381,9 +425,13 @@ func guardClasses(n *ir.Node, on []bool) []string {
 func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	a := fb.a
 	p := a.tablePlan(n)
-	td := fb.tableRows(n, p, sc)
+	act := fb.tableActive(p, sc)
+	td := fb.tableRows(n, p, sc, act)
 	b.Placeholder = fb.interp(n, n.Attrs["placeholder"], sc)
 	for j, c := range p.cols {
+		if !act.cols[j] {
+			continue // pruned by the guard of the <use> that placed it
+		}
 		cb := &layout.Box{
 			Tag: c.Tag, Kind: c.Kind, ID: c.ID, Classes: c.Classes, Parent: b, Src: c,
 			Hints: a.hintsOf(c), Inline: a.inlineOf(c), Follow: -1, Index: -1,
@@ -424,7 +472,7 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	// SPEC §6.14: the checked row keys, and the mark channel of every
 	// row, the header row's too (§6.9.3).
 	var checked keySet
-	if path, ok := n.Attr("checked"); ok && ir.IsPath(path) {
+	if path, ok := n.Attr("checked"); ok && ir.IsPathField(path) {
 		keys, _ := fb.checkedKeys(n, path, sc)
 		checked = fb.checkedSet(n, path, keys, sc)
 		if m, ok := n.Attr("mark"); ok {
@@ -441,7 +489,11 @@ func (fb *builder) inflateTable(n *ir.Node, b *layout.Box, sc *scope) {
 	if fb.tables == nil {
 		fb.tables = map[*layout.Box]*tableFrame{}
 	}
-	fb.tables[b] = &tableFrame{plan: p, data: td, checked: checked, sel: sel}
+	item := p.item
+	if !act.item {
+		item = nil
+	}
+	fb.tables[b] = &tableFrame{plan: p, data: td, checked: checked, sel: sel, item: item}
 }
 
 // placeTableRows is step 7 of SPEC §18: after layout, for each laid-out
@@ -495,9 +547,9 @@ func (fb *builder) placeRows(casc *css.Cascade, t *layout.Box) {
 			rowOn = td.rowOn[i]
 		}
 		row := &layout.Box{
-			Tag: "item", Kind: "item", Parent: t, Src: p.item, Follow: -1, Index: i,
+			Tag: "item", Kind: "item", Parent: t, Src: tf.item, Follow: -1, Index: i,
 			Fixed: true, Disabled: t.Disabled, Mark: t.Mark,
-			Classes: guardClasses(p.item, rowOn), GuardOn: rowOn,
+			Classes: guardClasses(tf.item, rowOn), GuardOn: rowOn,
 			Selected: i == tf.sel, Checked: tf.checked.has(td.keys[i]), Key: Format(td.keys[i]),
 		}
 		for _, col := range cols {

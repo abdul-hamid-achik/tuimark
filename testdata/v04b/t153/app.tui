@@ -1,0 +1,13 @@
+<tui>
+  <screen id="main">
+    <col>
+      <template id="a"><text>x</text></template>
+    </col>
+    <use id="u" template="b" style="x">text</use>
+  </screen>
+  <template id="b">
+    <screen id="s2"/>
+    <text>ok</text>
+  </template>
+  <template><text>y</text></template>
+</tui>

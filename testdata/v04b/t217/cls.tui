@@ -1,0 +1,18 @@
+<tui>
+  <style>
+    .k-btn { bold: true; }
+    .danger { color: red; }
+  </style>
+  <template id="one">
+    <text class="k-note">note</text>
+  </template>
+  <template id="pair">
+    <button id="ok" class="k-btn danger" label="ok"/>
+    <use id="in" template="one" class="inner"/>
+    <box class="k-box"><text>deep</text></box>
+  </template>
+  <screen id="main">
+    <use id="a" template="pair" class="danger wide"/>
+    <use id="b" template="pair"/>
+  </screen>
+</tui>

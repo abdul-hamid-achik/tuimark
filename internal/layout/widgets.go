@@ -367,7 +367,7 @@ func (e *Engine) grid(b *Box, kids []*Box, area Rect, clip Rect) {
 	}
 	for _, k := range kids {
 		if what := gridIgnored(k); what != "" {
-			e.report(k, ir.Warning, "L007", "%s is ignored in a layout: grid container (%s); its column sets its width and its content its height", what, describe(b))
+			e.report(k, ir.Warning, "L007", "%s is ignored in a layout: grid container (%s); its column sets its width and its content its height", what, describeAt(k, b))
 		}
 	}
 	rows := e.gridRows(kids, n, widths)

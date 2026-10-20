@@ -60,12 +60,61 @@ const ExpansionLimit = 100000
 // content, which the count of elements does not.
 const ExpansionByteLimit = 16 << 20
 
-// expFrame is an expansion under way: the innermost one reports V021.
-type expFrame struct{}
+// budget is what the expansions of one kind have placed (ADR 0034): the
+// elements they inserted (ExpansionLimit) and the bytes of source they
+// placed (ExpansionByteLimit). dead is set once one went over: no later
+// expansion charged to it expands.
+type budget struct {
+	count, bytes int
+	dead         bool
+}
+
+// expFrame is an expansion under way: the innermost one reports V021. bg
+// is the budget it is charged to: the document's, or, for an <include> in
+// the body of a <template> as written, the templates' own (decision of the
+// F2 review: a template is charged once per copy, so building its body as
+// written is not charged to the document).
+type expFrame struct{ bg *budget }
 
 // expansionOverflow is the panic that unwinds an expansion to the frame
-// that inserted one element too many.
-type expansionOverflow struct{ frame *expFrame }
+// that inserted one element too many, placed too many bytes, or nested an
+// element deeper than maxNestingDepth (depth).
+type expansionOverflow struct {
+	frame *expFrame
+	depth bool
+}
+
+// MaxExpandedDepth is the deepest the expanded document nests (the F2
+// review, approved by the owner): an element of an expansion that would
+// stand deeper than this, its written ancestors counted, makes the
+// innermost <include> or <use> insert nothing (V021), as the parser's own
+// limit bounds a document as written.
+const MaxExpandedDepth = maxNestingDepth
+
+// defOverflowMsg is the V021 message of an include in the body of the
+// template t as written, charged to the definitions' budget (the F2
+// review): only the template's own checks lose what it inserts, and the
+// placements go on.
+func defOverflowMsg(src string, t *ir.Node, o *expansionOverflow) string {
+	in := "<template>"
+	if t != nil && t.ID != "" {
+		in = fmt.Sprintf("<template id=%q>", ir.ShownID(t.ID))
+	}
+	limit := fmt.Sprintf("the expansion limit for template definitions (%d elements or %d MiB of placed source)", ExpansionLimit, ExpansionByteLimit>>20)
+	if o.depth {
+		limit = fmt.Sprintf("the expansion depth limit of %d levels", MaxExpandedDepth)
+	}
+	return fmt.Sprintf("include src=%q in %s exceeds %s: it inserts nothing into the template's own checks, and no later include in a template definition expands", src, in, limit)
+}
+
+// overflowMsg is the V021 message of the expansion what (`include
+// src="X"` or `use template="T"`) that o unwound.
+func overflowMsg(what string, o *expansionOverflow) string {
+	if o.depth {
+		return fmt.Sprintf("%s exceeds the expansion depth limit of %d levels: it inserts nothing, and no later include or use expands", what, MaxExpandedDepth)
+	}
+	return fmt.Sprintf("%s exceeds the expansion limit (%d elements or %d MiB of placed source): it inserts nothing, and no later include or use expands", what, ExpansionLimit, ExpansionByteLimit>>20)
+}
 
 // composer is the state of composition while one document is built.
 type composer struct {
@@ -82,17 +131,17 @@ type composer struct {
 	// docOrg is the origin of an <include> written in the document: its
 	// file, placed by nothing.
 	docOrg *ir.Origin
-	// frames are the expansions under way, outermost first; count is the
-	// number of elements they have inserted (ExpansionLimit); dead is set
-	// once one went over: no later include expands (ADR 0034).
-	frames []*expFrame
-	count  int
-	bytes  int
-	dead   bool
+	// frames are the expansions under way, outermost first. doc is the
+	// document's budget, def the budget of the template bodies built as
+	// written (expFrame).
+	frames   []*expFrame
+	doc, def budget
 	// files caches each fragment read and parsed, by Canon: an expansion
 	// may place a file many times, and reading and parsing it again each
 	// time would make the work grow with the copies, not the files.
 	files map[string]*fragFile
+	// templating is the state of <template> and <use> (expand.go).
+	templating
 }
 
 // fragFile is a fragment read once: its parsed root, or why it has none.
@@ -117,13 +166,13 @@ type chainFile struct {
 // passing ExpansionLimit does. F2's <use> charges its template's source
 // span through it.
 func (b *builder) chargeBytes(n int) {
-	cp := b.comp
-	if cp == nil || cp.dead || len(cp.frames) == 0 {
+	fr := b.charged()
+	if fr == nil || fr.bg.dead {
 		return
 	}
-	cp.bytes += n
-	if cp.bytes > ExpansionByteLimit {
-		panic(&expansionOverflow{frame: cp.frames[len(cp.frames)-1]})
+	fr.bg.bytes += n
+	if fr.bg.bytes > ExpansionByteLimit {
+		panic(&expansionOverflow{frame: fr})
 	}
 }
 
@@ -131,14 +180,54 @@ func (b *builder) chargeBytes(n int) {
 // would pass ExpansionLimit unwinds to the innermost expansion, which
 // inserts nothing and reports V021 (ADR 0034).
 func (b *builder) countElement() {
-	cp := b.comp
-	if cp == nil || cp.dead || len(cp.frames) == 0 {
+	fr := b.charged()
+	if fr == nil || fr.bg.dead {
 		return
 	}
-	cp.count++
-	if cp.count > ExpansionLimit {
-		panic(&expansionOverflow{frame: cp.frames[len(cp.frames)-1]})
+	fr.bg.count++
+	if fr.bg.count > ExpansionLimit {
+		panic(&expansionOverflow{frame: fr})
 	}
+}
+
+// checkDepth unwinds to the innermost expansion when a node it builds
+// would stand at depth d, deeper than MaxExpandedDepth. Depth is counted in
+// the tree `tuimark ir` prints, the root at 1, where an <include> or a
+// <use> is a level holding what it inserted (the frame's tree, without
+// them, nests no deeper). Only an expansion can nest a node that deep: a
+// document as written nests at most maxNestingDepth levels.
+func (b *builder) checkDepth(d int) {
+	if d <= MaxExpandedDepth {
+		return
+	}
+	if fr := b.charged(); fr != nil {
+		panic(&expansionOverflow{frame: fr, depth: true})
+	}
+}
+
+// charged is the innermost expansion under way when what is built now is
+// charged to it, else nil. The body of a template as written is charged
+// to the templates' budget, and only by an <include> inside it: when the
+// template is itself written in a fragment, its own elements are part of
+// that fragment's source, which the include placing it already charged.
+func (b *builder) charged() *expFrame {
+	cp := b.comp
+	if cp == nil || len(cp.frames) == 0 {
+		return nil
+	}
+	fr := cp.frames[len(cp.frames)-1]
+	if fr.bg != cp.active() {
+		return nil
+	}
+	return fr
+}
+
+// active is the budget an expansion starting now is charged to.
+func (cp *composer) active() *budget {
+	if cp.selfCheck {
+		return &cp.def
+	}
+	return &cp.doc
 }
 
 // docName is how the document is named in a message that names files.
@@ -177,7 +266,7 @@ func (b *builder) attach(n, outer, child *ir.Node) {
 		if b.droppedIn == nil {
 			b.droppedIn = map[*ir.Node][]droppedAt{}
 		}
-		b.droppedIn[n] = append(b.droppedIn[n], droppedAt{len(n.Children), child})
+		b.droppedIn[n] = append(b.droppedIn[n], droppedAt{at: len(n.Children), node: child})
 		return
 	}
 	n.Children = append(n.Children, child)
@@ -210,6 +299,7 @@ func writeInto(n, outer, w *ir.Node) {
 func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 	cp := b.comp
 	cp.used = true
+	b.checkDepth(b.depth + 1) // its own level, in the tree as composed
 	w := &ir.Node{
 		Tag: "include", Kind: "include", Parent: n,
 		Attrs: map[string]string{}, On: map[string]string{},
@@ -237,7 +327,7 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		b.errInc(w, "V003", `<include> needs src="FILE"`)
 		return
 	}
-	if cp.selfOnly || cp.dead {
+	if cp.selfOnly || cp.active().dead {
 		return
 	}
 	cur := cp.chain[len(cp.chain)-1]
@@ -325,24 +415,29 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 	saved := b.org
 	chainLen := len(cp.chain)
 	nChildren, nDropped, nDroppedIn := len(n.Children), len(b.doc.dropped), len(b.droppedIn[n])
-	nStyles, nDiags, count, bytes := len(b.doc.Styles), len(b.doc.Diags), cp.count, cp.bytes
+	fr := &expFrame{bg: cp.active()}
+	nStyles, nDiags, count, bytes := len(b.doc.Styles), len(b.doc.Diags), fr.bg.count, fr.bg.bytes
+	nScope, nUsed, depth := len(cp.scope), len(cp.usedLog), b.depth
 	nList := len(n.Source)
 	if outer != nil {
 		nList = len(outer.Children)
 	}
-	fr := &expFrame{}
 	cp.frames = append(cp.frames, fr)
 	defer func() {
 		cp.frames = cp.frames[:len(cp.frames)-1]
+		b.depth = depth
 		r := recover()
 		if r == nil {
 			return
 		}
-		if o, ok := r.(*expansionOverflow); !ok || o.frame != fr {
+		o, ok := r.(*expansionOverflow)
+		if !ok || o.frame != fr {
 			panic(r)
 		}
 		b.org = saved
+		cp.unuse(nUsed)
 		cp.chain = cp.chain[:chainLen]
+		cp.popTo(nScope) // an element of a copy left mid-build
 		n.Children = n.Children[:nChildren]
 		if outer != nil {
 			outer.Children = outer.Children[:nList]
@@ -357,23 +452,27 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 			delete(b.styleSeen, styleKey(st.File, st.Line, st.Col))
 		}
 		b.doc.Styles = b.doc.Styles[:nStyles]
-		b.doc.Diags = b.doc.Diags[:nDiags]
+		b.cutDiags(nDiags)
 		w.Children = nil
-		cp.count, cp.bytes = count, bytes
-		cp.dead = true
-		b.errInc(w, "V021", "include src=%q exceeds the expansion limit (%d elements or %d MiB of placed source): it inserts nothing, and no later include or use expands", src, ExpansionLimit, ExpansionByteLimit>>20)
+		fr.bg.count, fr.bg.bytes = count, bytes
+		fr.bg.dead = true
+		if fr.bg == &cp.def {
+			b.errInc(w, "V021", "%s", defOverflowMsg(src, cp.defining, o))
+		} else {
+			b.errInc(w, "V021", "%s", overflowMsg(fmt.Sprintf("include src=%q", src), o))
+		}
 	}()
 	b.chargeBytes(size) // before anything is built
 	b.countElement()    // the include itself, so it is the one that reports
 	b.org = fo
+	b.depth++ // the include's own level: its elements stand below it
 	cp.chain = append(cp.chain, file)
 	b.fragmentRoot(root)
 	for _, fc := range root.Children {
 		if fc.Type != RawElement {
 			continue
 		}
-		if fc.Name == "include" {
-			b.include(n, fc, w)
+		if b.compose(n, fc, w) {
 			continue
 		}
 		b.attach(n, w, b.node(fc, n))
@@ -420,8 +519,7 @@ func FragmentDiags(doc *Document) ir.Diags {
 		if c.Type != RawElement {
 			continue
 		}
-		if c.Name == "include" {
-			b.include(holder, c, nil)
+		if b.compose(holder, c, nil) {
 			continue
 		}
 		b.attach(holder, nil, b.node(c, holder))

@@ -113,11 +113,11 @@ func (e *Engine) reportPctOfAuto(parent, k *Box, horizontal bool, s ir.Scalar) {
 // its content there by §11.2 (no size on that axis from any origin, so not
 // one the built-in sheet makes 1fr, and not made 1fr by the sibling-fr
 // rule), the cause and the CSS fix; otherwise the 0.4.1 advice.
-func (e *Engine) cutCause(c *Box, horizontal bool) string {
+func (e *Engine) cutCause(n, c *Box, horizontal bool) string {
 	if e.Lang.V4() && c.Style.Dock == "" && c.unsizedOn(horizontal) {
 		switch c.Kind {
 		case "col", "row", "box":
-			return fmt.Sprintf("%s is sized by its content and does not shrink: give it %s: 1fr (or flex: 1)", clipRef(c), axisName(horizontal))
+			return fmt.Sprintf("%s is sized by its content and does not shrink: give it %s: 1fr (or flex: 1)", clipRef(n, c), axisName(horizontal))
 		}
 	}
 	return "give it room"

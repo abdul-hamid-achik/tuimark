@@ -111,7 +111,7 @@ func (fb *builder) inflateSelect(n *ir.Node, b *layout.Box, sc *scope, nested bo
 func (fb *builder) resolveOptions(n *ir.Node, sc *scope) *selectOptions {
 	a := fb.a
 	o := &selectOptions{}
-	e, err := ir.ParseEach(n.Each)
+	e, err := ir.ParseEachField(n.Each)
 	if err != nil {
 		return o
 	}
@@ -345,7 +345,7 @@ func (a *App) pickOption(b *layout.Box, i int) []Event {
 		return nil
 	}
 	if act, ok := b.Src.On["change"]; ok {
-		return []Event{{Action: act, Source: b.ID, Keys: map[string]any{st.alias: deepCopyJSON(k)}, Value: deepCopyJSON(k)}}
+		return []Event{{Action: act, Source: b.ID, Keys: map[string]any{ir.Unmark(st.alias): deepCopyJSON(k)}, Value: deepCopyJSON(k)}}
 	}
 	return nil
 }

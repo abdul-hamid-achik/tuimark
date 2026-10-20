@@ -469,7 +469,7 @@ func compareToAgents(c catalog.Catalog, md string) (problems []string) {
 		for _, a := range tg.Attrs {
 			has = has || a.Name == catalog.ClassGuardAttr
 		}
-		if skip := map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true}[tg.Name]; has == skip {
+		if skip := map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true, "template": true, "use": true}[tg.Name]; has == skip {
 			errorf("tag %s: class:NAME present = %v", tg.Name, has)
 		}
 	}
