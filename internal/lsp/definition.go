@@ -119,7 +119,8 @@ func (s *Server) definitionTUI(sn *snapshot, doc *document, off int) []location 
 
 // composedDocs are the analyses whose expanded documents a definition or
 // a completion in doc reads: doc's own, or, for a fragment, those of the
-// documents that read it (SPEC v0.4b §15.12).
+// documents that read it (SPEC v0.4b §15.12), else, when none does, the
+// fragment's own (orphanOf).
 func (s *Server) composedDocs(sn *snapshot, doc *document) []*analysis {
 	a := s.analysisOf(sn, doc.path, doc.text)
 	if !a.fragment {
@@ -128,7 +129,45 @@ func (s *Server) composedDocs(sn *snapshot, doc *document) []*analysis {
 	if doc.path == "" {
 		return nil
 	}
-	return s.includers(sn, doc.path)
+	if inc := s.includers(sn, doc.path); len(inc) > 0 {
+		return inc
+	}
+	if o := s.orphanOf(sn, doc.path, a.doc); o != nil {
+		return []*analysis{o}
+	}
+	return nil
+}
+
+// srcEscape escapes a file name for an attribute value.
+var srcEscape = strings.NewReplacer("&", "&amp;", "<", "&lt;", `"`, "&quot;")
+
+// orphanOf is the fragment at frag, which no document reads, as the one
+// thing a document holds: the expanded document of a <tui> that includes
+// it where its elements belong (at the <tui> when it holds a <screen>,
+// else in a <screen>), so definition and completion find its own
+// templates and ids, the copies its uses make, and what its includes
+// bring, as a document that read it would give them. fd is the fragment's
+// own parse. Nothing is checked: its diagnostics stay its own check's.
+func (s *Server) orphanOf(sn *snapshot, frag string, fd *parse.Document) *analysis {
+	if fd == nil || fd.Raw == nil {
+		return nil
+	}
+	inc := `<include src="` + srcEscape.Replace(filepath.Base(frag)) + `"/>`
+	text := "<tui><screen>" + inc + "</screen></tui>"
+	for _, c := range fd.Raw.Children {
+		if c.Type == parse.RawElement && c.Name == "screen" {
+			text = "<tui>" + inc + "</tui>"
+			break
+		}
+	}
+	// A name beside the fragment, which nothing reads: the include
+	// resolves against its directory.
+	path := filepath.Join(filepath.Dir(frag), ".orphan."+filepath.Base(frag))
+	pd := s.expandedOf(sn, path, text)
+	if !pd.expanded {
+		return nil
+	}
+	return &analysis{path: path, text: text, doc: pd.doc, version: int(ir.LangCurrent)}
 }
 
 // locationIn is the location of an element of a's expanded document, in

@@ -178,6 +178,12 @@ func fragmentPaths(doc *parse.Document) []string {
 	return out
 }
 
+// reads are the files the document reads besides itself: its stylesheets,
+// then its fragments, each named or read at any depth.
+func (a *analysis) reads() []string {
+	return append(append([]string(nil), a.loadPaths...), a.fragPaths...)
+}
+
 // fileOf is the absolute path of the file a diagnostic or an element of
 // the analysis names: the loader names a stylesheet and a fragment by
 // their absolute paths, and the document by its base name (an element of

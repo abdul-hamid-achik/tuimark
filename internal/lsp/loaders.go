@@ -38,6 +38,36 @@ func parseLoader(sn *snapshot, path, text string) parsedDoc {
 	return parsedDoc{path, text, app.Document(), true}
 }
 
+// includeSrcRE finds the src of each <include> of a .tui text, the
+// element's other attributes skipped whole (a quoted value may hold '>').
+var includeSrcRE = regexp.MustCompile(`<include\b(?:[^>"']|"[^"]*"|'[^']*')*?\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)')`)
+
+// xmlEntities decodes the named entities an attribute value may hold.
+var xmlEntities = strings.NewReplacer("&lt;", "<", "&gt;", ">", "&quot;", `"`, "&apos;", "'", "&amp;", "&")
+
+// mayRead reports whether the .tui at path, whose text is text, may read
+// the fragment at frag: whether an <include src> in it names frag, or
+// names a file that may read it, followed through the texts alone, each
+// file once (seen). It over-approximates (an include in a comment counts,
+// and so does one in a pinned document, which never reads it), so
+// includers expands only the documents it accepts.
+func mayRead(sn *snapshot, path, text, frag string, seen map[string]bool) bool {
+	for _, m := range includeSrcRE.FindAllStringSubmatch(text, -1) {
+		p := resolveSrc(path, xmlEntities.Replace(m[1]+m[2]))
+		if p == frag {
+			return true
+		}
+		if seen[p] {
+			continue
+		}
+		seen[p] = true
+		if t, ok := readText(sn, p); ok && mayRead(sn, p, t, frag, seen) {
+			return true
+		}
+	}
+	return false
+}
+
 // readText is the text of the file at path: its open buffer, else the file
 // when it is a regular file of a bounded size (host.ReadRegular); any other
 // path counts as absent.
