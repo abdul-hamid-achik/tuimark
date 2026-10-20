@@ -153,7 +153,7 @@ function tagsPage() {
       const attrs = m[2] === '(no attributes)' ? '—' : codeList(m[2].split(', '))
       if (tables === 0) catalog.tags.push(m[1])
       else if (tables === 1 && !catalog.tags.includes(m[1])) catalog.tagsV2.push(m[1])
-      else if (tables === 3 && !catalog.tags.includes(m[1])) catalog.tagsCurrent.push(m[1])
+      else if (tables === 3 && !catalog.tags.includes(m[1]) && !catalog.tagsV2.includes(m[1])) catalog.tagsCurrent.push(m[1])
       rows.push(`| \`<${m[1]}>\` | ${cell(attrs)} |`)
     }
     if (rows.length) {
@@ -409,7 +409,7 @@ const OUTPUTS = [
   { name: 'w-tabs-tiny', dir: 'widgets', kind: 'grid', args: ['dump', 'tabs.tui', '--data', 'data.json', '--cols', '16', '--rows', '2'] },
   { name: 'w-hints-filter', dir: 'widgets', kind: 'grid', args: ['play', 'hints.tui', '--data', 'data.json', '--cols', '44', '--rows', '8', '--input', '/'] },
   // the current language: forms, the spinner, defaults, composition
-  { name: 'forms-events', dir: 'forms', kind: 'events', args: ['play', 'form.tui', '--data', 'data.json', '--cols', '44', '--rows', '16', '--input', 'tab enter down enter tab space tab tab down space'] },
+  { name: 'forms-events', dir: 'forms', kind: 'events', args: ['play', 'form.tui', '--data', 'data.json', '--cols', '44', '--rows', '16', '--input', 'tab enter down enter tab space enter tab tab down space'] },
   { name: 'forms-bad', dir: 'forms', kind: 'term', args: ['validate', 'form.tui', '--data', 'bad.json'], exit: [2] },
   { name: 'spinner-tick', dir: 'widgets', kind: 'grid', args: ['play', 'spinner.tui', '--data', 'spinner.json', '--cols', '30', '--rows', '1', '--input', 'tick:300ms'] },
   { name: 'layout-panes', dir: 'layout', kind: 'grid', args: ['dump', 'panes.tui', '--cols', '40', '--rows', '8'] },

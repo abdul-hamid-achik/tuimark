@@ -1,4 +1,4 @@
-$ tuimark play form.tui --data data.json --cols 44 --rows 16 --input "tab enter down enter tab space tab tab down space"
+$ tuimark play form.tui --data data.json --cols 44 --rows 16 --input "tab enter down enter tab space enter tab tab down space"
 4 tz_changed tz {"z":"cet"} "cet"
 6 news_changed news {} true
-10 plan_changed plan {"p":"pro"} "pro"
+11 plan_changed plan {"p":"pro"} "pro"

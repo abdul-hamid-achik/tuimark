@@ -44,13 +44,19 @@ Control characters and ANSI escapes are removed from bound data before it is pai
 
 You don't write a version. A `<tui>` without `version` is the **current language**: everything in these guides and in the [reference](/reference/tags) is available to it. Tools that need a number for it use 4 (the `current` member of `tuimark catalog`, `"version": "0.4"` in `tuimark ir`), but there is no `version="4"`: like any value other than 1, 2, or 3 it is `V003`, and the document is read as `version="1"`.
 
-A document that writes `version="1"`, `"2"`, or `"3"` is **pinned** to the meaning it had in tuimark 0.4.1, defaults included, and its dumps do not change. What only the current language has is reported in a pinned document as a diagnostic that ends in `(requires a <tui> without version)`, and the construct does nothing:
+A document that writes `version="1"`, `"2"`, or `"3"` is **pinned** to the meaning it had in tuimark 0.4.1, defaults included, and its dumps do not change. Two kinds of thing are only in the current language.
+
+**New vocabulary.** A pinned document that uses it gets a diagnostic that ends in `(requires a <tui> without version)`, and the construct does nothing:
 
 - the tags `checkbox` and `select`, the attribute `single` on `list` and `table`, and `indeterminate` on `progress` (see [widgets](/guide/widgets));
 - `{path}` in a `<button>`'s label and body (see [bindings](/guide/bindings));
-- the tags `include`, `fragment`, `template`, and `use` ([composition](#composing-a-document-from-files), below);
-- the changed defaults: [layout](/guide/layout#the-current-languages-defaults), the [built-in sheet](/guide/tcss#the-built-in-sheet) and its focus look, and the [key and focus rules](/guide/interaction#a-modal-traps-the-keymap) (`esc` closes a modal, a modal traps the keymap, `tabs` is focusable). A pinned document keeps the old defaults and writes none of this;
-- `V003` for `ctrl+i`, `ctrl+j`, and `ctrl+m` in a keymap.
+- the tags `include`, `fragment`, `template`, and `use` ([composition](#composing-a-document-from-files), below).
+
+**Changed behavior.** A pinned document is not diagnosed here; it simply keeps the old behavior, and writes by hand what the current language does for you:
+
+- the defaults: [layout](/guide/layout#the-current-languages-defaults) and the [built-in sheet](/guide/tcss#the-built-in-sheet) with its focus look;
+- the [key and focus rules](/guide/interaction#a-modal-traps-the-keymap): `esc` closes a modal, a modal traps the keymap, and `tabs` is focusable;
+- `ctrl+i`, `ctrl+j`, and `ctrl+m` in a keymap are `V003` in the current language, because a terminal delivers them as `tab` and `enter`. A pinned document still accepts them, and they never match there either.
 
 The current language also reports `L008` and `L009`, two layout warnings about content a dump shows as gone:
 
@@ -140,9 +146,9 @@ A document with several screens shows one at a time. Only the active screen and 
 
 A modal is open while its `open` attribute is truthy: `true`, `false`, a path, or `!path` (never `{path}`). `bind` on a modal is a shorthand for the same thing; if both are present, `open` wins. An open modal:
 
-- is laid out above its screen, centered, 80% × 80% unless you size it, with a single border by default;
+- is laid out above its screen, centered, with a single border by default. Unsized, it is as big as its content in the current language, and 80% × 80% of the screen in a document that writes `version`;
 - traps focus: `tab` cycles inside it, and a focus request for a node outside it does nothing;
-- fires `on:open` when it opens and `on:close` when it closes, and `on:escape` when `esc` is pressed;
+- fires `on:open` when it opens and `on:close` when it closes, and `on:escape` when `esc` is pressed. In the current language `esc` on a modal without `on:escape` closes it;
 - gives focus back to where it was when it closes.
 
 ## Composing a document from files

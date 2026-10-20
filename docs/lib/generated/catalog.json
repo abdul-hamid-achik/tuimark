@@ -32,7 +32,6 @@
     "fragment",
     "include",
     "select",
-    "table",
     "template",
     "use"
   ],

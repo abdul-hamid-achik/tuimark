@@ -101,11 +101,11 @@ What the runtime says about data that does not fit these widgets, from `tuimark 
 
 <include cwd lang="term">snippets/out/forms-bad.txt</include>
 
-And what a replay of the form fires, from the name input: `tab` to the select, `enter` to open it, `down enter` to pick the second zone, `tab space` to toggle the newsletter, `tab tab down space` to choose the Pro plan:
+And what a replay of the form fires, from the name input: `tab` to the select, `enter` to open it, `down enter` to pick the second zone, `tab space` to toggle the newsletter, `enter` on that checkbox, `tab tab down space` to choose the Pro plan:
 
 <include cwd lang="term">snippets/out/forms-events.txt</include>
 
-The number at the start of each line is the step that fired it. `enter` on the checkbox fired nothing, because no keymap row claims it.
+The number at the start of each line is the step that fired it. The `enter` on the checkbox (step 7) fired nothing: a checkbox takes only `space`, and no keymap row claims `enter`.
 
 ## button
 
@@ -181,9 +181,9 @@ A strip of tab labels over the content of the active tab (version 2).
 <TermShot name="w-tabs" />
 
 - With `bind`, the active tab is the one whose id is the bound string, and activating a tab writes its id there; `on:select` fires with the id as the value. Without `bind`, the runtime remembers the tab.
-- Tabs switch with the `switch-to`, `move-next`, and `move-prev` built-ins, with `left` and `right` on a `focusable="true"` tabs, with a click on a label, and when focus moves into an inactive tab.
+- Tabs switch with the `switch-to`, `move-next`, and `move-prev` built-ins, with `left` and `right` on a focused strip, with a click on a label, and when focus moves into an inactive tab. In the current language a `tabs` takes focus by default; a document that writes `version` needs `focusable="true"` for the strip to take `left` and `right`.
 - Only the active tab is laid out; widgets in the others keep their state (a list's cursor, an input's text).
-- When a tab becomes active while focus was in the old tab, on the strip, or nowhere, focus moves to the new tab's `focus="#id"` target, or its first focusable node.
+- When a tab becomes active while focus was in the old tab, on the strip, or nowhere, focus moves to the new tab's `focus="#id"` target, or its first focusable node. The exception is the current language, where `left` and `right` on the strip leave focus on the strip, so the next key switches tabs again.
 - **Labels always fit.** Every `label` when there is room, else every `short`, else only the active tab as `‹ label ›`. The same strip at 24 and 16 columns:
 
 <div className="side-by-side">

@@ -81,7 +81,7 @@ Along the main axis, a container hands out its content size in this order:
 4. viewports sized `auto`, at their content size but capped by what is left ([auto-fit](#auto-fit));
 5. what remains, split between the `fr` children by weight.
 
-`min-width`, `max-width`, `min-height`, and `max-height` clamp a child after its percentage and before the `fr` split. In the current language an `fr` child that a `max` clamps (or a `min` lifts) is frozen at that size, and the other `fr` children share what it frees, as in CSS: three `1fr` columns in 40 cells, the first with `max-width: 10`, come out 10, 15, and 15. A document that writes `version` splits first and clamps after, giving 10, 13, and 17. There is no flex-wrap: a row that does not fit is clipped.
+`min-width`, `max-width`, `min-height`, and `max-height` clamp a child after its percentage and before the `fr` split. In the current language an `fr` child that a `max` clamps (or a `min` lifts) is frozen at that size, and the other `fr` children share what it frees, as in CSS: three `1fr` columns in 40 cells, the first with `max-width: 10`, come out 10, 15, and 15. A document that writes `version` splits first and clamps after, giving 10, 13, and 14, and leaves 3 cells empty. There is no flex-wrap: a row that does not fit is clipped.
 
 ## Docks
 
