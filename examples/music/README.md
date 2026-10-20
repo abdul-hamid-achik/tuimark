@@ -105,7 +105,7 @@ To see the whole thing move without a terminal, use `-demo`.
   playing and settles to zero when paused. All arithmetic is integer, so the
   bars are the same on every machine, CPU architecture included.
 - **`<progress>` with `bar: eighths`** for the track position and the volume.
-- **`<tabs>` with v3 templated labels** (`label="queue {counts.queue}"`) and a
+- **`<tabs>` with templated labels** (`label="queue {counts.queue}"`) and a
   `short` form for narrow terminals; `switch-to` on `1 2 3`.
 - **`<table>`** for the library, queue, and albums, with `<column priority>`
   so a narrow terminal drops the album column first and then the artist, a

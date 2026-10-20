@@ -13,7 +13,7 @@ import (
 // writable version, rather than the newest of versions. A build whose
 // current language moves fails here until a <tui> without version reads
 // as it.
-func TestNewTemplateIsTheNewestVersion(t *testing.T) {
+func TestNewTemplateIsTheCurrentLanguage(t *testing.T) {
 	b, err := templates.ReadFile("newtemplate/app.tui")
 	if err != nil {
 		t.Fatal(err)

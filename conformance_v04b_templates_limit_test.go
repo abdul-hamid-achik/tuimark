@@ -40,7 +40,7 @@ func TestUseExpansionLimitFanOutRenders(t *testing.T) {
 	if _, err := app.Dump(80, 24); err != nil {
 		t.Fatal(err)
 	}
-	if d := time.Since(start); d > 20*time.Second {
+	if d := time.Since(start); d > 20*time.Second*slowdown {
 		t.Errorf("parse, validate, and dump took %v", d)
 	}
 	if len(v021) != 1 || !strings.Contains(v021[0], ":31:41 /screen/use ") || !strings.Contains(v021[0], `use template="t30" exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands`) {

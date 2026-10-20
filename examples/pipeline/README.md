@@ -96,7 +96,7 @@ fake clock, no map iteration in any output.
   lines, held back while paused) are recomputed inside every store write, so
   moving the cursor changes the log pane with no handler and the markup has no
   expressions.
-- **`<scroll stick="bottom">`** (version 3): the log follows the end of a growing
+- **`<scroll stick="bottom">`**: the log follows the end of a growing
   stream, holds still once you scroll up, and sticks again after `G`.
 - **`<progress>` with `bar: eighths`**, per job inside a `<list>` row and for the
   overall run, colored by status with `class:` guards; **`<sparkline>`**;

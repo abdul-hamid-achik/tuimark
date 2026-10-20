@@ -388,6 +388,22 @@ func TestV04bIntegration225MisplacedAndForm(t *testing.T) {
 		if checked := c.steps == "tab space"; news.Checked != checked {
 			t.Errorf("%s: news checked %v", c.steps, news.Checked)
 		}
+		if c.steps == "tab tab enter" {
+			// The select takes enter and opens its option list: a list
+			// without an id, after every other node (SPEC v0.4b §6.17.6).
+			var opts []string
+			open := false
+			for _, n := range res.Dump.Nodes {
+				if n.Tag == "list" && n.ID == "" {
+					open = true
+				} else if open && n.Tag == "item" {
+					opts = append(opts, n.Key)
+				}
+			}
+			if want := []string{"utc", "lis"}; !reflect.DeepEqual(opts, want) {
+				t.Errorf("tab tab enter: the select's open options %q, want %q", opts, want)
+			}
+		}
 		if c.steps == "tab tab tab space" {
 			var rows []string
 			for _, n := range res.Dump.Nodes {

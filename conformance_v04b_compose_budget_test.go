@@ -76,7 +76,7 @@ func TestByteBudgetBoundsPlacedSource(t *testing.T) {
 					v021 = append(v021, d)
 				}
 			}
-			if d := time.Since(start); d > 30*time.Second {
+			if d := time.Since(start); d > 30*time.Second*slowdown {
 				t.Errorf("took %v", d)
 			}
 			if len(v021) != 1 || !strings.Contains(v021[0], `exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands`) {

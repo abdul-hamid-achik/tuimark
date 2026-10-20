@@ -102,8 +102,12 @@ func TestV04bIntegration132NewUnderTheCurrentLanguage(t *testing.T) {
 				if code != 0 || !d.OK || len(d.Errors) != 0 {
 					t.Errorf("%v dump %s columns, %s: exit %d, diagnostics %s", flags, cols, theme, code, d.Errors)
 				}
-				if cols == "80" && (len(d.Grid) == 0 || !strings.Contains(d.Grid[len(d.Grid)-1], "q quit")) {
-					t.Errorf("%v at 80 columns, %s: the hint bar has no `q quit`: %q", flags, theme, d.Grid[len(d.Grid)-1])
+				last := ""
+				if len(d.Grid) > 0 {
+					last = d.Grid[len(d.Grid)-1]
+				}
+				if cols == "80" && !strings.Contains(last, "q quit") {
+					t.Errorf("%v at 80 columns, %s: the hint bar has no `q quit`: %q", flags, theme, last)
 				}
 			}
 		}
