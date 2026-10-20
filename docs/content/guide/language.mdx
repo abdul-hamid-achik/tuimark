@@ -189,7 +189,7 @@ An include that fails inserts nothing, and the rest of the document is still che
 
 The limit is there to stop an include that fans out into a tree of includes from filling the memory: it counts what the includes insert, and the first one that would go over inserts nothing and stops later ones from expanding.
 
-`<template>` and `<use>` go one step further than a file: a `<template id="…">` directly under `<tui>` or `<screen>` holds a piece of markup, and each `<use template="…" with="path as alias"/>` stamps a copy of it, with the data bound to an alias and its ids scoped to the use. That is for a piece that repeats, such as a group of fields. Their attributes are in the [tags reference](/reference/tags#added-by-the-current-language), and a template that reaches itself is `V019` in the [diagnostics](/reference/diagnostics#v019).
+`<template>` and `<use>` go one step further than a file: a `<template id="…">` directly under `<tui>` or `<screen>` holds a piece of markup, and each `<use template="…" with="path as alias"/>` stamps a copy of it, with the data bound to an alias and its ids scoped to the use. That is for a piece that repeats, such as a group of fields. [Templates and composition](/guide/composition) walks through them, with the scoped ids, the diagnostics, and the tools that show what a copy produced; the attributes are in the [tags reference](/reference/tags#added-by-the-current-language).
 
 ## What is not in the language
 

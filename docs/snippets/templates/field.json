@@ -1,0 +1,6 @@
+{
+  "form": {
+    "name": { "label": "Name", "hint": "your name", "value": "", "error": "" },
+    "email": { "label": "Email", "hint": "you@example.com", "value": "ada@", "error": "not an email" }
+  }
+}

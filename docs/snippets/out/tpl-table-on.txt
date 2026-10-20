@@ -1,0 +1,4 @@
+Job             Status
+build           ok
+deploy          failed
+lint            skipped

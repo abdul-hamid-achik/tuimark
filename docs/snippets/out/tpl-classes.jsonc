@@ -1,0 +1,7 @@
+// $ tuimark play rows.tui --data rows.json --cols 24 --rows 3 --input set:show_badges=true --format json
+// excerpt: the nodes that have classes
+[
+  {"tag":"text","x":6,"y":0,"classes":["badge","cell"]},
+  {"tag":"text","x":7,"y":1,"classes":["badge","cell","hot"]},
+  {"tag":"text","x":5,"y":2,"classes":["badge","cell"]}
+]

@@ -1,0 +1,5 @@
+$ tuimark dump field.tui --data field.json --cols 40 --rows 12
+=== nodes (those with an id) ===
+main          screen  40x12 @(0,0)
+name__input   input   38x1 @(1,4) focus
+email__input  input   38x1 @(1,7)

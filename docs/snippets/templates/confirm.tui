@@ -1,0 +1,18 @@
+<tui>
+  <template id="confirm">
+    <modal id="dlg" open="c.open" focus="#no">
+      <text>{c.question}</text>
+      <row height="1" gap="1">
+        <button id="yes" label="Yes" on:click="yes"/>
+        <button id="no" label="No" on:click="no"/>
+      </row>
+    </modal>
+  </template>
+  <keymap>
+    <bind keys="y" action="yes_pressed" when="#del__dlg" label="yes"/>
+  </keymap>
+  <screen id="main">
+    <button id="open" label="Delete…" on:click="ask"/>
+    <use id="del" template="confirm" with="ui.del as c"/>
+  </screen>
+</tui>

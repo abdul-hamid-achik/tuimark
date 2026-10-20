@@ -1,0 +1,14 @@
+<tui>
+  <template id="field">
+    <col>
+      <text class:invalid="f.error">{f.label}</text>
+      <input id="input" bind="f.value"/>
+      <text if="f.error">{f.error}</text>
+      <text>{f.help}</text>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="email" template="field" with="form.email as f"/>
+    <use id="phone" template="field" with="form.phone as f"/>
+  </screen>
+</tui>

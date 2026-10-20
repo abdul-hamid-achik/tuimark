@@ -1,0 +1,3 @@
+$ tuimark validate rows.tui --data rows-bad.json
+warning B003 rows.tui:7:5 /screen/list/item/row/text bind path "s.label" is missing (j.status.label via <use template="badge"> at rows.tui:14:11)
+ok

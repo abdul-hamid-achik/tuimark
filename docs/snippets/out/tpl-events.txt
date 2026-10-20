@@ -1,0 +1,3 @@
+$ tuimark play field.tui --data field.json --cols 40 --rows 12 --input "text:Ada ctrl+n text:x enter ctrl+s"
+4 submit email__input {} "ada@x"
+5 save email__input {} "ada@x"

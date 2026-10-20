@@ -1,0 +1,47 @@
+// $ tuimark ir field.tui
+// excerpt: the <use id="email"> node and what it placed
+{
+  "kind": "use",
+  "id": "email",
+  "attrs": {
+    "template": "field",
+    "with": "form.email as f"
+  },
+  "children": [
+    {
+      "kind": "col",
+      "from": "field.tui:7",
+      "children": [
+        {
+          "kind": "text",
+          "classes": [
+            "label"
+          ],
+          "attrs": {
+            "class:invalid": "f.error"
+          },
+          "text": "{f.label}",
+          "from": "field.tui:8"
+        },
+        {
+          "kind": "input",
+          "id": "email__input",
+          "attrs": {
+            "placeholder": "{f.hint}"
+          },
+          "bind": "f.value",
+          "from": "field.tui:9"
+        },
+        {
+          "kind": "text",
+          "classes": [
+            "invalid"
+          ],
+          "if": "f.error",
+          "text": "{f.error}",
+          "from": "field.tui:10"
+        }
+      ]
+    }
+  ]
+}

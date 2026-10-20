@@ -157,6 +157,58 @@
     "description": "Key hints from the keymap rows that have a label (version 2 or 3)",
     "body": "<hints scope=\"${1|active,all|}\"/>"
   },
+  "Checkbox": {
+    "prefix": "checkbox",
+    "description": "A labeled toggle bound to a path (a document without version)",
+    "body": "<checkbox id=\"${1:dark}\" bind=\"${2:settings.dark}\" label=\"${3:Dark mode}\" on:change=\"${4:dark_changed}\"/>"
+  },
+  "Select": {
+    "prefix": "select",
+    "description": "A dropdown over an array, one choice (a document without version)",
+    "body": "<select id=\"${1:tz}\" bind=\"${2:tz}\" each=\"${3:zones} as ${4:z}\" key=\"${4:z}.${5:id}\" label=\"{${4:z}.${6:name}}\" placeholder=\"${7:choose}\" on:change=\"${8:tz_changed}\"/>"
+  },
+  "Radio group (single list)": {
+    "prefix": ["radio", "listsingle"],
+    "description": "A list that holds one checked key: a radio group (a document without version)",
+    "body": [
+      "<list id=\"${1:plan}\" each=\"${2:plans} as ${3:p}\" key=\"${3:p}.${4:id}\" checked=\"${5:profile.plan}\" single=\"true\" mark=\"●\" on:change=\"${6:plan_changed}\">",
+      "  <item><text>{${3:p}.${7:name}}</text></item>",
+      "</list>"
+    ]
+  },
+  "Spinner": {
+    "prefix": "spinner",
+    "description": "A progress that turns while it is busy (a document without version)",
+    "body": "<progress indeterminate=\"true\"/>"
+  },
+  "Include a fragment": {
+    "prefix": "include",
+    "description": "Place the elements of another file here (a document without version)",
+    "body": "<include src=\"${1:parts/header.tui}\"/>"
+  },
+  "Fragment file": {
+    "prefix": "fragment",
+    "description": "The root of a file that other documents include",
+    "body": [
+      "<fragment>",
+      "  $0",
+      "</fragment>"
+    ]
+  },
+  "Template": {
+    "prefix": "template",
+    "description": "A reusable piece of markup, placed by <use> (a document without version)",
+    "body": [
+      "<template id=\"${1:field}\">",
+      "  $0",
+      "</template>"
+    ]
+  },
+  "Use a template": {
+    "prefix": "use",
+    "description": "A copy of a template: its ids scoped by id, its data behind an alias",
+    "body": "<use id=\"${1:email}\" template=\"${2:field}\" with=\"${3:form.email} as ${4:f}\"/>"
+  },
   "Conditional": {
     "prefix": "if",
     "description": "A box shown while a path is truthy",

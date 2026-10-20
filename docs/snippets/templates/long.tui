@@ -1,0 +1,9 @@
+<tui>
+  <template id="a_template_whose_name_is_longer_than_sixty_four_bytes_so_it_is_cut">
+    <text>{f.settings.profile.preferences.notifications.email.digest.frequency.label}</text>
+  </template>
+  <screen id="main">
+    <use id="u" template="a_template_whose_name_is_longer_than_sixty_four_bytes_so_it_is_cut" with="user as f"/>
+    <use template="another_template_whose_name_is_longer_than_sixty_four_bytes_so_nothing_matches_it"/>
+  </screen>
+</tui>

@@ -1,0 +1,2 @@
+$ tuimark play kit-dialog.tui --data ../../../kit/components/confirm.sample.json --cols 60 --rows 12 --input y
+1 dialog_confirm confirm__no {} null

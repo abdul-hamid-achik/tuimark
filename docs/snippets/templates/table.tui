@@ -1,0 +1,14 @@
+<tui>
+  <style>
+    .hot { bold: true; }
+  </style>
+  <template id="status">
+    <column title="Status" width="8" class:hot="s.urgent">{s.label}</column>
+  </template>
+  <screen id="main" focus="#jobs">
+    <table id="jobs" each="jobs as j" key="j.id" height="4">
+      <column title="Job" width="1fr">{j.name}</column>
+      <use template="status" with="j.status as s" if="show_status"/>
+    </table>
+  </screen>
+</tui>
