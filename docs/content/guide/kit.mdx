@@ -94,6 +94,18 @@ Selection and focus never rely on a background color alone. A cursor row is also
 
 **Sizes are explicit.** A component that fills a space says so in its class, and a `tabs` writes `focusable`, so nothing depends on the default size of a bare `row`, `col`, or modal.
 
+## Kit components as templates
+
+The kit is markup you copy, and copying a component three times into one document means three copies to keep in step. Since [`<template>` and `<use>`](/guide/composition) a component can be written once and used where it is needed. The kit's `instance__part` ids are exactly the ids a use gives its copy: the confirm dialog below, used as `confirm`, has the parts `confirm__dialog`, `confirm__yes`, and `confirm__no`, which is what the host's routing by the part before the last `__` expects.
+
+<include cwd lang="tui">snippets/templates/kit-dialog.tui</include>
+
+The two `<style>` lines point at the kit's sheets in this repository; use the paths of your copy. The dialog's `y` key routes to the instance that has focus:
+
+<include cwd lang="term">snippets/out/tpl-kit-events.txt</include>
+
+The `source` is `confirm__yes`, so one `dialog_confirm` handler serves every dialog the document uses. The kit's own component files stay plain markup, so each one validates and runs alone.
+
 ## Components
 
 | Component | Class | In one line |
