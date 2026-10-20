@@ -9,7 +9,7 @@ import (
 // SPEC v0.4b §6.18.2, §15.12 (phase F1): an open file whose root is
 // <fragment> is checked on its own, with no V005; a document that includes
 // a fragment reads the editor's text of it. Routing a fragment's
-// diagnostics through the documents that include it is F4's.
+// diagnostics through the documents that include it is fragments_test.go.
 func TestAnalyzeChecksAFragmentOnItsOwn(t *testing.T) {
 	dir := writeTree(t, nil)
 	sn := &snapshot{open: map[string]string{}, byURI: map[string]*document{}}

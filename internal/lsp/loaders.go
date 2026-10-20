@@ -6,17 +6,36 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
-// parsedDoc is a .tui that loads a stylesheet, parsed and not checked.
+// parsedDoc is a .tui that loads a stylesheet, parsed and not checked;
+// one in the current language that has an <include> is loaded with its
+// includes and uses expanded (expanded), so the stylesheets its fragments
+// load, and the ids its fragments and copies give, count as its own (SPEC
+// v0.4b §6.18.2).
 type parsedDoc struct {
-	path string
-	text string
-	doc  *parse.Document
+	path     string
+	text     string
+	doc      *parse.Document
+	expanded bool
+}
+
+// parseLoader parses the .tui at path whose text is text for parsedDoc.
+func parseLoader(sn *snapshot, path, text string) parsedDoc {
+	doc := parse.Parse([]byte(text), path)
+	if !doc.Lang.V4() || doc.FragmentRoot || !strings.Contains(text, "<include") {
+		return parsedDoc{path, text, doc, false}
+	}
+	app, _ := host.LoadBuffers(path, []byte(text), func(abs string) ([]byte, bool) {
+		t, ok := sn.docText(abs)
+		return []byte(t), ok
+	})
+	return parsedDoc{path, text, app.Document(), true}
 }
 
 // readText is the text of the file at path: its open buffer, else the file
@@ -44,9 +63,8 @@ func parsedLoaders(sn *snapshot, sheet string) []parsedDoc {
 			return
 		}
 		seen[path] = true
-		doc := parse.Parse([]byte(text), path)
-		if contains(loadedPaths(path, doc), sheet) {
-			out = append(out, parsedDoc{path, text, doc})
+		if pd := parseLoader(sn, path, text); contains(loadedPaths(path, pd.doc), sheet) {
+			out = append(out, pd)
 		}
 	}
 	var open []string

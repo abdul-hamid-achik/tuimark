@@ -98,6 +98,18 @@ func TestV04bFragmentCheckedOnItsOwn(t *testing.T) {
 	}
 }
 
+// 152, the orphan bullet's validate half: the two diagnostics the language
+// server gives orphan.tui, and exit 2.
+func TestV04bValidateOrphanFragment(t *testing.T) {
+	file := writeTemp(t, "orphan.tui", "<fragment>\n  <zzz/>\n  <text bogus=\"1\">x</text>\n</fragment>")
+	code, out, errw := runCLI("validate", file)
+	want := "error V001 orphan.tui:2:3 /zzz unknown tag <zzz>\n" +
+		"error V002 orphan.tui:3:9 /text attribute \"bogus\" is not allowed on <text>\n"
+	if code != 2 || out != want {
+		t.Errorf("validate orphan.tui: exit %d\n%s%s\nwant\n%s", code, out, errw, want)
+	}
+}
+
 // A fragment checked on its own has a document's usage errors: a --theme
 // other than dark or light, and a --catalog that cannot be read, exit 1
 // before anything is checked, though neither adds a check there.

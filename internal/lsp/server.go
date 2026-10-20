@@ -14,11 +14,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/catalog"
+	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
 // DefaultDebounce is the interval at most one publishDiagnostics is sent
@@ -448,9 +452,10 @@ func uriName(uri, path string) string {
 }
 
 // touch schedules a publish for every document a change to d moves: d
-// itself; for a .tui, the stylesheets it loaded; for a stylesheet, the
-// open .tui files that load it; for a sample.json, the open .tui files
-// beside it.
+// itself; for a .tui, the stylesheets and fragments it loaded, and, for a
+// fragment, the open .tui files that read it; for a stylesheet, the open
+// .tui files that load it; for a sample.json, the open .tui files beside
+// it.
 func (s *Server) touch(d *document) {
 	s.mu.Lock()
 	uris := []string{d.uri}
@@ -458,6 +463,13 @@ func (s *Server) touch(d *document) {
 	case kindTUI:
 		for _, p := range d.loads {
 			uris = append(uris, s.uriFor(p))
+		}
+		if d.path != "" {
+			for _, o := range s.docs {
+				if o.kind == kindTUI && o.uri != d.uri && contains(o.loads, d.path) {
+					uris = append(uris, o.uri)
+				}
+			}
 		}
 	case kindTCSS:
 		for _, o := range s.docs {
@@ -632,8 +644,19 @@ func (s *Server) publish(uri string) {
 	case kindTUI:
 		if doc != nil {
 			a := s.analysisOf(sn, doc.path, doc.text)
-			diags = a.route("", true)
-			loaded = a
+			if a.fragment && doc.path != "" {
+				diags = s.fragmentDiags(sn, doc.path, doc.text, a)
+			} else {
+				diags = a.route("", true)
+				loaded = a
+			}
+		} else if isFile {
+			// A closed fragment gets what the documents that read it say
+			// about it, as a closed stylesheet does; any other closed .tui
+			// gets an empty list.
+			if text, ok := readText(sn, path); ok && parse.Parse([]byte(text), path).FragmentRoot {
+				diags = s.fragmentDiags(sn, path, text, nil)
+			}
 		}
 	case kindTCSS:
 		if isFile {
@@ -674,16 +697,16 @@ func (s *Server) publish(uri string) {
 	}
 }
 
-// noteLoads records the stylesheets a .tui loads, whose analysis read the
-// state of generation gen. A stylesheet that has not been published since
-// has diagnostics this document now contributes (it may be a first
-// publish, or one it loses or gains by a changed <style src>), so it is
-// scheduled like any change: inside the debounce window, and a window
-// already open for it (a .tui and its stylesheet opened together) covers
-// it. One published from a generation at least as new has already read
-// this document, and is left alone.
+// noteLoads records the stylesheets and fragments a .tui loads, whose
+// analysis read the state of generation gen. One that has not been
+// published since has diagnostics this document now contributes (it may
+// be a first publish, or one it loses or gains by a changed <style src> or
+// <include src>), so it is scheduled like any change: inside the debounce
+// window, and a window already open for it (a .tui and its stylesheet
+// opened together) covers it. One published from a generation at least as
+// new has already read this document, and is left alone.
 func (s *Server) noteLoads(doc *document, a *analysis, gen int) {
-	loads := a.loadPaths
+	loads := append(append([]string(nil), a.loadPaths...), a.fragPaths...)
 	s.mu.Lock()
 	if d := s.docs[doc.uri]; d != nil {
 		d.loads = loads
@@ -707,6 +730,75 @@ func (s *Server) loaders(sn *snapshot, sheet string) []*analysis {
 	var out []*analysis
 	for _, pd := range parsedLoaders(sn, sheet) {
 		out = append(out, s.analysisOf(sn, pd.path, pd.text))
+	}
+	return out
+}
+
+// includers are the analyses of the documents that read the fragment at
+// frag, at any depth (SPEC v0.4b §15.12): each open .tui, then each .tui
+// in the fragment's directory and in its parent directory, that is not a
+// fragment itself and whose includes, expanded, name frag. A text with no
+// <include> reads no fragment and is not analyzed for it.
+func (s *Server) includers(sn *snapshot, frag string) []*analysis {
+	var out []*analysis
+	seen := map[string]bool{frag: true}
+	try := func(path, text string) {
+		if seen[path] {
+			return
+		}
+		seen[path] = true
+		if !strings.Contains(text, "<include") {
+			return
+		}
+		if a := s.analysisOf(sn, path, text); !a.fragment && contains(a.fragPaths, frag) {
+			out = append(out, a)
+		}
+	}
+	var open []string
+	for _, d := range sn.byURI {
+		if d.kind == kindTUI && d.path != "" {
+			open = append(open, d.path)
+		}
+	}
+	sort.Strings(open)
+	for _, p := range open {
+		try(p, sn.open[p])
+	}
+	dir := filepath.Dir(frag)
+	for _, dd := range []string{dir, filepath.Dir(dir)} {
+		entries, _ := os.ReadDir(dd)
+		for _, e := range entries {
+			if e.IsDir() || kindOf("", e.Name()) != kindTUI {
+				continue
+			}
+			p := filepath.Join(dd, e.Name())
+			if seen[p] {
+				continue
+			}
+			if text, ok := readText(sn, p); ok {
+				try(p, text)
+			}
+		}
+	}
+	return out
+}
+
+// fragmentDiags are the diagnostics of the fragment at frag, whose text
+// is text (SPEC v0.4b §15.12): those whose file is the fragment, from
+// every document that reads it; or, when none does, its own check (own,
+// which a closed fragment does not have).
+func (s *Server) fragmentDiags(sn *snapshot, frag, text string, own *analysis) []lspDiagnostic {
+	inc := s.includers(sn, frag)
+	if len(inc) == 0 {
+		if own == nil {
+			return nil
+		}
+		return own.route("", true)
+	}
+	lines := splitLines(text)
+	var out []lspDiagnostic
+	for _, a := range inc {
+		out = append(out, a.routeFile(frag, lines)...)
 	}
 	return out
 }

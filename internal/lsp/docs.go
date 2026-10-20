@@ -25,9 +25,10 @@ type document struct {
 	kind    fileKind
 	text    string
 	version int
-	// loads is the absolute paths of the stylesheets the last analysis of a
-	// .tui read (and of those it tried to), so a change can find the
-	// stylesheets whose diagnostics it moves.
+	// loads is the absolute paths of the stylesheets and fragments the last
+	// analysis of a .tui read (and of those it tried to), so a change can
+	// find the files whose diagnostics it moves: the ones it loads, and,
+	// for a fragment, the open documents that read it.
 	loads []string
 }
 
