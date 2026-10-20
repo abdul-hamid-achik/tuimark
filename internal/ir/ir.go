@@ -224,13 +224,17 @@ func (n *Node) ViaOf(slot string, seg int) *Via {
 // (EachRel) and the use has no id, P reads the same in every each that
 // holds such a use, so the use is also named by where it is written, as
 // the placement suffix names it: ` (P via <use template="T"> at
-// FILE:LINE:COL)` (the owner's decision on the F3 review). A P that
-// starts with a store member says which data it reads, and a use with an
-// id is named by it, so neither adds a place.
+// FILE:LINE:COL)` (the owner's decision on the F3 review). A use written
+// in a template or a fragment stands at one FILE:LINE:COL in every copy
+// or include that places it, so its own placement suffix follows when
+// something placed it: ` (P via <use template="T"> at FILE:LINE:COL,
+// placed by <use id="U"> at FILE:LINE:COL)` (the coordinator's follow-up
+// to that decision). A P that starts with a store member says which data
+// it reads, and a use with an id is named by it, so neither adds a place.
 func (v *Via) Suffix(p string) string {
 	at := ""
 	if v.EachRel && v.Use.ID == "" {
-		at = " at " + v.Use.Loc(true)
+		at = " at " + v.Use.Loc(true) + PlacedSuffix(v.Use)
 	}
 	return " (" + ShownPath(p) + " via " + v.Use.describePlacer() + at + ")"
 }

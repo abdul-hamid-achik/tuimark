@@ -49,6 +49,14 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 		}
 		return b.String()
 	}
+	// placedBy is many("t") with each use given the id prefix+N.
+	placedBy := func(prefix string) string {
+		var b strings.Builder
+		for i := 0; i < copies; i++ {
+			fmt.Fprintf(&b, `<use id="%s%d" template="t" with="a%d as f"/>`, prefix, i, i)
+		}
+		return b.String()
+	}
 	manyData := func(v string) string {
 		var b strings.Builder
 		b.WriteString("{")
@@ -118,6 +126,11 @@ func TestCopyMessagesStayLinear(t *testing.T) {
 		{"a long written path through an each alias in many eaches",
 			`<tui><template id="t"><text>{f.` + long + `}</text></template><screen id="main"><col>` + strings.Repeat(`<box each="rows as r"><use template="t" with="r as f"/></box>`, copies) + `</col></screen></tui>`,
 			`{"rows": [{}]}`, map[string]int{"B003": copies}},
+		// Such a via also names what placed its use: here 150 uses with
+		// long ids, each placing a template whose each holds the use.
+		{"a via naming its use's long-id placer in many copies",
+			`<tui><template id="in"><text>{x.` + long + `}</text></template><template id="t"><box each="f.rows as it"><use template="in" with="it as x"/></box></template><screen id="main"><col>` + placedBy(long[:1000]) + `</col></screen></tui>`,
+			manyData(`{"rows": [{}]}`), map[string]int{"B003": copies}},
 		{"a use's missing with path in many rows",
 			`<tui><template id="t"><text>{a.n}</text></template><screen id="main"><list id="l" each="rows as r" key="r.id"><item><use template="t" with="r.` + long[:10000] + ` as a"/></item></list></screen></tui>`,
 			rows(20000), map[string]int{"B003": 1}},

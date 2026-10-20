@@ -456,7 +456,8 @@ func TestEmptyCopiesAreChecked(t *testing.T) {
 // as the placement suffix names it (the owner's decision on the F3
 // review): two eaches over one template give two B003 (the review's
 // two/app.tui). So is one written in an each inside a copy, whose alias
-// is renamed. A use with an id is named by it, and a P from a store
+// is renamed, followed by what placed it (TestViaNamesWhatPlacedItsUse).
+// A use with an id is named by it, and a P from a store
 // member says which data it reads: neither adds a place.
 func TestViaFromAnEachAliasNamesWhereTheUseIs(t *testing.T) {
 	const two = `<tui>
@@ -484,11 +485,91 @@ func TestViaFromAnEachAliasNamesWhereTheUseIs(t *testing.T) {
 </tui>`
 	a = useApp(t, others, `{"d": {"items": [{}]}, "rows": [{"id": 1}], "cfg": {}}`)
 	sameDiags(t, "others", useDiags(a), []string{
-		`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (it.missing via <use template="b"> at app.tui:3:46)`,
+		`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (it.missing via <use template="b"> at app.tui:3:46, placed by <use id="u1"> at app.tui:5:5)`,
 		`warning B003 2:20 /screen/list/item/text bind path "x.missing" is missing (r.missing via <use id="k">)`,
 		`warning B003 2:20 /screen/text bind path "x.missing" is missing (cfg.missing via <use id="s">)`,
 		`warning B003 2:20 /screen/text bind path "x.missing" is missing (cfg.missing via <use template="b">)`,
 	})
+}
+
+// A use without id written in a template or a fragment stands at one place
+// in every copy or include that places it, so a via through it whose P is
+// from an each alias also names what placed it, as a placement suffix
+// does (the coordinator's follow-up to the owner's decision): a nested use
+// in two eaches, a use in an each of a template placed by two uses with
+// ids, and a use in a fragment included twice each give two B003 (the
+// review's probes b, c, and d).
+func TestViaNamesWhatPlacedItsUse(t *testing.T) {
+	const data = `{"aa": [{}], "bb": [{}], "d1": {"items": [{}]}, "d2": {"items": [{}]}, "cfg": {"rows": [{"id": 1}]}}`
+	for _, c := range []struct {
+		name  string
+		files map[string]string
+		want  []string
+	}{
+		{"a nested use in two eaches", map[string]string{"app.tui": `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <template id="w"><use template="b" with="y as x"/></template>
+  <screen id="main">
+    <box each="aa as r"><use template="w" with="r as y"/></box>
+    <box each="bb as r"><use template="w" with="r as y"/></box>
+  </screen>
+</tui>
+`}, []string{
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at app.tui:3:20, placed by <use template="w"> at app.tui:5:25)`,
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at app.tui:3:20, placed by <use template="w"> at app.tui:6:25)`,
+		}},
+		{"a use in an each of a template placed twice", map[string]string{"app.tui": `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <template id="w"><box each="f.items as it"><use template="b" with="it as x"/></box></template>
+  <screen id="main">
+    <use id="u1" template="w" with="d1 as f"/>
+    <use id="u2" template="w" with="d2 as f"/>
+  </screen>
+</tui>
+`}, []string{
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (it.missing via <use template="b"> at app.tui:3:46, placed by <use id="u1"> at app.tui:5:5)`,
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (it.missing via <use template="b"> at app.tui:3:46, placed by <use id="u2"> at app.tui:6:5)`,
+		}},
+		{"a use in a fragment included twice", map[string]string{"app.tui": `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <screen id="main">
+    <include src="frag.tui"/>
+    <include src="frag.tui"/>
+  </screen>
+</tui>
+`, "frag.tui": `<fragment>
+  <box each="aa as r"><use template="b" with="r as x"/></box>
+</fragment>
+`}, []string{
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at frag.tui:2:23, placed by <include> at app.tui:4:5)`,
+			`warning B003 2:20 /screen/box/text bind path "x.missing" is missing (r.missing via <use template="b"> at frag.tui:2:23, placed by <include> at app.tui:5:5)`,
+		}},
+		// Placed too, but a P from a store member, or a use with an id,
+		// keeps the via as it was.
+		{"a store P and a use with id, placed", map[string]string{"app.tui": `<tui>
+  <template id="b"><text>{x.missing}</text></template>
+  <template id="s"><use template="b" with="d1 as x"/></template>
+  <template id="k"><list id="l" each="f.rows as it" key="it.id"><item><use id="k2" template="b" with="it as x"/></item></list></template>
+  <screen id="main">
+    <use id="o" template="s"/>
+    <use id="ok" template="k" with="cfg as f"/>
+  </screen>
+</tui>
+`}, []string{
+			`warning B003 2:20 /screen/text bind path "x.missing" is missing (d1.missing via <use template="b">)`,
+			`warning B003 2:20 /screen/list/item/text bind path "x.missing" is missing (it.missing via <use id="ok__k2">)`,
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			dir := writeTree(t, c.files)
+			a, err := Load(filepath.Join(dir, "app.tui"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			bindJSON(t, a, data)
+			sameDiags(t, c.name, useDiags(a), c.want)
+		})
+	}
 }
 
 // A via is kept where its path is written (ir.ViaKey), not under the path
