@@ -58,8 +58,8 @@ func runProbe(t *testing.T, files map[string]string, args ...string) probeRun {
 	}()
 	select {
 	case <-done:
-	case <-time.After(60 * time.Second):
-		t.Fatalf("%v still running after 60s", args[0])
+	case <-time.After(60 * slowdown * time.Second):
+		t.Fatalf("%v still running after %v", args[0], 60*slowdown*time.Second)
 	}
 	r.took = time.Since(start)
 	runtime.ReadMemStats(&after)

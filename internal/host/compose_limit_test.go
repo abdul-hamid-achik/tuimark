@@ -38,7 +38,7 @@ func TestExpansionLimitLoadBuffers(t *testing.T) {
 		if len(v) != 1 || v[0] != `include src="f30.tui" exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands` {
 			t.Errorf("V021: %v", v)
 		}
-	case <-time.After(30 * time.Second):
+	case <-time.After(30 * slowdown * time.Second):
 		t.Fatal("LoadBuffers hangs on the fan-out")
 	}
 }
@@ -87,7 +87,7 @@ func TestExpansionLimitCountsIncludesLoadBuffers(t *testing.T) {
 		if len(v) != 1 {
 			t.Errorf("V021: %v", v)
 		}
-	case <-time.After(30 * time.Second):
+	case <-time.After(30 * slowdown * time.Second):
 		t.Fatal("LoadBuffers hangs on the fan-out of empty fragments")
 	}
 }

@@ -296,7 +296,7 @@ func TestHugeSizesDumpPromptly(t *testing.T) {
 		if msg != "" {
 			t.Error(msg)
 		}
-	case <-time.After(20 * time.Second):
+	case <-time.After(20 * slowdown * time.Second):
 		t.Fatal("dump/validate of a huge box did not finish: paint walks the logical rect")
 	}
 }

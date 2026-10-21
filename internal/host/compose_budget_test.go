@@ -57,7 +57,7 @@ func TestByteBudgetLoadBuffers(t *testing.T) {
 				if len(v) != 1 {
 					t.Errorf("V021: %v", v)
 				}
-			case <-time.After(60 * time.Second):
+			case <-time.After(60 * slowdown * time.Second):
 				t.Fatal("LoadBuffers hangs")
 			}
 		})
