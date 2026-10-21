@@ -137,8 +137,10 @@ func (s *Server) completeTUI(sn *snapshot, doc *document, off int) *completionLi
 	switch ctx.kind {
 	case tuiTagName:
 		c := newCompleter(doc.text, ctx.start, off)
+		// A <slot/> stands only in a template's body (SPEC v0.4c §15.12).
+		inTemplate := enclosingTemplate(ctx.stack) != nil
 		for _, t := range s.cat.Tags {
-			if t.Since <= ver {
+			if t.Since <= ver && (t.Name != "slot" || inTemplate) {
 				c.add(t.Name, kindClass, sinceDetail(t.Since), "", false)
 			}
 		}
@@ -158,10 +160,19 @@ func (s *Server) completeTUI(sn *snapshot, doc *document, off int) *completionLi
 				}
 			}
 		}
+		if ctx.tag == "use" && ver == int(ir.LangCurrent) {
+			// The props its template declares (SPEC v0.4c §15.12).
+			s.addUseProps(c, sn, doc, ctx, next)
+		}
 		return c.list()
 	case tuiAttrValue:
 		return s.completeValue(sn, doc, ctx, off, ver)
 	case tuiText:
+		if i := openProp(ctx.prefix); i >= 0 && ver == int(ir.LangCurrent) {
+			c := newCompleter(doc.text, ctx.start+i, off)
+			addProps(c, doc, ctx)
+			return c.list()
+		}
 		if i := strings.LastIndexByte(ctx.prefix, '{'); i >= 0 && !strings.Contains(ctx.prefix[i:], "}") {
 			c := newCompleter(doc.text, ctx.start+i+1, off)
 			s.addPaths(c, sn, doc, ctx, false)
@@ -207,6 +218,12 @@ var templateAttrs = map[string]bool{"title": true, "placeholder": true, "label":
 func (s *Server) completeValue(sn *snapshot, doc *document, ctx tuiCtx, off, ver int) *completionList {
 	c := newCompleter(doc.text, ctx.start, off)
 	attr := ctx.attr
+	if i := openProp(ctx.prefix); i >= 0 && ver == int(ir.LangCurrent) {
+		// A {$name} in a template's body (SPEC v0.4c §15.12).
+		c.start = ctx.start + i
+		addProps(c, doc, ctx)
+		return c.list()
+	}
 	// Literal keywords of an enumerated attribute.
 	if a := s.attrOf(ctx.tag, attr); a != nil {
 		for _, k := range a.Keywords {
