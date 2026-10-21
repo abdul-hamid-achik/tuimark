@@ -122,6 +122,7 @@ func (a *App) resolveAuto(probed, fgbg string) (theme, from string) {
 func (a *App) endRun() {
 	a.mu.Lock()
 	a.runAuto = ""
+	a.keyboard = ""
 	a.mu.Unlock()
 }
 

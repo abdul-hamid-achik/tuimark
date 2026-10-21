@@ -1,0 +1,32 @@
+<tui>
+  <screen id="main" focus="#l">
+    <list id="l" each="rows as r" key="r.id"><item><text>{r.name}</text></item></list>
+  </screen>
+  <keymap>
+    <bind keys="delete" action="delete"/>
+    <bind keys="f1" action="f1"/>
+    <bind keys="f3" action="f3"/>
+    <bind keys="f12" action="f12"/>
+    <bind keys="shift+enter" action="shift_enter"/>
+    <bind keys="ctrl+enter" action="ctrl_enter"/>
+    <bind keys="alt+enter" action="alt_enter"/>
+    <bind keys="alt+backspace" action="alt_backspace"/>
+    <bind keys="alt+a" action="alt_a"/>
+    <bind keys="alt+A" action="alt_A"/>
+    <bind keys="ctrl+a" action="ctrl_a"/>
+    <bind keys="backspace" action="backspace"/>
+    <bind keys="tab" action="tab"/>
+    <bind keys="enter" action="enter"/>
+    <bind keys="esc" action="esc"/>
+    <bind keys="shift+tab" action="shift_tab"/>
+    <bind keys="up" action="up"/>
+    <bind keys="left" action="left"/>
+    <bind keys="right" action="right"/>
+    <bind keys="space" action="space"/>
+    <bind keys="/" action="slash"/>
+    <bind keys="1" action="n1"/>
+    <bind keys="2" action="n2"/>
+    <bind keys="3" action="n3"/>
+    <bind keys="8" action="n8"/>
+  </keymap>
+</tui>

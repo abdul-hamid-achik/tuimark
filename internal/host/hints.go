@@ -44,6 +44,12 @@ func keyOf(tok string) Key {
 	if strings.HasPrefix(tok, "ctrl+") {
 		return Key{Name: tok}
 	}
+	if len(tok) > 1 {
+		// A token of the current language (SPEC v0.4d §8.1): delete, f1 to
+		// f12, alt+X, shift+enter, ctrl+enter, alt+enter, alt+backspace.
+		// None is typed text, so none carries a rune.
+		return Key{Name: tok}
+	}
 	r := []rune(tok)[0]
 	return Key{Name: string(r), Rune: r}
 }
@@ -52,6 +58,18 @@ func keyOf(tok string) Key {
 // decoder turns their bytes into tab and enter (SPEC §8.1).
 func neverArrives(tok string) bool {
 	return tok == "ctrl+i" || tok == "ctrl+j" || tok == "ctrl+m"
+}
+
+// firstSendable is the first of keys that the session's terminal can send
+// (SPEC v0.4d §26.14.3, decision 220), and keys[0] as written when it can
+// send none of them. In a pinned document it is keys[0].
+func (a *App) firstSendable(keys []string) string {
+	for _, tok := range keys {
+		if a.producible(tok) {
+			return tok
+		}
+	}
+	return keys[0]
 }
 
 // hintItems returns the items of a hints on v (SPEC §6.12): the hint rows
@@ -68,7 +86,7 @@ func (a *App) hintItems(v keyView, all bool) []hintItem {
 			continue
 		}
 		if all {
-			keycap := kb.Keys[0]
+			keycap := a.firstSendable(kb.Keys)
 			if kb.Keycap != "" {
 				keycap = kb.Keycap
 			}
@@ -76,7 +94,7 @@ func (a *App) hintItems(v keyView, all bool) []hintItem {
 			continue
 		}
 		for _, tok := range kb.Keys {
-			if !ir.ValidKey(tok) || neverArrives(tok) {
+			if !a.keyTokenOK(tok) || neverArrives(tok) || !a.producible(tok) {
 				continue
 			}
 			if p := a.planKey(v, keyOf(tok)); p.step == stepKeymap && p.row == i {

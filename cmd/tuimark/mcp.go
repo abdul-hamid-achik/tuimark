@@ -242,6 +242,7 @@ var mcpTools = []mcpTool{
 		Props: []mcpProp{
 			{"file", "string"}, {"steps", "array"}, {"data", "string"}, {"cols", "integer"}, {"rows", "integer"},
 			{"theme", "string"}, {"styles", "boolean"}, {"cells", "boolean"}, {"frames", "boolean"}, {"strict", "boolean"},
+			{"keyboard", "string"},
 		},
 	},
 	{
@@ -301,6 +302,9 @@ func mcpSchema(t mcpTool) map[string]any {
 			s := map[string]any{"type": "string"}
 			if p.Name == "theme" {
 				s["enum"] = []string{"dark", "light"}
+			}
+			if p.Name == "keyboard" {
+				s["enum"] = []string{"kitty", "legacy"}
 			}
 			props[p.Name] = s
 		case "integer":
@@ -684,6 +688,11 @@ func invokePlayTool(file string, args map[string]json.RawMessage) map[string]any
 		if v, ok := mcpBoolArg(args, name); ok && v {
 			argv = append(argv, "--"+name)
 		}
+	}
+	// SPEC v0.4d §15.8: keyboard is passed as --keyboard, after the other
+	// flags and before the output format.
+	if v, ok := mcpStrArg(args, "keyboard"); ok {
+		argv = append(argv, "--keyboard", v)
 	}
 	argv = append(argv, "--format", "json")
 	steps, _ := mcpStepsArg(args, "steps")

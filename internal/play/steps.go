@@ -41,6 +41,7 @@ type Step struct {
 	Kind  Kind
 	Raw   string
 	Key   host.Key
+	Tok   string        // KindKey: the key token (SPEC §8.1), as written
 	Text  string        // KindText, KindPaste
 	Path  string        // KindSet
 	Value any           // KindSet, decoded JSON
@@ -128,10 +129,18 @@ func ParseStep(tok string) (Step, error) {
 		}
 		return st, nil
 	}
-	if !ir.ValidKey(tok) {
+	return KeyStep(tok, tok)
+}
+
+// KeyStep is the key step for the token tok, written as raw: a token of
+// tuimark 0.4.4 or of the current language (SPEC v0.4d §8.1). Whether the
+// document accepts it, and whether the keyboard can send it, is decided
+// when the document is known (CheckKeys).
+func KeyStep(raw, tok string) (Step, error) {
+	if !ir.ValidKey(tok) && !ir.IsKeyCurrent(tok) {
 		return Step{}, errNotKeyToken
 	}
-	return Step{Kind: KindKey, Raw: tok, Key: KeyFromToken(tok)}, nil
+	return Step{Kind: KindKey, Raw: raw, Key: KeyFromToken(tok), Tok: tok}, nil
 }
 
 // ParseSteps splits s on runs of ASCII spaces (leading/trailing ignored,
@@ -219,6 +228,10 @@ func parseResizeToken(tok string) (Step, error) {
 func KeyFromToken(tok string) host.Key {
 	if tok == "space" {
 		return host.Key{Name: "space", Rune: ' '}
+	}
+	if ir.IsKeyCurrent(tok) {
+		// A token of the current language (SPEC v0.4d §8.1); none is text.
+		return host.Key{Name: tok}
 	}
 	switch tok {
 	case "ctrl+i":

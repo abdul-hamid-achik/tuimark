@@ -11,7 +11,6 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
-	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/play"
 )
 
@@ -249,10 +248,11 @@ func parseScriptLine(line string) (play.Step, error) {
 		if err != nil {
 			return play.Step{}, err
 		}
-		if !ir.ValidKey(s) {
+		st, err := play.KeyStep(line, s)
+		if err != nil {
 			return play.Step{}, fmt.Errorf("%q is not a valid key token", s)
 		}
-		return play.Step{Kind: play.KindKey, Raw: line, Key: play.KeyFromToken(s)}, nil
+		return st, nil
 	case "text":
 		s, err := decodeStringMember("text", raw)
 		if err != nil {
@@ -327,6 +327,7 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 	styles := fs.Bool("styles", false, "include theme and per-row style spans (json only)")
 	frames := fs.Bool("frames", false, "include one settled frame per applied step")
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
+	keyboard := fs.String("keyboard", host.KeyboardKitty, "the terminal play emulates: kitty or legacy")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -340,6 +341,9 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 	}
 	if *format != "text" && *format != "json" {
 		return c.fail(fmt.Errorf("--format must be text or json"))
+	}
+	if *keyboard != host.KeyboardKitty && *keyboard != host.KeyboardLegacy {
+		return c.fail(fmt.Errorf("--keyboard must be kitty or legacy"))
 	}
 	fromTool := len(toolSteps) > 0
 	if (*input != "" || fromTool) && *script != "" {
@@ -367,8 +371,12 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 		return c.fail(err)
 	}
 	app.SetStrict(*strict)
+	if err := play.CheckKeys(app, steps, *keyboard); err != nil {
+		return c.fail(fmt.Errorf("play: %v", err))
+	}
 
 	sess := play.NewSession(app, *cols, *rows, *cells, *styles, *frames, true)
+	sess.Keyboard = *keyboard
 	sess.Run(steps)
 	if sess.UsageErr != nil {
 		return c.fail(fmt.Errorf("play: step %d (%s): %v", sess.UsageStep, sess.UsageRaw, sess.UsageErr))

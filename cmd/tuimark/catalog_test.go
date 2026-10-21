@@ -261,10 +261,25 @@ func TestCatalogEqualsTheTables(t *testing.T) {
 	}
 
 	// Keys.
-	if !reflect.DeepEqual(c.Keys.Named, ir.NamedKeys) || c.Keys.Ctrl != "a-z" || !c.Keys.Printable ||
+	if !reflect.DeepEqual(c.Keys.Named, ir.NamedKeysAll) || c.Keys.Ctrl != "a-z" || !c.Keys.Printable ||
 		!reflect.DeepEqual(c.Keys.NeverMatch, []string{"ctrl+i", "ctrl+j", "ctrl+m"}) ||
 		c.Keys.RejectedSince != 4 {
 		t.Errorf("keys = %+v", c.Keys)
+	}
+	// SPEC v0.4d §15.10: named gains the tokens of the current language in
+	// the order of §8.1, named_since maps each to 4, and alt is the
+	// characters alt+ takes.
+	if c.Keys.Alt != "a-z A-Z 0-9" || c.Keys.AltSince != 4 || len(c.Keys.NamedSince) != len(ir.NamedKeysCurrent) {
+		t.Errorf("keys alt = %q since %d, named_since = %v", c.Keys.Alt, c.Keys.AltSince, c.Keys.NamedSince)
+	}
+	for _, k := range ir.NamedKeysAll {
+		if !ir.ValidKeyLang(k, ir.LangCurrent) {
+			t.Errorf("named key %q is not a valid key", k)
+		}
+		since, current := c.Keys.NamedSince[k]
+		if current != !ir.ValidKey(k) || (current && since != 4) {
+			t.Errorf("named key %q: named_since %d (present %v), valid in 0.4.4: %v", k, since, current, ir.ValidKey(k))
+		}
 	}
 	for _, k := range ir.NamedKeys {
 		if !ir.ValidKey(k) {

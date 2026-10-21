@@ -263,8 +263,12 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 	// theme="auto" (or @theme "auto") without TUIMARK_THEME puts OSC 11 in
 	// the probe (§26.2, ADR 0010).
 	themeQuery := a.wantsTerminalTheme(cfg.theme)
-	sess.probe, sess.skipDECRQM = probePlan(os.Getenv, outTTY, cfg.sync, themeQuery)
+	// A document in the current language also asks for the Kitty keyboard
+	// protocol, outside the skip rule (SPEC v0.4d §26.14.1, decision 216).
+	modern := a.Modern()
+	sess.probe, sess.skipDECRQM = probePlanKB(os.Getenv, outTTY, cfg.sync, themeQuery, modern)
 	sess.themeQuery = themeQuery && sess.probe
+	sess.kbQuery = modern && sess.probe
 	defer a.overrideTheme(cfg.theme)()
 	// Catch the signals before raw mode; release them only after the
 	// terminal is restored (defers run last-in, first-out).
@@ -617,7 +621,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// start of the paste start marker the next read may still complete
 	// the marker (decoder.flush). A paste waits for its end marker however
 	// long it takes. Only `tuimark run` (hooks.F12) decodes F12.
-	dec := decoder{f12: hooks.F12 != nil}
+	dec := decoder{f12: hooks.F12 != nil, cur: a.Modern()}
 
 	// hostStop translates one HostHooks.Stop value into what the caller
 	// should return from session (SPEC v0.3b §19.1): eof records sess.eof,
@@ -730,6 +734,23 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			return err
 		}
 	}
+	// The keyboard of a document in the current language (SPEC v0.4d
+	// §26.14.1, step 6 of §26.1): flag 1 pushed after the probe when the
+	// terminal answered the Kitty query, modifyOtherKeys level 2 when the
+	// probe ran without an answer, nothing (legacy) without a probe. The
+	// frames are built for that keyboard, and <hints> shows the keys it
+	// can send.
+	keyboard := ""
+	if a.Modern() {
+		var seq string
+		seq, keyboard = sess.keyboardPush(caps)
+		a.SetKeyboard(keyboard)
+		if seq != "" {
+			if _, err := io.WriteString(out, seq); err != nil {
+				return err
+			}
+		}
+	}
 	opts := paint.Options{Profile: sess.profile, NoCHA: caps.graphemeActive()}
 	syncFrames := sess.syncFrames(caps)
 	// theme="auto" (§26.4): the probe's background, else COLORFGBG, else
@@ -739,8 +760,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		a.mu.Lock()
 		theme, from := a.frameTheme(), a.themeSource(autoFrom)
 		a.mu.Unlock()
-		lg.write("caps", member{"probe", sess.probe}, member{"color", sess.profile.String()}, member{"sync", syncFrames},
-			member{"grapheme", caps.graphemeState()}, member{"theme", theme}, member{"theme_from", from})
+		ms := []member{{"probe", sess.probe}, {"color", sess.profile.String()}, {"sync", syncFrames},
+			{"grapheme", caps.graphemeState()}, {"theme", theme}, {"theme_from", from}}
+		if keyboard != "" {
+			ms = append(ms, member{"keyboard", keyboard})
+		}
+		lg.write("caps", ms...)
 	}
 
 	var prev *paint.Grid
@@ -1216,6 +1241,13 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			next.takeOver(a, s.KeepStore)
 			old := a
 			a = next
+			// The new app is driven by the session's keyboard and, when
+			// the session pushed a keyboard mode, by the decoder that
+			// reads it, whatever language the reload gave the document
+			// (the terminal sends the bytes of the mode it was left in).
+			old.SetKeyboard("")
+			a.SetKeyboard(keyboard)
+			dec.cur = a.Modern() || sess.pushed()
 			a.mu.Lock()
 			quitReq = a.quitReq
 			a.mu.Unlock()

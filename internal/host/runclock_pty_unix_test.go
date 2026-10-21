@@ -43,7 +43,9 @@ func runSpinPtyChild(t *testing.T, s1 string, extra bool) {
 func startSpinPty(t *testing.T, mode string) (*ptyRig, int) {
 	t.Helper()
 	r := startPtyChildEnv(t, "TestRunClockPtySmoke", mode, []string{"TERM=xterm-256color", "TUIMARK_COLOR=truecolor"})
-	if !r.waitFor(r.screen, "\x1b[?2027$p\x1b[c", 10*time.Second) {
+	// A document in the current language asks for the Kitty keyboard too
+	// (SPEC v0.4d §26.2): the query goes right before DA1.
+	if !r.waitFor(r.screen, "\x1b[?2027$p\x1b[?u\x1b[c", 10*time.Second) {
 		t.Fatalf("never saw the probe; %s", r.describe())
 	}
 	r.write(t, ptyV04aProbe)

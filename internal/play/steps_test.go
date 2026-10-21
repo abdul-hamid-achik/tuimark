@@ -16,8 +16,8 @@ func TestParseStepAccepted(t *testing.T) {
 		tok  string
 		want Step
 	}{
-		{"enter", Step{Kind: KindKey, Raw: "enter", Key: host.Key{Name: "enter"}}},
-		{"a", Step{Kind: KindKey, Raw: "a", Key: host.Key{Name: "a", Rune: 'a'}}},
+		{"enter", Step{Kind: KindKey, Raw: "enter", Key: host.Key{Name: "enter"}, Tok: "enter"}},
+		{"a", Step{Kind: KindKey, Raw: "a", Key: host.Key{Name: "a", Rune: 'a'}, Tok: "a"}},
 		{"text:", Step{Kind: KindText, Raw: "text:"}}, // empty text is a step that types nothing
 		{"text:hi", Step{Kind: KindText, Raw: "text:hi", Text: "hi"}},
 		{"paste:a=b", Step{Kind: KindPaste, Raw: "paste:a=b", Text: "a=b"}},

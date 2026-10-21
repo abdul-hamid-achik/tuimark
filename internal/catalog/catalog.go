@@ -81,8 +81,17 @@ type Media struct {
 
 // Keys describes the key tokens of SPEC §8.1.
 type Keys struct {
-	Named      []string `json:"named"`
-	Ctrl       string   `json:"ctrl"`
+	// Named lists every named token of the current language in the order
+	// of SPEC §8.1 (v0.4d); NamedSince maps each token only the current
+	// language accepts to 4, so a reader that filters by language drops
+	// them for a pinned document.
+	Named      []string       `json:"named"`
+	NamedSince map[string]int `json:"named_since"`
+	Ctrl       string         `json:"ctrl"`
+	// Alt is the characters alt+ takes, AltSince the language that
+	// accepts alt+X (SPEC v0.4d §15.10).
+	Alt        string   `json:"alt"`
+	AltSince   int      `json:"alt_since"`
 	Printable  bool     `json:"printable"`
 	NeverMatch []string `json:"never_match"`
 	// RejectedSince is the first language whose keymaps reject NeverMatch
@@ -146,8 +155,11 @@ func Build(tuimark string) Catalog {
 		PseudoClasses: pseudoClasses(),
 		Media:         media(),
 		Keys: Keys{
-			Named:         append([]string(nil), ir.NamedKeys...),
+			Named:         append([]string(nil), ir.NamedKeysAll...),
+			NamedSince:    namedSince(),
 			Ctrl:          "a-z",
+			Alt:           ir.KeysAltChars,
+			AltSince:      int(ir.KeysCurrentSince),
 			Printable:     true,
 			NeverMatch:    append([]string(nil), agentsdoc.NeverMatchKeys...),
 			RejectedSince: int(ir.KeysRejectedSince),
@@ -155,6 +167,16 @@ func Build(tuimark string) Catalog {
 		Actions:     actions(),
 		Diagnostics: diagnostics(),
 	}
+}
+
+// namedSince maps each named key token only the current language accepts
+// to the language number (SPEC v0.4d §15.10).
+func namedSince() map[string]int {
+	m := map[string]int{}
+	for _, k := range ir.NamedKeysCurrent {
+		m[k] = int(ir.KeysCurrentSince)
+	}
+	return m
 }
 
 func tags() []Tag {

@@ -169,6 +169,7 @@ func Markdown() string {
 	writeV04aToolsSection(&b)
 	writeV04bSection(&b)
 	writeV04cSection(&b)
+	writeV04dKeysSection(&b)
 	writeV04bDefaultsSection(&b)
 	writeNotes(&b)
 
@@ -434,7 +435,8 @@ func writeCSSProperties(b *strings.Builder) {
 
 func writeKeyTokens(b *strings.Builder) {
 	b.WriteString("### Key tokens\n\n")
-	b.WriteString("Named: " + strings.Join(ir.NamedKeys, ", ") + "\n\n")
+	b.WriteString("Named: " + strings.Join(ir.NamedKeysAll, ", ") + "\n\n")
+	b.WriteString("Only in a `<tui>` without `version` (V003 with `(requires a <tui> without version)` in a document that writes it): " + strings.Join(ir.NamedKeysCurrent, ", ") + ", and `alt+` a letter (`a`-`z` or `A`-`Z`) or a digit (`" + ir.KeysAltChars + "`). Not tokens: `alt+` a punctuation character, `alt+space`, `shift+` a letter (write the upper-case letter), `ctrl+` a named key, `alt+` a named key other than `enter` and `backspace`, and anything after `f12`.\n\n")
 	b.WriteString("Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`enter` and never match: in a keymap of a `<tui>` without `version` each is V003, so write `tab` or `enter`; a document that writes `version` accepts them, never matching, as before; `play` steps accept them in every document and deliver `tab`/`enter`), and any single printable ASCII character except space (write `space`) and `,` (the `keys=` list separator; a token of `,` binds nothing).\n\n")
 }
 

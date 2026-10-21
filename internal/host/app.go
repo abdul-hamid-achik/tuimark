@@ -221,6 +221,10 @@ type App struct {
 	flagTheme   string
 	runEnvTheme string
 	runAuto     string
+	// keyboard is the keyboard the frames are built for (SPEC v0.4d
+	// §26.14.3, keyboard.go): "" is a Kitty session, the keyboard of every
+	// tool that renders without a terminal; Run and play set it.
+	keyboard string
 }
 
 // modalEntry is a modal that took the focus trap when it became the top
