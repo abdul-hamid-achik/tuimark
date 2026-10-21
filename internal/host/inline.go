@@ -302,6 +302,10 @@ func (a *App) commitTemplate(c Commit, cols, rows int) (*paint.Grid, int, error)
 			best(&pair, d)
 		case d.Code == "V011":
 			// the with, checked above
+		case d.Code == "V012", d.Code == "V004":
+			// Ids are dropped from the copy (SPEC v0.4d §26.15.4): a use
+			// without id whose template holds one, and a repeated one,
+			// are no error here.
 		default:
 			if other == nil {
 				other = d

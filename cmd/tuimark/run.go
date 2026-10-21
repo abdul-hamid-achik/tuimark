@@ -42,6 +42,7 @@ func (c *cli) cmdRun(args []string) int {
 	mock := fs.String("mock", "", "JSON file mapping actions to the store writes they make")
 	strip := fs.Bool("strip", false, "show the event strip from the start (F12 shows or hides it)")
 	screen := fs.String("screen", "", "the screen the session starts on; applied as Set(\"@screen\", ID)")
+	inline := fs.Bool("inline", false, "draw the active screen as a live region below the cursor, in the terminal's scrollback")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -54,7 +55,7 @@ func (c *cli) cmdRun(args []string) int {
 	if setTheme && *theme != "dark" && *theme != "light" {
 		return c.runFail(fmt.Errorf("--theme must be dark or light (got %q)", *theme))
 	}
-	r := &runner{file: file, data: *data, mockPath: *mock, theme: *theme, setTheme: setTheme, stripOn: *strip}
+	r := &runner{file: file, data: *data, mockPath: *mock, theme: *theme, setTheme: setTheme, stripOn: *strip, inline: *inline}
 	// Everything that can fail before the session does so here, before the
 	// terminal is touched (SPEC v0.4a §15.9 "Errors before the session").
 	// A document with error-severity diagnostics still runs, as under
@@ -63,6 +64,10 @@ func (c *cli) cmdRun(args []string) int {
 	app, mk, err := r.load(true, true)
 	if err != nil {
 		return c.runFail(err)
+	}
+	if r.inline && !app.Modern() {
+		// SPEC v0.4d §15.1, §26.15.1: before the terminal is touched.
+		return c.runFail(host.ErrInlineNeedsCurrent)
 	}
 	// --screen is applied once, here, as Set("@screen", ID) before the first
 	// frame (SPEC v0.4d §15.9, decision 260); a reload keeps the screen the
@@ -103,6 +108,8 @@ func (c *cli) runFail(err error) int {
 type runner struct {
 	file, data, mockPath, theme string
 	setTheme                    bool
+	// inline draws the session as a live region (SPEC v0.4d §26.15).
+	inline bool
 
 	// The watcher's own state: the fragments and stylesheets of the last
 	// load that read the document far enough to resolve them, the
@@ -150,6 +157,11 @@ func (r *runner) load(initial, bind bool) (app *host.App, mk map[string][]mockWr
 		}
 		if st := app.Static(); st.HasErrors() {
 			return nil, nil, diagError(st)
+		}
+		if r.inline && !app.Modern() {
+			// An inline session needs a document in the current language:
+			// the reload fails and the old one runs on.
+			return nil, nil, host.ErrInlineNeedsCurrent
 		}
 	}
 	if r.data != "" && bind {
@@ -533,6 +545,7 @@ func (r *runner) run(app *host.App, stdout, stderr io.Writer) int {
 		},
 		CtrlCTwice: true,
 		Swap:       swaps,
+		Inline:     r.inline,
 	}
 	res := app.RunHost(stdout, hooks)
 	close(done)

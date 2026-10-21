@@ -48,7 +48,11 @@ func CommitDocument(doc *Document, ld *Loader, id, with string, props []CommitPr
 		}
 	}
 	use := &RawNode{Type: RawElement, Name: "use", SelfClosing: true, Line: CommitLine}
-	use.Attrs = append(use.Attrs, RawAttr{Name: "template", Value: id, Line: CommitLine})
+	// A use without id whose template holds an id places nothing (V012),
+	// and a commit's copy has its ids dropped anyway: the use gets one so
+	// the copy is built, and the caller drops every id of it.
+	use.Attrs = append(use.Attrs, RawAttr{Name: "id", Value: "commit__", Line: CommitLine},
+		RawAttr{Name: "template", Value: id, Line: CommitLine})
 	if with != "" {
 		use.Attrs = append(use.Attrs, RawAttr{Name: "with", Value: with, Line: CommitLine})
 	}

@@ -621,6 +621,10 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	defer func() {
 		a.endRun()
 		if a != orig {
+			if inl != nil {
+				a.setInlineSink(nil)
+				a.SetInline(false)
+			}
 			a.leaveSession()
 		}
 	}()
@@ -1311,9 +1315,23 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			if err := next.enterMode(modeRun); err != nil {
 				return true, err
 			}
+			if inl != nil {
+				// The new app is an inline region too (SPEC v0.4d
+				// §26.15.1: a reload into a pinned document is refused
+				// before the swap, by the tool).
+				if _, err := next.SetInline(true); err != nil {
+					next.exitMode()
+					return true, err
+				}
+			}
 			next.takeOver(a, s.KeepStore)
 			old := a
 			a = next
+			if inl != nil {
+				old.setInlineSink(nil)
+				old.SetInline(false)
+				a.setInlineSink(inl)
+			}
 			// The new app is driven by the session's keyboard and, when
 			// the session pushed a keyboard mode, by the decoder that
 			// reads it, whatever language the reload gave the document

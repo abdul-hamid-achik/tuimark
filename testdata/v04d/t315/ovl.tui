@@ -1,0 +1,9 @@
+<tui>
+  <screen id="main" focus="#composer">
+    <scroll id="live" stick="bottom">
+      <text>{live.text}</text>
+    </scroll>
+    <input id="composer" bind="draft" placeholder="Message"/>
+    <text id="status">{status}</text>
+  </screen>
+</tui>

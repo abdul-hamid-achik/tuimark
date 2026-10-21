@@ -192,7 +192,7 @@ func (v *vt) screenRows() []string {
 // dropped, one row per line.
 func (v *vt) text() string {
 	v.mu.Lock()
-	all := append(append([]string(nil), v.scrollback...))
+	all := append([]string(nil), v.scrollback...)
 	for _, r := range v.cells {
 		all = append(all, strings.TrimRight(string(r), " "))
 	}
