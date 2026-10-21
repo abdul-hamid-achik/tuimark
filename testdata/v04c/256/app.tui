@@ -1,0 +1,10 @@
+<tui>
+  <template id="card"><box><slot/></box></template>
+  <template id="kv"><text id="t">k</text></template>
+  <screen id="main">
+    <use id="c" template="card">
+      <use id="k" template="kv"/>
+      <include src="f.tui"/>
+    </use>
+  </screen>
+</tui>

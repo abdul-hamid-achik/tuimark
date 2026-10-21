@@ -17,7 +17,7 @@ import (
 // (equal frames, the charges of test 248, and test 260) are the root
 // package's conformance_v04c_slot_test.go. The fixtures are
 // testdata/v04c/<test>. The via entries of a fill (242's inspect, 243,
-// 256) are phase C3's.
+// 256) are conformance_v04c_tools_test.go's (phase C3).
 
 // screenTree is the screen main of file as the parser builds it, its
 // fills placed: each node as KIND, #ID when it has one, :TEXT for a text,
@@ -100,7 +100,8 @@ func TestV04cSlot241Classes(t *testing.T) {
 
 // 242. A fill belongs where it is written: its ids are not scoped, its
 // paths are the store's, and a focus= in it names its own nodes. (The
-// inspect via entry of the fill is phase C3's; the source is checked.)
+// inspect via entry of the fill is TestV04cTools242FillVia's; the source
+// is checked.)
 func TestV04cSlot242FillBelongsWhereWritten(t *testing.T) {
 	dir := propsFixtures + "242/"
 	data := dir + "d.json"
@@ -363,7 +364,8 @@ func TestV04cSlotFillProps(t *testing.T) {
 }
 
 // ir and inspect read a document with fills without failing; the shape of
-// a fill in IR 0.4 and inspect's via entries are phase C3's.
+// a fill in IR 0.4 and inspect's via entries are checked by
+// conformance_v04c_tools_test.go (phase C3).
 func TestV04cSlotToolsReadFills(t *testing.T) {
 	for _, f := range []string{"241/app.tui", "242/app.tui", "257/app.tui", "258/app.tui"} {
 		if code, _, errw := runCLI("ir", propsFixtures+f); code != 0 {

@@ -216,12 +216,17 @@ func fileLoc(file string, line, col int) string {
 
 // viaText names an element of a via list as the text output of inspect
 // does (SPEC v0.4b §15.7): <use id="U" template="T">, <use template="T">
-// for a use without id (as a placement suffix names it), or
-// <include src="S">.
+// for a use without id (as a placement suffix names it), <include
+// src="S">, or, for a slot (v0.4c), <slot/> of <use id="U" template="T">
+// (of <use template="T"> without id).
 func viaText(v host.ViaInfo) string {
 	switch {
 	case v.Include != nil:
 		return fmt.Sprintf("<include src=%q>", *v.Include)
+	case v.Slot != nil && *v.Slot != "":
+		return fmt.Sprintf("<slot/> of <use id=%q template=%q>", *v.Slot, *v.Template)
+	case v.Slot != nil:
+		return fmt.Sprintf("<slot/> of <use template=%q>", *v.Template)
 	case v.Use != nil && *v.Use != "":
 		return fmt.Sprintf("<use id=%q template=%q>", *v.Use, *v.Template)
 	}
