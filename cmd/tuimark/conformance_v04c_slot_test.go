@@ -363,6 +363,38 @@ func TestV04cSlotFillProps(t *testing.T) {
 	walk(h.Document().Root)
 }
 
+// A slot is judged in the body of the template that writes it, never where
+// a copy lands (decision 193): a template whose root is an <item> is valid
+// in a <table>, and the elements of its fill meet the table item's rule
+// where they are written, with no suffix (decision 176), as the
+// hand-written row's <text> does (C2 review S1). Through a forwarding slot
+// too.
+func TestV04cSlotInATableItem(t *testing.T) {
+	doc := func(use string) string {
+		return "<tui>\n  <template id=\"li\"><item class=\"row\"><slot/></item></template>\n  <template id=\"fw\"><use template=\"li\"><slot/></use></template>\n  <screen id=\"main\">\n    <table id=\"t\" each=\"xs as z\" key=\"z\">\n      <column title=\"A\">{z}</column>\n      " + use + "\n    </table>\n  </screen>\n</tui>\n"
+	}
+	data := writeTemp(t, "d.json", `{"xs": ["a", "b"]}`)
+	const v016 = `a table's <item> is the row template: it takes class and class:NAME only, no children (found <text>); the cells come from the <column> elements`
+	for _, c := range []struct {
+		use  string
+		want []string
+	}{
+		{`<use template="li"/>`, []string{}},
+		{`<use template="li"><text>bad</text></use>`, []string{`error V016 app.tui:7:26 /screen/table/item id= ` + v016}},
+		{`<use template="fw"/>`, []string{}},
+		{`<use template="fw"><text>bad</text></use>`, []string{`error V016 app.tui:7:26 /screen/table/item id= ` + v016}},
+	} {
+		sameLines(t, c.use, vdiags(t, writeTemp(t, "app.tui", doc(c.use)), data), c.want)
+	}
+	// The same template in a list holds its fill (and the list item's own
+	// rules apply to it).
+	list := writeTemp(t, "app.tui", "<tui>\n  <template id=\"li\"><item class=\"row\"><slot/></item></template>\n  <screen id=\"main\">\n    <list id=\"l\" each=\"xs as r\" key=\"r\">\n      <use template=\"li\"><text>{r}</text></use>\n    </list>\n  </screen>\n</tui>\n")
+	sameLines(t, "in a list", vdiags(t, list, data), []string{})
+	if nodes, _ := dumpNodes(t, list, "--data", data); !reflect.DeepEqual(textsOf(nodes), []string{"a", "b"}) {
+		t.Errorf("in a list: texts %q", textsOf(nodes))
+	}
+}
+
 // ir and inspect read a document with fills without failing; the shape of
 // a fill in IR 0.4 and inspect's via entries are checked by
 // conformance_v04c_tools_test.go (phase C3).

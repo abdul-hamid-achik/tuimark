@@ -22,6 +22,42 @@ func TestSlotFillsEqualTheHandWrittenMarkup(t *testing.T) {
 	sameFrame(t, "241", loadWith(t, filepath.Join(dir, "app.tui"), data), loadWith(t, filepath.Join(dir, "hand.tui"), data), 20, 6)
 }
 
+// A template whose root is an <item>, used in a <table>: its slot is
+// judged in the template's body (decision 193), so the copy is the
+// hand-written row, frame and diagnostics: none for an empty fill, and
+// for a fill the table item's V016 at the fill's element, where it is
+// written, with no suffix (decision 176), as the hand-written row's text
+// gets it at its own (C2 review S1).
+func TestSlotInATableItemIsTheHandWrittenRow(t *testing.T) {
+	doc := func(row, use string) string {
+		return "<tui>\n" + row + "  <screen id=\"main\">\n    <table id=\"t\" each=\"xs as z\" key=\"z\">\n      <column title=\"A\">{z}</column>\n      " + use + "\n    </table>\n  </screen>\n</tui>\n"
+	}
+	const li = "  <template id=\"li\"><item class=\"row\"><slot/></item></template>\n"
+	const v016 = `a table's <item> is the row template: it takes class and class:NAME only, no children (found <text>); the cells come from the <column> elements`
+	data := writeDoc(t, "d.json", `{"xs": ["a", "b"]}`)
+	for _, c := range []struct {
+		what, use, hand string
+		app, hands      []string
+	}{
+		{"empty fill", `<use template="li"/>`, `<item class="row"></item>`, []string{}, []string{}},
+		{
+			"a fill", `<use template="li"><text>bad</text></use>`, `<item class="row"><text>bad</text></item>`,
+			[]string{`V016 app.tui:6:26 /screen/table/item id= ` + v016},
+			[]string{`V016 hand.tui:5:25 /screen/table/item id= ` + v016},
+		},
+	} {
+		app := loadWith(t, writeDoc(t, "app.tui", doc(li, c.use)), data)
+		hand := loadWith(t, writeDoc(t, "hand.tui", doc("", c.hand)), data)
+		if got := diagTexts(app.Validate()); !reflect.DeepEqual(got, c.app) {
+			t.Errorf("%s: %v", c.what, got)
+		}
+		if got := diagTexts(hand.Validate()); !reflect.DeepEqual(got, c.hands) {
+			t.Errorf("%s, by hand: %v", c.what, got)
+		}
+		sameFrame(t, c.what, app, hand, 20, 4)
+	}
+}
+
 // limitMsg is the message of a V021 at a use of template id.
 func limitMsg(id string) string {
 	return `use template="` + id + `" exceeds the expansion limit (100000 elements or 16 MiB of placed source): it inserts nothing, and no later include or use expands`
