@@ -328,8 +328,8 @@ func openProp(prefix string) int {
 func (s *Server) hoverProp(sn *snapshot, doc *document, word string, start, end int) []string {
 	if strings.HasPrefix(word, "$") && start > 0 && doc.text[start-1] == '{' {
 		d, ok := enclosingProps(doc, lexTUI(doc.text, start-1))
-		if !ok {
-			return nil
+		if !ok || propIndex(d.attr.value, word[1:]) < 0 {
+			return nil // validate's V003 says it is not declared
 		}
 		return []string{fmt.Sprintf("`{%s}` — %s", word, propDetail(d.id)), propsText(d)}
 	}

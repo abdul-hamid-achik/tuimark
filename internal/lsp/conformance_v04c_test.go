@@ -187,6 +187,13 @@ func TestV04cLSPHover(t *testing.T) {
 			t.Errorf("%s: %q, want %q", tc.name, got, tc.want)
 		}
 	}
+	// A {$name} the template does not declare names no template.
+	other := strings.Replace(text, "{$max}", "{$zzz}", 1)
+	c.change(uri, 2, other)
+	if got := hoverAt(t, c, uri, positionAt(other, strings.Index(other, "{$zzz}")+3)); strings.Contains(got, "prop of") {
+		t.Errorf("undeclared: %q", got)
+	}
+	c.change(uri, 3, text)
 	// The use's own attribute keeps the catalog's text.
 	if got := hoverAt(t, c, uri, at(`template="t" title`, 1)); !strings.Contains(got, "`template` — attribute of `<use>`") {
 		t.Errorf("template: %q", got)
