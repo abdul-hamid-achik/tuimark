@@ -14,7 +14,7 @@
 //
 // The public surface is deliberately small: Load, LoadFS, Parse, Bind,
 // Set, Get, Batch, On, Catalog, Dump, Validate, Play, Run, RunContext,
-// RunWith, Quit, Every, Derive, Commit.
+// RunWith, Quit, Every, Derive, Append, Commit.
 package tuimark
 
 import (

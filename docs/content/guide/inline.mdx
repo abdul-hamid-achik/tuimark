@@ -1,0 +1,61 @@
+---
+title: Inline mode
+description: Draw a screen as a live region below the shell's prompt, and print into the terminal's own scrollback above it with Commit.
+---
+
+By default `Run()` takes the whole terminal (the alternate screen). **Inline mode** draws the active screen as a *live region* below the cursor instead, and the host prints what it wants to keep into the terminal's own scrollback, above the region, with `Commit`. The user scrolls, selects, and copies that scrollback with the terminal's own means, as with any command-line tool. A chat client, an installer, and a prompt that asks for an approval are the typical users.
+
+Only a `<tui>` without `version` runs inline; for a document that writes `version` it is the error `tuimark: inline mode needs a <tui> without version`, before the terminal is touched. Nothing in the markup changes: inline mode is a way to run a document.
+
+## Running inline
+
+```go
+ui, _ := tuimark.Load("app.tui")
+// ...Bind, On...
+err := ui.RunWith(context.Background(), os.Stdout, tuimark.RunOptions{Inline: true})
+```
+
+`tuimark run app.tui --inline` does the same without Go code. `Run` and `RunContext` are never inline.
+
+## The region
+
+The region is the active screen laid out at the terminal's width and at the height of its content, as a modal sized by its content is. It follows its content: it grows when a node appears (a composer taking a second line, an approval) and shrinks when it goes.
+
+- A `height` or `max-height` in cells written on the screen caps it, a `min-height` in cells raises it, and the terminal's rows are the last cap. The built-in `height: 100%` of `screen` does not apply.
+- `@media` reads the terminal's columns and rows, never the region's.
+- When the content is taller than the terminal, the children share the terminal's rows as a modal's children share its cap: an `fr` child and a `scroll`, `list`, or `table` take what the others leave, and what is still too tall is cut (`L009`). A transcript in a `<scroll stick="bottom">` shows its end with the composer and the status in view.
+- A modal and an open option list are laid out against the region as against a screen of its size. The region does not grow for them.
+- The document's `mouse` is ignored: an inline session has no mouse.
+
+## Committing
+
+```go
+ui.Commit(tuimark.Commit{Lines: []any{
+    "You: hello",
+    []any{map[string]any{"text": "ok", "class": "good"}},
+}})
+ui.Commit(tuimark.Commit{Template: "card", With: "last as m", Props: map[string]string{"who": "Claude"}})
+```
+
+A line is a string or an array of [runs](/guide/language). It is styled by your stylesheet as a child of the active screen, wrapped at the terminal's width, and an LF in it starts a new row. A template commit prints the copy of a `<template>` laid out from column 0 at the terminal's width, with its ids dropped and its `<slot/>` empty: to commit a card whose content comes through its slot, commit a wrapper template that has none, after writing the item to a scratch path of the store.
+
+A commit prints at once while your handler runs and is otherwise queued before the next frame; it is safe from any goroutine. A commit that fails prints nothing, and its error says why (`commit: no <template id="T">`, `commit: line 1 is a number, not a string or an array of runs`, and so on). Commits made before the session ends are printed before the region is erased, so a host that wants to keep its last state commits it before it quits.
+
+To stream a long reply, commit each block as soon as it is finished and keep only the unfinished tail in the region.
+
+## Checking an inline screen
+
+Everything can be checked without a terminal:
+
+```sh
+tuimark dump app.tui --data sample.json --cols 80 --rows 24 --inline --format json
+tuimark play app.tui --data sample.json --inline --frames --format json --script steps.ndjson
+```
+
+`dump --inline` has the region's height in `rows` and the terminal's in `terminal_rows`. `play --inline` takes the step `{"commit": {"lines": ["a"]}}` (`commit:JSON` in `--input`), lists the committed rows in `scrollback`, and each frame says in `scrollback_rows` how many rows were committed up to its step. A golden manifest entry takes `"inline": true`, and the MCP tools take `inline`.
+
+## Limits
+
+Rows already committed belong to the terminal, which rewraps them or not when it is resized: Tuimark never repaints them, and a part of the region the terminal rewrapped before the redraw may stay in the scrollback. Tuimark wraps a committed line at the terminal's width, so a long line copied from the scrollback breaks where it wrapped; keep text meant to be copied whole (a command) shorter than the terminal.
+
+The `examples/inline` program is a small chat that commits what you send.

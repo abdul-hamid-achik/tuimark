@@ -259,7 +259,7 @@ func TestD4CommitErrors297(t *testing.T) {
 	}
 	// The members the script errors name include commit.
 	code, _, errw = runCLI("play", inCard, "--script", inScript(t, `{}`))
-	if code != 1 || !strings.Contains(errw, "wheel with at, theme, tick, commit)") {
+	if code != 1 || !strings.Contains(errw, "wheel with at, theme, tick, commit, append)") {
 		t.Errorf("no known step member: %d %q", code, errw)
 	}
 	// A commit that fails prints nothing even after earlier commits made
