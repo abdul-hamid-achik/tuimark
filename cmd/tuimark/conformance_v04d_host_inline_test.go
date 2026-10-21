@@ -106,9 +106,18 @@ func TestD5a2HostInlineCommit301(t *testing.T) {
 		t.Fatalf("the template's copy never reached the terminal; %s", r.describe())
 	}
 
+	// A run's class is a string of class names, as in §6.20.2: an array of
+	// names, which the TypeScript client's types allowed by mistake, is the
+	// rule's error.
+	r.send(t, map[string]any{"type": "commit", "id": 5, "lines": []any{[]any{map[string]any{"text": "bold", "class": "k-strong k-em"}, " plain"}}})
+	i = r.waitRaw(t, i, `{"type":"ack","id":5,"ok":true}`)
+	r.send(t, map[string]any{"type": "commit", "id": 6, "lines": []any{[]any{map[string]any{"text": "x", "class": []any{"k-strong"}}}}})
+	var l hostLine
+	i, l = r.waitMsg(t, i, ackOf(6))
+	d5aWantAckError(t, l, `commit: line 0: run 0 has a "class" that is not a list of class names`)
+
 	// A commit that breaks a rule of §18.3 is acked with its error.
 	r.send(t, map[string]any{"type": "commit", "id": 3, "template": "nope"})
-	var l hostLine
 	i, l = r.waitMsg(t, i, ackOf(3))
 	d5aWantAckError(t, l, `commit: no <template id="nope">`)
 	r.send(t, map[string]any{"type": "commit", "id": 4, "lines": []any{"a"}, "template": "card"})
