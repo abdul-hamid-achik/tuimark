@@ -517,16 +517,24 @@ func TestV04cPropsReviewFixes(t *testing.T) {
 	})
 	// E1: an attribute its element takes in the definition but not where a
 	// copy lands is that copy's V002, with its suffix; the definition's own
-	// checks of the {$name} in it stand.
+	// checks of the {$name} in it stand. A whole value of one {$name} that
+	// names no prop reads as unset: the attribute is not in the copy, so
+	// its place rejects nothing (the width).
 	t.Run("place-dependent attribute", func(t *testing.T) {
 		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"row\" props=\"c t\"><item class=\"{$c}\" title=\"{$t}\" width=\"{$nope}\"/></template>\n  <template id=\"cell\" props=\"act\"><text on:click=\"{$act}\">c</text></template>\n  <screen id=\"main\">\n    <table id=\"tb\" each=\"rows as r\" key=\"r.id\"><column title=\"N\">{r.name}</column><use template=\"row\" c=\"hot\" t=\"T\"/></table>\n    <list id=\"ls\" each=\"rows as r\" key=\"r\"><item><use template=\"cell\" act=\"go\"/></item></list>\n  </screen>\n</tui>\n")
 		got := vdiags(t, f, "")
 		sameLines(t, "validate", got, []string{
 			`error V002 a.tui:2:53 /screen/table/item id= attribute "title" is not allowed on <item>, placed by <use template="row"> at a.tui:5:83`,
-			`error V002 a.tui:2:66 /screen/table/item id= attribute "width" is not allowed on <item>, placed by <use template="row"> at a.tui:5:83`,
 			`error V003 a.tui:2:66 /template/item id= {$nope} names no prop of <template id="row">; declare it in props="…"`,
 			`error V002 a.tui:3:41 /screen/list/item/text id= attribute "on:click" is not allowed inside a list <item> (on <text>): list rows are navigated by their list; handle the row with the list's on:select, or a keymap <bind keys="..." action="..." when="#ls:focus"/> (its event identifies the selected row), placed by <use template="cell"> at a.tui:6:50`,
 		})
+	})
+	// The same with the props not passed: each whole-value attribute is
+	// removed from the copy (decision 163), so no place rejects it, and the
+	// document is valid.
+	t.Run("place-dependent attribute, not passed", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"row\" props=\"c t w\"><item class=\"{$c}\" title=\"{$t}\" width=\"{$w}\"/></template>\n  <template id=\"cell\" props=\"act\"><text on:click=\"{$act}\">c</text></template>\n  <screen id=\"main\">\n    <table id=\"tb\" each=\"rows as r\" key=\"r.id\"><column title=\"N\">{r.name}</column><use template=\"row\" c=\"hot\"/></table>\n    <list id=\"ls\" each=\"rows as r\" key=\"r\"><item><use template=\"cell\"/></item></list>\n  </screen>\n</tui>\n")
+		sameLines(t, "validate", vdiags(t, f, ""), []string{})
 	})
 	// N4, decision 186: only a well-formed {$name} is one unit; the braces
 	// of a malformed one pair as §7 says, so {$p} is not inside a pair.
