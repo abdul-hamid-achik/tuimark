@@ -1651,8 +1651,9 @@ kept with the maintainer's project notes, outside this repository.
   levels: `V021`); a cycle of templates is `V019`; a diagnostic about an
   element of a copy ends with `(P via <use …>)` or `, placed by <use …> at
   FILE:LINE:COL`. `tuimark inspect` ends with the `source` of a node and a
-  `via` line for each use or include that placed it, and `tuimark ir`
-  gives each placed node a `from`. A fragment is not a document: `validate`
+  `via` line for each use, include, or slot that placed it, and
+  `tuimark ir` gives each placed node a `from`, keeps a copy's `<slot/>` as
+  a `slot` node holding its content, and shows props already substituted. A fragment is not a document: `validate`
   (`ok (fragment checked on its own)`) and `fmt` accept it, and the other
   commands give it `V005`.
 
@@ -1690,16 +1691,17 @@ kept with the maintainer's project notes, outside this repository.
   takes no attribute, no content, and has no fallback: a use with no
   content leaves it empty. The content belongs to the place where it is
   written, not to the use: its paths are the document's (the use's `with`
-  aliases and the copy's `each` aliases are not in scope), its ids are not
+  aliases and the copy's `each` aliases are not in scope, but an alias of
+  the place where it is written, such as a list row's, is), its ids are not
   scoped by the use (`#note`, not `#side__note`; the template's own ids
   are), its `#id` references and `<include src>` mean what they would
   without the use, and the use's `class` does not reach it. It stands where
   the slot stands, in the focus order, the cascade, and the dump, and its
   parent there checks it (a `tab` fills a slot that stands in a `tabs`);
   the use's `if` or `hidden` removes it with the copy. A slot cannot stand
-  outside a template, in a list `<item>`, in an `each` template, or
-  directly in a `table` or a `list each`, because its content would repeat
-  per row (`V001`). Text directly in a use is `V013` (wrap it in
+  outside a template, and not where its content would repeat per row: in a
+  list `<item>`, in an `each` template, or directly in a `table` or a
+  `list each` (`V001`). Text directly in a use is `V013` (wrap it in
   `<text>`), and so is content for a template that has no slot. A template
   forwards its content with `<slot/>` inside the content of an inner
   `<use>`, with elements of its own around it. In a pinned document `<slot>`
