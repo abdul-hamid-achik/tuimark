@@ -470,3 +470,18 @@ func sameHintItems(x, y []hintItem) bool {
 	}
 	return true
 }
+
+// pasteNormalized is the text a bracketed paste inserts where the focus is
+// (SPEC v0.4d §6.19.6): a textarea's normalization when a textarea has
+// focus (it keeps the line breaks), else the input's (§26.7). It is what
+// TUIMARK_LOG measures.
+func (a *App) pasteNormalized(payload string) string {
+	a.mu.Lock()
+	b := a.focusedBox()
+	ta := b != nil && !b.Disabled && b.Kind == "textarea"
+	a.mu.Unlock()
+	if ta {
+		return NormalizeTextareaPaste(payload)
+	}
+	return NormalizePaste(payload)
+}
