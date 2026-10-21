@@ -7,6 +7,78 @@ line.
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-10-21
+
+Terminal and agent features for a `<tui>` without `version` (0.4d). It adds:
+- rich text as runs and `wrap: pre-wrap`;
+- a multi-line `<textarea>`;
+- the keys a modern terminal sends (one decoder for legacy, Kitty and `modifyOtherKeys`);
+- inline mode, where the screen is a live region below the prompt and `Commit` prints into the terminal's own scrollback;
+- `Append`;
+- `--screen`.
+
+Every document that writes `version` behaves as in 0.4.5.
+
+### Added
+
+- **Rich text with runs.**
+  - `<text runs="path"/>` paints an array of styled runs from the data. A run is a string, or `{text, class}`.
+  - Each run is styled as a generated `span` through the stylesheet (`span`, `.code`, `text > span.code`).
+  - Wrapping and truncating act on the joined text.
+  - A malformed `runs` value is the warning `B013`.
+  - `inspect --at` reports the `run` that painted a cell.
+- **`wrap: pre-wrap`** keeps every space and line break and wraps at the width, for code and diffs. It measures as `nowrap`.
+- **`<textarea>`.** A multi-line input that grows to `max-height: 8` and then scrolls. It wraps by visual lines.
+  - `up`/`down`/`pgup`/`pgdn` keep a goal column, and fall through to the keymap at the first and last lines.
+  - It takes `ctrl+k`, `ctrl+w`, `alt+backspace`, `alt+b`, and `alt+f`.
+  - `enter` submits with `on:submit` and otherwise breaks the line. `shift+enter`, `alt+enter`, and the LF byte always break it.
+  - A paste keeps its line breaks.
+  - A value the host writes is read as run text (TAB as four spaces, controls removed). An outside change moves the caret to the end.
+  - The dump of the focused textarea has `caret`. `Run()` puts the terminal's cursor there.
+- **Key tokens.** `delete`, `f1`–`f12`, `alt+`letter or digit, `alt+enter`, `alt+backspace`, `shift+enter`, and `ctrl+enter`.
+  - A focused `input` takes `delete`, `alt+b`, `alt+f`, and `alt+backspace`.
+  - Under Kitty or `modifyOtherKeys`, `ctrl`/`alt` + `left`/`right` move by word inside an `input` or `textarea`. A keymap row still sees `left`/`right`.
+- **Inline mode.** `RunOptions.Inline`, `tuimark run --inline`, and `tuimark host --inline` draw the active screen as a live region below the terminal's cursor instead of in the alternate screen.
+  - The region is sized by its content and capped by the terminal's rows.
+  - A resize erases the region and draws it again.
+  - There is no mouse. Modals are laid out inside the region.
+- **`Commit`.** It prints lines or the copy of a template into the scrollback above the region.
+  - Lines are strings or runs, wrapped at the terminal's width. An LF starts a new row.
+  - Commits are synchronous and atomic, and they are printed before the region is erased on exit.
+  - The `tuimark host` protocol takes the `commit` message.
+- **`Append(path, v)`** adds to the value at `path` in place: a string takes a string, and an array takes `v` as one element. `(*Batch).Append` checks the value when the batch is applied.
+- **`--screen ID`** on `tuimark run` and `tuimark host` starts the session on that screen.
+- **Tools.**
+  - `dump`, `inspect`, and `play` take `--inline`. The dump gains `terminal_rows`.
+  - `play --inline` gains the `commit:` step, a `scrollback` member, and `scrollback_rows` on each frame.
+  - `play` takes `append:PATH=JSON` and `--keyboard kitty|legacy`.
+  - The test manifest and the MCP tools take `inline` and `keyboard`.
+  - `TUIMARK_LOG` records `start.inline`, `commit` records, and `caps.keyboard`.
+- **`tuimark host`.** `ready` gains `messages`. The `append` and `commit` messages are accepted, and a `batch` entry may carry `"op": "append"`. The protocol stays `1`.
+- **`@thelacanians/tuimark`.** It adds:
+  - `append()` and `commit()`;
+  - `batch` entries with `op`;
+  - the `inline` and `screen` options of `spawnHost`;
+  - a `ready.messages` check that rejects (`UnsupportedMessageError`) without sending.
+- **Catalog and editors.** `runs`, `span`, `pre-wrap`, `textarea`, and the new keys are in `tuimark catalog`, the IR and dump schemas, `AGENTS.md`, the language server, and the VS Code grammar (with a composer snippet).
+- **Docs.** Guide pages for rich text, the textarea, and inline mode (with streaming by blocks). New example `examples/inline`.
+- **The kit.** `k-composer` (a `textarea` with its hints), `k-block` (one block of a transcript: markdown with `runs`, code with `pre-wrap`), and `k-receipt` (a tool receipt whose output is shown with `runs`), each with a fixture; the kit gallery shows them in a chat tab. The kit guide shows the wrapper template that commits a card and the inline approval pattern.
+- **`examples/host-ts` inline mode.** It streams a reply by committing each finished block and commits its partial tail on a cancel or a quit, and it ships the reference producer `markdownToBlocks(md, {streaming})` in TypeScript (paragraphs, headings, fenced code, lists, and quotes into the kit's blocks; streaming closes an open fence and leaves an unclosed `**` as text), with `bun test` tests. It is an example, not part of the runtime.
+
+### Changed
+
+- **Keys under `Run()`.** One decoder reads the legacy, Kitty (flag 1), and `modifyOtherKeys` forms, keypad included.
+  - `Run()` asks the terminal for Kitty keyboard support at start and pushes flag 1 when it answers, or `modifyOtherKeys` mode 2 when it does not. It pops the mode on exit, also on a signal or a panic.
+  - `TERM=dumb` gets neither.
+- **`alt` in legacy terminals.** A legacy `ESC` followed by a letter or digit, in one read or before the esc timeout, arrives as `alt+`that key.
+- **`<hints/>`.**
+  - It shows the first key of a row that the session's keyboard can send. With `scope="active"` it hides a row none of whose keys the session can send.
+  - It chooses its items again after layout when a focused `textarea` takes `up`/`down`/`pgup`/`pgdn`.
+- **`tuimark run`.** Every key decoded as `f12`, `shift+f12` included, toggles the event strip.
+- **`play`, `Play`, and `dump`** are a Kitty session by default.
+- **Pinned documents.** `runs`, `pre-wrap`, `textarea`, `span` selectors, and the new key tokens are errors in a document that writes `version`, saying they need a `<tui>` without `version`. A written `<span>` is an error in every language.
+- **Glyphrun.** The behavioral specs run on Glyphrun v0.23.0, for its scrollback assertions.
+
 ## [0.4.5] - 2026-10-20
 
 Static props and one default slot for templates (0.4c), and Kit v2 built
@@ -1084,7 +1156,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.6...HEAD
+[0.4.6]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.6
 [0.4.5]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.5
 [0.4.4]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.4
 [0.4.3]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.3
