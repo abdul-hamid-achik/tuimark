@@ -329,7 +329,15 @@
         { "name": "punctuation.separator.list.tui", "match": "," },
         {
           "name": "constant.language.key.tui",
-          "match": "(?<![\\w+-])(?:enter|esc|tab|backspace|space|up|down|left|right|home|end|pgup|pgdn|shift\\+tab)(?![\\w+-])"
+          "match": "(?<![\\w+-])(?:enter|esc|tab|backspace|space|delete|up|down|left|right|home|end|pgup|pgdn|f(?:1[0-2]|[1-9])|shift\\+tab|shift\\+enter|ctrl\\+enter|alt\\+enter|alt\\+backspace)(?![\\w+-])"
+        },
+        {
+          "match": "(?<![\\w+-])(alt)(\\+)([A-Za-z0-9])(?![\\w+-])",
+          "captures": {
+            "1": { "name": "constant.language.key.modifier.tui" },
+            "2": { "name": "punctuation.separator.key-combo.tui" },
+            "3": { "name": "constant.language.key.tui" }
+          }
         },
         {
           "match": "(?<![\\w+-])(ctrl)(\\+)([a-z])(?![\\w+-])",

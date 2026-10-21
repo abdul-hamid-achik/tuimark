@@ -428,3 +428,47 @@ func TestD2WordMoves312(t *testing.T) {
 		t.Errorf("rows: %v", got)
 	}
 }
+
+// SPEC v0.4d §15.5: the manifest's keyboard member, as play --keyboard.
+func TestD2ManifestKeyboard(t *testing.T) {
+	dir := t.TempDir()
+	tui := filepath.Join(dir, "app.tui")
+	writeFile(t, tui, `<tui><screen id="main"><hints/></screen><keymap><bind keys="shift+enter,alt+enter" action="nl" label="newline"/><bind keys="ctrl+enter" action="go" label="send"/></keymap></tui>`)
+	entry := func(extra string) string {
+		return `[{"name":"e","file":"` + tui + `","sizes":["40x2"],"input":"alt+enter"` + extra + `}]`
+	}
+	// kitty (the default) and legacy give different hints, so different goldens.
+	writeManifest(t, dir, entry(`,"keyboard":"legacy"`))
+	if code, out, errw := runCLI("test", dir, "--update"); code != 0 {
+		t.Fatalf("update legacy: exit %d %s%s", code, out, errw)
+	}
+	text, err := os.ReadFile(filepath.Join(dir, "e", "40x2.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(text), "alt+enter newline") || strings.Contains(string(text), "send") {
+		t.Errorf("legacy golden:\n%s", text)
+	}
+	if code, out, _ := runCLI("test", dir); code != 0 || !strings.Contains(out, "PASS e 40x2") {
+		t.Errorf("legacy golden does not pass: exit %d %s", code, out)
+	}
+	writeManifest(t, dir, entry(`,"keyboard":"kitty"`))
+	if code, out, _ := runCLI("test", dir); code != 2 || !strings.Contains(out, "FAIL e 40x2") {
+		t.Errorf("kitty against the legacy golden: exit %d %s", code, out)
+	}
+	writeManifest(t, dir, entry(``))
+	if code, out, _ := runCLI("test", dir); code != 2 || !strings.Contains(out, "FAIL e 40x2") {
+		t.Errorf("default keyboard against the legacy golden: exit %d %s", code, out)
+	}
+	// Manifest errors: a bad value, the empty string, and no input or script.
+	for _, bad := range []string{`,"keyboard":"other"`, `,"keyboard":""`} {
+		writeManifest(t, dir, entry(bad))
+		if code, out, _ := runCLI("test", dir); code != 1 || !strings.Contains(out, `FAIL e: keyboard must be "kitty" or "legacy"`) {
+			t.Errorf("%s: exit %d %s", bad, code, out)
+		}
+	}
+	writeManifest(t, dir, `[{"name":"e","file":"`+tui+`","sizes":["40x2"],"keyboard":"legacy"}]`)
+	if code, out, _ := runCLI("test", dir); code != 1 || !strings.Contains(out, "FAIL e: keyboard needs input or script") {
+		t.Errorf("keyboard without input: exit %d %s", code, out)
+	}
+}
