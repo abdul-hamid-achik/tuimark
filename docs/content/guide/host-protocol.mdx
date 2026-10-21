@@ -17,7 +17,7 @@ If your host is already Go, use [`Run`](/guide/go-api#run) directly; it is simpl
 ## Starting it
 
 ```sh
-tuimark host FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
+tuimark host FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID] [--inline]
 ```
 
 - `--data` binds a JSON file as the store, exactly as `dump --data` does; the parent typically overwrites and extends it with `set`/`batch` messages once the session is running.

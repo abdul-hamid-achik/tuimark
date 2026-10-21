@@ -9,6 +9,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+
+	"github.com/abdul-hamid-achik/tuimark/internal/host"
 )
 
 // hostMessages is `ready.messages`: the fd 3 types this child accepts, with
@@ -146,11 +148,11 @@ func (b *hostBridge) handleCommit(id json.RawMessage, msg wireMsg) {
 	b.ack(id, b.applyCommit(c))
 }
 
-// applyCommit is Commit (SPEC v0.4d §18.3) for the bridge, and the one
-// place the inline session joins the bridge. Until the bridge runs a
-// session inline every session is the full-screen one, where a commit is
-// the error below and prints nothing.
+// applyCommit is Commit (SPEC v0.4d §18.3) for the bridge: the commit
+// request as App.Commit takes it. Without --inline it is the error
+// "commit: not in inline mode" and prints nothing. It returns after the
+// rows are written, so the ack follows the print; while an event waits for
+// its reply the loop is running host code and the commit prints at once.
 func (b *hostBridge) applyCommit(c commitRequest) error {
-	_ = c
-	return errors.New("commit: not in inline mode")
+	return b.app.Commit(host.Commit{Lines: c.Lines, Template: c.Template, With: c.With, Props: c.Props})
 }

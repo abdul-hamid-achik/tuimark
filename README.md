@@ -651,7 +651,7 @@ tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.
                       [--theme dark|light] [--strict] [--json]
 tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
                       [--mock FILE.json] [--strip] [--screen ID]
-tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
+tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID] [--inline]
 tuimark mcp
 tuimark lsp
 tuimark version

@@ -1,0 +1,5 @@
+<tui version="3">
+  <screen id="main">
+    <text>PINNED</text>
+  </screen>
+</tui>
