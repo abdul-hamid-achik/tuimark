@@ -136,6 +136,13 @@ func TestD5AppendDerive302(t *testing.T) {
 	}
 	wantErr(t, app.Append("view.rows", 1), `tuimark: "view.rows" is a derived path (Derive): only its function writes it`)
 	mustGet(t, app, "view.rows", []any{1.0, "two"})
+	// A path inside a derived path is Set's error for it, which names the
+	// derived path (the SPEC quotes only the first form).
+	insideErr := `tuimark: "view.rows.x" is inside the derived path "view.rows" (Derive): only its function writes it`
+	wantErr(t, app.Append("view.rows.x", 1), insideErr)
+	if setErr := app.Set("view.rows.x", 1); setErr == nil || setErr.Error() != insideErr {
+		t.Errorf("Set inside a derived path: %v", setErr)
+	}
 	if err := app.Append("a", "three"); err != nil {
 		t.Fatal(err)
 	}
