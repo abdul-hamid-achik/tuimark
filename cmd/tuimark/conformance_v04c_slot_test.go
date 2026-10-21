@@ -328,6 +328,40 @@ func TestV04cSlot263FragmentOnItsOwn(t *testing.T) {
 	}
 }
 
+// A fill written in a template's body reads the props of that template's
+// copy, never those of the use that receives it: {$p} is A's p, {$q} is
+// A's own undeclared-name V003 and, a whole value unset in A's copy, no
+// title, and a bad substituted value names A's use, not card's.
+func TestV04cSlotFillProps(t *testing.T) {
+	doc := writeTemp(t, "app.tui", "<tui>\n"+
+		"  <template id=\"card\" props=\"p q\"><box><text>{$p}</text><slot/></box></template>\n"+
+		"  <template id=\"A\" props=\"p\"><use template=\"card\" p=\"inner\"><text>{$p}</text><text title=\"{$q}\">t</text><text width=\"{$p}\">w</text></use></template>\n"+
+		"  <screen id=\"main\"><use template=\"A\" p=\"outer\"/><use id=\"z\" template=\"A\" p=\"zz\"/></screen>\n"+
+		"</tui>\n")
+	sameLines(t, "validate", vdiags(t, doc, ""), []string{
+		`error V003 app.tui:3:84 /template/use/text id= {$q} names no prop of <template id="A">; declare it in props="…"`,
+		`error V003 app.tui:3:111 /screen/box/text id= width: bad size "outer" (want N, N%, Nfr, or auto), placed by <use template="A"> at app.tui:4:21`,
+		`error V003 app.tui:3:111 /screen/box/text id= width: bad size "zz" (want N, N%, Nfr, or auto), placed by <use id="z"> at app.tui:4:50`,
+	})
+	if got, want := screenTree(t, doc), "screen#main(box(text:inner text:outer text:t text:w) box(text:inner text:zz text:t text:w))"; got != want {
+		t.Errorf("the screen: %s, want %s", got, want)
+	}
+	h, err := host.Load(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var walk func(n *ir.Node)
+	walk = func(n *ir.Node) {
+		if _, has := n.Attrs["title"]; has && n.Kind == "text" {
+			t.Errorf("a copy's text has a title: %v", n.Attrs)
+		}
+		for _, c := range n.Children {
+			walk(c)
+		}
+	}
+	walk(h.Document().Root)
+}
+
 // ir and inspect read a document with fills without failing; the shape of
 // a fill in IR 0.4 and inspect's via entries are phase C3's.
 func TestV04cSlotToolsReadFills(t *testing.T) {

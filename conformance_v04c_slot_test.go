@@ -81,6 +81,21 @@ func TestSlotFillsAreCharged(t *testing.T) {
 	screenIsEmpty(t, app)
 }
 
+// §6.18.8: a slot is a depth level though not an element. 126 nested uses
+// of a template that is one slot put a box's text at level 256 (tui,
+// screen, 126 uses, 126 slots, box, text); one more box is a V021 at the
+// innermost use, whose fill is being built when it goes past.
+func TestSlotIsADepthLevel(t *testing.T) {
+	doc := func(inner string) string {
+		return "<tui>\n<template id=\"w\"><slot/></template>\n<screen id=\"main\">\n" + strings.Repeat(`<use template="w">`, 126) + inner + strings.Repeat("</use>", 126) + "\n</screen>\n</tui>\n"
+	}
+	noErrors(t, "level 256", writeDoc(t, "d.tui", doc("<box><text>x</text></box>")))
+	app := mustLoad(t, writeDoc(t, "d.tui", doc("<box><box><text>x</text></box></box>")))
+	if got, want := diagTexts(app.Validate()), []string{`V021 d.tui:4:2251 /screen/use id= use template="w" exceeds the expansion depth limit of 256 levels: it inserts nothing, and no later include or use expands`}; !reflect.DeepEqual(got, want) {
+		t.Errorf("level 257: %v", got)
+	}
+}
+
 // 260. A forwarded fill past 16 MiB is charged when it is built, to the
 // inner use's expansion.
 func TestSlotForwardedFillPast16MiB(t *testing.T) {
