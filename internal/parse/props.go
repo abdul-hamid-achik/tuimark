@@ -47,8 +47,11 @@ const (
 	pmOutside
 	// pmUnknown: a fragment checked on its own, outside its templates:
 	// whether the fragment is included in a template's body is not known
-	// there, so a {$name} is neither reported nor checked (decision 103:
-	// a fragment on its own gets only what holds wherever it is placed).
+	// there, so a {$name} gets only the checks that do not depend on a
+	// template (§15.1: a malformed reference, one where a prop cannot
+	// stand, one inside braces), and its value is otherwise muted
+	// (decision 103: a fragment on its own gets only what holds wherever
+	// it is placed).
 	pmUnknown
 	// pmDef: a template's body as written.
 	pmDef
@@ -136,7 +139,8 @@ func hasPropRef(s string) bool {
 // insideBraces returns, for each reference of s, whether it stands inside
 // a pair of braces of s as written, nil when none does (decision 186):
 // braces pair as §7 says, a `{` and the first `}` after it, each
-// reference read as one unit that holds no brace.
+// well-formed reference read as one unit that holds no brace (a malformed
+// one is text, whose braces pair as any other).
 func insideBraces(s string, refs []pref) []bool {
 	if !strings.ContainsAny(s, "{}") {
 		return nil
@@ -149,9 +153,11 @@ func insideBraces(s string, refs []pref) []bool {
 	r := 0
 	for i := 0; i < len(s); i++ {
 		if r < len(refs) && i == refs[r].start {
-			i = refs[r].end - 1
 			r++
-			continue
+			if refs[r-1].ok {
+				i = refs[r-1].end - 1
+				continue
+			}
 		}
 		switch s[i] {
 		case '{':
@@ -405,6 +411,10 @@ const (
 	psIgnored               // where a prop cannot stand, or inside braces: ignored (decision 157)
 	psRemoved               // a whole value whose prop is not passed: not in the copy
 	psSubst                 // substituted in a copy
+	// psPlace: an attribute of a copy that its element does not take
+	// where the copy lands, though the template's definition took it: its
+	// V002 carries the copy's suffix (erratum E1).
+	psPlace
 )
 
 // pattr is what a value that holds a reference becomes.
@@ -453,6 +463,13 @@ type propsState struct {
 	// noLoad holds a <style> or an <include> whose src holds a {$name}
 	// outside a template: it loads nothing (decision 184).
 	noLoad map[*ir.Node]bool
+	// muted holds the attributes of an element outside a template whose
+	// {$name} is that value's only diagnostic: a check of the element that
+	// reads one reports nothing about it (mutedAttr).
+	muted map[*ir.Node][]string
+	// took holds the attributes holding a `{$` that an element of a
+	// template's definition takes where it is written (erratum E1).
+	took map[rawAttrRef]bool
 	// wuses are the <use> elements as written, in a template's body or
 	// outside every template (checkWrittenUses); firstAt the node of each
 	// one's first placement in a copy, firstLog the order they were
@@ -463,6 +480,12 @@ type propsState struct {
 	// fragDecls are the templates a fragment checked on its own writes,
 	// the first of each id (FragmentDiags).
 	fragDecls map[string]*propDecl
+}
+
+// rawAttrRef is the attribute i of a raw element.
+type rawAttrRef struct {
+	r *RawNode
+	i int
 }
 
 // writtenUse is a <use> as written.
@@ -489,6 +512,35 @@ func (b *builder) wrote(n *ir.Node, name string) bool {
 // ignored where a prop cannot stand (decision 157).
 func (b *builder) noID(n *ir.Node) bool {
 	return n.ID == "" && !(b.comp != nil && slices.Contains(b.comp.ignored[n], "id"))
+}
+
+// ignoredAttr reports whether n's attribute name was ignored where a prop
+// cannot stand (decision 157).
+func (b *builder) ignoredAttr(n *ir.Node, name string) bool {
+	return b.comp != nil && slices.Contains(b.comp.ignored[n], name)
+}
+
+// mutedAttr reports whether n's attribute name held a {$name} outside a
+// template: its V003 is reported instead of any other diagnostic about
+// that value, so a check that reads it reports nothing (§6.18.9).
+func (b *builder) mutedAttr(n *ir.Node, name string) bool {
+	return b.comp != nil && slices.Contains(b.comp.muted[n], name)
+}
+
+// substBy is the use a diagnostic names when a check reported at another
+// attribute of the element whose attributes are being checked reads the
+// attribute name, substituted in a copy (erratum E4), nil otherwise.
+func (b *builder) substBy(name string) *ir.Node {
+	pn, r := b.pnode, b.praw
+	if pn == nil || r == nil {
+		return nil
+	}
+	for i, a := range r.Attrs {
+		if a.Name == name && i < len(pn.attrs) && pn.attrs[i].st == psSubst {
+			return pn.attrs[i].by
+		}
+	}
+	return nil
 }
 
 // orgFile is the name of the file being built.
@@ -523,23 +575,29 @@ func (b *builder) propValue(tag, path, id, name, s string, line, col int, mode p
 	}
 	cp := b.comp
 	switch mode {
-	case pmOutside, pmUnknown:
+	case pmOutside:
 		var seen []string
 		for _, r := range refs {
 			if !r.ok || slices.Contains(seen, r.name) {
 				continue
 			}
 			seen = append(seen, r.name)
-			if mode == pmOutside {
-				b.diag(ir.Error, "V003", line, col, path, id, msgPropOutside, r.name)
-			}
+			// It depends on where the element stands, so on an element an
+			// include placed it names the include (§6.18.6, erratum E2).
+			b.diagPlaced(ir.Error, "V003", line, col, path, id, msgPropOutside, r.name)
 		}
 		if seen == nil {
 			return pattr{} // no {$name}: §7 reads it, as before
 		}
 		return pattr{st: psMuted}
-	case pmDef:
+	case pmDef, pmUnknown:
+		// A template's own checks; in a fragment checked on its own,
+		// outside its templates, those that do not depend on a template
+		// (§15.1), the value otherwise muted.
 		d := cp.defDecl
+		if mode == pmUnknown {
+			d = nil
+		}
 		if pl := placeOf(name); pl != plText {
 			// Where a prop cannot stand: one diagnostic, the attribute
 			// ignored (decision 157).
@@ -571,6 +629,9 @@ func (b *builder) propValue(tag, path, id, name, s string, line, col int, mode p
 		}
 		if in != nil {
 			return pattr{st: psIgnored}
+		}
+		if mode == pmUnknown {
+			return pattr{st: psMuted}
 		}
 		if d != nil {
 			d.sites = append(d.sites, propSite{s: s, refs: refs, t7: t7})
@@ -616,8 +677,30 @@ func (b *builder) propNode(n *ir.Node, r *RawNode) *propNode {
 		}
 	}
 	for i, a := range r.Attrs {
-		if !strings.Contains(a.Value, "{$") || !b.attrGate(n, a, false) {
-			continue // none, or checked no further (decision 157)
+		if !strings.Contains(a.Value, "{$") {
+			continue
+		}
+		if !b.attrGate(n, a, false) {
+			// Checked no further (decision 157). Where the attributes an
+			// element takes depend on its place, the definition judges
+			// them as written, and a copy that lands where the element does
+			// not take one reports its V002 with the copy's suffix (E1).
+			if mode == pmCopy && cp.took[rawAttrRef{r, i}] && n.Org != nil {
+				if pn == nil {
+					start()
+				}
+				if pn.attrs == nil {
+					pn.attrs = make([]pattr, len(r.Attrs))
+				}
+				pn.attrs[i] = pattr{st: psPlace, by: n.Org.Placed}
+			}
+			continue
+		}
+		if mode == pmDef {
+			if cp.took == nil {
+				cp.took = map[rawAttrRef]bool{}
+			}
+			cp.took[rawAttrRef{r, i}] = true
 		}
 		if pn == nil {
 			start()
@@ -627,11 +710,17 @@ func (b *builder) propNode(n *ir.Node, r *RawNode) *propNode {
 		}
 		pn.attrs[i] = b.propValue(n.Tag, n.Path, id, a.Name, a.Value, a.Line, a.Col, mode)
 		switch p := pn.attrs[i]; {
-		case p.st == psMuted && a.Name == "src" && (n.Tag == "style" || n.Tag == "include"):
-			if cp.noLoad == nil {
-				cp.noLoad = map[*ir.Node]bool{}
+		case p.st == psMuted:
+			if cp.muted == nil {
+				cp.muted = map[*ir.Node][]string{}
 			}
-			cp.noLoad[n] = true
+			cp.muted[n] = append(cp.muted[n], a.Name)
+			if a.Name == "src" && (n.Tag == "style" || n.Tag == "include") {
+				if cp.noLoad == nil {
+					cp.noLoad = map[*ir.Node]bool{}
+				}
+				cp.noLoad[n] = true
+			}
 		case p.st == psIgnored:
 			if cp.ignored == nil {
 				cp.ignored = map[*ir.Node][]string{}
@@ -751,6 +840,8 @@ func (pn *propNode) check(b *builder, i int, a RawAttr) (RawAttr, bool) {
 		b.at = propAt{on: true, file: b.orgFile(), line: a.Line, col: a.Col, by: p.by}
 	case psMuted:
 		b.mute = propAt{on: true, file: b.orgFile(), line: a.Line, col: a.Col}
+	case psPlace:
+		b.at = propAt{on: true, file: b.orgFile(), line: a.Line, col: a.Col, by: p.by}
 	}
 	return a, true
 }
@@ -1186,7 +1277,9 @@ func (b *builder) checkWrittenUses(lookup func(string) *propDecl) {
 				continue
 			}
 			switch {
-			case wu.encl != nil:
+			case wu.encl != nil || wu.unknown:
+				// In a fragment checked on its own, outside its templates,
+				// only the checks that do not depend on a template (§15.1).
 				in := insideBraces(a.Value, refs)
 				for k, r := range refs {
 					switch {
@@ -1194,16 +1287,18 @@ func (b *builder) checkWrittenUses(lookup func(string) *propDecl) {
 						diag("V003", a.Line, a.Col, msgPropMalformed, a.Value[r.start:r.end])
 					case in != nil && in[k]:
 						diag("V003", a.Line, a.Col, msgPropInsideText, r.name)
-					case !wu.encl.names[r.name]:
+					case wu.encl != nil && !wu.encl.names[r.name]:
 						diag("V003", a.Line, a.Col, msgPropUndeclared, r.name, wu.encl.id)
 					}
 				}
-			case !wu.unknown:
+			default:
 				var seen []string
 				for _, r := range refs {
 					if r.ok && !slices.Contains(seen, r.name) {
 						seen = append(seen, r.name)
-						diag("V003", a.Line, a.Col, msgPropOutside, r.name)
+						// With the suffix of the include that placed the
+						// use, if any (erratum E2).
+						b.diagOrg(org, true, ir.Error, "V003", a.Line, a.Col, at.Path, at.ID, msgPropOutside, r.name)
 					}
 				}
 			}

@@ -400,6 +400,10 @@ type builder struct {
 	// pbody is what the element being built holds in its body, when its
 	// written body held a {$name} (node, content).
 	pbody *pattr
+	// pnode and praw are the references of the element whose attributes
+	// node is checking, and the element as written (substBy).
+	pnode *propNode
+	praw  *RawNode
 }
 
 // diagKey is what decides a diagnostic's identity for dedupeDiags before
@@ -783,6 +787,7 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 		}
 	}
 	b.checkTag(n, parent)
+	b.pnode, b.praw = pn, r
 	for i, a := range r.Attrs {
 		if pn != nil {
 			var ok bool
@@ -793,6 +798,7 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 		b.attr(n, a)
 		b.at.on, b.mute.on = false, false
 	}
+	b.pnode, b.praw = nil, nil
 	b.pbody = nil
 	if pn != nil && pn.hasBody {
 		b.pbody = &pn.body
@@ -1479,6 +1485,11 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			_, hasBind := n.Attrs["bind"]
 			_, hasValue := n.Attrs["value"]
 			if hasBind || hasValue {
+				if by := b.substBy("value"); by != nil {
+					// It reads a value a copy substituted: it names the use
+					// that wrote it (SPEC v0.4c §6.18.6, erratum E4).
+					b.at = propAt{on: true, file: b.orgFile(), line: a.Line, col: a.Col, by: by}
+				}
 				b.attrErr(n, a, "V003", "indeterminate=%q cannot be combined with bind or value", val)
 				return
 			}
@@ -1810,6 +1821,12 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				break
 			}
 			defer func() { b.at.on, b.mute.on = false, false }()
+		} else if n.PropBy != nil {
+			// The body of an element of a copy one of whose attributes held
+			// a {$name}: a diagnostic at its text names that use too (SPEC
+			// v0.4c §6.18.6, decision 194).
+			b.at = propAt{on: true, file: b.orgFile(), line: textLine, col: textCol, by: n.PropBy}
+			defer func() { b.at.on = false }()
 		}
 		// Trim the source indentation (spaces or tabs) first, so only control
 		// characters inside the text itself are V007. A version="2"
@@ -2281,7 +2298,10 @@ func (b *builder) checkMultiSelect(n *ir.Node) {
 	}
 	hasChecked := b.wrote(n, "checked")
 	b.checkSingle(n, hasChecked)
-	if hasChecked && n.Tag != "tabs" {
+	// A checked ignored where a prop cannot stand counts as written for
+	// the checks that require it (single, mark, on:change), and is absent
+	// for this one, which its own presence triggers (SPEC v0.4c §6.18.9).
+	if _, written := n.Attrs["checked"]; written && n.Tag != "tabs" {
 		hasEach, hasKey := b.wrote(n, "each"), b.wrote(n, "key")
 		if !hasEach || !hasKey {
 			what := "each= and key="
@@ -2468,11 +2488,20 @@ func (b *builder) checkKeymap() {
 	for i := range b.doc.Keymap {
 		k := &b.doc.Keymap[i]
 		path := "/keymap/bind"
-		if strings.TrimSpace(k.KeysRaw) == "" {
+		// A value that held a {$name} outside a template gets that V003
+		// instead of any other diagnostic (mutedAttr), and one ignored
+		// where a prop cannot stand counts as written for the checks that
+		// require it (ignoredAttr): SPEC v0.4c §6.18.9.
+		kn := k.Node
+		if strings.TrimSpace(k.KeysRaw) == "" && !b.ignoredAttr(kn, "keys") {
 			b.errKB(k, "V003", path, "<bind> needs keys=")
 		}
 		k.Keys = ir.SplitKeys(k.KeysRaw)
-		for _, tok := range k.Keys {
+		toks := k.Keys
+		if b.mutedAttr(kn, "keys") {
+			toks = nil
+		}
+		for _, tok := range toks {
 			if !ir.ValidKey(tok) {
 				b.errKB(k, "V003", path, "unknown key %q (see the key token list: a-z 0-9 enter esc tab backspace space arrows home end pgup pgdn ctrl+x shift+tab)", tok)
 				continue
@@ -2487,8 +2516,11 @@ func (b *builder) checkKeymap() {
 			}
 		}
 		switch {
+		case b.mutedAttr(kn, "action"):
 		case k.Action == "":
-			b.errKB(k, "V003", path, "<bind> needs action=")
+			if !b.ignoredAttr(kn, "action") {
+				b.errKB(k, "V003", path, "<bind> needs action=")
+			}
 		case ir.IsBuiltinActionV2(k.Action):
 			// SPEC §8.4: the hyphenated built-ins are version="2" keymap
 			// actions (ADR 0006).
@@ -2500,7 +2532,7 @@ func (b *builder) checkKeymap() {
 		}
 		switch {
 		case k.HasOwnWhen:
-			if k.When != "" {
+			if k.When != "" && !b.mutedAttr(kn, "when") {
 				sel, err := css.ParseSelectorLang(k.When, b.lang)
 				if err == nil && sel.Root {
 					err = fmt.Errorf(":root is not a node selector")
@@ -2522,7 +2554,7 @@ func (b *builder) checkKeymap() {
 			k.WhenSel = kmSel[k.KeymapNode]
 		}
 		toOK := false
-		if k.To != "" {
+		if k.To != "" && !b.mutedAttr(kn, "to") {
 			if !strings.HasPrefix(k.To, "#") || !isIDName(k.To[1:]) {
 				b.errKB(k, "V003", path, "to=%q: want #id", k.To)
 			} else {
@@ -2536,7 +2568,7 @@ func (b *builder) checkKeymap() {
 				}
 			}
 		}
-		if k.Action == "focus" && k.To == "" {
+		if k.Action == "focus" && k.To == "" && !b.ignoredAttr(kn, "to") {
 			b.errKB(k, "V003", path, `action="focus" needs to="#id"`)
 		}
 		if b.v2 && ir.IsBuiltinActionV2(k.Action) {
@@ -2544,7 +2576,7 @@ func (b *builder) checkKeymap() {
 		}
 	}
 	for _, s := range b.doc.Screens {
-		if f, ok := s.Attr("focus"); ok && strings.HasPrefix(f, "#") {
+		if f, ok := s.Attr("focus"); ok && strings.HasPrefix(f, "#") && !b.mutedAttr(s, "focus") {
 			if why := b.idTarget(f[1:]); strings.HasPrefix(why, idMissing) {
 				b.errN(s, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
@@ -2580,7 +2612,7 @@ func (b *builder) keymapWhens() map[*ir.Node]*css.Selector {
 			continue
 		}
 		w, ok := c.Attr("when")
-		if !ok || w == "" {
+		if !ok || w == "" || b.mutedAttr(c, "when") {
 			continue
 		}
 		sel, err := css.ParseSelectorLang(w, b.lang)

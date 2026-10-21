@@ -444,7 +444,7 @@ func TestV04cPropsImplementation(t *testing.T) {
 		})
 		sameLines(t, "inc.tui", vdiags(t, inc, ""), []string{
 			`error V003 frag.tui:2:36 /screen/template/text id= {$z} names no prop of <template id="f">; declare it in props="…"`,
-			`error V003 frag.tui:3:9 /screen/text id= {$y} is outside a <template>: props exist only in a template's body`,
+			`error V003 frag.tui:3:9 /screen/text id= {$y} is outside a <template>: props exist only in a template's body, placed by <include> at inc.tui:3:5`,
 			`error V002 frag.tui:4:27 /screen/use id= ` + w,
 			`error V013 frag.tui:4:33 /screen/use id= <template id="f"> has no <slot/>`,
 			`error V019 frag.tui:5:3 /screen/use id= <use template="g"> names no <template>`,
@@ -462,5 +462,83 @@ func TestV04cPropsImplementation(t *testing.T) {
 		if got, want := textsOf(nodes), []string{"T!", "L: a", "L: b"}; !reflect.DeepEqual(got, want) {
 			t.Errorf("texts %q, want %q", got, want)
 		}
+	})
+}
+
+// The fixes of the C1 review (S1-S5, errata E1 and E4, nit N4), each with
+// the input that showed it.
+func TestV04cPropsReviewFixes(t *testing.T) {
+	// S1, §15.1: a fragment checked on its own gives a {$name} outside its
+	// templates the checks that do not depend on a template (a malformed
+	// reference, one where a prop cannot stand, one inside braces), its use
+	// values included; a well-formed one in a text place is not reported.
+	t.Run("fragment on its own", func(t *testing.T) {
+		f := writeTemp(t, "k.tui", "<fragment>\n  <text id=\"{$p}\" title=\"{{$q}}\">z</text>\n  <list id=\"l\" each=\"{$e}\" key=\"k\"><item><text>a</text></item></list>\n  <text>{$Bad}</text>\n  <text>{$ok}</text>\n  <keymap><bind keys=\"{$k}\" action=\"quit\"/></keymap>\n  <template id=\"t\" props=\"p\"><text>{$p}</text></template>\n  <use template=\"t\" p=\"{$Bad}\"/>\n</fragment>\n")
+		sameLines(t, "validate", vdiags(t, f, ""), []string{
+			`error V003 k.tui:2:9 /text id= {$p} cannot stand in id; write the value itself`,
+			`error V003 k.tui:2:19 /text id= {$q} cannot stand inside {…}: a prop is text; pass a path with with="…"`,
+			`error V003 k.tui:3:16 /list id=l {$e} cannot stand in each: a prop is text; pass a path with with="…"`,
+			`error V003 k.tui:4:9 /text id= malformed prop reference "{$Bad}": want {$name}, name [a-z_][a-z0-9_-]*`,
+			`error V003 k.tui:6:17 /keymap/bind id= {$k} cannot stand in keys; write the value itself`,
+			`error V003 k.tui:8:21 /use id= malformed prop reference "{$Bad}": want {$name}, name [a-z_][a-z0-9_-]*`,
+		})
+	})
+	// S2: outside a template, a value's {$name} V003 is reported instead of
+	// any other diagnostic about it, the keymap's and focus='s included.
+	t.Run("outside replaces the rest", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <keymap when=\"{$w}\"><bind keys=\"{$k}\" action=\"{$a}\" to=\"#{$x}\"/><bind keys=\"q\" action=\"quit\" when=\"{$v}\"/></keymap>\n  <screen id=\"main\" focus=\"#{$f}\"><text>t</text></screen>\n</tui>\n")
+		const out = ` is outside a <template>: props exist only in a template's body`
+		sameLines(t, "validate", vdiags(t, f, ""), []string{
+			`error V003 a.tui:2:11 /keymap id= {$w}` + out,
+			`error V003 a.tui:2:29 /keymap/bind id= {$k}` + out,
+			`error V003 a.tui:2:41 /keymap/bind id= {$a}` + out,
+			`error V003 a.tui:2:55 /keymap/bind id= {$x}` + out,
+			`error V003 a.tui:2:96 /keymap/bind id= {$v}` + out,
+			`error V003 a.tui:3:21 /screen id=main {$f}` + out,
+		})
+	})
+	// S3: an ignored checked counts as written for what requires it (mark
+	// needs checked) and is absent for the V018 its own presence triggers.
+	t.Run("ignored checked", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"t\" props=\"x\"><list id=\"l\" checked=\"{$x}\" mark=\"*\"><item><text>a</text></item></list></template>\n  <screen id=\"main\"><use id=\"a\" template=\"t\" x=\"q\"/><use id=\"b\" template=\"t\"/></screen>\n</tui>\n")
+		sameLines(t, "validate", vdiags(t, f, ""), []string{
+			`error V003 a.tui:2:43 /template/list id=l {$x} cannot stand in checked: a prop is text; pass a path with with="…"`,
+		})
+	})
+	// S4, §6.18.6: a diagnostic at the text of a body whose element's
+	// attribute held a {$name} carries the copy's suffix, once per copy.
+	t.Run("body of a copy", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"t\" props=\"ttl\"><text title=\"{$ttl}\">{ bad }</text></template>\n  <screen id=\"main\">\n    <use template=\"t\" ttl=\"A\"/>\n    <use template=\"t\" ttl=\"B\"/>\n  </screen>\n</tui>\n")
+		const msg = `error V003 a.tui:2:53 /screen/text id= { bad } is not a path: write {bad}, with no spaces inside the braces, placed by <use template="t"> at `
+		sameLines(t, "validate", vdiags(t, f, ""), []string{msg + `a.tui:4:5`, msg + `a.tui:5:5`})
+	})
+	// E4: a check reported at another attribute of the element that reads
+	// a substituted value names the use that wrote it.
+	t.Run("combination check", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"t\" props=\"x\"><progress indeterminate=\"true\" value=\"{$x}\"/></template>\n  <screen id=\"main\"><use id=\"a\" template=\"t\" x=\"50\"/><use id=\"b\" template=\"t\"/></screen>\n</tui>\n")
+		sameLines(t, "validate", vdiags(t, f, ""), []string{
+			`error V003 a.tui:2:40 /screen/progress id= indeterminate="true" cannot be combined with bind or value, placed by <use id="a"> at a.tui:3:21`,
+		})
+	})
+	// E1: an attribute its element takes in the definition but not where a
+	// copy lands is that copy's V002, with its suffix; the definition's own
+	// checks of the {$name} in it stand.
+	t.Run("place-dependent attribute", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"row\" props=\"c t\"><item class=\"{$c}\" title=\"{$t}\" width=\"{$nope}\"/></template>\n  <template id=\"cell\" props=\"act\"><text on:click=\"{$act}\">c</text></template>\n  <screen id=\"main\">\n    <table id=\"tb\" each=\"rows as r\" key=\"r.id\"><column title=\"N\">{r.name}</column><use template=\"row\" c=\"hot\" t=\"T\"/></table>\n    <list id=\"ls\" each=\"rows as r\" key=\"r\"><item><use template=\"cell\" act=\"go\"/></item></list>\n  </screen>\n</tui>\n")
+		got := vdiags(t, f, "")
+		sameLines(t, "validate", got, []string{
+			`error V002 a.tui:2:53 /screen/table/item id= attribute "title" is not allowed on <item>, placed by <use template="row"> at a.tui:5:83`,
+			`error V002 a.tui:2:66 /screen/table/item id= attribute "width" is not allowed on <item>, placed by <use template="row"> at a.tui:5:83`,
+			`error V003 a.tui:2:66 /template/item id= {$nope} names no prop of <template id="row">; declare it in props="…"`,
+			`error V002 a.tui:3:41 /screen/list/item/text id= attribute "on:click" is not allowed inside a list <item> (on <text>): list rows are navigated by their list; handle the row with the list's on:select, or a keymap <bind keys="..." action="..." when="#ls:focus"/> (its event identifies the selected row), placed by <use template="cell"> at a.tui:6:50`,
+		})
+	})
+	// N4, decision 186: only a well-formed {$name} is one unit; the braces
+	// of a malformed one pair as §7 says, so {$p} is not inside a pair.
+	t.Run("malformed braces pair", func(t *testing.T) {
+		f := writeTemp(t, "a.tui", "<tui>\n  <template id=\"t\" props=\"p\"><text title=\"{a {$Bad} {$p} b}\">x</text></template>\n  <screen id=\"main\"><text>t</text></screen>\n</tui>\n")
+		sameLines(t, "validate", vdiags(t, f, ""), []string{
+			`error V003 a.tui:2:36 /template/text id= malformed prop reference "{$Bad}": want {$name}, name [a-z_][a-z0-9_-]*`,
+		})
 	})
 }
