@@ -63,9 +63,8 @@ type slotState struct {
 	// slot placed twice in one body apart (decision 193).
 	inclAt    *inclStep
 	inclRoots map[*RawNode]*inclStep
-	// defRaw is the template whose body is being built as written, and
-	// defSlots the slots of that body that no rule reported, in order.
-	defRaw   *RawNode
+	// defSlots are the slots of the template's body being built as written
+	// that no rule reported, in order.
 	defSlots []slotRec
 	// slotOK holds each template's one slot (decision 170), and receives
 	// the templates that have one.
@@ -230,19 +229,61 @@ func (b *builder) takesNoElements(n *ir.Node) bool {
 		(b.v2 && (n.Tag == "sparkline" || n.Tag == "hints")) || b.formNoContent(n) || leafKinds[n.Tag]
 }
 
+// noElements reports, when n takes no element children, its rule's
+// diagnostic about the element c written in it, and whether it did: c is
+// then dropped with what it holds (content, and a fill's elements, fill).
+func (b *builder) noElements(n *ir.Node, c *RawNode) bool {
+	switch {
+	case n.Tag == "text":
+		b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<text> cannot contain elements (found <%s>)", c.Name)
+	case b.v2 && n.Tag == "column":
+		// SPEC §6.9.1: a column's body is its cell template (text only).
+		b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<column> holds its cell template as text, with {path} for the row's values; it cannot contain elements (found <%s>)", c.Name)
+	case b.tableItem(n):
+		// SPEC §6.9.1: a table's <item> is the row template, with no
+		// children.
+		b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "a table's <item> is the row template: it takes class and class:NAME only, no children (found <%s>); the cells come from the <column> elements", c.Name)
+	case (b.v2 && (n.Tag == "sparkline" || n.Tag == "hints")) || b.formNoContent(n):
+		// SPEC §6.11, §6.12: no children (a hints' items come from the
+		// keymap); a form control neither (v0.4b §6.16.1).
+		b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<%s> takes no children (found <%s>)", n.Tag, c.Name)
+	case leafKinds[n.Tag]:
+		b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<%s> cannot contain elements (found <%s>)", n.Tag, c.Name)
+	default:
+		return false
+	}
+	return true
+}
+
 // slotIn handles the <slot/> c written in the content of n (content). It
 // reports whether nothing more is to be done with c: a slot that a rule of
-// §6.18.10 reports, or one in an element that takes element children. A
-// slot in an element that takes none falls to that element's rule.
+// §6.18.10 reports, the template's one slot in a copy, or one in an element
+// that takes element children. Any other slot in an element that takes
+// none falls to that element's rule.
 func (b *builder) slotIn(n *ir.Node, c *RawNode) bool {
 	if b.slotMisplaced(n, c) {
 		return true
 	}
-	if b.takesNoElements(n) {
+	// A slot is judged in the body of the template that writes it, never
+	// where a copy lands (decision 193): the definition took this one, so
+	// it is built whatever its place in the copy takes, and the elements of
+	// its fill meet that place's rules (fill). Only a table's <item> takes
+	// element children in the one and not in the other.
+	if !b.slotReceives(c) && b.takesNoElements(n) {
 		return false
 	}
 	b.slot(n, c, nil)
 	return true
+}
+
+// slotReceives reports whether the <slot/> c, being built in a copy, is
+// its template's one slot, which receives the fill of the use copied.
+func (b *builder) slotReceives(c *RawNode) bool {
+	cp := b.comp
+	if len(cp.copies) == 0 || cp.selfCheck {
+		return false
+	}
+	return cp.slotOK[slotKey{cp.stack[len(cp.stack)-1].raw, c, cp.inclAt}]
 }
 
 // slotMisplaced checks the <slot/> c, a child of n, where it stands, and
@@ -314,10 +355,9 @@ func (b *builder) slot(n *ir.Node, c *RawNode, outer *ir.Node) {
 	if len(cp.copies) == 0 {
 		return
 	}
-	t, fr := cp.stack[len(cp.stack)-1], cp.copies[len(cp.copies)-1]
-	s.Attrs["template"] = t.node.ID
-	if cp.slotOK[slotKey{t.raw, c, cp.inclAt}] {
-		b.fill(n, s, fr.q)
+	s.Attrs["template"] = cp.stack[len(cp.stack)-1].node.ID
+	if b.slotReceives(c) {
+		b.fill(n, s, cp.copies[len(cp.copies)-1].q)
 	}
 }
 
@@ -407,6 +447,14 @@ func (b *builder) fill(n, s, q *ir.Node) {
 	start := len(n.Children)
 	for _, cc := range info.raw.Children {
 		if cc.Type != RawElement {
+			continue
+		}
+		// The fill's elements follow the rules of the place where they land
+		// (§6.18.10, decision 193): in an element that takes no element
+		// children (a table's <item>), each is that element's diagnostic,
+		// at the element, placed by where it is written (decision 176), and
+		// is dropped. A forwarding slot is its own case (compose, slot).
+		if cc.Name != "slot" && b.noElements(n, cc) {
 			continue
 		}
 		if b.compose(n, cc, s) {
