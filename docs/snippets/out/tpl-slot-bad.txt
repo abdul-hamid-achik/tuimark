@@ -1,0 +1,4 @@
+$ tuimark validate slot-bad.tui
+error V019 slot-bad.tui:6:17 /template/col/slot <template id="two"> has more than one <slot/> (the first is at 6:10)
+error V001 slot-bad.tui:10:13 /template/list/item/slot <slot/> cannot stand inside a list <item>: a list's rows hold no focus or state from outside the list
+error V013 slot-bad.tui:15:29 /screen/col/use <template id="plain"> has no <slot/>

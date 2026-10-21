@@ -5,6 +5,7 @@
     "body": "This permanently deletes orbit-api and its 14 deployments. This cannot be undone.",
     "no": "Cancel",
     "yes": "Delete",
-    "result": "none"
+    "result": "none",
+    "detail": "orbit-api · 14 deployments · 3 environments"
   }
 }

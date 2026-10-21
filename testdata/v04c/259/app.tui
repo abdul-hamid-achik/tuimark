@@ -1,0 +1,7 @@
+<tui>
+  <include src="sub/k.tui"/>
+  <screen id="main">
+    <use template="k"><include src="p.tui"/></use>
+    <include src="g.tui"/>
+  </screen>
+</tui>

@@ -69,7 +69,7 @@ describe("package.json", () => {
 
   test("the snippets only use tags and attributes of the catalog", () => {
     const tags = new Set(
-      "tui style keymap bind screen col row box scroll spacer text rule list item input button progress modal column table tabs tab sparkline hints checkbox select include fragment template use".split(" "),
+      "tui style keymap bind screen col row box scroll spacer text rule list item input button progress modal column table tabs tab sparkline hints checkbox select include fragment template use slot".split(" "),
     );
     const defs = read("snippets/tui.code-snippets.json") as Record<string, { body: string | string[] }>;
     for (const [name, d] of Object.entries(defs)) {

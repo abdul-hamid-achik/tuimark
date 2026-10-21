@@ -33,13 +33,12 @@ func selectAttrs() map[string]bool {
 // name in a <tui> without version. A document that writes version keeps
 // 0.4.1's hint. <checkbox> and <select> are tags of the current language,
 // and the §5.1 hint names them in a pinned document, so they have no HTML
-// hint any more. <component>, <slot>, and <import> name the composition
-// of SPEC v0.4b §6.18 (the F2 review).
+// hint any more. <component> and <import> name the composition of SPEC
+// v0.4b §6.18 (the F2 review); <slot> is a tag since 0.4c (§6.18.10).
 var htmlTagHintsCurrent = map[string]string{
 	"radio":     `a radio group is a <list> with checked= and single="true"`,
 	"option":    `use <select each=… key=… label=…>`,
 	"component": `write it once in a <template id=…> and place it with <use template=…>`,
-	"slot":      `a <use> takes no content: write the markup in a <template id=…> and place it with <use template=…>`,
 	"import":    `use <include src=…> for markup, <style src=…> for a stylesheet`,
 }
 
@@ -108,10 +107,10 @@ func (b *builder) checkSelect(n *ir.Node) {
 	if listItem(n.Parent) != nil || b.eachContainer(n) != nil {
 		return
 	}
-	if _, ok := n.Attr("each"); !ok {
+	if !b.wrote(n, "each") {
 		b.errN(n, "V017", "<select> needs each=\"path as alias\": its options are the elements of an array")
 	}
-	if _, ok := n.Attr("key"); !ok {
+	if !b.wrote(n, "key") {
 		b.errN(n, "V017", "<select> needs key=\"path\": bind holds the chosen option's key, which an index would not keep when the array changes")
 	}
 }

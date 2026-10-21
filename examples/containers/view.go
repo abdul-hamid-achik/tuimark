@@ -152,9 +152,11 @@ func (s *sim) containerView(c *container) map[string]any {
 		"cpu_n": float64(int(c.cpu*10)) / 10, "mem_n": float64(int(c.mem)), "up_n": float64(int(upN)), "state_n": float64(stateRank(c)),
 		"command": c.command, "network": c.network + " · " + c.ip, "restart": c.restart,
 		"created": ago(s.now, c.created), "mounts": mounts,
-		"cpu_txt": cpuTxt, "cpu_avg": fmt.Sprintf("avg %.1f%%", avg(c.cpuHist)),
-		"mem_txt": memTxt, "mem_avg": fmt.Sprintf("avg %.0f%% of limit", avg(c.memHist)),
-		"cpu_hist": floats(c.cpuHist), "mem_hist": floats(c.memHist),
+		// The two k-stat cards read value, delta and hist under their alias.
+		"stats": map[string]any{
+			"cpu": map[string]any{"value": cpuTxt, "delta": fmt.Sprintf("avg %.1f%%", avg(c.cpuHist)), "hist": floats(c.cpuHist)},
+			"mem": map[string]any{"value": memTxt, "delta": fmt.Sprintf("avg %.0f%% of limit", avg(c.memHist)), "hist": floats(c.memHist)},
+		},
 		"env": env, "port_rows": ports,
 	}
 }

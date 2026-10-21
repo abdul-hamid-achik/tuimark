@@ -444,6 +444,13 @@ const OUTPUTS = [
   { name: 'tpl-rows-bad', dir: 'templates', kind: 'term', args: ['validate', 'rows.tui', '--data', 'rows-bad.json'] },
   { name: 'tpl-long', dir: 'templates', kind: 'term', args: ['validate', 'long.tui', '--data', 'long.json'], exit: [2] },
   { name: 'tpl-kit-events', dir: 'templates', kind: 'events', args: ['play', 'kit-dialog.tui', '--data', '../../../kit/components/confirm.sample.json', '--cols', '60', '--rows', '12', '--input', 'y'] },
+  { name: 'tpl-props-dump', dir: 'templates', kind: 'grid', args: ['dump', 'props.tui', '--data', 'props.json', '--cols', '40', '--rows', '4'] },
+  { name: 'tpl-props-classes', dir: 'templates', kind: 'classes', args: ['dump', 'props.tui', '--data', 'props.json', '--cols', '40', '--rows', '4', '--format', 'json'] },
+  { name: 'tpl-props-bad', dir: 'templates', kind: 'term', args: ['validate', 'props-bad.tui'], exit: [2] },
+  { name: 'tpl-slot-ids', dir: 'templates', kind: 'ids', args: ['dump', 'slot.tui', '--data', 'slot.json', '--cols', '36', '--rows', '4'] },
+  { name: 'tpl-slot-typed', dir: 'templates', kind: 'grid', args: ['play', 'slot.tui', '--data', 'slot.json', '--cols', '36', '--rows', '4', '--input', 'text:hello'] },
+  { name: 'tpl-slot-forward', dir: 'templates', kind: 'grid', args: ['dump', 'slot-forward.tui', '--data', 'slot.json', '--cols', '30', '--rows', '5'] },
+  { name: 'tpl-slot-bad', dir: 'templates', kind: 'term', args: ['validate', 'slot-bad.tui'], exit: [2] },
 ]
 
 function pickJSON(text, keys) {
@@ -643,11 +650,12 @@ const KIT = [
   {
     group: 'Content',
     items: [
-      { name: 'card', rows: 12, title: 'card', line: 'a bordered panel with a title that takes the focus color while it holds focus', alt: 'a titled card with a heading, a line of text and two buttons, and two smaller cards side by side' },
-      { name: 'alert', rows: 14, title: 'alert', line: 'a callout with an icon, in four status colors', alt: 'four alerts, info, success, warning and danger, each a titled frame with an icon and a message' },
+      { name: 'card', rows: 13, title: 'card', line: 'a bordered panel with a title that takes the focus color while it holds focus', alt: 'a titled card with a heading, a line of text and two buttons, and two smaller cards side by side' },
+      { name: 'kv', rows: 10, title: 'key / value', line: 'a muted label and a value on one row, for a card of facts', alt: 'a card titled Service with four rows, each a muted label and its value: name, owner, region and version' },
+      { name: 'alert', rows: 16, title: 'alert', line: 'a callout with an icon, in four status colors', alt: 'four alerts, info, success, warning and danger, each a titled frame with an icon and a message' },
       { name: 'badge', rows: 9, title: 'badge', line: 'a short status label, with a modifier for its color', alt: 'badges for states such as draft, new, passing, flaky and failed, and a build number' },
       { name: 'stat', rows: 8, title: 'stat', line: 'a KPI card with a change and a sparkline', alt: 'two KPI cards, each with a value, a change marked up or down, and a sparkline' },
-      { name: 'meter', rows: 11, title: 'labeled progress', line: 'a label, a value and a bar in eighths', alt: 'three labeled progress bars with their values: an upload, disk use and tests' },
+      { name: 'meter', rows: 12, title: 'labeled progress', line: 'a label, a value and a bar in eighths', alt: 'three labeled progress bars with their values: an upload, disk use and tests' },
       { name: 'empty', rows: 15, title: 'empty state', line: 'an icon, a title, a line of help and a call to action, centered', alt: 'an empty state: an icon, a title, a line of text and a button, centered' },
       { name: 'log', rows: 12, title: 'log panel', line: 'a scrolling log that follows its end', alt: 'a bordered build log with timestamps, a warning and a failed test in color, over its scroll hints' },
     ],
@@ -657,8 +665,8 @@ const KIT = [
     items: [
       { name: 'table', rows: 10, title: 'data table', line: 'a table with a header, right-aligned numbers and columns that hide by priority', alt: 'a data table of services with a header, state colors, right-aligned numbers and the cursor row as an accent bar' },
       { name: 'menu', rows: 10, title: 'menu', line: 'a navigation list with icons, shortcuts and optional check marks', alt: 'a navigation menu with icons and key shortcuts, one row checked and the cursor row highlighted' },
-      { name: 'button', rows: 10, title: 'button', line: '`primary`, `secondary`, `danger` and `ghost`, inverted when focused', alt: 'primary, secondary, danger, ghost and disabled buttons, the focused one inverted' },
-      { name: 'field', rows: 13, title: 'form field', line: 'a label, an input, help text and an error line, with invalid styling', alt: 'a form with a focused name field and an email field showing its error message' },
+      { name: 'button', rows: 11, title: 'button', line: '`primary`, `secondary`, `danger` and `ghost`, inverted when focused', alt: 'primary, secondary, danger, ghost and disabled buttons, the focused one inverted' },
+      { name: 'field', rows: 14, title: 'form field', line: 'a label, an input, help text and an error line, with invalid styling', alt: 'a form with a focused name field and an email field showing its error message' },
     ],
   },
   {
@@ -679,7 +687,8 @@ const kitIndex = []
 const kitTemplate = (() => {
   const kit = readFileSync(join(REPO, 'kit', 'kit.tui'), 'utf8')
   return (id) => {
-    const open = kit.indexOf(`<template id="${id}">`)
+    // The id may be followed by attributes (props="…").
+    const open = kit.search(new RegExp(`<template id="${id}"[\\s>]`))
     if (open < 0) return null
     const close = kit.indexOf('</template>', open) + '</template>'.length
     let start = open

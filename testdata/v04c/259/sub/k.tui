@@ -1,0 +1,3 @@
+<fragment>
+  <template id="k"><box><slot/></box></template>
+</fragment>

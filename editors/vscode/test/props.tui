@@ -1,0 +1,23 @@
+<!-- SYNTAX TEST "text.tui" "the 0.4c vocabulary: props on a template, {$name} references, and the slot"
+<tui>
+      <template id="panel" props="title style">
+<!--   ^^^^^^^^ entity.name.tag.tui
+<!--                       ^^^^^ entity.other.attribute-name.tui
+        <box class="panel" title="{$title}" style="{$style}">
+<!--                       ^^^^^ entity.other.attribute-name.template.tui
+<!--                              ^ punctuation.section.interpolation.begin.tui
+<!--                               ^ keyword.operator.prop-prefix.tui
+<!--                                ^^^^^ variable.parameter.prop.tui
+<!--                                     ^ punctuation.section.interpolation.end.tui
+<!--                                               ^^^^^^^^ meta.interpolation.prop.tui
+          <slot/>
+<!--       ^^^^ entity.name.tag.tui
+          <text>{$title}: {user.name}</text>
+<!--            ^^^^^^^^ meta.interpolation.prop.tui
+<!--                      ^^^^^^^^^^^ meta.interpolation.tui
+        </box>
+      </template>
+      <use id="a" template="panel" title="Quota"><text>body</text></use>
+<!--   ^^^ entity.name.tag.tui
+<!--              ^^^^^^^^ entity.other.attribute-name.use-template.tui
+</tui>

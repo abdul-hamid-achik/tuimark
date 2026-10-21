@@ -1,4 +1,4 @@
-<!-- k-meter · Contract: with="PATH as m" reads m.label, m.text, m.pct (0 to 100), and the flags m.ok, m.warn and m.danger · Actions: none · Keys: none · Requires: k-title -->
+<!-- k-meter · Contract: props label, style; with="PATH as m" reads m.text, m.pct (0 to 100), and the flags m.ok, m.warn and m.danger · Actions: none · Keys: none · Requires: k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo">
@@ -10,9 +10,9 @@
            danger), or from data with the flags m.ok, m.warn and m.danger.
            The host updates the number (and the text) as the work
            advances. -->
-      <use template="k-meter" with="meters.upload as m"/>
-      <use template="k-meter" with="meters.disk as m"/>
-      <use template="k-meter" class="ok" with="meters.tests as m"/>
+      <use template="k-meter" label="Uploading artifact.tar" with="meters.upload as m"/>
+      <use template="k-meter" label="Disk" with="meters.disk as m"/>
+      <use template="k-meter" class="ok" label="Tests" with="meters.tests as m"/>
     </col>
   </screen>
 </tui>

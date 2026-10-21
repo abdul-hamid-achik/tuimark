@@ -142,6 +142,10 @@ type composer struct {
 	files map[string]*fragFile
 	// templating is the state of <template> and <use> (expand.go).
 	templating
+	// propsState is the state of props (SPEC v0.4c §6.18.9, props.go).
+	propsState
+	// slotState is the state of the slot (SPEC v0.4c §6.18.10, slot.go).
+	slotState
 }
 
 // fragFile is a fragment read once: its parsed root, or why it has none.
@@ -253,7 +257,9 @@ func (b *builder) wrapperOrg() *ir.Origin {
 // errInc reports an error about an <include> element itself: at the
 // include, in its file, with no placement suffix (SPEC v0.4b §6.18.6).
 func (b *builder) errInc(w *ir.Node, code, format string, args ...any) {
+	n := len(b.doc.Diags)
 	b.diagOrg(w.Org, false, ir.Error, code, w.Line, w.Col, w.Path, w.ID, format, args...)
+	b.contentOwn(n) // in a use's content, in a template's body (v0.4c, slot.go)
 }
 
 // attach adds an element built from n's content to n's tree. A node of a
@@ -306,26 +312,50 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		Line: c.Line, Col: c.Col, Path: childPath(n, "include"),
 		Org: b.wrapperOrg(),
 	}
-	for _, a := range c.Attrs {
+	// A {$name} in its src (SPEC v0.4c §6.18.9, props.go).
+	pn := b.propNode(w, c)
+	for i, a := range c.Attrs {
+		if pn != nil && !pn.inAttrs(w, i, a) {
+			continue
+		}
 		w.Attrs[a.Name] = a.Value
 		w.Order = append(w.Order, a.Name)
 	}
 	writeInto(n, outer, w)
-	for _, a := range c.Attrs {
+	for i, a := range c.Attrs {
+		if pn != nil {
+			var ok bool
+			if a, ok = pn.check(b, i, a); !ok {
+				continue
+			}
+		}
 		b.attr(w, a)
+		b.at.on, b.mute.on = false, false
 	}
-	// An include takes no content: Tuimark has no slots.
+	if pn != nil {
+		defer pn.restore(b, w, c) // once nothing reads src any more
+	}
+	if cp.selfCheck && cp.defDecl != nil {
+		cp.defDecl.include = true // a template's body that holds an include (decision 195)
+	}
+	// An include takes no content: a template with a slot wraps content
+	// (SPEC v0.4c decision 166).
 	for _, cc := range c.Children {
 		bad := cc.Type == RawElement || ((cc.Type == RawText || cc.Type == RawCData) && !isXMLWhitespaceOnly(cc.Text))
 		if bad {
-			b.diagOrg(w.Org, false, ir.Error, "V013", cc.Line, cc.Col, w.Path, "", "<include> takes no content; Tuimark has no slots")
+			b.diagOrg(w.Org, false, ir.Error, "V013", cc.Line, cc.Col, w.Path, "", msgIncludeNoSlot)
 			break
 		}
 	}
 	src := w.Attrs["src"]
 	if src == "" {
-		b.errInc(w, "V003", `<include> needs src="FILE"`)
+		if !b.wrote(w, "src") { // an ignored src counts as written (v0.4c, decision 157)
+			b.errInc(w, "V003", `<include> needs src="FILE"`)
+		}
 		return
+	}
+	if cp.noLoad[w] {
+		return // a src that holds a {$name} outside a template (v0.4c, decision 184)
 	}
 	if cp.selfOnly || cp.active().dead {
 		return
@@ -395,7 +425,9 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 	root, serr := ff.root, ff.syntax
 	fo := &ir.Origin{File: name, Placed: w}
 	if serr != nil {
+		nd := len(b.doc.Diags)
 		b.diagOrg(fo, false, ir.Error, "V005", serr.Line, serr.Col, "", "", "%s", serr.Msg)
+		b.contentOwn(nd)
 		return
 	}
 	// 6. Not a fragment.
@@ -403,6 +435,8 @@ func (b *builder) include(n *ir.Node, c *RawNode, outer *ir.Node) {
 		b.errInc(w, "V020", "include src=%q is not a fragment: its root is <%s>, and an included file's root is <fragment>", src, root.Name)
 		return
 	}
+	// The includes that place a slot in a template's body (v0.4c, slot.go).
+	defer cp.popIncl(cp.pushIncl(c))
 	b.expandFragment(n, w, outer, root, fo, chainFile{path: resolved, canon: canon, name: name, real: resolved}, src, ff.size)
 }
 
@@ -419,6 +453,11 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 	fr := &expFrame{bg: cp.active()}
 	nStyles, nDiags, count, bytes := len(b.doc.Styles), len(b.doc.Diags), fr.bg.count, fr.bg.bytes
 	nScope, nUsed, depth := len(cp.scope), len(cp.usedLog), b.depth
+	nOwn, nWUses, nFirst, nSites := len(cp.own), len(cp.wuses), len(cp.firstLog), 0
+	nSlots, slotSeen := len(cp.defSlots), false
+	if cp.defDecl != nil {
+		nSites, slotSeen = len(cp.defDecl.sites), cp.defDecl.slot
+	}
 	nList := len(n.Source)
 	if outer != nil {
 		nList = len(outer.Children)
@@ -437,6 +476,15 @@ func (b *builder) expandFragment(n, w, outer *ir.Node, root *RawNode, fo *ir.Ori
 		}
 		b.org = saved
 		cp.unuse(nUsed)
+		cp.own = cp.own[:nOwn] // what a discarded expansion gave (v0.4c)
+		cp.forgetUses(nWUses, nFirst)
+		if cp.defDecl != nil {
+			cp.defDecl.sites = cp.defDecl.sites[:nSites]
+			// A slot the definition does not read is not its slot (v0.4c).
+			cp.defDecl.slot = slotSeen
+		}
+		cp.defSlots = cp.defSlots[:nSlots]
+		b.at.on, b.mute.on, b.pbody = false, false, nil
 		cp.chain = cp.chain[:chainLen]
 		cp.popTo(nScope) // an element of a copy left mid-build
 		n.Children = n.Children[:nChildren]
@@ -525,6 +573,9 @@ func FragmentDiags(doc *Document) ir.Diags {
 		}
 		b.attach(holder, nil, b.node(c, holder))
 	}
+	// Each written use against a template of the fragment (v0.4c, decision
+	// 187): one the fragment does not write is not known here.
+	b.checkWrittenUses(func(name string) *propDecl { return b.comp.fragDecls[name] })
 	return dedupeDiags(out.Diags).Sorted()
 }
 

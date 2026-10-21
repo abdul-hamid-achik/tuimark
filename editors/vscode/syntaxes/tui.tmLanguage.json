@@ -59,9 +59,9 @@
     "tag": {
       "patterns": [
         {
-          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags, the 0.4b tags checkbox, select, include, fragment, template and use, and the spike alias app).",
+          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags, the 0.4b tags checkbox, select, include, fragment, template and use, the 0.4c tag slot, and the spike alias app).",
           "name": "meta.tag.tui",
-          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|include|fragment|template|use|app)(?![\\w:.-])",
+          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|include|fragment|template|use|slot|app)(?![\\w:.-])",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.tui" },
             "2": { "name": "entity.name.tag.tui" }
@@ -91,8 +91,20 @@
         { "include": "#entity" }
       ]
     },
+    "prop-ref": {
+      "comment": "{$name}: a prop of the enclosing <template> (0.4c), replaced by the text a <use> passes. It goes before the path rule, since the braces of anything else that is not a path are marked illegal.",
+      "name": "meta.interpolation.prop.tui",
+      "match": "(\\{)(\\$)([a-z_][a-z0-9_-]*)(\\})",
+      "captures": {
+        "1": { "name": "punctuation.section.interpolation.begin.tui" },
+        "2": { "name": "keyword.operator.prop-prefix.tui" },
+        "3": { "name": "variable.parameter.prop.tui" },
+        "4": { "name": "punctuation.section.interpolation.end.tui" }
+      }
+    },
     "interpolation": {
       "patterns": [
+        { "include": "#prop-ref" },
         {
           "comment": "{path}: a path with no spaces (binding grammar, SPEC section 7).",
           "name": "meta.interpolation.tui",
@@ -163,7 +175,7 @@
       "end": "\\6",
       "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
       "contentName": "string.quoted.tui meta.action-name.tui",
-      "patterns": [{ "include": "#action-name" }]
+      "patterns": [{ "include": "#prop-ref" }, { "include": "#action-name" }]
     },
     "action-name": {
       "patterns": [
@@ -186,7 +198,7 @@
       "end": "\\5",
       "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
       "contentName": "string.quoted.tui meta.action-name.tui",
-      "patterns": [{ "include": "#action-name" }]
+      "patterns": [{ "include": "#prop-ref" }, { "include": "#action-name" }]
     },
     "attr-class-guard": {
       "comment": "class:NAME=\"path\" or \"!path\" (version 2).",
@@ -285,7 +297,7 @@
       "end": "\\5",
       "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
       "contentName": "string.quoted.tui meta.path.tui",
-      "patterns": [{ "include": "#path-parts" }]
+      "patterns": [{ "include": "#prop-ref" }, { "include": "#path-parts" }]
     },
     "attr-template": {
       "comment": "title, placeholder, label, short: literal text with {path} interpolations.",
@@ -408,7 +420,7 @@
       "end": "\\5",
       "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
       "contentName": "string.quoted.tui meta.embedded.inline.tcss",
-      "patterns": [{ "include": "source.tcss#declarations-inline" }]
+      "patterns": [{ "include": "#prop-ref" }, { "include": "source.tcss#declarations-inline" }]
     },
     "attr-src": {
       "comment": "src=\"theme.tcss\" on <style>.",
@@ -437,7 +449,7 @@
           "end": "\\5",
           "endCaptures": { "0": { "name": "punctuation.definition.string.end.tui" } },
           "contentName": "string.quoted.tui",
-          "patterns": [{ "include": "#entity" }]
+          "patterns": [{ "include": "#prop-ref" }, { "include": "#entity" }]
         },
         {
           "comment": "An attribute with no value is not well-formed XML (V005).",

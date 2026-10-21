@@ -165,7 +165,7 @@ func (e *Engine) report(b *Box, sev, code, format string, args ...any) {
 			// and one an include placed names the include (SPEC v0.4b
 			// §6.18.6).
 			file = b.Src.FileName(e.File)
-			msg += ir.PlacedSuffix(b.Src)
+			msg += ir.NodeSuffix(b.Src)
 		}
 		switch code {
 		case "L003":

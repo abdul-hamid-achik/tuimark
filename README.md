@@ -36,7 +36,7 @@ agent edits again
 
 Release history is in the [Changelog](CHANGELOG.md).
 
-The Tuimark specification (the SPEC, currently v0.3) is the source of truth
+The Tuimark specification (the SPEC) is the source of truth
 for the language and the runtime. It is maintained by the author outside
 this repository; "SPEC §N" references in code and docs point to it. This
 file is the map of what's in the repo and how to drive it.
@@ -303,11 +303,12 @@ takes over), proving the loop end to end. This one example touches:
 ## Document versions
 
 A `<tui>` needs no `version`: without one it is the current language, with
-everything this section describes plus the 0.4b additions in the Language
-notes below (composition, and a few defaults and key rules). It is
-not `version="3"`: a document that writes `version="1"`, `"2"`, or `"3"` is
-pinned to the meaning it had in 0.4.1, defaults included, and its dumps do
-not change; new vocabulary in a pinned document is a diagnostic that ends
+everything this section describes plus the 0.4b and 0.4c additions in the
+Language notes below (composition, props and the slot, and a few defaults
+and key rules). It is not
+`version="3"`: a document that writes `version="1"`, `"2"`, or `"3"` is pinned
+to the meaning it had in 0.4.1, defaults included, and its dumps do not
+change; new vocabulary in a pinned document is a diagnostic that ends
 `(requires a <tui> without version)`. There is no `version="4"` (it is
 `V003`). A `version="1"` document keeps the vocabulary and meaning it has
 always had, and its dumps stay byte-identical. `version="2"` adds the 0.2b
@@ -715,7 +716,8 @@ tuimark version
   that accepts it (`since`). It is generated from the runtime's own tables,
   takes no flags, and reads no environment variable. `schema/catalog.v1.json`
   validates it; `catalog: 1` is the format version, and adding members,
-  items, or versions keeps it.
+  items, or versions keeps it. A tag with an `open_attrs` member also takes
+  the attributes it names (`use`: the props of its template).
 - `new NAME [--go | --ts]` (0.4a) creates a project in the directory `NAME`,
   which must not exist or must be empty (otherwise it is a usage error that
   writes nothing, and no file is ever overwritten): `app.tui` (the newest
@@ -1650,10 +1652,61 @@ kept with the maintainer's project notes, outside this repository.
   levels: `V021`); a cycle of templates is `V019`; a diagnostic about an
   element of a copy ends with `(P via <use …>)` or `, placed by <use …> at
   FILE:LINE:COL`. `tuimark inspect` ends with the `source` of a node and a
-  `via` line for each use or include that placed it, and `tuimark ir`
-  gives each placed node a `from`. A fragment is not a document: `validate`
-  (`ok (fragment checked on its own)`) and `fmt` accept it, and the other
-  commands give it `V005`.
+  `via` line for each use, include, or slot that placed it, and
+  `tuimark ir` gives each placed node a `from`, keeps a copy's `<slot/>` as
+  a `slot` node holding its content, and shows props already substituted. A
+  fragment is not a document: `validate` (`ok (fragment checked on its own)`)
+  and `fmt` accept it, and the other commands give it `V005`.
+
+- **Props (0.4c).** `<template id="T" props="title max">` declares text
+  props (lowercase names, `[a-z_][a-z0-9_-]*`, separated by exactly one
+  space), a `<use>` passes each as an attribute with that name
+  (`title="CPU"`), and the template's body reads it as `{$title}`. A prop is
+  literal text, replaced when the document is read and before any data, so
+  it never changes while the app runs. It may stand in the text of a
+  `text`, `button`, or `column`; in `title`, `placeholder`, and the labels
+  that take a `{path}`; and in the attributes with a literal value
+  (`width`, `height`, `gap`, `pad`, `border`, `min`, `max`, `mark`,
+  `value`, `wrap`, `axis`, `priority`, `scale`, `class`, `style`, and the
+  action name of an `on:*`), mixed with other text (`class="k {$tone}"`).
+  Anywhere else it is `V003`: in `bind`, `each`, `key`, `if`, `id`, a
+  `#id` reference, or a `src`, outside a template, or naming a prop the
+  template does not declare. An attribute on a `<use>` that is neither its
+  own (`template`, `id`, `with`, `if`, `hidden`, `class`) nor a declared
+  prop is `V002`, and those six names cannot be props. A prop the use does
+  not pass removes an attribute whose whole value is exactly `{$name}`
+  (`max="{$max}"`, so the sparkline takes its range from its values) and
+  is the empty string anywhere else (`title="{$t}: all"` becomes `: all`);
+  `title=""` passes the empty string, which is a value. A prop is never
+  data: a pair of braces that a value makes (`title="{user.name}"`) is
+  `V003` and the prop is not passed in that copy; pass data with `with`.
+  A substituted value is checked as if it had been written there
+  (`max="lots"` is the bad-`max` `V003`, and the message ends with the use
+  that wrote it). A `<use>` in a template may pass its template's props on
+  (`label="{$label}"`), and a root with `style="{$style}"` lets each use
+  size its copy. In a pinned document `{$name}` stays the `V003` it
+  was ("not a path"), and a template is `V001` there anyway.
+
+- **The slot (0.4c).** One `<slot/>` in a template marks where the content
+  written between `<use>` and `</use>` goes. A second is `V019`, and a slot
+  takes no attribute, no content, and has no fallback: a use with no
+  content leaves it empty. The content belongs to the place where it is
+  written, not to the use: its paths are the document's (the use's `with`
+  aliases and the copy's `each` aliases are not in scope, but an alias of
+  the place where it is written, such as a list row's, is), its ids are not
+  scoped by the use (`#note`, not `#side__note`; the template's own ids
+  are), its `#id` references and `<include src>` mean what they would
+  without the use, and the use's `class` does not reach it. It stands where
+  the slot stands, in the focus order, the cascade, and the dump, and its
+  parent there checks it (a `tab` fills a slot that stands in a `tabs`);
+  the use's `if` or `hidden` removes it with the copy. A slot cannot stand
+  outside a template, and not where its content would repeat per row: in a
+  list `<item>`, in an `each` template, or directly in a `table` or a
+  `list each` (`V001`). Text directly in a use is `V013` (wrap it in
+  `<text>`), and so is content for a template that has no slot. A template
+  forwards its content with `<slot/>` inside the content of an inner
+  `<use>`, with elements of its own around it. In a pinned document `<slot>`
+  is `V001`, `requires a <tui> without version`.
 
 ## Status per phase (SPEC §4)
 

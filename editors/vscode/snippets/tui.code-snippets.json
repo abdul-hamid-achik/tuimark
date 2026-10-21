@@ -204,6 +204,17 @@
       "</template>"
     ]
   },
+  "Template with props and a slot": {
+    "prefix": "templateprops",
+    "description": "A template that takes literal text as props ({$name}) and the use's content in <slot/> (a document without version)",
+    "body": [
+      "<template id=\"${1:panel}\" props=\"${2:title}\">",
+      "  <box title=\"{\\$${2:title}}\">",
+      "    <slot/>",
+      "  </box>",
+      "</template>"
+    ]
+  },
   "Use a template": {
     "prefix": "use",
     "description": "A copy of a template: its ids scoped by id, its data behind an alias",

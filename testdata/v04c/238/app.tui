@@ -1,0 +1,10 @@
+<tui>
+  <template id="t" props="label"><text>{$label}: {v}</text></template>
+  <screen id="main">
+    <use template="t" label="a" width="3" class:x="f" on:click="go" with="n as v"/>
+    <use template="nope" width="3"/>
+    <use template="t" label="{n}" with="n as v"/>
+    <use template="t" label="{n" with="n as v"/>
+    <use template="t" label="x}" with="n as v"/>
+  </screen>
+</tui>

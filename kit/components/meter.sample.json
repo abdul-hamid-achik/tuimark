@@ -1,7 +1,7 @@
 {
   "meters": {
-    "upload": { "label": "Uploading artifact.tar", "pct": 64, "text": "64% · 8.2 MB/s" },
-    "disk": { "label": "Disk", "pct": 91, "text": "91% of 500 GB", "warn": false, "danger": true },
-    "tests": { "label": "Tests", "pct": 100, "text": "212 / 212" }
+    "upload": { "pct": 64, "text": "64% · 8.2 MB/s" },
+    "disk": { "pct": 91, "text": "91% of 500 GB", "warn": false, "danger": true },
+    "tests": { "pct": 100, "text": "212 / 212" }
   }
 }

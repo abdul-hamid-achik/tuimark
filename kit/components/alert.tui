@@ -1,17 +1,21 @@
-<!-- k-alert · Contract: with="PATH as a" reads a.title, a.text, and a.icon when there is one · Actions: none · Keys: none · Requires: k-title -->
+<!-- k-alert · Contract: props title, icon, text (each optional) and style; slot: more body, after the text; reads build.retry · Actions: none · Keys: none · Requires: k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo">
     <col width="1fr" height="1fr" gap="0" pad="1">
       <text class="k-title">alert / callout</text>
       <!-- USE: one <use> of the k-alert template per alert, with its
-           variant as the use's class (info, ok, warn, danger) and its data
-           through `with`. The title is the box title; the text wraps; the
-           variant colors the frame and the icon. -->
-      <use template="k-alert" class="info" with="alerts.info as a"/>
-      <use template="k-alert" class="ok" with="alerts.ok as a"/>
-      <use template="k-alert" class="warn" with="alerts.warn as a"/>
-      <use template="k-alert" class="danger" with="alerts.danger as a"/>
+           variant as the use's class (info, ok, warn, danger) and its text
+           as props (title, icon, text; each optional). The title is the box
+           title; the text wraps; the variant colors the frame and the icon.
+           What you write inside the <use> (the last alert) is more body,
+           after the text, with the paths of this document. -->
+      <use template="k-alert" class="info" title="Heads up" icon="i" text="Deploys are paused until 09:00 UTC."/>
+      <use template="k-alert" class="ok" title="Saved" icon="✓" text="Your changes are live in every region."/>
+      <use template="k-alert" class="warn" title="Quota" icon="!" text="You have used 92% of this month's build minutes."/>
+      <use template="k-alert" class="danger" title="Build failed" icon="✗" text="Step 3 exited with code 1: tests failed in pkg/router.">
+        <text>{build.retry}</text>
+      </use>
     </col>
   </screen>
 </tui>

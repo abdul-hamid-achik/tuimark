@@ -1,0 +1,18 @@
+<!-- k-kv · Contract: props label, style; with="PATH as v" reads v, the value · Actions: none · Keys: none · Requires: k-card, k-title -->
+<tui theme="auto">
+  <include src="../kit.tui"/>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <text class="k-title">key / value</text>
+      <!-- COPY: one row per field, in a card: the label is literal, the
+           value is a path. The label column is 8 wide; a sheet rule
+           (.k-kv-label { width: 10; }) widens it for every row. -->
+      <use template="k-card" title="Service">
+        <use template="k-kv" label="Name" with="svc.name as v"/>
+        <use template="k-kv" label="Owner" with="svc.owner as v"/>
+        <use template="k-kv" label="Region" with="svc.region as v"/>
+        <use template="k-kv" label="Version" with="svc.version as v"/>
+      </use>
+    </col>
+  </screen>
+</tui>

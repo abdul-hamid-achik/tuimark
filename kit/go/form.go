@@ -101,7 +101,7 @@ type Form struct {
 
 // Add creates the form called name (the id prefix of its inputs). Describe it
 // with Field and OnSubmit, then call Reset to write its values, errors and
-// valid (a field's label, placeholder and help are the app's own data).
+// valid (a field's label, placeholder and help are props of its k-field use).
 func (fs *Forms) Add(name string) *Form {
 	f := &Form{fs: fs, name: name, rules: map[string][]Rule{}}
 	fs.mu.Lock()

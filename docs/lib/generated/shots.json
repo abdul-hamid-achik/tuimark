@@ -315,17 +315,25 @@
     "name": "kit-card",
     "light": true,
     "cols": 72,
-    "rows": 12,
+    "rows": 13,
     "alt": "a titled card with a heading, a line of text and two buttons, and two smaller cards side by side",
-    "cmd": "tuimark play kit/components/card.tui --data kit/components/card.sample.json --cols 72 --rows 12"
+    "cmd": "tuimark play kit/components/card.tui --data kit/components/card.sample.json --cols 72 --rows 13"
+  },
+  {
+    "name": "kit-kv",
+    "light": true,
+    "cols": 72,
+    "rows": 10,
+    "alt": "a card titled Service with four rows, each a muted label and its value: name, owner, region and version",
+    "cmd": "tuimark play kit/components/kv.tui --data kit/components/kv.sample.json --cols 72 --rows 10"
   },
   {
     "name": "kit-alert",
     "light": true,
     "cols": 72,
-    "rows": 14,
+    "rows": 16,
     "alt": "four alerts, info, success, warning and danger, each a titled frame with an icon and a message",
-    "cmd": "tuimark play kit/components/alert.tui --data kit/components/alert.sample.json --cols 72 --rows 14"
+    "cmd": "tuimark play kit/components/alert.tui --data kit/components/alert.sample.json --cols 72 --rows 16"
   },
   {
     "name": "kit-badge",
@@ -347,9 +355,9 @@
     "name": "kit-meter",
     "light": true,
     "cols": 72,
-    "rows": 11,
+    "rows": 12,
     "alt": "three labeled progress bars with their values: an upload, disk use and tests",
-    "cmd": "tuimark play kit/components/meter.tui --data kit/components/meter.sample.json --cols 72 --rows 11"
+    "cmd": "tuimark play kit/components/meter.tui --data kit/components/meter.sample.json --cols 72 --rows 12"
   },
   {
     "name": "kit-empty",
@@ -357,7 +365,7 @@
     "cols": 72,
     "rows": 15,
     "alt": "an empty state: an icon, a title, a line of text and a button, centered",
-    "cmd": "tuimark play kit/components/empty.tui --data kit/components/empty.sample.json --cols 72 --rows 15"
+    "cmd": "tuimark play kit/components/empty.tui --cols 72 --rows 15"
   },
   {
     "name": "kit-log",
@@ -387,17 +395,17 @@
     "name": "kit-button",
     "light": true,
     "cols": 72,
-    "rows": 10,
+    "rows": 11,
     "alt": "primary, secondary, danger, ghost and disabled buttons, the focused one inverted",
-    "cmd": "tuimark play kit/components/button.tui --data kit/components/button.sample.json --cols 72 --rows 10"
+    "cmd": "tuimark play kit/components/button.tui --data kit/components/button.sample.json --cols 72 --rows 11"
   },
   {
     "name": "kit-field",
     "light": true,
     "cols": 72,
-    "rows": 13,
+    "rows": 14,
     "alt": "a form with a focused name field and an email field showing its error message",
-    "cmd": "tuimark play kit/components/field.tui --data kit/components/field.sample.json --cols 72 --rows 13"
+    "cmd": "tuimark play kit/components/field.tui --data kit/components/field.sample.json --cols 72 --rows 14"
   },
   {
     "name": "kit-confirm",

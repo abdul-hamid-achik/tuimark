@@ -1,0 +1,13 @@
+<tui>
+  <template id="t" props="title max tone">
+    <box class="b {$tone}" title="{$title}">
+      <text>{$title}: {v}</text>
+      <sparkline bind="h" min="0" max="{$max}"/>
+    </box>
+  </template>
+  <screen id="main">
+    <use template="t" title="CPU" max="100" tone="hot" with="cpu as v, hist as h"/>
+    <use template="t" with="cpu as v, hist as h"/>
+    <use template="t" title="" max="50" with="cpu as v, hist as h"/>
+  </screen>
+</tui>

@@ -234,7 +234,8 @@ func TestIncludeCheckOrder(t *testing.T) {
 	}
 }
 
-// An include's own attributes and content: only src, no slots.
+// An include's own attributes and content: only src, and no content (a
+// <slot/> is a template's, placed with <use>).
 func TestIncludeAttributesAndContent(t *testing.T) {
 	files := map[string]string{"x.tui": `<fragment><text>a</text></fragment>`}
 	doc := parse.ParseWith([]byte(`<tui><screen><include src="x.tui" id="i" class:a="b"><text>no</text></include></screen></tui>`), "app.tui", memLoader(files, "app.tui", nil))
@@ -242,7 +243,7 @@ func TestIncludeAttributesAndContent(t *testing.T) {
 	for _, s := range []string{
 		`V002 app.tui:1:35 attribute "id" is not allowed on <include>`,
 		`V002 app.tui:1:42 attribute "class:a" is not allowed on <include>`,
-		`V013 app.tui:1:54 <include> takes no content; Tuimark has no slots`,
+		`V013 app.tui:1:54 <include> takes no content; to wrap content, make the fragment's markup a <template> with a <slot/> and place it with <use>`,
 	} {
 		if !strings.Contains(got, s) {
 			t.Errorf("missing %q in:\n%s", s, got)

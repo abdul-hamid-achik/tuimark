@@ -4,11 +4,10 @@
 // filter.ts (createFilter): copy that file with this one.
 //
 // The component reads palette.commands (the registry, [{id, label, hint}]),
-// palette.title, palette.placeholder, palette.query, found.items and
-// found.any, and reads and writes palette.open and palette.cur. This helper
-// writes the registry from your commands, a default title ("Command palette")
-// and placeholder ("type a command…") when the store has none, keeps found
-// with createFilter, and implements the actions:
+// palette.query, found.items and found.any, and reads and writes palette.open
+// and palette.cur. Its title and its placeholder are props of the use
+// (title="Command palette"), not data. This helper writes the registry from
+// your commands, keeps found with createFilter, and implements the actions:
 //
 //   palette_open   resets the query and the cursor, opens the palette
 //   palette_close  closes it
@@ -50,10 +49,9 @@ export interface PaletteOptions {
  * A command palette: registers the commands, writes palette.commands, keeps
  * found with createFilter, and offers the handlers of palette_open,
  * palette_close, palette_run and palette_query (register() installs them).
- * Async because it writes the initial state: palette.open, .query, .cur,
- * .last, .title ("Command palette") and .placeholder ("type a command…"),
- * each only when the store has none (write your own title or placeholder in
- * your data to keep it).
+ * Async because it writes the initial state: palette.open, .query, .cur and
+ * .last, each only when the store has none. It writes no title and no
+ * placeholder: they are props of the k-palette use.
  */
 export async function createPalette(ui: Ui, options: PaletteOptions = {}, ...commands: Command[]) {
   const path = options.path ?? "palette";
@@ -135,8 +133,6 @@ export async function createPalette(ui: Ui, options: PaletteOptions = {}, ...com
     query: "",
     cur: cmds[0]?.id ?? "",
     last: "",
-    title: "Command palette",
-    placeholder: "type a command…",
   };
   for (const [name, value] of Object.entries(defaults)) {
     if (!(await ui.get(`${path}.${name}`)).found) await ui.set(`${path}.${name}`, value);

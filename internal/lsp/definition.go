@@ -66,6 +66,12 @@ func (s *Server) nodeLocation(sn *snapshot, self *document, path, text string, n
 }
 
 func (s *Server) definitionTUI(sn *snapshot, doc *document, off int) []location {
+	if docVersionOf(doc.text) == int(ir.LangCurrent) {
+		// A {$name}, or a prop of a <use> (SPEC v0.4c §15.12).
+		if locs := s.definitionProp(sn, doc, off); locs != nil {
+			return locs
+		}
+	}
 	ctx := lexTUI(doc.text, off)
 	if ctx.kind != tuiAttrValue {
 		return nil

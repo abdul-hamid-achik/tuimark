@@ -63,9 +63,9 @@ func TestEveryStateIsCleanAtEverySize(t *testing.T) {
 		"images":          {[][2]any{{"view", "images"}}, "REPOSITORY"},
 		"volumes":         {[][2]any{{"view", "volumes"}}, "pgdata"},
 		"events":          {[][2]any{{"view", "events"}}, "Events · "},
-		"confirm":         {[][2]any{{"confirm.open", true}, {"confirm.title", "Stop api-gateway?"}, {"confirm.message", "api-gateway will get SIGTERM and stop. Nothing is removed; start brings it back."}}, "Stop api-gateway?"},
+		"confirm":         {[][2]any{{"confirm.open", true}, {"confirm.title", "Stop api-gateway?"}, {"confirm.body", "api-gateway will get SIGTERM and stop. Nothing is removed; start brings it back."}}, "Stop api-gateway?"},
 		"confirm-danger": {[][2]any{{"confirm.open", true}, {"confirm.danger", true}, {"confirm.title", "Remove 3 containers?"},
-			{"confirm.message", "api-gateway, billing-api and edge-proxy and its writable layer will be deleted. Volumes are kept. This cannot be undone."}}, "Remove 3 containers?"},
+			{"confirm.body", "api-gateway, billing-api and edge-proxy and its writable layer will be deleted. Volumes are kept. This cannot be undone."}}, "Remove 3 containers?"},
 		"palette":          {[][2]any{{"palette.open", true}}, "Command palette"},
 		"palette-filtered": {[][2]any{{"palette.open", true}, {"palette.query", "prune"}}, "Prune unused images"},
 		"palette-empty":    {[][2]any{{"palette.open", true}, {"palette.query", "zzz"}}, "No command matches"},
@@ -307,9 +307,9 @@ func TestTheLogGrowsAndFollowsItsEnd(t *testing.T) {
 func TestTheStatsFollowTheContainerOnEverySecond(t *testing.T) {
 	r := newRig(t)
 	r.advance(sampleSecs)
-	before := listAt(r.a.ui.Get, "detail.cpu_hist")
+	before := listAt(r.a.ui.Get, "detail.stats.cpu.hist")
 	r.advance(3)
-	after := listAt(r.a.ui.Get, "detail.cpu_hist")
+	after := listAt(r.a.ui.Get, "detail.stats.cpu.hist")
 	if len(after) != len(before)+3 && len(after) != histLen {
 		t.Errorf("cpu history %d then %d samples", len(before), len(after))
 	}

@@ -142,6 +142,9 @@ type tmpl struct {
 	scanned bool
 	// uses are the <use> nodes of its body as written, at any depth.
 	uses []*ir.Node
+	// decl is what it declares and what its body as written holds, for
+	// its props (SPEC v0.4c §6.18.9, props.go).
+	decl *propDecl
 }
 
 // useInfo is what a <use> node needs to expand.
@@ -154,6 +157,14 @@ type useInfo struct {
 	// it holds its copy: the copy's elements stand one level below it
 	// (checkDepth).
 	depth int
+	// props are its prop-shaped attributes, as it passes them (SPEC v0.4c
+	// §6.18.9), and lvl the number of copies being built where it stands
+	// (pwriter).
+	props []useProp
+	lvl   int
+	// place is where it is written, when its content holds an element:
+	// the context its fill is built in (SPEC v0.4c §6.18.10, slot.go).
+	place *fillPlace
 }
 
 // alias is an alias in scope in a copy: a with alias (use is its <use>,
@@ -199,6 +210,7 @@ func (t *templating) popTo(n int) {
 // #id that no copy inside it has resolved.
 type copyFrame struct {
 	refs []*ir.Node
+	q    *ir.Node // the use whose copy it is
 }
 
 // notInTemplate are the tags a template's body may not hold, at any depth
@@ -225,6 +237,16 @@ func (b *builder) compose(n *ir.Node, c *RawNode, outer *ir.Node) bool {
 		b.diag(ir.Error, "V001", c.Line, c.Col, childPath(n, c.Name), "", "<%s> cannot be inside a <template>: a template holds content only", c.Name)
 		return true
 	}
+	if cp.outContent && notInTemplate[c.Name] {
+		if cp.selfOnly {
+			return false // a fragment on its own: only its own checks (decision 195)
+		}
+		// The content of a use outside every template's body holds content
+		// only, at any depth (SPEC v0.4c decision 185), as a template's body
+		// does: reported instead of the placement message.
+		b.diag(ir.Error, "V001", c.Line, c.Col, childPath(n, c.Name), "", msgUseOnlyFills, c.Name)
+		return true
+	}
 	switch c.Name {
 	case "include":
 		b.include(n, c, outer)
@@ -232,6 +254,11 @@ func (b *builder) compose(n *ir.Node, c *RawNode, outer *ir.Node) bool {
 		b.template(n, c, outer)
 	case "use":
 		b.use(n, c, outer)
+	case "slot":
+		// SPEC v0.4c §6.18.10 (slot.go).
+		if !b.slotMisplaced(n, c) {
+			b.slot(n, c, outer)
+		}
 	default:
 		return false
 	}
@@ -264,9 +291,7 @@ func (b *builder) template(n *ir.Node, c *RawNode, outer *ir.Node) {
 	}
 	t.ID = t.Attrs["id"]
 	writeInto(n, outer, t)
-	for _, a := range c.Attrs {
-		b.attr(t, a)
-	}
+	decl := b.templateProps(t, c) // its own attributes (v0.4c, props.go)
 	collect := true
 	if !cp.selfOnly && n.Tag != "tui" && n.Tag != "screen" {
 		b.diagOrg(b.org, true, ir.Error, "V001", t.Line, t.Col, t.Path, t.ID, "<template> must be a direct child of <tui> or <screen>")
@@ -282,9 +307,25 @@ func (b *builder) template(n *ir.Node, c *RawNode, outer *ir.Node) {
 			break
 		}
 	}
-	nDiags := len(b.doc.Diags)
+	nDiags, nOwn := len(b.doc.Diags), len(cp.own)
+	savedDecl := cp.defDecl
+	cp.defDecl = decl
 	b.templateBody(t, c)
+	cp.defDecl = savedDecl
+	// The template's own prop checks (SPEC v0.4c §6.18.9) are reported
+	// whether or not a use copies it, once per written element.
+	own := slices.Clone(cp.own[nOwn:])
+	cp.own = cp.own[:nOwn]
+	if cp.selfOnly && t.ID != "" {
+		if cp.fragDecls == nil {
+			cp.fragDecls = map[string]*propDecl{}
+		}
+		if cp.fragDecls[t.ID] == nil {
+			cp.fragDecls[t.ID] = decl
+		}
+	}
 	if cp.selfOnly || !collect {
+		b.doc.Diags = append(b.doc.Diags, own...)
 		return // never copied: its body's checks stand
 	}
 	// The definitions' V021 (an include of the body as written, which the
@@ -301,13 +342,13 @@ func (b *builder) template(n *ir.Node, c *RawNode, outer *ir.Node) {
 			self = append(self, d)
 		}
 	}
-	b.doc.Diags, b.reported = kept, nil // set aside: forgotten by reported too
+	b.doc.Diags, b.reported = append(kept, own...), nil // set aside: forgotten by reported too
 	if cp.tmplOf == nil {
 		cp.tmplOf = map[*ir.Node]*tmpl{}
 	}
 	cp.tmplOf[t] = &tmpl{
 		node: t, raw: c, file: b.org.FileOr(b.file),
-		chain: slices.Clip(slices.Clone(cp.chain)), self: self,
+		chain: slices.Clip(slices.Clone(cp.chain)), self: self, decl: decl,
 	}
 	b.ghostEntry(n, t, ghostTemplate)
 }
@@ -318,11 +359,14 @@ func (b *builder) template(n *ir.Node, c *RawNode, outer *ir.Node) {
 func (b *builder) templateBody(t *ir.Node, c *RawNode) {
 	cp := b.comp
 	saved, savedDef := cp.selfCheck, cp.defining
+	savedSlots, savedIncl := cp.defSlots, cp.inclAt
 	cp.selfCheck, cp.defining = true, t
+	cp.defSlots, cp.inclAt = nil, nil // its slots (v0.4c, slot.go)
 	cp.inTmpl++
 	b.depth++ // the template's own level, in the tree as written
 	defer func() {
 		cp.selfCheck, cp.defining = saved, savedDef
+		cp.defSlots, cp.inclAt = savedSlots, savedIncl
 		cp.inTmpl--
 		b.depth--
 	}()
@@ -334,6 +378,9 @@ func (b *builder) templateBody(t *ir.Node, c *RawNode) {
 			continue
 		}
 		b.attach(t, nil, b.node(cc, t))
+	}
+	if cp.defDecl != nil {
+		b.endSlots(t, c, cp.defDecl, cp.defSlots) // its one slot (decision 170)
 	}
 }
 
@@ -349,7 +396,10 @@ func (b *builder) use(n *ir.Node, c *RawNode, outer *ir.Node) {
 	b.checkDepth(b.depth + 1) // its own level, in the tree as composed
 	q := b.useNode(n, c, outer)
 	if cp.selfOnly || cp.selfCheck {
-		return // a template's body as written, or a fragment on its own
+		// A template's body as written, or a fragment on its own: the
+		// definition reads the use's content (v0.4c, decision 189).
+		b.useContent(q, c)
+		return
 	}
 	b.ghostEntry(n, q, ghostUse)
 	if cp.expanding {
@@ -371,23 +421,47 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 		Line: c.Line, Col: c.Col, Path: childPath(n, "use"),
 		Org: b.wrapperOrg(),
 	}
-	for _, a := range c.Attrs {
+	info := &useInfo{raw: c, depth: b.depth + 1, lvl: len(cp.copies)}
+	if !cp.selfOnly && !cp.selfCheck && hasElement(c) {
+		// Where its content is written, for its fill (v0.4c, slot.go): the
+		// chain of step 1 has unwound by step 3.
+		info.place = &fillPlace{org: b.org, chain: slices.Clip(slices.Clone(cp.chain))}
+	}
+	// Its {$name} and its props (SPEC v0.4c §6.18.9, props.go).
+	pn := b.useProps(q, c, info)
+	if pn != nil {
+		defer pn.restore(b, q, c) // once every check has read the use
+	}
+	for i, a := range c.Attrs {
+		if pn != nil && !pn.inAttrs(q, i, a) {
+			continue
+		}
 		q.Attrs[a.Name] = a.Value
 		q.Order = append(q.Order, a.Name)
 	}
 	b.chargePlaced() // as for any element a copy places (node)
-	if id, ok := q.Attrs["id"]; ok {
+	if id, ok := q.Attrs["id"]; ok && !pn.touched(c, "id") {
 		q.ID = cp.prefix + id
 	}
 	writeInto(n, outer, q)
-	info := &useInfo{raw: c, depth: b.depth + 1}
 	allowed := TagAttrsCurrent["use"]
-	for _, a := range c.Attrs {
+	for i, a := range c.Attrs {
 		if !allowed[a.Name] {
-			b.attrErr(q, a, "V002", useAttrError, a.Name)
+			// One that could be a prop is checked against the use's
+			// template, as written (v0.4c, checkWrittenUses).
+			if !propShaped(a.Name) {
+				b.attrErr(q, a, "V002", useAttrError, a.Name)
+			}
 			continue
 		}
+		if pn != nil {
+			var ok bool
+			if a, ok = pn.check(b, i, a); !ok {
+				continue
+			}
+		}
 		b.attr(q, a)
+		b.at.on, b.mute.on = false, false
 	}
 	if _, ok := q.Attrs["if"]; ok && q.If == "" {
 		info.bad = true // V011 (attr)
@@ -398,14 +472,11 @@ func (b *builder) useNode(n *ir.Node, c *RawNode, outer *ir.Node) *ir.Node {
 		// review), and is no V012 either.
 		info.bad = true
 	}
-	for _, cc := range c.Children {
-		if cc.Type == RawElement || ((cc.Type == RawText || cc.Type == RawCData) && !isXMLWhitespaceOnly(cc.Text)) {
-			b.diag(ir.Error, "V013", cc.Line, cc.Col, q.Path, q.ID, "<use> takes no content; Tuimark has no slots")
-			break
-		}
-	}
+	// Its content, and its attributes that could be props, are checked
+	// against its template as written (v0.4c, decision 187).
+	b.recordUse(c, q)
 	var clauses []ir.Each
-	if w, ok := q.Attrs["with"]; ok {
+	if w, ok := q.Attrs["with"]; ok && !pn.touched(c, "with") {
 		var msg string
 		if clauses, msg = parseWith(w); msg != "" {
 			b.diag(ir.Error, "V011", q.Line, q.Col, q.Path, q.ID, "%s", msg)
@@ -486,6 +557,13 @@ func (b *builder) expandUses() {
 			b.doc.Diags = append(b.doc.Diags, t.self...)
 		}
 	}
+	// Each written use against its template (v0.4c, decision 187).
+	b.checkWrittenUses(func(name string) *propDecl {
+		if t := cp.tmpls[name]; t != nil {
+			return t.decl
+		}
+		return nil
+	})
 }
 
 // collectTemplates collects the templates standing in n's subtree, in
@@ -652,16 +730,21 @@ func (b *builder) aliasesAround(q *ir.Node) func(string) bool {
 func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	cp := b.comp
 	cp.used = true
+	cp.recordPlace(q) // where its fill is written (v0.4c, slot.go)
 	savedOrg, savedChain, savedPrefix := b.org, cp.chain, cp.prefix
+	savedIncl, savedOut := cp.inclAt, cp.outContent
 	nChildren, nDroppedIn, nDropped, nEmpty := len(n.Children), len(b.droppedIn[n]), len(b.doc.dropped), len(n.EmptyCopies)
 	fr := &expFrame{bg: cp.active()}
 	nDiags, count, bytes := len(b.doc.Diags), fr.bg.count, fr.bg.bytes
 	nScope, nStack, nCopies, inTmpl := len(cp.scope), len(cp.stack), len(cp.copies), cp.inTmpl
 	nUsed, savedDepth := len(cp.usedLog), b.depth
+	nFrames, nWUses, nFirst := len(cp.pframes), len(cp.wuses), len(cp.firstLog)
 	cp.frames = append(cp.frames, fr)
 	defer func() {
 		cp.frames = cp.frames[:len(cp.frames)-1]
 		b.org, cp.chain, cp.prefix, b.depth = savedOrg, savedChain, savedPrefix, savedDepth
+		cp.inclAt, cp.outContent = savedIncl, savedOut
+		cp.pframes = cp.pframes[:nFrames]
 		cp.popTo(nScope)
 		for _, s := range cp.stack[nStack:] {
 			s.onStack--
@@ -684,6 +767,8 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 		}
 		b.cutDiags(nDiags)
 		cp.unuse(nUsed) // a discarded copy makes no template used
+		cp.forgetUses(nWUses, nFirst)
+		b.at.on, b.mute.on, b.pbody = false, false, nil
 		fr.bg.count, fr.bg.bytes = count, bytes
 		fr.bg.dead = true
 		b.errUse(q, "V021", "%s", overflowMsg(fmt.Sprintf("use template=%q", shownID(q.Attrs["template"])), o))
@@ -695,6 +780,7 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	b.depth = cp.useOf[q].depth
 	b.org = &ir.Origin{File: t.file, Placed: q}
 	cp.chain = t.chain
+	cp.inclAt, cp.outContent = nil, false // the template's body (v0.4c, slot.go)
 	prefix := cp.prefix
 	if q.ID != "" {
 		prefix = q.ID + "__"
@@ -705,9 +791,10 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 	}
 	cp.stack = append(cp.stack, t)
 	t.onStack++
-	frame := &copyFrame{}
+	frame := &copyFrame{q: q}
 	cp.copies = append(cp.copies, frame)
 	cp.inTmpl++
+	b.pushProps(q, t) // the props of this copy (v0.4c, props.go)
 	for _, c := range t.raw.Children {
 		if c.Type != RawElement {
 			continue
@@ -729,7 +816,9 @@ func (b *builder) copyTemplate(n, q *ir.Node, t *tmpl) {
 		// F2 re-review). The classes are merged once, when the expansion
 		// ends (uniqueClasses, from CopiedBy), so a class costs the same
 		// at every level of nested uses (the F2 final check).
-		if len(q.Classes) > 0 {
+		// Not on an element a fill placed that does not come from the
+		// template (v0.4c, decision 172): the class does not reach it.
+		if len(q.Classes) > 0 && cp.classReaches(q, e) {
 			b.chargeBytes(classes)
 			if !cp.classed[e] {
 				if cp.classed == nil {
@@ -811,8 +900,9 @@ func (b *builder) chargePlaced() {
 func (cp *composer) uniqueClasses() {
 	seen := map[string]bool{}
 	for _, e := range cp.classedOrder {
+		by := cp.classUses(e) // those whose class reaches it (v0.4c, slot.go)
 		n := len(e.Classes)
-		for _, q := range e.CopiedBy {
+		for _, q := range by {
 			n += len(q.Classes)
 		}
 		clear(seen)
@@ -826,7 +916,7 @@ func (cp *composer) uniqueClasses() {
 			}
 		}
 		add(e.Classes)
-		for _, q := range e.CopiedBy {
+		for _, q := range by {
 			add(q.Classes)
 		}
 		e.Classes = slices.Clip(out)
@@ -1130,13 +1220,13 @@ func written(n *ir.Node) []*ir.Node {
 	return n.Children
 }
 
+// firstWrittenID descends into the content of a <use> as the definition
+// reads it (SPEC v0.4c §6.18.4, decision 174): its ids are scoped by the
+// use of the template that holds it.
 func firstWrittenID(ns []*ir.Node) string {
 	for _, x := range ns {
 		if x.Kind != "include" && x.ID != "" {
 			return x.ID
-		}
-		if x.Kind == "use" {
-			continue
 		}
 		if id := firstWrittenID(written(x)); id != "" {
 			return id
@@ -1145,12 +1235,12 @@ func firstWrittenID(ns []*ir.Node) string {
 	return ""
 }
 
-// usesIn appends the <use> nodes of a body as written, at any depth.
+// usesIn appends the <use> nodes of a body as written, at any depth, those
+// in the content of a use included (SPEC v0.4c §6.18.3, decision 189).
 func usesIn(out []*ir.Node, ns []*ir.Node) []*ir.Node {
 	for _, x := range ns {
 		if x.Kind == "use" {
 			out = append(out, x)
-			continue
 		}
 		out = usesIn(out, written(x))
 	}
@@ -1207,7 +1297,7 @@ func idOwner(n *ir.Node) *ir.Node {
 func (b *builder) notANode(id string) string {
 	cp := b.comp
 	if q := cp.useIDs[id]; q != nil {
-		if first := firstNodeID(q.Children); first != "" {
+		if first := firstNodeID(q.Children, func(x *ir.Node) bool { return cp.fillRoot[x] && !placedBy(x, q) }); first != "" {
 			return "is a <use>, not a node; name a node of its copy, such as #" + shownID(first)
 		}
 		return "is a <use>, not a node, and its copy has no id"
@@ -1235,13 +1325,17 @@ func (b *builder) notANode(id string) string {
 }
 
 // firstNodeID is the first id of a node in a copy as written, in document
-// order (a <use>'s own id is not a node's).
-func firstNodeID(ns []*ir.Node) string {
+// order (a <use>'s own id is not a node's), skipping the elements a fill
+// placed that are not the copy's (other, SPEC v0.4c decision 174).
+func firstNodeID(ns []*ir.Node, other func(*ir.Node) bool) string {
 	for _, x := range ns {
+		if other(x) {
+			continue
+		}
 		if x.Kind != "use" && x.Kind != "include" && x.ID != "" {
 			return x.ID
 		}
-		if id := firstNodeID(x.Children); id != "" {
+		if id := firstNodeID(x.Children, other); id != "" {
 			return id
 		}
 	}

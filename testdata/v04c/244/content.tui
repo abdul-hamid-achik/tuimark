@@ -1,0 +1,13 @@
+<tui>
+  <template id="bare"><text>b</text></template>
+  <template id="box"><box><slot/></box></template>
+  <screen id="main">
+    <use template="bare"><text>x</text></use>
+    <use template="box">loose<text>y</text></use>
+    <use template="missing"><text>z</text></use>
+    <use template="box"/>
+    <use template="box">
+    </use>
+    <include src="f.tui"><text>w</text></include>
+  </screen>
+</tui>

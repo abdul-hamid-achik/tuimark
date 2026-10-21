@@ -1,4 +1,4 @@
-<!-- k-palette · Contract: with="PATH as p, FOUND as f" reads p.title, p.placeholder and p.last, reads and writes p.open, p.query and p.cur, and reads f.any and f.items[] {id, label, hint} (the host keeps FOUND with a Derive over p.query and the commands) · Actions: palette_open, palette_run, palette_close, palette_query (fires as the query changes; a Go host that filters with Derive needs no work in it, a TypeScript parent recomputes FOUND there) · Keys: ctrl+k opens, up and down (or ctrl+p and ctrl+n) move, enter runs, esc closes · Requires: k-hints, k-title, k-muted -->
+<!-- k-palette · Contract: props title, placeholder, style; with="PATH as p, FOUND as f" reads and writes p.open, p.query and p.cur, and reads f.any and f.items[] {id, label, hint} (the host keeps FOUND with a Derive over p.query and the commands) · Actions: palette_open, palette_run, palette_close, palette_query (fires as the query changes; a Go host that filters with Derive needs no work in it, a TypeScript parent recomputes FOUND there) · Keys: ctrl+k opens, up and down (or ctrl+p and ctrl+n) move, enter runs, esc closes · Requires: k-hints, k-title, k-muted -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <!-- The overlay's own keys come first (the first matching row in document
@@ -30,6 +30,6 @@
          `found` with a Derive over `palette.query` and the commands, and
          pass it as the second alias. The list's `bind` is the cursor row's
          id. The palette is 60 by 16, at most the screen. -->
-    <use id="palette" template="k-palette" with="palette as p, found as f"/>
+    <use id="palette" template="k-palette" title="Command palette" placeholder="type a command…" with="palette as p, found as f"/>
   </screen>
 </tui>

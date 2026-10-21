@@ -1,0 +1,16 @@
+<tui>
+  <template id="k" props="max label">
+    <col>
+      <sparkline bind="h" max="{$max}"/>
+      <text>{$label}: {v.x}</text>
+    </col>
+  </template>
+  <template id="fw" props="max">
+    <use template="k" max="{$max}" label="F" with="data as v, hist as h"/>
+  </template>
+  <screen id="main">
+    <use id="a" template="fw" max="lots"/>
+    <use id="b" template="fw" max="lots"/>
+    <use id="c" template="k" max="9" label="C" with="data as v, hist as h"/>
+  </screen>
+</tui>

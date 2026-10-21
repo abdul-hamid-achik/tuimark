@@ -189,7 +189,7 @@ An include that fails inserts nothing, and the rest of the document is still che
 
 The limit is there to stop an include that fans out into a tree of includes from filling the memory: it counts what the includes insert, and the first one that would go over inserts nothing and stops later ones from expanding.
 
-`<template>` and `<use>` go one step further than a file: a `<template id="…">` directly under `<tui>` or `<screen>` holds a piece of markup, and each `<use template="…" with="path as alias"/>` stamps a copy of it, with the data bound to an alias and its ids scoped to the use. That is for a piece that repeats, such as a group of fields. [Templates and composition](/guide/composition) walks through them, with the scoped ids, the diagnostics, and the tools that show what a copy produced; the attributes are in the [tags reference](/reference/tags#added-by-the-current-language).
+`<template>` and `<use>` go one step further than a file: a `<template id="…">` directly under `<tui>` or `<screen>` holds a piece of markup, and each `<use template="…" with="path as alias"/>` stamps a copy of it, with the data bound to an alias and its ids scoped to the use. A template can also take literal text as props (`props="title"`, `<use title="CPU"/>`, `{$title}`) and one `<slot/>` that receives the content written between `<use>` and `</use>`. That is for a piece that repeats, such as a group of fields or a panel. [Templates and composition](/guide/composition) walks through them, with the scoped ids, the diagnostics, and the tools that show what a copy produced; the attributes are in the [tags reference](/reference/tags#added-by-the-current-language).
 
 ## What is not in the language
 
@@ -198,6 +198,7 @@ On purpose, and permanently:
 - **No expressions.** No arithmetic, comparisons, filters, function calls, or array indexes. Markup has `{path}`, `each`, `if`, and guards; anything computed comes from the host as data.
 - **No pixels.** One unit is one terminal cell. `px`, `em`, `vh` and friends are `V003`.
 - **No open vocabulary.** Tags and properties are a fixed catalog, so an agent cannot invent a widget that silently does nothing.
+- **No dynamic props, no named slots.** A prop is literal text replaced when the document is read, never a path or an expression; a template has one slot, with no name and no fallback content; and a slot cannot stand where content repeats per row. Data goes through `with`.
 - **No generated code.** A `.tui` file is interpreted at run time; nothing is compiled to Go.
 
 ## Formatting

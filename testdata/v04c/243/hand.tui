@@ -1,0 +1,11 @@
+<tui>
+  <screen id="main">
+    <col class="out oc">
+      <text>T</text>
+      <box class="in ic">
+        <text class="head">{form.h}</text>
+        <input id="name" bind="form.name"/>
+      </box>
+    </col>
+  </screen>
+</tui>

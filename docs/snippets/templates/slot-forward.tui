@@ -1,0 +1,18 @@
+<tui>
+  <template id="panel" props="title">
+    <col border="single" title="{$title}" style="height: auto">
+      <slot/>
+    </col>
+  </template>
+  <template id="note-panel" props="title">
+    <use template="panel" title="{$title}">
+      <text>Notes</text>
+      <slot/>
+    </use>
+  </template>
+  <screen id="main">
+    <use template="note-panel" title="Today">
+      <text>{user.name}: ship it</text>
+    </use>
+  </screen>
+</tui>

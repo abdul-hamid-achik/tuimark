@@ -7,13 +7,114 @@ line.
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-10-20
+
+Static props and one default slot for templates (0.4c), and Kit v2 built
+on them. A `<template>` declares `props="a b"`, a `<use>` passes them as
+attributes, and `{$a}` reads them in the template's body. A `<slot/>` in a
+template marks where the content of a `<use>` goes; that content is built
+where it is written. Documents that use neither, and every document that
+writes `version`, behave as in 0.4.4.
+
+### Added
+
+- **Props.**
+  - `props="a b"` on a `<template>` declares static props.
+  - A `<use>` passes them as attributes (`title="Deploy"`), and `{$a}`
+    reads them in the template's body: in attribute values, in the text of
+    a `text`, `button` or `column`, and in the other places the composition
+    guide lists.
+  - A prop is literal text, substituted once per copy. When an attribute's
+    whole value is a prop the use does not pass, the attribute is left out.
+    Anywhere else, an unpassed prop is the empty string.
+  - Where a prop cannot stand (an `id`, a path, `each`, a `<use>`'s
+    `template`, inside `{…}`), or outside a template, the error is `V003`.
+    A prop the template does not declare is `V002` on the `<use>`.
+- **The slot.**
+  - A `<slot/>` in a template marks where the content of a `<use>` goes.
+  - The content is built where it is written: the use doesn't scope its
+    ids, its paths read the store and the aliases in scope there, and its
+    includes resolve next to its own file. The use's `class` never reaches
+    it.
+  - A `<slot/>` inside a use's content in a template forwards the outer
+    use's content.
+  - A template has at most one slot (a second is `V019`).
+  - Content toward a template without a slot is `V013`
+    `<template id="T"> has no <slot/>`. Loose text in a `<use>` is `V013`.
+  - A misplaced slot is `V001`: outside a template, brought by an
+    `<include>` in a use's content, inside a list `<item>`, or where
+    content repeats per row.
+  - `<slot>` in a document that writes `version` is `V001` with the
+    requires hint.
+- **Tools.**
+  - `tuimark ir`:
+    - a copy's `<slot/>` is a `slot` node holding its fill;
+    - templates keep `props`, and uses in a template body keep their
+      content;
+    - every placed node has `from`.
+  - `tuimark inspect`: `via` lists slot entries
+    (`via <slot/> of <use id="U" template="T"> FILE:LINE:COL`).
+  - `tuimark fmt`: formats a use's content and `<slot/>`.
+  - `tuimark lsp`:
+    - completes a use's props, `{$name}` in a template, and `slot`;
+    - hover and definition lead from a prop to the template's `props`.
+  - `tuimark catalog`: lists `slot`, `props` on `template`, and
+    `"open_attrs": "props"` on `use`.
+- **Kit v2.**
+  - The kit's templates take literal text as props and, where a component
+    has a body, content through `<slot/>`.
+  - New templates:
+    - `k-card`: a titled panel; its body is the use's content.
+    - `k-appbar`: brand and title props; the right side is the content.
+    - `k-kv`: one key/value row,
+      `<use template="k-kv" label="Owner" with="svc.owner as v"/>`.
+  - `k-alert`, `k-empty` and `k-confirm` take content too.
+  - Every template takes a `style` prop for its root, which a rule cannot
+    name unless the template gives it an id (the overlays' `U__dialog`,
+    the log's `U__view`).
+  - `k-stat` takes `min` and `max`, the sparkline's range.
+  - `k-help` lists its keys in a scroll (`U__keys`), which takes the focus,
+    so a long keymap scrolls without a height rule in the app.
+- **Docs.**
+  - The composition guide has sections on props, the slot, and when to
+    use props, `with`, or the slot.
+  - README's "Language notes" and AGENTS.md cover them too.
+
 ### Changed
 
-- The kit's help overlay shows "? close help" as its own line, above the
-  list of keys, and the kit's `.k-help` keymap row has no label any more.
-  So a `<hints scope="all">` in a document that includes the kit without
-  using the help no longer shows "? close help", and a hint bar under the
-  open help no longer repeats it. The overlay itself looks as before.
+- **Messages.** "Tuimark has no slots" is gone from every message.
+  Content in an `<include>` now says to wrap it with a template and a slot.
+  The `V002` of an attribute a `<use>` does not take now ends with "or
+  declare it in the template's props" when the name could be a prop.
+- **Help overlay.** The kit's help overlay shows "? close help" as its own
+  line, above the list of keys, and the kit's `.k-help` keymap row has no
+  label any more.
+  - A `<hints scope="all">` in a document that includes the kit without
+    using the help no longer shows "? close help".
+  - A hint bar under the open help no longer repeats it.
+  - The overlay itself looks as before.
+- **Kit v2: literal text is a prop, not data.**
+  - These templates and props:
+    - `k-alert`: `title`, `icon`, `text`;
+    - `k-stat`: `title`;
+    - `k-meter`: `label`;
+    - `k-empty`: `icon`, `title`, `text`;
+    - `k-field`: `label`, `placeholder`, `help`;
+    - `k-palette`: `title`, `placeholder`;
+    - `k-help`: `title`.
+  - The members they replace are no longer read. A use that still passes
+    them only through `with` shows no title or label, with no diagnostic.
+    The kit README's "Upgrading from kit v1" section has a migration table.
+- **`k-empty`.** Its call to action is the use's content: your button,
+  your id, your action. The kit no longer has `empty_create` or
+  `U__create`.
+- **Palette helpers.** The kit's palette helpers (Go and TypeScript) no
+  longer write a default `title` and `placeholder` into the store.
+- **Examples.**
+  - `examples/containers` includes `kit/kit.tui` and uses its templates.
+    Its detail tab is 45 lines instead of 72, and the whole document 209
+    instead of 274.
+  - `examples/kit-gallery` shows "v2".
 
 ## [0.4.4] - 2026-10-20
 
@@ -983,7 +1084,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.5
 [0.4.4]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.4
 [0.4.3]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.3
 [0.4.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.2

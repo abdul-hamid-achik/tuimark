@@ -2,6 +2,7 @@ package host
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
+	"github.com/abdul-hamid-achik/tuimark/internal/parse"
 )
 
 // InspectTarget selects the node `tuimark inspect` explains (SPEC v0.2b
@@ -58,8 +60,15 @@ type SourceInfo struct {
 // nesting. Template is cut the same way, as a placement suffix names a
 // use's template, though the templates of one chain are distinct and
 // their total is bounded by the document.
+//
+// Since 0.4c an entry may be a slot whose fill holds the element (SPEC
+// v0.4c §15.7, decision 176), {"slot", "template", "file", "line",
+// "col"}: Slot is the id, in the expanded document, of the use whose copy
+// holds the slot ("" without one), cut as Use is, Template the template
+// whose body holds it, and the position the <slot/>'s.
 type ViaInfo struct {
 	Use      *string `json:"use,omitempty"`
+	Slot     *string `json:"slot,omitempty"`
 	Template *string `json:"template,omitempty"`
 	Include  *string `json:"include,omitempty"`
 	File     string  `json:"file"`
@@ -182,19 +191,99 @@ func (a *App) sourceInfo(b *layout.Box) *SourceInfo {
 		return nil
 	}
 	s := &SourceInfo{File: n.FileName(a.file), Line: n.Line, Col: n.Col, Via: []ViaInfo{}}
-	for p := n.Placer(); p != nil; p = p.Placer() {
-		v := ViaInfo{File: p.FileName(a.file), Line: p.Line, Col: p.Col}
-		switch p.Kind {
-		case "use":
-			id, tpl := ir.ShownID(p.ID), ir.ShownID(p.Attrs["template"])
-			v.Use, v.Template = &id, &tpl
-		default:
-			src := p.Attrs["src"]
-			v.Include = &src
+	// Each placement that encloses n in the tree `tuimark ir` prints,
+	// nearest first (SPEC v0.4c §15.7, decision 176): an include; a use
+	// whose copy holds n as copied from its template; a slot of a copy
+	// whose fill holds n. The use whose copy holds that slot appears only
+	// as the slot's entry, and so does what placed the slot in that copy
+	// (an include in its template's body): the entries after a slot's are
+	// those of the place where its fill is written. Without slots this is
+	// the chain of placers of 0.4b.
+	skip := map[*ir.Node]int{} // the owners of the slots met, not yet passed
+	for e := n; e.Parent != nil; e = e.Parent {
+		for _, p := range placedBetween(e.Parent, e) {
+			switch p.Kind {
+			case "slot":
+				q := slotOwner(p)
+				v := ViaInfo{File: p.FileName(a.file), Line: p.Line, Col: p.Col}
+				id, tpl := "", ir.ShownID(p.Attrs["template"])
+				if q != nil {
+					id = ir.ShownID(q.ID)
+					skip[q]++
+				}
+				v.Slot, v.Template = &id, &tpl
+				s.Via = append(s.Via, v)
+			case "use":
+				if skip[p] > 0 {
+					skip[p]--
+					continue
+				}
+				id, tpl := ir.ShownID(p.ID), ir.ShownID(p.Attrs["template"])
+				s.Via = append(s.Via, ViaInfo{Use: &id, Template: &tpl, File: p.FileName(a.file), Line: p.Line, Col: p.Col})
+			case "include":
+				if len(skip) > 0 && skipping(skip) {
+					continue
+				}
+				src := p.Attrs["src"]
+				s.Via = append(s.Via, ViaInfo{Include: &src, File: p.FileName(a.file), Line: p.Line, Col: p.Col})
+			}
 		}
-		s.Via = append(s.Via, v)
 	}
 	return s
+}
+
+// skipping reports whether a slot met is waiting for its owner: what
+// encloses the slot up to that use placed the slot, not its fill.
+func skipping(skip map[*ir.Node]int) bool {
+	for _, k := range skip {
+		if k > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// slotOwner is the use whose copy holds the slot s (SPEC v0.4c §15.7):
+// the first use on its chain of placers, an include of the template's
+// body coming before it when one placed the slot. A forwarded slot stands
+// where its use's content is written, in the copy of that use's place.
+func slotOwner(s *ir.Node) *ir.Node {
+	for p := s.Placer(); p != nil; p = p.Placer() {
+		if p.Kind == "use" {
+			return p
+		}
+	}
+	return nil
+}
+
+// placedBetween is the include, use, and slot nodes that stand between the
+// element e and its parent element p in the tree `tuimark ir` prints
+// (parse.AsWritten), nearest e first; nil when e is a child of p as
+// written.
+func placedBetween(p, e *ir.Node) []*ir.Node {
+	var path []*ir.Node
+	var find func(ns []*ir.Node) bool
+	find = func(ns []*ir.Node) bool {
+		for _, x := range ns {
+			if x == e {
+				return true
+			}
+			switch x.Kind {
+			case "include", "use", "slot":
+				path = append(path, x)
+				if find(x.Children) {
+					return true
+				}
+				path = path[:len(path)-1]
+			}
+		}
+		return false
+	}
+	if p.Source == nil || !find(parse.AsWritten(p)) {
+		return nil
+	}
+	slices.Reverse(path)
+	return path
 }
 
 // HitNode is the hit node of cell (x, y) of f, steps 2 and 3 of the SPEC

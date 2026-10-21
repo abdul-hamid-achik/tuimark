@@ -18,7 +18,3 @@
 @media (max-rows: 17) {
   #detail__top { display: none; }
 }
-
-/* The help lists every labeled key, more rows than a small terminal has: the
- * modal takes the screen's height (at most) and its list scrolls. */
-#help__dialog { height: 100%; max-height: 28; }

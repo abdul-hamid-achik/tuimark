@@ -1,0 +1,16 @@
+<tui>
+  <screen id="main">
+    <box class="b hot" title="CPU">
+      <text>CPU: {cpu}</text>
+      <sparkline bind="hist" min="0" max="100"/>
+    </box>
+    <box class="b ">
+      <text>: {cpu}</text>
+      <sparkline bind="hist" min="0"/>
+    </box>
+    <box class="b " title="">
+      <text>: {cpu}</text>
+      <sparkline bind="hist" min="0" max="50"/>
+    </box>
+  </screen>
+</tui>

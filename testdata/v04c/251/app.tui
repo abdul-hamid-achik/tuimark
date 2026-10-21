@@ -1,0 +1,17 @@
+<tui>
+  <template id="w"><slot/></template>
+  <template id="h">
+    <use template="w"><style src="x.tcss"/></use>
+  </template>
+  <use template="w">
+    <screen id="extra"><text>e</text></screen>
+    <keymap/>
+  </use>
+  <screen id="main">
+    <use template="w">
+      <text>a</text>
+      <box><template id="inner"><text>i</text></template></box>
+      <bind keys="x" action="go"/>
+    </use>
+  </screen>
+</tui>

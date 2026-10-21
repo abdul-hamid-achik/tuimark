@@ -62,7 +62,7 @@ const roles: Record<string, string[]> = {
   content: ['text', 'rule', 'sparkline', 'hints'],
   interactive: ['list', 'item', 'input', 'button', 'progress', 'table', 'column', 'checkbox', 'select'],
   overlay: ['modal'],
-  composition: ['include', 'fragment', 'template', 'use'],
+  composition: ['include', 'fragment', 'template', 'use', 'slot'],
 };
 const allTags = [...catalog.tags, ...catalog.tagsV2, ...catalog.tagsCurrent];
 const grouped = new Set(Object.values(roles).flat());

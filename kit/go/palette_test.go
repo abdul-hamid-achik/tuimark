@@ -95,8 +95,9 @@ func TestPaletteFuzzyAndAdd(t *testing.T) {
 }
 
 // What NewPalette writes is all palette.tui needs: with no other data the
-// document reports nothing, and the open palette shows its title and the
-// input's placeholder. A title the store already has is kept.
+// document reports nothing, and the open palette shows the title and the
+// placeholder the use passes as props. The helper writes neither into the
+// store.
 func TestPaletteDefaultsAreAllTheComponentNeeds(t *testing.T) {
 	app, _, _ := paletteApp(t, Substring)
 	for _, d := range app.Validate() {
@@ -108,13 +109,9 @@ func TestPaletteDefaultsAreAllTheComponentNeeds(t *testing.T) {
 	}
 	contains(t, text, "Command palette")
 	contains(t, text, "type a command…")
-
-	app = loadComponent(t, "palette", `{"palette": {"title": "Run", "placeholder": "what to run"}}`)
-	if _, err := NewPalette(app, PaletteOptions{}, Command{ID: "deploy", Title: "Deploy"}); err != nil {
-		t.Fatal(err)
-	}
-	if getStr(t, app, "palette.title") != "Run" || getStr(t, app, "palette.placeholder") != "what to run" {
-		t.Errorf("title %q placeholder %q: the store's own values are kept",
-			getStr(t, app, "palette.title"), getStr(t, app, "palette.placeholder"))
+	for _, path := range []string{"palette.title", "palette.placeholder"} {
+		if v, ok := app.Get(path); ok {
+			t.Errorf("%s = %v: the title and the placeholder are props of the use, the helper writes none", path, v)
+		}
 	}
 }
