@@ -11,6 +11,7 @@
       "properties": {
         "cols": { "type": "integer", "minimum": 0 },
         "rows": { "type": "integer", "minimum": 0 },
+        "terminal_rows": { "type": "integer", "minimum": 0 },
         "ok": { "type": "boolean" },
         "focus": { "type": ["string", "null"] },
         "errors": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } },
@@ -24,6 +25,7 @@
           "items": { "type": "array", "items": { "$ref": "#/$defs/span" } }
         },
         "events": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+        "scrollback": { "$ref": "#/$defs/scrollback" },
         "frames": { "type": "array", "items": { "$ref": "#/$defs/frame" } }
       }
     },
@@ -152,7 +154,20 @@
         "step": { "type": "integer", "minimum": 0 },
         "input": { "type": "string" },
         "events": { "type": "array", "items": { "$ref": "#/$defs/event" } },
-        "dump": { "$ref": "#/$defs/dump" }
+        "dump": { "$ref": "#/$defs/dump" },
+        "scrollback_rows": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "scrollback": {
+      "type": "object",
+      "required": ["grid"],
+      "additionalProperties": false,
+      "properties": {
+        "grid": { "type": "array", "items": { "type": "string" } },
+        "styles": {
+          "type": "array",
+          "items": { "type": "array", "items": { "$ref": "#/$defs/span" } }
+        }
       }
     }
   }

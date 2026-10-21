@@ -174,7 +174,7 @@ go build -o bin/tuimark ./cmd/tuimark
   CLI) — optional, only needed to run the terminal end-to-end specs under
   `specs/glyphrun/`. `go install
   github.com/abdul-hamid-achik/glyphrun/cmd/glyph@latest` (it needs Go
-  1.26; CI pins `@v0.22.0`), then run `glyph docs` for its own
+  1.26; CI pins `@v0.23.0`), then run `glyph docs` for its own
   documentation.
 
 ## Quickstart

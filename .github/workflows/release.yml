@@ -58,7 +58,7 @@ jobs:
       - name: Install go-task and Glyphrun
         run: |
           go install github.com/go-task/task/v3/cmd/task@v3.51.1
-          go install github.com/abdul-hamid-achik/glyphrun/cmd/glyph@v0.22.0
+          go install github.com/abdul-hamid-achik/glyphrun/cmd/glyph@v0.23.0
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Build binaries
