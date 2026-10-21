@@ -285,6 +285,14 @@ func TestV04dRuns268SpanCascade(t *testing.T) {
 	p := playMap(t, dir+"app.tui", "--data", dir+"d.json", "--cols", "20", "--rows", "3", "--input", "focus:#t", "--styles")
 	sameLines(t, "focused", styleSpans(t, p, 1), []string{"0+1 red/default bold underline", "1+1 red/default underline", "2+18 default/default"})
 
+	// The SPEC's document has no input before the text, so the text takes
+	// the initial focus and is underlined from the first frame, and
+	// focus:#t changes nothing (an erratum of test 268, reported; the
+	// fixture above adds an input to see the unfocused state).
+	literal := writeTemp(t, "literal.tui", strings.Replace(string(mustRead(t, dir+"app.tui")), "    <input id=\"i\"/>\n", "", 1))
+	m = dumpMap(t, literal, "--data", dir+"d.json", "--cols", "20", "--rows", "2", "--styles")
+	sameLines(t, "literal 268, no focus step", styleSpans(t, m, 0), []string{"0+1 red/default bold underline", "1+1 red/default underline", "2+18 default/default"})
+
 	// background: blue on the text: x is white on blue, the cells after the
 	// text are blue.
 	bg := writeTemp(t, "bg.tui", runsTUI(".b { color: white; } text { background: blue; }", ""))
