@@ -5,7 +5,7 @@ description: "@thelacanians/tuimark (0.4): drive a Tuimark view from a Bun progr
 
 `@thelacanians/tuimark` (0.4) is the TypeScript client of the [host protocol](/guide/host-protocol). Your Bun program calls `spawnHost`, which starts `tuimark host` with the document. From then on `tuimark` owns the terminal: it lays out, paints, and handles keys. Your program only does three things:
 
-- it writes data into the document with `set` and `batch`;
+- it writes data into the document with `set`, `append`, and `batch`;
 - it reads data back with `get`;
 - it answers the actions the document fires.
 
@@ -62,6 +62,8 @@ It rejects with `HostError` in two cases: the child cannot be started, or it exi
 | `data` | The document's data, bound at the root, like `--data`. A string is the path of a JSON file. An object is written to a temporary file (mode 0600), which is removed as soon as the child is up. |
 | `theme` | `"dark"` or `"light"`, like `--theme`. |
 | `replyTimeout` | Like `--reply-timeout`: a duration from `100ms` to `1m` (`"5s"`), or a number of milliseconds. |
+| `inline` | `true` passes `--inline`: the session runs in the terminal's own scrollback instead of on the alternate screen. |
+| `screen` | Passes `--screen ID`: the screen the session starts on, applied before the first frame. An id no screen has rejects `spawnHost` (`error.code` is 1). |
 | `bin` | The executable. Defaults to the binary of this package's release (`TUIMARK_BINARY`, the cache, or a checked download). |
 | `handlers` | Handlers registered before the first event can arrive. |
 | `onError` | `(ev, err) => unknown`. It receives an error a handler throws, and the session goes on. See [Replies](#replies). |
@@ -73,18 +75,32 @@ It rejects with `HostError` in two cases: the child cannot be started, or it exi
 
 | Member | |
 |---|---|
-| `ready` | The `ready` message: `protocol`, `version`, `cols`, `rows`, `theme`, `catalog`, `diagnostics`. |
+| `ready` | The `ready` message: `protocol`, `version`, `cols`, `rows`, `theme`, `catalog`, `diagnostics`, and `messages`, the message types the child accepts (absent for an older child). |
 | `pid` | The child's process id. |
 | `on(action, handler)` | Registers the handler of one action. A later call for the same action replaces it. Returns the host. |
 | `set(path, value)` | `Set`. Resolves with the ack. |
-| `batch(writes)` | `Batch`, all or nothing. `writes` is `[{path, value}, …]`. |
+| `append(path, value)` | `Append`: adds `value` to the string at `path` (it must be a string too) or to the array there, as one element. |
+| `commit(commit)` | `Commit`: prints `{lines}`, or a copy of `{template, with?, props?}`, into the scrollback of an inline session, above the live region. Resolves once the rows are written. |
+| `batch(writes)` | `Batch`, all or nothing. `writes` is `[{path, value, op?}, …]`, where `op` is `"set"` (the default) or `"append"`. |
 | `get(path)` | `Get`. Resolves with `{found, value}`. |
 | `exited` | Settles when the child has exited. See [Ending](#ending). |
 | `close()` | Sends `SIGTERM`, then `SIGKILL` after 2 seconds. It never rejects, and calling it twice is safe. |
 
-`set`, `batch`, and `get` reject with a `RequestError` when the child refuses them (the ack is in `error.ack`). When the child exits first, they reject with a `HostError`.
+`set`, `append`, `commit`, `batch`, and `get` reject with a `RequestError` when the child refuses them (the ack is in `error.ack`). When the child exits first, they reject with a `HostError`.
 
-Writes made before a handler returns are applied before its reply, so the frame drawn after the handler already shows them. `set`, `batch`, and `get` also work while an event is waiting for its reply, so a handler can read and write state first.
+Writes made before a handler returns are applied before its reply, so the frame drawn after the handler already shows them. `set`, `append`, `commit`, `batch`, and `get` also work while an event is waiting for its reply, so a handler can read and write state first. A `commit` sent then prints at once, above the live region, so an approval can print its diff before the user answers.
+
+A handler that takes the text of an input clears the input before it replies, so the next frame is drawn without the sent text:
+
+```ts
+ui.on("send", async (ev) => {
+  const text = String(ev.value);
+  await ui.set("draft", ""); // applied before the reply
+  await ui.append("messages", { role: "user", text });
+});
+```
+
+Before it sends a message type, or a `batch` entry with an `op` other than `"set"`, the client checks `ready.messages`. When the child does not list the type, the call rejects with an `UnsupportedMessageError` (`the tuimark child does not accept "commit" messages`) and nothing is sent, so an older child fails with a message and never applies an `append` entry as a `set`. A child whose `ready` has no `messages` is taken to accept `set`, `bind`, `batch`, `get`, and `reply`.
 
 A message of 64 MiB or more is refused with a `RangeError` before it is sent, because `tuimark host` ends the session on such a line.
 

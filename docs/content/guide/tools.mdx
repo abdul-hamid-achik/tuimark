@@ -69,6 +69,7 @@ Steps come from `--input "STEP STEP …"` (separated by spaces) or `--script FIL
 | `text:deploy` | `{"text": "deploy"}` | typed text; a run of characters into an input is one edit |
 | `paste:STR` | `{"paste": "…"}` | one bracketed paste; it never reaches the keymap |
 | `set:PATH=JSON` | `{"set": {"path": "…", "value": …}}` | `Set(PATH, value)` from the host |
+| `append:PATH=JSON` | `{"append": {"path": "…", "value": …}}` | `Append(PATH, value)`: concatenates a string, or adds one element to an array. A failure is a usage error with the reason of [`Append`](/guide/go-api) |
 | `focus:#id` | `{"focus": "#id"}` | `Set("@focus", "#id")` |
 | `set:@theme="light"` | `{"theme": "light"}` | the host's theme |
 | `resize:100x30` | `{"resize": [100, 30]}` | the terminal is resized |

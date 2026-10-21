@@ -650,8 +650,8 @@ tuimark test     [DIR] [--update] [--allow-breaking]
 tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                       [--theme dark|light] [--strict] [--json]
 tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
-                      [--mock FILE.json] [--strip]
-tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
+                      [--mock FILE.json] [--strip] [--screen ID]
+tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
 tuimark mcp
 tuimark lsp
 tuimark version
@@ -750,12 +750,20 @@ tuimark version
   running. Two `ctrl+c` within a second always exit 0. Exit codes: 0 for
   quit or the end of input, 1 for an error (a bad `--mock`, an `--events`
   path that is a terminal, … are one `tuimark: run: …` line before the
-  terminal is touched), 128 + the signal number for a stop signal. See the
+  terminal is touched), 128 + the signal number for a stop signal.
+  `--screen ID` (0.4d) picks the screen the session starts on, applied as
+  `Set("@screen", ID)` before the first frame (a reload keeps the screen
+  the session is on); an id no screen has is `tuimark: run: no screen with
+  id "ID"`, before the terminal is touched. See the
   [run guide](https://tuimark.dev/guide/run).
 - `host` (0.3b) runs a document in the terminal for a parent process in any
   language: the terminal stays on fd 0/1/2 as with `Run()`, the parent
-  writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 and reads
-  `ready`/`event`/`ack`/`error`/`exit` JSON lines from fd 4. POSIX only
+  writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 (and, since
+  0.4d, `append` and `commit`, and `batch` entries with `"op": "append"`;
+  `ready.messages` lists what the child accepts) and reads
+  `ready`/`event`/`ack`/`error`/`exit` JSON lines from fd 4.
+  `--screen ID` (0.4d) starts the session on that screen; an id no screen
+  has is `tuimark: host: no screen with id "ID"`, with nothing on fd 4. POSIX only
   (a usage error on Windows). A line of 64 MiB or more on fd 3 (the newline
   excluded) ends the session with exit reason `error` (0.4a), the bound
   `mcp` uses for stdin. See the [host protocol
@@ -879,12 +887,14 @@ With neither, the session is just the first frame (step 0).
 | `text:STR` | STR's bytes, decoded like real terminal input: a run of printable characters going to a focused input is one edit and one `on:change` (the same coalescing `Run()` does for fast typing or an unbracketed paste); characters that go elsewhere reach the keymap one by one. In a `version="2"` document each key or paste of the step sees the frame the previous one left, as in `Run()`, so `text:ab\r` and `text:ab enter` fire the same events |
 | `paste:STR` | one bracketed paste. Normalized (CRLF/CR/LF/TAB → space, ANSI/control bytes stripped) and delivered as one edit/`on:change` when an enabled input has focus; discarded — never reaching the keymap or a built-in — otherwise, so a paste containing `q` can never quit |
 | `set:PATH=JSON` | `Set(PATH, json.Unmarshal(JSON))`; `PATH` may be empty (the store root) or the reserved `@focus`/`@screen`/`@theme` (`set:@theme="light"`) |
+| `append:PATH=JSON` | `Append(PATH, json.Unmarshal(JSON))` (0.4d): concatenates a string to the string at `PATH`, or adds the value as one element at the end of the array there. A failing append is a usage error with the reason `append "PATH": …` |
 | `focus:#ID` | `Set("@focus", "ID")` (the `#` is optional); fires no `on:focus`, like `Set` |
 | `resize:COLSxROWS` | the terminal size changes, handled like `Run()` handles `SIGWINCH` |
 | `click:X,Y`, `wheel-up:X,Y`, `wheel-down:X,Y` | a left click (press and release) or one wheel report at cell (X, Y), 0-based as in the dump, on the current frame (`version="2"` mouse, SPEC §8.5). With the document's `mouse` false the step changes nothing and fires nothing; a cell outside the current grid is a usage error |
 
 The equivalent `--script` line for each: `{"key":"..."}`, `{"text":"..."}`,
-`{"paste":"..."}`, `{"set":{"path":"...","value":...}}`, `{"focus":"#..."}`,
+`{"paste":"..."}`, `{"set":{"path":"...","value":...}}`,
+`{"append":{"path":"...","value":...}}`, `{"focus":"#..."}`,
 `{"resize":[COLS,ROWS]}`. `{"theme":"light"}` (`"dark"`, `"light"`, or
 `"auto"`) is `Set("@theme", value)`, like `set:@theme="light"`; since
 `play` never probes the terminal, `auto` is `dark`. `{"click":[X,Y]}` is
@@ -1736,6 +1746,20 @@ kept with the maintainer's project notes, outside this repository.
   the width is cut by clusters); an empty text is 0 lines under every
   `wrap`. In a pinned document `runs` is `V002`, `pre-wrap` and a `span`
   selector `V003`, each `requires a <tui> without version`.
+
+- **`Append` and the first screen (0.4d).** `Append(path, v)` adds to the
+  value at `path` in place: a string takes a string, an array takes `v` as
+  one element at its end (an array `v` is one element, never spread), and
+  every other case is an error that changes nothing (`append "n": "n"
+  holds a number, not a string or an array`; a missing path, the root, a
+  reserved path, a string and a non-string value; a derived path gives
+  `Set`'s error). `(*Batch).Append` checks the value when the batch is
+  applied, against the store as the earlier writes left it. The same write
+  is the `append` message and the `"op": "append"` batch entry of `tuimark
+  host`, and the `append:PATH=JSON` step of `play`. `--screen ID` on `run`
+  and `host` is `Set("@screen", ID)` before the first frame, as a Go host
+  does before `Run`: a parent's own `set` of `@screen` lands after the
+  first frame.
 
 ## Status per phase (SPEC §4)
 

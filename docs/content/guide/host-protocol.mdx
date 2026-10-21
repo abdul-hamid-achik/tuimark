@@ -17,12 +17,13 @@ If your host is already Go, use [`Run`](/guide/go-api#run) directly; it is simpl
 ## Starting it
 
 ```sh
-tuimark host FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
+tuimark host FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
 ```
 
 - `--data` binds a JSON file as the store, exactly as `dump --data` does; the parent typically overwrites and extends it with `set`/`batch` messages once the session is running.
 - `--theme` is applied as `Set("@theme", …)` before the first frame; `TUIMARK_THEME` still wins over it, as it does everywhere else `Run()` reads the environment.
 - `--reply-timeout` (default `5s`, from `100ms` to `1m`) bounds how long a host action waits for the parent's reply before the session moves on.
+- `--screen ID` picks the screen the session starts on, as a Go host does with `Set("@screen", id)` before `Run`. It is applied after the document is loaded and `--data` bound, before the first frame, so the first frame is already the right screen. An id no screen has is `tuimark: host: no screen with id "ID"` and exit 1, before the terminal is touched and with nothing on fd 4. A `set` of `@screen` from the parent lands after `ready`, so after the first frame; use `--screen` for the first one.
 
 The transport is **POSIX only**: on Windows, `host` is a usage error, because passing extra file descriptors to a child process needs `os/exec`'s `ExtraFiles` (Unix) or an equivalent Windows has no counterpart for here.
 
@@ -48,7 +49,11 @@ In Go, pass the two ends in `exec.Cmd.ExtraFiles`. In Bun (see the excerpt below
 | `set`, `bind` | `path`, `value`, optional `id` | `Set(path, value)`. `bind` is an alias of `set`. |
 | `batch` | `writes: [{"path","value"}…]`, optional `id` | `Batch`, all or nothing |
 | `get` | `id`, `path` | `Get(path)` |
+| `append` | `path`, `value`, optional `id` | `Append(path, value)`: concatenates a string to a string, or adds `value` as one element at the end of an array |
+| `commit` | `lines`, or `template` with optional `with` and `props`, optional `id` | `Commit`: prints into the scrollback of an inline session. In a session that is not inline it is answered with the error `commit: not in inline mode` |
 | `reply` | `seq`, optional `quit: true`, optional `error: "msg"` | answers the `event` numbered `seq` |
+
+A `batch` entry may hold `"op": "set"` (the default) or `"op": "append"`: `{"op": "append", "path": "live.text", "value": " world"}` appends within the batch, checked when the batch is applied, so it sees the writes before it. An `op` that is neither makes the message malformed, and nothing of it is applied. An `append` that cannot be made (the path is missing, or holds a number, an object, `null`, or a string while the value is not a string) fails with the message `append "PATH": …`, changes nothing, and fails a batch as a whole.
 
 A message that carries an `id` (a number or string you choose) gets an `ack` back; one without `id` gets nothing on success, and an `error` on failure, so no failure is silent. That includes a `reply`: one with an `id` that answers the waiting event gets `{"type":"ack","id":…,"ok":true}` before the loop resumes (so it comes before the `exit` a `quit` reply leads to), and every `error` about a reply (late, for an unknown `seq`, or malformed) carries the reply's `id` when it had one, next to its `seq`. A `seq` is any JSON integer (`1`, `1.0`, and `1e0` all answer event 1); a `seq` echoed in an `error` is written exactly as you sent it. Messages are applied in the order they arrive from one reader, so writes sent before a `reply` are applied before that reply is processed — the frame drawn after the handler returns shows them.
 
@@ -56,13 +61,13 @@ A message that carries an `id` (a number or string you choose) gets an `ack` bac
 
 | `type` | Members | When |
 |---|---|---|
-| `ready` | `protocol`, `version`, `cols`, `rows`, `theme`, `catalog`, `diagnostics` | once, always first |
+| `ready` | `protocol`, `version`, `cols`, `rows`, `theme`, `catalog`, `diagnostics`, `messages` | once, always first |
 | `event` | `seq`, `action`, `source`, `keys`, `value` | a host action fired |
 | `ack` | `id`, `ok`, optional `error`, `found`, `value` | answers a message that had an `id` |
 | `error` | `error`, optional `id`, optional `seq` | a malformed message, a failed write without `id`, a reply timeout, or a late/unknown reply |
 | `exit` | `reason` (`quit`, `eof`, `signal`, `error`), optional `signal`, optional `error` | once, always last |
 
-`ready` is the handshake: `protocol` is `1` (check it — a parent must stop on a value it does not know), `version` is the bare runtime version, `cols`/`rows`/`theme` are the session's starting size and resolved theme, `catalog` lists every action the document names (the same shape as `Catalog()`), and `diagnostics` holds the document's static problems.
+`ready` is the handshake: `protocol` is `1` (check it — a parent must stop on a value it does not know), `version` is the bare runtime version, `cols`/`rows`/`theme` are the session's starting size and resolved theme, `catalog` lists every action the document names (the same shape as `Catalog()`), and `diagnostics` holds the document's static problems. `messages` lists the types a parent may send, `["set", "bind", "batch", "get", "reply", "append", "commit"]`; a parent checks it before it sends a type an older child would report as unknown, and ignores the members it does not know in any message. A child whose `ready` has no `messages` accepts exactly `["set", "bind", "batch", "get", "reply"]`, and reads only `path` and `value` of a `batch` entry, so a parent sends an entry with an `op` other than `"set"` only to a child that lists `append`. The protocol number stays `1`: new versions only add members and message types.
 
 Every non-built-in action in the catalog becomes an `event`: the child writes it with a fresh `seq` (1, 2, … per session) and waits for a `reply` with that `seq`, up to `--reply-timeout`. While it waits, keys keep queuing (dispatched after the handler returns) and `set`/`batch`/`get` keep being served, so the parent can read and write state before replying. `{"type":"reply","seq":N}` alone resumes the loop; `"quit": true` ends the session with reason `quit`; `"error": "msg"` ends it with reason `error` (which wins when both are present). A reply that never arrives becomes an `error` on fd 4 and the loop moves on — the parent lost that one event, but the session keeps going.
 

@@ -18,6 +18,7 @@ func Parse(r io.Reader) (*App, error)
 
 func (a *App) Bind(path string, v any) error
 func (a *App) Set(path string, v any) error
+func (a *App) Append(path string, v any) error                 // 0.4d
 func (a *App) Get(path string) (any, bool)                     // 0.3
 func (a *App) Batch(fn func(b *Batch) error) error              // 0.3
 func (a *App) On(action string, h Handler)
@@ -69,6 +70,17 @@ _ = ui.Set("steps.2.status", "done")          // host paths may index arrays
 A host path may use a number to reach into an array, as above; markup paths cannot, and reach arrays through `each`.
 
 `Get(path)` (0.3) reads a value back as a copy: changing what it returns never changes the store. It uses the same paths, and `@focus`, `@screen`, and `@theme` return the app's current focus (`"#id"`), screen, and theme.
+
+`Append(path, v)` (0.4d) adds to what is already there, without sending the old value through your program. When the value at `path` is a string, `v` must be a string, and it is concatenated; when it is an array, `v` is added at its end as **one** element (an array `v` is one element, never spread). It is a `Set` of the new value in every other way: it schedules a redraw and recomputes the derived values. Streaming a model's reply is a loop of appends:
+
+```go
+_ = ui.Append("messages", map[string]any{"role": "assistant", "text": ""}) // a new message
+_ = ui.Append("live.text", token)                                           // one more token
+```
+
+Any other case is an error and changes nothing: a missing path (`append "p": "p" is missing`), a `null`, number, boolean, or object at the path (`append "p": "p" holds a number, not a string or an array`), a string at the path and a `v` that is not a string, the root, a reserved path (`@focus`, `@screen`, `@theme`), and a derived path (the error `Set` gives). In a `Batch`, `b.Append(path, v)` checks the value when the batch is applied, against the store as the earlier writes of the batch left it, so `b.Set("log", []any{})` then `b.Append("log", x)` gives `[x]`; a failure there applies nothing.
+
+`Set("@screen", id)` before `Run` picks the screen the session starts on, as `--screen` does for `tuimark run` and `tuimark host`.
 
 `Batch` (0.3) applies several writes as one change. Use it to publish one sample of live data, so no frame shows half of it:
 
