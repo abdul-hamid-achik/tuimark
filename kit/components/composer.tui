@@ -1,0 +1,26 @@
+<!-- k-composer · Contract: props placeholder, style; with="PATH as c": c.draft (the textarea writes it; the host clears it after a send), flag c.disabled (optional) · Actions: composer_change (every edit, value: the text), composer_submit (enter, value: the text) · Keys: enter sends, shift+enter or alt+enter a new line, up and down move through the lines · Requires: k-hints -->
+<tui theme="auto">
+  <include src="../kit.tui"/>
+  <keymap>
+    <bind keys="ctrl+o" action="composer_tips" label="tips"/>
+    <bind keys="ctrl+q" action="quit" label="quit"/>
+    <bind keys="up" action="composer_history_prev" when="#composer__input:focus" label="history"/>
+  </keymap>
+  <screen id="demo" focus="#composer__input">
+    <col width="1fr" height="1fr">
+      <text class="k-muted">The transcript goes above the composer.</text>
+      <spacer/>
+      <!-- USE: the box a message is typed in, with its key hints. The
+           textarea is composer__input (the use's id, then the template's):
+           name it in `focus=` and in a `when="#composer__input:focus"`.
+           It is one row when empty and grows with its text up to eight
+           rows. Enter fires composer_submit with the text; the host replies
+           by writing "" to the draft before it replies, since enter changes
+           nothing in the text. A disabled composer (c.disabled) takes no
+           focus and no key: an approval that wants a plain key (y) sets it
+           while it shows. The hints list the labeled rows of the keymap
+           that a key would fire now (up shows only on the first line). -->
+      <use id="composer" template="k-composer" placeholder="Message the model" with="composer as c"/>
+    </col>
+  </screen>
+</tui>

@@ -1,0 +1,7 @@
+<tui>
+  <screen id="inline">
+    <use id="m" template="commit-msg" with="msg as msg" role="assistant"/>
+  </screen>
+  <template id="card" props="role"><text class="who">{$role}</text><slot/></template>
+  <template id="commit-msg" props="role"><use template="card" role="{$role}"><col each="msg.blocks as b" key="b.id"><text>{b.text}</text></col></use></template>
+</tui>

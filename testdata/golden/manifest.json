@@ -506,5 +506,26 @@
     "sizes": ["30x10"],
     "json": ["30x10"],
     "frozen": false
+  },
+  {
+    "name": "t311-inline-approval",
+    "file": "testdata/v04d/t311/app.tui",
+    "data": "testdata/v04d/t311/data.json",
+    "input": "y n enter esc set:approval.open=false esc text:h",
+    "sizes": ["40x12"],
+    "json": ["40x12"],
+    "inline": true,
+    "frozen": false
+  },
+  {
+    "name": "t311-inline-commit-card",
+    "file": "testdata/v04d/t311/card.tui",
+    "data": "testdata/v04d/t311/data.json",
+    "script": "testdata/v04d/t311/card-steps.ndjson",
+    "sizes": ["40x12"],
+    "json": ["40x12"],
+    "styles": true,
+    "inline": true,
+    "frozen": false
   }
 ]

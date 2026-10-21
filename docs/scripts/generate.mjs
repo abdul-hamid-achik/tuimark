@@ -676,6 +676,14 @@ const KIT = [
     ],
   },
   {
+    group: 'Inline and chat',
+    items: [
+      { name: 'composer', rows: 8, title: 'composer', line: 'a message box that grows with its text, with the key hints of your keymap', alt: 'a composer at the bottom of the screen: a rule, the placeholder text of an empty message box, and a row of key hints' },
+      { name: 'block', rows: 26, title: 'transcript block', line: 'a paragraph, heading, quote, list item, code block, or rule made of runs', alt: 'a transcript block by block: a heading, a paragraph with code, emphasis and bold runs, a quote, two list items, a Go code block that keeps its indentation, and a rule' },
+      { name: 'receipt', rows: 16, title: 'tool receipt', line: 'what a tool did: its call, its output kept as runs, and a status line', alt: 'two tool receipts: a successful ls with its tab-separated columns kept and a failed test run with its error in bold, each a bordered box with its status below' },
+    ],
+  },
+  {
     group: 'Overlays',
     items: [
       { name: 'confirm', rows: 16, title: 'confirm dialog', line: 'a modal that puts the cursor on the safe button', alt: 'a confirm dialog over the page asking to delete a project, with Cancel and Delete buttons' },

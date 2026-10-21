@@ -1,0 +1,18 @@
+{
+  "ok_call": {
+    "title": "bash · ls -l src",
+    "status": "exit 0 · 0.2s",
+    "ok": true,
+    "output": "total 24\n-rw-r--r--\t1 me\t4210\tapp.ts\n-rw-r--r--\t1 me\t812\tmarkdown.ts\n-rw-r--r--\t1 me\t96\tmain.ts"
+  },
+  "failed_call": {
+    "title": "bash · bun test",
+    "status": "exit 1 · 1.4s",
+    "err": true,
+    "output": [
+      "markdown.test.ts:\n",
+      { "text": "error: ", "class": "k-strong" },
+      "expected 2 blocks, got 1\n\tat markdown.test.ts:31"
+    ]
+  }
+}

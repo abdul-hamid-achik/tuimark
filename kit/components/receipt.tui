@@ -1,0 +1,17 @@
+<!-- k-receipt · Contract: props style; with="PATH as r": r.title (the call), r.status, r.output (a string or an array of runs, shown as runs so its tabs are four spaces and its line breaks kept), flags r.ok and r.err · Actions: none · Keys: none · Requires: none -->
+<tui theme="auto">
+  <include src="../kit.tui"/>
+  <screen id="demo">
+    <col width="1fr" height="1fr" gap="1" pad="1">
+      <!-- USE: what a tool did, as a bordered receipt: its call in the
+           title, its output below, a status line last. The output is shown
+           with `runs`, not a {path}: a {path} removes a TAB, and run text
+           makes it four spaces, so a tool's `ls -l` keeps its columns. A
+           flag colors the border (ok, err); both are optional. A host
+           commits a receipt as a template's copy (Commit with this
+           template), so it stays in the scrollback. -->
+      <use template="k-receipt" with="ok_call as r"/>
+      <use template="k-receipt" with="failed_call as r"/>
+    </col>
+  </screen>
+</tui>

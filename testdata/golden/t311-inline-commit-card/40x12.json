@@ -1,0 +1,189 @@
+{
+  "cols": 40,
+  "rows": 3,
+  "terminal_rows": 12,
+  "ok": true,
+  "focus": null,
+  "errors": [],
+  "nodes": [
+    {
+      "id": "inline",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 3,
+      "classes": [
+        "approving"
+      ]
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 1,
+      "text": "Edit src/a.ts? y approve · n deny",
+      "classes": [
+        "ask"
+      ]
+    },
+    {
+      "id": "composer",
+      "tag": "textarea",
+      "x": 0,
+      "y": 1,
+      "w": 40,
+      "h": 1,
+      "scroll": {
+        "y": 0,
+        "h": 1
+      }
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 2,
+      "w": 40,
+      "h": 1,
+      "text": "waiting",
+      "classes": [
+        "status"
+      ]
+    }
+  ],
+  "grid": [
+    "Edit src/a.ts? y approve · n deny       ",
+    "Message the model                       ",
+    "waiting                                 "
+  ],
+  "theme": "dark",
+  "styles": [
+    [
+      {
+        "x": 0,
+        "w": 40,
+        "fg": "default",
+        "bg": "default"
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "w": 17,
+        "fg": "default",
+        "bg": "default",
+        "a": [
+          "dim"
+        ]
+      },
+      {
+        "x": 17,
+        "w": 23,
+        "fg": "default",
+        "bg": "default"
+      }
+    ],
+    [
+      {
+        "x": 0,
+        "w": 40,
+        "fg": "default",
+        "bg": "default"
+      }
+    ]
+  ],
+  "events": [
+    {
+      "step": 7,
+      "action": "approve",
+      "source": "",
+      "keys": {},
+      "value": null
+    }
+  ],
+  "scrollback": {
+    "grid": [
+      "assistant                               ",
+      "assistant                               ",
+      "first                                   ",
+      "second                                  ",
+      "- old line                              ",
+      "+ new    line                           "
+    ],
+    "styles": [
+      [
+        {
+          "x": 0,
+          "w": 9,
+          "fg": "default",
+          "bg": "default",
+          "a": [
+            "bold"
+          ]
+        },
+        {
+          "x": 9,
+          "w": 31,
+          "fg": "default",
+          "bg": "default"
+        }
+      ],
+      [
+        {
+          "x": 0,
+          "w": 9,
+          "fg": "default",
+          "bg": "default",
+          "a": [
+            "bold"
+          ]
+        },
+        {
+          "x": 9,
+          "w": 31,
+          "fg": "default",
+          "bg": "default"
+        }
+      ],
+      [
+        {
+          "x": 0,
+          "w": 40,
+          "fg": "default",
+          "bg": "default"
+        }
+      ],
+      [
+        {
+          "x": 0,
+          "w": 40,
+          "fg": "default",
+          "bg": "default"
+        }
+      ],
+      [
+        {
+          "x": 0,
+          "w": 40,
+          "fg": "default",
+          "bg": "#161b22"
+        }
+      ],
+      [
+        {
+          "x": 0,
+          "w": 13,
+          "fg": "cyan",
+          "bg": "#161b22"
+        },
+        {
+          "x": 13,
+          "w": 27,
+          "fg": "default",
+          "bg": "#161b22"
+        }
+      ]
+    ]
+  }
+}

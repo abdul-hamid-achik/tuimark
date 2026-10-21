@@ -1,0 +1,100 @@
+{
+  "cols": 40,
+  "rows": 2,
+  "terminal_rows": 12,
+  "ok": true,
+  "focus": "composer",
+  "errors": [],
+  "nodes": [
+    {
+      "id": "inline",
+      "tag": "screen",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 2
+    },
+    {
+      "id": "composer",
+      "tag": "textarea",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 1,
+      "text": "h",
+      "focused": true,
+      "scroll": {
+        "y": 0,
+        "h": 1
+      },
+      "caret": {
+        "line": 0,
+        "col": 1,
+        "x": 1,
+        "y": 0
+      }
+    },
+    {
+      "tag": "text",
+      "x": 0,
+      "y": 1,
+      "w": 40,
+      "h": 1,
+      "text": "waiting",
+      "classes": [
+        "status"
+      ]
+    }
+  ],
+  "grid": [
+    "h                                       ",
+    "waiting                                 "
+  ],
+  "events": [
+    {
+      "step": 1,
+      "action": "approve",
+      "source": "",
+      "keys": {},
+      "value": null
+    },
+    {
+      "step": 2,
+      "action": "deny",
+      "source": "",
+      "keys": {},
+      "value": null
+    },
+    {
+      "step": 3,
+      "action": "deny",
+      "source": "",
+      "keys": {},
+      "value": null
+    },
+    {
+      "step": 4,
+      "action": "deny",
+      "source": "",
+      "keys": {},
+      "value": null
+    },
+    {
+      "step": 6,
+      "action": "cancel",
+      "source": "composer",
+      "keys": {},
+      "value": ""
+    },
+    {
+      "step": 7,
+      "action": "typed",
+      "source": "composer",
+      "keys": {},
+      "value": "h"
+    }
+  ],
+  "scrollback": {
+    "grid": []
+  }
+}
