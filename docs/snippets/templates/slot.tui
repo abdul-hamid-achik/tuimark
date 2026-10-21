@@ -1,0 +1,16 @@
+<tui>
+  <template id="panel" props="title">
+    <col id="frame" border="single" title="{$title}" style="height: auto">
+      <slot/>
+    </col>
+  </template>
+  <keymap>
+    <bind keys="ctrl+n" action="focus" to="#note"/>
+  </keymap>
+  <screen id="main" focus="#note">
+    <use id="side" template="panel" title="Note">
+      <input id="note" bind="note" placeholder="write here"/>
+      <text>{user.name} wrote {note}</text>
+    </use>
+  </screen>
+</tui>

@@ -444,6 +444,13 @@ const OUTPUTS = [
   { name: 'tpl-rows-bad', dir: 'templates', kind: 'term', args: ['validate', 'rows.tui', '--data', 'rows-bad.json'] },
   { name: 'tpl-long', dir: 'templates', kind: 'term', args: ['validate', 'long.tui', '--data', 'long.json'], exit: [2] },
   { name: 'tpl-kit-events', dir: 'templates', kind: 'events', args: ['play', 'kit-dialog.tui', '--data', '../../../kit/components/confirm.sample.json', '--cols', '60', '--rows', '12', '--input', 'y'] },
+  { name: 'tpl-props-dump', dir: 'templates', kind: 'grid', args: ['dump', 'props.tui', '--data', 'props.json', '--cols', '40', '--rows', '4'] },
+  { name: 'tpl-props-classes', dir: 'templates', kind: 'classes', args: ['dump', 'props.tui', '--data', 'props.json', '--cols', '40', '--rows', '4', '--format', 'json'] },
+  { name: 'tpl-props-bad', dir: 'templates', kind: 'term', args: ['validate', 'props-bad.tui'], exit: [2] },
+  { name: 'tpl-slot-ids', dir: 'templates', kind: 'ids', args: ['dump', 'slot.tui', '--data', 'slot.json', '--cols', '36', '--rows', '4'] },
+  { name: 'tpl-slot-typed', dir: 'templates', kind: 'grid', args: ['play', 'slot.tui', '--data', 'slot.json', '--cols', '36', '--rows', '4', '--input', 'text:hello'] },
+  { name: 'tpl-slot-forward', dir: 'templates', kind: 'grid', args: ['dump', 'slot-forward.tui', '--data', 'slot.json', '--cols', '30', '--rows', '5'] },
+  { name: 'tpl-slot-bad', dir: 'templates', kind: 'term', args: ['validate', 'slot-bad.tui'], exit: [2] },
 ]
 
 function pickJSON(text, keys) {

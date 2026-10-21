@@ -1,0 +1,6 @@
+{
+  "load": {
+    "cpu": { "value": 87, "history": [40, 55, 70, 87] },
+    "mem": { "value": 9, "history": [8, 8, 9, 9] }
+  }
+}

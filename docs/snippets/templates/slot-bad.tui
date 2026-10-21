@@ -1,0 +1,20 @@
+<tui>
+  <template id="plain">
+    <text>plain</text>
+  </template>
+  <template id="two">
+    <col><slot/><slot/></col>
+  </template>
+  <template id="rows">
+    <list id="l" each="items as r" key="r.id">
+      <item><slot/></item>
+    </list>
+  </template>
+  <screen id="main">
+    <col>
+      <use template="plain"><text>hi</text></use>
+      <use template="two"><text>a</text></use>
+      <use id="r" template="rows"/>
+    </col>
+  </screen>
+</tui>

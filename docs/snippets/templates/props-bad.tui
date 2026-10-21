@@ -1,0 +1,14 @@
+<tui>
+  <template id="card" props="title">
+    <box title="{$title}">
+      <input id="in" bind="{$field}"/>
+    </box>
+  </template>
+  <screen id="main">
+    <col>
+      <use id="a" template="card" title="T" color="red"/>
+      <use id="b" template="card" title="{user.name}"/>
+      <text>{$title}</text>
+    </col>
+  </screen>
+</tui>

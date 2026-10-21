@@ -1,0 +1,17 @@
+<tui>
+  <style>
+    .warn { color: yellow; }
+  </style>
+  <template id="stat" props="title max tone style">
+    <box border="single" title="{$title}" class="{$tone}" style="{$style}">
+      <text>{s.value} of {$max}</text>
+      <sparkline bind="s.history" min="0" max="{$max}"/>
+    </box>
+  </template>
+  <screen id="main">
+    <row gap="1">
+      <use template="stat" with="load.cpu as s" title="CPU" max="100" tone="warn" style="width: 18"/>
+      <use template="stat" with="load.mem as s" title="Memory" max="16" style="width: 18"/>
+    </row>
+  </screen>
+</tui>
