@@ -118,7 +118,7 @@ func tagText(t catalog.Tag) []string {
 	for _, a := range t.Attrs {
 		names = append(names, "`"+a.Name+"`")
 	}
-	if len(names) == 0 { // <keymap>, <fragment>, <slot>
+	if len(names) == 0 { // <fragment> and <slot> have no attributes
 		names = append(names, "none")
 	}
 	return []string{

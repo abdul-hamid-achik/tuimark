@@ -13,7 +13,8 @@ If you build interfaces for the browser, most of Tuimark will be familiar, and a
 | CSS grid | `layout: grid` with `grid-columns` and `grid-min-width` | [Layout](/guide/layout#grids) |
 | A stylesheet, classes, ids, specificity, custom properties | TCSS: `.class`, `#id`, `:focus`, the same cascade by specificity, and `$token` colors | [TCSS](/guide/tcss) |
 | Media queries | `@media (max-cols: 80)` | [Layout](/guide/layout#responsive-layouts) |
-| A component, with props | A file you `<include>`; a `<template>` you stamp with `<use template="…" with="path as alias"/>`, such as the kit's (`k-confirm`, `k-field`, …) once you include `kit/kit.tui` | [The .tui language](/guide/language#composing-a-document-from-files), [Kit](/guide/kit) |
+| A component, with props | A file you `<include>`; a `<template props="title">` you stamp with `<use template="…" title="CPU" with="path as alias"/>`: props are literal text read as `{$title}`, and `with` binds the data. The kit's (`k-confirm`, `k-field`, …) work this way once you include `kit/kit.tui` | [Props](/guide/composition#props), [Kit](/guide/kit) |
+| A component's `children` | The `<slot/>` of a template, filled by the content written between `<use>` and `</use>`; one slot per template, and the content keeps the meaning of the place where you wrote it | [The slot](/guide/composition#the-slot) |
 | `<input>`, checkbox, `<select>`, radio buttons, `<button>` | `<input>`, `<checkbox>`, `<select>`, a `<list>` with `single="true"`, `<button>` | [Widgets](/guide/widgets) |
 | `overflow: auto`, a scrolling `<div>` | `<scroll>`, or `overflow: scroll` | [Layout](/guide/layout#scrolling) |
 | A modal dialog | `<modal>`, which traps focus while it is open | [Widgets](/guide/widgets#modal) |

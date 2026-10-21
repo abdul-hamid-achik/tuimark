@@ -320,12 +320,20 @@
     "cmd": "tuimark play kit/components/card.tui --data kit/components/card.sample.json --cols 72 --rows 12"
   },
   {
+    "name": "kit-kv",
+    "light": true,
+    "cols": 72,
+    "rows": 9,
+    "alt": "a card titled Service with four rows, each a muted label and its value: name, owner, region and version",
+    "cmd": "tuimark play kit/components/kv.tui --data kit/components/kv.sample.json --cols 72 --rows 9"
+  },
+  {
     "name": "kit-alert",
     "light": true,
     "cols": 72,
-    "rows": 14,
+    "rows": 16,
     "alt": "four alerts, info, success, warning and danger, each a titled frame with an icon and a message",
-    "cmd": "tuimark play kit/components/alert.tui --data kit/components/alert.sample.json --cols 72 --rows 14"
+    "cmd": "tuimark play kit/components/alert.tui --data kit/components/alert.sample.json --cols 72 --rows 16"
   },
   {
     "name": "kit-badge",
@@ -357,7 +365,7 @@
     "cols": 72,
     "rows": 15,
     "alt": "an empty state: an icon, a title, a line of text and a button, centered",
-    "cmd": "tuimark play kit/components/empty.tui --data kit/components/empty.sample.json --cols 72 --rows 15"
+    "cmd": "tuimark play kit/components/empty.tui --cols 72 --rows 15"
   },
   {
     "name": "kit-log",

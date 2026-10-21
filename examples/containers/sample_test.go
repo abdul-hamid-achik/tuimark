@@ -63,7 +63,7 @@ func (r *rig) effects(paths ...string) []any {
 }
 
 var (
-	confirmPaths = []string{"confirm.title", "confirm.message", "confirm.danger", "confirm.open"}
+	confirmPaths = []string{"confirm.title", "confirm.body", "confirm.yes", "confirm.no", "confirm.danger", "confirm.open"}
 	// A mock cannot recompute the engine, so a confirmed operation only closes
 	// the dialog and says so; the Go host does the work.
 	donePaths = []string{"confirm.open", "toast", "status"}
@@ -98,6 +98,9 @@ func mockData(t *testing.T) map[string]any {
 	do("help_open", []string{"help"}, nil, "?")
 	do("help_close", []string{"help"}, nil, "?", "q")
 	do("palette_open", []string{"palette", "found"}, nil, "ctrl+k")
+	// k-palette fires palette_query as the input changes; the Go host filters
+	// with a Derive, so it has no handler, and the mock writes the result.
+	do("palette_query", []string{"palette", "found"}, nil, "ctrl+k", "text:st")
 	do("palette_close", []string{"palette"}, nil, "ctrl+k", "esc")
 	do("palette_run", append([]string{"palette"}, confirmPaths...), nil, "ctrl+k", "enter")
 	do("theme_toggle", []string{"theme", "status"}, nil, "t")

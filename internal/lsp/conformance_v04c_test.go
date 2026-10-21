@@ -71,6 +71,12 @@ func TestV04cLSPCompletion(t *testing.T) {
 			want: []string{"title"}, absent: []string{"max"}},
 		{name: "a template in an included fragment", text: "<tui>\n  <include src=\"parts.tui\"/>\n  <screen id=\"main\"><use template=\"far\" |/></screen></tui>",
 			want: []string{"label", "width"}},
+		{name: "names that cannot be props are not offered", text: "<tui>\n  <template id=\"t\" props=\"if class:x Bad 9z ok\"><text>x</text></template>\n  <screen id=\"main\"><use template=\"t\" |/></screen></tui>",
+			want: []string{"ok"}, absent: []string{"class:x", "Bad", "9z"}},
+		{name: "a props value with a {$ declares nothing", text: "<tui>\n  <template id=\"t\" props=\"{$x} ok\"><text>x</text></template>\n  <screen id=\"main\"><use template=\"t\" |/></screen></tui>",
+			want: []string{"with"}, absent: []string{"ok", "{$x}", "x"}},
+		{name: "{$ offers only the names that can be props", text: "<tui>\n  <template id=\"t\" props=\"if Bad ok\"><text>{$|</text></template>\n  <screen id=\"main\"/></tui>",
+			want: []string{"ok"}, absent: []string{"if", "Bad"}},
 		{name: "an unknown template", text: tmpl + `  <screen id="main"><use template="zz" |/></screen></tui>`,
 			want: []string{"with"}, absent: []string{"title", "max"}},
 		{name: "a buffer that does not parse", text: tmpl + `  <screen id="main"><use template="t" |`,
@@ -299,4 +305,23 @@ func TestV04cLSPDiagnostics(t *testing.T) {
 		}
 	}
 	_ = c.shutdown()
+}
+
+// A name that cannot be a prop has no declaration to hover or to go to, and
+// a props value that holds a "{$" declares nothing.
+func TestPropIndexOnlyDeclaredNames(t *testing.T) {
+	for _, tc := range []struct {
+		value, name string
+		want        int
+	}{
+		{"if class:x Bad 9z ok", "ok", 18},
+		{"if class:x Bad 9z ok", "if", -1},
+		{"if class:x Bad 9z ok", "Bad", -1},
+		{"{$x} ok", "ok", -1},
+		{"title max", "max", 6},
+	} {
+		if got := propIndex(tc.value, tc.name); got != tc.want {
+			t.Errorf("propIndex(%q, %q) = %d, want %d", tc.value, tc.name, got, tc.want)
+		}
+	}
 }

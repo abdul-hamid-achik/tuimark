@@ -3,10 +3,11 @@
 Every component of the [Tuimark kit](../../kit/README.md) in one app, on five
 tabs. It is the kit's showroom and its integration test: the document includes
 `kit/kit.tui` (which loads `kit/theme.tcss` and `kit/kit.tcss`), copies the
-kit's templates with `<use>` (alert, stat, meter, field, log, empty state,
-toast, confirm dialog, command palette, help), builds the rest from the kit's
-classes, and has a small stylesheet of its own (`app.tcss`) for the sizes a
-page decides.
+kit's templates with `<use>` (app bar, card, key / value, alert, stat, meter,
+field, log, empty state, toast, confirm dialog, command palette, help), passing
+their literal text as props and their bodies as content, builds the rest from
+the kit's classes, and has a small stylesheet of its own (`app.tcss`) for the
+sizes a page decides.
 
 ```sh
 go build -o bin/tuimark ./cmd/tuimark

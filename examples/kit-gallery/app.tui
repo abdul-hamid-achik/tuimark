@@ -59,13 +59,10 @@
   <screen id="gallery" focus="#nav">
     <col id="app" width="1fr" height="1fr">
       <!-- app bar -->
-      <row class="k-appbar">
-        <text class="k-appbar-brand">◆ tuimark kit</text>
-        <text class="k-appbar-title">component gallery</text>
-        <spacer/>
+      <use template="k-appbar" brand="◆ tuimark kit" title="component gallery">
         <text class="k-appbar-meta">press t to switch the theme</text>
-        <text class="k-badge accent">v1</text>
-      </row>
+        <text class="k-badge accent">v2</text>
+      </use>
 
       <tabs id="nav" class="k-tabs" bind="view" mark="▸" focusable="true">
         <!-- ============================================================ -->
@@ -74,7 +71,7 @@
             <col class="k-page-body">
               <use template="k-breadcrumb" with="crumbs as b"/>
               <row class="k-cols">
-                <box class="k-card" title="Badges">
+                <use template="k-card" title="Badges">
                   <row class="k-card-row">
                     <text class="k-badge">draft</text>
                     <text class="k-badge accent">new</text>
@@ -85,8 +82,8 @@
                     <text class="k-badge danger">failed</text>
                     <text class="k-badge info">#1842</text>
                   </row>
-                </box>
-                <box class="k-card" title="Buttons">
+                </use>
+                <use template="k-card" title="Buttons">
                   <row class="k-card-actions">
                     <button id="buttons__primary" class="k-btn primary" label="Save" on:click="button_press"/>
                     <button id="buttons__secondary" class="k-btn secondary" label="Cancel" on:click="button_press"/>
@@ -96,25 +93,25 @@
                     <button id="buttons__ghost" class="k-btn ghost" label="Skip" on:click="button_press"/>
                     <button id="buttons__off" class="k-btn secondary" label="Locked" disabled="true"/>
                   </row>
-                </box>
+                </use>
               </row>
               <row class="k-cols">
-                <use template="k-alert" class="info" with="alerts.info as a"/>
-                <use template="k-alert" class="ok" with="alerts.ok as a"/>
+                <use template="k-alert" class="info" title="Heads up" icon="i" text="Deploys are paused until 09:00 UTC."/>
+                <use template="k-alert" class="ok" title="Saved" icon="✓" text="Your changes are live everywhere."/>
               </row>
               <row class="k-cols">
-                <use template="k-alert" class="warn" with="alerts.warn as a"/>
-                <use template="k-alert" class="danger" with="alerts.danger as a"/>
+                <use template="k-alert" class="warn" title="Quota" icon="!" text="92% of this month's build minutes used."/>
+                <use template="k-alert" class="danger" title="Build failed" icon="✗" text="Step 3 exited with code 1."/>
               </row>
               <row class="k-cols">
-                <use template="k-stat" with="stats.req as s"/>
-                <use template="k-stat" with="stats.err as s"/>
+                <use template="k-stat" title="Requests" with="stats.req as s"/>
+                <use template="k-stat" title="Errors" with="stats.err as s"/>
               </row>
-              <box class="k-card" title="Progress">
-                <use template="k-meter" with="meters.upload as m"/>
-                <use template="k-meter" with="meters.disk as m"/>
-                <use template="k-meter" class="ok" with="meters.tests as m"/>
-              </box>
+              <use template="k-card" title="Progress">
+                <use template="k-meter" label="Upload" with="meters.upload as m"/>
+                <use template="k-meter" label="Disk" with="meters.disk as m"/>
+                <use template="k-meter" class="ok" label="Tests" with="meters.tests as m"/>
+              </use>
             </col>
           </scroll>
         </tab>
@@ -124,14 +121,14 @@
           <scroll id="forms__page" class="k-page" focusable="true">
             <col class="k-page-body">
               <row class="k-cols">
-                <box class="k-card" title="Profile">
-                  <use id="profile__name" template="k-field" with="forms.profile.name as f"/>
-                  <use id="profile__email" template="k-field" with="forms.profile.email as f"/>
+                <use template="k-card" title="Profile">
+                  <use id="profile__name" template="k-field" label="Name" placeholder="your name" help="Shown on your profile." with="forms.profile.name as f"/>
+                  <use id="profile__email" template="k-field" label="Email" placeholder="you@example.com" help="We never share it." with="forms.profile.email as f"/>
                   <row class="k-card-actions">
                     <button id="profile__save" class="k-btn primary" label="Save" on:click="form_submit"/>
                     <button id="profile__reset" class="k-btn ghost" label="Reset" on:click="button_press"/>
                   </row>
-                </box>
+                </use>
                 <list id="prefs" class="k-menu" each="prefs as p" key="p.id" bind="prefs_cur" checked="prefs_on" mark="✓" title="Notify me by" on:change="menu_change">
                   <item>
                     <row class="k-menu-row">
@@ -159,9 +156,11 @@
               </table>
               <row class="k-cols">
                 <use id="log" template="k-log" with="log as l"/>
-                <box id="empty__card" class="k-card" title="Empty state">
-                  <use id="empty" template="k-empty" with="empty as e"/>
-                </box>
+                <use template="k-card" title="Empty state" style="height: 10">
+                  <use template="k-empty" icon="◌" title="No deployments yet" text="Push a commit or create one.">
+                    <button id="empty__create" class="k-btn primary" label="New deployment" on:click="empty_create"/>
+                  </use>
+                </use>
               </row>
             </col>
           </scroll>
@@ -172,7 +171,7 @@
           <scroll id="overlays__page" class="k-page" focusable="true">
             <col class="k-page-body">
               <row class="k-cols">
-                <box class="k-card" title="Dialogs">
+                <use template="k-card" title="Dialogs">
                   <text class="k-card-muted">A modal opens over the page; esc closes it.</text>
                   <row class="k-card-actions">
                     <button id="confirm__open" class="k-btn danger" label="Delete project…" on:click="dialog_open"/>
@@ -181,8 +180,8 @@
                     <button id="palette__open" class="k-btn secondary" label="Commands" on:click="palette_open"/>
                     <button id="help__open" class="k-btn ghost" label="Help" on:click="help_open"/>
                   </row>
-                </box>
-                <box class="k-card" title="Toasts">
+                </use>
+                <use template="k-card" title="Toasts">
                   <text class="k-card-muted">A toast clears itself after a few seconds.</text>
                   <row class="k-card-actions">
                     <button id="toast__info" class="k-btn secondary" label="Info" on:click="toast_show"/>
@@ -192,7 +191,7 @@
                     <button id="toast__warn" class="k-btn secondary" label="Warning" on:click="toast_show"/>
                     <button id="toast__danger" class="k-btn secondary" label="Danger" on:click="toast_show"/>
                   </row>
-                </box>
+                </use>
               </row>
             </col>
           </scroll>
@@ -215,7 +214,7 @@
                 <text class="k-muted">{detail.age} ago</text>
               </row>
               <text class="k-card-text" wrap="wrap">{detail.summary}</text>
-              <text class="k-card-muted">owner: {detail.owner}</text>
+              <use template="k-kv" label="Owner" with="detail.owner as v"/>
             </box>
           </row>
         </tab>
@@ -239,7 +238,7 @@
          instance the handlers route by: confirm__no and confirm__yes belong
          to `confirm`, whose state is under confirm. -->
     <use id="confirm" template="k-confirm" class="danger" with="confirm as d"/>
-    <use id="palette" template="k-palette" with="palette as p, found as f"/>
-    <use id="help" template="k-help" with="help as h"/>
+    <use id="palette" template="k-palette" title="Command palette" placeholder="type a command…" with="palette as p, found as f"/>
+    <use id="help" template="k-help" title="Keys" with="help as h"/>
   </screen>
 </tui>

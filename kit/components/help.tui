@@ -1,4 +1,4 @@
-<!-- k-help · Contract: with="PATH as h" reads h.open and h.title; lists every keymap row that has a label · Actions: help_open, help_close (the demo also names item_new, item_delete, item_next, item_prev, item_save) · Keys: ? opens, q and ? close · Requires: k-hints, k-title, k-muted -->
+<!-- k-help · Contract: props title, style; with="PATH as h" reads h.open; lists every keymap row that has a label · Actions: help_open, help_close (the demo also names item_new, item_delete, item_next, item_prev, item_save) · Keys: ? opens, q and ? close · Requires: k-hints, k-title, k-muted -->
 <tui theme="auto">
   <!-- The kit comes first, with its overlay keys: q and ? close the help
        (<keymap when=".k-help">) before they reach the global rows below,
@@ -27,6 +27,6 @@
          that holds `<hints scope="all">`, every labeled row, not only the
          ones that would fire right now. It is 56 columns wide and as tall
          as its content. -->
-    <use id="help" template="k-help" with="help as h"/>
+    <use id="help" template="k-help" title="Keys" with="help as h"/>
   </screen>
 </tui>
