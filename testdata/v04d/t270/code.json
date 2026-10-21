@@ -1,0 +1,1 @@
+{"code": "def f(x):\n    return  [1,   2,\n            3]"}

@@ -1,0 +1,11 @@
+<tui>
+  <template id="t">
+    <text runs="m.r"/>
+  </template>
+  <screen id="main">
+    <col each="msgs as m" key="m.id" height="auto">
+      <text runs="m.r"/>
+    </col>
+    <use template="t" with="last as m"/>
+  </screen>
+</tui>

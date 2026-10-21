@@ -144,6 +144,9 @@ type builder struct {
 	// useSaid holds the messages about a <use> this pass reported
 	// (placeUse), so that each is formatted once. nil until the first.
 	useSaid map[useMsg]bool
+	// runs holds the texts with runs this pass inflated, SPEC v0.4d
+	// §6.20 (runs_frame.go).
+	runs runsState
 }
 
 // newBox returns a zeroed box for inflate, cut from a chunk the builder
@@ -354,6 +357,9 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	}
 	f.Options = options
 	f.Root, f.Modals = rootBox, fb.modals
+	// The look of the spans of the runs (SPEC v0.4d §6.20.4), after every
+	// cascade of the frame and before the paint that reads it.
+	fb.styleRuns(casc)
 	f.Grid = paint.PaintFrame(rootBox, fb.modals, f.Options, cols, rows, a.phase) // step 8
 	f.ByID = fb.byID
 	f.Focus = a.focus
@@ -904,7 +910,11 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	}
 	switch n.Kind {
 	case "text":
-		b.Text = fb.interp(n, "", n.Text, sc)
+		if n.Runs != "" {
+			fb.inflateRuns(n, b, sc) // SPEC v0.4d §6.20 (runs_frame.go)
+		} else {
+			b.Text = fb.interp(n, "", n.Text, sc)
+		}
 	case "button":
 		b.Text = fb.buttonText(n, sc)
 	case "checkbox":

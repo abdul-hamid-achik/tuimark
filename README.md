@@ -669,7 +669,7 @@ tuimark version
   sake — it still renders internally at 40/80/120×24 to catch
   layout/bind problems (under both themes, dark first, for a `theme="auto"`
   document without `--theme`). Without `--data`, bind-dependent checks
-  (`B001`–`B003`, the 0.2b `B008`–`B010`, and the 0.4b `B011` and `B012`) are skipped, since every path
+  (`B001`–`B003`, the 0.2b `B008`–`B010`, the 0.4b `B011` and `B012`, and the 0.4d `B013`) are skipped, since every path
   would otherwise read as "missing", and the text output ends with
   `ok (bindings not checked: no --data)` instead of `ok` (0.4a); with
   `--data` the line stays `ok`. `--json` has the members `actions`, `data`
@@ -970,6 +970,13 @@ attribute as written, or `style=""` — specificity, and `@media`
 condition), and the declarations it `overridden`, highest priority first
 (a declaration of a selector list counts once, never against itself). The text form (the
 default) shows the same, one line per property that is not `initial`.
+
+For a `<tui>` without `version`, a cell that a run of a `<text runs>` painted
+also adds `run`: `{"index", "text", "classes", "style"}`, the run's index in
+its array (0 for a string), its text, its classes, and the `style` entries of
+the seven properties its `span` styles (a property no rule sets on the span
+has the text's value and the origin `inherited`). A cell after the text, on an
+ellipsis, or selected with `--id` has none.
 
 A cell outside the grid, an id no laid-out node has, or a malformed value
 exits 1 with nothing on stdout; a frame with an error-severity diagnostic
@@ -1707,6 +1714,28 @@ kept with the maintainer's project notes, outside this repository.
   forwards its content with `<slot/>` inside the content of an inner
   `<use>`, with elements of its own around it. In a pinned document `<slot>`
   is `V001`, `requires a <tui> without version`.
+
+- **Text runs and `pre-wrap` (0.4d).** `<text runs="path"/>` paints an
+  array of runs the host built, from markdown for instance: a run is a
+  string, or an object with a string `text` and a `class` (class names
+  separated by spaces); a string is one run and `null` is none. `runs` is a
+  path, resolved like `bind`, and the text takes no body (`V013`). The
+  joined text is the text, so `wrap`, `truncate*`, `pre-wrap`, and
+  `content-align` act on it as on a body, and a word may cross two runs.
+  Each run is styled as a generated `span` of its text: select it by type
+  and class (`span`, `.code`, `text > span.code`, `#reply > span`); it sets
+  `color`, `background`, `bold`, `dim`, `italic`, `underline`, and
+  `reverse`, and what a rule does not set on it is its text's. A written
+  `<span>` is `V001`. A run's text is data, normalized in this order:
+  escape sequences are removed whole, each TAB becomes four spaces, and
+  every other control but LF is removed. A missing path is `B003`, and a
+  value of the wrong shape `B013` (a warning, once per `<text>` and
+  frame). `wrap: pre-wrap` keeps every space and line break and wraps at the
+  width as CSS's `white-space: pre-wrap` does (the spaces that do not fit
+  hang, a word that does not fit starts the next line, a word wider than
+  the width is cut by clusters); an empty text is 0 lines under every
+  `wrap`. In a pinned document `runs` is `V002`, `pre-wrap` and a `span`
+  selector `V003`, each `requires a <tui> without version`.
 
 ## Status per phase (SPEC §4)
 

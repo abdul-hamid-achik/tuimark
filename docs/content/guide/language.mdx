@@ -135,8 +135,32 @@ An attribute a tag does not take is `V002`.
 
 - A `<text>` has no element children (`V013`).
 - Each line of the body is trimmed, and blank lines at the start and end are dropped, so indentation in the source never reaches the screen. Interior spaces are kept: `mail  {folder}` keeps its two spaces. For spacing around text, use `gap`, `padding`, or `margin` on a container.
-- `wrap` is `nowrap` (the default: the line is cut at the edge), `wrap` (word-wrap to the width), or `truncate` (cut with `…` at the end); in `version="3"`, also `truncate-start` (`…` at the start, keeping the end of the line — useful for a path) and `truncate-middle` (`…` in the middle, keeping both ends).
+- `wrap` is `nowrap` (the default: the line is cut at the edge), `wrap` (word-wrap to the width), or `truncate` (cut with `…` at the end); in `version="3"`, also `truncate-start` (`…` at the start, keeping the end of the line — useful for a path) and `truncate-middle` (`…` in the middle, keeping both ends). Without a `version`, `pre-wrap` keeps every space and line break and wraps at the width: use it for code and diffs.
 - Width is measured in terminal columns by grapheme cluster: CJK and emoji take two columns, combining accents take none, and a cluster is never split.
+
+### Rich text with runs
+
+A `<text>` paints styled pieces of text when it has `runs` instead of a body. The host builds the pieces, from markdown for instance, and the document only styles them:
+
+```tui
+<text id="reply" runs="msg.runs" style="wrap: wrap"/>
+```
+
+```tcss
+.code { color: cyan; bold: true; }
+text > span.i { italic: true; }
+```
+
+```json
+{"msg": {"runs": ["Use ", {"text": "go build", "class": "code"}, " and then check the ",
+                  {"text": "go.mod", "class": "code i"}, " file"]}}
+```
+
+- `runs` is a path, resolved like `bind` (through `each` and `with` aliases, then the data). Its value is an array of runs, a string (one run), or `null` (no run). A run is a string, or an object with a string `text` and an optional `class`, a string of class names separated by spaces. Other members are ignored.
+- Each run is styled as a `span`, a child of its text that only the stylesheet sees: `span`, `.code`, `span.code`, `text > span`, and `#reply > span.code` are all selectors that reach it. A span sets `color`, `background`, `bold`, `dim`, `italic`, `underline`, and `reverse`; whatever a rule does not set on it is the text's own, and any other property is accepted and ignored. You never write `<span>` yourself (`V001`).
+- The runs are joined into one text, and `wrap`, `truncate`, `pre-wrap`, and `content-align` act on that text, so a word that crosses two runs stays one word in two styles.
+- A run's text is data: `{…}` in it is never read, an escape sequence is removed, each tab becomes four spaces, and any other control character but a line feed is removed. A line feed starts a new line.
+- A `<text runs>` takes no body text (`V013`). A missing path is `B003`, and a value of the wrong shape is `B013`, a warning that names the first bad run; `tuimark validate` needs `--data` to check them. `tuimark inspect --at X,Y` on a cell a run painted adds a `run` member with the run's index, text, classes, and style.
 
 `<button>` takes its label from `label` or from its body; `title` and `placeholder` are templates too, and in the current language so is a button's label or body (`label="Save ({plan})"`). See [bindings](/guide/bindings) for how paths resolve.
 

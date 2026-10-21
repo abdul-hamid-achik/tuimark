@@ -191,6 +191,11 @@ type Box struct {
 	// a member's own HasLo/HasHi (its own min=/max= literal) still wins
 	// over them at paint time.
 	Scale string
+	// Runs are the runs of a <text runs> (version: the current language,
+	// SPEC v0.4d §6.20): Text is their joined text, and Runs says where
+	// each run ends in it and what look its span gives it. nil for every
+	// other box, which is all but a few of a frame's.
+	Runs *TextRuns
 }
 
 // ResetOutputs zeroes what laying out a frame and the steps after it

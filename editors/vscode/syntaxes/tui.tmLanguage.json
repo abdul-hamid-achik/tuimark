@@ -286,9 +286,9 @@
       "patterns": [{ "include": "#flag-value" }]
     },
     "attr-path": {
-      "comment": "bind, checked, key: a path into the store or the each alias.",
+      "comment": "bind, checked, key, runs (0.4d): a path into the store or the each alias.",
       "name": "meta.attribute.path.tui",
-      "begin": "(?<![\\w:.-])(bind|checked|key)(\\s*)(=)(\\s*)(\"|')",
+      "begin": "(?<![\\w:.-])(bind|checked|key|runs)(\\s*)(=)(\\s*)(\"|')",
       "beginCaptures": {
         "1": { "name": "entity.other.attribute-name.path.tui" },
         "3": { "name": "punctuation.separator.key-value.tui" },

@@ -1,0 +1,5 @@
+<tui>
+  <screen id="main">
+    <text id="c" style="wrap: pre-wrap">{code}</text>
+  </screen>
+</tui>

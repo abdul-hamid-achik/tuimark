@@ -628,15 +628,7 @@ func (p *painter) mark(b *layout.Box, st cellStyle) {
 	p.text(b.Clip.Intersect(ch), ch.X, ch.Y, b.Mark, st)
 }
 
-func alignOffset(mode string, room, w int) int {
-	switch mode {
-	case "center":
-		return max(0, (room-w)/2)
-	case "end":
-		return max(0, room-w)
-	}
-	return 0
-}
+func alignOffset(mode string, room, w int) int { return layout.AlignOffset(mode, room, w) }
 
 func (p *painter) content(b *layout.Box, st cellStyle) {
 	c := b.Content
@@ -649,15 +641,21 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		// header cell (its column, whose text is its resolved title) and
 		// body cells never wrap: wrap: wrap paints as truncate (§6.9.4).
 		mode := b.Style.Wrap
-		if b.Fixed && mode == "wrap" {
+		if b.Fixed && (mode == "wrap" || mode == layout.ModePreWrap) {
 			mode = "truncate"
+		}
+		if b.Runs != nil && !b.Fixed {
+			p.runs(b, clip, mode, st)
+			return
 		}
 		lines := layout.Lines(b.Text, c.W, mode)
 		for i, line := range lines {
 			if i >= c.H {
 				break
 			}
-			x := c.X + alignOffset(b.Style.ContentAlign, c.W, layout.Width(line))
+			// A pre-wrap line is aligned without its trailing spaces, which
+			// hang and are not painted (SPEC v0.4d §11.5.2).
+			x := c.X + alignOffset(b.Style.ContentAlign, c.W, layout.LineWidth(line, mode))
 			p.text(clip, x, c.Y+i, line, st)
 		}
 	case "button":

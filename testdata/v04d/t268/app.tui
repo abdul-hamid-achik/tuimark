@@ -1,0 +1,14 @@
+<tui>
+  <style>
+    .b { bold: true; }
+    text.h > span { color: red; }
+    span { width: 10; margin: 1; }
+    #t:focus > span { underline: true; }
+    span:focus { italic: true; }
+  </style>
+  <screen id="main">
+    <!-- The input takes the initial focus, so the text starts unfocused. -->
+    <input id="i"/>
+    <text id="t" class="h" focusable="true" runs="r"/>
+  </screen>
+</tui>

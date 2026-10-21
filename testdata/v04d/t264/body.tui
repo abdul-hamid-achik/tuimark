@@ -1,0 +1,10 @@
+<tui>
+  <style>
+    .code { color: cyan; bold: true; }
+    text > span.i { italic: true; }
+    #reply { wrap: wrap; }
+  </style>
+  <screen id="main">
+    <text id="reply">Use go build and then check the go.mod file</text>
+  </screen>
+</tui>

@@ -127,6 +127,11 @@ func Lines(text string, width int, mode string) []string {
 			out = append(out, Wrap(p, width)...)
 		}
 		return out
+	case ModePreWrap:
+		if width <= 0 {
+			return paras
+		}
+		return PreWrap(text, width)
 	case "truncate", "truncate-start", "truncate-middle":
 		cut := Truncate
 		switch mode {
@@ -220,6 +225,9 @@ func LineCount(text string, width int, mode string) int {
 	if text == "" {
 		return 0
 	}
+	if mode == ModePreWrap && width > 0 {
+		return preWrapLineCount(text, width)
+	}
 	if mode != "wrap" || width <= 0 {
 		return strings.Count(text, "\n") + 1
 	}
@@ -289,6 +297,14 @@ func (b *Box) textInfo() *textInfo {
 // printable ASCII no wider than width.
 func (b *Box) lineCount(width int, mode string) int {
 	t := b.textInfo()
+	if mode == ModePreWrap {
+		// A pre-wrap paragraph that fits is one line, whatever it holds;
+		// otherwise count the lines (PreWrap).
+		if width <= 0 || t.w <= width {
+			return t.paras
+		}
+		return preWrapLineCount(b.Text, width)
+	}
 	if mode != "wrap" || width <= 0 || (t.ascii && t.w <= width) {
 		return t.paras
 	}
