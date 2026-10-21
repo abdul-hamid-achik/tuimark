@@ -9,7 +9,8 @@ import (
 
 // SPEC v0.4b §10.6: the current language's built-in sheet is UASheet with
 // its col and row rules replaced by three rules, and the form-control rule
-// and the focus rule added at its end (v0.4b §12.5: checkbox, select); every other
+// and the focus rule added at its end (v0.4b §12.5: checkbox, select), then the
+// two rules of the textarea (v0.4d §10.6); every other
 // rule is UASheet's, in order. Pinned documents
 // keep UASheet as it was in 0.4.1.
 func TestUASheetCurrentIsUASheetWithTheCurrentRules(t *testing.T) {
@@ -22,7 +23,9 @@ func TestUASheetCurrentIsUASheetWithTheCurrentRules(t *testing.T) {
 	want := strings.Replace(UASheet, old, repl, 1) +
 		"checkbox, select { width: auto; height: auto; wrap: truncate; }\n" +
 		"select > list { border: single; max-height: 12; reverse: false; wrap: truncate; }\n" +
-		"button:focus, checkbox:focus, select:focus { reverse: true; }\n"
+		"button:focus, checkbox:focus, select:focus { reverse: true; }\n" +
+		"textarea { width: auto; height: auto; max-height: 8; }\n" +
+		"row > textarea { width: 1fr; }\n"
 	if UASheetCurrent != want {
 		t.Errorf("UASheetCurrent drifted from UASheet:\n%s", UASheetCurrent)
 	}

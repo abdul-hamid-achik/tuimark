@@ -271,6 +271,9 @@ func (a *App) consumes(b *layout.Box, k Key) bool {
 			return ok
 		}
 		return false
+	case "textarea":
+		// SPEC v0.4d §6.19.3, decisions 227-229, 259 (textarea.go).
+		return textareaConsumes(b, k)
 	case "list", "table":
 		if a.rows(b) > 0 {
 			switch k.Name {
@@ -437,6 +440,8 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 			a.markStale()
 		}
 		return nil
+	case "textarea":
+		return a.textareaKey(b, k)
 	case "list", "table":
 		// A table moves its cursor exactly as a list does, with P =
 		// max(1, V), its body viewport (SPEC §6.9.2). moveList marks the
@@ -617,6 +622,10 @@ func (a *App) compatible(action string, t *layout.Box) bool {
 				return false
 			}
 			return len(enabledTabs(t)) > 0 && !a.bindBlocked(t)
+		case "textarea":
+			// Its caret and offset are its own (SPEC v0.4d §6.19.7,
+			// decision 240).
+			return false
 		}
 		return t.Scrolls()
 	case action == "check-toggle" || action == "check-all" || action == "check-none":

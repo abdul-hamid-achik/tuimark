@@ -22,6 +22,11 @@ import (
 // depend on the data (ADR 0031, decision 27), and every other unsized
 // child stays auto, as in CSS (test 166).
 func (e *Engine) siblingFr(k *Box) bool {
+	if k.Kind == "textarea" {
+		// Not a viewport for sizing (SPEC v0.4d §6.19.4, decision 232): it
+		// is sized by its content, like a text with wrap: wrap.
+		return false
+	}
 	return !e.Lang.V4() || k.Scrolls()
 }
 

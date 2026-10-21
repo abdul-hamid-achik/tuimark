@@ -668,6 +668,8 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		p.selectBox(b, clip, st)
 	case "input":
 		p.input(b, clip, st)
+	case "textarea":
+		p.textarea(b, clip, st) // SPEC v0.4d §12.8 (textarea.go)
 	case "sparkline":
 		p.sparkline(b, clip, st)
 	case "progress":

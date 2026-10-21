@@ -147,6 +147,10 @@ type builder struct {
 	// runs holds the texts with runs this pass inflated, SPEC v0.4d
 	// §6.20 (runs_frame.go).
 	runs runsState
+	// hintsBuilt holds the items step 5 gave the hints of the frame, by
+	// whether the hints shows every row (scope="all"), for step 6a (SPEC
+	// v0.4d §18, decision 259).
+	hintsBuilt map[bool][]hintItem
 }
 
 // newBox returns a zeroed box for inflate, cut from a chunk the builder
@@ -333,6 +337,13 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		}
 	}
 	eng.Layout(rootBox, fb.modals, cols, rows) // step 6
+	if kinds.hints && kinds.textarea {
+		// Step 6a (SPEC v0.4d §18, decision 259): a focused textarea's up,
+		// down, pgup, and pgdn depend on the layout the hints helped decide.
+		if eng2 := fb.hintsSecondPass(casc, rootBox, cols, rows); eng2 != nil {
+			eng = eng2
+		}
+	}
 	if a.doc.V3 && kinds.scale {
 		// SPEC v0.3b §6.11: scale groups are formed after layout, over the
 		// laid-out sparklines of the frame; scale is never valid outside a
@@ -547,6 +558,9 @@ func (a *App) rememberScroll(b *layout.Box, keyed bool) {
 		if ls := a.lists[b.ID]; ls != nil {
 			ls.page = max(1, b.Content.H)
 		}
+	}
+	if b.Kind == "textarea" && b.ID != "" {
+		a.settleTextarea(b) // SPEC v0.4d §6.19.2, §6.19.4
 	}
 	if b.Kind == "table" && b.ID != "" && b.Laid {
 		// P = max(1, V), the body viewport (SPEC §6.9.2).
@@ -841,7 +855,7 @@ func (fb *builder) interp(n *ir.Node, slot, s string, sc *scope) string {
 // version="2" documents (the only ones that can hold one), table.
 func focusableByDefault(kind string) bool {
 	switch kind {
-	case "input", "list", "button", "modal", "table":
+	case "input", "list", "button", "modal", "table", "textarea":
 		return true
 	}
 	return false
@@ -947,6 +961,8 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		}
 		st.cursor = min(max(st.cursor, 0), len([]rune(b.Text)))
 		b.Cursor = st.cursor
+	case "textarea":
+		fb.inflateTextarea(n, b, sc) // SPEC v0.4d §6.19 (textarea.go)
 	case "progress":
 		if n.Bind != "" {
 			v, found := sc.resolve(a.store, n.Bind)

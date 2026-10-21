@@ -1,0 +1,11 @@
+<tui>
+  <screen id="main" focus="#composer">
+    <text>log</text>
+    <textarea id="composer" bind="draft" placeholder="Message" on:change="typed" on:submit="send"/>
+    <text id="status">ready</text>
+  </screen>
+  <keymap when="#composer:focus">
+    <bind keys="up" action="history_prev"/>
+    <bind keys="down" action="history_next"/>
+  </keymap>
+</tui>

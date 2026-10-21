@@ -60,6 +60,17 @@ type inputState struct {
 	value  string // used when the input has no bind path
 	cursor int
 	init   bool
+	// The rest is a textarea's (SPEC v0.4d §6.19.2, textarea.go): the goal
+	// column the vertical keys keep (goalSet false: the caret was placed
+	// where no layout could measure it, settled after the frame's layout),
+	// whether the offset must follow the caret (decision 233), and the raw
+	// value it last saw in the store (seenOK), which tells an outside
+	// change from its own edits (decision 226).
+	goal    int
+	goalSet bool
+	follow  bool
+	seen    string
+	seenOK  bool
 }
 
 // App is a loaded document plus its runtime state.

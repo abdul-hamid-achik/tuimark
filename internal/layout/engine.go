@@ -199,6 +199,9 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 		W: max(0, b.W-b.frameH()),
 		H: max(0, b.H-b.frameV()),
 	}
+	if b.Kind == "textarea" {
+		e.textareaPlace(b) // SPEC v0.4d §6.19.4
+	}
 	if !b.IsContainer() {
 		e.placed(b, false)
 		return
@@ -1440,6 +1443,14 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 			v = e.inputWidth(b)
 		} else {
 			v = 1
+		}
+	case "textarea":
+		// SPEC v0.4d §6.19.4, decision 231: its visual lines at its content
+		// width, at least 1; an input's width, whatever its value.
+		if horizontal {
+			v = textareaWidth(b)
+		} else {
+			v = TextareaLineCount(b.Text, avail-fh)
 		}
 	case "button":
 		if horizontal {

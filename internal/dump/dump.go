@@ -41,6 +41,20 @@ type Node struct {
 	// version="3" documents; a version="1" or version="2" dump never has
 	// it.
 	Clipped string `json:"clipped,omitempty"`
+	// Caret is the caret of the focused textarea, and of no other node
+	// (SPEC v0.4d §6.19.8, §13.2, decision 237): after every other member.
+	Caret *Caret `json:"caret,omitempty"`
+}
+
+// Caret is the caret of the focused textarea: its hard line and its
+// column in that line, from 0, in columns, then the cell where Run puts
+// the terminal's cursor. X and Y are left out when the caret's visual line
+// is outside the content box.
+type Caret struct {
+	Line int  `json:"line"`
+	Col  int  `json:"col"`
+	X    *int `json:"x,omitempty"`
+	Y    *int `json:"y,omitempty"`
 }
 
 // Scroll is a viewport's scroll state (SPEC v0.2 §13.2). Its members come
@@ -262,6 +276,19 @@ func NodeOf(n *layout.Box, v2, v3 bool) Node {
 		dn.Text = n.Text
 	case "input":
 		dn.Text = layout.InputShown(n) // one • per cluster when secret
+	case "textarea":
+		// Its value as the host's text reads it, line breaks included,
+		// never the placeholder (SPEC v0.4d §6.19.8).
+		dn.Text = n.Text
+		if n.Focused && !n.Disabled {
+			cc := layout.CaretOf(n)
+			c := &Caret{Line: cc.Line, Col: cc.Col}
+			if cc.Shown {
+				x, y := cc.X, cc.Y
+				c.X, c.Y = &x, &y
+			}
+			dn.Caret = c
+		}
 	}
 	if v2 && len(n.Classes) > 0 {
 		dn.Classes = append([]string(nil), n.Classes...)
