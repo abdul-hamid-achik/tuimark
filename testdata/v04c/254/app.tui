@@ -1,0 +1,21 @@
+<tui>
+  <template id="k" props="title"><text>{$title}</text></template>
+  <template id="bare"><text>b</text></template>
+  <template id="unused">
+    <col>
+      <use template="k" style="x" class:z="f"/>
+      <use template="bare"><text>c</text></use>
+    </col>
+  </template>
+  <template id="used" props="s">
+    <col>
+      <use template="k" title="T" style="{$s}"/>
+      <use template="bare"><text>c</text></use>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="u1" template="used" s="a"/>
+    <use id="u2" template="used" s="b"/>
+    <use id="u3" template="used"/>
+  </screen>
+</tui>

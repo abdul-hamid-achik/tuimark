@@ -1,0 +1,9 @@
+<tui>
+  <screen id="main">
+    <col>
+      <text title=" "></text>
+      <text>{x</text>
+      <text>s</text>
+    </col>
+  </screen>
+</tui>

@@ -278,8 +278,10 @@ var TagAttrsV3 = map[string]map[string]bool{
 var TagAttrsCurrent = map[string]map[string]bool{
 	"include":  only("src"),
 	"fragment": only(),
-	// SPEC v0.4b §6.18.3; a <use>'s attributes are decision 9's.
-	"template": only("id"),
+	// SPEC v0.4b §6.18.3; a <use>'s attributes are decision 9's, and it
+	// also takes the props its template declares (v0.4c §6.18.9, which
+	// adds props).
+	"template": only("id", "props"),
 	"use":      only("id", "template", "with", "if", "hidden", "class"),
 
 	"progress": only("indeterminate"), // SPEC v0.4b §6.4.1: the spinner
@@ -389,6 +391,19 @@ type builder struct {
 	// clears it wherever doc.Diags loses entries.
 	reported map[diagKey][]any
 	seed     maphash.Seed
+	// at and mute are set while one attribute, or one body, that holds a
+	// {$name} is checked (props.go): at names the use a diagnostic there
+	// names in its placement suffix (an element of a copy), mute drops
+	// every diagnostic there (outside a template, after its V003).
+	at   propAt
+	mute propAt
+	// pbody is what the element being built holds in its body, when its
+	// written body held a {$name} (node, content).
+	pbody *pattr
+	// pnode and praw are the references of the element whose attributes
+	// node is checking, and the element as written (substBy).
+	pnode *propNode
+	praw  *RawNode
 }
 
 // diagKey is what decides a diagnostic's identity for dedupeDiags before
@@ -522,13 +537,29 @@ func (b *builder) diag(sev, code string, line, col int, path, id, format string,
 // stands gets it, a self-check (what the element's own attributes and text
 // say) does not, since it holds wherever the element is placed.
 func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, col int, path, id, format string, args ...any) {
-	file := b.file
 	var placed *ir.Node
+	if org != nil && place {
+		placed = org.Placed
+	}
+	b.diagBy(org, placed, sev, code, line, col, path, id, format, args...)
+}
+
+// diagBy is diagOrg with the include or use the placement suffix names,
+// placed (nil for none). A diagnostic at the attribute or the body of an
+// element of a copy that held a {$name} names the use b.at says, whatever
+// its code (SPEC v0.4c §6.18.6, decision 194), and one about a value
+// outside a template that holds a {$name} is muted (b.mute: the V003 of
+// §6.18.9 is reported instead of any other about that value).
+func (b *builder) diagBy(org *ir.Origin, placed *ir.Node, sev, code string, line, col int, path, id, format string, args ...any) {
+	file := b.file
 	if org != nil {
 		file = org.File
-		if place {
-			placed = org.Placed
-		}
+	}
+	if b.mute.on && line == b.mute.line && col == b.mute.col && file == b.mute.file {
+		return
+	}
+	if b.at.on && line == b.at.line && col == b.at.col && file == b.at.file {
+		placed = b.at.by
 	}
 	if b.comp != nil && b.comp.used && earlyDedupe {
 		// dedupeDiags applies (ParseWith): a repeat is dropped unformatted.
@@ -557,7 +588,7 @@ func (b *builder) diagOrg(org *ir.Origin, place bool, sev, code string, line, co
 	}
 	msg := fmt.Sprintf(format, ir.UnmarkArgs(args)...)
 	if placed != nil {
-		msg += org.PlacedSuffix()
+		msg += ir.SuffixOf(placed)
 	}
 	b.doc.Diags = append(b.doc.Diags, ir.WithWhole(ir.Diagnostic{
 		Severity: sev, Code: code, Msg: msg,
@@ -579,7 +610,22 @@ var selfCheck = map[string]bool{"V002": true, "V003": true, "V007": true, "V013"
 
 // errN reports an error about n, in the file n is written in.
 func (b *builder) errN(n *ir.Node, code, format string, args ...any) {
-	b.diagOrg(n.Org, !selfCheck[code], ir.Error, code, n.Line, n.Col, n.Path, n.ID, format, args...)
+	b.diagBy(n.Org, nodePlacer(n, code), ir.Error, code, n.Line, n.Col, n.Path, n.ID, format, args...)
+}
+
+// nodePlacer is the include or use that the placement suffix of a
+// diagnostic with code at n names, nil for none: n's innermost placer for
+// a check that depends on where n stands, none for a self-check, and, at
+// an element of a copy whose attributes or body held a {$name}, the use
+// that n.PropBy names, whatever the code (SPEC v0.4c §6.18.6).
+func nodePlacer(n *ir.Node, code string) *ir.Node {
+	if n.PropBy != nil {
+		return n.PropBy
+	}
+	if selfCheck[code] || n.Org == nil {
+		return nil
+	}
+	return n.Org.Placed
 }
 
 // errSelf reports an error about n that holds wherever n is placed (an
@@ -595,7 +641,7 @@ func (b *builder) errKB(k *KeyBind, code, path, format string, args ...any) {
 }
 
 func (b *builder) warnN(n *ir.Node, code, format string, args ...any) {
-	b.diagOrg(n.Org, !selfCheck[code], ir.Warning, code, n.Line, n.Col, n.Path, n.ID, format, args...)
+	b.diagBy(n.Org, nodePlacer(n, code), ir.Warning, code, n.Line, n.Col, n.Path, n.ID, format, args...)
 }
 
 // Parse parses and validates a .tui document. file is used in diagnostics
@@ -719,7 +765,17 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 	if r.Name == "app" {
 		n.Kind = "col"
 	}
-	for _, a := range r.Attrs {
+	// The {$name} of its attributes and body (SPEC v0.4c §6.18.9,
+	// props.go): nil when none holds one, the case of every element of a
+	// document that does not use props.
+	var pn *propNode
+	if b.comp != nil {
+		pn = b.propNode(n, r)
+	}
+	for i, a := range r.Attrs {
+		if pn != nil && !pn.inAttrs(n, i, a) {
+			continue
+		}
 		n.Attrs[a.Name] = a.Value
 		n.Order = append(n.Order, a.Name)
 	}
@@ -731,13 +787,29 @@ func (b *builder) node(r *RawNode, parent *ir.Node) *ir.Node {
 		}
 	}
 	b.checkTag(n, parent)
-	for _, a := range r.Attrs {
+	b.pnode, b.praw = pn, r
+	for i, a := range r.Attrs {
+		if pn != nil {
+			var ok bool
+			if a, ok = pn.check(b, i, a); !ok {
+				continue
+			}
+		}
 		b.attr(n, a)
+		b.at.on, b.mute.on = false, false
+	}
+	b.pnode, b.praw = nil, nil
+	b.pbody = nil
+	if pn != nil && pn.hasBody {
+		b.pbody = &pn.body
 	}
 	if b.comp != nil && len(b.comp.copies) > 0 {
 		b.copyContent(n, r) // an element of a copy (expand.go)
 	} else {
 		b.content(n, r)
+	}
+	if pn != nil {
+		pn.restore(b, n, r)
 	}
 	b.depth--
 	return n
@@ -1196,9 +1268,19 @@ func StripControl(s string, keepNL bool) (string, bool) {
 	return out.String(), bad
 }
 
-func (b *builder) attr(n *ir.Node, a RawAttr) {
-	name, val := a.Name, a.Value
+// attrGate reports whether n takes the attribute a, where it stands
+// (SPEC §6.15): when it does not, the attribute is V002, reported when
+// report is set, and is checked no further, its value included (SPEC
+// v0.4c §6.18.9, decision 157: props.go asks without reporting).
+func (b *builder) attrGate(n *ir.Node, a RawAttr, report bool) bool {
+	name := a.Name
 	tag := n.Tag
+	err := func(format string, args ...any) bool {
+		if report {
+			b.attrErr(n, a, "V002", format, args...)
+		}
+		return false
+	}
 	if b.doc.Spike {
 		ok := false
 		for _, s := range ir.SpikeAttrs {
@@ -1207,8 +1289,7 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			}
 		}
 		if !ok {
-			b.attrErr(n, a, "V002", "unknown attribute %q on <%s> (phase-0 attributes: id class width height gap pad border)", name, tag)
-			return
+			return err("unknown attribute %q on <%s> (phase-0 attributes: id class width height gap pad border)", name, tag)
 		}
 	} else if b.tagKnown(tag) {
 		ptag := ""
@@ -1218,26 +1299,24 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		allowed, need := attrAllowed(tag, ptag, name)
 		if itemFocusAttrs[name] {
 			if it := listItem(n); it == n {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed on a list <item>: %s", name, listHintAt(n, it))
-				return
+				return err("attribute %q is not allowed on a list <item>: %s", name, listHintAt(n, it))
 			} else if it != nil && !needsID[tag] {
 				// (An input/button/list/modal there is already V001 as a
 				// whole in checkTag; its own attributes add nothing.)
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item> (on <%s>): %s", name, tag, listHintAt(n, it))
-				return
+				return err("attribute %q is not allowed inside a list <item> (on <%s>): %s", name, tag, listHintAt(n, it))
 			} else if c := b.eachContainer(n); it == nil && c != nil && !needsID[tag] && !statefulV2[tag] {
 				// SPEC §6.8 item 8, at any depth of a container template.
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (on <%s>, in %s): %s", name, tag, describeNodeAt(n, c), templateHint)
-				return
+				return err("attribute %q is not allowed inside an each template (on <%s>, in %s): %s", name, tag, describeNodeAt(n, c), templateHint)
 			}
 		}
 		if !allowed {
-			if strings.HasPrefix(name, "on:") && !eventNames[strings.TrimPrefix(name, "on:")] {
-				b.attrErr(n, a, "V002", "unknown event %q on <%s>%s", name, tag, b.attrSuggestion(tag, ptag, name))
-			} else {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed on <%s>%s", name, tag, b.attrSuggestion(tag, ptag, name))
+			if !report {
+				return false
 			}
-			return
+			if strings.HasPrefix(name, "on:") && !eventNames[strings.TrimPrefix(name, "on:")] {
+				return err("unknown event %q on <%s>%s", name, tag, b.attrSuggestion(tag, ptag, name))
+			}
+			return err("attribute %q is not allowed on <%s>%s", name, tag, b.attrSuggestion(tag, ptag, name))
 		}
 		// The newest gate first: a current-language item gets its own
 		// hint in every pinned document (SPEC v0.4b §5.1); a version="3"
@@ -1246,16 +1325,22 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		// attribute that needs exactly version="2" falls to the version="2"
 		// hint (SPEC v0.3b §5.1).
 		if need >= int(ir.Lang4) && !b.lang.V4() {
-			b.currentHint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
-			return
+			if report {
+				b.currentHint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
+			}
+			return false
 		}
 		if need >= 3 && !b.v3 {
-			b.v3Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
-			return
+			if report {
+				b.v3Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
+			}
+			return false
 		}
 		if need >= 2 && !b.v2 {
-			b.v2Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
-			return
+			if report {
+				b.v2Hint(a.Line, a.Col, n, "V002", "attribute %q on <%s>", name, tag)
+			}
+			return false
 		}
 		if name == "stick" {
 			// SPEC v0.3b §6.15: stick needs an identity across frames that a
@@ -1263,20 +1348,26 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			// here (the version gate above comes first, §5.1), and only on
 			// a tag that takes stick.
 			if it := listItem(n); it != nil {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
-				return
+				return err("attribute %q is not allowed inside a list <item>: its state needs an identity across frames that a repeated row does not have", name)
 			} else if c := b.eachContainer(n); c != nil {
-				b.attrErr(n, a, "V002", "attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNodeAt(n, c))
-				return
+				return err("attribute %q is not allowed inside an each template (in %s): its state needs an identity across frames that a repeated row does not have", name, describeNodeAt(n, c))
 			}
 		}
 	} else {
-		return // unknown tag already reported
+		return false // unknown tag already reported
 	}
 	if hasUpper(name) {
-		b.attrErr(n, a, "V002", "unknown attribute %q (attribute names are lowercase)", name)
+		return err("unknown attribute %q (attribute names are lowercase)", name)
+	}
+	return true
+}
+
+func (b *builder) attr(n *ir.Node, a RawAttr) {
+	if !b.attrGate(n, a, true) {
 		return
 	}
+	name, val := a.Name, a.Value
+	tag := n.Tag
 	if strings.HasPrefix(name, "on:") {
 		if !ir.IsIdent(val) {
 			b.attrErr(n, a, "V003", "%s=%q: an action is a plain name", name, val)
@@ -1394,6 +1485,11 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			_, hasBind := n.Attrs["bind"]
 			_, hasValue := n.Attrs["value"]
 			if hasBind || hasValue {
+				if by := b.substBy("value"); by != nil {
+					// It reads a value a copy substituted: it names the use
+					// that wrote it (SPEC v0.4c §6.18.6, erratum E4).
+					b.at = propAt{on: true, file: b.orgFile(), line: a.Line, col: a.Col, by: by}
+				}
 				b.attrErr(n, a, "V003", "indeterminate=%q cannot be combined with bind or value", val)
 				return
 			}
@@ -1653,6 +1749,8 @@ func NormalizeText(s string) string {
 }
 
 func (b *builder) content(n *ir.Node, r *RawNode) {
+	pb := b.pbody // what node found in the body, if it held a {$name}
+	b.pbody = nil
 	var text strings.Builder
 	textLine, textCol := 0, 0
 	for _, c := range r.Children {
@@ -1716,6 +1814,20 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 			b.errN(n, "V013", "<style> takes either src or an inline body, not both")
 		}
 	case "text", "button", "column":
+		if pb != nil {
+			// A body that held a {$name} (SPEC v0.4c §6.18.9, props.go).
+			var check bool
+			if body, check = pb.body(b, n, body, textLine, textCol); !check {
+				break
+			}
+			defer func() { b.at.on, b.mute.on = false, false }()
+		} else if n.PropBy != nil {
+			// The body of an element of a copy one of whose attributes held
+			// a {$name}: a diagnostic at its text names that use too (SPEC
+			// v0.4c §6.18.6, decision 194).
+			b.at = propAt{on: true, file: b.orgFile(), line: textLine, col: textCol, by: n.PropBy}
+			defer func() { b.at.on = false }()
+		}
 		// Trim the source indentation (spaces or tabs) first, so only control
 		// characters inside the text itself are V007. A version="2"
 		// <column>'s body is its cell template, a template like a <text>
@@ -1781,6 +1893,11 @@ func (b *builder) addStyle(n *ir.Node, body string, textLine, textCol int) {
 		b.styleSeen = map[string]bool{}
 	}
 	b.styleSeen[key] = true
+	if b.comp != nil && b.comp.noLoad[n] {
+		// src holds a {$name} outside a template: loads nothing, with no
+		// V006 (SPEC v0.4c §6.18.9, decision 184).
+		return
+	}
 	ref := StyleRef{Src: n.Attrs["src"], Body: body, Line: n.Line, Col: n.Col, BodyLine: textLine, BodyCol: textCol, File: file}
 	if n.Org != nil && n.Org.Placed != nil {
 		ref.Org = n.Org
@@ -1940,7 +2057,7 @@ func (b *builder) checkNode(n *ir.Node) {
 		// V001/V002, and any id there V004: SPEC §6.8 item 8.)
 		focusable = false
 	}
-	if focusable && n.ID == "" && !(b.v2 && (n.Tag == "table" || n.Tag == "tabs")) {
+	if focusable && b.noID(n) && !(b.v2 && (n.Tag == "table" || n.Tag == "tabs")) {
 		// (A table needs an id whether or not it is focusable: checkTable.)
 		b.errN(n, "V012", "<%s> is focusable and needs an id", n.Tag)
 	}
@@ -1956,7 +2073,7 @@ func (b *builder) checkNode(n *ir.Node) {
 			b.checkSelect(n)
 		case "sparkline":
 			// SPEC §6.11: bind is required.
-			if _, ok := n.Attr("bind"); !ok {
+			if !b.wrote(n, "bind") {
 				b.errN(n, "V003", "<sparkline> needs bind=\"path\": the numeric array it draws")
 			}
 		}
@@ -1975,7 +2092,7 @@ func (b *builder) checkNode(n *ir.Node) {
 			if items != 1 {
 				b.errN(n, "V013", "<list each=...> needs exactly one <item> template (found %d)", items)
 			}
-			if _, ok := n.Attr("key"); !ok {
+			if !b.wrote(n, "key") {
 				// The each as written, as V011 quotes it (writtenEach).
 				b.warnN(n, "B006", "<list each=%q> has no key=; selection follows the index", writtenEach(n))
 			}
@@ -1996,11 +2113,11 @@ func (b *builder) checkNode(n *ir.Node) {
 // gets neither V012 (an id there would be V004) nor B006.
 func (b *builder) checkTable(n *ir.Node) {
 	nested := listItem(n.Parent) != nil || b.eachContainer(n) != nil
-	if n.ID == "" && !nested {
+	if b.noID(n) && !nested {
 		b.errN(n, "V012", "<table> needs an id: its cursor and scroll offset are kept by it, and to=\"#id\" names it")
 	}
-	eachAttr, hasEach := n.Attr("each")
-	if !hasEach {
+	eachAttr, _ := n.Attr("each")
+	if !b.wrote(n, "each") {
 		b.errN(n, "V017", "<table> needs each=\"path as alias\": its rows are the elements of an array")
 	}
 	cols, items := 0, 0
@@ -2018,7 +2135,7 @@ func (b *builder) checkTable(n *ir.Node) {
 	if cols == 0 {
 		b.errN(n, "V017", "<table> needs at least one <column>")
 	}
-	if _, ok := n.Attr("key"); n.Each != "" && !ok && !nested {
+	if n.Each != "" && !b.wrote(n, "key") && !nested {
 		if n.Written != nil {
 			// As written: an element of a copy holds its paths after the
 			// with aliases (Node.Written), as V011 says.
@@ -2037,7 +2154,7 @@ func (b *builder) checkTable(n *ir.Node) {
 // V004).
 func (b *builder) checkTabs(n *ir.Node) {
 	nested := listItem(n.Parent) != nil || b.eachContainer(n) != nil
-	if n.ID == "" && !nested {
+	if b.noID(n) && !nested {
 		if n.Tag == "tabs" {
 			b.errN(n, "V012", "<tabs> needs an id: it keeps the remembered tab, and move-* and to=\"#id\" name it")
 		} else {
@@ -2093,7 +2210,7 @@ func (b *builder) checkStick(n *ir.Node) {
 	if listItem(n) != nil || b.eachContainer(n) != nil {
 		return
 	}
-	if n.ID == "" {
+	if b.noID(n) {
 		b.errN(n, "V012", `<scroll stick="bottom"> needs an id: its offset and the previous maximum are kept across frames by it`)
 	}
 	if ax, _ := n.Attr("axis"); ax == "x" {
@@ -2179,11 +2296,13 @@ func (b *builder) checkMultiSelect(n *ir.Node) {
 	default:
 		return
 	}
-	_, hasChecked := n.Attr("checked")
+	hasChecked := b.wrote(n, "checked")
 	b.checkSingle(n, hasChecked)
-	if hasChecked && n.Tag != "tabs" {
-		_, hasEach := n.Attr("each")
-		_, hasKey := n.Attr("key")
+	// A checked ignored where a prop cannot stand counts as written for
+	// the checks that require it (single, mark, on:change), and is absent
+	// for this one, which its own presence triggers (SPEC v0.4c §6.18.9).
+	if _, written := n.Attrs["checked"]; written && n.Tag != "tabs" {
+		hasEach, hasKey := b.wrote(n, "each"), b.wrote(n, "key")
 		if !hasEach || !hasKey {
 			what := "each= and key="
 			switch {
@@ -2369,11 +2488,20 @@ func (b *builder) checkKeymap() {
 	for i := range b.doc.Keymap {
 		k := &b.doc.Keymap[i]
 		path := "/keymap/bind"
-		if strings.TrimSpace(k.KeysRaw) == "" {
+		// A value that held a {$name} outside a template gets that V003
+		// instead of any other diagnostic (mutedAttr), and one ignored
+		// where a prop cannot stand counts as written for the checks that
+		// require it (ignoredAttr): SPEC v0.4c §6.18.9.
+		kn := k.Node
+		if strings.TrimSpace(k.KeysRaw) == "" && !b.ignoredAttr(kn, "keys") {
 			b.errKB(k, "V003", path, "<bind> needs keys=")
 		}
 		k.Keys = ir.SplitKeys(k.KeysRaw)
-		for _, tok := range k.Keys {
+		toks := k.Keys
+		if b.mutedAttr(kn, "keys") {
+			toks = nil
+		}
+		for _, tok := range toks {
 			if !ir.ValidKey(tok) {
 				b.errKB(k, "V003", path, "unknown key %q (see the key token list: a-z 0-9 enter esc tab backspace space arrows home end pgup pgdn ctrl+x shift+tab)", tok)
 				continue
@@ -2388,8 +2516,11 @@ func (b *builder) checkKeymap() {
 			}
 		}
 		switch {
+		case b.mutedAttr(kn, "action"):
 		case k.Action == "":
-			b.errKB(k, "V003", path, "<bind> needs action=")
+			if !b.ignoredAttr(kn, "action") {
+				b.errKB(k, "V003", path, "<bind> needs action=")
+			}
 		case ir.IsBuiltinActionV2(k.Action):
 			// SPEC §8.4: the hyphenated built-ins are version="2" keymap
 			// actions (ADR 0006).
@@ -2401,7 +2532,7 @@ func (b *builder) checkKeymap() {
 		}
 		switch {
 		case k.HasOwnWhen:
-			if k.When != "" {
+			if k.When != "" && !b.mutedAttr(kn, "when") {
 				sel, err := css.ParseSelectorLang(k.When, b.lang)
 				if err == nil && sel.Root {
 					err = fmt.Errorf(":root is not a node selector")
@@ -2423,7 +2554,7 @@ func (b *builder) checkKeymap() {
 			k.WhenSel = kmSel[k.KeymapNode]
 		}
 		toOK := false
-		if k.To != "" {
+		if k.To != "" && !b.mutedAttr(kn, "to") {
 			if !strings.HasPrefix(k.To, "#") || !isIDName(k.To[1:]) {
 				b.errKB(k, "V003", path, "to=%q: want #id", k.To)
 			} else {
@@ -2437,7 +2568,7 @@ func (b *builder) checkKeymap() {
 				}
 			}
 		}
-		if k.Action == "focus" && k.To == "" {
+		if k.Action == "focus" && k.To == "" && !b.ignoredAttr(kn, "to") {
 			b.errKB(k, "V003", path, `action="focus" needs to="#id"`)
 		}
 		if b.v2 && ir.IsBuiltinActionV2(k.Action) {
@@ -2445,7 +2576,7 @@ func (b *builder) checkKeymap() {
 		}
 	}
 	for _, s := range b.doc.Screens {
-		if f, ok := s.Attr("focus"); ok && strings.HasPrefix(f, "#") {
+		if f, ok := s.Attr("focus"); ok && strings.HasPrefix(f, "#") && !b.mutedAttr(s, "focus") {
 			if why := b.idTarget(f[1:]); strings.HasPrefix(why, idMissing) {
 				b.errN(s, "B005", "focus=%q refers to an id that %s", f, why)
 			} else if why != "" {
@@ -2481,7 +2612,7 @@ func (b *builder) keymapWhens() map[*ir.Node]*css.Selector {
 			continue
 		}
 		w, ok := c.Attr("when")
-		if !ok || w == "" {
+		if !ok || w == "" || b.mutedAttr(c, "when") {
 			continue
 		}
 		sel, err := css.ParseSelectorLang(w, b.lang)

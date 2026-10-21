@@ -178,6 +178,14 @@ type Node struct {
 	// nil for every node with no such path, which is every node outside
 	// copies.
 	Vias map[ViaKey]*Via
+	// PropBy is set on an element of a copy whose attributes or body held
+	// a {$name} as written (SPEC v0.4c §6.18.6, decisions 161 and 194):
+	// the <use> that a diagnostic at the element names in its placement
+	// suffix, whatever its code. It is the outermost use whose prop
+	// attribute wrote, as literal text, text that one of the element's
+	// substituted values holds, or else the use that copied the element.
+	// nil for every other node (NodeSuffix).
+	PropBy *Node
 }
 
 // ViaKey is where a path of an element is written: Slot is the name of
@@ -414,6 +422,25 @@ func PlacedSuffix(n *Node) string {
 		return ""
 	}
 	return n.Org.PlacedSuffix()
+}
+
+// NodeSuffix is the placement suffix of a diagnostic at the element n:
+// the suffix that names n.PropBy for an element of a copy whose values
+// held a {$name} (SPEC v0.4c §6.18.6, decision 194), else PlacedSuffix.
+func NodeSuffix(n *Node) string {
+	if n != nil && n.PropBy != nil {
+		return SuffixOf(n.PropBy)
+	}
+	return PlacedSuffix(n)
+}
+
+// SuffixOf is the placement suffix that names the <include> or <use> p,
+// `, placed by <use id="U"> at FILE:LINE:COL`, or "" for nil.
+func SuffixOf(p *Node) string {
+	if p == nil {
+		return ""
+	}
+	return ", placed by " + p.describePlacer() + " at " + p.Loc(true)
 }
 
 // PlacedSuffix is the placement suffix of an element written where o says
@@ -836,7 +863,7 @@ func At(n *Node, file, sev, code, format string, args ...any) Diagnostic {
 	if n != nil {
 		d.Line, d.Col, d.Path, d.ID = n.Line, n.Col, n.Path, n.ID
 		d.File = n.FileName(file)
-		d.Msg += PlacedSuffix(n)
+		d.Msg += NodeSuffix(n)
 	}
 	return d
 }

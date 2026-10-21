@@ -1,0 +1,16 @@
+<tui>
+  <template id="w"><box><slot/></box></template>
+  <template id="t" props="x">
+    <col>
+      <input id="{$x}" bind="v"/>
+      <sparkline bind="{$x}"/>
+      <use template="w" if="{$x}"><text>gone</text></use>
+      <include src="{$x}.tui"/>
+      <text>kept</text>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="a" template="t" x="q"/>
+    <use id="b" template="t" x="r"/>
+  </screen>
+</tui>

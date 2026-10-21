@@ -365,13 +365,15 @@ func TestV04bTemplate148IR(t *testing.T) {
 	}
 }
 
-// 153. Where a template may stand, and what a template and a use hold.
+// 153. Where a template may stand, and what a template and a use hold
+// (as revised by SPEC v0.4c: the V002 of a name that could be a prop, and
+// the V013 of content toward a template with no slot).
 func TestV04bTemplate153PlacementAndContent(t *testing.T) {
 	app := composeFixtures + "t153/app.tui"
 	sameLines(t, "validate", vdiags(t, app, ""), []string{
 		`error V001 app.tui:4:7 /screen/col/template id=a <template> must be a direct child of <tui> or <screen>`,
-		`error V002 app.tui:6:30 /screen/use id=u attribute "style" is not allowed on <use>: a <use> is not a node; give this copy a static class="…" and style that class, or put the attribute on the template's element`,
-		`error V013 app.tui:6:40 /screen/use id=u <use> takes no content; Tuimark has no slots`,
+		`error V002 app.tui:6:30 /screen/use id=u attribute "style" is not allowed on <use>: a <use> is not a node; give this copy a static class="…" and style that class, put the attribute on the template's element, or declare it in the template's props`,
+		`error V013 app.tui:6:40 /screen/use id=u <template id="b"> has no <slot/>`,
 		`error V001 app.tui:9:5 /screen/screen id= <screen> cannot be inside a <template>: a template holds content only`,
 		`error V012 app.tui:12:3 /template id= <template> needs an id, which <use template> names`,
 	})
@@ -395,6 +397,16 @@ func TestV04bTemplate153PlacementAndContent(t *testing.T) {
 	keymap := writeTemp(t, "app.tui", "<tui>\n  <template id=\"t\"><text>y</text></template>\n  <keymap><use template=\"t\"/></keymap>\n  <screen id=\"main\"/>\n</tui>")
 	sameLines(t, "a use in a keymap", vdiags(t, keymap, ""), []string{
 		`error V001 app.tui:3:11 /keymap/use id= a <template> holds no <bind> rows; share keymap rows with <include>`,
+	})
+	// 0.4c: style is not a name a use takes for itself, so a template may
+	// declare it: the use passes it, and its V002 goes. (The variant with
+	// a <slot/> in b is phase C2's.)
+	props := variant(t, composeFixtures+"t153/app.tui", `<template id="b">`, `<template id="b" props="style">`)
+	sameLines(t, "props=\"style\"", vdiags(t, props, ""), []string{
+		`error V001 app.tui:4:7 /screen/col/template id=a <template> must be a direct child of <tui> or <screen>`,
+		`error V013 app.tui:6:40 /screen/use id=u <template id="b"> has no <slot/>`,
+		`error V001 app.tui:9:5 /screen/screen id= <screen> cannot be inside a <template>: a template holds content only`,
+		`error V012 app.tui:12:3 /template id= <template> needs an id, which <use template> names`,
 	})
 }
 

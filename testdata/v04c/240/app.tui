@@ -1,0 +1,13 @@
+<tui>
+  <template id="kv" props="label"><text>{$label}={v}</text></template>
+  <template id="pair" props="label note">
+    <col>
+      <use template="kv" label="{$label}" with="a as v"/>
+      <use template="kv" label="{$label} ({$note})" with="b as v"/>
+    </col>
+  </template>
+  <screen id="main">
+    <use template="pair" label="x" note="n"/>
+    <use template="pair"/>
+  </screen>
+</tui>

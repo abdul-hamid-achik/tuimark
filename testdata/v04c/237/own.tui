@@ -1,0 +1,4 @@
+<tui>
+  <template id="{$x}" props="{$y}"><text>k</text></template>
+  <screen id="main"><text>t</text></screen>
+</tui>
