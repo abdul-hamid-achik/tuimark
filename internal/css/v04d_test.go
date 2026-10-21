@@ -31,9 +31,10 @@ func TestPreWrapIsCurrentLanguageOnly(t *testing.T) {
 	if err := CheckDeclIn("wrap", "pre-wrap", true, true); err == nil || !strings.Contains(err.Error(), "requires a <tui> without version") {
 		t.Errorf("CheckDeclIn(true, true): %v", err)
 	}
-	// A bad value lists what the document accepts, pre-wrap included in
-	// the current language only.
-	if err := CheckDeclLang("wrap", "bogus", ir.Lang4); err == nil || !strings.Contains(err.Error(), "| truncate-middle | pre-wrap)") {
+	// A bad value keeps the list of tuimark 0.4.5 in the current language
+	// (test 275: every output for a document, an invalid one included,
+	// stays byte-identical), pre-wrap left out.
+	if err := CheckDeclLang("wrap", "bogus", ir.Lang4); err == nil || err.Error() != `wrap: bad value "bogus" (want wrap | nowrap | truncate | truncate-start | truncate-middle)` {
 		t.Errorf("current language, bad wrap: %v", err)
 	}
 	if err := CheckDeclLang("wrap", "bogus", ir.Lang3); err == nil || strings.Contains(err.Error(), "pre-wrap") {

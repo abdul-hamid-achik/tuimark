@@ -325,9 +325,10 @@ func checkDecl(prop, val string, g gate) error {
 					return fmt.Errorf("%s: value %q (want %s)%s", prop, val, want, ir.VersionHintCurrent)
 				}
 			}
-			if v4 {
-				want += " | " + strings.Join(p.v4Values, " | ")
-			}
+			// The list of a bad value in the current language stays the one
+			// tuimark 0.4.5 printed, pre-wrap left out: SPEC v0.4d test 275
+			// keeps the output for every document, an invalid one such as
+			// testdata/v04b/t134 included, byte-identical.
 		}
 		return fmt.Errorf("%s: bad value %q (want %s)", prop, val, want)
 	case pGridColumns:

@@ -176,6 +176,12 @@ func (s *Server) hoverTCSS(doc *document, word string, start, end int) []string 
 		if t := s.tag(word); t != nil {
 			return tagText(*t)
 		}
+		if word == "span" {
+			// The type a run is styled as (SPEC v0.4d §6.20.4): generated
+			// from <text runs>, so the catalog has no tag for it.
+			return []string{"`span` — type generated from `<text runs=\"…\">`, one per run, a child of its text" + sinceSuffix(int(ir.LangCurrent)),
+				"Styles `color`, `background`, `bold`, `dim`, `italic`, `underline`, and `reverse`; select it as `span`, `.class`, `text > span`."}
+		}
 	case cssMedia:
 		for _, m := range s.cat.Media {
 			if m.Name == word {

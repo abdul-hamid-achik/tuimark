@@ -211,6 +211,7 @@ func (s *Server) attrOf(tag, attr string) *catalog.Attr {
 var pathAttrs = map[string]bool{
 	"bind": true, "if": true, "checked": true, "open": true, "mouse": true,
 	"disabled": true, "hidden": true,
+	"runs": true, // SPEC v0.4d §6.20.1
 }
 
 // templateAttrs are the attributes whose value may hold {path}.
@@ -602,6 +603,12 @@ func (s *Server) completeSelector(doc *document, loaders []parsedDoc, ver, off i
 			if t.Since <= ver {
 				c.add(t.Name, kindClass, sinceDetail(t.Since), "", false)
 			}
+		}
+		if ver == int(ir.LangCurrent) {
+			// The type a run is styled as (SPEC v0.4d §6.20.4): generated
+			// from <text runs>, never a tag of the catalog, but a rule may
+			// name it.
+			c.add("span", kindClass, "generated from <text runs>", "", false)
 		}
 	}
 	return c.list()
