@@ -221,7 +221,7 @@ The input `shipping__zip__input` was written at `parts/forms.tui:5:7`, placed by
 
 <include cwd lang="jsonc">snippets/out/tpl-inspect.jsonc</include>
 
-A node the document writes itself has `"via": []`, and a document that writes `version` has no `source` at all. A use without an `id` is listed as `<use template="…">`.
+A node the document writes itself, outside the content of a `<use>`, has `"via": []` (one written in that content gets the entries of the slots its fill reached), and a document that writes `version` has no `source` at all. A use without an `id` is listed as `<use template="…">`.
 
 A node in the content of a `<use>` was written outside the template, so its `via` names the `<slot/>` that received it: for the `note` input of the slot example above, `via <slot/> of <use id="side" template="panel"> slot.tui:4:7`, the line of the slot in the template. In `--json` that entry is `{slot, template, file, line, col}`, where `slot` is the use's id.
 

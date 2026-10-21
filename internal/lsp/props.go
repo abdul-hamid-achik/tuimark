@@ -97,13 +97,26 @@ func attrNamed(attrs []attrSpan, name string) (attrSpan, bool) {
 	return attrSpan{}, false
 }
 
-// propNames are the names a props value declares, in order, each once.
-// The validation of the names is validate's (V003).
+// useOwnAttrs are the attributes a <use> keeps for itself: none of them can
+// be a prop.
+var useOwnAttrs = map[string]bool{"template": true, "id": true, "with": true, "if": true, "hidden": true, "class": true}
+
+// declarable reports whether name is a prop name a props value can declare:
+// a valid name that is not one of a <use>'s own attributes.
+func declarable(name string) bool { return ir.IsGuardName(name) && !useOwnAttrs[name] }
+
+// propNames are the names a props value declares, in order, each once. A
+// name that cannot be a prop (invalid, or a <use>'s own) is not declared,
+// and a value that holds a "{$" declares nothing, since a prop reference
+// there is an error of the template (V003). The messages are validate's.
 func propNames(value string) []string {
+	if strings.Contains(value, "{$") {
+		return nil
+	}
 	var out []string
 	seen := map[string]bool{}
 	for _, n := range strings.Fields(value) {
-		if !seen[n] {
+		if !seen[n] && declarable(n) {
 			seen[n] = true
 			out = append(out, n)
 		}
@@ -114,6 +127,9 @@ func propNames(value string) []string {
 // propIndex is the byte offset, in value, of the first name equal to name
 // among those value declares, or -1.
 func propIndex(value, name string) int {
+	if strings.Contains(value, "{$") || !declarable(name) {
+		return -1
+	}
 	for i := 0; i < len(value); {
 		for i < len(value) && isSpaceByte(value[i]) {
 			i++
