@@ -80,6 +80,7 @@ func (t *fakeTimer) arm(d time.Duration) {
 	if d <= 0 {
 		t.fire()
 	}
+	t.c.cond.Broadcast()
 }
 
 // fire delivers the clock's reading, once, and the timer is spent. The
@@ -199,6 +200,27 @@ func (c *fakeClock) Advance(t *testing.T, d time.Duration) int {
 		c.waitQuiet(t, seq)
 	}
 	return n
+}
+
+// waitArmed blocks until a timer is armed to fire at elapsed after the
+// clock's creation. A test that drives Run through run() has no idle hook
+// to tell it the loop has armed its timers: the loop arms a timer from a
+// relative duration it computed from an earlier reading of the clock, so
+// an Advance that lands between the reading and the arming moves the
+// clock under a timer that is not armed yet, and the arming then counts
+// its duration from the new reading, one period late. Waiting for the
+// armed deadline before the Advance leaves no such window.
+func (c *fakeClock) waitArmed(t *testing.T, elapsed time.Duration) {
+	t.Helper()
+	want := c.epoch.Add(elapsed)
+	c.wait(t, "a timer armed for "+elapsed.String(), func() bool {
+		for _, tm := range c.timers {
+			if tm.active && tm.due.Equal(want) {
+				return true
+			}
+		}
+		return false
+	})
 }
 
 // active is the number of armed timers.
