@@ -16,11 +16,9 @@ import (
 // are the root package's conformance_v04d_host_test.go, the TypeScript
 // client's are sdk/ts, and 301's inline lines wait for D5a-2.
 
-const (
-	d5Msgs = "../../testdata/v04d/t303/msgs.tui"
-	d5Data = "../../testdata/v04d/t303/sample.json"
-	d5Two  = "../../testdata/v04d/t313/two.tui"
-)
+// d5Msgs and d5Data are in conformance_v04d_append_test.go, which every
+// platform builds.
+const d5Two = "../../testdata/v04d/t313/two.tui"
 
 // d5Ready is the exact tail of `ready` (SPEC v0.4d §19.1): messages come
 // after diagnostics.

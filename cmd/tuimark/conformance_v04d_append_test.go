@@ -12,6 +12,12 @@ import (
 // SPEC v0.4d §21 test 303's play parts and §15.4/§15.5/§15.8's append
 // step, through the CLI: --input, --script, the manifest, and tuimark_play.
 
+// The fixtures of test 303, shared with the unix-only host tests.
+const (
+	d5Msgs = "../../testdata/v04d/t303/msgs.tui"
+	d5Data = "../../testdata/v04d/t303/sample.json"
+)
+
 type d5Play struct {
 	Dump struct {
 		Grid []string `json:"grid"`
