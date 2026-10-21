@@ -43,6 +43,11 @@ type RawNode struct {
 	// to the end of its end tag: the source a <use> of a <template>
 	// places (ADR 0034's byte budget).
 	Span int
+	// Inner is the length in bytes of an element's content, from the byte
+	// after its start tag's '>' to the byte before its end tag (0 for a
+	// self-closing element): the span a fill written in the document is
+	// charged (SPEC v0.4c §6.18.8, decision 177).
+	Inner int
 }
 
 // SyntaxError is a V005 well-formedness failure.
@@ -479,12 +484,14 @@ func (s *scanner) element() (*RawNode, *SyntaxError) {
 		n.Attrs = append(n.Attrs, RawAttr{Name: an, Value: val, Line: aline, Col: acol})
 	}
 	// Content.
+	inner := s.pos
 	for {
 		if s.eof() {
 			return nil, s.errf(line, col, "unclosed <%s>", name)
 		}
 		switch {
 		case s.has("</"):
+			n.Inner = s.pos - inner
 			cline, ccol := s.line, s.col
 			s.advance(2)
 			cn := s.name()

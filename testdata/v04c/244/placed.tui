@@ -1,0 +1,7 @@
+<tui>
+  <template id="card"><box><slot/></box></template>
+  <screen id="main">
+    <use template="card"><tab id="t" label="T"/></use>
+    <use template="card"><modal id="m" open="true"/></use>
+  </screen>
+</tui>

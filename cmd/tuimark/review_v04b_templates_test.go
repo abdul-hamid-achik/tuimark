@@ -369,19 +369,21 @@ func TestV04bTemplateUseWithABadID(t *testing.T) {
 
 // In the current language, the HTML names of composition point at
 // <template>/<use> and <include> (the F2 review); a document that writes
-// version keeps 0.4.1's hint (review probe comp).
+// version keeps 0.4.1's hint (review probe comp). Since 0.4c <slot> is a
+// tag of the current language: outside a template it is its own V001, and
+// a document that writes version gets the requires hint (decision 152).
 func TestV04bTemplateCompositionHints(t *testing.T) {
 	const body = "\n<screen><component/><slot/><import/></screen>\n</tui>"
 	sameLines(t, "current", vdiags(t, writeTemp(t, "app.tui", "<tui>"+body), ""), []string{
 		`error V001 app.tui:2:9 /screen/component id= unknown tag <component>; write it once in a <template id=…> and place it with <use template=…>`,
-		`error V001 app.tui:2:21 /screen/slot id= unknown tag <slot>; a <use> takes no content: write the markup in a <template id=…> and place it with <use template=…>`,
+		`error V001 app.tui:2:21 /screen/slot id= <slot/> is only valid inside a <template>: it marks where the content of a <use> goes`,
 		`error V001 app.tui:2:28 /screen/import id= unknown tag <import>; use <include src=…> for markup, <style src=…> for a stylesheet`,
 	})
 	const old = "Tuimark has no components or includes; only <style src> loads another file"
 	for _, v := range []string{"1", "2", "3"} {
 		sameLines(t, "version="+v, vdiags(t, writeTemp(t, "app.tui", `<tui version="`+v+`">`+body), ""), []string{
 			`error V001 app.tui:2:9 /screen/component id= unknown tag <component>; ` + old,
-			`error V001 app.tui:2:21 /screen/slot id= unknown tag <slot>; ` + old,
+			`error V001 app.tui:2:21 /screen/slot id= tag <slot> (requires a <tui> without version)`,
 			`error V001 app.tui:2:28 /screen/import id= unknown tag <import>; ` + old,
 		})
 	}

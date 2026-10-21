@@ -693,6 +693,12 @@ func (b *builder) propNode(n *ir.Node, r *RawNode) *propNode {
 					pn.attrs = make([]pattr, len(r.Attrs))
 				}
 				pn.attrs[i] = pattr{st: psPlace, by: n.Org.Placed}
+				// A whole value that is one reference to a prop the use does
+				// not pass, or that names no prop, is not in the copy
+				// (decision 163), so its place rejects nothing there.
+				if refs := scanRefs(a.Value); len(refs) == 1 && refs[0].start == 0 && refs[0].end == len(a.Value) && cp.pframes[len(cp.pframes)-1].val(refs[0]) == nil {
+					pn.attrs[i] = pattr{st: psRemoved, held: true}
+				}
 			}
 			continue
 		}
@@ -1303,14 +1309,6 @@ func (b *builder) checkWrittenUses(lookup func(string) *propDecl) {
 				}
 			}
 		}
-		if t.slot || (cp.selfOnly && t.include) {
-			continue
-		}
-		for _, cc := range c.Children {
-			if cc.Type == RawElement || ((cc.Type == RawText || cc.Type == RawCData) && !isXMLWhitespaceOnly(cc.Text)) {
-				diag("V013", cc.Line, cc.Col, msgUseNoSlot, t.id)
-				break
-			}
-		}
+		b.checkUseContent(c, t, diag) // its content (v0.4c, slot.go)
 	}
 }
