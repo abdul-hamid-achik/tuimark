@@ -20,6 +20,7 @@
     "---Tools and hosts---",
     "tools",
     "run",
+    "inline",
     "go-api",
     "testing",
     "host-protocol",

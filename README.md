@@ -174,7 +174,7 @@ go build -o bin/tuimark ./cmd/tuimark
   CLI) — optional, only needed to run the terminal end-to-end specs under
   `specs/glyphrun/`. `go install
   github.com/abdul-hamid-achik/glyphrun/cmd/glyph@latest` (it needs Go
-  1.26; CI pins `@v0.22.0`), then run `glyph docs` for its own
+  1.26; CI pins `@v0.23.0`), then run `glyph docs` for its own
   documentation.
 
 ## Quickstart
@@ -1782,6 +1782,21 @@ kept with the maintainer's project notes, outside this repository.
   printable key, a keymap row for one never fires while it is enabled and
   focused: disable it, or move the focus, while the row must act. In a
   pinned document `<textarea>` is `V001`, `requires a <tui> without version`.
+
+- **Inline mode (0.4d).** `RunOptions.Inline` (`--inline` on `tuimark
+  run`) draws the active screen as a live region below the terminal's
+  cursor and `Commit` prints into the terminal's scrollback above it; only
+  a `<tui>` without `version` runs inline. The limits: there is no mouse
+  (the document's `mouse` is ignored); a modal and an open option list are
+  laid out against the region, as against a screen of its size, and the
+  region does not grow for them; after a resize the region is erased and
+  drawn again, but rows already committed belong to the terminal, which
+  rewraps them or not, so a part of the region the terminal rewrapped
+  before the redraw may stay in the scrollback; and Tuimark, not the
+  terminal, wraps a committed line at the terminal's width, so a long line
+  copied from the scrollback breaks where it wrapped (keep text meant to be
+  copied whole shorter than the terminal). A host that wants its last state
+  to stay commits it before it quits: the region is erased on every way out.
 
 ## Status per phase (SPEC §4)
 

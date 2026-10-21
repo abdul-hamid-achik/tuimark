@@ -233,6 +233,7 @@ var mcpTools = []mcpTool{
 		Props: []mcpProp{
 			{"file", "string"}, {"data", "string"}, {"cols", "integer"}, {"rows", "integer"},
 			{"theme", "string"}, {"styles", "boolean"}, {"cells", "boolean"}, {"strict", "boolean"},
+			{"inline", "boolean"},
 		},
 	},
 	{
@@ -242,7 +243,7 @@ var mcpTools = []mcpTool{
 		Props: []mcpProp{
 			{"file", "string"}, {"steps", "array"}, {"data", "string"}, {"cols", "integer"}, {"rows", "integer"},
 			{"theme", "string"}, {"styles", "boolean"}, {"cells", "boolean"}, {"frames", "boolean"}, {"strict", "boolean"},
-			{"keyboard", "string"},
+			{"inline", "boolean"}, {"keyboard", "string"},
 		},
 	},
 	{
@@ -252,6 +253,7 @@ var mcpTools = []mcpTool{
 		Props: []mcpProp{
 			{"file", "string"}, {"at", "string"}, {"id", "string"}, {"data", "string"},
 			{"cols", "integer"}, {"rows", "integer"}, {"theme", "string"}, {"strict", "boolean"},
+			{"inline", "boolean"},
 		},
 	},
 	{
@@ -623,6 +625,10 @@ func invokeDumpTool(file string, args map[string]json.RawMessage) map[string]any
 	if v, ok := mcpBoolArg(args, "strict"); ok && v {
 		argv = append(argv, "--strict")
 	}
+	// SPEC v0.4d §15.8: inline is passed as --inline, after the other flags.
+	if v, ok := mcpBoolArg(args, "inline"); ok && v {
+		argv = append(argv, "--inline")
+	}
 	argv = append(argv, "--format", "json")
 	out, errw, code := runCapture(func(s *cli) int { return s.cmdDump(argv) })
 	return mcpResultFromRun(out, errw, code)
@@ -650,6 +656,9 @@ func invokeInspectTool(file string, args map[string]json.RawMessage) map[string]
 	}
 	if v, ok := mcpStrArg(args, "id"); ok {
 		argv = append(argv, "--id", v)
+	}
+	if v, ok := mcpBoolArg(args, "inline"); ok && v {
+		argv = append(argv, "--inline")
 	}
 	argv = append(argv, "--json")
 	out, errw, code := runCapture(func(s *cli) int { return s.cmdInspect(argv) })
@@ -689,8 +698,11 @@ func invokePlayTool(file string, args map[string]json.RawMessage) map[string]any
 			argv = append(argv, "--"+name)
 		}
 	}
-	// SPEC v0.4d §15.8: keyboard is passed as --keyboard, after the other
-	// flags and before the output format.
+	// SPEC v0.4d §15.8: inline and keyboard are passed as --inline and
+	// --keyboard, after the other flags and before the output format.
+	if v, ok := mcpBoolArg(args, "inline"); ok && v {
+		argv = append(argv, "--inline")
+	}
 	if v, ok := mcpStrArg(args, "keyboard"); ok {
 		argv = append(argv, "--keyboard", v)
 	}

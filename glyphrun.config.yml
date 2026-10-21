@@ -13,6 +13,7 @@ environments:
     vars:
       tuimark: ./bin/tuimark
       inbox: ./bin/inbox
+      inline: ./bin/inline
       dashboard: ./bin/dashboard
       monitor: ./bin/monitor
       # The versionless examples with a help modal (help_esc_*.yml).

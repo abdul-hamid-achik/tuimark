@@ -65,6 +65,7 @@ func (c *cli) cmdInspect(args []string) int {
 	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
 	asJSON := fs.Bool("json", false, "print the report as JSON")
+	inline := fs.Bool("inline", false, "lay the active screen out as an inline region, with --rows as the terminal's rows")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -117,6 +118,9 @@ func (c *cli) cmdInspect(args []string) int {
 			fmt.Fprintln(c.stderr, d.String())
 		}
 		return 2
+	}
+	if err := applyInline(app, "inspect", *inline); err != nil {
+		return c.fail(err)
 	}
 	app.SetStrict(*strict)
 	f := app.Frame(*cols, *rows)

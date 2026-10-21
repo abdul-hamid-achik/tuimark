@@ -1,0 +1,73 @@
+version: 1
+name: run_inline_strip
+intent: |
+    `tuimark run FILE --inline --strip` (SPEC v0.4d §26.15, §15.9, test 299,
+    decision 249): the session is inline, so the event strip is painted over
+    the region's own rows, which do not grow for it, and its size reads the
+    region's 3 rows, not the terminal's 24. The keys a, enter, b, enter
+    record two `send` events, which `run` answers itself; the strip is one
+    row, which shows only the newer event, `send composer {} "ab"`, where
+    24 rows would have shown both. F12 hides it and the region's rows are
+    painted again.
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "inline", "--inline", "--strip"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "Message"
+        timeoutMs: 5000
+    - press: "a"
+    - press: enter
+    - press: "b"
+    - press: enter
+    - wait:
+        screen:
+            contains: 'send composer {} "ab"'
+        timeoutMs: 3000
+    - snapshot: strip_shown
+    - send:
+        bytes: '\x1b[24~'
+    - wait:
+        screen:
+            contains: "ready"
+        timeoutMs: 3000
+    - snapshot: strip_hidden
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+outcomes:
+    - id: strip_is_one_row_over_the_region
+      description: the strip is one row, the newer event only, painted over the region's last row; the region keeps its 3 rows and nothing is above it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/strip_shown.txt"
+                first=$(sed -n 1p "$f")
+                second=$(sed -n 2p "$f")
+                third=$(sed -n 3p "$f")
+                sends=$(grep -c '^send composer' "$f")
+                if echo "$first" | grep -q '^────' && [ "$second" = "ab" ] && [ "$third" = 'send composer {} "ab"' ] && [ "$sends" -eq 1 ]; then
+                  echo '{"ok": true, "evidence": "rows 1 to 3 are the rule, the composer, and the strip with the newer event only"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected rows: ['"$first"'] ['"$second"'] ['"$third"'], sends '"$sends"'"}'
+                fi
+    - id: f12_paints_the_region_again
+      description: F12 hides the strip and the region's last row shows the status again
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/strip_hidden.txt"
+                if [ "$(sed -n 3p "$f")" = "ready" ] && ! grep -q '^send composer' "$f"; then
+                  echo '{"ok": true, "evidence": "the status is back on the region'"'"'s last row"}'
+                else
+                  echo '{"ok": false, "evidence": "the strip is still shown"}'
+                fi
+contractHash: sha256:638aa76d22f05b5eac5c46ad8faf1f98f261ab9161abe7553d883759fc6bef89

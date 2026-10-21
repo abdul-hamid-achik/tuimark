@@ -1,0 +1,168 @@
+version: 1
+name: inline_region
+intent: |
+    A Go host runs examples/inline inline (SPEC v0.4d §26.15, tests 299 and
+    294): the active screen is a live region below the shell's prompt, not the
+    alternate screen. The prompt line above it stays on the screen; a message
+    sent with enter is committed above the region (a line, then a template's
+    copy as the reply) and the region is drawn again below; a row that
+    appears (the tips, ctrl+o) grows the region by one row and hides again, as
+    do two line breaks typed with shift+enter in the composer;
+    after enough messages the oldest rows scroll into the terminal's own
+    scrollback, which Tuimark never repaints; ctrl+q commits a last line and
+    leaves: the region is gone, the committed rows are above the cursor, and
+    the cursor is at the start of the empty row after them. (A resize is
+    inline_resize.)
+target:
+    cmd: ["sh", "-c", "printf 'PROMPT$ ./inline\\n'; exec \"$0\"", "${vars.inline}"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "Message"
+        timeoutMs: 5000
+    - snapshot: start
+    - send:
+        bytes: 'hello\r'
+    - wait:
+        screen:
+            contains: "Claude: echo: hello"
+        timeoutMs: 3000
+    - snapshot: sent
+    - press: ctrl+o
+    - wait:
+        screen:
+            contains: "Tips: enter sends"
+        timeoutMs: 3000
+    - snapshot: tips_on
+    - press: ctrl+o
+    - wait:
+        screen:
+            notContains: "Tips: enter sends"
+        timeoutMs: 3000
+    - snapshot: tips_off
+    - send:
+        bytes: 'l1\x1b[13;2ul2\x1b[13;2ul3'
+    - wait:
+        screen:
+            contains: "l3"
+        timeoutMs: 3000
+    - snapshot: multi
+    - send:
+        bytes: '\r'
+    - wait:
+        screen:
+            contains: "You: l1"
+        timeoutMs: 3000
+    - send:
+        bytes: 'm1\r'
+    - send:
+        bytes: 'm2\r'
+    - send:
+        bytes: 'm3\r'
+    - send:
+        bytes: 'm4\r'
+    - send:
+        bytes: 'm5\r'
+    - send:
+        bytes: 'm6\r'
+    - send:
+        bytes: 'm7\r'
+    - send:
+        bytes: 'm8\r'
+    - send:
+        bytes: 'm9\r'
+    - wait:
+        screen:
+            contains: "Claude: echo: m9"
+        timeoutMs: 3000
+    - wait:
+        scrollback:
+            contains: "PROMPT$ ./inline"
+        timeoutMs: 3000
+    - snapshot: full
+    - press: ctrl+q
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 5000
+    - snapshot: left
+outcomes:
+    - id: region_is_below_the_prompt
+      description: the prompt line is still on the screen above the region, and the region is not in the alternate screen
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/start.txt"
+                first=$(sed -n 1p "$f")
+                if [ "$first" = 'PROMPT$ ./inline' ] && sed -n 2p "$f" | grep -q '^────' && sed -n 3p "$f" | grep -q '^Message' && sed -n 4p "$f" | grep -q '^ctrl+o' && sed -n 5p "$f" | grep -q '^ready'; then
+                  echo '{"ok": true, "evidence": "the prompt, the rule, the composer, the key hints and the status are on rows 1 to 5"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected start screen"}'
+                fi
+    - id: send_commits_above_the_region
+      description: a sent message is committed as a line and a template's copy above the region, which is drawn again below them
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/sent.txt"
+                if [ "$(sed -n 1p "$f")" = 'PROMPT$ ./inline' ] && [ "$(sed -n 2p "$f")" = 'You: hello' ] && [ "$(sed -n 3p "$f")" = 'Claude: echo: hello' ] && sed -n 4p "$f" | grep -q '^────' && sed -n 5p "$f" | grep -q '^Message' && sed -n 7p "$f" | grep -q '^1 sent'; then
+                  echo '{"ok": true, "evidence": "two committed rows above the region, the status says 1 sent"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected screen after a send"}'
+                fi
+    - id: tips_grow_and_shrink_the_region
+      description: the tips row grows the region by one row and its removal shrinks it back, with nothing left behind
+      verify:
+        script:
+            runtime: shell
+            run: |
+                on="$GLYPHRUN_RUN_DIR/snapshots/tips_on.txt"
+                off="$GLYPHRUN_RUN_DIR/snapshots/tips_off.txt"
+                sent="$GLYPHRUN_RUN_DIR/snapshots/sent.txt"
+                n_on=$(grep -c . "$on")
+                n_off=$(grep -c . "$off")
+                n_sent=$(grep -c . "$sent")
+                if [ "$n_on" -eq $((n_sent + 1)) ] && [ "$n_off" -eq "$n_sent" ] && ! grep -q 'Tips:' "$off"; then
+                  echo '{"ok": true, "evidence": "tips on: '"$n_on"' rows (the tips row), tips off: '"$n_off"' rows"}'
+                else
+                  echo '{"ok": false, "evidence": "rows: sent '"$n_sent"', tips on '"$n_on"', tips off '"$n_off"'"}'
+                fi
+    - id: shift_enter_grows_the_composer
+      description: two line breaks typed with shift+enter grow the region by two rows, and the three lines are committed as one multi-line message
+      verify:
+        script:
+            runtime: shell
+            run: |
+                multi="$GLYPHRUN_RUN_DIR/snapshots/multi.txt"
+                off="$GLYPHRUN_RUN_DIR/snapshots/tips_off.txt"
+                n_multi=$(grep -c . "$multi")
+                n_off=$(grep -c . "$off")
+                if [ "$n_multi" -eq $((n_off + 2)) ] && grep -q '^l1$' "$multi" && grep -q '^l2$' "$multi" && grep -q '^l3$' "$multi"; then
+                  echo '{"ok": true, "evidence": "the composer shows three lines: '"$n_multi"' rows against '"$n_off"'"}'
+                else
+                  echo '{"ok": false, "evidence": "rows: multi '"$n_multi"', tips off '"$n_off"'"}'
+                fi
+    - id: committed_rows_reach_the_scrollback
+      description: after enough messages the first rows scroll into the terminal's scrollback, committed lines among them
+      verify:
+        scrollback:
+            contains: "You: hello"
+    - id: leave_erases_the_region_and_keeps_the_commits
+      description: after ctrl+q the region is gone, the committed rows and the last line stay, and the cursor is on the empty row after them
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/left.txt"
+                if ! grep -q 'Message' "$f" && ! grep -q '^────' "$f" && [ "$(grep -c . "$f")" -ge 1 ] && tail -n 1 "$f" | grep -q -- '-- 11 messages sent --'; then
+                  echo '{"ok": true, "evidence": "the region is erased and the last committed line ends the screen"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected final screen"}'
+                fi
+contractHash: sha256:2735c2f9c7a0ab666215e2972e7edf81d49f71a4f4bf2178b15d42ca06040a47

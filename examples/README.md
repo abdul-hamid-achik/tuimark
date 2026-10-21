@@ -33,6 +33,7 @@ go build -o bin/logs ./examples/logs && ./bin/logs
 | [`agent`](agent) | A coding-agent chat on a scripted provider or a local Ollama model | a transcript, a composer, approval modals, a headless mode |
 | [`dashboard`](dashboard) | A deploy dashboard | two screens, a progress bar, buttons, a confirm modal |
 | [`inbox`](inbox) | A ticket inbox, the SPEC's reference fixture (`version="1"`) | a search input, a bound list, a detail pane, `@media` |
+| [`inline`](inline) | A small chat in the terminal's own scrollback: the screen is a live region below the prompt, and what you send is committed above it | `RunOptions.Inline`, `Commit` of lines and of a template's copy, a row that appears and grows the region, a last commit before `quit` |
 | [`host-ts`](host-ts) | A minimal counter driven by a Bun parent through `@thelacanians/tuimark` | `tuimark host` and its fd 3/fd 4 protocol, from TypeScript |
 
 `logs`, `tasks`, `gitui`, `http`, the six games (`snake`, `chess`, `tetris`,

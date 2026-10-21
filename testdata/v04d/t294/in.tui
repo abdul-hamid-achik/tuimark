@@ -1,0 +1,11 @@
+<tui>
+  <style>.good { color: green; }</style>
+  <screen id="main" focus="#composer">
+    <rule/>
+    <textarea id="composer" bind="draft" placeholder="Message" on:submit="send"/>
+    <text id="status">{status}</text>
+  </screen>
+  <template id="card" props="who">
+    <text class="who">{$who}: {m.text}</text>
+  </template>
+</tui>

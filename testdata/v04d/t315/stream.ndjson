@@ -1,0 +1,2 @@
+{"commit": {"lines": ["first block"]}}
+{"set": {"path": "live.blocks", "value": [{"id": 2, "runs": ["tail"]}]}}

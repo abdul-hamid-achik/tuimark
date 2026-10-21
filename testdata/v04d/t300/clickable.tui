@@ -1,0 +1,6 @@
+<tui mouse="true">
+  <screen id="main">
+    <button id="b" on:click="clicked">Click</button>
+    <text>below</text>
+  </screen>
+</tui>

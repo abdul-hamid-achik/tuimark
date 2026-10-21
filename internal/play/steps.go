@@ -32,6 +32,9 @@ const (
 	KindWheel  // wheel-up:X,Y, wheel-down:X,Y, or {"wheel":…,"at":[X,Y]}
 	KindTick   // tick:DUR or {"tick":"DUR"} (SPEC v0.4b §15.4.1)
 	KindAppend // append:PATH=JSON or {"append":{"path":…,"value":…}} (SPEC v0.4d §15.4); Path and Value, as KindSet
+	// KindCommit is commit:JSON or {"commit": {…}} (SPEC v0.4d §15.4): a
+	// Commit, only with --inline.
+	KindCommit
 )
 
 // Step is one parsed, validated step of a play session. Raw is "the step
@@ -52,6 +55,8 @@ type Step struct {
 	X, Y  int           // KindClick, KindWheel: the 0-based cell
 	Dir   int           // KindWheel: -1 up, +1 down
 	Dur   time.Duration // KindTick: how far the virtual clock advances
+	// Commit is the commit a KindCommit step makes.
+	Commit host.Commit
 }
 
 // errNotKeyToken is ParseStep's error for a token that is neither a
@@ -115,6 +120,12 @@ func ParseStep(tok string) (Step, error) {
 		return parseResizeToken(tok)
 	case strings.HasPrefix(tok, "tick:"):
 		return TickStep(tok, tok[len("tick:"):])
+	case strings.HasPrefix(tok, "commit:"):
+		c, err := ParseCommit([]byte(tok[len("commit:"):]))
+		if err != nil {
+			return Step{}, err
+		}
+		return Step{Kind: KindCommit, Raw: tok, Commit: c}, nil
 	case strings.HasPrefix(tok, "click:"), strings.HasPrefix(tok, "wheel-up:"), strings.HasPrefix(tok, "wheel-down:"):
 		// SPEC v0.2b §15.4: a left click (press and release) or one wheel
 		// report at cell (X, Y), 0-based as in the dump.

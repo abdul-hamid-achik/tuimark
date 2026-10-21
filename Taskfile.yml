@@ -9,10 +9,11 @@ vars:
 
 tasks:
   build:
-    desc: Build tuimark, the example apps (inbox, dashboard, monitor, logs, tasks, gitui, http, kit-gallery, containers, snake, chess, tetris, minesweeper, 2048, sudoku, pipeline, music, pomodoro), and (once it has Go files) agent into bin/.
+    desc: Build tuimark, the example apps (inbox, inline, dashboard, monitor, logs, tasks, gitui, http, kit-gallery, containers, snake, chess, tetris, minesweeper, 2048, sudoku, pipeline, music, pomodoro), and (once it has Go files) agent into bin/.
     cmds:
       - go build -o bin/tuimark ./cmd/tuimark
       - go build -o bin/inbox ./examples/inbox
+      - go build -o bin/inline ./examples/inline
       - go build -o bin/dashboard ./examples/dashboard
       - go build -o bin/monitor ./examples/monitor
       - go build -o bin/logs ./examples/logs

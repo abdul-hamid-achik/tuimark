@@ -198,6 +198,7 @@ func (c *cli) cmdDump(args []string) int {
 	styles := fs.Bool("styles", false, "include theme and per-row style spans (json only)")
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
 	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
+	inline := fs.Bool("inline", false, "lay the active screen out as an inline region, with --rows as the terminal's rows")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -217,6 +218,9 @@ func (c *cli) cmdDump(args []string) int {
 		return c.fail(err)
 	}
 	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
+		return c.fail(err)
+	}
+	if err := applyInline(app, "dump", *inline); err != nil {
 		return c.fail(err)
 	}
 	app.SetStrict(*strict)

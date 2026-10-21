@@ -493,7 +493,7 @@ func ruleOf(d css.DeclSource) RuleInfo {
 // styleInfo explains every TCSS property of b, in the order of SPEC §10.2
 // then §10.3, re-running the frame's cascade on it. The caller holds a.mu.
 func (a *App) styleInfo(f *Frame, b *layout.Box) []StyleInfo {
-	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: f.Cols, Rows: f.Rows, Theme: f.Theme}, f.Lang)
+	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: f.Cols, Rows: f.TermRows, Theme: f.Theme}, f.Lang)
 	var parent *css.Style
 	if b.Parent != nil {
 		parent = b.Parent.Style

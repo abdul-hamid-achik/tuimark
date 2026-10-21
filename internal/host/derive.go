@@ -250,6 +250,12 @@ func (a *App) recompute() {
 		}
 		return deepCopyJSON(v), true
 	}
+	if a.inlActive.Load() {
+		// A Commit from inside a Derive function is an error, not a
+		// deadlock (SPEC v0.4d §18.3).
+		a.deriveG.Store(goid())
+		defer a.deriveG.Store(0)
+	}
 	for _, d := range a.derived {
 		v, err := d.fn(get)
 		if err == nil {

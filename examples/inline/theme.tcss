@@ -1,0 +1,5 @@
+/* The live region is the screen: its children are laid out by their
+   content, and what the host commits is styled by these same rules. */
+.who { color: cyan; bold: true; }
+.tips { dim: true; }
+#status { dim: true; }

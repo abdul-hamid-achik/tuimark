@@ -1,0 +1,94 @@
+version: 1
+name: inline_resize
+intent: |
+    A resize of an inline session (SPEC v0.4d §26.15.5, test 299, decision
+    248): the runtime moves up to the region's first row, erases from there,
+    and draws the region again at the new width, never above the terminal's
+    first row. Glyphrun's virtual terminal clears its visible rows on a
+    resize, where a real terminal keeps or rewraps them, so this spec starts
+    with nothing committed: examples/inline starts at 80 columns, is resized
+    to 60 and then to 100, and the rule is 60 and then 100 columns wide, one
+    rule each time, the composer and the status below it. A message sent
+    afterwards is committed above the new region.
+target:
+    cmd: ["${vars.inline}"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "Message"
+        timeoutMs: 5000
+    - snapshot: wide80
+    - resize:
+        cols: 60
+        rows: 24
+    - wait:
+        screen:
+            regex: '(?m)^─{60}$'
+        timeoutMs: 3000
+    - snapshot: narrow60
+    - resize:
+        cols: 100
+        rows: 24
+    - wait:
+        screen:
+            regex: '(?m)^─{100}$'
+        timeoutMs: 3000
+    - snapshot: wide100
+    - send:
+        bytes: 'after\r'
+    - wait:
+        screen:
+            contains: "Claude: echo: after"
+        timeoutMs: 3000
+    - snapshot: committed
+    - press: ctrl+q
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 5000
+outcomes:
+    - id: region_is_drawn_again_at_each_width
+      description: after each resize exactly one rule of the new width is on the screen, with the composer and the status below it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                ok=1
+                evidence=""
+                for pair in narrow60:60 wide100:100; do
+                  name=$(echo "$pair" | cut -d: -f1)
+                  want=$(echo "$pair" | cut -d: -f2)
+                  f="$GLYPHRUN_RUN_DIR/snapshots/$name.txt"
+                  n=$(grep -c '^─' "$f")
+                  width=$(grep '^─' "$f" | head -1 | wc -m | tr -d ' ')
+                  width=$((width - 1))
+                  below=$(grep -A3 '^─' "$f" | grep -c -e '^Message' -e '^ready')
+                  if [ "$n" -ne 1 ] || [ "$width" -ne "$want" ] || [ "$below" -ne 2 ]; then
+                    ok=0
+                  fi
+                  evidence="$evidence $name: $n rule(s), width $width;"
+                done
+                if [ "$ok" -eq 1 ]; then
+                  echo '{"ok": true, "evidence": "'"$evidence"'"}'
+                else
+                  echo '{"ok": false, "evidence": "'"$evidence"'"}'
+                fi
+    - id: commit_after_a_resize
+      description: a message sent after the resizes is committed above the region, drawn again below it at the new width
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/committed.txt"
+                you=$(grep -n '^You: after$' "$f" | cut -d: -f1)
+                rule=$(grep -n '^─' "$f" | tail -1 | cut -d: -f1)
+                if [ -n "$you" ] && [ -n "$rule" ] && [ "$you" -lt "$rule" ] && [ "$(grep -c '^─' "$f")" -eq 1 ]; then
+                  echo '{"ok": true, "evidence": "the committed row is above the single rule"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected screen after the commit"}'
+                fi
+contractHash: sha256:504731d0ca1af1e459151267faeeed993565727794be203f637c8ddb3ebe9ea8

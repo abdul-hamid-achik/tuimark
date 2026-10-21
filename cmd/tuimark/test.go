@@ -36,6 +36,9 @@ type goldenEntry struct {
 	// input or script (SPEC v0.4d §15.5). *string, like Theme: an explicit
 	// "" is a manifest error.
 	Keyboard *string `json:"keyboard,omitempty"`
+	// Inline says the goldens are dump --inline output, or play --inline
+	// output in an entry with input or script (SPEC v0.4d §15.5, §15.1).
+	Inline bool `json:"inline,omitempty"`
 }
 
 // theme returns the entry's theme value and whether the field was given
@@ -306,7 +309,7 @@ func (c *cli) cmdTest(args []string) int {
 				continue
 			}
 		}
-		freshPerSize := hasPlay || e.Styles || e.Cells
+		freshPerSize := hasPlay || e.Styles || e.Cells || e.Inline
 		themeVal, themeSet := e.theme()
 
 		// A plain (non-play, non-styles) entry loads once: App.Dump is a
@@ -349,6 +352,7 @@ func (c *cli) cmdTest(args []string) int {
 
 			var d *dump.Dump
 			var events []dump.Event
+			var scrollback *dump.Scrollback
 			isPlay := false
 
 			if freshPerSize {
@@ -363,6 +367,17 @@ func (c *cli) cmdTest(args []string) int {
 					ioErr = true
 					continue
 				}
+				if e.Inline && !app.Modern() {
+					// SPEC v0.4d §15.1: an entry whose document writes
+					// version fails with the error of --inline.
+					cmd := "dump"
+					if hasPlay {
+						cmd = "play"
+					}
+					fmt.Fprintf(c.stdout, "FAIL %s %s: %v\n", e.Name, size, inlineNeedsCurrent(cmd))
+					ioErr = true
+					continue
+				}
 				if hasPlay {
 					if err := play.CheckKeys(app, steps, keyboard); err != nil {
 						fmt.Fprintf(c.stdout, "FAIL %s %s: play %v\n", e.Name, size, err)
@@ -371,6 +386,7 @@ func (c *cli) cmdTest(args []string) int {
 					}
 					sess := play.NewSession(app, cols, rows, e.Cells, e.Styles, false, true)
 					sess.Keyboard = keyboard
+					sess.Inline = e.Inline
 					sess.Run(steps)
 					if sess.UsageErr != nil {
 						fmt.Fprintf(c.stdout, "FAIL %s %s: play step %d (%s): %v\n", e.Name, size, sess.UsageStep, sess.UsageRaw, sess.UsageErr)
@@ -380,7 +396,15 @@ func (c *cli) cmdTest(args []string) int {
 					d = sess.BuildDump()
 					events = sess.Events
 					isPlay = true
+					if sess.Rec != nil {
+						scrollback = sess.Rec.Scrollback(e.Styles)
+					}
 				} else {
+					if err := applyInline(app, "dump", e.Inline); err != nil {
+						fmt.Fprintf(c.stdout, "FAIL %s %s: %v\n", e.Name, size, err)
+						ioErr = true
+						continue
+					}
 					d = frameDump(app.Frame(cols, rows), e.Cells, e.Styles)
 				}
 			} else {
@@ -392,6 +416,9 @@ func (c *cli) cmdTest(args []string) int {
 				var tb strings.Builder
 				tb.WriteString(dump.Text(d))
 				play.WriteEventsSection(&tb, events)
+				if scrollback != nil {
+					writeScrollbackSection(&tb, scrollback)
+				}
 				gotText = tb.String()
 			} else {
 				gotText = dump.Text(d)
@@ -408,7 +435,7 @@ func (c *cli) cmdTest(args []string) int {
 
 			var gotJSON []byte
 			if isPlay {
-				play := &dump.Play{Dump: d, Events: events}
+				play := &dump.Play{Dump: d, Events: events, Scrollback: scrollback}
 				b, err := json.MarshalIndent(play, "", "  ")
 				if err != nil {
 					fmt.Fprintf(c.stdout, "FAIL %s %s (json): %v\n", e.Name, size, err)
