@@ -1,0 +1,68 @@
+---
+title: Textarea
+description: A multi-line input that grows with its text up to eight rows and then scrolls - its keys, its caret and goal column, paste, the events it fires, and how it works with key hints.
+---
+
+A `<textarea>` is an [`input`](/guide/widgets#input) of several lines: a message composer, a commit message, a note. It is vocabulary of the current language (a `<tui>` without `version`); in a document that writes `version` the tag is `V001`, with the hint `(requires a <tui> without version)`.
+
+<include cwd lang="tui">snippets/textarea/composer.tui</include>
+
+<details>
+<summary>data.json</summary>
+
+
+<include cwd lang="json">snippets/textarea/data.json</include>
+
+
+</details>
+
+<TermShot name="w-textarea" />
+
+It takes the common attributes plus `bind`, `placeholder`, `on:change`, and `on:submit`. It needs an `id` (`V012`) and takes no content (`V013`): its text is the value at its `bind` path, a string. Without `bind` the runtime keeps the value by `id`. There is no `secret` (`V002`): a hidden text of several lines has no use. Like an `input`, it cannot stand in a list row or in an `each` template (`V001`).
+
+## Size
+
+A textarea is one row high when it is empty and grows one row per visual line, up to its `max-height`, which the built-in sheet sets to 8. After that it scrolls. In a `row`, it takes the rest of the row (`row > textarea { width: 1fr; }`), as a composer beside its send button does.
+
+<TermShot name="w-textarea-grown" />
+
+- Its visual lines are the text wrapped at one column less than its width, so the cell after a full line is always there for the caret. `"a\n"` has two lines, the second empty.
+- It moves the layout when it grows: the nodes after it move down, and a modal sized by its content around it grows. An `input` never does. Give it a `height` or a `max-height` when the layout must not move.
+- The dump's `scroll` is `{"y": OFFSET, "h": EXTENT}`, the extent being the larger of its rows and its visual lines. The wheel scrolls it without moving the caret, `scrollbar: auto` paints a thumb on its border, and `L006` warns when it can never show part of its text.
+- Next to a `list` it is sized by its text and does not share the space with it; the list takes what is left.
+
+## Keys
+
+A focused, enabled textarea takes these keys before the keymap sees them. Everything else goes on to the keymap.
+
+- **Typing.** Every printable key and `space`. Keys that arrive together are one edit, with one `on:change`.
+- **Deleting.** `backspace` and `ctrl+h` delete the cluster before the caret and `delete` the one after it; either may be a line break. `ctrl+u` deletes back to the start of the line and `ctrl+k` forward to its end, or the line break at the end of a line that is not the last. `ctrl+w` and `alt+backspace` delete a word backward, or the line break at the start of a line.
+- **Moving.** `left` and `right` cross line breaks. `home` and `ctrl+a` go to the start of the line, `end` and `ctrl+e` to its end. `alt+b` and `alt+f` move by words, across lines, and so do `left` and `right` held with `alt` or `ctrl`.
+- **Lines.** `up` and `down` move one visual line to the column the caret last had, and `pgup` and `pgdn` move by as many lines as the textarea has rows. On the first line `up` is not taken, and on the last `down` is not: the keymap gets them, so `<bind keys="up" action="history_prev" when="#composer:focus"/>` recalls the previous message from the first line only. `pgup` and `pgdn` are taken only while the textarea scrolls.
+- **Line breaks.** `enter` fires `on:submit` when the textarea has one, and changes nothing: the host clears the text when it wants to. Without `on:submit`, `enter` inserts a line break. `shift+enter`, `alt+enter`, and the LF byte (`ctrl+j`) always do.
+- **Not taken.** `tab`, `shift+tab`, `esc`, `ctrl+enter`, `ctrl+c`, the F keys, and the other `ctrl+X` and `alt+X`, so they can be bound.
+
+Because a textarea takes every printable key, a keymap row for a plain key (`y`, say, for an approval) never fires while an enabled textarea has focus. Disable the textarea while the row must act (`disabled="approval.open"`): a disabled textarea takes no focus and no key, and keeps its value.
+
+<include cwd lang="term">snippets/out/textarea-events.txt</include>
+
+## Value, caret, and paste
+
+- **The caret** starts at the end of the text and is a position between two clusters. When the text changes from outside (a `Set`, a `Batch`, an `append`, a host `set`), the caret goes to the end of the new text, which is where a composer wants it after the host clears it or recalls an older message. A write of the text it already holds is no change. A click focuses the textarea without moving the caret.
+- **The text the host writes** is read as run text: escape sequences are removed, each tab becomes four spaces, and other control characters but the line feed are removed. Everything reads that text (the screen, the dump, and the `value` of every event), and the store keeps what the host wrote until the next edit that changes the text, which writes the cleaned text with the edit applied.
+- **A bracketed paste** keeps its line breaks and is one edit with one `on:change`. A terminal without bracketed paste delivers a paste as keys, so each carriage return is an `enter` and submits when there is an `on:submit`; Tuimark does not guess a paste from the timing, so a host that cares waits for a short quiet time before it submits.
+- **There is no undo.**
+
+## Events
+
+`on:change` and `on:submit` carry `{"source": ID, "keys": {}, "value": TEXT}`, and so does a keymap row fired while the textarea has focus. `move-next` and the other `move-*` and `check-*` built-ins never apply to a textarea; naming one with `to=` is `B007`.
+
+## Key hints and the caret
+
+`<hints/>` shows the keymap rows a key would fire now. A focused textarea's `up` and `down` depend on where the caret is and how the text wraps, which the layout decides, so the hints are chosen once more after layout. In the example above, `up history` is shown while the caret is on the first line and hidden once the caret is on a later line:
+
+```sh
+tuimark play composer.tui --data data.json --input "text:a shift+enter" --format json
+```
+
+The dump of the focused textarea has a `caret` member, `{"line", "col", "x", "y"}`: the caret's line and its column in it, from 0, in columns, then the cell where the terminal's cursor is put (`x` and `y` are left out when the caret has been scrolled out of view, and the cursor is hidden). It is on no other node. In `tuimark run` the runtime paints no caret glyph: the terminal's own cursor shows the caret, so an input method opens its window there.

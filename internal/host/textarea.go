@@ -91,6 +91,10 @@ func (a *App) settleTextarea(b *layout.Box) {
 	if st == nil || !b.Laid {
 		return
 	}
+	// The box leaves the frame as a settled one: whether layout followed
+	// the caret is not a member of the frame (a skipped frame and a cold
+	// build agree).
+	b.Follow = -1
 	if !st.goalSet {
 		st.goal, st.goalSet = layout.CaretOf(b).VCol, true
 	}

@@ -34,6 +34,7 @@
     "select",
     "slot",
     "template",
+    "textarea",
     "use"
   ],
   "properties": 35,

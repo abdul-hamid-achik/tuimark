@@ -413,6 +413,7 @@ const OUTPUTS = [
   { name: 'w-hints-filter', dir: 'widgets', kind: 'grid', args: ['play', 'hints.tui', '--data', 'data.json', '--cols', '44', '--rows', '8', '--input', '/'] },
   // the current language: forms, the spinner, defaults, composition
   { name: 'forms-events', dir: 'forms', kind: 'events', args: ['play', 'form.tui', '--data', 'data.json', '--cols', '44', '--rows', '16', '--input', 'tab enter down enter tab space enter tab tab down space'] },
+  { name: 'textarea-events', dir: 'textarea', kind: 'events', args: ['play', 'composer.tui', '--data', 'data.json', '--cols', '44', '--rows', '8', '--input', 'text:hello shift+enter text:world up up enter'] },
   { name: 'forms-bad', dir: 'forms', kind: 'term', args: ['validate', 'form.tui', '--data', 'bad.json'], exit: [2] },
   { name: 'spinner-tick', dir: 'widgets', kind: 'grid', args: ['play', 'spinner.tui', '--data', 'spinner.json', '--cols', '30', '--rows', '1', '--input', 'tick:300ms'] },
   { name: 'layout-panes', dir: 'layout', kind: 'grid', args: ['dump', 'panes.tui', '--cols', '40', '--rows', '8'] },
@@ -565,6 +566,8 @@ const SHOTS = [
   { name: 'w-hints', dir: 'widgets', file: 'hints.tui', data: 'data.json', cols: 44, rows: 8, alt: 'key hints generated from the keymap along the bottom row' },
   { name: 'w-modal', dir: 'widgets', file: 'modal.tui', cols: 44, rows: 7, alt: 'a modal with a title and two buttons, the focused one reversed' },
   { name: 'w-input', dir: 'widgets', file: 'input.tui', data: 'data.json', cols: 40, rows: 3, alt: 'an empty input showing its placeholder' },
+  { name: 'w-textarea', dir: 'textarea', file: 'composer.tui', data: 'data.json', cols: 44, rows: 6, alt: 'a bordered textarea, one row high, showing its dim placeholder, with a status line and the hint for ctrl+enter below it' },
+  { name: 'w-textarea-grown', dir: 'textarea', file: 'composer.tui', data: 'grown.json', cols: 44, rows: 7, alt: 'the same textarea holding three lines, grown to three rows; the status line moved down' },
   { name: 'w-form', dir: 'forms', file: 'form.tui', data: 'data.json', cols: 44, rows: 16, alt: 'a form: a name input with its placeholder, a select showing UTC, a checked and an unchecked checkbox, a radio group with Free chosen, and Save and Cancel buttons' },
   { name: 'w-select-open', dir: 'forms', file: 'form.tui', data: 'data.json', cols: 44, rows: 16, input: 'tab enter', alt: 'the same form with the select open: a bordered option list under it, over the radio group, with the cursor on UTC' },
   { name: 'w-spinner', dir: 'widgets', file: 'spinner.tui', data: 'spinner.json', cols: 30, rows: 1, input: 'tick:300ms', alt: 'a braille spinner glyph followed by the text Deploying billing' },

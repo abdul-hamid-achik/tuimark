@@ -246,7 +246,7 @@
       "patterns": [
         {
           "name": "entity.name.tag.tcss",
-          "match": "(?<![\\w-])(?:tui|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|span|app)(?![\\w-])"
+          "match": "(?<![\\w-])(?:tui|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|textarea|span|app)(?![\\w-])"
         },
         {
           "name": "entity.name.tag.unknown.tcss invalid.illegal.unknown-tag.tcss",

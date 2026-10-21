@@ -1,0 +1,6 @@
+$ tuimark play composer.tui --data data.json --cols 44 --rows 8 --input "text:hello shift+enter text:world up up enter"
+1 typed composer {} "hello"
+2 typed composer {} "hello\n"
+3 typed composer {} "hello\nworld"
+5 history_prev composer {} "hello\nworld"
+6 send composer {} "hello\nworld"

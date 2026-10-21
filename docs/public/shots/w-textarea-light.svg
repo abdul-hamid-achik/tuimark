@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="450.4" height="148" viewBox="0 0 450.4 148" role="img" aria-label="a bordered textarea, one row high, showing its dim placeholder, with a status line and the hint for ctrl+enter below it">
+<title>a bordered textarea, one row high, showing its dim placeholder, with a status line and the hint for ctrl+enter below it</title>
+<rect width="450.4" height="148" rx="6" fill="#ffffff"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+<path stroke="#1f2328" stroke-width="1.3" d="M23.6 44H23.6Q18.8 44 18.8 48.8V54M23.6 44H33.2M33.2 44H42.8M42.8 44H52.4M52.4 44H62M62 44H71.6M71.6 44H81.2M81.2 44H90.8M90.8 44H100.4M100.4 44H110M110 44H119.6M119.6 44H129.2M129.2 44H138.8M138.8 44H148.4M148.4 44H158M158 44H167.6M167.6 44H177.2M177.2 44H186.8M186.8 44H196.4M196.4 44H206M206 44H215.6M215.6 44H225.2M225.2 44H234.8M234.8 44H244.4M244.4 44H254M254 44H263.6M263.6 44H273.2M273.2 44H282.8M282.8 44H292.4M292.4 44H302M302 44H311.6M311.6 44H321.2M321.2 44H330.8M330.8 44H340.4M340.4 44H350M350 44H359.6M359.6 44H369.2M369.2 44H378.8M378.8 44H388.4M388.4 44H398M398 44H407.6M407.6 44H417.2M417.2 44H426.8M426.8 44H426.8Q431.6 44 431.6 48.8V54M18.8 54V74M431.6 54V74M23.6 84H23.6Q18.8 84 18.8 79.2V74M23.6 84H33.2M33.2 84H42.8M42.8 84H52.4M52.4 84H62M62 84H71.6M71.6 84H81.2M81.2 84H90.8M90.8 84H100.4M100.4 84H110M110 84H119.6M119.6 84H129.2M129.2 84H138.8M138.8 84H148.4M148.4 84H158M158 84H167.6M167.6 84H177.2M177.2 84H186.8M186.8 84H196.4M196.4 84H206M206 84H215.6M215.6 84H225.2M225.2 84H234.8M234.8 84H244.4M244.4 84H254M254 84H263.6M263.6 84H273.2M273.2 84H282.8M282.8 84H292.4M292.4 84H302M302 84H311.6M311.6 84H321.2M321.2 84H330.8M330.8 84H340.4M340.4 84H350M350 84H359.6M359.6 84H369.2M369.2 84H378.8M378.8 84H388.4M388.4 84H398M398 84H407.6M407.6 84H417.2M417.2 84H426.8M426.8 84H426.8Q431.6 84 431.6 79.2V74"/>
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="14" y="29" textLength="96" lengthAdjust="spacing" fill="#1f2328">assistant:</text>
+<text x="119.6" y="29" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">what</text>
+<text x="167.6" y="29" textLength="48" lengthAdjust="spacing" fill="#1f2328">shall</text>
+<text x="225.2" y="29" textLength="19.2" lengthAdjust="spacing" fill="#1f2328">we</text>
+<text x="254" y="29" textLength="67.2" lengthAdjust="spacing" fill="#1f2328">change?</text>
+<text x="23.6" y="69" textLength="67.2" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">Message</text>
+<text x="14" y="109" textLength="48" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">ready</text>
+<text x="177.2" y="109" textLength="19.2" lengthAdjust="spacing" fill="#1f2328">up</text>
+<text x="206" y="109" textLength="67.2" lengthAdjust="spacing" fill="#1f2328">history</text>
+<text x="292.4" y="109" textLength="96" lengthAdjust="spacing" fill="#1f2328">ctrl+enter</text>
+<text x="398" y="109" textLength="38.4" lengthAdjust="spacing" fill="#1f2328">send</text>
+</g>
+</svg>

@@ -1,0 +1,18 @@
+<tui>
+  <style>
+    #composer { border: rounded; }
+    #status { dim: true; }
+  </style>
+  <screen id="main" focus="#composer">
+    <text>assistant: what shall we change?</text>
+    <textarea id="composer" bind="draft" placeholder="Message" on:change="typed" on:submit="send"/>
+    <row>
+      <text id="status" width="1fr">{status}</text>
+      <hints/>
+    </row>
+  </screen>
+  <keymap when="#composer:focus">
+    <bind keys="up" action="history_prev" label="history"/>
+    <bind keys="ctrl+enter" action="send" label="send"/>
+  </keymap>
+</tui>

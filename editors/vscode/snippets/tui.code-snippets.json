@@ -167,6 +167,11 @@
     "description": "A dropdown over an array, one choice (a document without version)",
     "body": "<select id=\"${1:tz}\" bind=\"${2:tz}\" each=\"${3:zones} as ${4:z}\" key=\"${4:z}.${5:id}\" label=\"{${4:z}.${6:name}}\" placeholder=\"${7:choose}\" on:change=\"${8:tz_changed}\"/>"
   },
+  "Textarea (composer)": {
+    "prefix": ["textarea", "composer"],
+    "description": "A multi-line input that grows to eight rows: enter submits, shift+enter breaks the line (a document without version)",
+    "body": "<textarea id=\"${1:composer}\" bind=\"${2:draft}\" placeholder=\"${3:Message}\" on:change=\"${4:typed}\" on:submit=\"${5:send}\"/>"
+  },
   "Radio group (single list)": {
     "prefix": ["radio", "listsingle"],
     "description": "A list that holds one checked key: a radio group (a document without version)",

@@ -64,6 +64,22 @@
     "cmd": "tuimark play input.tui --data data.json --cols 40 --rows 3"
   },
   {
+    "name": "w-textarea",
+    "light": true,
+    "cols": 44,
+    "rows": 6,
+    "alt": "a bordered textarea, one row high, showing its dim placeholder, with a status line and the hint for ctrl+enter below it",
+    "cmd": "tuimark play composer.tui --data data.json --cols 44 --rows 6"
+  },
+  {
+    "name": "w-textarea-grown",
+    "light": true,
+    "cols": 44,
+    "rows": 7,
+    "alt": "the same textarea holding three lines, grown to three rows; the status line moved down",
+    "cmd": "tuimark play composer.tui --data grown.json --cols 44 --rows 7"
+  },
+  {
     "name": "w-form",
     "light": true,
     "cols": 44,
