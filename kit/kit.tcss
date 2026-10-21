@@ -63,6 +63,12 @@
 .k-card-row { width: 1fr; height: 1; gap: 1; }
 .k-card-actions { width: 1fr; height: 1; gap: 2; }
 
+/* --------------------------------------------------------- key / value */
+
+.k-kv { width: 1fr; height: 1; gap: 1; }
+.k-kv-label { width: 8; color: $muted; }
+.k-kv-value { width: 1fr; color: $fg; }
+
 /* ---------------------------------------------------------------- alert */
 
 .k-alert { width: 1fr; height: auto; border: rounded; border-color: $border; background: $panel; padding: 0 1; }
@@ -72,6 +78,11 @@
 .k-alert.danger { border-color: $danger; title-color: $danger; }
 .k-alert-row { width: 1fr; height: auto; gap: 1; }
 .k-alert-icon { width: 1; bold: true; }
+/* A prop the <use> leaves out is an empty text: hide it, gap included. */
+.k-alert-icon:empty, .k-alert-text:empty { display: none; }
+/* The body holds the text prop and the slot's content; plain <text> there
+ * inherits the wrap and the color. */
+.k-alert-body { width: 1fr; height: auto; color: $fg; wrap: wrap; }
 /* The icon takes the alert's variant, which the <use> puts on the box. */
 .k-alert.info > .k-alert-row > .k-alert-icon { color: $info; }
 .k-alert.ok > .k-alert-row > .k-alert-icon { color: $ok; }
@@ -85,6 +96,7 @@
 .k-appbar-brand { width: auto; bold: true; color: $accent; }
 .k-appbar-title { width: auto; bold: true; }
 .k-appbar-meta { width: auto; color: $muted; }
+.k-appbar-brand:empty, .k-appbar-title:empty { display: none; }
 
 .k-statusbar { dock: bottom; width: 1fr; height: 1; gap: 1; overflow: hidden; background: $raised; color: $fg; }
 .k-statusbar-seg { width: auto; padding: 0 1; bold: true; color: $on-accent; background: $accent; }
@@ -138,6 +150,7 @@
 .k-empty-icon { width: auto; color: $muted; bold: true; }
 .k-empty-title { width: auto; bold: true; color: $fg; }
 .k-empty-text { width: auto; color: $muted; }
+.k-empty-icon:empty, .k-empty-text:empty { display: none; }
 
 /* ------------------------------------------------------------ data table */
 
@@ -244,6 +257,8 @@
 .k-help-close { width: 1fr; height: 1; gap: 1; }
 .k-help-close > .k-help-key { color: $accent; bold: true; }
 .k-help-close > .k-help-label { color: $muted; }
+/* The list scrolls when the keymap is longer than the screen. */
+.k-help-scroll { width: 1fr; height: 1fr; padding: 0; }
 
 /* ------------------------------------------------------- split / master */
 

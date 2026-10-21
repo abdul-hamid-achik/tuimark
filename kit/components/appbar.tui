@@ -1,19 +1,17 @@
-<!-- k-appbar · Contract: reads app.name, app.page, app.user, app.env · Actions: none · Keys: none · Requires: k-badge -->
+<!-- k-appbar · Contract: props brand, title, style; slot: the right side; reads app.user, app.env · Actions: none · Keys: none · Requires: k-badge -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo">
     <col id="app" width="1fr" height="1fr">
-      <!-- COPY: the app bar is a one-row `row` with class `k-appbar`. The
-           class docks it to the top of its parent (`dock: top`), so the
-           content below it keeps all the remaining space whatever it is.
-           Put at most one top-docked bar in a container. -->
-      <row class="k-appbar">
-        <text class="k-appbar-brand">◆ {app.name}</text>
-        <text class="k-appbar-title">{app.page}</text>
-        <spacer/>
+      <!-- COPY: the app bar is one row docked to the top of its parent, so
+           the content below keeps all the remaining space. What you write
+           inside the use goes on the right. Put at most one top-docked bar
+           in a container. A page title from data is the class markup:
+           <row class="k-appbar"> with its own k-appbar-* texts. -->
+      <use template="k-appbar" brand="◆ orbit" title="Deployments">
         <text class="k-appbar-meta">{app.user}</text>
         <text class="k-badge ok">{app.env}</text>
-      </row>
+      </use>
       <col width="1fr" height="1fr" pad="1">
         <text class="k-muted">The page content goes here.</text>
       </col>

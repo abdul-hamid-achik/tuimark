@@ -1,7 +1,7 @@
 {
   "view": "basics",
   "theme": { "name": "dark" },
-  "status": { "text": "ready", "right": "kit v1" },
+  "status": { "text": "ready", "right": "kit v2" },
   "toast": { "show": false, "text": "", "is_ok": false, "is_warn": false, "is_danger": false },
   "crumbs": [
     { "id": "prod", "label": "Production", "last": false },
@@ -9,25 +9,19 @@
     { "id": "billing", "label": "billing", "last": false },
     { "id": "settings", "label": "Settings", "last": true }
   ],
-  "alerts": {
-    "info": { "title": "Heads up", "icon": "i", "text": "Deploys are paused until 09:00 UTC." },
-    "ok": { "title": "Saved", "icon": "✓", "text": "Your changes are live everywhere." },
-    "warn": { "title": "Quota", "icon": "!", "text": "92% of this month's build minutes used." },
-    "danger": { "title": "Build failed", "icon": "✗", "text": "Step 3 exited with code 1." }
-  },
   "stats": {
-    "req": { "title": "Requests", "value": "128.4k", "delta": "▲ 4.2%", "good": true, "hist": [3, 4, 4, 6, 5, 7, 8, 7, 9, 11, 10, 12] },
-    "err": { "title": "Errors", "value": "0.31%", "delta": "▼ 0.08", "good": true, "hist": [5, 4, 6, 3, 4, 2, 3, 5, 2, 2, 3, 1] }
+    "req": { "value": "128.4k", "delta": "▲ 4.2%", "good": true, "hist": [3, 4, 4, 6, 5, 7, 8, 7, 9, 11, 10, 12] },
+    "err": { "value": "0.31%", "delta": "▼ 0.08", "good": true, "hist": [5, 4, 6, 3, 4, 2, 3, 5, 2, 2, 3, 1] }
   },
   "meters": {
-    "upload": { "label": "Upload", "pct": 64, "text": "64% · 8.2 MB/s" },
-    "disk": { "label": "Disk", "pct": 91, "text": "91% of 500 GB", "warn": false, "danger": true },
-    "tests": { "label": "Tests", "pct": 100, "text": "212 / 212" }
+    "upload": { "pct": 64, "text": "64% · 8.2 MB/s" },
+    "disk": { "pct": 91, "text": "91% of 500 GB", "warn": false, "danger": true },
+    "tests": { "pct": 100, "text": "212 / 212" }
   },
   "forms": {
     "profile": {
-      "name": { "label": "Name", "placeholder": "your name", "help": "Shown on your profile.", "value": "Ada Lovelace", "error": "" },
-      "email": { "label": "Email", "placeholder": "you@example.com", "help": "We never share it.", "value": "ada@example.com", "error": "" },
+      "name": { "value": "Ada Lovelace", "error": "" },
+      "email": { "value": "ada@example.com", "error": "" },
       "valid": true
     }
   },
@@ -50,7 +44,6 @@
       { "id": "mailer", "name": "mailer", "state": "stopped", "ok": false, "region": "ap-south", "rps": "0", "p95": "0" }
     ]
   },
-  "empty": { "icon": "◌", "title": "No deployments yet", "text": "Push a commit or create one.", "action": "New deployment" },
   "log": {
     "title": "build log · 6 lines",
     "count": 6,
@@ -72,8 +65,6 @@
   },
   "palette": {
     "open": false,
-    "title": "Command palette",
-    "placeholder": "type a command…",
     "query": "",
     "cur": "deploy",
     "commands": [
@@ -94,7 +85,7 @@
       { "id": "help", "label": "Show the keys", "hint": "?" }
     ]
   },
-  "help": { "open": false, "title": "Keys" },
+  "help": { "open": false },
   "split": {
     "cur": "i2",
     "items": [

@@ -122,7 +122,7 @@ func TestEveryTabShowsItsContent(t *testing.T) {
 		"forms":    {"Profile", "Notify me by", "Shown on your profile."},
 		"data":     {"Services · 5", "api-gateway", "build log · 6 lines", "No deployments yet"},
 		"overlays": {"Dialogs", "Toasts", "Delete project…"},
-		"layouts":  {"Incidents", "Billing errors", "owner: grace"},
+		"layouts":  {"Incidents", "Billing errors", "Owner    grace"},
 	}
 	for view, subs := range want {
 		a := newApp(t)

@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -69,7 +70,7 @@ func stripXMLComments(s string) string {
 var (
 	includeTag  = regexp.MustCompile(`<include\s+src="([^"]+)"\s*/>`)
 	fragmentRE  = regexp.MustCompile(`(?s)^\s*<fragment>(.*)</fragment>\s*$`)
-	templateRE  = regexp.MustCompile(`(?s)<template\s+id="([^"]+)"\s*>(.*?)</template>`)
+	templateRE  = regexp.MustCompile(`(?s)<template\s+id="([^"]+)"(?:\s+props="[^"]*")?\s*>(.*?)</template>`)
 	useTag      = regexp.MustCompile(`<use\b[^>]*>`)
 	anyTag      = regexp.MustCompile(`<([a-z]+)\b[^>]*>`)
 	templateRef = regexp.MustCompile(`\btemplate="([^"]+)"`)
@@ -580,6 +581,36 @@ func TestKitTemplates(t *testing.T) {
 		if strings.Contains(km, "#") {
 			t.Errorf("kit.tui: a keymap names an id: %s", km)
 		}
+	}
+}
+
+// Kit v2: every template takes the prop `style` and writes it on its root, a
+// copy having no id of its own to size it by; a prop it declares is read in
+// its body (an unread prop is a typo that validates clean); and a template has
+// at most one <slot/>.
+func TestTemplatesTakeProps(t *testing.T) {
+	declared := regexp.MustCompile(`(?s)<template\s+id="([^"]+)"(?:\s+props="([^"]*)")?\s*>(.*?)</template>`)
+	n := 0
+	for _, m := range declared.FindAllStringSubmatch(fragmentBody(t, kitFragment), -1) {
+		id, props, body := m[1], strings.Fields(m[2]), m[3]
+		n++
+		if !slices.Contains(props, "style") {
+			t.Errorf("template %s: no `style` prop", id)
+		}
+		if root := rootTag(body); !strings.Contains(root, `style="{$style}"`) {
+			t.Errorf("template %s: its root does not write style=\"{$style}\": %s", id, root)
+		}
+		for _, p := range props {
+			if !strings.Contains(body, "{$"+p+"}") {
+				t.Errorf("template %s: the prop %q is declared and never read", id, p)
+			}
+		}
+		if got := len(regexp.MustCompile(`<slot\s*/>`).FindAllString(body, -1)); got > 1 {
+			t.Errorf("template %s: %d slots, a template has one", id, got)
+		}
+	}
+	if n < 14 {
+		t.Errorf("kit.tui has %d templates, want at least 14", n)
 	}
 }
 

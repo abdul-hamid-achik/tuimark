@@ -2,18 +2,22 @@
   "container_remove": [
     {"path":"confirm.title","value":"Remove 2 containers?"},
     {
-      "path": "confirm.message",
+      "path": "confirm.body",
       "value": "postgres and redis and its writable layer will be deleted. Volumes are kept. This cannot be undone."
     },
+    {"path":"confirm.yes","value":"Confirm"},
+    {"path":"confirm.no","value":"Cancel"},
     {"path":"confirm.danger","value":true},
     {"path":"confirm.open","value":true}
   ],
   "container_restart": [
     {"path":"confirm.title","value":"Restart 2 containers?"},
     {
-      "path": "confirm.message",
+      "path": "confirm.body",
       "value": "postgres and redis will go down for a moment and come back. Open connections are dropped."
     },
+    {"path":"confirm.yes","value":"Confirm"},
+    {"path":"confirm.no","value":"Cancel"},
     {"path":"confirm.danger","value":false},
     {"path":"confirm.open","value":true}
   ],
@@ -208,9 +212,11 @@
   "container_stop": [
     {"path":"confirm.title","value":"Stop 2 containers?"},
     {
-      "path": "confirm.message",
+      "path": "confirm.body",
       "value": "postgres and redis will get SIGTERM and stop. Nothing is removed; start brings it back."
     },
+    {"path":"confirm.yes","value":"Confirm"},
+    {"path":"confirm.no","value":"Cancel"},
     {"path":"confirm.danger","value":false},
     {"path":"confirm.open","value":true}
   ],
@@ -472,7 +478,9 @@
   "help_open": [{"path":"help","value":{"open":true}}],
   "image_prune": [
     {"path":"confirm.title","value":"Remove 2 unused images?"},
-    {"path":"confirm.message","value":"Frees about 634MB. Images that a container uses are kept."},
+    {"path":"confirm.body","value":"Frees about 634MB. Images that a container uses are kept."},
+    {"path":"confirm.yes","value":"Confirm"},
+    {"path":"confirm.no","value":"Cancel"},
     {"path":"confirm.danger","value":true},
     {"path":"confirm.open","value":true}
   ],
@@ -553,6 +561,44 @@
       }
     }
   ],
+  "palette_query": [
+    {
+      "path": "palette",
+      "value": {
+        "commands": [
+          {"hint":"s","id":"stop","label":"Stop the selected containers…"},
+          {"hint":"u","id":"start","label":"Start the selected containers"},
+          {"hint":"r","id":"restart","label":"Restart the selected containers…"},
+          {"hint":"d","id":"remove","label":"Remove the selected containers…"},
+          {"hint":"enter","id":"detail","label":"Show the container's detail"},
+          {"hint":"/","id":"filter","label":"Filter containers"},
+          {"hint":"o","id":"sort","label":"Cycle the sort order"},
+          {"hint":"1","id":"containers","label":"Go to containers"},
+          {"hint":"3","id":"images","label":"Go to images"},
+          {"hint":"4","id":"volumes","label":"Go to volumes"},
+          {"hint":"5","id":"events","label":"Go to events"},
+          {"hint":"","id":"prune-images","label":"Prune unused images…"},
+          {"hint":"","id":"prune-volumes","label":"Prune unused volumes…"},
+          {"hint":"t","id":"theme","label":"Switch the theme"},
+          {"hint":"?","id":"help","label":"Show the keys"}
+        ],
+        "cur": "stop",
+        "open": true,
+        "query": "st"
+      }
+    },
+    {
+      "path": "found",
+      "value": {
+        "any": true,
+        "items": [
+          {"hint":"s","id":"stop","label":"Stop the selected containers…"},
+          {"hint":"u","id":"start","label":"Start the selected containers"},
+          {"hint":"r","id":"restart","label":"Restart the selected containers…"}
+        ]
+      }
+    }
+  ],
   "palette_run": [
     {
       "path": "palette",
@@ -581,9 +627,11 @@
     },
     {"path":"confirm.title","value":"Stop 2 containers?"},
     {
-      "path": "confirm.message",
+      "path": "confirm.body",
       "value": "postgres and redis will get SIGTERM and stop. Nothing is removed; start brings it back."
     },
+    {"path":"confirm.yes","value":"Confirm"},
+    {"path":"confirm.no","value":"Cancel"},
     {"path":"confirm.danger","value":false},
     {"path":"confirm.open","value":true}
   ],
@@ -595,7 +643,9 @@
   "toast_dismiss": [{"path":"toast","value":{"is_danger":false,"is_ok":false,"is_warn":false,"show":false,"text":""}}],
   "volume_prune": [
     {"path":"confirm.title","value":"Remove 1 unused volume?"},
-    {"path":"confirm.message","value":"Deletes their data and frees about 3.2GB. This cannot be undone."},
+    {"path":"confirm.body","value":"Deletes their data and frees about 3.2GB. This cannot be undone."},
+    {"path":"confirm.yes","value":"Confirm"},
+    {"path":"confirm.no","value":"Cancel"},
     {"path":"confirm.danger","value":true},
     {"path":"confirm.open","value":true}
   ]

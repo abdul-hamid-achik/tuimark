@@ -1,15 +1,19 @@
-<!-- k-empty · Contract: with="PATH as e" reads e.icon, e.title, e.text, and e.action, the label of the call to action (no button without it) · Actions: empty_create · Keys: enter on the button · Requires: k-btn, k-title -->
+<!-- k-empty · Contract: props icon, title, text (icon and text optional); slot: the call to action, your button and your action · Actions: deploy_create (the demo's button) · Keys: enter on the button · Requires: k-btn, k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
-  <screen id="demo" focus="#empty__create">
+  <screen id="demo" focus="#deploy__create">
     <col width="1fr" height="1fr" pad="1">
       <text class="k-title">empty state</text>
       <!-- USE: the k-empty template fills the space left and centers an
-           icon, a title, one line of help, and an optional call to action
-           (its label is e.action; leave it out for no button). The button
-           is empty__create and fires empty_create. Show it with
-           `if="!items.any"` on the <use>, next to the list it replaces. -->
-      <use id="empty" template="k-empty" with="empty as e"/>
+           icon, a title and one line of help, all props (the icon and the
+           text are optional), then its content: the call to action. The
+           button, its id and its action are yours (deploy__create fires
+           deploy_create), so the use needs no id and reads no data. Show it
+           with `if="!items.any"` on the <use>, next to the list it
+           replaces. -->
+      <use template="k-empty" icon="◌" title="No deployments yet" text="Push a commit or create one by hand.">
+        <button id="deploy__create" class="k-btn primary" label="New deployment" on:click="deploy_create"/>
+      </use>
     </col>
   </screen>
 </tui>

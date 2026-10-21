@@ -1,17 +1,19 @@
-<!-- k-stat · Contract: with="PATH as s" reads s.title, s.value, s.delta, s.hist[] (numbers), and the flags s.good and s.bad · Actions: none · Keys: none · Requires: k-title -->
+<!-- k-stat · Contract: props title, min, max (the sparkline range), style; with="PATH as s" reads s.value, s.delta, s.hist[] (numbers), and the flags s.good and s.bad · Actions: none · Keys: none · Requires: k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo">
     <col width="1fr" height="1fr" gap="1" pad="1">
       <text class="k-title">stat / KPI card</text>
-      <!-- USE: the k-stat template: the label as the box title, the value in
-           bold, and a row with the change and a sparkline of s.hist. The
+      <!-- USE: the k-stat template: the `title` prop as the box title, the
+           value in bold, and a row with the change and a sparkline of s.hist. The
            flags s.good and s.bad turn the change green or red (whether a
-           rise is good depends on the metric, so the host decides). Put
+           rise is good depends on the metric, so the host decides). `min`
+           and `max` fix the sparkline's range (without them it comes from
+           the values). Put
            stats in a row; each takes `1fr` of the width. -->
       <row width="1fr" height="auto" gap="1">
-        <use template="k-stat" with="stats.req as s"/>
-        <use template="k-stat" with="stats.err as s"/>
+        <use template="k-stat" title="Requests" with="stats.req as s"/>
+        <use template="k-stat" title="Errors" min="0" with="stats.err as s"/>
       </row>
     </col>
   </screen>

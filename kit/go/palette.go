@@ -5,12 +5,11 @@
 // that file with this one.
 //
 // The component reads palette.commands (the registry, [{id, label, hint}]),
-// palette.title, palette.placeholder, palette.query, found.items and
-// found.any, and reads and writes palette.open and palette.cur. This helper
-// writes the registry from your Commands, a default title ("Command palette")
-// and placeholder ("type a command…") when the store has none, keeps found
-// with Filter (a Derive, so the list follows the query as the user types),
-// and implements the actions:
+// palette.query, found.items and found.any, and reads and writes palette.open
+// and palette.cur. Its title and its placeholder are props of the use
+// (title="Command palette"), not data. This helper writes the registry from
+// your Commands, keeps found with Filter (a Derive, so the list follows the
+// query as the user types), and implements the actions:
 //
 //	palette_open   resets the query and the cursor, opens the palette
 //	palette_close  closes it
@@ -51,9 +50,9 @@ type Palette struct {
 }
 
 // NewPalette registers cmds and the derived found list. It writes
-// palette.commands, and palette.open, .query, .cur, .last, .title ("Command
-// palette") and .placeholder ("type a command…") when the store has none of
-// them: write your own title or placeholder in your data to keep it.
+// palette.commands, and palette.open, .query, .cur and .last when the store has
+// none of them. The title and the placeholder are props of the k-palette use
+// (title="Command palette"), not data: it writes neither.
 func NewPalette(app *tuimark.App, opts PaletteOptions, cmds ...Command) (*Palette, error) {
 	if opts.Path == "" {
 		opts.Path = "palette"
@@ -75,7 +74,6 @@ func NewPalette(app *tuimark.App, opts PaletteOptions, cmds ...Command) (*Palett
 		var errs []error
 		for name, v := range map[string]any{
 			"open": false, "query": "", "cur": p.first(), "last": "",
-			"title": "Command palette", "placeholder": "type a command…",
 		} {
 			if _, ok := app.Get(opts.Path + "." + name); !ok {
 				errs = append(errs, b.Set(opts.Path+"."+name, v))

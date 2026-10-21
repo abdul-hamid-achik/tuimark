@@ -1,19 +1,19 @@
-# Tuimark kit (v1)
+# Tuimark kit (v2)
 
 A copy-and-paste component kit for Tuimark, in the spirit of shadcn: you do not
 install it, you copy it into your project and own it.
 
 - `kit.tui`: the kit as one `<fragment>`. It loads the two sheets below, holds
-  the overlays' keys, and has one `<template>` per component that takes data
-  (alert, stat, meter, empty state, form field, breadcrumb, log, toast, confirm
-  dialog, command palette, help). Include it once and copy a component with
-  `<use>`.
+  the overlays' keys, and has one `<template>` per component that takes text,
+  data or content (card, key / value, app bar, alert, stat, meter, empty state,
+  form field, breadcrumb, log, toast, confirm dialog, command palette, help).
+  Include it once and copy a component with `<use>`.
 - `theme.tcss`: the design tokens (dark and light) and the base typography.
 - `kit.tcss`: the component classes.
 - `components/NAME.tui`: one small, valid document per component. For a
-  template it shows the `<use>`; for a class component (badge, button, card,
-  app bar, status bar, key hints, data table, menu, tabs, split pane) it holds
-  the markup to copy. A `NAME.sample.json` sits beside it when it binds data.
+  template it shows the `<use>`; for a class component (badge, button, status
+  bar, key hints, data table, menu, tabs, split pane) it holds the markup to
+  copy. A `NAME.sample.json` sits beside it when it binds data.
   Each includes `../kit.tui`, so it validates and dumps on its own:
 
   ```sh
@@ -45,7 +45,7 @@ first child of your `<tui>`, and put your own sheet after it:
   <style src="app.tcss"/>   <!-- yours: token overrides, app-specific sizes -->
   <screen id="main">
     <col width="1fr" height="1fr" pad="1">
-      <use template="k-alert" class="warn" with="quota as a"/>
+      <use template="k-alert" class="warn" title="Quota" icon="!" text="92% of the build minutes used."/>
     </col>
     <use id="confirm" template="k-confirm" class="danger" with="confirm as d"/>
   </screen>
@@ -56,36 +56,71 @@ The sheets are cascaded together; where two rules tie, the later one wins, so a
 token re-declared in your sheet rebrands the whole kit. A `<tui>` needs no
 `version` attribute.
 
-**Templates.** `<use template="k-NAME" with="PATH as x"/>` copies a component
-where it stands:
+**Templates.** `<use template="k-NAME" …/>` copies a component where it
+stands. A `<use>` passes three kinds of arguments:
 
-- **Data** comes through the `with` alias: every label, title, and value a copy
-  shows is a path under it, a button's label included. A copy reads `x.title`
-  as `PATH.title`, and a widget that writes (a field's input, the palette's
-  cursor) writes under `PATH`. A template that reads two objects takes two
-  aliases (`with="palette as p, found as f"`).
-- **Flags** (the paths a template reads in `if`, `open`, and `class:NAME`
-  guards) are optional members of the alias: a missing one reads as false.
-  The elements of an array the template repeats (a log's lines) still carry
-  every flag (B002 otherwise).
+- **Props** are literal text: a title, a label, a placeholder, an icon, the
+  sparkline's limits (`title="CPU"`, `min="0"`). A prop is text, never a path
+  (`title="{card.title}"` is V003); a title that comes from data is the class
+  markup (`<box class="k-card" title="{PATH}">`) or a path under `with`. A prop
+  you leave out is an attribute the copy does not write, or an empty text that
+  the kit hides (`:empty`: the alert's icon, the empty state's text).
+- **Data** comes through the `with` alias: values, arrays, the flags in `if`,
+  `open` and `class:NAME` guards, and the paths a widget writes. A copy reads
+  `x.value` as `PATH.value`, and a widget that writes (a field's input, the
+  palette's cursor) writes under `PATH`. A template that reads two objects
+  takes two aliases (`with="palette as p, found as f"`), and `k-kv` takes a
+  scalar (`with="svc.owner as v"`). Flags are optional members of the alias: a
+  missing one reads as false. The elements of an array the template repeats (a
+  log's lines) still carry every flag (B002 otherwise).
+- **Content** is what you write between `<use>` and `</use>`, for the
+  templates that have a `<slot/>`: card (the body), app bar (the right side),
+  alert (more body after `text`), empty state (the call to action) and confirm
+  (more body under `d.body`). Content stays in the place where you wrote it:
+  its paths are the document's (the alias of the `with` does not exist there:
+  write `{confirm.detail}`, not `{d.detail}`), its ids are yours (the `<use>`
+  does not scope them: `deploy__create`, not `create`), and its actions are the
+  app's. Two uses of one template with the same content would repeat its ids
+  (V004). Content in a template with no slot is V013.
+
+Besides:
+
 - **A variant** is a static `class` on the `<use>` (`class="danger"`). It lands
   on the copy's root, and the kit's rules style the parts from there
-  (`.k-alert.danger > .k-alert-row > .k-alert-icon`).
+  (`.k-alert.danger > .k-alert-row > .k-alert-icon`). It is a modifier, not a
+  prop.
+- **`style`** is a prop of every template. It lands on the copy's root, which
+  has no id of its own, so it is how an instance gets a size
+  (`<use template="k-card" title="Empty state" style="height: 10">`); a prop
+  you do not pass writes no `style` at all.
 - **Ids** come from the use: a template that holds ids needs an `id` on its
   `<use>`, which prefixes them. `<use id="confirm" template="k-confirm">` makes
-  `confirm__dialog`, `confirm__no` and `confirm__yes`.
+  `confirm__dialog`, `confirm__no` and `confirm__yes`. A `<use>` is not a node:
+  its own id names nothing, and a template with no ids of its own needs none.
 - **Sizes**: every template's root writes its own size, so a copy is the same
   size in a screen, a tab, or a `col`.
 
-**Classes.** A component whose content is yours (a card's body, a table's
-columns, a menu's rows, a row of buttons) is not a template, since a template
-has no slots: copy its markup from `components/NAME.tui` and keep its classes.
+**Classes.** A component stays a class, not a template, when a template would
+save nothing or cannot express it:
+
+- **table, menu, split**: their columns, rows or panes read a row alias, which
+  would be a slot with scope. A `<slot/>` inside an `each`, a list `<item>` or a
+  table is V001. A menu's list id (`menu`, named by keymaps and hosts) would
+  also become `U__list`.
+- **badge, button, tabs, hints**: one element each, and each carries an id or a
+  handler of its own (`{$}` cannot go in an id).
+- **status bar**: two sides, and a template has one slot.
+- **a card with a data title, an app bar with a data title**: the class markup
+  (`<box class="k-card" title="{PATH}">`) stays valid next to the templates.
+
+Copy the markup from `components/NAME.tui` and keep its classes. There are no
+named slots, no scoped slots, and a template has at most one `<slot/>`.
 
 Each component file starts with a **contract**, an XML comment that says what
 the component needs from the store and the host:
 
 ```
-k-NAME · Contract: <the with alias and the paths it reads and writes> · Actions: <named actions> · Keys: <keys> · Requires: <other kit classes>
+k-NAME · Contract: <the props, the with alias and the paths it reads and writes, the slot> · Actions: <named actions> · Keys: <keys> · Requires: <other kit classes>
 ```
 
 ## Tokens
@@ -197,7 +232,9 @@ true of every document and template in the kit.
   panels that show focus set one (and switch it to `double`).
 - Presentational attributes lose to author CSS: a `height="9"` attribute does
   not beat `.k-table { height: 1fr }`. To size a component in your app, add a
-  rule to your own sheet (`#svc { height: 9; }`).
+  rule to your own sheet (`#svc { height: 9; }`); to size a copy of a
+  template, which has no id, pass `style` (`style="height: 9"`), which is
+  author CSS on the root.
 - Narrow terminals: every kit document validates clean at 40, 80 and 120
   columns. `@media (max-cols: 60)` hides the least important part (the app bar's
   meta, a status bar's muted segment, a breadcrumb's older crumbs), and
@@ -230,7 +267,7 @@ No actions, no keys.
 filled one), `danger`, `ghost` (no background at all). The focused button is
 drawn inverted, bold and underlined, and no modifier shares its focus look with
 its idle look. A `disabled` button is dimmed. The label may be a `{path}`,
-resolved every frame (`label="{e.action}"` in the empty state's template).
+resolved every frame (`label="{d.yes}"` in the confirm dialog's template).
 
 ```xml
 <button id="buttons__save" class="k-btn primary" label="Save" on:click="button_save"/>
@@ -239,27 +276,44 @@ resolved every frame (`label="{e.action}"` in the empty state's template).
 Action: whatever `on:click` names. Keys: `enter` / `space` press the focused
 button, `tab` / `shift+tab` move focus.
 
-### card / panel (`components/card.tui`)
+### card / panel (`components/card.tui`, template `k-card`)
 
-A `box` with class `k-card` and a `title`. Parts: `k-card-title`, `k-card-text`,
-`k-card-muted`, `k-card-row` (a one-row group of badges or text),
-`k-card-actions` (a one-row button group). The border takes the focus color
-while anything inside holds focus (`:focus-within`). Side-by-side cards: a `row`
-of cards, each `1fr`.
+`<use template="k-card" title="Deploy">…</use>`: a `box` with class `k-card`
+whose title is the `title` prop and whose body is the use's content. Parts:
+`k-card-title`, `k-card-text`, `k-card-muted`, `k-card-row` (a one-row group of
+badges or text), `k-card-actions` (a one-row button group). The border takes
+the focus color while anything inside holds focus (`:focus-within`).
+Side-by-side cards: a `row` of cards, each `1fr`. A card whose title comes from
+data is the class markup, `<box class="k-card" title="{PATH}">`. `style` sizes
+one copy (`style="height: 10"`).
+
+### key / value row (`components/kv.tui`, template `k-kv`)
+
+`<use template="k-kv" label="Owner" with="svc.owner as v"/>`: a one-row `row`
+with class `k-kv` of the `label` prop in a muted, 8-column cell and the value
+`{v}` after it, for a card of facts. A row that mixes a badge and text uses the
+classes `k-kv`, `k-kv-label` and `k-kv-value` without the template.
 
 ### alert / callout (`components/alert.tui`, template `k-alert`)
 
-`<use template="k-alert" class="warn" with="PATH as a"/>`: a `box` with class
-`k-alert`, `a.title` as the box title, and a row with the glyph `a.icon`
-(optional: no icon, no glyph) and the wrapping `a.text`. The variant (`info`,
-`ok`, `warn`, `danger`) colors the frame and the glyph.
+`<use template="k-alert" class="warn" title="Quota" icon="!" text="92% used."/>`:
+a `box` with class `k-alert`, the `title` prop as the box title, and a row with
+the glyph `icon` and a body of the wrapping `text`. Every prop is optional (no
+icon, no glyph; the kit hides what is empty). The use's content goes in the
+body after the text: a line from data (`<text>{build.retry}</text>`) or a
+button. The variant (`info`, `ok`, `warn`, `danger`) colors the frame and the
+glyph.
 
-### app bar (`components/appbar.tui`)
+### app bar (`components/appbar.tui`, template `k-appbar`)
 
-A one-row `row` with class `k-appbar`, docked to the top of its parent
-(`dock: top`) so the content below keeps all the remaining space. Parts:
-`k-appbar-brand`, `k-appbar-title`, `k-appbar-meta` (hidden under 60 columns),
-then any badge. Put one top-docked bar in a container.
+`<use template="k-appbar" brand="◆ orbit" title="Deployments">…</use>`: a
+one-row `row` with class `k-appbar`, docked to the top of its parent
+(`dock: top`) so the content below keeps all the remaining space. The `brand`
+and `title` props are `k-appbar-brand` and `k-appbar-title`; the use's content
+is the right side, after a `spacer`: `k-appbar-meta` (hidden under 60
+columns), then any badge. Put one top-docked bar in a container. A title that
+comes from data is the class markup (`<row class="k-appbar">` with its own
+`k-appbar-title` text).
 
 ### status bar (`components/statusbar.tui`)
 
@@ -283,13 +337,16 @@ exist, so bind host actions you want listed unconditionally.
 last child of the screen: a `modal` with class `k-dialog` showing `d.body`
 under the title `d.title`, and an action row `k-dialog-actions` of
 `height: 1` with the buttons `d.no` and `d.yes`. `d.open` is the path the host
-flips. The [dialog helper](#dialog) writes all of them at the use's id, so with
-it `PATH` is that id (`with="confirm as d"`), and the labels are `Confirm` and
-`Cancel` unless the request names its own. The variant `danger` (or the flag
-`d.danger`) makes a destructive dialog. The dialog takes its content's size, up to 60 columns where the text
-wraps, and at most the screen. `focus` puts the cursor on the safe button so a
-stray `enter` cancels; `on:escape` cancels. Keep the labels short so the row
-fits 40 columns.
+flips. The labels are data, not props, because one dialog serves several
+operations (stop, restart, delete): the [dialog helper](#dialog) writes all of
+them at the use's id on every open, so with it `PATH` is that id
+(`with="confirm as d"`), and the labels are `Confirm` and `Cancel` unless the
+request names its own. The use's content goes under `d.body` (a list, a
+checkbox), with its paths written in full. The variant `danger` (or the flag
+`d.danger`) makes a destructive dialog. The dialog takes its content's size, up
+to 60 columns where the text wraps, and at most the screen. `focus` puts the
+cursor on the safe button so a stray `enter` cancels; `on:escape` cancels. Keep
+the labels short so the row fits 40 columns.
 
 Ids: `confirm__dialog`, `confirm__no`, `confirm__yes` (and your trigger, such
 as `confirm__open`). Actions: `dialog_confirm`, `dialog_cancel`, and your
@@ -298,19 +355,21 @@ trigger's `dialog_open`. Keys: `y` confirms and `n` cancels (the kit's keymap
 
 ### form field (`components/field.tui`, template `k-field`)
 
-`<use id="profile__email" template="k-field" with="forms.profile.email as f"/>`:
-a `col` with class `k-field` holding the label `f.label`, an `input` with
-class `k-field-input` bound to `f.value` (placeholder `f.placeholder`), the
-help line `f.help`, and the error line `f.error`. The input has its own border
-and `height: 3`, which is what lets `:focus` change `border-color`. While
-`f.error` is non-empty the label and the input are red and the error line
-replaces the help.
+`<use id="profile__email" template="k-field" label="Email"
+placeholder="you@example.com" help="We never share it."
+with="forms.profile.email as f"/>`: a `col` with class `k-field` holding the
+`label` prop, an `input` with class `k-field-input` bound to `f.value` (the
+`placeholder` prop), the `help` line, and the error line `f.error`. The input
+has its own border and `height: 3`, which is what lets `:focus` change
+`border-color`. While `f.error` is non-empty the label and the input are red and
+the error line replaces the help.
 
 A form is named by the id prefix of its fields, and its state lives under that
 name: the fields `profile__name` and `profile__email` read
 `forms.profile.name` and `forms.profile.email`, their inputs
 (`profile__name__input`, `profile__email__input`) write `.value`, and the host
 writes `forms.profile.<field>.error` ("" when fine) and `forms.profile.valid`.
+The label, the placeholder and the help are props of the use, not data.
 
 Ids: `profile__name__input`, `profile__email__input`, and your Save button
 (`profile__save`). Actions: `on:change` (`form_validate`: the host checks the
@@ -319,11 +378,15 @@ value and writes the field's `.error`), `on:submit` / the Save button
 
 ### empty state (`components/empty.tui`, template `k-empty`)
 
-`<use id="empty" template="k-empty" with="PATH as e" if="!items.any"/>`: a
-`col` with class `k-empty` that fills the space left and centers `e.icon`,
-`e.title`, `e.text`, then a call to action labeled `e.action` (none when
-`e.action` is absent). Show it in place of the list it replaces with the use's
-`if`. Action: the button's `empty_create` (source `empty__create`).
+`<use template="k-empty" icon="◌" title="No deployments yet" text="Push a
+commit." if="!items.any">`, with your button as its content: a `col` with class
+`k-empty` that fills the space left and centers the `icon`, `title` and `text`
+props (the icon and the text are optional), then the call to action. The
+button, its id and its action are the app's:
+`<button id="deploy__create" class="k-btn primary" label="New deployment"
+on:click="deploy_create"/>`, so the use needs no id and the kit has no action
+of its own here. Show it in place of the list it replaces with the use's `if`.
+It reads no data.
 
 ### data table (`components/table.tui`)
 
@@ -362,8 +425,9 @@ Optional action: `on:select`.
 
 ### labeled progress (`components/meter.tui`, template `k-meter`)
 
-`<use template="k-meter" class="ok" with="PATH as m"/>`: a `col` with class
-`k-meter`, a head row (`m.label`, a `spacer`, `m.text`) over a `progress` with
+`<use template="k-meter" class="ok" label="Tests" with="PATH as m"/>`: a `col`
+with class `k-meter`, a head row (the `label` prop, a `spacer`, `m.text`) over a
+`progress` with
 class `k-meter-bar` bound to `m.pct`, a number from 0 to 100. The variant `ok`,
 `warn` or `danger` colors the bar, or the flags `m.ok`, `m.warn` and
 `m.danger` pick it from data. The host updates the number and the text; no
@@ -371,11 +435,13 @@ actions.
 
 ### stat / KPI card (`components/stat.tui`, template `k-stat`)
 
-`<use template="k-stat" with="PATH as s"/>`: a `box` with class `k-stat` titled
-`s.title`: `s.value` in bold, then a row with the change `s.delta` (the flags
-`s.good` or `s.bad` make it green or red, because whether a rise is good
-depends on the metric) and a `sparkline` bound to `s.hist`, an array of
-numbers. No actions.
+`<use template="k-stat" title="CPU" min="0" with="PATH as s"/>`: a `box` with
+class `k-stat` titled by the `title` prop: `s.value` in bold, then a row with
+the change `s.delta` (the flags `s.good` or `s.bad` make it green or red,
+because whether a rise is good depends on the metric) and a `sparkline` bound
+to `s.hist`, an array of numbers. `min` and `max` (integers) are the
+sparkline's range: leave them out and the range comes from the values. No
+actions.
 
 ### toast (`components/toast.tui`, template `k-toast`)
 
@@ -391,18 +457,19 @@ keymap).
 
 ### command palette (`components/palette.tui`, template `k-palette`)
 
-`<use id="palette" template="k-palette" with="palette as p, found as f"/>`, the
-last child of the screen: a `modal` with class `k-palette` titled `p.title`,
-an `input` (`k-palette-input`, bound to `p.query`) over a `list`
-(`k-palette-list`) of `f.items`, whose cursor is `p.cur`. The markup has no
-expressions, so the **host filters**: it keeps `found` (the matching commands,
-plus `any`) with `Derive` over `palette.query` and `palette.commands`, and the
-list reads it. `focusable="false"` on the list keeps focus in the input; while
-the palette is open, `up`/`down` (and `ctrl+n`/`ctrl+p`) are not consumed by
-the input, so they reach a keymap `when=".k-palette"` in your document, where
-`move-next`/`move-prev` with `to="#palette__list"` move the cursor (these rows
-name your copy's id, so the kit cannot hold them). Enter is the input's
-`on:submit`.
+`<use id="palette" template="k-palette" title="Command palette"
+placeholder="type a command…" with="palette as p, found as f"/>`, the last
+child of the screen: a `modal` with class `k-palette` titled by the `title`
+prop, an `input` (`k-palette-input`, bound to `p.query`, with the `placeholder`
+prop) over a `list` (`k-palette-list`) of `f.items`, whose cursor is `p.cur`.
+The markup has no expressions, so the **host filters**: it keeps `found` (the
+matching commands, plus `any`) with `Derive` over `palette.query` and
+`palette.commands`, and the list reads it. `focusable="false"` on the list keeps
+focus in the input; while the palette is open, `up`/`down` (and
+`ctrl+n`/`ctrl+p`) are not consumed by the input, so they reach a keymap
+`when=".k-palette"` in your document, where `move-next`/`move-prev` with
+`to="#palette__list"` move the cursor (these rows name your copy's id, so the
+kit cannot hold them). Enter is the input's `on:submit`.
 
 Ids: `palette__dialog`, `palette__q`, `palette__list`. Actions: `palette_open`
 (your `ctrl+k`), `palette_close` (`esc`), `palette_run` (the host does the
@@ -413,11 +480,13 @@ there).
 
 ### help overlay (`components/help.tui`, template `k-help`)
 
-`<use id="help" template="k-help" with="help as h"/>`, the last child of the
-screen: a `modal` with class `k-help` titled `h.title`, open while `h.open`,
-holding a `? close help` line and, under it,
+`<use id="help" template="k-help" title="Keys" with="help as h"/>`, the last
+child of the screen: a `modal` with class `k-help` titled by the `title` prop,
+open while `h.open`, holding a `? close help` line and, under it, a scroll
+(`help__keys`, focusable, so the arrows move it) around
 `<hints class="k-hints k-help-keys" scope="all"/>`: every labeled keymap
-row, stacked. Id: `help__dialog`. Actions: `help_open` (your `?`),
+row, stacked. A keymap longer than the screen scrolls, and the app needs no
+height rule. Ids: `help__dialog`, `help__keys`. Actions: `help_open` (your `?`),
 `help_close` (`q`, `?` from the kit's keymap, and `esc`). The list holds your
 keymap's labeled rows. The kit's own overlay keys have no label, so no
 `<hints>` lists them, and a document that includes the kit without using an
@@ -577,7 +646,7 @@ and does not turn red a field the user has not reached; `form_submit` checks
 every field, focuses the first invalid input, and otherwise calls your
 `OnSubmit`. `Reset` writes only each field's `forms.profile.<field>.value` and
 `.error` and the form's `forms.profile.valid`; a field's `label`,
-`placeholder` and `help` come from your own data under the same path.
+`placeholder` and `help` are props of its `<use>`, not data.
 
 ```go
 forms := kit.NewForms(app)
@@ -647,10 +716,9 @@ and a function. It writes `palette.commands`, keeps `found` with `filter`, and
 implements `palette_open` (resets the query and cursor), `palette_close`,
 `palette_run` (runs the command under the cursor, or the first match, and writes
 `palette.last`) and `palette_query`. When the store has none of them yet, it
-also writes `palette.open`, `.query`, `.cur`, `.last`, the title
-`palette.title` (`Command palette`) and the input's placeholder
-`palette.placeholder` (`type a command…`), so what it writes is all the
-palette needs; put your own title or placeholder in your data to keep it.
+also writes `palette.open`, `.query`, `.cur` and `.last`, so what it writes is
+all the palette needs. The title and the placeholder are props of the use, not
+data: it writes neither.
 
 ```go
 p, _ := kit.NewPalette(app, kit.PaletteOptions{Mode: kit.Fuzzy},

@@ -1,7 +1,3 @@
 {
-  "card": {
-    "title": "Deploy",
-    "heading": "api-gateway 2.14.0",
-    "text": "Rolled out to 3 of 5 regions."
-  }
+  "card": { "heading": "api-gateway 2.14.0", "text": "Rolled out to 3 of 5 regions." }
 }

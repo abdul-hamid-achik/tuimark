@@ -71,6 +71,9 @@ func (a *app) handlers() map[string]tuimark.Handler {
 	})
 	on("palette_close", func(tuimark.Event) error { return a.ui.Set("palette.open", false) })
 	on("palette_run", func(tuimark.Event) error { return a.paletteRun() })
+	// palette_query is the k-palette input's on:change. `found` is a Derive,
+	// which the runtime recomputes on that write: nothing to do.
+	on("palette_query", func(tuimark.Event) error { return nil })
 	on("theme_toggle", func(tuimark.Event) error { return a.toggleTheme() })
 	on("toast_dismiss", func(tuimark.Event) error {
 		a.toastLeft = 0
@@ -165,7 +168,7 @@ func ids(cs []*container) (is, ns []string) {
 // ask opens the confirm dialog for an operation, or says why it cannot.
 func (a *app) ask(kind string) error {
 	p := &pending{kind: kind}
-	var title, message string
+	var title, body string
 	danger := false
 	switch kind {
 	case "stop", "restart", "remove":
@@ -181,13 +184,13 @@ func (a *app) ask(kind string) error {
 		switch kind {
 		case "stop":
 			title = "Stop " + who + "?"
-			message = names(p.names) + " will get SIGTERM and stop. Nothing is removed; start brings it back."
+			body = names(p.names) + " will get SIGTERM and stop. Nothing is removed; start brings it back."
 		case "restart":
 			title = "Restart " + who + "?"
-			message = names(p.names) + " will go down for a moment and come back. Open connections are dropped."
+			body = names(p.names) + " will go down for a moment and come back. Open connections are dropped."
 		case "remove":
 			title, danger = "Remove "+who+"?", true
-			message = names(p.names) + " and its writable layer will be deleted. Volumes are kept. This cannot be undone."
+			body = names(p.names) + " and its writable layer will be deleted. Volumes are kept. This cannot be undone."
 		}
 	case "prune-images":
 		n := len(a.sim.unusedImages())
@@ -199,7 +202,7 @@ func (a *app) ask(kind string) error {
 			mb += im.mb
 		}
 		title, danger = "Remove "+plural(n, "unused image", "unused images")+"?", true
-		message = "Frees about " + fmtSize(mb) + ". Images that a container uses are kept."
+		body = "Frees about " + fmtSize(mb) + ". Images that a container uses are kept."
 	case "prune-volumes":
 		n := len(a.sim.unusedVolumes())
 		if n == 0 {
@@ -210,12 +213,15 @@ func (a *app) ask(kind string) error {
 			mb += v.mb
 		}
 		title, danger = "Remove "+plural(n, "unused volume", "unused volumes")+"?", true
-		message = "Deletes their data and frees about " + fmtSize(mb) + ". This cannot be undone."
+		body = "Deletes their data and frees about " + fmtSize(mb) + ". This cannot be undone."
 	}
 	a.pending = p
 	return a.ui.Batch(func(b *tuimark.Batch) error {
 		return errors.Join(
-			b.Set("confirm.title", title), b.Set("confirm.message", message),
+			b.Set("confirm.title", title), b.Set("confirm.body", body),
+			// k-confirm reads its button labels as data, so each open writes
+			// them: one dialog serves every operation.
+			b.Set("confirm.yes", "Confirm"), b.Set("confirm.no", "Cancel"),
 			b.Set("confirm.danger", danger), b.Set("confirm.open", true),
 		)
 	})
