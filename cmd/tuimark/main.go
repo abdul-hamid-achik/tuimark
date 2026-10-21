@@ -18,8 +18,8 @@
 //	tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
 //	                      [--theme dark|light] [--strict] [--json]
 //	tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
-//	                      [--mock FILE.json] [--strip]
-//	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
+//	                      [--mock FILE.json] [--strip] [--screen ID]
+//	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
 //	tuimark mcp                                — a Model Context Protocol server on stdin/stdout
 //	tuimark lsp                                — a Language Server Protocol server on stdin/stdout
 //
@@ -87,9 +87,9 @@ usage:
                         [--theme dark|light] [--strict] [--json]
                                                explain one node: path, classes, pseudo-classes, styles
   tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
-                        [--mock FILE.json] [--strip]
+                        [--mock FILE.json] [--strip] [--screen ID]
                                                run in the terminal: F12 shows the events, edits reload
-  tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
+  tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
                                                run in the terminal for a parent program (fd 3 in, fd 4 out)
   tuimark mcp                                 a Model Context Protocol server on stdin/stdout
   tuimark lsp                                 a Language Server Protocol server on stdin/stdout

@@ -41,6 +41,7 @@ func (c *cli) cmdRun(args []string) int {
 	events := fs.String("events", "", "NDJSON file that gets one line per host action")
 	mock := fs.String("mock", "", "JSON file mapping actions to the store writes they make")
 	strip := fs.Bool("strip", false, "show the event strip from the start (F12 shows or hides it)")
+	screen := fs.String("screen", "", "the screen the session starts on; applied as Set(\"@screen\", ID)")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -62,6 +63,14 @@ func (c *cli) cmdRun(args []string) int {
 	app, mk, err := r.load(true, true)
 	if err != nil {
 		return c.runFail(err)
+	}
+	// --screen is applied once, here, as Set("@screen", ID) before the first
+	// frame (SPEC v0.4d §15.9, decision 260); a reload keeps the screen the
+	// session is on, so load does not apply it again.
+	if flagWasSet(fs, "screen") {
+		if err := app.Set("@screen", *screen); err != nil {
+			return c.runFail(err)
+		}
 	}
 	if *events != "" {
 		f, err := host.OpenRecordFile(*events, "the event log")
