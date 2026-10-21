@@ -269,7 +269,10 @@ function keyName(t) {
     enter: 'Enter / Return', esc: 'Escape', tab: 'Tab', backspace: 'Backspace', space: 'Space bar',
     up: 'Arrow up', down: 'Arrow down', left: 'Arrow left', right: 'Arrow right', home: 'Home', end: 'End',
     pgup: 'Page up', pgdn: 'Page down', 'shift+tab': 'Shift + Tab',
+    delete: 'Delete (forward delete)', 'shift+enter': 'Shift + Enter', 'ctrl+enter': 'Ctrl + Enter',
+    'alt+enter': 'Alt + Enter', 'alt+backspace': 'Alt + Backspace',
   }
+  for (let i = 1; i <= 12; i++) names[`f${i}`] = `Function key F${i}`
   if (!(t in names)) throw new Error(`generate: no description for key token "${t}"`)
   return names[t]
 }

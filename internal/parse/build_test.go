@@ -227,7 +227,7 @@ func TestParseDiagnostics(t *testing.T) {
 		{"unknown theme", "<tui version=\"1\" theme=\"neon\">\n<screen/>\n</tui>", "V003", 1, 18, `unknown theme "neon"`},
 		{"screen focus without #", "<tui version=\"1\">\n<screen focus=\"query\"/>\n</tui>", "V003", 2, 9, "want #id"},
 		{"empty keys", "<tui version=\"1\">\n<keymap>\n<bind keys=\"\" action=\"quit\"/>\n</keymap>\n<screen/>\n</tui>", "V003", 3, 1, "needs keys="},
-		{"bad key token", "<tui version=\"1\">\n<keymap>\n<bind keys=\"q,f1\" action=\"quit\"/>\n</keymap>\n<screen/>\n</tui>", "V003", 3, 1, `unknown key "f1"`},
+		{"bad key token", "<tui version=\"1\">\n<keymap>\n<bind keys=\"q,f1\" action=\"quit\"/>\n</keymap>\n<screen/>\n</tui>", "V003", 3, 1, `key "f1" (requires a <tui> without version)`},
 		{"no action", "<tui version=\"1\">\n<keymap>\n<bind keys=\"q\"/>\n</keymap>\n<screen/>\n</tui>", "V003", 3, 1, "needs action="},
 		{"action expression", "<tui version=\"1\">\n<keymap>\n<bind keys=\"q\" action=\"a.b\"/>\n</keymap>\n<screen/>\n</tui>", "V003", 3, 1, "plain name"},
 		{"when universal", "<tui version=\"1\">\n<keymap>\n<bind keys=\"q\" action=\"x\" when=\"*\"/>\n</keymap>\n<screen/>\n</tui>", "V003", 3, 1, "universal selector"},

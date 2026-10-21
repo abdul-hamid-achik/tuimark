@@ -32,6 +32,10 @@ type goldenEntry struct {
 	Script string   `json:"script,omitempty"` // a play script path; exclusive with Input
 	Styles bool     `json:"styles,omitempty"` // JSON goldens include theme and styles
 	Cells  bool     `json:"cells,omitempty"`  // JSON goldens include cells (SPEC v0.2b §15.5)
+	// Keyboard is "kitty" or "legacy", as play --keyboard, in an entry with
+	// input or script (SPEC v0.4d §15.5). *string, like Theme: an explicit
+	// "" is a manifest error.
+	Keyboard *string `json:"keyboard,omitempty"`
 }
 
 // theme returns the entry's theme value and whether the field was given
@@ -274,6 +278,20 @@ func (c *cli) cmdTest(args []string) int {
 			continue
 		}
 		hasPlay := e.Input != "" || e.Script != ""
+		keyboard := host.KeyboardKitty
+		if e.Keyboard != nil {
+			switch {
+			case *e.Keyboard != host.KeyboardKitty && *e.Keyboard != host.KeyboardLegacy:
+				fmt.Fprintf(c.stdout, "FAIL %s: keyboard must be \"kitty\" or \"legacy\" (got %q)\n", e.Name, *e.Keyboard)
+				ioErr = true
+				continue
+			case !hasPlay:
+				fmt.Fprintf(c.stdout, "FAIL %s: keyboard needs input or script\n", e.Name)
+				ioErr = true
+				continue
+			}
+			keyboard = *e.Keyboard
+		}
 		var steps []play.Step
 		if hasPlay {
 			var perr error
@@ -346,7 +364,13 @@ func (c *cli) cmdTest(args []string) int {
 					continue
 				}
 				if hasPlay {
+					if err := play.CheckKeys(app, steps, keyboard); err != nil {
+						fmt.Fprintf(c.stdout, "FAIL %s %s: play %v\n", e.Name, size, err)
+						ioErr = true
+						continue
+					}
 					sess := play.NewSession(app, cols, rows, e.Cells, e.Styles, false, true)
+					sess.Keyboard = keyboard
 					sess.Run(steps)
 					if sess.UsageErr != nil {
 						fmt.Fprintf(c.stdout, "FAIL %s %s: play step %d (%s): %v\n", e.Name, size, sess.UsageStep, sess.UsageRaw, sess.UsageErr)

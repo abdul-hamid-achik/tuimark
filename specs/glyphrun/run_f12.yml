@@ -1,0 +1,107 @@
+version: 1
+name: run_f12
+intent: |
+    Under `tuimark run` the key F12 belongs to the event strip (SPEC v0.4d
+    §26.14.5, §15.9, test 282, decision 222): every key the decoder reads
+    as f12, shift+F12 and ctrl+F12 included, toggles the strip and never
+    reaches the dispatch, so a keymap row with `f12` never fires there,
+    while a row with `f2` does. The document binds both; F2 is sent first,
+    so its event waits in the hidden strip, then F12 shows the strip with
+    `two` in it, shift+F12 (CSI 24 ; 2 ~) hides it, and ctrl+F12 shows it
+    again. The `dbg` action never fires.
+target:
+    cmd: ["sh", "specs/fixtures/run/session.sh", "${vars.tuimark}", "f12"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "F12APP"
+        timeoutMs: 5000
+    - send:
+        bytes: '\x1bOQ'
+    - send:
+        bytes: '\x1b[24~'
+    - wait:
+        screen:
+            contains: "two - {} null"
+        timeoutMs: 3000
+    - snapshot: shown
+    - send:
+        bytes: '\x1b[24;2~'
+    - wait:
+        screen:
+            notContains: "two - {} null"
+        timeoutMs: 3000
+    - snapshot: hidden
+    - send:
+        bytes: '\x1b[24;5~'
+    - wait:
+        screen:
+            contains: "two - {} null"
+        timeoutMs: 3000
+    - snapshot: shown_again
+    - press: ctrl+c
+    - wait:
+        screen:
+            contains: "session-done"
+        timeoutMs: 5000
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 3000
+outcomes:
+    - id: f12_shows_the_strip
+      description: F12 shows the strip, which lists the event of the f2 row
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/shown.txt"
+                if grep -q "two - {} null" "$f" && ! grep -q "dbg" "$f"; then
+                  echo '{"ok": true, "evidence": "the strip lists two and no dbg"}'
+                else
+                  echo '{"ok": false, "evidence": "the strip is missing two, or lists dbg"}'
+                fi
+    - id: shift_f12_hides_the_strip
+      description: shift+F12 (CSI 24 ; 2 ~) is read as f12 and hides the strip
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/hidden.txt"
+                if grep -q "F12APP" "$f" && ! grep -q "two - {} null" "$f"; then
+                  echo '{"ok": true, "evidence": "the strip is hidden after shift+F12"}'
+                else
+                  echo '{"ok": false, "evidence": "the strip is still shown after shift+F12"}'
+                fi
+    - id: ctrl_f12_shows_the_strip_again
+      description: ctrl+F12 (CSI 24 ; 5 ~) toggles the strip too
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/shown_again.txt"
+                if grep -q "two - {} null" "$f"; then
+                  echo '{"ok": true, "evidence": "the strip is shown again after ctrl+F12"}'
+                else
+                  echo '{"ok": false, "evidence": "no strip after ctrl+F12"}'
+                fi
+    - id: only_the_f2_row_fired
+      description: the events file holds the f2 row's action and never the f12 row's
+      verify:
+        screen:
+            contains: '{"seq":1,"action":"two","source":"","keys":{},"value":null}'
+    - id: f12_row_never_fires
+      description: no event of the f12 row reaches the events file
+      verify:
+        screen:
+            notContains: '"action":"dbg"'
+    - id: ctrl_c_exits_zero
+      description: an unbound ctrl+c quits and run exits 0
+      verify:
+        screen:
+            contains: "run-exit=0"
+contractHash: sha256:58fa94057425fa4d5cfade5bee8ef8a800738d312eae7602c2fea354073fbe10

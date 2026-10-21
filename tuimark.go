@@ -368,6 +368,12 @@ type PlayOptions struct {
 	Styles     bool
 	Cells      bool
 	Frames     bool
+	// Keyboard is "kitty" (the default, also for "") or "legacy", as
+	// play --keyboard (v0.4d, SPEC §15.4, §18.1): the terminal Play
+	// emulates. It chooses which keys a key step can send and which bytes
+	// it sends, and which keys <hints> shows. Any other value is an error
+	// before any step. A document that writes version ignores it.
+	Keyboard string
 }
 
 // PlayResult is what one Play call did: Events holds every event
@@ -440,7 +446,7 @@ func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) {
 	res, err := play.Play(a.h, play.Options{
 		Cols: opts.Cols, Rows: opts.Rows,
 		NoHandlers: opts.NoHandlers, Styles: opts.Styles, Cells: opts.Cells,
-		Frames: opts.Frames,
+		Frames: opts.Frames, Keyboard: opts.Keyboard,
 	}, steps)
 	if res == nil {
 		return nil, err

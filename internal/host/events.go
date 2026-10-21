@@ -11,10 +11,20 @@ import (
 )
 
 // Key is one decoded key press. Name is the key token (SPEC §8.1); Rune is
-// the printable character, if any.
+// the printable character, if any. The two marks only the decoder of the
+// current language sets (SPEC v0.4d §26.14) are never part of the token:
+//
+//   - Word marks a left or right that was held with alt or ctrl: the
+//     keymap still sees left and right, and only a focused input or
+//     textarea reads the mark, as a word move (alt+b, alt+f);
+//   - LF marks an enter that came from the LF byte (0x0a) or from ctrl+j:
+//     enter everywhere but in a focused textarea, where it is a line break
+//     (§26.14.4).
 type Key struct {
 	Name string
 	Rune rune
+	Word bool
+	LF   bool
 }
 
 // switchScreen activates the screen with the given id. Caller holds a.mu.

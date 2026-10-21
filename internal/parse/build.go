@@ -2488,8 +2488,17 @@ func (b *builder) checkKeymap() {
 		}
 		for _, tok := range toks {
 			if !ir.ValidKey(tok) {
-				b.errKB(k, "V003", path, "unknown key %q (see the key token list: a-z 0-9 enter esc tab backspace space arrows home end pgup pgdn ctrl+x shift+tab)", tok)
-				continue
+				if ir.IsKeyCurrent(tok) && !b.lang.V4() {
+					// SPEC v0.4d §5.1, decision 202: a 0.4d token in a
+					// pinned document was already V003; its message now
+					// carries the hint.
+					b.errKB(k, "V003", path, "key %q%s", tok, ir.VersionHintCurrent)
+					continue
+				}
+				if !ir.IsKeyCurrent(tok) {
+					b.errKB(k, "V003", path, "unknown key %q (see the key token list: %s)", tok, ir.UnknownKeyList(b.lang))
+					continue
+				}
 			}
 			// SPEC v0.4b §8.1: in the current language a token that never
 			// reaches a keymap is V003, at the <bind>, once per token, with

@@ -242,7 +242,7 @@ func (s *Server) completeValue(sn *snapshot, doc *document, ctx tuiCtx, off, ver
 		for c.start < off && doc.text[c.start] == ' ' {
 			c.start++
 		}
-		s.addKeys(c)
+		s.addKeys(c, ver)
 	case attr == "to", attr == "focus", attr == "when":
 		// A selector such as #list:focus: the id after the last #.
 		if i := strings.LastIndexByte(ctx.prefix, '#'); i >= 0 {
@@ -334,14 +334,18 @@ func (s *Server) addActions(c *completer, text string, ver int, onAttr bool) {
 	}
 }
 
-// addKeys offers the key tokens of SPEC §8.1: the named keys and ctrl+a to
-// ctrl+z, without those that never match.
-func (s *Server) addKeys(c *completer) {
+// addKeys offers the key tokens of SPEC §8.1: the named keys the document's
+// version accepts (named_since, SPEC v0.4d §15.10) and ctrl+a to ctrl+z,
+// without those that never match.
+func (s *Server) addKeys(c *completer, ver int) {
 	never := map[string]bool{}
 	for _, k := range s.cat.Keys.NeverMatch {
 		never[k] = true
 	}
 	for _, k := range s.cat.Keys.Named {
+		if since, ok := s.cat.Keys.NamedSince[k]; ok && since > ver {
+			continue
+		}
 		c.add(k, kindKeyword, "", "", false)
 	}
 	for r := 'a'; r <= 'z'; r++ {

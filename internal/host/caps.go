@@ -48,6 +48,16 @@ const (
 	// (SPEC v0.2b §26.11). Mode 1003 (motion) is never written.
 	mouseModesOn  = "\x1b[?1000h\x1b[?1006h"
 	mouseModesOff = "\x1b[?1000l\x1b[?1006l"
+	// The keyboard of a document in the current language (SPEC v0.4d
+	// §26.14.1, decision 216): the Kitty query goes in the probe right
+	// before DA1; a reply pushes flag 1 (disambiguate escape codes) after
+	// the probe, which the leave sequence pops; without a reply
+	// modifyOtherKeys level 2 is set instead and reset on leave.
+	queryKitty = "\x1b[?u"
+	kittyPush  = "\x1b[>1u"
+	kittyPop   = "\x1b[<u"
+	mokPush    = "\x1b[>4;2m"
+	mokPop     = "\x1b[>4;0m"
 )
 
 // probeWait is how long the capability probe waits for its DA1 sentinel
@@ -148,11 +158,20 @@ func probeQueries(s syncMode) string {
 // Apple Terminal/SSH skip rule that is only OSC 11 (so a skipped terminal
 // gets OSC 11 and DA1, and only for theme="auto").
 func probePlan(getenv func(string) string, outTTY bool, s syncMode, themeQuery bool) (probe, skipDECRQM bool) {
+	return probePlanKB(getenv, outTTY, s, themeQuery, false)
+}
+
+// probePlanKB is probePlan for a session that may also ask for the Kitty
+// keyboard protocol (SPEC v0.4d §26.2, §26.14.1, decision 216): kbQuery is
+// set for a document in the current language. The query is not subject to
+// the skip rule, and it counts as a query other than DA1, so the probe runs
+// whenever the output is a terminal and TERM is not dumb.
+func probePlanKB(getenv func(string) string, outTTY bool, s syncMode, themeQuery, kbQuery bool) (probe, skipDECRQM bool) {
 	if !outTTY || getenv("TERM") == "dumb" {
 		return false, false
 	}
 	decrqm := shouldProbe(getenv, outTTY, s)
-	return decrqm || themeQuery, !decrqm
+	return decrqm || themeQuery || kbQuery, !decrqm
 }
 
 // knownProbeTerms are TERM substrings of terminals the probe skip rule
@@ -191,6 +210,7 @@ func shouldProbe(getenv func(string) string, outTTY bool, s syncMode) bool {
 // termCaps is what the probe found (SPEC v0.2 §26.2). A missing reply
 // means "not supported".
 type termCaps struct {
+	kitty    bool   // a reply CSI ? FLAGS u arrived: the Kitty keyboard protocol (SPEC v0.4d §26.14.1)
 	sync     int    // Ps of the DECRPM reply for mode 2026 (0: none)
 	grapheme int    // Ps of the DECRPM reply for mode 2027 (0: none)
 	bg       string // the background of the first OSC 11 reply: dark, light, or "" (none)
@@ -207,6 +227,8 @@ func (c *termCaps) record(r reply) bool {
 	switch {
 	case r.da1:
 		c.done = true
+	case r.kitty:
+		c.kitty = true
 	case r.osc11:
 		if c.bg == "" {
 			c.bg = r.bg
@@ -257,9 +279,12 @@ type termSession struct {
 	// DECRQM queries out (the skip rule applies).
 	themeQuery bool
 	skipDECRQM bool
-	fgbg       string  // the theme COLORFGBG gives, "" for none
-	log        *runLog // TUIMARK_LOG, nil for none
-	eof        bool    // the session ended because the input ended
+	// kbQuery adds the Kitty keyboard query to the probe (SPEC v0.4d
+	// §26.14.1): set for a document in the current language.
+	kbQuery bool
+	fgbg    string  // the theme COLORFGBG gives, "" for none
+	log     *runLog // TUIMARK_LOG, nil for none
+	eof     bool    // the session ended because the input ended
 	// ctx is RunWith's context (SPEC v0.4a §18.2): its cancellation is
 	// taken at the loop's stop checks and ends the session with an error
 	// wrapping ctx.Err(). nil never cancels (Loop, RunHost, tests).
@@ -280,8 +305,9 @@ type termSession struct {
 	noPoll bool
 
 	mu       sync.Mutex
-	grapheme bool // mode 2027 was turned on: leaving turns it off
-	mouse    bool // the mouse modes are on: leaving turns them off
+	grapheme bool   // mode 2027 was turned on: leaving turns it off
+	mouse    bool   // the mouse modes are on: leaving turns them off
+	kbPop    string // the sequence that undoes the keyboard push (kittyPop or mokPop), "" with none: leaving writes it right after the mouse modes
 }
 
 // leave is the leave sequence: mode 2027 off when the session turned it
@@ -298,7 +324,38 @@ func (s *termSession) leave() string {
 	if s.mouse {
 		out += mouseModesOff
 	}
+	// SPEC v0.4d §26.14.1: the keyboard push is popped on every path, right
+	// after the mouse modes.
+	out += s.kbPop
 	return out + leaveScreen
+}
+
+// pushed reports whether the session pushed a keyboard mode.
+func (s *termSession) pushed() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.kbPop != ""
+}
+
+// keyboardPush decides the session's keyboard after the probe (SPEC v0.4d
+// §26.14.1): the sequence to write and the keyboard's name. A reply to the
+// Kitty query pushes flag 1; the probe having run without one sets
+// modifyOtherKeys level 2; no probe (the output is not a terminal, TERM is
+// dumb) writes nothing and the session is legacy. The pop is recorded
+// before the push is written, so a restore that races with the write still
+// undoes it.
+func (s *termSession) keyboardPush(c termCaps) (seq, name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	switch {
+	case !s.probe:
+		return "", KeyboardLegacy
+	case c.kitty:
+		s.kbPop = kittyPop
+		return kittyPush, KeyboardKitty
+	}
+	s.kbPop = mokPop
+	return mokPush, KeyboardModifyOtherKeys
 }
 
 // mouseChange returns the sequence that brings the terminal's mouse
@@ -336,9 +393,21 @@ func (s *termSession) queries() string {
 		q = queryBackground
 	}
 	if s.skipDECRQM {
-		return q + queryDA1
+		return q + s.kittyQuery() + queryDA1
 	}
-	return q + probeQueries(s.sync)
+	// probeQueries ends with DA1: the Kitty query goes right before it
+	// (SPEC v0.4d §26.2).
+	pq := probeQueries(s.sync)
+	return q + pq[:len(pq)-len(queryDA1)] + s.kittyQuery() + queryDA1
+}
+
+// kittyQuery is the keyboard query of the probe, "" outside the current
+// language.
+func (s *termSession) kittyQuery() string {
+	if s.kbQuery {
+		return queryKitty
+	}
+	return ""
 }
 
 // probeCap is the probe's wait.

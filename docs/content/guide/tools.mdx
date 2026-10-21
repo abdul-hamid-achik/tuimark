@@ -76,6 +76,7 @@ Steps come from `--input "STEP STEP …"` (separated by spaces) or `--script FIL
 | `click:X,Y` | `{"click": [X, Y]}` | a left click at a cell (version 2, mouse on) |
 | `wheel-up:X,Y`, `wheel-down:X,Y` | `{"wheel": "up", "at": [X, Y]}` | one wheel step at a cell |
 
+- For a document without `version`, `play` emulates a terminal that has the Kitty keyboard protocol, and sends each key step as the bytes that terminal sends: `shift+enter` as `CSI 13 ; 2 u`, `esc` as `CSI 27 u`. `--keyboard legacy` (`"keyboard": "legacy"` in a golden manifest entry, `keyboard` in `tuimark_play`, `Keyboard: "legacy"` in Go) emulates a plain terminal instead: `alt+x` is `ESC x`, `f1` is `ESC O P`, and a key it cannot send (`shift+enter`, `ctrl+enter`, `alt+O`, `alt+P`, `alt+X`) is a usage error. Hints follow the keyboard. A document that writes `version` ignores the flag.
 - Host actions are recorded, never run. A `set:` step stands in for what a handler would do, so a whole interaction can be scripted: `--input "enter set:confirm_open=true tab enter"`.
 - `quit` ends the session; later steps are skipped.
 - `--format json` adds `"events"`, each `{step, action, source, keys, value}`; `--frames` adds one settled frame per step. `--styles` and `--cells` work as for `dump`.

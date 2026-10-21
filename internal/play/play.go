@@ -16,6 +16,9 @@ type Options struct {
 	Styles     bool
 	Cells      bool
 	Frames     bool
+	// Keyboard is "kitty" (also "") or "legacy", as play --keyboard (SPEC
+	// v0.4d §15.4, §18.1).
+	Keyboard string
 }
 
 // Result is what one Play call did; it mirrors tuimark.PlayResult. Frames
@@ -53,6 +56,10 @@ func Play(app *host.App, opts Options, steps []string) (*Result, error) {
 		return nil, fmt.Errorf("tuimark: Play %v", err)
 	}
 
+	if !ValidKeyboard(opts.Keyboard) {
+		return nil, fmt.Errorf("tuimark: Play: Keyboard must be \"kitty\" or \"legacy\" (got %q)", opts.Keyboard)
+	}
+
 	parsed := make([]Step, len(steps))
 	for i, raw := range steps {
 		st, err := ParseStep(raw)
@@ -62,7 +69,12 @@ func Play(app *host.App, opts Options, steps []string) (*Result, error) {
 		parsed[i] = st
 	}
 
+	if err := CheckKeys(app, parsed, opts.Keyboard); err != nil {
+		return nil, err
+	}
+
 	sess := NewSession(app, cols, rows, opts.Cells, opts.Styles, opts.Frames, opts.NoHandlers)
+	sess.Keyboard = opts.Keyboard
 	sess.Run(parsed)
 	res := &Result{Events: sess.Events, Dump: sess.BuildDump(), Quit: sess.Quit, Frames: sess.StepFrames}
 	switch {
