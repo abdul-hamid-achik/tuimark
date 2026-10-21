@@ -116,6 +116,18 @@ func (a *App) Bind(path string, v any) error { return a.h.Bind(path, v) }
 // ±2^53 lose precision (pass them as strings).
 func (a *App) Set(path string, v any) error { return a.h.Set(path, v) }
 
+// Append (v0.4d) adds v to the value at path: a string is concatenated
+// with v, which must be a string; an array gets v, any JSON value after
+// Set's coercion, as one element at its end (an array v is one element,
+// never spread). Any other case is an error and changes nothing: a
+// missing path, null, a number, a boolean or an object at the path, a
+// string at the path and a v that is not a string, the root, a reserved
+// path, and a derived path (the error Set gives). Otherwise it is Set of
+// the new value, and the store appends in place. It is safe to call from
+// any goroutine. In a Batch, (*Batch).Append checks the value when the
+// batch is applied.
+func (a *App) Append(path string, v any) error { return a.h.Append(path, v) }
+
 // Get returns a deep copy of the value at path, JSON-shaped (nil, bool,
 // float64, string, []any, or map[string]any): mutating the returned
 // value never changes the store. path has the grammar of Bind and Set

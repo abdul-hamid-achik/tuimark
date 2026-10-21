@@ -304,6 +304,13 @@ func (s *Session) Run(steps []Step) {
 				s.UsageErr, s.UsageStep, s.UsageRaw = err, stepNum, st.Raw
 				return
 			}
+		case KindAppend:
+			// SPEC v0.4d §15.4: Append(PATH, value); a failure is a usage
+			// error with the error of §18.3 as its reason.
+			if err := s.App.Append(st.Path, st.Value); err != nil {
+				s.UsageErr, s.UsageStep, s.UsageRaw = err, stepNum, st.Raw
+				return
+			}
 		case KindFocus:
 			if err := s.App.Set("@focus", st.Focus); err != nil {
 				s.UsageErr, s.UsageStep, s.UsageRaw = err, stepNum, st.Raw

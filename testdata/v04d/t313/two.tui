@@ -1,0 +1,5 @@
+<tui>
+  <keymap><bind keys="q" action="quit"/></keymap>
+  <screen id="a"><text>SCREEN-A</text></screen>
+  <screen id="b"><text>SCREEN-B</text></screen>
+</tui>

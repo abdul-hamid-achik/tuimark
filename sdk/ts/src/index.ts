@@ -7,10 +7,13 @@ export {
   resolveBinary,
 } from "./binary.ts";
 export type { BinaryErrorCode, ResolveOptions, Target } from "./binary.ts";
-export { HostError, ProtocolVersionError, RequestError } from "./errors.ts";
+export { HostError, ProtocolVersionError, RequestError, UnsupportedMessageError } from "./errors.ts";
 export type {
   Ack,
   CatalogEntry,
+  Commit,
+  CommitLine,
+  CommitRun,
   ExitReason,
   GetResult,
   HostEvent,
