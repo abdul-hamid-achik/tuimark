@@ -1,0 +1,52 @@
+<tui>
+  <include src="kit.tui"/>
+  <screen id="main" focus="#logs-view">
+    <tabs id="nav">
+      <tab id="detail" label="2 detail" short="2 det" focus="#logs-view">
+        <col id="detail__page" width="1fr" height="1fr">
+          <row id="detail__top" width="1fr" height="auto" gap="1">
+            <use id="detail__overview" template="k-card" with="detail.name as t">
+              <row class="k-card-row">
+                <text class="k-card-muted" width="8">status</text>
+                <text class="k-badge" class:ok="detail.ok" class:warn="detail.warn" class:danger="detail.bad">{detail.state}</text>
+                <text class="k-card-muted">up {detail.up}</text>
+              </row>
+              <use template="k-kv" label="image" with="detail.image as v"/>
+              <use template="k-kv" label="id" with="detail.id as v"/>
+              <use template="k-kv" label="network" with="detail.network as v"/>
+              <use template="k-kv" label="restart" with="detail.restart as v"/>
+              <use template="k-kv" label="created" with="detail.created as v"/>
+            </use>
+            <col id="detail__stats" width="1fr" height="auto">
+              <use template="k-stat" title="CPU" with="detail.cpu_txt as v, detail.cpu_avg as d, detail.cpu_hist as h"/>
+              <use template="k-stat" title="Memory" max="100" with="detail.mem_txt as v, detail.mem_avg as d, detail.mem_hist as h"/>
+            </col>
+          </row>
+          <tabs id="dtabs" class="k-tabs" bind="detail_tab" mark="▸" focusable="true">
+            <tab id="logs" label="logs ({detail.nlogs})" short="logs" focus="#logs-view">
+              <scroll id="logs-view" class="k-log" stick="bottom" focusable="true" title="{detail.name} · log">
+                <col class="k-log-lines" each="detail.logs as l" key="l.n">
+                  <text class="k-log-line" class:muted="l.debug" class:info="l.info" class:warn="l.warn" class:danger="l.err">{l.text}</text>
+                </col>
+              </scroll>
+            </tab>
+            <tab id="env" label="env ({detail.nenv})" short="env">
+              <table id="envt" class="k-table" each="detail.env as e" key="e.k" title="Environment" placeholder="no environment variables">
+                <column id="envt__k" class="k-table-muted" title="VARIABLE" width="40%">{e.k}</column>
+                <column id="envt__v" title="VALUE" width="1fr">{e.v}</column>
+              </table>
+            </tab>
+            <tab id="ports" label="ports ({detail.nports})" short="ports">
+              <table id="portt" class="k-table" each="detail.port_rows as p" key="p.key" title="Published ports" placeholder="no published ports">
+                <column id="portt__host" class="k-num" title="HOST" width="6">{p.host}</column>
+                <column id="portt__cont" class="k-num" title="CONTAINER" width="9">{p.cont}</column>
+                <column id="portt__proto" class="k-table-muted" title="PROTO" width="6">{p.proto}</column>
+                <column id="portt__addr" title="BIND" width="1fr" priority="1">{p.addr}</column>
+              </table>
+            </tab>
+          </tabs>
+        </col>
+      </tab>
+    </tabs>
+  </screen>
+</tui>

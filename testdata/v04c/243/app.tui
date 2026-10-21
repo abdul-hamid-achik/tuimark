@@ -1,0 +1,21 @@
+<tui>
+  <template id="inner">
+    <box class="in">
+      <slot/>
+    </box>
+  </template>
+  <template id="outer" props="title">
+    <col class="out">
+      <text>{$title}</text>
+      <use id="i" template="inner" class="ic">
+        <text class="head">{f.h}</text>
+        <slot/>
+      </use>
+    </col>
+  </template>
+  <screen id="main">
+    <use id="o" template="outer" title="T" class="oc" with="form as f">
+      <input id="name" bind="form.name"/>
+    </use>
+  </screen>
+</tui>

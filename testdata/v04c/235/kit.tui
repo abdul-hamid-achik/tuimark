@@ -1,0 +1,24 @@
+<fragment>
+  <template id="k-kv" props="label">
+    <row class="k-card-row">
+      <text class="k-card-muted" width="8">{$label}</text>
+      <text class="k-card-text" width="1fr">{v}</text>
+    </row>
+  </template>
+
+  <template id="k-stat" props="title max">
+    <box class="k-stat" title="{$title}">
+      <text class="k-stat-value">{v}</text>
+      <row class="k-stat-row">
+        <text class="k-stat-delta">{d}</text>
+        <sparkline class="k-stat-spark" bind="h" min="0" max="{$max}"/>
+      </row>
+    </box>
+  </template>
+
+  <template id="k-card">
+    <box class="k-card" title="{t}">
+      <slot/>
+    </box>
+  </template>
+</fragment>
