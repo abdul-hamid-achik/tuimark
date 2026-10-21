@@ -105,7 +105,7 @@ A child tells which message types it accepts in `ready.messages`. Before it send
 
 #### Submit and clear
 
-A handler that takes the text of an input should clear the input before it replies, so the next frame is drawn without the sent text:
+A handler that takes the text of an input or a textarea should clear it before it replies, so the next frame is drawn without the sent text (`enter` changes nothing in a textarea, so a composer's `on:submit` handler always does this):
 
 ```ts
 ui.on("send", async (ev) => {

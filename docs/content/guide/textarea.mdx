@@ -57,6 +57,25 @@ Because a textarea takes every printable key, a keymap row for a plain key (`y`,
 
 `on:change` and `on:submit` carry `{"source": ID, "keys": {}, "value": TEXT}`, and so does a keymap row fired while the textarea has focus. `move-next` and the other `move-*` and `check-*` built-ins never apply to a textarea; naming one with `to=` is `B007`.
 
+## A composer
+
+A chat's message box is a textarea with a rule above it and the key hints below it, and the kit ships it as the `k-composer` template. The host clears the draft before it replies to the `composer_submit` event, since `enter` changes nothing in the text, and the caret goes to the end of whatever the host writes:
+
+```tui
+<use id="composer" template="k-composer" placeholder="Message the model" with="composer as c"/>
+```
+
+The textarea is `composer__input` (the use's id, then the template's), the id a `when="#composer__input:focus"` and a `focus=` name. `c.draft` is the text, and an optional `c.disabled` flag takes it out of the focus and key order, as the approval in the [inline guide](/guide/inline#an-approval-inside-the-region) needs. `composer_change` and `composer_submit` carry the text as `value`. A host that sends from a parent over the [host protocol](/guide/host-protocol) writes the clear before it replies:
+
+```ts
+ui.on("composer_submit", async (ev) => {
+  await ui.set("composer.draft", ""); // applied before the reply, so the next frame is empty
+  await send(String(ev.value));
+});
+```
+
+See [the kit](/guide/kit#chat-and-inline-components) for the component and its sample.
+
 ## Key hints and the caret
 
 `<hints/>` shows the keymap rows a key would fire now. A focused textarea's `up` and `down` depend on where the caret is and how the text wraps, which the layout decides, so the hints are chosen once more after layout. In the example above, `up history` is shown while the caret is on the first line and hidden once the caret is on a later line:

@@ -6,7 +6,8 @@ install it, you copy it into your project and own it.
 - `kit.tui`: the kit as one `<fragment>`. It loads the two sheets below, holds
   the overlays' keys, and has one `<template>` per component that takes text,
   data or content (card, key / value, app bar, alert, stat, meter, empty state,
-  form field, breadcrumb, log, toast, confirm dialog, command palette, help).
+  form field, breadcrumb, log, toast, confirm dialog, command palette, help,
+  and, for a chat, the composer, a transcript block, and a tool receipt).
   Include it once and copy a component with `<use>`.
 - `theme.tcss`: the design tokens (dark and light) and the base typography.
 - `kit.tcss`: the component classes.
