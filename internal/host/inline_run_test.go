@@ -10,8 +10,7 @@ import (
 	"time"
 )
 
-// inlineDoc is the screen of SPEC v0.4d test 294 with an <input> in place
-// of the textarea (D3 brings the textarea), and a row that appears while
+// inlineDoc is the screen of SPEC v0.4d test 294 // of the textarea (D3 brings the textarea), and a row that appears while
 // more is set, which makes the region grow.
 const inlineDoc = `<tui>
 <style>.good { color: green; }</style>
@@ -20,7 +19,7 @@ const inlineDoc = `<tui>
 </keymap>
 <screen id="main" focus="#composer">
   <rule/>
-  <input id="composer" bind="draft" placeholder="Message" on:submit="send"/>
+  <textarea id="composer" bind="draft" placeholder="Message" on:submit="send"/>
   <text id="extra" if="more">extra row</text>
   <text id="status">{status}</text>
 </screen>
@@ -101,8 +100,8 @@ const (
 // ? 1049 h, CSI H, nor CSI 2 J; the shell's prompt above the region stays;
 // the region grows by the row that appears and shrinks when it goes;
 // quitting erases the region and leaves the cursor at the start of its
-// first row. The growth by shift+enter in a textarea needs D3; a row that
-// appears (if="more") grows the region the same way.
+// first row. A row that appears (if="more") grows the region, and so does a
+// line break in the textarea (TestInlineTextareaGrowsRun).
 func TestInlineRegionRun(t *testing.T) {
 	r := startInline(t, inlineDoc, 30, 10, RunOptions{}, nil)
 	r.waitText(prompt + ruleRow + "\nMessage\nready")
@@ -332,5 +331,28 @@ func TestInlinePinnedRunWith(t *testing.T) {
 	}
 	if out.String() != "" {
 		t.Errorf("RunWith wrote %q", out.String())
+	}
+}
+
+// SPEC 0.4d test 299: typing three lines with shift+enter grows the region
+// by two rows, and sending them shrinks it again.
+func TestInlineTextareaGrowsRun(t *testing.T) {
+	r := startInline(t, inlineDoc, 30, 10, RunOptions{}, nil)
+	r.waitText(prompt + ruleRow + "\nMessage\nready")
+	shiftEnter := "\x1b[13;2u"
+	r.send("one" + shiftEnter + "two" + shiftEnter + "three")
+	r.waitText(prompt + ruleRow + "\none\ntwo\nthree\nready")
+	if x, y := r.term.cursor(); x != 5 || y != 6 {
+		t.Errorf("the caret is at %d,%d, want 5,6 (the last line of the composer)", x, y)
+	}
+	if f := r.term.forbiddenSeen(); len(f) > 0 {
+		t.Errorf("an inline session wrote %v", f)
+	}
+	if err := r.app.Set("draft", ""); err != nil {
+		t.Fatal(err)
+	}
+	r.waitText(prompt + ruleRow + "\nMessage\nready")
+	if err := r.quit(); err != nil {
+		t.Fatal(err)
 	}
 }

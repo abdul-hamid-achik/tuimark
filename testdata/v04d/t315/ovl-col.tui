@@ -3,7 +3,7 @@
     <col id="live">
       <text>{live.text}</text>
     </col>
-    <input id="composer" bind="draft" placeholder="Message"/>
+    <textarea id="composer" bind="draft" placeholder="Message"/>
     <text id="status">{status}</text>
   </screen>
 </tui>

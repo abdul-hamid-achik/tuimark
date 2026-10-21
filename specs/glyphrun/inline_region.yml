@@ -6,7 +6,8 @@ intent: |
     alternate screen. The prompt line above it stays on the screen; a message
     sent with enter is committed above the region (a line, then a template's
     copy as the reply) and the region is drawn again below; a row that
-    appears (the tips, ctrl+o) grows the region by one row and hides again;
+    appears (the tips, ctrl+o) grows the region by one row and hides again, as
+    do two line breaks typed with shift+enter in the composer;
     after enough messages the oldest rows scroll into the terminal's own
     scrollback, which Tuimark never repaints; ctrl+q commits a last line and
     leaves: the region is gone, the committed rows are above the cursor, and
@@ -43,6 +44,19 @@ steps:
             notContains: "Tips: enter sends"
         timeoutMs: 3000
     - snapshot: tips_off
+    - send:
+        bytes: 'l1\x1b[13;2ul2\x1b[13;2ul3'
+    - wait:
+        screen:
+            contains: "l3"
+        timeoutMs: 3000
+    - snapshot: multi
+    - send:
+        bytes: '\r'
+    - wait:
+        screen:
+            contains: "You: l1"
+        timeoutMs: 3000
     - send:
         bytes: 'm1\r'
     - send:
@@ -119,6 +133,21 @@ outcomes:
                 else
                   echo '{"ok": false, "evidence": "rows: sent '"$n_sent"', tips on '"$n_on"', tips off '"$n_off"'"}'
                 fi
+    - id: shift_enter_grows_the_composer
+      description: two line breaks typed with shift+enter grow the region by two rows, and the three lines are committed as one multi-line message
+      verify:
+        script:
+            runtime: shell
+            run: |
+                multi="$GLYPHRUN_RUN_DIR/snapshots/multi.txt"
+                off="$GLYPHRUN_RUN_DIR/snapshots/tips_off.txt"
+                n_multi=$(grep -c . "$multi")
+                n_off=$(grep -c . "$off")
+                if [ "$n_multi" -eq $((n_off + 2)) ] && grep -q '^l1$' "$multi" && grep -q '^l2$' "$multi" && grep -q '^l3$' "$multi"; then
+                  echo '{"ok": true, "evidence": "the composer shows three lines: '"$n_multi"' rows against '"$n_off"'"}'
+                else
+                  echo '{"ok": false, "evidence": "rows: multi '"$n_multi"', tips off '"$n_off"'"}'
+                fi
     - id: committed_rows_reach_the_scrollback
       description: after enough messages the first rows scroll into the terminal's scrollback, committed lines among them
       verify:
@@ -131,9 +160,9 @@ outcomes:
             runtime: shell
             run: |
                 f="$GLYPHRUN_RUN_DIR/snapshots/left.txt"
-                if ! grep -q 'Message' "$f" && ! grep -q '^────' "$f" && [ "$(grep -c . "$f")" -ge 1 ] && tail -n 1 "$f" | grep -q -- '-- 10 messages sent --'; then
+                if ! grep -q 'Message' "$f" && ! grep -q '^────' "$f" && [ "$(grep -c . "$f")" -ge 1 ] && tail -n 1 "$f" | grep -q -- '-- 11 messages sent --'; then
                   echo '{"ok": true, "evidence": "the region is erased and the last committed line ends the screen"}'
                 else
                   echo '{"ok": false, "evidence": "unexpected final screen"}'
                 fi
-contractHash: sha256:a49cb75c4fc4b515435f99ab22080716b8d7f5a56a31589e70323d6d93bed29a
+contractHash: sha256:2735c2f9c7a0ab666215e2972e7edf81d49f71a4f4bf2178b15d42ca06040a47

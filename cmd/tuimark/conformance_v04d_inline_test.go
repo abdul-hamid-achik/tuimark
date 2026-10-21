@@ -68,12 +68,16 @@ func TestD4Region294(t *testing.T) {
 		tag        string
 		x, y, w, h float64
 	}
-	wantNodes := map[string]geo{"main": {"screen", 0, 0, 30, 3}, "composer": {"input", 0, 1, 30, 1}, "status": {"text", 0, 2, 30, 1}}
+	wantNodes := map[string]geo{"main": {"screen", 0, 0, 30, 3}, "composer": {"textarea", 0, 1, 30, 1}, "status": {"text", 0, 2, 30, 1}}
 	for id, g := range wantNodes {
 		n := nodeOfMap(t, m, id)
 		if n["tag"] != g.tag || n["x"] != g.x || n["y"] != g.y || n["w"] != g.w || n["h"] != g.h {
 			t.Errorf("node %s = %v, want %v", id, n, g)
 		}
+	}
+	// The textarea has its caret (SPEC v0.4d §13.2): line 0, column 0, at (0, 1).
+	if car, _ := nodeOfMap(t, m, "composer")["caret"].(map[string]any); car["line"] != 0.0 || car["col"] != 0.0 || car["x"] != 0.0 || car["y"] != 1.0 {
+		t.Errorf("caret %v", car)
 	}
 	// The member comes right after rows (SPEC v0.4d §13.2).
 	_, out, _ := runCLI("dump", inT294, "--data", inT294Dat, "--cols", "30", "--rows", "24", "--inline", "--format", "json")
@@ -397,9 +401,15 @@ func TestD4Tall315(t *testing.T) {
 	if c := nodeOfMap(t, m, "composer"); c["y"] != 30.0 {
 		t.Errorf("composer %v", c)
 	}
+	// The L009 at the screen is the one the SPEC lists; the textarea, a
+	// viewport that now lies below the region, is also an L006 (erratum:
+	// the 0.4.5 reference had an input there).
 	errs = m["errors"].([]any)
-	if len(errs) != 1 {
+	if len(errs) != 2 {
 		t.Fatalf("box errors %v", errs)
+	}
+	if e := errs[1].(map[string]any); e["code"] != "L006" || e["id"] != "composer" {
+		t.Errorf("box L006 %v", e)
 	}
 	if e := errs[0].(map[string]any); e["code"] != "L009" || e["path"] != "/screen" || e["msg"] != "cuts #live on y: 12 of 30 cells shown; #live is sized by its content and does not shrink: give it height: 1fr (or flex: 1), or write overflow: hidden to keep the cut" {
 		t.Errorf("box diagnostic %v", e)

@@ -21,7 +21,7 @@ const d4Doc = `<tui>
   <style>.good { color: green; }</style>
   <screen id="main" focus="#composer">
     <rule/>
-    <input id="composer" bind="draft" placeholder="Message" on:submit="send"/>
+    <textarea id="composer" bind="draft" placeholder="Message" on:submit="send"/>
     <text id="status">{status}</text>
   </screen>
   <template id="card" props="who">

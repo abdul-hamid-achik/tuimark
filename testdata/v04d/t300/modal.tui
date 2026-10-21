@@ -1,7 +1,7 @@
 <tui>
   <screen id="main" focus="#composer">
     <rule/>
-    <input id="composer" bind="draft" placeholder="Message" on:submit="send"/>
+    <textarea id="composer" bind="draft" placeholder="Message" on:submit="send"/>
     <text id="status">{status}</text>
     <modal id="m" open="true" style="height: 10"><text>a</text><text>b</text></modal>
   </screen>
