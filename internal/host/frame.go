@@ -56,6 +56,11 @@ type Frame struct {
 	// that moved neither focus nor a tab (renderOnce), so building it again
 	// from the state it left behind gives the same frame (liveFrame).
 	settled bool
+	// Inline is set when the frame is an inline region (SPEC v0.4d
+	// §26.15): Rows is then the region's height and TermRows the
+	// terminal's, which @media reads; without it TermRows is Rows.
+	Inline   bool
+	TermRows int
 	// slab is the parity of the live build that built the frame (App.slab:
 	// its lists' rows are in that listSlab), 0 when it was built in fresh
 	// memory.
@@ -65,7 +70,11 @@ type Frame struct {
 // Dump returns the frame's dump (SPEC §13.2), with the --cells map when
 // cells is set.
 func (f *Frame) Dump(cells bool) *dump.Dump {
-	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, dump.Options{Cells: cells, V2: f.V2, V3: f.V3, Lang: f.Lang, Options: f.Options})
+	o := dump.Options{Cells: cells, V2: f.V2, V3: f.V3, Lang: f.Lang, Options: f.Options}
+	if f.Inline {
+		o.TerminalRows = &f.TermRows // SPEC v0.4d §26.15.6
+	}
+	return dump.BuildWith(f.Cols, f.Rows, f.Root, f.Modals, f.Grid, f.Diags, f.Focus, o)
 }
 
 // Dump renders the current state at cols×rows (negative sizes clamp to 0)
@@ -246,11 +255,17 @@ func (a *App) modalOpenOn(req *focusRequest, cols, rows int, theme string) bool 
 func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	cols, rows = max(cols, 0), max(rows, 0)
 	theme = css.EffectiveTheme(theme)
-	f := &Frame{Cols: cols, Rows: rows, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, Lang: a.doc.Lang, settled: true, slab: a.slab}
+	termRows := rows
+	f := &Frame{Cols: cols, Rows: rows, TermRows: termRows, Inline: a.inline, Theme: theme, V2: a.doc.V2, V3: a.doc.V3, Lang: a.doc.Lang, settled: true, slab: a.slab}
+	if a.inline {
+		// No screen to draw: an inline region of no rows (SPEC v0.4d
+		// §26.15.2).
+		f.Rows = 0
+	}
 	static := a.staticFor(theme)
 	if a.doc.Root == nil {
 		f.Diags = append(f.Diags, static...)
-		f.Grid = paint.NewGrid(cols, rows)
+		f.Grid = paint.NewGrid(cols, f.Rows)
 		f.ByID = map[string]*layout.Box{}
 		a.last = f
 		return f
@@ -259,7 +274,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 	if !a.doc.Spike {
 		if len(a.doc.Screens) == 0 {
 			f.Diags = append(f.Diags, static...)
-			f.Grid = paint.NewGrid(cols, rows)
+			f.Grid = paint.NewGrid(cols, f.Rows)
 			f.ByID = map[string]*layout.Box{}
 			a.last = f
 			return f
@@ -321,11 +336,11 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		}
 	}
 	a.trackModals(fb)
-	f.Mouse = fb.mouseOn()
+	f.Mouse = fb.mouseOn() && !a.inline // an inline session has no mouse (SPEC v0.4d §26.15.2, decision 249)
 	if kinds.hints {
 		fb.buildHints(casc, rootBox) // step 5
 	}
-	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Lang: a.doc.Lang, Scratch: &a.scratch}
+	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Lang: a.doc.Lang, Scratch: &a.scratch, Inline: a.inline}
 	if rootBox == nil {
 		rootBox = &layout.Box{Tag: root.Tag, Kind: root.Kind, Style: newStyle(css.Initial())}
 	}
@@ -343,6 +358,13 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		if eng2 := fb.hintsSecondPass(casc, rootBox, cols, rows); eng2 != nil {
 			eng = eng2
 		}
+	}
+	if a.inline {
+		// The layers, the option list, and the paint see the region as
+		// the screen (SPEC v0.4d §26.15.2, decision 249); the cascade's
+		// @media read the terminal's rows before (decision 242).
+		rows = eng.RegionH
+		f.Rows = rows
 	}
 	if a.doc.V3 && kinds.scale {
 		// SPEC v0.3b §6.11: scale groups are formed after layout, over the
@@ -364,7 +386,7 @@ func (a *App) renderOnce(cols, rows int, theme string) *Frame {
 		// once; what the first build already did (an initial on:focus, a
 		// modal's on:open, a focus move) is state the second build starts
 		// from and does not repeat.
-		return a.renderOnce(cols, rows, theme)
+		return a.renderOnce(cols, termRows, theme)
 	}
 	f.Options = options
 	f.Root, f.Modals = rootBox, fb.modals

@@ -673,6 +673,12 @@ func ParseWith(src []byte, file string, ld *Loader) *Document {
 		b.diag(ir.Error, "V005", err.Line, err.Col, "", "", "%s", err.Msg)
 		return doc
 	}
+	return b.build(doc, raw, prolog, epilog, file, ld)
+}
+
+// build is ParseWith from the tree of the file on: the document is checked
+// and expanded as if raw had been read from file.
+func (b *builder) build(doc *Document, raw *RawNode, prolog, epilog []*RawNode, file string, ld *Loader) *Document {
 	doc.Raw, doc.Prolog, doc.Epilog = raw, prolog, epilog
 	switch raw.Name {
 	case "app":

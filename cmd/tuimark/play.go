@@ -191,7 +191,7 @@ func parseScriptSteps(path string) ([]play.Step, error) {
 
 // scriptMembers names the step members of a --script line (SPEC v0.2b
 // §15.4), for error messages.
-const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme, tick, append"
+const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme, tick, commit, append"
 
 // parseScriptCell decodes the [X,Y] of a click or wheel script step: a
 // JSON array of exactly two integers (SPEC v0.2b §15.4).
@@ -323,6 +323,13 @@ func parseScriptLine(line string) (play.Step, error) {
 			return play.Step{}, err
 		}
 		return play.TickStep(line, s)
+	case "commit":
+		// SPEC v0.4d §15.4: {"commit": {…}} is commit: with that object.
+		c, err := play.ParseCommit(raw)
+		if err != nil {
+			return play.Step{}, err
+		}
+		return play.Step{Kind: play.KindCommit, Raw: line, Commit: c}, nil
 	case "theme":
 		// SPEC v0.2b §15.4: {"theme": "dark" | "light" | "auto"} is
 		// Set("@theme", value); play never probes, so auto is dark.
@@ -361,6 +368,7 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 	frames := fs.Bool("frames", false, "include one settled frame per applied step")
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
 	keyboard := fs.String("keyboard", host.KeyboardKitty, "the terminal play emulates: kitty or legacy")
+	inline := fs.Bool("inline", false, "lay the active screen out as an inline region and record the commits")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -404,19 +412,27 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 		return c.fail(err)
 	}
 	app.SetStrict(*strict)
+	if *inline && !app.Modern() {
+		return c.fail(inlineNeedsCurrent("play"))
+	}
 	if err := play.CheckKeys(app, steps, *keyboard); err != nil {
 		return c.fail(fmt.Errorf("play: %v", err))
 	}
 
 	sess := play.NewSession(app, *cols, *rows, *cells, *styles, *frames, true)
 	sess.Keyboard = *keyboard
+	sess.Inline = *inline
 	sess.Run(steps)
 	if sess.UsageErr != nil {
 		return c.fail(fmt.Errorf("play: step %d (%s): %v", sess.UsageStep, sess.UsageRaw, sess.UsageErr))
 	}
+	var scrollback *dump.Scrollback
+	if sess.Rec != nil {
+		scrollback = sess.Rec.Scrollback(*styles)
+	}
 
 	if *format == "json" {
-		out := &dump.Play{Dump: sess.BuildDump(), Events: sess.Events}
+		out := &dump.Play{Dump: sess.BuildDump(), Events: sess.Events, Scrollback: scrollback}
 		if *frames {
 			out.Frames = sess.StepFrames
 		}
@@ -447,6 +463,9 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 	d := sess.BuildDump()
 	b.WriteString(dump.Text(d))
 	play.WriteEventsSection(&b, sess.Events)
+	if scrollback != nil {
+		writeScrollbackSection(&b, scrollback)
+	}
 	fmt.Fprint(c.stdout, b.String())
 	if !d.OK {
 		return 2

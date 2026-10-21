@@ -116,6 +116,7 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 	num(int64(rows))
 	str(css.EffectiveTheme(theme))
 	flag(a.strict)
+	flag(a.inline)      // SPEC v0.4d §26.15: the region's height is the frame's
 	str(a.keyboard)     // SPEC v0.4d §26.14.3: <hints> shows the keys the keyboard can send
 	num(int64(a.phase)) // SPEC v0.4b §26.13: the spinner phase is an input of the frame
 	num(int64(a.storeGen))

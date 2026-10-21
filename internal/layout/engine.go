@@ -35,6 +35,11 @@ type Engine struct {
 	// held counts the boxes being placed that hold their subtree's
 	// checks (holdChecks).
 	held int
+	// Inline lays the root out as an inline region (SPEC v0.4d §26.15.2):
+	// at the width of cols and the height RegionHeight gives, which Layout
+	// leaves in RegionH. Modals are placed against the region.
+	Inline  bool
+	RegionH int
 }
 
 type memoKey struct {
@@ -60,9 +65,17 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 	if verifying {
 		snap = e.snapChecks()
 	}
-	screen := Rect{0, 0, cols, rows}
 	w := min(clampAxis(root, true, resolveRoot(root.Style.Width, cols), cols), cols)
-	h := min(clampAxis(root, false, resolveRoot(root.Style.Height, rows), rows), rows)
+	var h int
+	if e.Inline {
+		w = cols
+		h = e.RegionHeight(root, cols, rows)
+		e.RegionH = h
+		rows = h
+	} else {
+		h = min(clampAxis(root, false, resolveRoot(root.Style.Height, rows), rows), rows)
+	}
+	screen := Rect{0, 0, cols, rows}
 	e.place(root, Rect{0, 0, w, h}, screen)
 	for _, m := range modals {
 		m.Modal = true

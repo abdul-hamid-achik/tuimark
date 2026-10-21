@@ -282,9 +282,15 @@ type termSession struct {
 	// kbQuery adds the Kitty keyboard query to the probe (SPEC v0.4d
 	// §26.14.1): set for a document in the current language.
 	kbQuery bool
-	fgbg    string  // the theme COLORFGBG gives, "" for none
-	log     *runLog // TUIMARK_LOG, nil for none
-	eof     bool    // the session ended because the input ended
+	// inline is set for an inline session (RunOptions.Inline, SPEC v0.4d
+	// §26.15): the alternate screen is never entered or left, and the
+	// leave sequence erases the region first. inl is its terminal state,
+	// made when the session starts (inlineTerm); guarded by mu.
+	inline bool
+	inl    *inlineTerm
+	fgbg   string  // the theme COLORFGBG gives, "" for none
+	log    *runLog // TUIMARK_LOG, nil for none
+	eof    bool    // the session ended because the input ended
 	// ctx is RunWith's context (SPEC v0.4a §18.2): its cancellation is
 	// taken at the loop's stop checks and ends the session with an error
 	// wrapping ctx.Err(). nil never cancels (Loop, RunHost, tests).
@@ -318,6 +324,11 @@ func (s *termSession) leave() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	out := ""
+	if s.inl != nil {
+		// SPEC v0.4d §26.15.3: the commits accepted before the end are
+		// printed, then the region is erased from its first row.
+		out += s.inl.finish()
+	}
 	if s.grapheme {
 		out += graphemeOff
 	}
@@ -327,6 +338,9 @@ func (s *termSession) leave() string {
 	// SPEC v0.4d §26.14.1: the keyboard push is popped on every path, right
 	// after the mouse modes.
 	out += s.kbPop
+	if s.inline {
+		return out + leaveInline
+	}
 	return out + leaveScreen
 }
 

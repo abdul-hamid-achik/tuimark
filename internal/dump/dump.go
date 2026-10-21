@@ -107,13 +107,16 @@ type Cell struct {
 
 // Dump is the frame IR.
 type Dump struct {
-	Cols   int             `json:"cols"`
-	Rows   int             `json:"rows"`
-	OK     bool            `json:"ok"`
-	Focus  *string         `json:"focus"`
-	Errors []ir.Diagnostic `json:"errors"`
-	Nodes  []Node          `json:"nodes"`
-	Grid   []string        `json:"grid"`
+	Cols int `json:"cols"`
+	Rows int `json:"rows"`
+	// TerminalRows is the terminal's rows under --inline, where Rows is the
+	// region's height (SPEC v0.4d §13.2, §26.15.6); nil outside it.
+	TerminalRows *int            `json:"terminal_rows,omitempty"`
+	OK           bool            `json:"ok"`
+	Focus        *string         `json:"focus"`
+	Errors       []ir.Diagnostic `json:"errors"`
+	Nodes        []Node          `json:"nodes"`
+	Grid         []string        `json:"grid"`
 	// Wide is true when some row holds a complex cluster (SPEC v0.2
 	// §11.5.1: two columns wide or more than one code point). Then
 	// grid[y] indexed by rune no longer matches column x; use Cells.
@@ -228,6 +231,17 @@ type PlayFrame struct {
 	Input  string  `json:"input"`
 	Events []Event `json:"events"`
 	Dump   *Dump   `json:"dump"`
+	// ScrollbackRows is the number of rows committed up to and including
+	// the step, under play --inline (SPEC v0.4d §15.4, decision 250).
+	ScrollbackRows *int `json:"scrollback_rows,omitempty"`
+}
+
+// Scrollback is the rows an inline session committed (SPEC v0.4d §15.4,
+// §18.3): Grid holds one string of the terminal's width per row, like a
+// dump's grid, and Styles, with --styles, one array of spans per row.
+type Scrollback struct {
+	Grid   []string `json:"grid"`
+	Styles [][]Span `json:"styles,omitempty"`
 }
 
 // Play is the JSON object `tuimark play --format json` prints: a Dump plus
@@ -236,8 +250,11 @@ type PlayFrame struct {
 // top-level field order.
 type Play struct {
 	*Dump
-	Events []Event     `json:"events"`
-	Frames []PlayFrame `json:"frames,omitempty"`
+	Events []Event `json:"events"`
+	// Scrollback is present under play --inline, after events (SPEC v0.4d
+	// §15.4).
+	Scrollback *Scrollback `json:"scrollback,omitempty"`
+	Frames     []PlayFrame `json:"frames,omitempty"`
 }
 
 // Options are what a dump carries beyond the frame itself.
@@ -258,6 +275,9 @@ type Options struct {
 	// modals included (the list, then each laid-out row's item followed
 	// by its text).
 	Options *layout.Box
+	// TerminalRows, when not nil, is the dump's terminal_rows: the
+	// terminal's rows of an inline session (SPEC v0.4d §26.15.6).
+	TerminalRows *int
 }
 
 // NodeOf is the dump node of a laid-out box (SPEC §13.2). v2 adds the
@@ -308,7 +328,7 @@ func Build(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.Grid
 // BuildWith assembles a dump from a painted frame.
 func BuildWith(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.Grid, diags ir.Diags, focus string, o Options) *Dump {
 	cells := o.Cells
-	d := &Dump{Cols: cols, Rows: rows, OK: !diags.HasErrors(), Errors: []ir.Diagnostic(diags), Nodes: []Node{}}
+	d := &Dump{Cols: cols, Rows: rows, TerminalRows: o.TerminalRows, OK: !diags.HasErrors(), Errors: []ir.Diagnostic(diags), Nodes: []Node{}}
 	if d.Errors == nil {
 		d.Errors = []ir.Diagnostic{}
 	}

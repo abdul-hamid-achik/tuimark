@@ -90,6 +90,12 @@ type RunOptions struct {
 	// having returned nil), a quit ends it as a quit (RunWith returns
 	// nil), and any other error ends it with that error.
 	OnError func(ev *Event, err error) error
+	// Inline draws the active screen as an inline region below the
+	// terminal's cursor, and App.Commit prints above it (SPEC v0.4d
+	// §26.15, inline_term.go). Only a document in the current language
+	// runs inline: RunWith returns ErrInlineNeedsCurrent for another one,
+	// before it touches the terminal.
+	Inline bool
 }
 
 // RunContext is RunWith(ctx, w, RunOptions{}) (SPEC v0.4a §18.2).
@@ -160,7 +166,7 @@ func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error {
 // (SPEC v0.3b §19.1's "exit" message and exit code), which a plain error
 // cannot: Run's own nil return conflates "quit" and "eof".
 func (a *App) RunHost(w io.Writer, hooks HostHooks) HostResult {
-	err, eof, started := a.run(context.Background(), w, hooks, RunOptions{})
+	err, eof, started := a.run(context.Background(), w, hooks, RunOptions{Inline: hooks.Inline})
 	var sig *SignalError
 	switch {
 	case errors.As(err, &sig):
@@ -184,6 +190,10 @@ type HostHooks struct {
 	F12        func()
 	CtrlCTwice bool
 	Swap       <-chan HostSwap
+
+	// Inline runs the session inline (SPEC v0.4d §26.15): `tuimark run`
+	// and `tuimark host` with --inline.
+	Inline bool
 }
 
 // HostStop is one value sent on HostHooks.Stop; see RunHost.
@@ -230,6 +240,16 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 	if ctx.Err() != nil {
 		return cancelled(ctx), false, false
 	}
+	// An inline session needs a document in the current language (SPEC
+	// v0.4d §26.15.1, decision 241): judged before the environment, the
+	// log, or the terminal is touched.
+	if opts.Inline {
+		prev, err := a.SetInline(true)
+		if err != nil {
+			return err, false, false
+		}
+		defer a.SetInline(prev)
+	}
 	// The session's clock (SPEC v0.4b §26.13): the log's t, the spinner
 	// phase, and the Every deadlines all read it.
 	clk := defaultRunClock()
@@ -249,7 +269,7 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 		return err, false, false
 	}
 	lg.useClock(clk)
-	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg, ctx: ctx, onError: opts.OnError, clk: clk}
+	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg, ctx: ctx, onError: opts.OnError, clk: clk, inline: opts.Inline}
 	defer func() { lg.end(endReason(err, sess)) }()
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
@@ -558,7 +578,14 @@ func (a *App) loopWith(ctx context.Context, in io.Reader, out io.Writer, size fu
 	if ctx.Err() != nil {
 		return cancelled(ctx)
 	}
-	sess := &termSession{ctx: ctx, onError: opts.OnError, log: lg}
+	sess := &termSession{ctx: ctx, onError: opts.OnError, log: lg, inline: opts.Inline}
+	if opts.Inline {
+		prev, err := a.SetInline(true)
+		if err != nil {
+			return err
+		}
+		defer a.SetInline(prev)
+	}
 	defer func() { lg.end(endReason(err, sess)) }()
 	return a.session(in, out, size, resize, nil, sess, HostHooks{})
 }
@@ -568,7 +595,22 @@ func (a *App) loopWith(ctx context.Context, in io.Reader, out io.Writer, size fu
 // zero HostHooks for Loop and Run (every field nil, so hostStop and the
 // Start hook never fire); RunHost passes its own (SPEC v0.3b §19.1).
 func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, sigs <-chan os.Signal, sess *termSession, hooks HostHooks) error {
-	io.WriteString(out, enterScreen)
+	// An inline session (SPEC v0.4d §26.15) has the terminal state of its
+	// region and the sink Commit prints into; the sink is taken away after
+	// the leave sequence is written (defers run last-in, first-out).
+	var inl *inlineTerm
+	if sess.inline {
+		inl = newInlineTerm(out, sess.log)
+		inl.setSize(size())
+		sess.mu.Lock()
+		sess.inl = inl
+		sess.mu.Unlock()
+		a.setInlineSink(inl)
+		defer a.setInlineSink(nil)
+		io.WriteString(out, enterInline)
+	} else {
+		io.WriteString(out, enterScreen)
+	}
 	defer func() { io.WriteString(out, sess.leave()) }()
 	// What the session resolved theme="auto" to is forgotten when it ends
 	// (Dump and Validate never see it, MUST 13). A reload (hooks.Swap)
@@ -584,7 +626,8 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	}()
 	lg := sess.log
 	if lg != nil {
-		lg.begin(size())
+		cols, rows := size()
+		lg.beginWith(cols, rows, inl != nil)
 	}
 	// The session reads one clock (SPEC v0.4b §26.13): start is the
 	// origin of the spinner phase P(t) = floor(t / 100 ms), and of the
@@ -674,7 +717,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		if sess.onError == nil {
 			return false, err
 		}
+		inl.enterHost()
 		r := sess.onError(ev, err)
+		inl.exitHost()
 		switch {
 		case r == nil:
 			return false, nil
@@ -753,6 +798,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	}
 	opts := paint.Options{Profile: sess.profile, NoCHA: caps.graphemeActive()}
 	syncFrames := sess.syncFrames(caps)
+	inl.configure(opts, syncFrames)
 	// theme="auto" (§26.4): the probe's background, else COLORFGBG, else
 	// dark, for the first frame and for a later @theme "auto".
 	_, autoFrom := a.resolveAuto(caps.bg, sess.fgbg)
@@ -798,6 +844,16 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				g = overlay(g, top, bottom)
 			}
 		}
+		if inl != nil {
+			// The region is drawn with relative moves, by the state of
+			// the terminal it keeps (SPEC v0.4d §26.15.3).
+			n, err := inl.frame(g)
+			if err != nil {
+				return 0, err
+			}
+			prev = g
+			return n, nil
+		}
 		s := paint.DiffWith(prev, g, opts)
 		if syncFrames {
 			s = syncBegin + s + syncEnd
@@ -813,14 +869,27 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	draw := func() error {
 		t0 := time.Now()
 		cols, rows := size()
+		inl.setSize(cols, rows)
 		if cols != lastCols || rows != lastRows {
 			if lastCols >= 0 {
 				lg.write("resize", member{"cols", cols}, member{"rows", rows})
 				// A resize drops a pending left press (SPEC v0.2b §26.11).
 				a.DropPress()
+				// SPEC v0.4d §26.15.5: the region goes, and the frame
+				// below draws it again at the new size.
+				if inl != nil {
+					if err := inl.resized(); err != nil {
+						return err
+					}
+				}
 			}
 			prev = nil
 			lastCols, lastRows = cols, rows
+		}
+		// The commits made before this frame are printed before it (SPEC
+		// v0.4d §18.3).
+		if err := inl.flush(); err != nil {
+			return err
 		}
 		// Every frame uses the phase of the moment it is built (§26.13).
 		phase := 0
@@ -882,7 +951,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				if lg != nil {
 					lg.action(ev, a.secretInput(ev.Source))
 				}
+				inl.enterHost()
 				quit, err := a.Dispatch(ev)
+				inl.exitHost()
 				if err != nil {
 					quit, err = handlerErr(&ev, err)
 				}
@@ -1139,6 +1210,8 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				if started = a.startTick(r); !started {
 					return nil
 				}
+				inl.enterHost()
+				defer inl.exitHost()
 				return r.fn(b)
 			})
 			if !started {
@@ -1264,6 +1337,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		return settle()
 	}
+	// A commit waiting for the loop asks it to settle, which prints it
+	// before the frame (inlineTerm.print); a nil channel is never ready.
+	var inlKick <-chan struct{}
+	if inl != nil {
+		inlKick = inl.kick
+	}
 	for {
 		tick := armTick()
 		spin := armSpin()
@@ -1293,6 +1372,10 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		case <-spin:
 			spinArmed = false
 			if stop, err := spinTick(); stop {
+				return err
+			}
+		case <-inlKick:
+			if stop, err := settle(); stop {
 				return err
 			}
 		case <-a.everyKick:

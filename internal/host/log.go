@@ -165,11 +165,19 @@ func writeJSON(b *bytes.Buffer, v any) {
 
 // begin writes the start record, the first of a session: from here on,
 // end writes the end record.
-func (l *runLog) begin(cols, rows int) {
+func (l *runLog) begin(cols, rows int) { l.beginWith(cols, rows, false) }
+
+// beginWith is begin for a session that may be inline: the start record
+// then ends with "inline": true (SPEC v0.4d §26.12, decision 251).
+func (l *runLog) beginWith(cols, rows int, inline bool) {
 	if l == nil {
 		return
 	}
-	l.write("start", member{"version", Version}, member{"cols", cols}, member{"rows", rows})
+	ms := []member{{"version", Version}, {"cols", cols}, {"rows", rows}}
+	if inline {
+		ms = append(ms, member{"inline", true})
+	}
+	l.write("start", ms...)
 	l.mu.Lock()
 	l.started = true
 	l.mu.Unlock()

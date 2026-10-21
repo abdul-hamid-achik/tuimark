@@ -454,7 +454,7 @@ func (fb *builder) hintsSecondPass(casc *css.Cascade, root *layout.Box, cols, ro
 	for _, m := range fb.modals {
 		reset(m)
 	}
-	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Lang: a.doc.Lang, Scratch: &a.scratch}
+	eng := &layout.Engine{File: a.file, V3: a.doc.V3, Lang: a.doc.Lang, Scratch: &a.scratch, Inline: a.inline}
 	eng.Layout(root, fb.modals, cols, rows) // step 6 again
 	return eng
 }

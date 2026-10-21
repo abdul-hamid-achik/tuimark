@@ -220,7 +220,7 @@ func (a *App) runInfo(f *Frame, b *layout.Box, x, y int) *RunInfo {
 		start = b.Runs.Spans[i-1].End
 	}
 	out := &RunInfo{Index: sp.Index, Text: b.Text[start:sp.End], Classes: append([]string{}, sp.Classes...), Style: []StyleInfo{}}
-	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: f.Cols, Rows: f.Rows, Theme: f.Theme}, f.Lang)
+	casc := css.NewCascadeLang(a.sheets, css.Env{Cols: f.Cols, Rows: f.TermRows, Theme: f.Theme}, f.Lang)
 	st, trace := casc.Explain(&spanElement{parent: b, classes: sp.Classes}, b.Style, nil, nil)
 	for _, prop := range css.PropertyOrder {
 		if !slices.Contains(spanProps[:], prop) {

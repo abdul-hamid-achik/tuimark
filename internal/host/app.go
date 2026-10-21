@@ -75,8 +75,11 @@ type inputState struct {
 
 // App is a loaded document plus its runtime state.
 type App struct {
-	mu     sync.Mutex
-	doc    *parse.Document
+	mu  sync.Mutex
+	doc *parse.Document
+	// ldr is the loader the document was parsed with, kept for the
+	// copies of a committed template (inline.go).
+	ldr    *parse.Loader
 	file   string // display name used in diagnostics
 	path   string // path on disk ("" for Parse)
 	dir    string
@@ -236,6 +239,18 @@ type App struct {
 	// §26.14.3, keyboard.go): "" is a Kitty session, the keyboard of every
 	// tool that renders without a terminal; Run and play set it.
 	keyboard string
+	// inline is set while the frames are built as an inline region (SPEC
+	// v0.4d §26.15, inline.go): Run with RunOptions.Inline, a Play with
+	// Inline, and the tools' --inline. It is an input of the frame.
+	inline bool
+	// inl is the inline session that Commit prints into (inline.go), nil
+	// outside one. Guarded by mu.
+	inl inlineSink
+	// inlActive mirrors inl != nil, and deriveG is the goroutine running
+	// the Derive functions of a write while it is set: Commit reads both
+	// without the lock (inline.go).
+	inlActive atomic.Bool
+	deriveG   deriveGoroutine
 }
 
 // modalEntry is a modal that took the focus trap when it became the top
@@ -288,7 +303,8 @@ func newApp(src []byte, path, dir string) *App {
 		a.file = ""
 	}
 	res := diskResolver(dir, path)
-	a.doc = parse.ParseWith(src, path, res.loader())
+	a.ldr = res.loader()
+	a.doc = parse.ParseWith(src, path, a.ldr)
 	a.static = append(a.static, a.doc.Diags...)
 	a.loadStyles(res)
 	return a

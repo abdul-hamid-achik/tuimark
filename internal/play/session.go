@@ -53,6 +53,15 @@ type Session struct {
 	// (tuimark.Play) returns it together with the result so far. tuimark
 	// play and tuimark test never see it: NoHandlers is always set there.
 	Err error
+
+	// Inline lays the frames out as an inline region and records the
+	// commits the steps and the handlers make (SPEC v0.4d §15.4, §26.15.6);
+	// set before Run. Rec is the recorder Run starts for it, whose rows
+	// are the scrollback, and StartErr the error of starting it (a
+	// document that writes version cannot run inline).
+	Inline   bool
+	Rec      *host.Recorder
+	StartErr error
 }
 
 // NewSession builds a Session over app at cols×rows. cells/styles/frames
@@ -95,7 +104,12 @@ func (s *Session) snapshot(step int, input string) {
 	if evs == nil {
 		evs = []dump.Event{}
 	}
-	s.StepFrames = append(s.StepFrames, dump.PlayFrame{Step: step, Input: input, Events: evs, Dump: s.BuildDump()})
+	pf := dump.PlayFrame{Step: step, Input: input, Events: evs, Dump: s.BuildDump()}
+	if s.Rec != nil {
+		n := s.Rec.Rows()
+		pf.ScrollbackRows = &n
+	}
+	s.StepFrames = append(s.StepFrames, pf)
 }
 
 // dispatchAll dispatches evs, then TakePending in rounds, redrawing
@@ -272,6 +286,15 @@ func (s *Session) Run(steps []Step) {
 	// when the session ends.
 	prev := s.App.SetKeyboard(s.Keyboard)
 	defer s.App.SetKeyboard(prev)
+	if s.Inline {
+		rec, err := s.App.StartRecording(s.Cols, s.Rows)
+		if err != nil {
+			s.StartErr = err
+			return
+		}
+		s.Rec = rec
+		defer rec.Stop()
+	}
 	s.settle(0)
 	s.snapshot(0, "")
 	for i, st := range steps {
@@ -321,8 +344,16 @@ func (s *Session) Run(steps []Step) {
 			if s.UsageErr != nil {
 				return
 			}
+		case KindCommit:
+			if err := s.App.Commit(st.Commit); err != nil {
+				s.UsageErr, s.UsageStep, s.UsageRaw = err, stepNum, st.Raw
+				return
+			}
 		case KindResize:
 			s.Cols, s.Rows = st.Cols, st.Rows
+			if s.Rec != nil {
+				s.Rec.Resize(st.Cols, st.Rows)
+			}
 			// A resize drops a pending left press, as in Run (SPEC
 			// v0.2b §26.11).
 			s.App.DropPress()
