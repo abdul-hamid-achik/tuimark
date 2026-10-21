@@ -342,14 +342,14 @@ func TestV04bClock204Grammar(t *testing.T) {
 			t.Errorf("%s: exit %d stdout %q stderr %q, want it to hold %q", s.line, code, out, errw, s.want)
 		}
 	}
-	// The members named in the two messages gain tick.
+	// The members named in the two messages gain tick (and, in 0.4d, append).
 	path := filepath.Join(t.TempDir(), "s.ndjson")
 	writeFile(t, path, "{}\n")
-	if _, _, errw := runCLI("play", clockS, "--script", path); !strings.Contains(errw, "theme, tick)") {
+	if _, _, errw := runCLI("play", clockS, "--script", path); !strings.Contains(errw, "append)") {
 		t.Errorf("no known step member: %q", errw)
 	}
 	writeFile(t, path, `{"nope":1}`+"\n")
-	if _, _, errw := runCLI("play", clockS, "--script", path); !strings.Contains(errw, "theme, tick)") {
+	if _, _, errw := runCLI("play", clockS, "--script", path); !strings.Contains(errw, "append)") {
 		t.Errorf("unknown step member: %q", errw)
 	}
 }

@@ -37,6 +37,11 @@ func TestParseStepAccepted(t *testing.T) {
 		{"set:a=1", Step{Kind: KindSet, Raw: "set:a=1", Path: "a", Value: float64(1)}},
 		{`set:a.b="x=y"`, Step{Kind: KindSet, Raw: `set:a.b="x=y"`, Path: "a.b", Value: "x=y"}}, // the first = splits
 		{"set:a=null", Step{Kind: KindSet, Raw: "set:a=null", Path: "a"}},
+		// SPEC v0.4d §15.4: append:PATH=JSON, split at the first =, as set:.
+		{`append:log="x=y"`, Step{Kind: KindAppend, Raw: `append:log="x=y"`, Path: "log", Value: "x=y"}},
+		{`append:m={"text":"hi"}`, Step{Kind: KindAppend, Raw: `append:m={"text":"hi"}`, Path: "m", Value: map[string]any{"text": "hi"}}},
+		{"append:a.b=null", Step{Kind: KindAppend, Raw: "append:a.b=null", Path: "a.b"}},
+		{"append:=1", Step{Kind: KindAppend, Raw: "append:=1", Value: float64(1)}}, // the root: judged when applied
 		{`set:a=[1,{"b":true}]`, Step{Kind: KindSet, Raw: `set:a=[1,{"b":true}]`, Path: "a", Value: []any{float64(1), map[string]any{"b": true}}}},
 		{"set:@theme=\"light\"", Step{Kind: KindSet, Raw: "set:@theme=\"light\"", Path: "@theme", Value: "light"}},
 		{"set:=1", Step{Kind: KindSet, Raw: "set:=1", Value: float64(1)}}, // an empty path parses; Set refuses it when applied
@@ -65,6 +70,12 @@ func TestParseStepRejected(t *testing.T) {
 		{"é", "not a valid key token"},
 		{"wheel:1,2", "not a valid key token"}, // no such prefix
 		{"Text:hi", "not a valid key token"},   // prefixes are case-sensitive
+		{"Append:a=1", "not a valid key token"},
+
+		{"append:", "append: wants PATH=JSON"},
+		{"append:log", "append: wants PATH=JSON"},
+		{"append:log=", "bad JSON value: unexpected end of JSON input"},
+		{"append:log={", "bad JSON value: unexpected end of JSON input"},
 
 		{"resize:", `bad size ""`},
 		{"resize:80", `bad size "80" (want COLSxROWS)`},

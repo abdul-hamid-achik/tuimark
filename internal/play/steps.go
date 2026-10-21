@@ -28,9 +28,10 @@ const (
 	KindSet
 	KindFocus
 	KindResize
-	KindClick // click:X,Y or {"click":[X,Y]} (SPEC v0.2b §15.4)
-	KindWheel // wheel-up:X,Y, wheel-down:X,Y, or {"wheel":…,"at":[X,Y]}
-	KindTick  // tick:DUR or {"tick":"DUR"} (SPEC v0.4b §15.4.1)
+	KindClick  // click:X,Y or {"click":[X,Y]} (SPEC v0.2b §15.4)
+	KindWheel  // wheel-up:X,Y, wheel-down:X,Y, or {"wheel":…,"at":[X,Y]}
+	KindTick   // tick:DUR or {"tick":"DUR"} (SPEC v0.4b §15.4.1)
+	KindAppend // append:PATH=JSON or {"append":{"path":…,"value":…}} (SPEC v0.4d §15.4); Path and Value, as KindSet
 )
 
 // Step is one parsed, validated step of a play session. Raw is "the step
@@ -106,6 +107,8 @@ func ParseStep(tok string) (Step, error) {
 		return Step{Kind: KindPaste, Raw: tok, Text: tok[len("paste:"):]}, nil
 	case strings.HasPrefix(tok, "set:"):
 		return parseSetToken(tok)
+	case strings.HasPrefix(tok, "append:"):
+		return parseAppendToken(tok)
 	case strings.HasPrefix(tok, "focus:"):
 		return Step{Kind: KindFocus, Raw: tok, Focus: strings.TrimPrefix(tok[len("focus:"):], "#")}, nil
 	case strings.HasPrefix(tok, "resize:"):
@@ -185,7 +188,23 @@ func parseSetToken(tok string) (Step, error) {
 	return Step{Kind: KindSet, Raw: tok, Path: path, Value: v}, nil
 }
 
-// parseSize parses "COLSxROWS" (resize: and the CLI's own flags share
+// parseAppendToken parses append:PATH=JSON (SPEC v0.4d §15.4): the value
+// is the JSON text after the first "=", as in set:.
+func parseAppendToken(tok string) (Step, error) {
+	rest := tok[len("append:"):]
+	idx := strings.IndexByte(rest, '=')
+	if idx < 0 {
+		return Step{}, fmt.Errorf("append: wants PATH=JSON")
+	}
+	path, jsonText := rest[:idx], rest[idx+1:]
+	var v any
+	if err := json.Unmarshal([]byte(jsonText), &v); err != nil {
+		return Step{}, fmt.Errorf("bad JSON value: %v", err)
+	}
+	return Step{Kind: KindAppend, Raw: tok, Path: path, Value: v}, nil
+}
+
+// parseSize parses "COLSxROWS"(resize: and the CLI's own flags share
 // this grammar; cmd/tuimark keeps its own copy for its size flags).
 func parseSize(s string) (cols, rows int, err error) {
 	parts := strings.SplitN(s, "x", 2)

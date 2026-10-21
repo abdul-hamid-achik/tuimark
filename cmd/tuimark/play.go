@@ -103,6 +103,37 @@ func parseScriptSet(line string, raw json.RawMessage) (play.Step, error) {
 	return play.Step{Kind: play.KindSet, Raw: line, Path: path, Value: value}, nil
 }
 
+// parseScriptAppend decodes {"append": {"path": P, "value": V}} (SPEC
+// v0.4d §15.4), which is append:P=V: the object holds exactly those two
+// members, as a set step's does.
+func parseScriptAppend(line string, raw json.RawMessage) (play.Step, error) {
+	members, err := decodeObjectMembers(raw)
+	if err != nil {
+		return play.Step{}, fmt.Errorf("append: %v", err)
+	}
+	for name := range members {
+		if name != "path" && name != "value" {
+			return play.Step{}, fmt.Errorf("append: unknown member %q (want exactly \"path\" and \"value\")", name)
+		}
+	}
+	pathRaw, hasPath := members["path"]
+	valueRaw, hasValue := members["value"]
+	if !hasPath || !hasValue {
+		return play.Step{}, fmt.Errorf("append: wants {\"path\": ..., \"value\": ...} (both required)")
+	}
+	path, err := decodeStringMember("append.path", pathRaw)
+	if err != nil {
+		return play.Step{}, err
+	}
+	var value any
+	vdec := json.NewDecoder(bytes.NewReader(valueRaw))
+	vdec.UseNumber()
+	if err := vdec.Decode(&value); err != nil {
+		return play.Step{}, fmt.Errorf("append: bad JSON value: %v", err)
+	}
+	return play.Step{Kind: play.KindAppend, Raw: line, Path: path, Value: value}, nil
+}
+
 // parseScriptResize decodes a script line's `"resize"` member (SPEC §15.4
 // example: `{"resize":[60,24]}`): a JSON array of exactly 2 integers, each
 // checked against §15.1's 1-1000 range, so `[30,8,5]` is a usage error
@@ -160,7 +191,7 @@ func parseScriptSteps(path string) ([]play.Step, error) {
 
 // scriptMembers names the step members of a --script line (SPEC v0.2b
 // §15.4), for error messages.
-const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme, tick"
+const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme, tick, append"
 
 // parseScriptCell decodes the [X,Y] of a click or wheel script step: a
 // JSON array of exactly two integers (SPEC v0.2b §15.4).
@@ -273,6 +304,8 @@ func parseScriptLine(line string) (play.Step, error) {
 		return play.Step{Kind: play.KindFocus, Raw: line, Focus: strings.TrimPrefix(s, "#")}, nil
 	case "set":
 		return parseScriptSet(line, raw)
+	case "append":
+		return parseScriptAppend(line, raw)
 	case "resize":
 		return parseScriptResize(line, raw)
 	case "click":
