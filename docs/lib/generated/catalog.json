@@ -32,6 +32,7 @@
     "fragment",
     "include",
     "select",
+    "slot",
     "template",
     "use"
   ],
