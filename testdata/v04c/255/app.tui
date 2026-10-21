@@ -1,0 +1,18 @@
+<tui>
+  <template id="w">
+    <box>
+      <slot/>
+      <use template="w"><use template="w"/></use>
+    </box>
+  </template>
+  <template id="bare"><text>b</text></template>
+  <template id="fw">
+    <use template="w"><include src="slotted.tui"/></use>
+  </template>
+  <screen id="main">
+    <use template="w"><include src="part.tui"/></use>
+    <use template="bare"><include src="missing.tui"/></use>
+    <use template="w"><use template="w"/></use>
+    <use template="fw"><text>f</text></use>
+  </screen>
+</tui>

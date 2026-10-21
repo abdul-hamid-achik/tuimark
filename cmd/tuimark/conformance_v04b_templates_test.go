@@ -399,8 +399,7 @@ func TestV04bTemplate153PlacementAndContent(t *testing.T) {
 		`error V001 app.tui:3:11 /keymap/use id= a <template> holds no <bind> rows; share keymap rows with <include>`,
 	})
 	// 0.4c: style is not a name a use takes for itself, so a template may
-	// declare it: the use passes it, and its V002 goes. (The variant with
-	// a <slot/> in b is phase C2's.)
+	// declare it: the use passes it, and its V002 goes.
 	props := variant(t, composeFixtures+"t153/app.tui", `<template id="b">`, `<template id="b" props="style">`)
 	sameLines(t, "props=\"style\"", vdiags(t, props, ""), []string{
 		`error V001 app.tui:4:7 /screen/col/template id=a <template> must be a direct child of <tui> or <screen>`,
@@ -408,6 +407,25 @@ func TestV04bTemplate153PlacementAndContent(t *testing.T) {
 		`error V001 app.tui:9:5 /screen/screen id= <screen> cannot be inside a <template>: a template holds content only`,
 		`error V012 app.tui:12:3 /template id= <template> needs an id, which <use template> names`,
 	})
+	// With a <slot/> right after <text>ok</text> too, the use's loose text
+	// is the V013, and the fill is empty: the screen still holds one text.
+	raw, err := os.ReadFile(props)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), "<text>ok</text>\n") {
+		t.Fatalf("%s holds no <text>ok</text> line", props)
+	}
+	slot := writeTemp(t, "app.tui", strings.Replace(string(raw), "<text>ok</text>\n", "<text>ok</text><slot/>\n", 1))
+	sameLines(t, "props=\"style\" and a <slot/>", vdiags(t, slot, ""), []string{
+		`error V001 app.tui:4:7 /screen/col/template id=a <template> must be a direct child of <tui> or <screen>`,
+		`error V013 app.tui:6:40 /screen/use id=u text is not allowed directly inside <use>; wrap it in <text>`,
+		`error V001 app.tui:9:5 /screen/screen id= <screen> cannot be inside a <template>: a template holds content only`,
+		`error V012 app.tui:12:3 /template id= <template> needs an id, which <use template> names`,
+	})
+	if nodes, _ := dumpNodes(t, slot); !reflect.DeepEqual(textsOf(nodes), []string{"ok"}) {
+		t.Errorf("with a <slot/>: texts %q", textsOf(nodes))
+	}
 }
 
 // 154. An unused template gets only the checks its elements give

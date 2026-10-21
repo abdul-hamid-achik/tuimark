@@ -1,0 +1,3 @@
+<fragment>
+  <use template="k"><include src="g.tui"/></use>
+</fragment>

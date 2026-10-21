@@ -1,0 +1,16 @@
+<tui>
+  <template id="two">
+    <col><slot/></col>
+    <slot/>
+  </template>
+  <template id="rowy">
+    <list id="l" each="xs as x" key="x"><item><slot/></item></list>
+    <col each="xs as y"><slot/></col>
+    <table id="tb" each="xs as z" key="z"><column title="A">{z}</column><slot/></table>
+    <text>t<slot/></text>
+    <slot name="n">c</slot>
+  </template>
+  <screen id="main">
+    <slot/>
+  </screen>
+</tui>

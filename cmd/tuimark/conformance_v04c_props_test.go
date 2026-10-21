@@ -240,14 +240,9 @@ func TestV04cProps252Braces(t *testing.T) {
 
 // 253. A prop where it cannot stand, in a used template: one diagnostic
 // each, and nothing follows from them.
-//
-// Open until C2: template w's <slot/> is an unknown tag in C1, and w is
-// never copied (its only use inserts nothing), so validate also reports
-// that V001, which C2 removes.
 func TestV04cProps253CannotStand(t *testing.T) {
 	dir := propsFixtures + "253/"
 	sameLines(t, "validate", vdiags(t, dir+"app.tui", ""), []string{
-		`error V001 app.tui:2:25 /template/box/slot id= unknown tag <slot>; a <use> takes no content: write the markup in a <template id=…> and place it with <use template=…>`, // until C2
 		`error V003 app.tui:5:14 /template/col/input id= {$x} cannot stand in id; write the value itself`,
 		`error V003 app.tui:6:18 /template/col/sparkline id= {$x} cannot stand in bind: a prop is text; pass a path with with="…"`,
 		`error V003 app.tui:7:25 /template/col/use id= {$x} cannot stand in if: a prop is text; pass a path with with="…"`,

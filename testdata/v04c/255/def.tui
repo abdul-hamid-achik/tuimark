@@ -1,0 +1,10 @@
+<tui>
+  <template id="bare"><text>b</text></template>
+  <template id="t">
+    <use template="bare"><include src="missing.tui"/></use>
+  </template>
+  <screen id="main">
+    <use template="t"/>
+    <use template="t"/>
+  </screen>
+</tui>

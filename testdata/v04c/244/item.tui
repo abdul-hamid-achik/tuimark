@@ -1,0 +1,9 @@
+<tui>
+  <template id="menu">
+    <list id="m"><item><text>x</text><slot/></item></list>
+    <list id="n"><slot/></list>
+  </template>
+  <screen id="main">
+    <use id="u" template="menu"><item><text>a</text></item></use>
+  </screen>
+</tui>

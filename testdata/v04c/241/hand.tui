@@ -1,0 +1,10 @@
+<tui>
+  <screen id="main">
+    <text class="f">a</text>
+    <text class="mine top">o</text>
+    <box class="panel p" border="single"/>
+    <box class="panel" border="single" if="show">
+      <text>hidden</text>
+    </box>
+  </screen>
+</tui>

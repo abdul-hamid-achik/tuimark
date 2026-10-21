@@ -1,0 +1,15 @@
+<tui>
+  <template id="card"><box><slot/></box></template>
+  <template id="A">
+    <col each="a.xs as r">
+      <use template="card"><text>{a.v}/{r}</text></use>
+    </col>
+  </template>
+  <template id="B">
+    <use template="card"><text>{b.nope}</text></use>
+  </template>
+  <screen id="main">
+    <use template="A" with="r.sub as a"/>
+    <use id="u" template="B" with="m as b"/>
+  </screen>
+</tui>

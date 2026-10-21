@@ -1,0 +1,12 @@
+<fragment>
+  <template id="card">
+    <box>
+      <text>c</text>
+    </box>
+  </template>
+  <use template="card">
+    <text bogus="1">a</text>
+    <zzz/>
+    <tab id="t" label="T"/>
+  </use>
+</fragment>

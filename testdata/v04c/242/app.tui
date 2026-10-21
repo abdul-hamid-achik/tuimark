@@ -1,0 +1,22 @@
+<tui>
+  <template id="card">
+    <box title="{t.label}">
+      <list id="rows" each="items as r" key="r.k">
+        <item><text>{r.k}</text></item>
+      </list>
+      <text id="x">{t.label}</text>
+      <slot/>
+    </box>
+  </template>
+  <screen id="main">
+    <use id="c" template="card" with="meta as t">
+      <text>{t}</text>
+      <text>{r.name}</text>
+      <tabs id="ft">
+        <tab id="one" label="one" focus="#x">
+          <input id="x" bind="q"/>
+        </tab>
+      </tabs>
+    </use>
+  </screen>
+</tui>

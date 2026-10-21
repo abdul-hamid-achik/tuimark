@@ -283,6 +283,7 @@ var TagAttrsCurrent = map[string]map[string]bool{
 	// adds props).
 	"template": only("id", "props"),
 	"use":      only("id", "template", "with", "if", "hidden", "class"),
+	"slot":     only(), // SPEC v0.4c §6.18.10: no attribute, no content (slot.go)
 
 	"progress": only("indeterminate"), // SPEC v0.4b §6.4.1: the spinner
 	"checkbox": checkboxAttrs(),       // SPEC v0.4b §6.16 (forms.go)
@@ -296,7 +297,7 @@ var TagAttrsCurrent = map[string]map[string]bool{
 var tableItemAttrs = only("class")
 
 // noClassGuard are the tags that take no class:NAME (SPEC §6.13).
-var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true, "template": true, "use": true}
+var noClassGuard = map[string]bool{"tui": true, "style": true, "keymap": true, "bind": true, "include": true, "fragment": true, "template": true, "use": true, "slot": true}
 
 // ClassGuardPrefix starts every class:NAME attribute (SPEC §6.13).
 const ClassGuardPrefix = "class:"
@@ -830,7 +831,6 @@ var htmlTagHints = map[string]string{
 	"option":    "a <list> with on:select picks one row",
 	"radio":     "a <list> with on:select picks one row",
 	"textarea":  "not in the vocabulary yet; use <input>",
-	"slot":      "Tuimark has no components or includes; only <style src> loads another file",
 	"component": "Tuimark has no components or includes; only <style src> loads another file",
 	"import":    "Tuimark has no components or includes; only <style src> loads another file",
 	"img":       "images are not supported",
@@ -1752,6 +1752,11 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 			}
 			text.WriteString(c.Text)
 		case RawElement:
+			if c.Name == "slot" && b.comp != nil && b.slotIn(n, c) {
+				// SPEC v0.4c §6.18.10 (slot.go): its rules come before
+				// those of an element that takes no element children.
+				continue
+			}
 			if n.Tag == "text" {
 				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<text> cannot contain elements (found <%s>)", c.Name)
 				continue

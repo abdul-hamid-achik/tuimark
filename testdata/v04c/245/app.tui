@@ -1,0 +1,19 @@
+<tui>
+  <template id="plain"><box><slot/></box></template>
+  <template id="holder">
+    <use template="plain">
+      <input id="in" bind="v"/>
+    </use>
+  </template>
+  <template id="lister">
+    <col each="xs as e"><text>{e}</text></col>
+    <slot/>
+  </template>
+  <screen id="main">
+    <use template="plain"><input id="q" bind="v"/></use>
+    <use template="holder"/>
+    <use id="h" template="holder"/>
+    <text id="q">dup</text>
+    <use template="lister" with="xs as a"><col each="ys as a"><text>{a}</text></col></use>
+  </screen>
+</tui>

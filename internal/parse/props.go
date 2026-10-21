@@ -1208,14 +1208,6 @@ func (b *builder) checkWrittenUses(lookup func(string) *propDecl) {
 				}
 			}
 		}
-		if t.slot || (cp.selfOnly && t.include) {
-			continue
-		}
-		for _, cc := range c.Children {
-			if cc.Type == RawElement || ((cc.Type == RawText || cc.Type == RawCData) && !isXMLWhitespaceOnly(cc.Text)) {
-				diag("V013", cc.Line, cc.Col, msgUseNoSlot, t.id)
-				break
-			}
-		}
+		b.checkUseContent(c, t, diag) // its content (v0.4c, slot.go)
 	}
 }
