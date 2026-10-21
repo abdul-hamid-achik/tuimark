@@ -1768,29 +1768,9 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 				// those of an element that takes no element children.
 				continue
 			}
-			if n.Tag == "text" {
-				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<text> cannot contain elements (found <%s>)", c.Name)
-				continue
-			}
-			// SPEC §6.9.1: a column's body is its cell template (text
-			// only); a table's <item> is the row template, with no
-			// children.
-			if b.v2 && n.Tag == "column" {
-				b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<column> holds its cell template as text, with {path} for the row's values; it cannot contain elements (found <%s>)", c.Name)
-				continue
-			}
-			if b.tableItem(n) {
-				b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "a table's <item> is the row template: it takes class and class:NAME only, no children (found <%s>); the cells come from the <column> elements", c.Name)
-				continue
-			}
-			if (b.v2 && (n.Tag == "sparkline" || n.Tag == "hints")) || b.formNoContent(n) {
-				// SPEC §6.11, §6.12: no children (a hints' items come
-				// from the keymap); a form control neither (v0.4b §6.16.1).
-				b.diagPlaced(ir.Error, "V016", c.Line, c.Col, n.Path, n.ID, "<%s> takes no children (found <%s>)", n.Tag, c.Name)
-				continue
-			}
-			if leafKinds[n.Tag] {
-				b.diag(ir.Error, "V013", c.Line, c.Col, n.Path, n.ID, "<%s> cannot contain elements (found <%s>)", n.Tag, c.Name)
+			if b.noElements(n, c) {
+				// An element that takes no element children: a text, a
+				// column, a table's <item>, … (slot.go).
 				continue
 			}
 			if b.comp != nil && b.compose(n, c, nil) {

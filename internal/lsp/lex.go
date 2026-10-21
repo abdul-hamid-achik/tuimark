@@ -18,11 +18,12 @@ const (
 	tuiAttrValue                // inside the quotes of an attribute value
 )
 
-// openTag is an element still open at the cursor: its name and its
-// attributes as written.
+// openTag is an element still open at the cursor: its name, its
+// attributes as written, and the byte offset of its "<".
 type openTag struct {
 	name  string
 	attrs map[string]string
+	start int
 }
 
 // tuiCtx is the lexer's answer for a cursor.
@@ -40,6 +41,9 @@ type tuiCtx struct {
 	present map[string]bool
 	// stack are the open ancestors of the cursor, outermost first.
 	stack []openTag
+	// tagStart is the byte offset of the "<" of the tag the cursor is in,
+	// for an attribute name or value.
+	tagStart int
 }
 
 func isNameByte(c byte) bool {
@@ -107,7 +111,7 @@ func lexTUI(text string, off int) tuiCtx {
 		if k == len(src) {
 			return tuiCtx{kind: tuiTagName, prefix: src[i+1 : k], start: i + 1, stack: stack}
 		}
-		tag := openTag{name: src[i+1 : k], attrs: map[string]string{}}
+		tag := openTag{name: src[i+1 : k], attrs: map[string]string{}, start: i}
 		present := map[string]bool{}
 		p := k
 		closed, abandoned := false, false
@@ -116,7 +120,7 @@ func lexTUI(text string, off int) tuiCtx {
 				p++
 			}
 			if p >= len(src) {
-				return tuiCtx{kind: tuiAttrName, tag: tag.name, start: p, present: present, stack: stack}
+				return tuiCtx{kind: tuiAttrName, tag: tag.name, start: p, present: present, stack: stack, tagStart: i}
 			}
 			switch src[p] {
 			case '<': // a tag left unfinished: the next one starts here
@@ -147,7 +151,7 @@ func lexTUI(text string, off int) tuiCtx {
 				continue
 			}
 			if q == len(src) {
-				return tuiCtx{kind: tuiAttrName, tag: tag.name, prefix: src[p:q], start: p, present: present, stack: stack}
+				return tuiCtx{kind: tuiAttrName, tag: tag.name, prefix: src[p:q], start: p, present: present, stack: stack, tagStart: i}
 			}
 			name := src[p:q]
 			present[name] = true
@@ -175,7 +179,7 @@ func lexTUI(text string, off int) tuiCtx {
 			}
 			e := strings.IndexByte(src[r+1:], src[r])
 			if e < 0 {
-				return tuiCtx{kind: tuiAttrValue, tag: tag.name, attr: name, prefix: src[r+1:], start: r + 1, present: present, stack: stack}
+				return tuiCtx{kind: tuiAttrValue, tag: tag.name, attr: name, prefix: src[r+1:], start: r + 1, present: present, stack: stack, tagStart: i}
 			}
 			tag.attrs[name] = src[r+1 : r+1+e]
 			p = r + 1 + e + 1

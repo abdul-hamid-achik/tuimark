@@ -1,0 +1,9 @@
+{"detail_tab": "logs",
+ "detail": {"name": "web-1", "state": "running", "ok": true, "warn": false, "bad": false, "up": "3h",
+  "image": "nginx:1.27", "id": "4f2a9c1e", "network": "bridge", "restart": "always", "created": "2026-10-20",
+  "cpu_txt": "12.5%", "cpu_avg": "avg 9.8%", "cpu_hist": [5, 9, 12, 7, 14],
+  "mem_txt": "41%", "mem_avg": "avg 39%", "mem_hist": [38, 40, 41, 39, 41],
+  "nlogs": 2, "logs": [{"n": 1, "text": "start", "debug": false, "info": true, "warn": false, "err": false},
+                       {"n": 2, "text": "ready", "debug": false, "info": true, "warn": false, "err": false}],
+  "nenv": 1, "env": [{"k": "PATH", "v": "/usr/bin"}],
+  "nports": 1, "port_rows": [{"key": "8080/tcp", "host": 8080, "cont": 80, "proto": "tcp", "addr": "0.0.0.0"}]}}

@@ -2,6 +2,7 @@ package parse
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
@@ -113,9 +114,30 @@ func BuildIR(doc *Document, tokens map[string]string) *IR {
 		out.App.Focus, _ = s.Attr("focus")
 	}
 	if doc.Root != nil {
-		out.Root = buildIRNode(doc.Root)
+		name := ""
+		if doc.File != "" {
+			name = filepath.Base(doc.File)
+		}
+		out.Root = buildIRNode(doc.Root, false, name)
 	}
 	return out
+}
+
+// AsWritten is the children of n in the tree `tuimark ir` prints (SPEC
+// v0.4b §13.1): the element's children as written, with the include,
+// template, use, and slot nodes in their places (Source), each of those
+// holding what it placed in its own Children; else its Children.
+func AsWritten(n *ir.Node) []*ir.Node {
+	if n.Source != nil {
+		return n.Source
+	}
+	return n.Children
+}
+
+// placement reports whether n is a node of the tree `tuimark ir` prints
+// that encloses what it placed: an include or a use (SPEC v0.4b §13.1).
+func placement(n *ir.Node) bool {
+	return n.Kind == "include" || n.Kind == "use"
 }
 
 func stylesheetPaths(styles []StyleRef) []string {
@@ -164,7 +186,10 @@ func buildKeymap(kb []KeyBind) []IRBind {
 	return out
 }
 
-func buildIRNode(n *ir.Node) *IRNode {
+// buildIRNode is n's node of the source IR. inside is set when an include
+// or a use node encloses n (its from member), and file is the document's
+// display name, for a node written in it.
+func buildIRNode(n *ir.Node, inside bool, file string) *IRNode {
 	// A node of a copy shows what its element wrote, its scoped id aside
 	// (SPEC v0.4b §13.1): a reader resolves its aliases through the with
 	// of the enclosing use nodes, and adds their classes.
@@ -182,29 +207,31 @@ func buildIRNode(n *ir.Node) *IRNode {
 	// The root tree keeps the composition as written (SPEC v0.4b §13.1):
 	// an element with includes lists its children with the include nodes
 	// in their places, each holding the nodes it inserted.
-	kids := n.Children
-	if n.Source != nil {
-		kids = n.Source
-	}
+	kids := AsWritten(n)
 	children := make([]*IRNode, 0, len(kids))
 	for _, c := range kids {
-		children = append(children, buildIRNode(c))
+		children = append(children, buildIRNode(c, inside || placement(n), file))
 	}
 	return &IRNode{
 		ID: n.ID, Kind: n.Kind, Classes: classes, Attrs: nodeAttrs(attrs),
 		Bind: bind, Each: each, If: cond, On: on,
 		Style: nodeStyle(n), Text: text, Children: children,
-		From: irFrom(n),
+		From: irFrom(n, inside, file),
 	}
 }
 
-// irFrom is a node's `from` member: FILE:LINE for a node placed by an
-// include, "" for every other.
-func irFrom(n *ir.Node) string {
-	if n.Org == nil || n.Org.Placed == nil {
+// irFrom is a node's `from` member (SPEC v0.4b §13.1): FILE:LINE of the
+// element it was built from for every node inside an include or a use
+// node, at any depth, "" for every other. Since 0.4c that takes in a node
+// that nothing placed: a fill written in the document stands in the slot
+// of a copy, and the content of a use in a template's definition in the
+// use node (v0.4c). An element an include or a use placed stands inside
+// its node, and file names the document for one written in it.
+func irFrom(n *ir.Node, inside bool, file string) string {
+	if !inside && (n.Org == nil || n.Org.Placed == nil) {
 		return ""
 	}
-	f := n.Org.File
+	f := n.Org.FileOr(file)
 	if f == "" {
 		f = "<input>"
 	}

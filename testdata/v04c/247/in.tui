@@ -1,0 +1,2 @@
+<tui><template props="b a" id="t"><box   title="{$a}"><slot></slot></box></template>
+<screen id="main"><use with="m as x" template="t" b="1" id="u" a="2" class="k"><text>{x}</text></use><use template="t"></use></screen></tui>

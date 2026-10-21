@@ -1,0 +1,11 @@
+<tui>
+  <template id="card" props="title">
+    <box title="{$title}"><slot/></box>
+  </template>
+  <template id="wrap"><use template="card" title="W"><slot/></use></template>
+  <screen id="main">
+    <use id="c" template="card" title="Hi" with="m as t">
+      <text>{t}</text>
+    </use>
+  </screen>
+</tui>

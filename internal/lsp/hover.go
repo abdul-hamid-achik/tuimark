@@ -39,7 +39,13 @@ func (s *Server) hover(sn *snapshot, doc *document, pos Position) *hoverResult {
 	if word != "" {
 		switch doc.kind {
 		case kindTUI:
-			parts = s.hoverTUI(doc, word, start, end)
+			if docVersionOf(doc.text) == int(ir.LangCurrent) {
+				// A {$name}, or a prop of a <use> (SPEC v0.4c §15.12).
+				parts = s.hoverProp(sn, doc, word, start, end)
+			}
+			if parts == nil {
+				parts = s.hoverTUI(doc, word, start, end)
+			}
 		case kindTCSS:
 			parts = s.hoverTCSS(doc, word, start, end)
 		}
@@ -111,6 +117,9 @@ func tagText(t catalog.Tag) []string {
 	names := make([]string, 0, len(t.Attrs))
 	for _, a := range t.Attrs {
 		names = append(names, "`"+a.Name+"`")
+	}
+	if len(names) == 0 { // <keymap>, <fragment>, <slot>
+		names = append(names, "none")
 	}
 	return []string{
 		fmt.Sprintf("`<%s>` — tag%s", t.Name, sinceSuffix(t.Since)),
