@@ -1,6 +1,6 @@
 ---
 title: The kit
-description: A copy-paste component kit for Tuimark - one file of templates you include, design tokens and k- component classes, small documents that show each of the 21 components, and a gallery app that shows them all.
+description: A copy-paste component kit for Tuimark - one file of templates you include, design tokens and k- component classes, small documents that show each of the 22 components, and a gallery app that shows them all.
 ---
 
 The kit is a set of ready-made components for Tuimark: buttons, cards, alerts, a data table, a command palette, dialogs, toasts, and more. It follows the shadcn way: you do not install it, you **copy it into your project and own it**. There is nothing to import from a registry and nothing to keep in sync; if a card should look different, you edit your copy.
@@ -9,7 +9,7 @@ The kit adds no tag, attribute, or CSS property to the language. It is a [fragme
 
 | File | Holds |
 |---|---|
-| `kit/kit.tui` | the kit as one fragment: it loads the two sheets, holds the overlays' keys, and has one `<template>` per component that takes data |
+| `kit/kit.tui` | the kit as one fragment: it loads the two sheets, holds the overlays' keys, and has one `<template>` per component that takes text, data, or content |
 | `kit/theme.tcss` | the design tokens, dark and light, and the base typography |
 | `kit/kit.tcss` | the component classes |
 | `kit/components/NAME.tui` | one small, valid document per component: a template in use, or the markup to copy for a class component, with a `NAME.sample.json` beside it when it binds data |
@@ -25,38 +25,71 @@ Copy `kit.tui`, `theme.tcss`, and `kit.tcss` into a folder of your project (they
   <style src="app.tcss"/>
   <screen id="main">
     <col width="1fr" height="1fr" gap="1" pad="1">
-      <use template="k-alert" class="warn" with="quota as a"/>
-      <box class="k-card" title="Deploy">
+      <use template="k-alert" class="warn" title="Quota" icon="!" text="You have used 92% of this month's build minutes."/>
+      <use template="k-card" title="Deploy">
         <text class="k-card-title">api-gateway 2.14.0</text>
         <row class="k-card-actions">
           <button id="deploy__go" class="k-btn primary" label="Deploy" on:click="button_deploy"/>
           <button id="deploy__skip" class="k-btn ghost" label="Not now" on:click="button_skip"/>
         </row>
-      </box>
+      </use>
     </col>
     <use id="confirm" template="k-confirm" class="danger" with="confirm as d"/>
   </screen>
 </tui>
 ```
 
-A component that takes data is a **template**: `<use template="k-NAME">` copies it where it stands. A component whose content is yours (a card, a button row, a table's columns, a menu) is a **class**: you write the markup and give it the kit's classes, since a template has no slots.
+A component that takes text, data, or a body is a **template**: `<use template="k-NAME">` copies it where it stands, and a `<use>` passes it three kinds of arguments. A component whose rows, columns, or panes read a row alias (a table, a menu, a split pane), or that is one element (a button, a badge, a tabs), is a **class**: you write the markup and give it the kit's classes.
+
+### Props: literal text
+
+A prop is an attribute of the `<use>` that the template reads: a title, a label, a placeholder, an icon, the limits of a sparkline.
+
+```tui
+<use template="k-stat" title="CPU" min="0" with="detail.stats.cpu as s"/>
+<use template="k-field" id="profile__email" label="Email" placeholder="you@example.com" help="We never share it." with="forms.profile.email as f"/>
+```
+
+A prop is text, never a path: `title="{card.title}"` is a `V003`. A title that comes from your data goes through `with`, or uses the class markup (`<box class="k-card" title="{PATH}">`, which stays valid next to the template). A prop you leave out is an attribute the copy does not write, or an empty text that the kit hides, so `k-alert` without `icon` has no icon and no gap. Every template takes a `style` prop, which lands on the copy's root.
+
+### Content: the slot
+
+The templates that have a body take it as the content of the `<use>`: `k-card` (the body), `k-appbar` (the right side), `k-alert` (more body after its text), `k-empty` (the call to action) and `k-confirm` (more body under the question).
+
+```tui
+<use template="k-card" title="Deploy">
+  <text class="k-card-title">{card.heading}</text>
+  <row class="k-card-actions">
+    <button id="card__open" class="k-btn primary" label="Open" on:click="card_open"/>
+  </row>
+</use>
+<use template="k-empty" icon="◌" title="No deployments yet" text="Push a commit or create one by hand.">
+  <button id="deploy__create" class="k-btn primary" label="New deployment" on:click="deploy_create"/>
+</use>
+```
+
+The content stays in the place where you wrote it. Its paths are the document's, so the `with` aliases of the `<use>` do not exist inside it (`{confirm.detail}`, not `{d.detail}`); its ids are yours, not scoped by the `<use>` (`deploy__create`, not `create`), so two uses of one template cannot repeat the same id; and its actions are the app's: `k-empty` has no action of its own, the button and its action are yours. Content in a `<use>` of a template with no slot is `V013`, and a template has one slot.
 
 ### Data: `with`
 
-A template reads everything it shows through the alias of `with`. `with="quota as a"` makes `a.title` read `quota.title`, so one template serves any part of your store, and a widget that writes (a field's input, the palette's cursor) writes the path the alias stands for:
+`with` is for data: values, arrays, flags, and the paths a widget writes. A template reads them through the alias: `with="quota as a"` makes `a.value` read `quota.value`, so one template serves any part of your store, and a widget that writes (a field's input, the palette's cursor) writes the path the alias stands for:
 
 ```json
 {
-  "quota": { "title": "Quota", "icon": "!", "text": "You have used 92% of this month's build minutes." },
+  "detail": { "stats": { "cpu": { "value": "2.5%", "delta": "avg 3.6%", "hist": [4.3, 4.6, 3.8, 3.2] } } },
   "confirm": { "open": false, "title": "Delete project", "body": "This cannot be undone.", "no": "Cancel", "yes": "Delete" }
 }
 ```
 
-Labels, titles, and texts are all paths, a button's label included. **Flags** (the paths a template reads in `if`, `open`, or a `class:NAME` guard) are optional members of the `with` object: a missing one reads as false, so `{"icon": "!"}` shows the icon and leaving `icon` out hides it. The elements of an array the template repeats, such as the log's lines, still carry every flag. A template that reads two objects takes two aliases: `with="palette as p, found as f"`.
+The confirm dialog's labels are data because one dialog serves several operations (stop, restart, delete): the helper writes them on every open. **Flags** (the paths a template reads in `if`, `open`, or a `class:NAME` guard) are optional members of the `with` object: a missing one reads as false, so `{"good": true}` colors the change green and leaving `good` out does not. The elements of an array the template repeats, such as the log's lines, still carry every flag. A template that reads two objects takes two aliases: `with="palette as p, found as f"`, and `k-kv` takes a path to a scalar: `with="svc.owner as v"`.
 
 ### Variants: `class`
 
 A variant is a static class on the `<use>`: `<use template="k-alert" class="danger" …/>`. It lands on the copy's root, and the kit's rules style the parts from there. When the variant comes from your data instead, a template reads a flag for it (`d.danger` on the dialog, `m.ok`, `m.warn`, and `m.danger` on the meter).
+
+### Size: `style`
+
+A copy has no id of its own (a `<use>` is not a node), so a rule in your sheet cannot name it. The `style` prop lands on its root: `<use template="k-card" title="Empty state" style="height: 10">`. If a media rule needs an id, wrap the copy in an element that has one.
 
 ### Ids and actions
 
@@ -98,7 +131,7 @@ tuimark run kit/components/confirm.tui --data kit/components/confirm.sample.json
 Each component file starts with a **contract**, an XML comment that says what it needs from your store and your host:
 
 ```text
-k-NAME · Contract: <the with alias and the paths it reads and writes> · Actions: <named actions> · Keys: <keys> · Requires: <other kit classes>
+k-NAME · Contract: <the props, the with alias and the paths it reads and writes, the slot> · Actions: <named actions> · Keys: <keys> · Requires: <other kit classes>
 ```
 
 ## Tokens
@@ -135,7 +168,7 @@ Selection and focus never rely on a background color alone. A cursor row is also
 
 The dialog's rows have no `label`: its buttons name the choices, and `y` and `n` work while it is open. So the help overlay, which lists every labeled row, never shows them.
 
-**Sizes are explicit.** Every template's root writes its own size, so a copy is the same size in a screen, a tab, or a column; a component that fills a space says so in its class; a `tabs` writes `focusable`. The confirm dialog takes the size of its content, up to 60 columns where its text wraps.
+**Sizes are explicit.** Every template's root writes its own size, so a copy is the same size in a screen, a tab, or a column (`style` changes one copy's); a component that fills a space says so in its class; a `tabs` writes `focusable`. The confirm dialog takes the size of its content, up to 60 columns where its text wraps.
 
 ## Templates in your own markup
 
@@ -155,9 +188,10 @@ The `source` is `confirm__no`, the button the template's `focus="#no"` put the c
 |---|---|---|
 | badge | class `k-badge` | a short status label, with a modifier for its color |
 | button | class `k-btn` | `primary`, `secondary`, `danger` and `ghost`, inverted when focused |
-| card | class `k-card` | a bordered panel with a title that takes the focus color while it holds focus |
+| card | template `k-card` | a bordered panel with a title that takes the focus color while it holds focus |
+| key / value | template `k-kv` | a muted label and a value on one row, for a card of facts |
 | alert | template `k-alert` | a callout with an icon, in four status colors |
-| app bar | class `k-appbar` | a one-row bar docked to the top |
+| app bar | template `k-appbar` | a one-row bar docked to the top |
 | status bar | class `k-statusbar` | a one-row bar docked to the bottom, with filled segments |
 | key hints | class `k-hints` | the keymap's labeled rows as a row of hints |
 | confirm dialog | template `k-confirm` | a modal that puts the cursor on the safe button |
@@ -191,13 +225,13 @@ To use one, copy its file into your project. In Go, change `package kit` to your
 | `sortpage` | cycle the sort of a column (with an arrow in its title) and paginate (`1–50 of 340`) | the sorted rows of the page, and a meta object |
 | `form` | per-field rules (required, pattern, length, your own function) on change and on submit | `forms.<form>.<field>.error`, `forms.<form>.valid` |
 | `dialog` | `Confirm(instance, title, body, onConfirm)` opens a `k-confirm` copy and routes `dialog_confirm` / `dialog_cancel` by instance | `<instance>.open`, `.title`, `.body`, `.yes`, `.no`, `.result` |
-| `palette` | a registry of commands (title, key hint, function) behind the palette | `palette.commands`, `found`, `palette.open`, `.query`, `.cur`, `.last`, and a default `.title` and `.placeholder` |
+| `palette` | a registry of commands (title, key hint, function) behind the palette | `palette.commands`, `found`, `palette.open`, `.query`, `.cur`, `.last` |
 | `async` | `Load(path, fn)` runs slow work off the handler | `<path>.loading`, `.error`, `.data` |
 | `format` | `Bytes`, `Duration`, `Relative`, `Percent`, `Thousands` | strings ready for `{path}` |
 
 The dialog's button labels are `Confirm` and `Cancel` unless the request names its own (`Yes` and `No` in Go, `yes` and `no` in TypeScript): an empty label means the default, and both are written on every open, so an earlier question's labels never stay. The dialog helper writes a dialog's data at the path named by its instance, the part of the event's source before the last `__`, which is the `<use>`'s id, so the use's `with` path is that id: `<use id="confirm" template="k-confirm" with="confirm as d"/>`.
 
-The palette helper writes the palette's state only where the store has none: its title is `Command palette` and its input's placeholder `type a command…` unless your data names others.
+The palette helper writes the palette's state only where the store has none. Its title and its input's placeholder are props of the `<use>` (`title="Command palette" placeholder="type a command…"`), not data, so it writes neither.
 
 The Go API has `Derive` and `Every` and the TypeScript host does not, so two things differ. In Go, `filter` and `sortpage` are derived values that follow every store write, and a toast expires on an `Every` tick. In TypeScript you call `recompute()` after a write, the palette's input fires `palette_query` on every change so the parent can, and `toasts.start()` runs the tick on a timer.
 
@@ -221,7 +255,7 @@ const stop = toasts.start(500);
 await toasts.push("ok", "Settings saved");
 ```
 
-A form is named by the id prefix of its fields, `<use id="profile__name" template="k-field" with="forms.profile.name as f"/>` and `<use id="profile__email" …/>`, whose inputs fire `form_validate` from `profile__name__input` and `profile__email__input`. In Go:
+A form is named by the id prefix of its fields, `<use id="profile__name" template="k-field" label="Name" with="forms.profile.name as f"/>` and `<use id="profile__email" …/>`, whose inputs fire `form_validate` from `profile__name__input` and `profile__email__input`. In Go:
 
 ```go
 forms := kit.NewForms(app)
@@ -233,7 +267,7 @@ forms.Add("profile").
 forms.Register()                    // form_validate, form_submit
 ```
 
-`Reset` writes only `forms.profile.<field>.value` and `.error` and `forms.profile.valid`. What a field shows besides, its `label`, `placeholder`, and `help`, comes from your own data at `forms.profile.<field>`.
+`Reset` writes only `forms.profile.<field>.value` and `.error` and `forms.profile.valid`. A field's `label`, `placeholder`, and `help` are props of its `<use>`, not data.
 
 A rule is a function from the value to the message to show (`""` when it is fine), so a custom rule is a plain function. Submitting shows every error and moves focus to the first invalid input.
 
