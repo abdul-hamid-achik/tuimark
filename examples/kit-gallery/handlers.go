@@ -158,6 +158,23 @@ func (a *app) handlers() map[string]tuimark.Handler {
 	// The log panel.
 	on("log_append", func(tuimark.Event) error { return a.logAppend() })
 
+	// The composer of the chat tab: a message is appended to the transcript
+	// as one block (Append adds to the array in place), and the draft is
+	// cleared in the same batch, since enter changes nothing in a textarea.
+	on("composer_change", func(tuimark.Event) error { return nil })
+	on("composer_submit", func(ev tuimark.Event) error {
+		text, _ := ev.Value.(string)
+		text = strings.TrimSpace(text)
+		if text == "" {
+			return nil
+		}
+		id := float64(len(listAt(a.ui.Get, "chat.blocks")))
+		block := map[string]any{"id": id, "runs": []any{map[string]any{"text": "You: ", "class": "k-strong"}, text}}
+		return a.ui.Batch(func(b *tuimark.Batch) error {
+			return errors.Join(b.Append("chat.blocks", block), b.Set("chat.composer.draft", ""), a.say(b, "message sent"))
+		})
+	})
+
 	// The form.
 	on("form_validate", func(ev tuimark.Event) error {
 		v, _ := ev.Value.(string)

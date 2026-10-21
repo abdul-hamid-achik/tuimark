@@ -82,16 +82,28 @@ func DecodeKeys(b []byte) []Key {
 // paste without its end marker, is dropped. `tuimark play` decodes its
 // text: steps with it.
 func DecodeInput(b []byte) []Input {
-	var d decoder
+	return DecodeInputLang(b, false)
+}
+
+// DecodeInputLang is DecodeInput for a document of the given language:
+// with cur set (a <tui> without version) it is the decoder of SPEC v0.4d
+// §26.14.2, which reads the legacy, Kitty, and modifyOtherKeys forms; a
+// document that writes version keeps tuimark 0.4.4's decoder (decision
+// 202). `tuimark play` decodes its text: steps with it.
+func DecodeInputLang(b []byte, cur bool) []Input {
+	d := decoder{cur: cur}
 	ins, _ := d.feed(b, true)
 	return ins
 }
 
 // reply is a terminal reply the capability probe reads (SPEC v0.2 §26.2).
 type reply struct {
-	da1   bool // a DA1 reply, CSI ? … c: the probe's sentinel
-	mode  int  // a DECRPM reply, CSI ? Pd ; Ps $ y: Pd
-	value int  // and Ps
+	da1 bool // a DA1 reply, CSI ? … c: the probe's sentinel
+	// kitty is a reply CSI ? FLAGS u: the terminal has the Kitty keyboard
+	// protocol (SPEC v0.4d §26.14.1). Consumed as DA1 is, it gives no key.
+	kitty bool
+	mode  int // a DECRPM reply, CSI ? Pd ; Ps $ y: Pd
+	value int // and Ps
 	// bg is the theme of an OSC 11 background reply, ESC ] 11 ; SPEC
 	// (dark or light; "" for a SPEC that records nothing), SPEC v0.2b
 	// §26.2. osc11 marks such a reply.
@@ -123,8 +135,14 @@ type decoder struct {
 	// f12 makes CSI 24 ~ the F12 notice (Input.IsF12) instead of a
 	// sequence consumed with no effect: set only for `tuimark run`
 	// (HostHooks.F12, SPEC v0.4a §26.8). Run, host, and play's text steps
-	// keep dropping it.
+	// keep dropping it. In the current language every key the decoder
+	// reads as f12, modifiers included, is the notice (SPEC v0.4d §26.14.5).
 	f12 bool
+
+	// cur is the decoder of the current language (SPEC v0.4d §26.14.2):
+	// the Kitty, modifyOtherKeys, F-key, and delete forms, alt keys, and
+	// the word-move and LF marks. Off, the decoder is tuimark 0.4.4's.
+	cur bool
 }
 
 // escPending reports whether the esc timeout must decide the decoder's
@@ -198,7 +216,7 @@ func (d *decoder) feed(b []byte, final bool) (ins []Input, reps []reply) {
 			i += d.discardChunk(data[i:])
 			continue
 		}
-		u := scanInput(data[i:])
+		u := scanInput(data[i:], d.cur)
 		if u.n == 0 { // incomplete: the next read may complete it
 			if !final {
 				break
@@ -212,6 +230,10 @@ func (d *decoder) feed(b []byte, final bool) (ins []Input, reps []reply) {
 		i += u.n
 		switch u.kind {
 		case unitKey:
+			if d.f12 && d.cur && u.key.Name == "f12" {
+				ins = append(ins, Input{IsF12: true})
+				break
+			}
 			ins = append(ins, Input{Key: u.key})
 		case unitMouse:
 			ins = append(ins, Input{IsMouse: true, Mouse: u.mouse})
@@ -337,11 +359,15 @@ func keyUnit(name string, r rune, n int) unit {
 }
 
 // scanInput decodes the item at the start of p (len(p) > 0).
-func scanInput(p []byte) unit {
+func scanInput(p []byte, cur bool) unit {
 	c := p[0]
 	switch {
 	case c == 0x1b:
-		return scanEscape(p)
+		return scanEscape(p, cur)
+	case c == '\n' && cur:
+		// The LF byte is a line break in a focused textarea and enter
+		// everywhere else (SPEC v0.4d §26.14.4).
+		return unit{kind: unitKey, n: 1, key: Key{Name: "enter", LF: true}}
 	case c == '\r' || c == '\n':
 		return keyUnit("enter", 0, 1)
 	case c == '\t':
@@ -368,16 +394,22 @@ func scanInput(p []byte) unit {
 }
 
 // scanEscape decodes the item at the start of p, which starts with ESC.
-func scanEscape(p []byte) unit {
+func scanEscape(p []byte, cur bool) unit {
 	if len(p) < 2 {
 		return unit{}
 	}
 	switch p[1] {
 	case '[':
-		return scanCSI(p)
+		return scanCSI(p, cur)
 	case 'O':
 		if len(p) < 3 {
 			return unit{}
+		}
+		if cur {
+			if name, ok := ss3KeyCur(p[2]); ok {
+				return keyUnit(name, 0, 3)
+			}
+			return unit{n: 3}
 		}
 		if name := ss3Key(p[2]); name != "" {
 			return keyUnit(name, 0, 3)
@@ -388,8 +420,16 @@ func scanEscape(p []byte) unit {
 	case 'P', 'X', '^', '_':
 		return scanString(p, false)
 	}
+	if cur {
+		// ESC and a letter or a digit is alt+ it, ESC CR and ESC LF are
+		// alt+enter, and ESC DEL is alt+backspace (SPEC v0.4d §26.14.2,
+		// decision 218).
+		if k, ok := altKeyCur(p[1]); ok {
+			return unit{kind: unitKey, n: 2, key: k}
+		}
+	}
 	// ESC followed by anything else is the esc key; the next byte decodes
-	// on its own (alt+x is esc then x).
+	// on its own (in tuimark 0.4.4 alt+x is esc then x).
 	return keyUnit("esc", 0, 1)
 }
 
@@ -417,7 +457,7 @@ func ss3Key(b byte) string {
 // on its own. A sequence that reaches maxCSI bytes without its final byte
 // is too long to be anything the runtime reads: those bytes are dropped
 // and the rest is discarded up to the final byte (discardCSI).
-func scanCSI(p []byte) unit {
+func scanCSI(p []byte, cur bool) unit {
 	limit := min(len(p), maxCSI)
 	j := 2
 	for j < limit && p[j] >= 0x20 && p[j] <= 0x3f {
@@ -463,12 +503,22 @@ func scanCSI(p []byte) unit {
 			return unit{kind: unitMouse, n: n, mouse: m}
 		}
 		return unit{n: n}
+	case private == '?' && final == 'u':
+		// The reply to the Kitty keyboard query, CSI ? FLAGS u (SPEC v0.4d
+		// §26.14.1): a reply the probe reads, never a key.
+		return unit{kind: unitReply, n: n, reply: reply{kitty: true}}
 	case private != 0:
 		// DA2 (CSI > … c) and every other private-parameter sequence:
 		// replies, never keys.
 		return unit{n: n}
 	case final == '~' && string(params) == "200":
 		return unit{kind: unitPaste, n: n}
+	case cur:
+		// The current language reads every key form (SPEC v0.4d §26.14.2).
+		if k, ok := csiKeyCur(final, params); ok {
+			return unit{kind: unitKey, n: n, key: k}
+		}
+		return unit{n: n}
 	case final == '~' && string(params) == "24":
 		// F12 (SPEC v0.4a §26.8): not a §8.1 key token. Only the decoder
 		// of `tuimark run` turns it into a notice; with a modifier
@@ -731,11 +781,22 @@ func pasteEscapeLen(s string) int {
 // paste is discarded: it never reaches the keymap, a widget, or a
 // built-in, so pasting a q cannot quit. Caller must not hold a.mu.
 func (a *App) HandlePaste(payload string) []Event {
-	text := NormalizePaste(payload)
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	b := a.focusedBox()
-	if text == "" || b == nil || b.Disabled || b.Kind != "input" {
+	if b == nil || b.Disabled || (b.Kind != "input" && b.Kind != "textarea") {
+		return nil
+	}
+	// A textarea keeps the paste's line breaks and normalizes it as run
+	// text (SPEC v0.4d §6.19.6, decisions 234 and 265); an input keeps
+	// §26.7's order.
+	var text string
+	if b.Kind == "textarea" {
+		text = NormalizeTextareaPaste(payload)
+	} else {
+		text = NormalizePaste(payload)
+	}
+	if text == "" {
 		return nil
 	}
 	return a.insertText(b, []rune(text))

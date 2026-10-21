@@ -90,6 +90,12 @@ type RunOptions struct {
 	// having returned nil), a quit ends it as a quit (RunWith returns
 	// nil), and any other error ends it with that error.
 	OnError func(ev *Event, err error) error
+	// Inline draws the active screen as an inline region below the
+	// terminal's cursor, and App.Commit prints above it (SPEC v0.4d
+	// §26.15, inline_term.go). Only a document in the current language
+	// runs inline: RunWith returns ErrInlineNeedsCurrent for another one,
+	// before it touches the terminal.
+	Inline bool
 }
 
 // RunContext is RunWith(ctx, w, RunOptions{}) (SPEC v0.4a §18.2).
@@ -160,7 +166,7 @@ func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error {
 // (SPEC v0.3b §19.1's "exit" message and exit code), which a plain error
 // cannot: Run's own nil return conflates "quit" and "eof".
 func (a *App) RunHost(w io.Writer, hooks HostHooks) HostResult {
-	err, eof, started := a.run(context.Background(), w, hooks, RunOptions{})
+	err, eof, started := a.run(context.Background(), w, hooks, RunOptions{Inline: hooks.Inline})
 	var sig *SignalError
 	switch {
 	case errors.As(err, &sig):
@@ -184,6 +190,10 @@ type HostHooks struct {
 	F12        func()
 	CtrlCTwice bool
 	Swap       <-chan HostSwap
+
+	// Inline runs the session inline (SPEC v0.4d §26.15): `tuimark run`
+	// and `tuimark host` with --inline.
+	Inline bool
 }
 
 // HostStop is one value sent on HostHooks.Stop; see RunHost.
@@ -230,6 +240,16 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 	if ctx.Err() != nil {
 		return cancelled(ctx), false, false
 	}
+	// An inline session needs a document in the current language (SPEC
+	// v0.4d §26.15.1, decision 241): judged before the environment, the
+	// log, or the terminal is touched.
+	if opts.Inline {
+		prev, err := a.SetInline(true)
+		if err != nil {
+			return err, false, false
+		}
+		defer a.SetInline(prev)
+	}
 	// The session's clock (SPEC v0.4b §26.13): the log's t, the spinner
 	// phase, and the Every deadlines all read it.
 	clk := defaultRunClock()
@@ -249,7 +269,7 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 		return err, false, false
 	}
 	lg.useClock(clk)
-	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg, ctx: ctx, onError: opts.OnError, clk: clk}
+	sess := &termSession{profile: cfg.profile, sync: cfg.sync, fgbg: cfg.fgbg, log: lg, ctx: ctx, onError: opts.OnError, clk: clk, inline: opts.Inline}
 	defer func() { lg.end(endReason(err, sess)) }()
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
@@ -263,8 +283,12 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 	// theme="auto" (or @theme "auto") without TUIMARK_THEME puts OSC 11 in
 	// the probe (§26.2, ADR 0010).
 	themeQuery := a.wantsTerminalTheme(cfg.theme)
-	sess.probe, sess.skipDECRQM = probePlan(os.Getenv, outTTY, cfg.sync, themeQuery)
+	// A document in the current language also asks for the Kitty keyboard
+	// protocol, outside the skip rule (SPEC v0.4d §26.14.1, decision 216).
+	modern := a.Modern()
+	sess.probe, sess.skipDECRQM = probePlanKB(os.Getenv, outTTY, cfg.sync, themeQuery, modern)
 	sess.themeQuery = themeQuery && sess.probe
+	sess.kbQuery = modern && sess.probe
 	defer a.overrideTheme(cfg.theme)()
 	// Catch the signals before raw mode; release them only after the
 	// terminal is restored (defers run last-in, first-out).
@@ -554,7 +578,14 @@ func (a *App) loopWith(ctx context.Context, in io.Reader, out io.Writer, size fu
 	if ctx.Err() != nil {
 		return cancelled(ctx)
 	}
-	sess := &termSession{ctx: ctx, onError: opts.OnError, log: lg}
+	sess := &termSession{ctx: ctx, onError: opts.OnError, log: lg, inline: opts.Inline}
+	if opts.Inline {
+		prev, err := a.SetInline(true)
+		if err != nil {
+			return err
+		}
+		defer a.SetInline(prev)
+	}
 	defer func() { lg.end(endReason(err, sess)) }()
 	return a.session(in, out, size, resize, nil, sess, HostHooks{})
 }
@@ -564,7 +595,22 @@ func (a *App) loopWith(ctx context.Context, in io.Reader, out io.Writer, size fu
 // zero HostHooks for Loop and Run (every field nil, so hostStop and the
 // Start hook never fire); RunHost passes its own (SPEC v0.3b §19.1).
 func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resize <-chan struct{}, sigs <-chan os.Signal, sess *termSession, hooks HostHooks) error {
-	io.WriteString(out, enterScreen)
+	// An inline session (SPEC v0.4d §26.15) has the terminal state of its
+	// region and the sink Commit prints into; the sink is taken away after
+	// the leave sequence is written (defers run last-in, first-out).
+	var inl *inlineTerm
+	if sess.inline {
+		inl = newInlineTerm(out, sess.log)
+		inl.setSize(size())
+		sess.mu.Lock()
+		sess.inl = inl
+		sess.mu.Unlock()
+		a.setInlineSink(inl)
+		defer a.setInlineSink(nil)
+		io.WriteString(out, enterInline)
+	} else {
+		io.WriteString(out, enterScreen)
+	}
 	defer func() { io.WriteString(out, sess.leave()) }()
 	// What the session resolved theme="auto" to is forgotten when it ends
 	// (Dump and Validate never see it, MUST 13). A reload (hooks.Swap)
@@ -575,12 +621,17 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	defer func() {
 		a.endRun()
 		if a != orig {
+			if inl != nil {
+				a.setInlineSink(nil)
+				a.SetInline(false)
+			}
 			a.leaveSession()
 		}
 	}()
 	lg := sess.log
 	if lg != nil {
-		lg.begin(size())
+		cols, rows := size()
+		lg.beginWith(cols, rows, inl != nil)
 	}
 	// The session reads one clock (SPEC v0.4b §26.13): start is the
 	// origin of the spinner phase P(t) = floor(t / 100 ms), and of the
@@ -617,7 +668,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	// start of the paste start marker the next read may still complete
 	// the marker (decoder.flush). A paste waits for its end marker however
 	// long it takes. Only `tuimark run` (hooks.F12) decodes F12.
-	dec := decoder{f12: hooks.F12 != nil}
+	dec := decoder{f12: hooks.F12 != nil, cur: a.Modern()}
 
 	// hostStop translates one HostHooks.Stop value into what the caller
 	// should return from session (SPEC v0.3b §19.1): eof records sess.eof,
@@ -670,7 +721,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		if sess.onError == nil {
 			return false, err
 		}
+		inl.enterHost()
 		r := sess.onError(ev, err)
+		inl.exitHost()
 		switch {
 		case r == nil:
 			return false, nil
@@ -730,8 +783,26 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			return err
 		}
 	}
+	// The keyboard of a document in the current language (SPEC v0.4d
+	// §26.14.1, step 6 of §26.1): flag 1 pushed after the probe when the
+	// terminal answered the Kitty query, modifyOtherKeys level 2 when the
+	// probe ran without an answer, nothing (legacy) without a probe. The
+	// frames are built for that keyboard, and <hints> shows the keys it
+	// can send.
+	keyboard := ""
+	if a.Modern() {
+		var seq string
+		seq, keyboard = sess.keyboardPush(caps)
+		a.SetKeyboard(keyboard)
+		if seq != "" {
+			if _, err := io.WriteString(out, seq); err != nil {
+				return err
+			}
+		}
+	}
 	opts := paint.Options{Profile: sess.profile, NoCHA: caps.graphemeActive()}
 	syncFrames := sess.syncFrames(caps)
+	inl.configure(opts, syncFrames)
 	// theme="auto" (§26.4): the probe's background, else COLORFGBG, else
 	// dark, for the first frame and for a later @theme "auto".
 	_, autoFrom := a.resolveAuto(caps.bg, sess.fgbg)
@@ -739,8 +810,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		a.mu.Lock()
 		theme, from := a.frameTheme(), a.themeSource(autoFrom)
 		a.mu.Unlock()
-		lg.write("caps", member{"probe", sess.probe}, member{"color", sess.profile.String()}, member{"sync", syncFrames},
-			member{"grapheme", caps.graphemeState()}, member{"theme", theme}, member{"theme_from", from})
+		ms := []member{{"probe", sess.probe}, {"color", sess.profile.String()}, {"sync", syncFrames},
+			{"grapheme", caps.graphemeState()}, {"theme", theme}, {"theme_from", from}}
+		if keyboard != "" {
+			ms = append(ms, member{"keyboard", keyboard})
+		}
+		lg.write("caps", ms...)
 	}
 
 	var prev *paint.Grid
@@ -773,6 +848,16 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				g = overlay(g, top, bottom)
 			}
 		}
+		if inl != nil {
+			// The region is drawn with relative moves, by the state of
+			// the terminal it keeps (SPEC v0.4d §26.15.3).
+			n, err := inl.frame(g)
+			if err != nil {
+				return 0, err
+			}
+			prev = g
+			return n, nil
+		}
 		s := paint.DiffWith(prev, g, opts)
 		if syncFrames {
 			s = syncBegin + s + syncEnd
@@ -788,14 +873,27 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	draw := func() error {
 		t0 := time.Now()
 		cols, rows := size()
+		inl.setSize(cols, rows)
 		if cols != lastCols || rows != lastRows {
 			if lastCols >= 0 {
 				lg.write("resize", member{"cols", cols}, member{"rows", rows})
 				// A resize drops a pending left press (SPEC v0.2b §26.11).
 				a.DropPress()
+				// SPEC v0.4d §26.15.5: the region goes, and the frame
+				// below draws it again at the new size.
+				if inl != nil {
+					if err := inl.resized(); err != nil {
+						return err
+					}
+				}
 			}
 			prev = nil
 			lastCols, lastRows = cols, rows
+		}
+		// The commits made before this frame are printed before it (SPEC
+		// v0.4d §18.3).
+		if err := inl.flush(); err != nil {
+			return err
 		}
 		// Every frame uses the phase of the moment it is built (§26.13).
 		phase := 0
@@ -857,7 +955,9 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				if lg != nil {
 					lg.action(ev, a.secretInput(ev.Source))
 				}
+				inl.enterHost()
 				quit, err := a.Dispatch(ev)
+				inl.exitHost()
 				if err != nil {
 					quit, err = handlerErr(&ev, err)
 				}
@@ -974,7 +1074,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				}
 				focus := a.Focus()
 				if lg != nil {
-					lg.paste(NormalizePaste(ins[0].Paste), a.secretFocused())
+					lg.paste(a.pasteNormalized(ins[0].Paste), a.secretFocused())
 				}
 				evs := a.HandlePaste(ins[0].Paste)
 				ins = ins[1:]
@@ -1114,6 +1214,8 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				if started = a.startTick(r); !started {
 					return nil
 				}
+				inl.enterHost()
+				defer inl.exitHost()
 				return r.fn(b)
 			})
 			if !started {
@@ -1213,9 +1315,30 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			if err := next.enterMode(modeRun); err != nil {
 				return true, err
 			}
+			if inl != nil {
+				// The new app is an inline region too (SPEC v0.4d
+				// §26.15.1: a reload into a pinned document is refused
+				// before the swap, by the tool).
+				if _, err := next.SetInline(true); err != nil {
+					next.exitMode()
+					return true, err
+				}
+			}
 			next.takeOver(a, s.KeepStore)
 			old := a
 			a = next
+			if inl != nil {
+				old.setInlineSink(nil)
+				old.SetInline(false)
+				a.setInlineSink(inl)
+			}
+			// The new app is driven by the session's keyboard and, when
+			// the session pushed a keyboard mode, by the decoder that
+			// reads it, whatever language the reload gave the document
+			// (the terminal sends the bytes of the mode it was left in).
+			old.SetKeyboard("")
+			a.SetKeyboard(keyboard)
+			dec.cur = a.Modern() || sess.pushed()
 			a.mu.Lock()
 			quitReq = a.quitReq
 			a.mu.Unlock()
@@ -1231,6 +1354,12 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 			s.Applied()
 		}
 		return settle()
+	}
+	// A commit waiting for the loop asks it to settle, which prints it
+	// before the frame (inlineTerm.print); a nil channel is never ready.
+	var inlKick <-chan struct{}
+	if inl != nil {
+		inlKick = inl.kick
 	}
 	for {
 		tick := armTick()
@@ -1261,6 +1390,10 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		case <-spin:
 			spinArmed = false
 			if stop, err := spinTick(); stop {
+				return err
+			}
+		case <-inlKick:
+			if stop, err := settle(); stop {
 				return err
 			}
 		case <-a.everyKick:

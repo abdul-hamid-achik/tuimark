@@ -1,0 +1,22 @@
+<tui>
+  <style>text { wrap: wrap; } text.who { bold: true; } text.code { wrap: pre-wrap; background: $panel; } .b { bold: true; } .raw { color: $accent; } text.h > span { color: $accent; bold: true; }</style>
+  <screen id="inline" focus="#composer" class:approving="approval.open">
+    <col if="live.active" each="live.blocks as b" key="b.i">
+      <text runs="b.runs" class:code="b.code"/>
+    </col>
+    <text if="approval.open" class="ask">{approval.title}? y approve · n deny</text>
+    <textarea id="composer" bind="draft" disabled="approval.open" placeholder="Message the model" on:change="typed" on:submit="send"/>
+    <text class="status">{status}</text>
+  </screen>
+  <keymap when="#inline.approving">
+    <bind keys="y" action="approve"/>
+    <bind keys="n,enter" action="deny"/>
+    <bind keys="esc" action="deny"/>
+  </keymap>
+  <keymap>
+    <bind keys="esc" action="cancel"/>
+  </keymap>
+  <template id="card" props="role"><text class="who">{$role}</text><slot/></template>
+  <template id="commit-msg" props="role"><use template="card" role="{$role}"><col each="msg.blocks as b" key="b.id"><text runs="b.runs"/></col></use></template>
+  <template id="diff"><text class="code" runs="approval.diff"/></template>
+</tui>

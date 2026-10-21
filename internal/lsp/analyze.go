@@ -98,7 +98,7 @@ func analyze(sn *snapshot, path, text string) *analysis {
 		var kept ir.Diags
 		for _, d := range diags {
 			switch d.Code {
-			case "B001", "B002", "B003", "B008", "B009", "B010", "B011", "B012":
+			case "B001", "B002", "B003", "B008", "B009", "B010", "B011", "B012", "B013":
 				continue
 			}
 			kept = append(kept, d)

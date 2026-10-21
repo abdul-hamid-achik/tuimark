@@ -130,7 +130,7 @@ type Box struct {
 	// The rest of the content.
 	Placeholder string
 	Secret      bool
-	Cursor      int     // input cursor (rune index)
+	Cursor      int     // input cursor, or textarea caret (rune index; a textarea follows it when Follow >= 0)
 	Value       float64 // progress 0-100
 	Axis        string  // rule/scroll axis
 	Title       string
@@ -191,6 +191,11 @@ type Box struct {
 	// a member's own HasLo/HasHi (its own min=/max= literal) still wins
 	// over them at paint time.
 	Scale string
+	// Runs are the runs of a <text runs> (version: the current language,
+	// SPEC v0.4d §6.20): Text is their joined text, and Runs says where
+	// each run ends in it and what look its span gives it. nil for every
+	// other box, which is all but a few of a frame's.
+	Runs *TextRuns
 }
 
 // ResetOutputs zeroes what laying out a frame and the steps after it
@@ -326,12 +331,14 @@ func (b *Box) IsContainer() bool {
 // a <scroll> on the y axis; axis= is allowed only on <scroll> and <rule>,
 // SPEC v0.2 §11.4). A table row ignores overflow (SPEC §6.9.3), and so do
 // a tabs, a hints, and the boxes they generate (§11.3), so none of them is
-// ever one.
+// ever one. A textarea is a viewport for scrolling (the dump's scroll, the
+// wheel, the scrollbar, L006) but not for sizing (SPEC v0.4d §6.19.4,
+// decision 232): the sibling-fr rule leaves it out (siblingFr).
 func (b *Box) Scrolls() bool {
 	if b.Fixed || b.Kind == "tabs" || b.Kind == "hints" {
 		return false
 	}
-	return b.Kind == "scroll" || b.Kind == "list" || b.Kind == "table" || (b.Style.Overflow == "scroll" && b.IsContainer())
+	return b.Kind == "textarea" || b.Kind == "scroll" || b.Kind == "list" || b.Kind == "table" || (b.Style.Overflow == "scroll" && b.IsContainer())
 }
 
 // IsGrid reports whether b lays out its in-flow children as a grid (SPEC

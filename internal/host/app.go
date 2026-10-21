@@ -24,7 +24,7 @@ import (
 // Version is the runtime version the start record of TUIMARK_LOG carries
 // (SPEC v0.2b §26.12). Release builds set it with -ldflags "-X", like the
 // CLI's own version.
-var Version = "0.4.5"
+var Version = "0.4.6"
 
 // Event is the payload a handler receives (SPEC §8.2).
 type Event struct {
@@ -60,12 +60,26 @@ type inputState struct {
 	value  string // used when the input has no bind path
 	cursor int
 	init   bool
+	// The rest is a textarea's (SPEC v0.4d §6.19.2, textarea.go): the goal
+	// column the vertical keys keep (goalSet false: the caret was placed
+	// where no layout could measure it, settled after the frame's layout),
+	// whether the offset must follow the caret (decision 233), and the raw
+	// value it last saw in the store (seenOK), which tells an outside
+	// change from its own edits (decision 226).
+	goal    int
+	goalSet bool
+	follow  bool
+	seen    string
+	seenOK  bool
 }
 
 // App is a loaded document plus its runtime state.
 type App struct {
-	mu     sync.Mutex
-	doc    *parse.Document
+	mu  sync.Mutex
+	doc *parse.Document
+	// ldr is the loader the document was parsed with, kept for the
+	// copies of a committed template (inline.go).
+	ldr    *parse.Loader
 	file   string // display name used in diagnostics
 	path   string // path on disk ("" for Parse)
 	dir    string
@@ -221,6 +235,22 @@ type App struct {
 	flagTheme   string
 	runEnvTheme string
 	runAuto     string
+	// keyboard is the keyboard the frames are built for (SPEC v0.4d
+	// §26.14.3, keyboard.go): "" is a Kitty session, the keyboard of every
+	// tool that renders without a terminal; Run and play set it.
+	keyboard string
+	// inline is set while the frames are built as an inline region (SPEC
+	// v0.4d §26.15, inline.go): Run with RunOptions.Inline, a Play with
+	// Inline, and the tools' --inline. It is an input of the frame.
+	inline bool
+	// inl is the inline session that Commit prints into (inline.go), nil
+	// outside one. Guarded by mu.
+	inl inlineSink
+	// inlActive mirrors inl != nil, and deriveG is the goroutine running
+	// the Derive functions of a write while it is set: Commit reads both
+	// without the lock (inline.go).
+	inlActive atomic.Bool
+	deriveG   deriveGoroutine
 }
 
 // modalEntry is a modal that took the focus trap when it became the top
@@ -273,7 +303,8 @@ func newApp(src []byte, path, dir string) *App {
 		a.file = ""
 	}
 	res := diskResolver(dir, path)
-	a.doc = parse.ParseWith(src, path, res.loader())
+	a.ldr = res.loader()
+	a.doc = parse.ParseWith(src, path, a.ldr)
 	a.static = append(a.static, a.doc.Diags...)
 	a.loadStyles(res)
 	return a

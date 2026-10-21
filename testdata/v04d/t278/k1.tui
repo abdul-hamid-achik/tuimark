@@ -1,0 +1,10 @@
+<tui>
+  <screen id="main">
+    <input id="q" bind="q" on:change="ch" on:submit="sub"/>
+  </screen>
+  <keymap>
+    <bind keys="esc" action="e"/>
+    <bind keys="x" action="xx"/>
+    <bind keys="ctrl+w" action="cw"/>
+  </keymap>
+</tui>

@@ -476,7 +476,8 @@ func TestHostProtocolHandshakeAndData(t *testing.T) {
 		_, first := r.waitMsg(t, 0, func(hostLine) bool { return true })
 		want := `{"type":"ready","protocol":1,"version":"` + version + `","cols":90,"rows":20,"theme":"light","catalog":[` +
 			`{"name":"pick","builtin":false,"sources":["#l on:select"]},` +
-			`{"name":"quit","builtin":true,"sources":["keys q"]}],"diagnostics":[]}`
+			`{"name":"quit","builtin":true,"sources":["keys q"]}],"diagnostics":[],` +
+			`"messages":["set","bind","batch","get","reply","append","commit"]}`
 		if first.raw != want {
 			t.Errorf("first fd 4 message\n got %s\nwant %s", first.raw, want)
 		}

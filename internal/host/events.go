@@ -11,10 +11,20 @@ import (
 )
 
 // Key is one decoded key press. Name is the key token (SPEC §8.1); Rune is
-// the printable character, if any.
+// the printable character, if any. The two marks only the decoder of the
+// current language sets (SPEC v0.4d §26.14) are never part of the token:
+//
+//   - Word marks a left or right that was held with alt or ctrl: the
+//     keymap still sees left and right, and only a focused input or
+//     textarea reads the mark, as a word move (alt+b, alt+f);
+//   - LF marks an enter that came from the LF byte (0x0a) or from ctrl+j:
+//     enter everywhere but in a focused textarea, where it is a line break
+//     (§26.14.4).
 type Key struct {
 	Name string
 	Rune rune
+	Word bool
+	LF   bool
 }
 
 // switchScreen activates the screen with the given id. Caller holds a.mu.
@@ -148,6 +158,10 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 		}
 	case "input":
 		ev.Value = a.inputValue(b)
+	case "textarea":
+		// Its text as everything reads it, keys {} (SPEC v0.4d §6.19.7,
+		// decision 238).
+		ev.Value = a.textareaText(b)
 	case "checkbox":
 		// A keymap row fired while a checkbox has focus carries its value
 		// (SPEC v0.4b §8.2, decision 65), keys {}.
@@ -211,7 +225,7 @@ func (a *App) HandleKeyRun(keys []Key) ([]Event, int) {
 	defer a.mu.Unlock()
 	// A printable key never reaches esc handling or the keymap while an
 	// enabled input has focus: the input takes it (handleKey step 2).
-	if b := a.focusedBox(); b != nil && !b.Disabled && b.Kind == "input" && isPrintable(keys[0]) {
+	if b := a.focusedBox(); b != nil && !b.Disabled && (b.Kind == "input" || b.Kind == "textarea") && isPrintable(keys[0]) {
 		n := 1
 		for n < len(keys) && isPrintable(keys[n]) {
 			n++
@@ -293,6 +307,9 @@ func (a *App) inputCursor(b *layout.Box) (*inputState, []rune, []int) {
 func (a *App) insertText(b *layout.Box, text []rune) []Event {
 	if a.inputBlocked(b) {
 		return nil
+	}
+	if b.Kind == "textarea" {
+		return a.insertTextarea(b, text)
 	}
 	st, runes, _ := a.inputCursor(b)
 	out := make([]rune, 0, len(runes)+len(text))

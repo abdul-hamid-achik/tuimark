@@ -21,6 +21,9 @@ type Batch struct {
 type batchWrite struct {
 	path string
 	v    any
+	// appendOp marks a queued Append (SPEC v0.4d §18.3): v is the value to
+	// append at path, checked against the trial's store when it applies.
+	appendOp bool
 }
 
 // Batch calls fn once, with a fresh *Batch. fn runs without the app's
@@ -208,7 +211,13 @@ func (a *App) applyBatchLocked(writes []batchWrite) (failErr error) {
 	// path cannot be written there.
 	a.deriveHold++
 	for _, w := range writes {
-		if err := a.applyLocked(w.path, w.v); err != nil {
+		var err error
+		if w.appendOp {
+			err = a.appendLocked(w.path, w.v, true)
+		} else {
+			err = a.applyLocked(w.path, w.v)
+		}
+		if err != nil {
 			failErr = err
 			break
 		}

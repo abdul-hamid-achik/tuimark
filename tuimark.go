@@ -14,7 +14,7 @@
 //
 // The public surface is deliberately small: Load, LoadFS, Parse, Bind,
 // Set, Get, Batch, On, Catalog, Dump, Validate, Play, Run, RunContext,
-// RunWith, Quit, Every, Derive.
+// RunWith, Quit, Every, Derive, Append, Commit.
 package tuimark
 
 import (
@@ -115,6 +115,18 @@ func (a *App) Bind(path string, v any) error { return a.h.Bind(path, v) }
 // coerced as Bind coerces them: numbers become float64, so integers beyond
 // ±2^53 lose precision (pass them as strings).
 func (a *App) Set(path string, v any) error { return a.h.Set(path, v) }
+
+// Append (v0.4d) adds v to the value at path: a string is concatenated
+// with v, which must be a string; an array gets v, any JSON value after
+// Set's coercion, as one element at its end (an array v is one element,
+// never spread). Any other case is an error and changes nothing: a
+// missing path, null, a number, a boolean or an object at the path, a
+// string at the path and a v that is not a string, the root, a reserved
+// path, and a derived path (the error Set gives). Otherwise it is Set of
+// the new value, and the store appends in place. It is safe to call from
+// any goroutine. In a Batch, (*Batch).Append checks the value when the
+// batch is applied.
+func (a *App) Append(path string, v any) error { return a.h.Append(path, v) }
 
 // Get returns a deep copy of the value at path, JSON-shaped (nil, bool,
 // float64, string, []any, or map[string]any): mutating the returned
@@ -228,6 +240,14 @@ type RunOptions struct {
 	// a quit (RunWith returns nil), and any other error ends it with that
 	// error.
 	OnError func(ev *Event, err error) error
+	// Inline (v0.4d) draws the active screen as a live region below the
+	// terminal's cursor instead of in the alternate screen, and Commit
+	// prints into the terminal's scrollback above it (SPEC §26.15). Only a
+	// <tui> without version runs inline: for a document that writes
+	// version RunWith returns the error "tuimark: inline mode needs a
+	// <tui> without version" before it touches the terminal. Run and
+	// RunContext are never inline.
+	Inline bool
 }
 
 // RunContext is RunWith(ctx, w, RunOptions{}).
@@ -253,6 +273,26 @@ func (a *App) RunContext(ctx context.Context, w io.Writer) error {
 func (a *App) RunWith(ctx context.Context, w io.Writer, opts RunOptions) error {
 	return a.h.RunWith(ctx, w, host.RunOptions(opts))
 }
+
+// Commit (v0.4d) prints c into the terminal's scrollback above the live
+// region of an inline session: while RunWith runs with Inline, or while
+// Play runs with Inline (the commit is recorded in PlayResult.Scrollback).
+// At any other time it is the error "commit: not in inline mode" and does
+// nothing. Exactly one of c.Lines (non-empty) and c.Template is given;
+// c.With and c.Props need a template. A line is a string or an array of
+// runs, normalized as run text, wrapped at the terminal's width, in which
+// an LF starts a new row. A commit that returns an error printed nothing,
+// and one that succeeds printed all its rows in one write.
+//
+// Commit is safe from any goroutine. While the loop runs host code (a
+// handler, an Every function, OnError) or the host protocol waits for a
+// reply, it prints at once, before it returns, and redraws the live region
+// as last drawn; otherwise it is queued to the loop, which prints it
+// before its next frame, and it returns after the print. Called from a
+// Derive function it returns "commit: inside a derive" and prints nothing.
+// A commit accepted before the session ends is printed before the leave
+// sequence.
+func (a *App) Commit(c Commit) error { return a.h.Commit(c) }
 
 // Quit asks the active Run, RunContext, or RunWith to end. The request is
 // taken at the same stop checks as a cancellation, with the same effect,
@@ -368,6 +408,19 @@ type PlayOptions struct {
 	Styles     bool
 	Cells      bool
 	Frames     bool
+	// Keyboard is "kitty" (the default, also for "") or "legacy", as
+	// play --keyboard (v0.4d, SPEC §15.4, §18.1): the terminal Play
+	// emulates. It chooses which keys a key step can send and which bytes
+	// it sends, and which keys <hints> shows. Any other value is an error
+	// before any step. A document that writes version ignores it.
+	Keyboard string
+	// Inline (v0.4d) lays the active screen out as an inline region, with
+	// Rows as the terminal's rows, and records every commit the steps and
+	// the handlers make in PlayResult.Scrollback, as play --inline (SPEC
+	// §15.4, §26.15). A document that writes version makes Play return the
+	// error "tuimark: inline mode needs a <tui> without version" with a
+	// nil result.
+	Inline bool
 }
 
 // PlayResult is what one Play call did: Events holds every event
@@ -381,7 +434,25 @@ type PlayResult struct {
 	Dump   *Dump
 	Quit   bool
 	Frames []PlayFrame
+	// Scrollback (v0.4d) holds the rows committed, in order: set only with
+	// PlayOptions.Inline.
+	Scrollback *Scrollback
 }
+
+// Scrollback is the rows an inline session committed (v0.4d): Grid holds
+// one string of the terminal's width per row, like Dump's grid, and
+// Styles, only with PlayOptions.Styles, the style spans of each row. It
+// marshals as play --inline's scrollback member.
+type Scrollback = dump.Scrollback
+
+// StyleSpan (v0.4d) names the element type of Dump's styles rows: a
+// stretch of a row's cells with one style, {"x","w","fg","bg","a"}.
+type StyleSpan = dump.Span
+
+// Commit (v0.4d) is what App.Commit prints into the scrollback of an
+// inline session, above the live region: Lines, each a string or an array
+// of runs, or a copy of Template (SPEC §18.3, §26.15.4).
+type Commit = host.Commit
 
 // Play drives the app itself, headless, exactly as Run would from the
 // same input, and returns what happened. The app's state persists across
@@ -440,10 +511,10 @@ func (a *App) Play(opts PlayOptions, steps ...string) (*PlayResult, error) {
 	res, err := play.Play(a.h, play.Options{
 		Cols: opts.Cols, Rows: opts.Rows,
 		NoHandlers: opts.NoHandlers, Styles: opts.Styles, Cells: opts.Cells,
-		Frames: opts.Frames,
+		Frames: opts.Frames, Keyboard: opts.Keyboard, Inline: opts.Inline,
 	}, steps)
 	if res == nil {
 		return nil, err
 	}
-	return &PlayResult{Events: res.Events, Dump: res.Dump, Quit: res.Quit, Frames: res.Frames}, err
+	return &PlayResult{Events: res.Events, Dump: res.Dump, Quit: res.Quit, Frames: res.Frames, Scrollback: res.Scrollback}, err
 }

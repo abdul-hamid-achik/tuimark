@@ -41,6 +41,20 @@ type Node struct {
 	// version="3" documents; a version="1" or version="2" dump never has
 	// it.
 	Clipped string `json:"clipped,omitempty"`
+	// Caret is the caret of the focused textarea, and of no other node
+	// (SPEC v0.4d §6.19.8, §13.2, decision 237): after every other member.
+	Caret *Caret `json:"caret,omitempty"`
+}
+
+// Caret is the caret of the focused textarea: its hard line and its
+// column in that line, from 0, in columns, then the cell where Run puts
+// the terminal's cursor. X and Y are left out when the caret's visual line
+// is outside the content box.
+type Caret struct {
+	Line int  `json:"line"`
+	Col  int  `json:"col"`
+	X    *int `json:"x,omitempty"`
+	Y    *int `json:"y,omitempty"`
 }
 
 // Scroll is a viewport's scroll state (SPEC v0.2 §13.2). Its members come
@@ -93,13 +107,16 @@ type Cell struct {
 
 // Dump is the frame IR.
 type Dump struct {
-	Cols   int             `json:"cols"`
-	Rows   int             `json:"rows"`
-	OK     bool            `json:"ok"`
-	Focus  *string         `json:"focus"`
-	Errors []ir.Diagnostic `json:"errors"`
-	Nodes  []Node          `json:"nodes"`
-	Grid   []string        `json:"grid"`
+	Cols int `json:"cols"`
+	Rows int `json:"rows"`
+	// TerminalRows is the terminal's rows under --inline, where Rows is the
+	// region's height (SPEC v0.4d §13.2, §26.15.6); nil outside it.
+	TerminalRows *int            `json:"terminal_rows,omitempty"`
+	OK           bool            `json:"ok"`
+	Focus        *string         `json:"focus"`
+	Errors       []ir.Diagnostic `json:"errors"`
+	Nodes        []Node          `json:"nodes"`
+	Grid         []string        `json:"grid"`
 	// Wide is true when some row holds a complex cluster (SPEC v0.2
 	// §11.5.1: two columns wide or more than one code point). Then
 	// grid[y] indexed by rune no longer matches column x; use Cells.
@@ -214,6 +231,17 @@ type PlayFrame struct {
 	Input  string  `json:"input"`
 	Events []Event `json:"events"`
 	Dump   *Dump   `json:"dump"`
+	// ScrollbackRows is the number of rows committed up to and including
+	// the step, under play --inline (SPEC v0.4d §15.4, decision 250).
+	ScrollbackRows *int `json:"scrollback_rows,omitempty"`
+}
+
+// Scrollback is the rows an inline session committed (SPEC v0.4d §15.4,
+// §18.3): Grid holds one string of the terminal's width per row, like a
+// dump's grid, and Styles, with --styles, one array of spans per row.
+type Scrollback struct {
+	Grid   []string `json:"grid"`
+	Styles [][]Span `json:"styles,omitempty"`
 }
 
 // Play is the JSON object `tuimark play --format json` prints: a Dump plus
@@ -222,8 +250,11 @@ type PlayFrame struct {
 // top-level field order.
 type Play struct {
 	*Dump
-	Events []Event     `json:"events"`
-	Frames []PlayFrame `json:"frames,omitempty"`
+	Events []Event `json:"events"`
+	// Scrollback is present under play --inline, after events (SPEC v0.4d
+	// §15.4).
+	Scrollback *Scrollback `json:"scrollback,omitempty"`
+	Frames     []PlayFrame `json:"frames,omitempty"`
 }
 
 // Options are what a dump carries beyond the frame itself.
@@ -244,6 +275,9 @@ type Options struct {
 	// modals included (the list, then each laid-out row's item followed
 	// by its text).
 	Options *layout.Box
+	// TerminalRows, when not nil, is the dump's terminal_rows: the
+	// terminal's rows of an inline session (SPEC v0.4d §26.15.6).
+	TerminalRows *int
 }
 
 // NodeOf is the dump node of a laid-out box (SPEC §13.2). v2 adds the
@@ -262,6 +296,19 @@ func NodeOf(n *layout.Box, v2, v3 bool) Node {
 		dn.Text = n.Text
 	case "input":
 		dn.Text = layout.InputShown(n) // one • per cluster when secret
+	case "textarea":
+		// Its value as the host's text reads it, line breaks included,
+		// never the placeholder (SPEC v0.4d §6.19.8).
+		dn.Text = n.Text
+		if n.Focused && !n.Disabled {
+			cc := layout.CaretOf(n)
+			c := &Caret{Line: cc.Line, Col: cc.Col}
+			if cc.Shown {
+				x, y := cc.X, cc.Y
+				c.X, c.Y = &x, &y
+			}
+			dn.Caret = c
+		}
 	}
 	if v2 && len(n.Classes) > 0 {
 		dn.Classes = append([]string(nil), n.Classes...)
@@ -281,7 +328,7 @@ func Build(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.Grid
 // BuildWith assembles a dump from a painted frame.
 func BuildWith(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.Grid, diags ir.Diags, focus string, o Options) *Dump {
 	cells := o.Cells
-	d := &Dump{Cols: cols, Rows: rows, OK: !diags.HasErrors(), Errors: []ir.Diagnostic(diags), Nodes: []Node{}}
+	d := &Dump{Cols: cols, Rows: rows, TerminalRows: o.TerminalRows, OK: !diags.HasErrors(), Errors: []ir.Diagnostic(diags), Nodes: []Node{}}
 	if d.Errors == nil {
 		d.Errors = []ir.Diagnostic{}
 	}

@@ -16,7 +16,8 @@ import (
 // inspectJSON is the JSON output of `tuimark inspect --json` (SPEC v0.2b
 // §15.7), members in the order cols, rows, ok, node, path, cell, pseudo,
 // classes, style, and, for a <tui> without version only, source (SPEC
-// v0.4b §15.7, decision 19).
+// v0.4b §15.7, decision 19) and, for a cell a run painted, run (SPEC
+// v0.4d §6.20.6).
 type inspectJSON struct {
 	Cols    int              `json:"cols"`
 	Rows    int              `json:"rows"`
@@ -28,6 +29,7 @@ type inspectJSON struct {
 	Classes []host.ClassInfo `json:"classes"`
 	Style   []host.StyleInfo `json:"style"`
 	Source  *host.SourceInfo `json:"source,omitempty"`
+	Run     *host.RunInfo    `json:"run,omitempty"`
 }
 
 // parseAt parses --at X,Y: two 0-based decimal cell coordinates.
@@ -63,6 +65,7 @@ func (c *cli) cmdInspect(args []string) int {
 	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
 	asJSON := fs.Bool("json", false, "print the report as JSON")
+	inline := fs.Bool("inline", false, "lay the active screen out as an inline region, with --rows as the terminal's rows")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -116,6 +119,9 @@ func (c *cli) cmdInspect(args []string) int {
 		}
 		return 2
 	}
+	if err := applyInline(app, "inspect", *inline); err != nil {
+		return c.fail(err)
+	}
 	app.SetStrict(*strict)
 	f := app.Frame(*cols, *rows)
 	in, err := app.Inspect(f, target)
@@ -124,7 +130,7 @@ func (c *cli) cmdInspect(args []string) int {
 	}
 	ok := !f.Diags.HasErrors()
 	if *asJSON {
-		out := inspectJSON{Cols: f.Cols, Rows: f.Rows, OK: ok, Node: in.Node, Path: in.Path, Cell: in.Cell, Pseudo: in.Pseudo, Classes: in.Classes, Style: in.Style, Source: in.Source}
+		out := inspectJSON{Cols: f.Cols, Rows: f.Rows, OK: ok, Node: in.Node, Path: in.Path, Cell: in.Cell, Pseudo: in.Pseudo, Classes: in.Classes, Style: in.Style, Source: in.Source, Run: in.Run}
 		b, err := json.MarshalIndent(out, "", "  ")
 		if err != nil {
 			return c.fail(err)
@@ -200,6 +206,26 @@ func inspectText(in *host.Inspection) string {
 		fmt.Fprintf(&b, "source %s\n", fileLoc(src.File, src.Line, src.Col))
 		for _, v := range src.Via {
 			fmt.Fprintf(&b, "via %s %s\n", viaText(v), fileLoc(v.File, v.Line, v.Col))
+		}
+	}
+	if r := in.Run; r != nil {
+		// The run of a <text runs> that painted the cell (SPEC v0.4d
+		// §6.20.6): its index, text, and classes, then the properties a
+		// rule set on its span.
+		fmt.Fprintf(&b, "run %d %q", r.Index, r.Text)
+		for _, c := range r.Classes {
+			b.WriteString(" ." + c)
+		}
+		b.WriteString("\n")
+		for _, s := range r.Style {
+			if s.Rule == nil {
+				continue
+			}
+			v := "(none)"
+			if s.Value != nil {
+				v = *s.Value
+			}
+			fmt.Fprintf(&b, "  %s: %s  %s  %s\n", s.Prop, v, s.Origin, ruleText(*s.Rule))
 		}
 	}
 	return b.String()

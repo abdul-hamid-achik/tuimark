@@ -59,9 +59,9 @@
     "tag": {
       "patterns": [
         {
-          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags, the 0.4b tags checkbox, select, include, fragment, template and use, the 0.4c tag slot, and the spike alias app).",
+          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags, the 0.4b tags checkbox, select, include, fragment, template and use, the 0.4c tag slot, the 0.4d tag textarea, and the spike alias app).",
           "name": "meta.tag.tui",
-          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|include|fragment|template|use|slot|app)(?![\\w:.-])",
+          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|textarea|include|fragment|template|use|slot|app)(?![\\w:.-])",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.tui" },
             "2": { "name": "entity.name.tag.tui" }
@@ -286,9 +286,9 @@
       "patterns": [{ "include": "#flag-value" }]
     },
     "attr-path": {
-      "comment": "bind, checked, key: a path into the store or the each alias.",
+      "comment": "bind, checked, key, runs (0.4d): a path into the store or the each alias.",
       "name": "meta.attribute.path.tui",
-      "begin": "(?<![\\w:.-])(bind|checked|key)(\\s*)(=)(\\s*)(\"|')",
+      "begin": "(?<![\\w:.-])(bind|checked|key|runs)(\\s*)(=)(\\s*)(\"|')",
       "beginCaptures": {
         "1": { "name": "entity.other.attribute-name.path.tui" },
         "3": { "name": "punctuation.separator.key-value.tui" },
@@ -329,7 +329,15 @@
         { "name": "punctuation.separator.list.tui", "match": "," },
         {
           "name": "constant.language.key.tui",
-          "match": "(?<![\\w+-])(?:enter|esc|tab|backspace|space|up|down|left|right|home|end|pgup|pgdn|shift\\+tab)(?![\\w+-])"
+          "match": "(?<![\\w+-])(?:enter|esc|tab|backspace|space|delete|up|down|left|right|home|end|pgup|pgdn|f(?:1[0-2]|[1-9])|shift\\+tab|shift\\+enter|ctrl\\+enter|alt\\+enter|alt\\+backspace)(?![\\w+-])"
+        },
+        {
+          "match": "(?<![\\w+-])(alt)(\\+)([A-Za-z0-9])(?![\\w+-])",
+          "captures": {
+            "1": { "name": "constant.language.key.modifier.tui" },
+            "2": { "name": "punctuation.separator.key-combo.tui" },
+            "3": { "name": "constant.language.key.tui" }
+          }
         },
         {
           "match": "(?<![\\w+-])(ctrl)(\\+)([a-z])(?![\\w+-])",

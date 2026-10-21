@@ -44,6 +44,12 @@ func keyOf(tok string) Key {
 	if strings.HasPrefix(tok, "ctrl+") {
 		return Key{Name: tok}
 	}
+	if len(tok) > 1 {
+		// A token of the current language (SPEC v0.4d §8.1): delete, f1 to
+		// f12, alt+X, shift+enter, ctrl+enter, alt+enter, alt+backspace.
+		// None is typed text, so none carries a rune.
+		return Key{Name: tok}
+	}
 	r := []rune(tok)[0]
 	return Key{Name: string(r), Rune: r}
 }
@@ -52,6 +58,18 @@ func keyOf(tok string) Key {
 // decoder turns their bytes into tab and enter (SPEC §8.1).
 func neverArrives(tok string) bool {
 	return tok == "ctrl+i" || tok == "ctrl+j" || tok == "ctrl+m"
+}
+
+// firstSendable is the first of keys that the session's terminal can send
+// (SPEC v0.4d §26.14.3, decision 220), and keys[0] as written when it can
+// send none of them. In a pinned document it is keys[0].
+func (a *App) firstSendable(keys []string) string {
+	for _, tok := range keys {
+		if a.producible(tok) {
+			return tok
+		}
+	}
+	return keys[0]
 }
 
 // hintItems returns the items of a hints on v (SPEC §6.12): the hint rows
@@ -68,7 +86,7 @@ func (a *App) hintItems(v keyView, all bool) []hintItem {
 			continue
 		}
 		if all {
-			keycap := kb.Keys[0]
+			keycap := a.firstSendable(kb.Keys)
 			if kb.Keycap != "" {
 				keycap = kb.Keycap
 			}
@@ -76,7 +94,7 @@ func (a *App) hintItems(v keyView, all bool) []hintItem {
 			continue
 		}
 		for _, tok := range kb.Keys {
-			if !ir.ValidKey(tok) || neverArrives(tok) {
+			if !a.keyTokenOK(tok) || neverArrives(tok) || !a.producible(tok) {
 				continue
 			}
 			if p := a.planKey(v, keyOf(tok)); p.step == stepKeymap && p.row == i {
@@ -131,17 +149,27 @@ func (fb *builder) buildHints(casc *css.Cascade, root *layout.Box) {
 			its = a.hintItems(v, all)
 			items[all] = its
 		}
-		h.Children = h.Children[:0]
-		for _, it := range its {
-			row := &layout.Box{Tag: "row", Kind: "row", Role: layout.RoleHintItem, Parent: h, GenFrom: it.src, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
-			key := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintKey, Parent: row, GenFrom: it.src, Classes: []string{"hint-key"}, Text: it.keycap, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
-			label := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintLabel, Parent: row, GenFrom: it.src, Classes: []string{"hint-label"}, Text: it.label, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
-			row.Children = []*layout.Box{key, label}
-			row.Style = newStyle(casc.Compute(row, h.Style, nil, nil))
-			key.Style = newStyle(casc.Compute(key, row.Style, nil, nil))
-			label.Style = newStyle(casc.Compute(label, row.Style, nil, nil))
-			h.Children = append(h.Children, row)
+		if fb.hintsBuilt == nil {
+			fb.hintsBuilt = map[bool][]hintItem{}
 		}
+		fb.hintsBuilt[all] = its
+		setHintItems(casc, h, its)
+	}
+}
+
+// setHintItems gives hints h the item rows of its (the children it is
+// built with, SPEC §6.12) and cascades them.
+func setHintItems(casc *css.Cascade, h *layout.Box, its []hintItem) {
+	h.Children = h.Children[:0]
+	for _, it := range its {
+		row := &layout.Box{Tag: "row", Kind: "row", Role: layout.RoleHintItem, Parent: h, GenFrom: it.src, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+		key := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintKey, Parent: row, GenFrom: it.src, Classes: []string{"hint-key"}, Text: it.keycap, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+		label := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintLabel, Parent: row, GenFrom: it.src, Classes: []string{"hint-label"}, Text: it.label, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+		row.Children = []*layout.Box{key, label}
+		row.Style = newStyle(casc.Compute(row, h.Style, nil, nil))
+		key.Style = newStyle(casc.Compute(key, row.Style, nil, nil))
+		label.Style = newStyle(casc.Compute(label, row.Style, nil, nil))
+		h.Children = append(h.Children, row)
 	}
 }
 

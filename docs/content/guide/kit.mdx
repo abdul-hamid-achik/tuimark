@@ -1,6 +1,6 @@
 ---
 title: The kit
-description: A copy-paste component kit for Tuimark - one file of templates you include, design tokens and k- component classes, small documents that show each of the 22 components, and a gallery app that shows them all.
+description: A copy-paste component kit for Tuimark - one file of templates you include, design tokens and k- component classes, small documents that show each of the 25 components, and a gallery app that shows them all.
 ---
 
 The kit is a set of ready-made components for Tuimark: buttons, cards, alerts, a data table, a command palette, dialogs, toasts, and more. It follows the shadcn way: you do not install it, you **copy it into your project and own it**. There is nothing to import from a registry and nothing to keep in sync; if a card should look different, you edit your copy.
@@ -13,7 +13,7 @@ The kit adds no tag, attribute, or CSS property to the language. It is a [fragme
 | `kit/theme.tcss` | the design tokens, dark and light, and the base typography |
 | `kit/kit.tcss` | the component classes |
 | `kit/components/NAME.tui` | one small, valid document per component: a template in use, or the markup to copy for a class component, with a `NAME.sample.json` beside it when it binds data |
-| `examples/kit-gallery` | every component in one app, on five tabs, with a Go host |
+| `examples/kit-gallery` | every component in one app, on six tabs, with a Go host |
 
 ## Using it
 
@@ -182,6 +182,22 @@ The include's path points at the kit in this repository; use the path of your co
 
 The `source` is `confirm__no`, the button the template's `focus="#no"` put the cursor on (the safe one), so one `dialog_confirm` handler serves every dialog the document uses.
 
+## Chat and inline components
+
+Three templates serve a chat, whether it runs on the alternate screen or [inline](/guide/inline) in the terminal's scrollback. Like the rest of the kit they add nothing to the language: their block schema is a pattern, not part of it.
+
+**`k-composer`** is the box a message is typed in: a rule, a `textarea`, and the key hints of your keymap. `with="composer as c"` reads `c.draft`, which the textarea writes and the host clears after a send, and the optional flag `c.disabled`. It fires `composer_change` and `composer_submit`, both with the text as `value`. Use it as `<use id="composer" …/>`: the textarea is `composer__input`, which a `focus=` and a `when="#composer__input:focus"` name. It is one row when empty and grows with its text up to eight rows, so in an inline screen the region grows with it.
+
+```tui
+<use id="composer" template="k-composer" placeholder="Message the model" with="composer as c"/>
+```
+
+**`k-block`** is one block of a transcript. `with="b as blk"` reads `blk.runs`, an array of strings and `{text, class}` runs, and five optional boolean flags that read as false when missing, with no diagnostic: `code` (a code block, which keeps its line breaks, tabs, and spaces: `wrap: pre-wrap`), `head`, `quote`, `item`, and `rule`. The classes `k-strong`, `k-em`, and `k-code` style a run. A transcript is one `<use template="k-block" with="b as blk"/>` per element of an array of `{id, runs, …}`, and the schema is what `markdownToBlocks` in `examples/host-ts` produces from markdown. The same use shows the unfinished tail in a live region and, as a [committed template](/guide/inline#streaming-a-reply-by-blocks), each finished block in the scrollback.
+
+**`k-receipt`** is what a tool did: a bordered box with its call as the title, its output, and a status line. `with="call as r"` reads `r.title`, `r.status`, `r.output`, and the flags `r.ok` and `r.err`. The output is shown with `runs`, not with a `{path}`: a `{path}` removes a tab, and run text makes it four spaces, so an `ls -l` keeps its columns.
+
+`k-composer` stands in for the textarea of the [composer](/guide/textarea#a-composer) guide in a document of its own: it passes the same behavior as a bare textarea (typing, line breaks, submitting, `up` and `down` through the lines before the keymap), with the ids, the action names, and one more row above and below it that the template brings.
+
 ## Components
 
 | Component | Use | In one line |
@@ -208,6 +224,9 @@ The `source` is `confirm__no`, the button the template's `focus="#no"` put the c
 | split pane | class `k-split` | a list beside a detail card, stacked on a narrow terminal |
 | log panel | template `k-log` | a scrolling log that follows its end |
 | breadcrumb | template `k-breadcrumb` | the current path, down to the last crumb on a narrow terminal |
+| composer | template `k-composer` | a message box that grows with its text, with the key hints of your keymap |
+| transcript block | template `k-block` | a paragraph, heading, quote, list item, code block, or rule made of runs |
+| tool receipt | template `k-receipt` | what a tool did: its call, its output kept as runs, and a status line |
 
 Markup has no expressions, so a few components lean on the host: the palette's filtered list and the split pane's detail are computed with `Derive`, and a toast is cleared by an `Every` tick. The contract comment of each file says which, and the [helpers](#helpers) below do the common ones for you.
 

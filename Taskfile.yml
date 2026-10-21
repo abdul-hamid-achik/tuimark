@@ -9,10 +9,11 @@ vars:
 
 tasks:
   build:
-    desc: Build tuimark, the example apps (inbox, dashboard, monitor, logs, tasks, gitui, http, kit-gallery, containers, snake, chess, tetris, minesweeper, 2048, sudoku, pipeline, music, pomodoro), and (once it has Go files) agent into bin/.
+    desc: Build tuimark, the example apps (inbox, inline, dashboard, monitor, logs, tasks, gitui, http, kit-gallery, containers, snake, chess, tetris, minesweeper, 2048, sudoku, pipeline, music, pomodoro), and (once it has Go files) agent into bin/.
     cmds:
       - go build -o bin/tuimark ./cmd/tuimark
       - go build -o bin/inbox ./examples/inbox
+      - go build -o bin/inline ./examples/inline
       - go build -o bin/dashboard ./examples/dashboard
       - go build -o bin/monitor ./examples/monitor
       - go build -o bin/logs ./examples/logs
@@ -135,6 +136,19 @@ tasks:
           echo "skipping examples/host-ts install: bun not found"
         fi
 
+  host-ts-test:
+    desc: Test examples/host-ts (markdownToBlocks and the streaming of a reply by blocks, with bun test),
+      after a fresh install of its dependencies. Skipped without `bun`.
+    deps: [host-ts-deps]
+    dir: examples/host-ts
+    cmds:
+      - |
+        if command -v bun >/dev/null 2>&1; then
+          bun test
+        else
+          echo "skipping the examples/host-ts tests: bun not found"
+        fi
+
   sdk-test:
     desc: Install, test, and type-check sdk/ts (@thelacanians/tuimark). Needs `bun`.
     dir: sdk/ts
@@ -227,13 +241,14 @@ tasks:
       - bunx @vscode/vsce package
 
   verify:
-    desc: fmt + vet + test + kit-go + kit-ts + build + golden + wasm-check + glyph, in that order.
+    desc: fmt + vet + test + kit-go + kit-ts + host-ts-test + build + golden + wasm-check + glyph, in that order.
     cmds:
       - task: fmt
       - task: vet
       - task: test
       - task: kit-go
       - task: kit-ts
+      - task: host-ts-test
       - task: build
       - task: golden
       - task: wasm-check

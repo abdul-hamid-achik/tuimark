@@ -1,0 +1,13 @@
+<tui>
+  <screen id="inline" focus="#composer">
+    <text if="approval.open" class="ask">{approval.title}? y approve · n deny</text>
+    <input id="composer" bind="draft" placeholder="Message the model" on:change="typed" on:submit="send"/>
+    <text class="status">{status}</text>
+  </screen>
+  <keymap>
+    <bind keys="y" action="approve"/>
+    <bind keys="n,enter" action="deny"/>
+    <bind keys="esc" action="deny"/>
+    <bind keys="esc" action="cancel"/>
+  </keymap>
+</tui>

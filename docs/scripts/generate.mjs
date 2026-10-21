@@ -269,7 +269,10 @@ function keyName(t) {
     enter: 'Enter / Return', esc: 'Escape', tab: 'Tab', backspace: 'Backspace', space: 'Space bar',
     up: 'Arrow up', down: 'Arrow down', left: 'Arrow left', right: 'Arrow right', home: 'Home', end: 'End',
     pgup: 'Page up', pgdn: 'Page down', 'shift+tab': 'Shift + Tab',
+    delete: 'Delete (forward delete)', 'shift+enter': 'Shift + Enter', 'ctrl+enter': 'Ctrl + Enter',
+    'alt+enter': 'Alt + Enter', 'alt+backspace': 'Alt + Backspace',
   }
+  for (let i = 1; i <= 12; i++) names[`f${i}`] = `Function key F${i}`
   if (!(t in names)) throw new Error(`generate: no description for key token "${t}"`)
   return names[t]
 }
@@ -410,6 +413,7 @@ const OUTPUTS = [
   { name: 'w-hints-filter', dir: 'widgets', kind: 'grid', args: ['play', 'hints.tui', '--data', 'data.json', '--cols', '44', '--rows', '8', '--input', '/'] },
   // the current language: forms, the spinner, defaults, composition
   { name: 'forms-events', dir: 'forms', kind: 'events', args: ['play', 'form.tui', '--data', 'data.json', '--cols', '44', '--rows', '16', '--input', 'tab enter down enter tab space enter tab tab down space'] },
+  { name: 'textarea-events', dir: 'textarea', kind: 'events', args: ['play', 'composer.tui', '--data', 'data.json', '--cols', '44', '--rows', '8', '--input', 'text:hello shift+enter text:world up up enter'] },
   { name: 'forms-bad', dir: 'forms', kind: 'term', args: ['validate', 'form.tui', '--data', 'bad.json'], exit: [2] },
   { name: 'spinner-tick', dir: 'widgets', kind: 'grid', args: ['play', 'spinner.tui', '--data', 'spinner.json', '--cols', '30', '--rows', '1', '--input', 'tick:300ms'] },
   { name: 'layout-panes', dir: 'layout', kind: 'grid', args: ['dump', 'panes.tui', '--cols', '40', '--rows', '8'] },
@@ -562,6 +566,8 @@ const SHOTS = [
   { name: 'w-hints', dir: 'widgets', file: 'hints.tui', data: 'data.json', cols: 44, rows: 8, alt: 'key hints generated from the keymap along the bottom row' },
   { name: 'w-modal', dir: 'widgets', file: 'modal.tui', cols: 44, rows: 7, alt: 'a modal with a title and two buttons, the focused one reversed' },
   { name: 'w-input', dir: 'widgets', file: 'input.tui', data: 'data.json', cols: 40, rows: 3, alt: 'an empty input showing its placeholder' },
+  { name: 'w-textarea', dir: 'textarea', file: 'composer.tui', data: 'data.json', cols: 44, rows: 6, alt: 'a bordered textarea, one row high, showing its dim placeholder, with a status line and the hint for ctrl+enter below it' },
+  { name: 'w-textarea-grown', dir: 'textarea', file: 'composer.tui', data: 'grown.json', cols: 44, rows: 7, alt: 'the same textarea holding three lines, grown to three rows; the status line moved down' },
   { name: 'w-form', dir: 'forms', file: 'form.tui', data: 'data.json', cols: 44, rows: 16, alt: 'a form: a name input with its placeholder, a select showing UTC, a checked and an unchecked checkbox, a radio group with Free chosen, and Save and Cancel buttons' },
   { name: 'w-select-open', dir: 'forms', file: 'form.tui', data: 'data.json', cols: 44, rows: 16, input: 'tab enter', alt: 'the same form with the select open: a bordered option list under it, over the radio group, with the cursor on UTC' },
   { name: 'w-spinner', dir: 'widgets', file: 'spinner.tui', data: 'spinner.json', cols: 30, rows: 1, input: 'tick:300ms', alt: 'a braille spinner glyph followed by the text Deploying billing' },
@@ -667,6 +673,14 @@ const KIT = [
       { name: 'menu', rows: 10, title: 'menu', line: 'a navigation list with icons, shortcuts and optional check marks', alt: 'a navigation menu with icons and key shortcuts, one row checked and the cursor row highlighted' },
       { name: 'button', rows: 11, title: 'button', line: '`primary`, `secondary`, `danger` and `ghost`, inverted when focused', alt: 'primary, secondary, danger, ghost and disabled buttons, the focused one inverted' },
       { name: 'field', rows: 14, title: 'form field', line: 'a label, an input, help text and an error line, with invalid styling', alt: 'a form with a focused name field and an email field showing its error message' },
+    ],
+  },
+  {
+    group: 'Inline and chat',
+    items: [
+      { name: 'composer', rows: 8, title: 'composer', line: 'a message box that grows with its text, with the key hints of your keymap', alt: 'a composer at the bottom of the screen: a rule, the placeholder text of an empty message box, and a row of key hints' },
+      { name: 'block', rows: 26, title: 'transcript block', line: 'a paragraph, heading, quote, list item, code block, or rule made of runs', alt: 'a transcript block by block: a heading, a paragraph with code, emphasis and bold runs, a quote, two list items, a Go code block that keeps its indentation, and a rule' },
+      { name: 'receipt', rows: 16, title: 'tool receipt', line: 'what a tool did: its call, its output kept as runs, and a status line', alt: 'two tool receipts: a successful ls with its tab-separated columns kept and a failed test run with its error in bold, each a bordered box with its status below' },
     ],
   },
   {

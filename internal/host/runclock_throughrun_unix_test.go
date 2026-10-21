@@ -127,7 +127,10 @@ func throughRun(t *testing.T, color string, set []string) {
 	}
 	pos = screen.waitFor(t, pos, set[0])
 	for i := 1; i <= 10; i++ {
-		// A phase boundary of the fake clock: the spinner turns once.
+		// A phase boundary of the fake clock: the spinner turns once. The
+		// loop arms its timer after it writes a frame, so wait for the
+		// timer to be armed for this boundary before moving the clock.
+		clk.waitArmed(t, time.Duration(i)*100*time.Millisecond)
 		clk.Advance(t, 100*time.Millisecond)
 		pos = screen.waitFor(t, pos, set[i%len(set)])
 	}

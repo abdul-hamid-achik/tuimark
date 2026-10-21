@@ -1,0 +1,9 @@
+<tui>
+  <screen id="main" focus="#composer">
+    <col id="live">
+      <text>{live.text}</text>
+    </col>
+    <textarea id="composer" bind="draft" placeholder="Message"/>
+    <text id="status">{status}</text>
+  </screen>
+</tui>

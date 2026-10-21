@@ -15,6 +15,7 @@ tuimark run app.tui --data sample.json
 |---|---|
 | `--data FILE.json` | binds the file as the store's root |
 | `--theme dark\|light` | the host's theme, as `Set("@theme", …)` |
+| `--screen ID` | the screen the session starts on, as `Set("@screen", ID)` before the first frame; a reload keeps the screen the session is on |
 | `--strip` | shows the event strip from the start (F12 toggles it) |
 | `--events FILE.ndjson` | writes one JSON line per host action |
 | `--mock FILE.json` | fixed store writes for each host action |
@@ -113,5 +114,6 @@ These print one `tuimark: run: …` line on stderr and exit `1` before the termi
 - no `FILE`, or more than one;
 - a `FILE`, `--data`, or `--mock` that cannot be read, or is not valid JSON;
 - a mock that names an unknown or built-in action, or whose values are not lists of `{"path", "value"}` writes;
+- a `--screen` that names no screen of the document, `no screen with id "ID"`;
 - an `--events` file that cannot be opened, or that is a terminal;
 - a terminal `Run()` cannot use (for example, when stdin is not a terminal).

@@ -174,7 +174,7 @@ go build -o bin/tuimark ./cmd/tuimark
   CLI) — optional, only needed to run the terminal end-to-end specs under
   `specs/glyphrun/`. `go install
   github.com/abdul-hamid-achik/glyphrun/cmd/glyph@latest` (it needs Go
-  1.26; CI pins `@v0.22.0`), then run `glyph docs` for its own
+  1.26; CI pins `@v0.23.0`), then run `glyph docs` for its own
   documentation.
 
 ## Quickstart
@@ -650,8 +650,8 @@ tuimark test     [DIR] [--update] [--allow-breaking]
 tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
                       [--theme dark|light] [--strict] [--json]
 tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
-                      [--mock FILE.json] [--strip]
-tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
+                      [--mock FILE.json] [--strip] [--screen ID]
+tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID] [--inline]
 tuimark mcp
 tuimark lsp
 tuimark version
@@ -669,7 +669,7 @@ tuimark version
   sake — it still renders internally at 40/80/120×24 to catch
   layout/bind problems (under both themes, dark first, for a `theme="auto"`
   document without `--theme`). Without `--data`, bind-dependent checks
-  (`B001`–`B003`, the 0.2b `B008`–`B010`, and the 0.4b `B011` and `B012`) are skipped, since every path
+  (`B001`–`B003`, the 0.2b `B008`–`B010`, the 0.4b `B011` and `B012`, and the 0.4d `B013`) are skipped, since every path
   would otherwise read as "missing", and the text output ends with
   `ok (bindings not checked: no --data)` instead of `ok` (0.4a); with
   `--data` the line stays `ok`. `--json` has the members `actions`, `data`
@@ -750,12 +750,21 @@ tuimark version
   running. Two `ctrl+c` within a second always exit 0. Exit codes: 0 for
   quit or the end of input, 1 for an error (a bad `--mock`, an `--events`
   path that is a terminal, … are one `tuimark: run: …` line before the
-  terminal is touched), 128 + the signal number for a stop signal. See the
+  terminal is touched), 128 + the signal number for a stop signal.
+  `--screen ID` (0.4d) picks the screen the session starts on, applied as
+  `Set("@screen", ID)` before the first frame (a reload keeps the screen
+  the session is on); an id no screen has is `tuimark: run: no screen with
+  id "ID"`, before the terminal is touched. See the
   [run guide](https://tuimark.dev/guide/run).
 - `host` (0.3b) runs a document in the terminal for a parent process in any
   language: the terminal stays on fd 0/1/2 as with `Run()`, the parent
-  writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 and reads
-  `ready`/`event`/`ack`/`error`/`exit` JSON lines from fd 4. POSIX only
+  writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 (and, since
+  0.4d, `append` and `commit`, and `batch` entries with `"op": "append"`;
+  `ready.messages` lists what the child accepts; `--inline` runs the
+  session inline) and reads
+  `ready`/`event`/`ack`/`error`/`exit` JSON lines from fd 4.
+  `--screen ID` (0.4d) starts the session on that screen; an id no screen
+  has is `tuimark: host: no screen with id "ID"`, with nothing on fd 4. POSIX only
   (a usage error on Windows). A line of 64 MiB or more on fd 3 (the newline
   excluded) ends the session with exit reason `error` (0.4a), the bound
   `mcp` uses for stdin. See the [host protocol
@@ -875,16 +884,18 @@ With neither, the session is just the first frame (step 0).
 
 | `--input` step | Meaning |
 |---|---|
-| `KEY` | one key: a named key (`enter esc tab backspace space up down left right home end pgup pgdn shift+tab`), `ctrl+a`..`ctrl+z`, or any other single printable ASCII character but `,` (write `/`, not `slash` — there are no aliases) |
+| `KEY` | one key: a named key (`enter esc tab backspace space up down left right home end pgup pgdn shift+tab`; in a document without `version` also `delete`, `f1`..`f12`, `shift+enter`, `ctrl+enter`, `alt+enter`, `alt+backspace`, and `alt+` a letter or a digit), `ctrl+a`..`ctrl+z`, or any other single printable ASCII character but `,` (write `/`, not `slash` — there are no aliases). In a document without `version` it is delivered as the bytes a terminal sends for the key and read by the same decoder `Run()` uses: Kitty's CSI-u form by default (`shift+enter` is `CSI 13 ; 2 u`), the legacy bytes with `--keyboard legacy` (`alt+x` is `ESC x`; a key a legacy terminal cannot send is a usage error) |
 | `text:STR` | STR's bytes, decoded like real terminal input: a run of printable characters going to a focused input is one edit and one `on:change` (the same coalescing `Run()` does for fast typing or an unbracketed paste); characters that go elsewhere reach the keymap one by one. In a `version="2"` document each key or paste of the step sees the frame the previous one left, as in `Run()`, so `text:ab\r` and `text:ab enter` fire the same events |
 | `paste:STR` | one bracketed paste. Normalized (CRLF/CR/LF/TAB → space, ANSI/control bytes stripped) and delivered as one edit/`on:change` when an enabled input has focus; discarded — never reaching the keymap or a built-in — otherwise, so a paste containing `q` can never quit |
 | `set:PATH=JSON` | `Set(PATH, json.Unmarshal(JSON))`; `PATH` may be empty (the store root) or the reserved `@focus`/`@screen`/`@theme` (`set:@theme="light"`) |
+| `append:PATH=JSON` | `Append(PATH, json.Unmarshal(JSON))` (0.4d): concatenates a string to the string at `PATH`, or adds the value as one element at the end of the array there. A failing append is a usage error with the reason `append "PATH": …` |
 | `focus:#ID` | `Set("@focus", "ID")` (the `#` is optional); fires no `on:focus`, like `Set` |
 | `resize:COLSxROWS` | the terminal size changes, handled like `Run()` handles `SIGWINCH` |
 | `click:X,Y`, `wheel-up:X,Y`, `wheel-down:X,Y` | a left click (press and release) or one wheel report at cell (X, Y), 0-based as in the dump, on the current frame (`version="2"` mouse, SPEC §8.5). With the document's `mouse` false the step changes nothing and fires nothing; a cell outside the current grid is a usage error |
 
 The equivalent `--script` line for each: `{"key":"..."}`, `{"text":"..."}`,
-`{"paste":"..."}`, `{"set":{"path":"...","value":...}}`, `{"focus":"#..."}`,
+`{"paste":"..."}`, `{"set":{"path":"...","value":...}}`,
+`{"append":{"path":"...","value":...}}`, `{"focus":"#..."}`,
 `{"resize":[COLS,ROWS]}`. `{"theme":"light"}` (`"dark"`, `"light"`, or
 `"auto"`) is `Set("@theme", value)`, like `set:@theme="light"`; since
 `play` never probes the terminal, `auto` is `dark`. `{"click":[X,Y]}` is
@@ -970,6 +981,13 @@ attribute as written, or `style=""` — specificity, and `@media`
 condition), and the declarations it `overridden`, highest priority first
 (a declaration of a selector list counts once, never against itself). The text form (the
 default) shows the same, one line per property that is not `initial`.
+
+For a `<tui>` without `version`, a cell that a run of a `<text runs>` painted
+also adds `run`: `{"index", "text", "classes", "style"}`, the run's index in
+its array (0 for a string), its text, its classes, and the `style` entries of
+the seven properties its `span` styles (a property no rule sets on the span
+has the text's value and the origin `inherited`). A cell after the text, on an
+ellipsis, or selected with `--id` has none.
 
 A cell outside the grid, an id no laid-out node has, or a malformed value
 exits 1 with nothing on stdout; a frame with an error-severity diagnostic
@@ -1288,7 +1306,7 @@ the app's `-demo` mode).
   spirit of shadcn (`kit/kit.tui`, a fragment of templates you include and
   copy with `<use>`; design tokens and `k-` component classes; and 21 small
   documents, one per component, under `kit/components/`) and an app that
-  shows every component on five tabs. You copy the kit into your project and
+  shows every component on six tabs. You copy the kit into your project and
   own it; the kit adds no tag, attribute, or property. Its host
   helpers do what markup cannot (toasts that expire, filter, sort and pages,
   form validation, dialog routing, the palette's commands, async loads,
@@ -1707,6 +1725,96 @@ kept with the maintainer's project notes, outside this repository.
   forwards its content with `<slot/>` inside the content of an inner
   `<use>`, with elements of its own around it. In a pinned document `<slot>`
   is `V001`, `requires a <tui> without version`.
+
+- **Text runs and `pre-wrap` (0.4d).** `<text runs="path"/>` paints an
+  array of runs the host built, from markdown for instance: a run is a
+  string, or an object with a string `text` and a `class` (class names
+  separated by spaces); a string is one run and `null` is none. `runs` is a
+  path, resolved like `bind`, and the text takes no body (`V013`). The
+  joined text is the text, so `wrap`, `truncate*`, `pre-wrap`, and
+  `content-align` act on it as on a body, and a word may cross two runs.
+  Each run is styled as a generated `span` of its text: select it by type
+  and class (`span`, `.code`, `text > span.code`, `#reply > span`); it sets
+  `color`, `background`, `bold`, `dim`, `italic`, `underline`, and
+  `reverse`, and what a rule does not set on it is its text's. A written
+  `<span>` is `V001`. A run's text is data, normalized in this order:
+  escape sequences are removed whole, each TAB becomes four spaces, and
+  every other control but LF is removed. A missing path is `B003`, and a
+  value of the wrong shape `B013` (a warning, once per `<text>` and
+  frame). `wrap: pre-wrap` keeps every space and line break and wraps at the
+  width as CSS's `white-space: pre-wrap` does (the spaces that do not fit
+  hang, a word that does not fit starts the next line, a word wider than
+  the width is cut by clusters); an empty text is 0 lines under every
+  `wrap`. In a pinned document `runs` is `V002`, `pre-wrap` and a `span`
+  selector `V003`, each `requires a <tui> without version`.
+
+- **`Append` and the first screen (0.4d).** `Append(path, v)` adds to the
+  value at `path` in place: a string takes a string, an array takes `v` as
+  one element at its end (an array `v` is one element, never spread), and
+  every other case is an error that changes nothing (`append "n": "n"
+  holds a number, not a string or an array`; a missing path, the root, a
+  reserved path, a string and a non-string value; a derived path gives
+  `Set`'s error). `(*Batch).Append` checks the value when the batch is
+  applied, against the store as the earlier writes left it. The same write
+  is the `append` message and the `"op": "append"` batch entry of `tuimark
+  host`, and the `append:PATH=JSON` step of `play`. `--screen ID` on `run`
+  and `host` is `Set("@screen", ID)` before the first frame, as a Go host
+  does before `Run`: a parent's own `set` of `@screen` lands after the
+  first frame.
+
+- **`<textarea>` (0.4d).** A multi-line `input` for the current language:
+  `bind`, `placeholder`, `on:change`, and `on:submit` plus the common
+  attributes (`secret` is `V002`; it needs an `id`, takes no content, and
+  cannot stand in a list row or an `each` template). It is one row high when
+  empty, grows one row per visual line (the text wrapped at its width less
+  one, so the caret has a cell after a full line) up to `max-height: 8`, and
+  then scrolls: it moves the layout as it grows, and is a viewport for the
+  dump's `scroll`, the wheel, `scrollbar`, and `L006` but not for sizing.
+  `enter` submits when there is an `on:submit` and breaks the line
+  otherwise; `shift+enter`, `alt+enter`, and the LF byte always break it;
+  `up` and `down` move by visual lines to a goal column and go on to the
+  keymap from the first and last line; `ctrl+k`, `ctrl+w`, `alt+backspace`,
+  `alt+b`, and `alt+f` are word and line edits that cross line breaks as
+  the SPEC says. A paste keeps its line breaks. The text the host writes is
+  read as run text (TAB four spaces, controls removed), the store keeping
+  what it wrote until the next edit, and a change from outside puts the
+  caret at the end. The focused textarea's node has `caret` in the dump, and
+  `Run()` puts the terminal's cursor on it. Because it takes every
+  printable key, a keymap row for one never fires while it is enabled and
+  focused: disable it, or move the focus, while the row must act. In a
+  pinned document `<textarea>` is `V001`, `requires a <tui> without version`.
+
+- **Inline mode (0.4d).** `RunOptions.Inline` (`--inline` on `tuimark
+  run`) draws the active screen as a live region below the terminal's
+  cursor and `Commit` prints into the terminal's scrollback above it; only
+  a `<tui>` without `version` runs inline. The limits: there is no mouse
+  (the document's `mouse` is ignored); a modal and an open option list are
+  laid out against the region, as against a screen of its size, and the
+  region does not grow for them; after a resize the region is erased and
+  drawn again, but rows already committed belong to the terminal, which
+  rewraps them or not, so a part of the region the terminal rewrapped
+  before the redraw may stay in the scrollback; and Tuimark, not the
+  terminal, wraps a committed line at the terminal's width, so a long line
+  copied from the scrollback breaks where it wrapped (keep text meant to be
+  copied whole shorter than the terminal). A host that wants its last state
+  to stay commits it before it quits: the region is erased on every way out.
+  `tuimark host FILE --inline` runs a parent's session inline: its fd 3
+  `commit` message is `Commit`, acked once the rows are written, printed at
+  once while an event waits for its reply, and printed before the leave
+  sequence when it comes before a `reply` with `quit` (a document that writes
+  `version` is `tuimark: host: inline mode needs a <tui> without version`,
+  exit 1, with nothing on fd 4). The kit's `k-composer`, `k-block`, and
+  `k-receipt` and `examples/host-ts/inline.ts` show a chat that streams a
+  reply into the scrollback by blocks. Three more limits are worth knowing:
+  a terminal without bracketed paste delivers a paste into a `textarea` as
+  keys, so each carriage return in it is an `enter` that submits when there
+  is an `on:submit` (Tuimark guesses nothing from timing: a host that cares
+  submits after a short quiet time); a session killed with `SIGKILL` under a
+  terminal that answered the Kitty keyboard query cannot pop the mode, so
+  the shell reads CSI-u keys until the terminal is reset (inline, the push
+  applies to the main screen); and text a host shows that may hold TABs, such
+  as a tool's output, belongs in `runs`, not in a `{path}`: a `{path}`
+  removes a TAB as any other control, and run text makes it four spaces.
 
 ## Status per phase (SPEC §4)
 

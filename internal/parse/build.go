@@ -290,6 +290,11 @@ var TagAttrsCurrent = map[string]map[string]bool{
 	"select":   selectAttrs(),         // SPEC v0.4b §6.17 (forms.go)
 	"list":     only("single"),        // SPEC v0.4b §6.14.1
 	"table":    only("single"),        // SPEC v0.4b §6.14.1
+	"text":     only("runs"),          // SPEC v0.4d §6.20.1 (runs.go)
+	// SPEC v0.4d §6.15, §6.19.1: the common set C, plus bind, placeholder,
+	// on:change, and on:submit. No secret: a hidden text of several lines
+	// has no use (decision 225).
+	"textarea": with("bind", "placeholder", "on:submit", "on:change"),
 }
 
 // tableItemAttrs are the attributes of a table's row template <item>
@@ -338,10 +343,10 @@ func attrAllowed(tag, parent, name string) (ok bool, need int) {
 }
 
 // Focusable-by-default kinds that therefore need an id (V012).
-var needsID = map[string]bool{"list": true, "input": true, "button": true, "modal": true, "checkbox": true, "select": true}
+var needsID = map[string]bool{"list": true, "input": true, "button": true, "modal": true, "checkbox": true, "select": true, "textarea": true}
 
 // Kinds that may not contain element children.
-var leafKinds = map[string]bool{"text": true, "input": true, "button": true, "progress": true, "rule": true, "spacer": true, "style": true, "bind": true}
+var leafKinds = map[string]bool{"text": true, "input": true, "textarea": true, "button": true, "progress": true, "rule": true, "spacer": true, "style": true, "bind": true}
 
 type builder struct {
 	doc  *Document
@@ -668,6 +673,12 @@ func ParseWith(src []byte, file string, ld *Loader) *Document {
 		b.diag(ir.Error, "V005", err.Line, err.Col, "", "", "%s", err.Msg)
 		return doc
 	}
+	return b.build(doc, raw, prolog, epilog, file, ld)
+}
+
+// build is ParseWith from the tree of the file on: the document is checked
+// and expanded as if raw had been read from file.
+func (b *builder) build(doc *Document, raw *RawNode, prolog, epilog []*RawNode, file string, ld *Loader) *Document {
 	doc.Raw, doc.Prolog, doc.Epilog = raw, prolog, epilog
 	switch raw.Name {
 	case "app":
@@ -836,7 +847,6 @@ var htmlTagHints = map[string]string{
 	"dialog":    "use <modal>",
 	"option":    "a <list> with on:select picks one row",
 	"radio":     "a <list> with on:select picks one row",
-	"textarea":  "not in the vocabulary yet; use <input>",
 	"component": "Tuimark has no components or includes; only <style src> loads another file",
 	"import":    "Tuimark has no components or includes; only <style src> loads another file",
 	"img":       "images are not supported",
@@ -1503,6 +1513,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			return
 		}
 		n.Bind = val
+	case "runs":
+		// SPEC v0.4d §6.20.1: the path of the runs a <text> paints. Only
+		// the current language gets here (the version gate comes first).
+		b.runsAttr(n, a)
 	case "open":
 		if val != "true" && val != "false" {
 			if _, err := ir.ParseGuard(val); err != nil {
@@ -1817,6 +1831,11 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 		// characters inside the text itself are V007. A version="2"
 		// <column>'s body is its cell template, a template like a <text>
 		// body (SPEC §6.9.1, §7).
+		if b.runsBody(n, body) {
+			// A <text runs> takes no body text (SPEC v0.4d §6.20.1): its
+			// text comes from the runs, so the body is ignored.
+			break
+		}
 		clean := b.sanitize(n, textLine, textCol, NormalizeText(body))
 		n.Text = NormalizeText(clean)
 		if (n.Tag == "text" || n.Tag == "column") && !b.doc.Spike {
@@ -1850,6 +1869,10 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "<%s> takes no text", n.Tag)
 		case b.tableItem(n):
 			b.diagPlaced(ir.Error, "V016", textLine, textCol, n.Path, n.ID, "a table's <item> is the row template and takes no text; the cells come from the <column> elements")
+		case n.Tag == "textarea" && b.lang.V4():
+			// SPEC v0.4d §6.19.1, decision 225: its text is the value at its
+			// bind path.
+			b.diag(ir.Error, "V013", textLine, textCol, n.Path, n.ID, "text is not allowed directly inside <textarea>; its text is the value at its bind path")
 		case !b.tagKnown(n.Tag):
 			// V001 already names this element; "wrap it in <text>" would
 			// only be noise next to it.
@@ -2441,6 +2464,9 @@ func BuiltinIncompatible(action, kind string, checked, single bool) string {
 		switch kind {
 		case "text", "rule", "spacer", "input", "button", "progress", "sparkline", "hints", "column", "tab", "item", "checkbox", "select":
 			return "which has no cursor, no tabs, and no scroll offset to move (want a list, a table, a tabs, or a viewport)"
+		case "textarea":
+			// SPEC v0.4d §6.19.7, decision 240: its caret and offset are its own.
+			return "whose caret and offset only its own keys and the wheel move (want a list, a table, a tabs, or a viewport)"
 		case "tabs":
 			if action == "move-page-down" || action == "move-page-up" {
 				return "whose strip does not page (use move-next or move-prev)"
@@ -2488,8 +2514,17 @@ func (b *builder) checkKeymap() {
 		}
 		for _, tok := range toks {
 			if !ir.ValidKey(tok) {
-				b.errKB(k, "V003", path, "unknown key %q (see the key token list: a-z 0-9 enter esc tab backspace space arrows home end pgup pgdn ctrl+x shift+tab)", tok)
-				continue
+				if ir.IsKeyCurrent(tok) && !b.lang.V4() {
+					// SPEC v0.4d §5.1, decision 202: a 0.4d token in a
+					// pinned document was already V003; its message now
+					// carries the hint.
+					b.errKB(k, "V003", path, "key %q%s", tok, ir.VersionHintCurrent)
+					continue
+				}
+				if !ir.IsKeyCurrent(tok) {
+					b.errKB(k, "V003", path, "unknown key %q (see the key token list: %s)", tok, ir.UnknownKeyList(b.lang))
+					continue
+				}
 			}
 			// SPEC v0.4b §8.1: in the current language a token that never
 			// reaches a keymap is V003, at the <bind>, once per token, with

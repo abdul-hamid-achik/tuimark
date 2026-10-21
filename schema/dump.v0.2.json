@@ -11,6 +11,7 @@
       "properties": {
         "cols": { "type": "integer", "minimum": 0 },
         "rows": { "type": "integer", "minimum": 0 },
+        "terminal_rows": { "type": "integer", "minimum": 0 },
         "ok": { "type": "boolean" },
         "focus": { "type": ["string", "null"] },
         "errors": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } },
@@ -24,6 +25,7 @@
           "items": { "type": "array", "items": { "$ref": "#/$defs/span" } }
         },
         "events": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+        "scrollback": { "$ref": "#/$defs/scrollback" },
         "frames": { "type": "array", "items": { "$ref": "#/$defs/frame" } }
       }
     },
@@ -50,7 +52,7 @@
         "list", "item", "input", "button", "progress",
         "modal",
         "table", "column", "tabs", "tab", "sparkline", "hints",
-        "checkbox", "select"
+        "checkbox", "select", "textarea"
       ]
     },
     "node": {
@@ -75,7 +77,19 @@
           "items": { "type": "string", "minLength": 1 }
         },
         "checked": { "const": true },
-        "clipped": { "enum": ["text", "children"] }
+        "clipped": { "enum": ["text", "children"] },
+        "caret": { "$ref": "#/$defs/caret" }
+      }
+    },
+    "caret": {
+      "type": "object",
+      "required": ["line", "col"],
+      "additionalProperties": false,
+      "properties": {
+        "line": { "type": "integer", "minimum": 0 },
+        "col": { "type": "integer", "minimum": 0 },
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 }
       }
     },
     "scroll": {
@@ -140,7 +154,20 @@
         "step": { "type": "integer", "minimum": 0 },
         "input": { "type": "string" },
         "events": { "type": "array", "items": { "$ref": "#/$defs/event" } },
-        "dump": { "$ref": "#/$defs/dump" }
+        "dump": { "$ref": "#/$defs/dump" },
+        "scrollback_rows": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "scrollback": {
+      "type": "object",
+      "required": ["grid"],
+      "additionalProperties": false,
+      "properties": {
+        "grid": { "type": "array", "items": { "type": "string" } },
+        "styles": {
+          "type": "array",
+          "items": { "type": "array", "items": { "$ref": "#/$defs/span" } }
+        }
       }
     }
   }

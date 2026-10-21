@@ -56,6 +56,7 @@ func TestEveryTabAndModalIsCleanAtEverySize(t *testing.T) {
 		"data":             {"view=data"},
 		"overlays":         {"view=overlays"},
 		"layouts":          {"view=layouts"},
+		"chat":             {"view=chat"},
 		"confirm":          {"view=overlays", "confirm.open=true"},
 		"palette":          {"view=overlays", "palette.open=true"},
 		"palette-filtered": {"palette.open=true", "palette.query=roll"},
@@ -123,6 +124,7 @@ func TestEveryTabShowsItsContent(t *testing.T) {
 		"data":     {"Services · 5", "api-gateway", "build log · 6 lines", "No deployments yet"},
 		"overlays": {"Dialogs", "Toasts", "Delete project…"},
 		"layouts":  {"Incidents", "Billing errors", "Owner    grace"},
+		"chat":     {"Fixing the flaky test", "bash · go test ./pkg/router", "Message the model"},
 	}
 	for view, subs := range want {
 		a := newApp(t)

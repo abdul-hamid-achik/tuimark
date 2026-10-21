@@ -47,6 +47,12 @@ var nonRenderedTags = map[string]bool{"tui": true, "style": true, "keymap": true
 // F2); none is declared ahead of it.
 var notANodeTags = map[string]bool{"include": true, "fragment": true, "template": true, "use": true, "slot": true}
 
+// generatedTags are the types a selector may name that are not tags: the
+// runtime generates the node (SPEC v0.4d §6.20.4), so a document never
+// writes one and the catalog does not list it. The current language accepts
+// them in a selector; a pinned document gets ir.VersionHintCurrent.
+var generatedTags = map[string]bool{"span": true}
+
 // Specificity: type=1, class=10, id=100, pseudo=+10 (SPEC §10.1).
 func (s Selector) Specificity() int {
 	n := 0
@@ -221,7 +227,16 @@ func parseCompound(s, whole string, g gate) (Compound, int, error) {
 	}
 	if i < len(s) && isIdentStart(s[i]) {
 		c.Tag = readIdent()
-		if ir.IsKindV2(c.Tag) && !v2 {
+		if generatedTags[c.Tag] {
+			// A type only a selector names (SPEC v0.4d §6.20.4, §10.1): the
+			// runtime generates the node, and the current language lets a
+			// rule name it. A pinned document gets the section 5.1 message;
+			// the type matches no element of the tree, only a generated
+			// span (host runs).
+			if !g.v4 {
+				return c, 0, fmt.Errorf("selector %q: type %q%s", whole, c.Tag, ir.VersionHintCurrent)
+			}
+		} else if ir.IsKindV2(c.Tag) && !v2 {
 			return c, 0, fmt.Errorf("selector %q: type %q%s", whole, c.Tag, ir.VersionHint)
 		}
 		// A tag only the current language has (SPEC v0.4b §5.1, §10.1):
@@ -231,7 +246,7 @@ func parseCompound(s, whole string, g gate) (Compound, int, error) {
 		if ir.IsKindCurrent(c.Tag) && !g.v4 && !notANodeTags[c.Tag] {
 			return c, 0, fmt.Errorf("selector %q: type %q%s", whole, c.Tag, ir.VersionHintCurrent)
 		}
-		if !ir.IsKindIn(c.Tag, v2) && !(g.v4 && ir.IsKindCurrent(c.Tag)) {
+		if !generatedTags[c.Tag] && !ir.IsKindIn(c.Tag, v2) && !(g.v4 && ir.IsKindCurrent(c.Tag)) {
 			return c, 0, fmt.Errorf("selector %q: unknown type %q (not in the tag catalog)", whole, c.Tag)
 		}
 		if notANodeTags[c.Tag] {

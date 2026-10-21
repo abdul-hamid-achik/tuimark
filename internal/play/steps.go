@@ -28,9 +28,13 @@ const (
 	KindSet
 	KindFocus
 	KindResize
-	KindClick // click:X,Y or {"click":[X,Y]} (SPEC v0.2b §15.4)
-	KindWheel // wheel-up:X,Y, wheel-down:X,Y, or {"wheel":…,"at":[X,Y]}
-	KindTick  // tick:DUR or {"tick":"DUR"} (SPEC v0.4b §15.4.1)
+	KindClick  // click:X,Y or {"click":[X,Y]} (SPEC v0.2b §15.4)
+	KindWheel  // wheel-up:X,Y, wheel-down:X,Y, or {"wheel":…,"at":[X,Y]}
+	KindTick   // tick:DUR or {"tick":"DUR"} (SPEC v0.4b §15.4.1)
+	KindAppend // append:PATH=JSON or {"append":{"path":…,"value":…}} (SPEC v0.4d §15.4); Path and Value, as KindSet
+	// KindCommit is commit:JSON or {"commit": {…}} (SPEC v0.4d §15.4): a
+	// Commit, only with --inline.
+	KindCommit
 )
 
 // Step is one parsed, validated step of a play session. Raw is "the step
@@ -41,6 +45,7 @@ type Step struct {
 	Kind  Kind
 	Raw   string
 	Key   host.Key
+	Tok   string        // KindKey: the key token (SPEC §8.1), as written
 	Text  string        // KindText, KindPaste
 	Path  string        // KindSet
 	Value any           // KindSet, decoded JSON
@@ -50,6 +55,8 @@ type Step struct {
 	X, Y  int           // KindClick, KindWheel: the 0-based cell
 	Dir   int           // KindWheel: -1 up, +1 down
 	Dur   time.Duration // KindTick: how far the virtual clock advances
+	// Commit is the commit a KindCommit step makes.
+	Commit host.Commit
 }
 
 // errNotKeyToken is ParseStep's error for a token that is neither a
@@ -105,12 +112,20 @@ func ParseStep(tok string) (Step, error) {
 		return Step{Kind: KindPaste, Raw: tok, Text: tok[len("paste:"):]}, nil
 	case strings.HasPrefix(tok, "set:"):
 		return parseSetToken(tok)
+	case strings.HasPrefix(tok, "append:"):
+		return parseAppendToken(tok)
 	case strings.HasPrefix(tok, "focus:"):
 		return Step{Kind: KindFocus, Raw: tok, Focus: strings.TrimPrefix(tok[len("focus:"):], "#")}, nil
 	case strings.HasPrefix(tok, "resize:"):
 		return parseResizeToken(tok)
 	case strings.HasPrefix(tok, "tick:"):
 		return TickStep(tok, tok[len("tick:"):])
+	case strings.HasPrefix(tok, "commit:"):
+		c, err := ParseCommit([]byte(tok[len("commit:"):]))
+		if err != nil {
+			return Step{}, err
+		}
+		return Step{Kind: KindCommit, Raw: tok, Commit: c}, nil
 	case strings.HasPrefix(tok, "click:"), strings.HasPrefix(tok, "wheel-up:"), strings.HasPrefix(tok, "wheel-down:"):
 		// SPEC v0.2b §15.4: a left click (press and release) or one wheel
 		// report at cell (X, Y), 0-based as in the dump.
@@ -128,10 +143,18 @@ func ParseStep(tok string) (Step, error) {
 		}
 		return st, nil
 	}
-	if !ir.ValidKey(tok) {
+	return KeyStep(tok, tok)
+}
+
+// KeyStep is the key step for the token tok, written as raw: a token of
+// tuimark 0.4.4 or of the current language (SPEC v0.4d §8.1). Whether the
+// document accepts it, and whether the keyboard can send it, is decided
+// when the document is known (CheckKeys).
+func KeyStep(raw, tok string) (Step, error) {
+	if !ir.ValidKey(tok) && !ir.IsKeyCurrent(tok) {
 		return Step{}, errNotKeyToken
 	}
-	return Step{Kind: KindKey, Raw: tok, Key: KeyFromToken(tok)}, nil
+	return Step{Kind: KindKey, Raw: raw, Key: KeyFromToken(tok), Tok: tok}, nil
 }
 
 // ParseSteps splits s on runs of ASCII spaces (leading/trailing ignored,
@@ -176,7 +199,23 @@ func parseSetToken(tok string) (Step, error) {
 	return Step{Kind: KindSet, Raw: tok, Path: path, Value: v}, nil
 }
 
-// parseSize parses "COLSxROWS" (resize: and the CLI's own flags share
+// parseAppendToken parses append:PATH=JSON (SPEC v0.4d §15.4): the value
+// is the JSON text after the first "=", as in set:.
+func parseAppendToken(tok string) (Step, error) {
+	rest := tok[len("append:"):]
+	idx := strings.IndexByte(rest, '=')
+	if idx < 0 {
+		return Step{}, fmt.Errorf("append: wants PATH=JSON")
+	}
+	path, jsonText := rest[:idx], rest[idx+1:]
+	var v any
+	if err := json.Unmarshal([]byte(jsonText), &v); err != nil {
+		return Step{}, fmt.Errorf("bad JSON value: %v", err)
+	}
+	return Step{Kind: KindAppend, Raw: tok, Path: path, Value: v}, nil
+}
+
+// parseSize parses "COLSxROWS"(resize: and the CLI's own flags share
 // this grammar; cmd/tuimark keeps its own copy for its size flags).
 func parseSize(s string) (cols, rows int, err error) {
 	parts := strings.SplitN(s, "x", 2)
@@ -219,6 +258,10 @@ func parseResizeToken(tok string) (Step, error) {
 func KeyFromToken(tok string) host.Key {
 	if tok == "space" {
 		return host.Key{Name: "space", Rune: ' '}
+	}
+	if ir.IsKeyCurrent(tok) {
+		// A token of the current language (SPEC v0.4d §8.1); none is text.
+		return host.Key{Name: tok}
 	}
 	switch tok {
 	case "ctrl+i":

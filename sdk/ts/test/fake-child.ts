@@ -17,6 +17,8 @@
 //   store            initial values for `get`
 //   noise            written right after `ready`: a string raw, anything else as JSON
 //   signalExitDelayMs  after the first signal, end this many ms later, not at once
+//   messages         the `messages` in `ready`: an array, or `null` to leave the member
+//                    out, as a child older than 0.4d does (default: the 0.4d list)
 //   fatalSecondSignal  a second signal kills the child with no `exit` message, as
 //                    the default action does under Run() (SPEC §19.1)
 import { appendFileSync, readFileSync, writeSync } from "node:fs";
@@ -36,6 +38,7 @@ interface Scenario {
   noise?: unknown[];
   signalExitDelayMs?: number;
   fatalSecondSignal?: boolean;
+  messages?: string[] | null;
 }
 
 const scenario = JSON.parse(process.env.FAKE_SCENARIO ?? "{}") as Scenario;
@@ -130,6 +133,8 @@ for (const [signal, code] of [
   });
 }
 
+const MESSAGES_04D = ["set", "bind", "batch", "get", "reply", "append", "commit"];
+const messages = scenario.messages === undefined ? MESSAGES_04D : scenario.messages;
 const ready = {
   type: "ready",
   protocol: scenario.protocol ?? 1,
@@ -139,6 +144,7 @@ const ready = {
   theme: "dark",
   catalog: [{ name: "quit", builtin: true, sources: [] }],
   diagnostics: [],
+  ...(messages === null ? {} : { messages }),
 };
 write(
   `${JSON.stringify(ready)}\n` +
@@ -147,6 +153,16 @@ write(
 );
 if (!scenario.burst) advance();
 else if (events.length === 0 && !scenario.hang) end(scenario.reason ?? "quit");
+
+// Append as the child does (SPEC §18.3): a string takes a string, an array
+// takes one more element; anything else is refused.
+function append(path: string, value: unknown): boolean {
+  const cur = store.get(path);
+  if (typeof cur === "string" && typeof value === "string") store.set(path, cur + value);
+  else if (Array.isArray(cur)) store.set(path, [...cur, value]);
+  else return false;
+  return true;
+}
 
 function handle(msg: Record<string, any>): void {
   log({ recv: shrink(msg) });
@@ -169,10 +185,27 @@ function handle(msg: Record<string, any>): void {
         ack(false);
         return;
       }
-      for (const w of writes) store.set(w.path, w.value);
+      // A child that lists `append` applies an entry's `op`; an older one
+      // reads only `path` and `value`, so it applies every entry as a set.
+      const ops = messages !== null && messages.includes("append");
+      for (const w of writes as Array<{ op?: string; path: string; value: unknown }>) {
+        if (ops && w.op === "append") {
+          if (!append(w.path, w.value)) {
+            ack(false);
+            return;
+          }
+        } else store.set(w.path, w.value);
+      }
       ack(true);
       return;
     }
+    case "append":
+      if (msg.path === "bad" || !append(msg.path, msg.value)) ack(false);
+      else ack(true);
+      return;
+    case "commit":
+      ack(true);
+      return;
     case "get":
       if (store.has(msg.path)) ack(true, { found: true, value: store.get(msg.path) });
       else ack(true, { found: false });

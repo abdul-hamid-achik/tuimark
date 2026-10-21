@@ -105,6 +105,17 @@ describe("valid forms spread over several lines have no illegal tokens", () => {
     expect(illegal(tui, `<style>\n  ${allman.replaceAll("\n", "\n  ")}\n</style>`)).toEqual([]);
     expect(illegal(tui, `<style>\n  ${split.replaceAll("\n", "\n  ")}\n</style>`)).toEqual([]);
   });
+  test(".tui: runs, a path attribute, and the span and pre-wrap of 0.4d", () => {
+    expect(illegal(tui, '<text id="r" runs="msg.runs" wrap="pre-wrap"/>')).toEqual([]);
+    expect(scopesAt(tui, '<text id="r" runs="msg.runs"/>', "runs=")).toContain("entity.other.attribute-name.path.tui");
+    expect(illegal(tcss, "text > span.code { bold: true; }\n#reply > span { color: red; }\ntext { wrap: pre-wrap; }\n")).toEqual([]);
+  });
+  test(".tui: the textarea tag of 0.4d, a self-closing leaf with a path and an action", () => {
+    expect(illegal(tui, '<textarea id="composer" bind="draft" placeholder="Message" on:change="typed" on:submit="send"/>')).toEqual([]);
+    expect(scopesAt(tui, '<textarea id="composer" bind="draft"/>', "textarea")).toContain("entity.name.tag.tui");
+    expect(scopesAt(tui, '<textarea id="composer" bind="draft"/>', "bind=")).toContain("entity.other.attribute-name.path.tui");
+    expect(illegal(tcss, "textarea { max-height: 8; }\nrow > textarea { width: 1fr; }\n")).toEqual([]);
+  });
   test(".tui: <style><![CDATA[ ... ]]></style>", () => {
     expect(illegal(tui, "<style><![CDATA[\n  #t { color: red; }\n]]></style>\n<text>{x}</text>")).toEqual([]);
     expect(illegal(tui, `<style><![CDATA[\n${allman}]]></style>`)).toEqual([]);

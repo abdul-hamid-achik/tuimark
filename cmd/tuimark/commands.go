@@ -198,6 +198,7 @@ func (c *cli) cmdDump(args []string) int {
 	styles := fs.Bool("styles", false, "include theme and per-row style spans (json only)")
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
 	theme := fs.String("theme", "", "dark or light; overrides the document's theme")
+	inline := fs.Bool("inline", false, "lay the active screen out as an inline region, with --rows as the terminal's rows")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -217,6 +218,9 @@ func (c *cli) cmdDump(args []string) int {
 		return c.fail(err)
 	}
 	if err := applyTheme(app, *theme, themeFlagSet(fs), "--theme"); err != nil {
+		return c.fail(err)
+	}
+	if err := applyInline(app, "dump", *inline); err != nil {
 		return c.fail(err)
 	}
 	app.SetStrict(*strict)
@@ -305,12 +309,12 @@ func (c *cli) cmdValidate(args []string) int {
 	diags := app.Validate()
 	if *data == "" {
 		// Without data every bind path is "missing"; report only data-free
-		// checks: B001-B003 and B008-B012 depend on the data, B007 is
+		// checks: B001-B003 and B008-B013 depend on the data, B007 is
 		// static (SPEC §14).
 		var kept ir.Diags
 		for _, d := range diags {
 			switch d.Code {
-			case "B001", "B002", "B003", "B008", "B009", "B010", "B011", "B012":
+			case "B001", "B002", "B003", "B008", "B009", "B010", "B011", "B012", "B013":
 				continue
 			}
 			kept = append(kept, d)
@@ -337,7 +341,7 @@ func (c *cli) cmdValidate(args []string) int {
 			fmt.Fprintln(c.stdout, d.String())
 		}
 		if ok {
-			// Without --data, B001-B003 and B008-B012 were not checked
+			// Without --data, B001-B003 and B008-B013 were not checked
 			// (SPEC v0.4a §15.1).
 			if *data == "" {
 				fmt.Fprintln(c.stdout, "ok (bindings not checked: no --data)")

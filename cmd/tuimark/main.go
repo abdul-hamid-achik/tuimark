@@ -2,13 +2,13 @@
 // documents.
 //
 //	tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json]
-//	                      [--cells] [--styles] [--strict] [--theme dark|light]
+//	                      [--cells] [--styles] [--strict] [--theme dark|light] [--inline]
 //	tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json] [--theme dark|light]
 //	tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch] [--theme dark|light]
 //	                      [--color truecolor|256|16|none]
 //	tuimark play     FILE [--cols 80] [--rows 24] [--data FILE.json] [--theme dark|light]
 //	                      [--input STEPS | --script FILE.ndjson]
-//	                      [--format text|json] [--cells] [--styles] [--frames] [--strict]
+//	                      [--format text|json] [--cells] [--styles] [--frames] [--strict] [--inline]
 //	tuimark fmt      FILE [--write] [--check]
 //	tuimark ir       FILE
 //	tuimark agents   [--repo | --project]
@@ -16,10 +16,10 @@
 //	tuimark new      NAME [--go | --ts]
 //	tuimark test     [DIR] [--update] [--allow-breaking]
 //	tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
-//	                      [--theme dark|light] [--strict] [--json]
+//	                      [--theme dark|light] [--strict] [--json] [--inline]
 //	tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
-//	                      [--mock FILE.json] [--strip]
-//	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
+//	                      [--mock FILE.json] [--strip] [--screen ID] [--inline]
+//	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID] [--inline]
 //	tuimark mcp                                — a Model Context Protocol server on stdin/stdout
 //	tuimark lsp                                — a Language Server Protocol server on stdin/stdout
 //
@@ -37,12 +37,12 @@ import (
 // release this source tree is; release builds set all three at link time
 // (see .goreleaser.yaml):
 //
-//	go build -ldflags "-X main.version=0.4.5 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
+//	go build -ldflags "-X main.version=0.4.6 -X main.commit=abc1234 -X main.date=2026-01-02T15:04:05Z" ./cmd/tuimark
 //
 // A plain `go build` or `go install` leaves commit and date empty, and
 // `tuimark version` then prints the version alone.
 var (
-	version = "0.4.5"
+	version = "0.4.6"
 	commit  = ""
 	date    = ""
 )
@@ -68,13 +68,13 @@ const usage = `tuimark — a view language for terminals
 
 usage:
   tuimark dump     FILE [--cols 80] [--rows 24] [--format text|json] [--data FILE.json]
-                        [--cells] [--styles] [--strict] [--theme dark|light]
+                        [--cells] [--styles] [--strict] [--theme dark|light] [--inline]
   tuimark validate FILE [--json] [--strict] [--catalog FILE] [--data FILE.json] [--theme dark|light]
   tuimark preview  FILE [--cols 80] [--rows 24] [--data FILE.json] [--watch] [--theme dark|light]
                         [--color truecolor|256|16|none]
   tuimark play     FILE [--cols 80] [--rows 24] [--data FILE.json] [--theme dark|light]
                         [--input STEPS | --script FILE.ndjson]
-                        [--format text|json] [--cells] [--styles] [--frames] [--strict]
+                        [--format text|json] [--cells] [--styles] [--frames] [--strict] [--inline]
   tuimark fmt      FILE [--write] [--check]
   tuimark ir       FILE                       print the source IR as JSON
   tuimark agents   [--repo | --project]       print AGENTS.md generated from the catalog
@@ -84,12 +84,12 @@ usage:
   tuimark test     [DIR] [--update] [--allow-breaking]
                                                check dump goldens under DIR (default testdata/golden)
   tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.json]
-                        [--theme dark|light] [--strict] [--json]
+                        [--theme dark|light] [--strict] [--json] [--inline]
                                                explain one node: path, classes, pseudo-classes, styles
   tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
-                        [--mock FILE.json] [--strip]
+                        [--mock FILE.json] [--strip] [--screen ID] [--inline]
                                                run in the terminal: F12 shows the events, edits reload
-  tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s]
+  tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID] [--inline]
                                                run in the terminal for a parent program (fd 3 in, fd 4 out)
   tuimark mcp                                 a Model Context Protocol server on stdin/stdout
   tuimark lsp                                 a Language Server Protocol server on stdin/stdout

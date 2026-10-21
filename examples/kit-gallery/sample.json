@@ -94,5 +94,20 @@
       { "id": "i3", "title": "Search index lag", "age": "1d", "status": "resolved", "open": false, "summary": "Reindexed; lag is under a second.", "owner": "linus" }
     ]
   },
-  "detail": { "title": "Billing errors", "age": "14m", "status": "open", "open": true, "summary": "The billing worker is failing 3% of invoices with a timeout.", "owner": "grace" }
+  "detail": { "title": "Billing errors", "age": "14m", "status": "open", "open": true, "summary": "The billing worker is failing 3% of invoices with a timeout.", "owner": "grace" },
+  "chat": {
+    "composer": { "draft": "", "nohints": true },
+    "blocks": [
+      { "id": 0, "head": true, "runs": ["Fixing the flaky test"] },
+      { "id": 1, "runs": ["The failure comes from ", { "text": "retry()", "class": "k-code" }, " sleeping ", { "text": "after", "class": "k-em" }, " the second attempt, so a ", { "text": "fast", "class": "k-strong" }, " machine passes and a slow one times out."] },
+      { "id": 2, "item": true, "runs": ["• move the sleep before the attempt"] },
+      { "id": 3, "item": true, "runs": ["• cap the backoff at 2s"] }
+    ],
+    "receipt": {
+      "title": "bash · go test ./pkg/router",
+      "status": "exit 0 · 1.4s",
+      "ok": true,
+      "output": "ok  \tpkg/router\t0.412s\nok  \tpkg/auth\t0.133s"
+    }
+  }
 }

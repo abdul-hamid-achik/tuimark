@@ -208,7 +208,7 @@ jobs:
       - name: Install go-task and glyph (glyphrun)
         run: |
           go install github.com/go-task/task/v3/cmd/task@v3.51.1
-          go install github.com/abdul-hamid-achik/glyphrun/cmd/glyph@v0.22.0
+          go install github.com/abdul-hamid-achik/glyphrun/cmd/glyph@v0.23.0
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Build binaries
@@ -353,3 +353,14 @@ jobs:
       - name: kit/ts type-check
         working-directory: kit/ts
         run: bunx tsc --noEmit
+
+      # examples/host-ts (markdownToBlocks and the streaming of a reply by
+      # blocks) has bun tests of its own; its Glyphrun specs run in the specs
+      # job.
+      - name: examples/host-ts install (frozen lockfile)
+        working-directory: examples/host-ts
+        run: rm -rf node_modules && bun install --frozen-lockfile
+
+      - name: examples/host-ts test
+        working-directory: examples/host-ts
+        run: bun test

@@ -60,6 +60,17 @@ A document may hold **several `<keymap>` elements**, in every version: their row
 </keymap>
 ```
 
+### More keys in the current language
+
+A document without `version` also accepts `delete`, `f1` to `f12`, `alt+` a letter or a digit (`alt+x`, `alt+A`, `alt+1`), `alt+enter`, `alt+backspace`, `shift+enter`, and `ctrl+enter`. Punctuation after `alt+`, `alt+space`, `shift+` a letter (write the upper-case letter), and anything after `f12` are not tokens. A document that writes `version` reports each of them as `V003`.
+
+- **What the terminal sends.** `tuimark run` and `Run()` ask the terminal for the Kitty keyboard protocol and use it when it answers; otherwise they ask for `modifyOtherKeys`, which many terminals understand. Under either, `shift+enter`, `ctrl+enter`, and `esc` are told apart from `enter` and from the start of other keys. A plain legacy terminal cannot send `shift+enter`, `ctrl+enter`, `alt+O`, `alt+P`, or `alt+X`, so a row that needs one also names a key every terminal sends: `keys="shift+enter,alt+enter"`. [`<hints>`](/guide/widgets#hints) shows the first key of a row that the session can send.
+- **`alt` in a plain terminal.** `ESC` followed by a letter or a digit, sent together, is `alt+` that key, so `esc` followed within a moment by `x` is `alt+x`.
+- **A modified `enter` is not `enter`.** Where a terminal reports `shift+enter` apart from `enter` (the Kitty protocol, `modifyOtherKeys`), an `enter` row and an input's `on:submit` do not fire for it; write `keys="enter,shift+enter"` for a row that should.
+- **`ctrl` with a character that is not a letter** (`ctrl+space`, `ctrl+/`, `ctrl+3`) is no key under those protocols, so a chord pressed for something else types nothing into an input.
+- **Words.** A focused `input` takes `delete`, `alt+b`, `alt+f`, and `alt+backspace`, and `left` and `right` held with `alt` or `ctrl` move it by a word; a keymap row still sees plain `left` and `right`. An `input` does not take `ctrl+w` or `ctrl+k`, so rows bound to them keep firing.
+- **`F12` under `tuimark run`** toggles the event strip, with or without a modifier, and never reaches the keymap: a row with `f12` fires in your own app and under `tuimark host`, not under `run`.
+
 ### when and the focus chain
 
 In a `version="2"` document, `when` matches if its selector matches the focused node **or any ancestor** up to the screen; with nothing focused, it matches against the top open modal and then the screen. So:

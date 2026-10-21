@@ -29,6 +29,10 @@ type Session struct {
 	NoHandlers bool
 	CellsFlag  bool
 	StylesFlag bool
+	// Keyboard is the terminal play emulates: "kitty" (also "") or
+	// "legacy" (SPEC v0.4d §15.4, §26.14.3). It chooses the bytes a key
+	// step sends and the keys <hints> shows; a pinned document ignores it.
+	Keyboard string
 	// StepFrames and CollectFrames serve both tuimark play --frames and
 	// tuimark.Play's PlayOptions.Frames (SPEC v0.3b §18.1 rule 9: --frames
 	// and Frames give the same frames, member for member).
@@ -49,6 +53,15 @@ type Session struct {
 	// (tuimark.Play) returns it together with the result so far. tuimark
 	// play and tuimark test never see it: NoHandlers is always set there.
 	Err error
+
+	// Inline lays the frames out as an inline region and records the
+	// commits the steps and the handlers make (SPEC v0.4d §15.4, §26.15.6);
+	// set before Run. Rec is the recorder Run starts for it, whose rows
+	// are the scrollback, and StartErr the error of starting it (a
+	// document that writes version cannot run inline).
+	Inline   bool
+	Rec      *host.Recorder
+	StartErr error
 }
 
 // NewSession builds a Session over app at cols×rows. cells/styles/frames
@@ -91,7 +104,12 @@ func (s *Session) snapshot(step int, input string) {
 	if evs == nil {
 		evs = []dump.Event{}
 	}
-	s.StepFrames = append(s.StepFrames, dump.PlayFrame{Step: step, Input: input, Events: evs, Dump: s.BuildDump()})
+	pf := dump.PlayFrame{Step: step, Input: input, Events: evs, Dump: s.BuildDump()}
+	if s.Rec != nil {
+		n := s.Rec.Rows()
+		pf.ScrollbackRows = &n
+	}
+	s.StepFrames = append(s.StepFrames, pf)
 }
 
 // dispatchAll dispatches evs, then TakePending in rounds, redrawing
@@ -200,7 +218,7 @@ func (s *Session) handleKeys(step int, keys []host.Key) {
 // resulting keys and pastes in order, exactly as Run's handleInputs
 // walks one read (SPEC v0.2 §15.4 `text:STR`).
 func (s *Session) handleText(step int, str string) {
-	ins := host.DecodeInput([]byte(str))
+	ins := host.DecodeInputLang([]byte(str), s.App.Modern())
 	for len(ins) > 0 && !s.stopped() {
 		if ins[0].IsPaste {
 			s.handlePaste(step, ins[0].Paste)
@@ -263,6 +281,20 @@ func (s *Session) handleMouse(step int, m host.Mouse) {
 // order, stopping early on quit, a handler error, or a step that could
 // not be applied (SPEC §15.4; SPEC v0.3 §18.1 Play rules 3-5).
 func (s *Session) Run(steps []Step) {
+	// The frames are built for the keyboard of the session (SPEC v0.4d
+	// §26.14.3), and the app goes back to its default, a Kitty session,
+	// when the session ends.
+	prev := s.App.SetKeyboard(s.Keyboard)
+	defer s.App.SetKeyboard(prev)
+	if s.Inline {
+		rec, err := s.App.StartRecording(s.Cols, s.Rows)
+		if err != nil {
+			s.StartErr = err
+			return
+		}
+		s.Rec = rec
+		defer rec.Stop()
+	}
 	s.settle(0)
 	s.snapshot(0, "")
 	for i, st := range steps {
@@ -273,13 +305,32 @@ func (s *Session) Run(steps []Step) {
 		stepNum := i + 1
 		switch st.Kind {
 		case KindKey:
-			s.handleKeys(stepNum, []host.Key{st.Key})
+			if !s.App.Modern() {
+				s.handleKeys(stepNum, []host.Key{st.Key})
+				break
+			}
+			// SPEC v0.4d §15.4: the bytes the emulated terminal sends for
+			// the token, read by the decoder of the current language.
+			b, ok := host.EncodeKey(st.Tok, s.Keyboard)
+			if !ok {
+				s.UsageErr = fmt.Errorf("key %q cannot be sent by a legacy terminal (--keyboard legacy)", st.Tok)
+				s.UsageStep, s.UsageRaw = stepNum, st.Raw
+				return
+			}
+			s.handleText(stepNum, b)
 		case KindText:
 			s.handleText(stepNum, st.Text)
 		case KindPaste:
 			s.handlePaste(stepNum, st.Text)
 		case KindSet:
 			if err := s.App.Set(st.Path, st.Value); err != nil {
+				s.UsageErr, s.UsageStep, s.UsageRaw = err, stepNum, st.Raw
+				return
+			}
+		case KindAppend:
+			// SPEC v0.4d §15.4: Append(PATH, value); a failure is a usage
+			// error with the error of §18.3 as its reason.
+			if err := s.App.Append(st.Path, st.Value); err != nil {
 				s.UsageErr, s.UsageStep, s.UsageRaw = err, stepNum, st.Raw
 				return
 			}
@@ -293,8 +344,16 @@ func (s *Session) Run(steps []Step) {
 			if s.UsageErr != nil {
 				return
 			}
+		case KindCommit:
+			if err := s.App.Commit(st.Commit); err != nil {
+				s.UsageErr, s.UsageStep, s.UsageRaw = err, stepNum, st.Raw
+				return
+			}
 		case KindResize:
 			s.Cols, s.Rows = st.Cols, st.Rows
+			if s.Rec != nil {
+				s.Rec.Resize(st.Cols, st.Rows)
+			}
 			// A resize drops a pending left press, as in Run (SPEC
 			// v0.2b §26.11).
 			s.App.DropPress()

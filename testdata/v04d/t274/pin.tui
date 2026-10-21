@@ -1,0 +1,9 @@
+<tui version="3">
+  <style>text > span.code { bold: true; } textarea { color: red; }</style>
+  <screen id="main">
+    <textarea id="t" bind="d"/>
+    <text runs="r" wrap="pre-wrap"/>
+    <span>x</span>
+  </screen>
+  <keymap><bind keys="delete,alt+x,shift+enter" action="zz"/></keymap>
+</tui>

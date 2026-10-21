@@ -11,7 +11,6 @@ import (
 
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 	"github.com/abdul-hamid-achik/tuimark/internal/host"
-	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/play"
 )
 
@@ -104,6 +103,37 @@ func parseScriptSet(line string, raw json.RawMessage) (play.Step, error) {
 	return play.Step{Kind: play.KindSet, Raw: line, Path: path, Value: value}, nil
 }
 
+// parseScriptAppend decodes {"append": {"path": P, "value": V}} (SPEC
+// v0.4d §15.4), which is append:P=V: the object holds exactly those two
+// members, as a set step's does.
+func parseScriptAppend(line string, raw json.RawMessage) (play.Step, error) {
+	members, err := decodeObjectMembers(raw)
+	if err != nil {
+		return play.Step{}, fmt.Errorf("append: %v", err)
+	}
+	for name := range members {
+		if name != "path" && name != "value" {
+			return play.Step{}, fmt.Errorf("append: unknown member %q (want exactly \"path\" and \"value\")", name)
+		}
+	}
+	pathRaw, hasPath := members["path"]
+	valueRaw, hasValue := members["value"]
+	if !hasPath || !hasValue {
+		return play.Step{}, fmt.Errorf("append: wants {\"path\": ..., \"value\": ...} (both required)")
+	}
+	path, err := decodeStringMember("append.path", pathRaw)
+	if err != nil {
+		return play.Step{}, err
+	}
+	var value any
+	vdec := json.NewDecoder(bytes.NewReader(valueRaw))
+	vdec.UseNumber()
+	if err := vdec.Decode(&value); err != nil {
+		return play.Step{}, fmt.Errorf("append: bad JSON value: %v", err)
+	}
+	return play.Step{Kind: play.KindAppend, Raw: line, Path: path, Value: value}, nil
+}
+
 // parseScriptResize decodes a script line's `"resize"` member (SPEC §15.4
 // example: `{"resize":[60,24]}`): a JSON array of exactly 2 integers, each
 // checked against §15.1's 1-1000 range, so `[30,8,5]` is a usage error
@@ -161,7 +191,7 @@ func parseScriptSteps(path string) ([]play.Step, error) {
 
 // scriptMembers names the step members of a --script line (SPEC v0.2b
 // §15.4), for error messages.
-const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme, tick"
+const scriptMembers = "key, text, paste, set, focus, resize, click, wheel with at, theme, tick, commit, append"
 
 // parseScriptCell decodes the [X,Y] of a click or wheel script step: a
 // JSON array of exactly two integers (SPEC v0.2b §15.4).
@@ -249,10 +279,11 @@ func parseScriptLine(line string) (play.Step, error) {
 		if err != nil {
 			return play.Step{}, err
 		}
-		if !ir.ValidKey(s) {
+		st, err := play.KeyStep(line, s)
+		if err != nil {
 			return play.Step{}, fmt.Errorf("%q is not a valid key token", s)
 		}
-		return play.Step{Kind: play.KindKey, Raw: line, Key: play.KeyFromToken(s)}, nil
+		return st, nil
 	case "text":
 		s, err := decodeStringMember("text", raw)
 		if err != nil {
@@ -273,6 +304,8 @@ func parseScriptLine(line string) (play.Step, error) {
 		return play.Step{Kind: play.KindFocus, Raw: line, Focus: strings.TrimPrefix(s, "#")}, nil
 	case "set":
 		return parseScriptSet(line, raw)
+	case "append":
+		return parseScriptAppend(line, raw)
 	case "resize":
 		return parseScriptResize(line, raw)
 	case "click":
@@ -290,6 +323,13 @@ func parseScriptLine(line string) (play.Step, error) {
 			return play.Step{}, err
 		}
 		return play.TickStep(line, s)
+	case "commit":
+		// SPEC v0.4d §15.4: {"commit": {…}} is commit: with that object.
+		c, err := play.ParseCommit(raw)
+		if err != nil {
+			return play.Step{}, err
+		}
+		return play.Step{Kind: play.KindCommit, Raw: line, Commit: c}, nil
 	case "theme":
 		// SPEC v0.2b §15.4: {"theme": "dark" | "light" | "auto"} is
 		// Set("@theme", value); play never probes, so auto is dark.
@@ -327,6 +367,8 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 	styles := fs.Bool("styles", false, "include theme and per-row style spans (json only)")
 	frames := fs.Bool("frames", false, "include one settled frame per applied step")
 	strict := fs.Bool("strict", false, "treat missing bind paths (B003) as errors")
+	keyboard := fs.String("keyboard", host.KeyboardKitty, "the terminal play emulates: kitty or legacy")
+	inline := fs.Bool("inline", false, "lay the active screen out as an inline region and record the commits")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -340,6 +382,9 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 	}
 	if *format != "text" && *format != "json" {
 		return c.fail(fmt.Errorf("--format must be text or json"))
+	}
+	if *keyboard != host.KeyboardKitty && *keyboard != host.KeyboardLegacy {
+		return c.fail(fmt.Errorf("--keyboard must be kitty or legacy"))
 	}
 	fromTool := len(toolSteps) > 0
 	if (*input != "" || fromTool) && *script != "" {
@@ -367,15 +412,27 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 		return c.fail(err)
 	}
 	app.SetStrict(*strict)
+	if *inline && !app.Modern() {
+		return c.fail(inlineNeedsCurrent("play"))
+	}
+	if err := play.CheckKeys(app, steps, *keyboard); err != nil {
+		return c.fail(fmt.Errorf("play: %v", err))
+	}
 
 	sess := play.NewSession(app, *cols, *rows, *cells, *styles, *frames, true)
+	sess.Keyboard = *keyboard
+	sess.Inline = *inline
 	sess.Run(steps)
 	if sess.UsageErr != nil {
 		return c.fail(fmt.Errorf("play: step %d (%s): %v", sess.UsageStep, sess.UsageRaw, sess.UsageErr))
 	}
+	var scrollback *dump.Scrollback
+	if sess.Rec != nil {
+		scrollback = sess.Rec.Scrollback(*styles)
+	}
 
 	if *format == "json" {
-		out := &dump.Play{Dump: sess.BuildDump(), Events: sess.Events}
+		out := &dump.Play{Dump: sess.BuildDump(), Events: sess.Events, Scrollback: scrollback}
 		if *frames {
 			out.Frames = sess.StepFrames
 		}
@@ -406,6 +463,9 @@ func (c *cli) runPlay(args, toolSteps []string) int {
 	d := sess.BuildDump()
 	b.WriteString(dump.Text(d))
 	play.WriteEventsSection(&b, sess.Events)
+	if scrollback != nil {
+		writeScrollbackSection(&b, scrollback)
+	}
 	fmt.Fprint(c.stdout, b.String())
 	if !d.OK {
 		return 2

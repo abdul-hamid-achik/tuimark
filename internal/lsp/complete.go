@@ -211,6 +211,7 @@ func (s *Server) attrOf(tag, attr string) *catalog.Attr {
 var pathAttrs = map[string]bool{
 	"bind": true, "if": true, "checked": true, "open": true, "mouse": true,
 	"disabled": true, "hidden": true,
+	"runs": true, // SPEC v0.4d §6.20.1
 }
 
 // templateAttrs are the attributes whose value may hold {path}.
@@ -242,7 +243,7 @@ func (s *Server) completeValue(sn *snapshot, doc *document, ctx tuiCtx, off, ver
 		for c.start < off && doc.text[c.start] == ' ' {
 			c.start++
 		}
-		s.addKeys(c)
+		s.addKeys(c, ver)
 	case attr == "to", attr == "focus", attr == "when":
 		// A selector such as #list:focus: the id after the last #.
 		if i := strings.LastIndexByte(ctx.prefix, '#'); i >= 0 {
@@ -334,14 +335,18 @@ func (s *Server) addActions(c *completer, text string, ver int, onAttr bool) {
 	}
 }
 
-// addKeys offers the key tokens of SPEC §8.1: the named keys and ctrl+a to
-// ctrl+z, without those that never match.
-func (s *Server) addKeys(c *completer) {
+// addKeys offers the key tokens of SPEC §8.1: the named keys the document's
+// version accepts (named_since, SPEC v0.4d §15.10) and ctrl+a to ctrl+z,
+// without those that never match.
+func (s *Server) addKeys(c *completer, ver int) {
 	never := map[string]bool{}
 	for _, k := range s.cat.Keys.NeverMatch {
 		never[k] = true
 	}
 	for _, k := range s.cat.Keys.Named {
+		if since, ok := s.cat.Keys.NamedSince[k]; ok && since > ver {
+			continue
+		}
 		c.add(k, kindKeyword, "", "", false)
 	}
 	for r := 'a'; r <= 'z'; r++ {
@@ -598,6 +603,12 @@ func (s *Server) completeSelector(doc *document, loaders []parsedDoc, ver, off i
 			if t.Since <= ver {
 				c.add(t.Name, kindClass, sinceDetail(t.Since), "", false)
 			}
+		}
+		if ver == int(ir.LangCurrent) {
+			// The type a run is styled as (SPEC v0.4d §6.20.4): generated
+			// from <text runs>, never a tag of the catalog, but a rule may
+			// name it.
+			c.add("span", kindClass, "generated from <text runs>", "", false)
 		}
 	}
 	return c.list()

@@ -35,6 +35,11 @@ type Engine struct {
 	// held counts the boxes being placed that hold their subtree's
 	// checks (holdChecks).
 	held int
+	// Inline lays the root out as an inline region (SPEC v0.4d §26.15.2):
+	// at the width of cols and the height RegionHeight gives, which Layout
+	// leaves in RegionH. Modals are placed against the region.
+	Inline  bool
+	RegionH int
 }
 
 type memoKey struct {
@@ -60,9 +65,17 @@ func (e *Engine) Layout(root *Box, modals []*Box, cols, rows int) {
 	if verifying {
 		snap = e.snapChecks()
 	}
-	screen := Rect{0, 0, cols, rows}
 	w := min(clampAxis(root, true, resolveRoot(root.Style.Width, cols), cols), cols)
-	h := min(clampAxis(root, false, resolveRoot(root.Style.Height, rows), rows), rows)
+	var h int
+	if e.Inline {
+		w = cols
+		h = e.RegionHeight(root, cols, rows)
+		e.RegionH = h
+		rows = h
+	} else {
+		h = min(clampAxis(root, false, resolveRoot(root.Style.Height, rows), rows), rows)
+	}
+	screen := Rect{0, 0, cols, rows}
 	e.place(root, Rect{0, 0, w, h}, screen)
 	for _, m := range modals {
 		m.Modal = true
@@ -198,6 +211,9 @@ func (e *Engine) place(b *Box, r Rect, clip Rect) {
 		Y: b.Y + bw + b.pad(0),
 		W: max(0, b.W-b.frameH()),
 		H: max(0, b.H-b.frameV()),
+	}
+	if b.Kind == "textarea" {
+		e.textareaPlace(b) // SPEC v0.4d §6.19.4
 	}
 	if !b.IsContainer() {
 		e.placed(b, false)
@@ -1214,7 +1230,10 @@ func (e *Engine) checkTextClip(n *Box) {
 	// truncate-start and truncate-middle (version="3", v0.3b) mark their
 	// cut with an ellipsis exactly as truncate does, so they never
 	// produce L008a either (SPEC §11.5.2).
-	nowrap := mode != "wrap" && mode != "truncate" && mode != "truncate-start" && mode != "truncate-middle"
+	// pre-wrap (the current language, SPEC v0.4d decision 214) measures as
+	// nowrap but never cuts columns, so it never produces L008a either; its
+	// lines are counted by PreWrap for L008b.
+	nowrap := mode != "wrap" && mode != ModePreWrap && mode != "truncate" && mode != "truncate-start" && mode != "truncate-middle"
 	if nowrap && !n.Style.WrapWritten {
 		if w, c := n.textInfo().w, n.Content.W; w > c {
 			if e.clipFirst(n, "L008a") {
@@ -1427,8 +1446,8 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 	case "text":
 		if horizontal {
 			v = b.textInfo().w
-		} else if b.Style.Wrap == "wrap" && avail > 0 {
-			v = b.lineCount(max(1, avail-fh), "wrap")
+		} else if (b.Style.Wrap == "wrap" || b.Style.Wrap == ModePreWrap) && avail > 0 {
+			v = b.lineCount(max(1, avail-fh), b.Style.Wrap)
 		} else {
 			v = b.textInfo().paras
 		}
@@ -1437,6 +1456,14 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 			v = e.inputWidth(b)
 		} else {
 			v = 1
+		}
+	case "textarea":
+		// SPEC v0.4d §6.19.4, decision 231: its visual lines at its content
+		// width, at least 1; an input's width, whatever its value.
+		if horizontal {
+			v = textareaWidth(b)
+		} else {
+			v = TextareaLineCount(b.Text, avail-fh)
 		}
 	case "button":
 		if horizontal {

@@ -260,7 +260,8 @@ func newAppFS(fsys iofs.FS, name string, src []byte) *App {
 	a := blankApp()
 	a.dir, a.file = dir, filepath.Base(name)
 	res := fsResolver(fsys, dir, name)
-	a.doc = parse.ParseWith(src, name, res.loader())
+	a.ldr = res.loader()
+	a.doc = parse.ParseWith(src, name, a.ldr)
 	a.static = append(a.static, a.doc.Diags...)
 	a.loadStyles(res)
 	return a

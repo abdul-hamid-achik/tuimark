@@ -1,0 +1,1 @@
+<tui><screen id="main"><col each="live.blocks as b" key="b.id"><text runs="b.runs"/></col><text id="status">{status}</text></screen></tui>

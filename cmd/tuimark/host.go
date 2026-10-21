@@ -43,6 +43,8 @@ func (c *cli) cmdHost(args []string) int {
 	data := fs.String("data", "", "JSON file bound as the data store")
 	theme := fs.String("theme", "", "dark or light; applied as Set(\"@theme\", …)")
 	replyTimeoutFlag := fs.String("reply-timeout", "5s", "how long a host action waits for the parent's reply (100ms to 1m)")
+	screen := fs.String("screen", "", "the screen the session starts on; applied as Set(\"@screen\", ID)")
+	inline := fs.Bool("inline", false, "run the session inline: a live region below the cursor, with commits into the scrollback")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -77,7 +79,24 @@ func (c *cli) cmdHost(args []string) int {
 			return c.hostFail(err)
 		}
 	}
-	return newHostBridge(app, fd3, fd4, replyTimeout).run(c.stdout, c.stderr)
+	// --screen is applied as Set("@screen", ID) after the document is
+	// loaded and --data bound, before the first frame (SPEC v0.4d §15.1,
+	// decision 260); an id no screen has is a usage error, before the
+	// terminal is touched and with nothing on fd 4.
+	if flagWasSet(fs, "screen") {
+		if err := app.Set("@screen", *screen); err != nil {
+			return c.hostFail(err)
+		}
+	}
+	// --inline needs a document in the current language (SPEC v0.4d
+	// §19.1, §26.15.1, test 298): checked before the terminal is touched,
+	// with nothing on fd 4.
+	if *inline && !app.Modern() {
+		return c.hostFail(host.ErrInlineNeedsCurrent)
+	}
+	b := newHostBridge(app, fd3, fd4, replyTimeout)
+	b.inline = *inline
+	return b.run(c.stdout, c.stderr)
 }
 
 // hostFail prints a usage or pre-session error as one "tuimark: host: …"
@@ -125,6 +144,7 @@ type readyMsg struct {
 	Theme       string          `json:"theme"`
 	Catalog     []catalogEntry  `json:"catalog"`
 	Diagnostics []ir.Diagnostic `json:"diagnostics"`
+	Messages    []string        `json:"messages"`
 }
 
 type eventMsg struct {
@@ -178,6 +198,9 @@ type hostBridge struct {
 	fd3          *os.File
 	out          *fd4Queue
 	replyTimeout time.Duration
+	// inline runs the session inline (--inline, SPEC v0.4d §19.1): a
+	// commit prints into the scrollback.
+	inline bool
 
 	mu       sync.Mutex
 	seq      int64
@@ -242,7 +265,7 @@ func (b *hostBridge) run(stdout, stderr io.Writer) int {
 			b.send(readyMsg{
 				Type: "ready", Protocol: hostProtocol, Version: version,
 				Cols: cols, Rows: rows, Theme: theme,
-				Catalog: catalog, Diagnostics: diagsOrEmpty(b.app.Static()),
+				Catalog: catalog, Diagnostics: diagsOrEmpty(b.app.Static()), Messages: hostMessages,
 			})
 			b.readySent.Store(true)
 			// fd 3 is read only from here on, so "ready" is always the
@@ -252,6 +275,7 @@ func (b *hostBridge) run(stdout, stderr io.Writer) int {
 		},
 		Stop:     b.stop,
 		Signaled: b.signaled,
+		Inline:   b.inline,
 	}
 	res := b.app.RunHost(stdout, hooks)
 	if !res.Started {
@@ -513,6 +537,10 @@ func (b *hostBridge) handleLine(line []byte) {
 		b.handleBatch(id, msg)
 	case "get":
 		b.handleGet(id, msg)
+	case "append":
+		b.handleAppend(id, msg)
+	case "commit":
+		b.handleCommit(id, msg)
 	case "reply":
 		b.handleReply(id, msg)
 	default:
@@ -594,8 +622,9 @@ func (b *hostBridge) handleBatch(id json.RawMessage, msg wireMsg) {
 		return
 	}
 	type write struct {
-		path string
-		v    any
+		path   string
+		v      any
+		append bool
 	}
 	writes := make([]write, len(items))
 	for i, it := range items {
@@ -605,17 +634,27 @@ func (b *hostBridge) handleBatch(id json.RawMessage, msg wireMsg) {
 			b.sendError(id, nil, fmt.Sprintf(`"writes"[%d] needs a string "path" and a "value"`, i))
 			return
 		}
+		// SPEC v0.4d §19.1: "op" is "set" (the default) or "append".
+		op, ok := entryOp(it)
+		if !ok {
+			b.sendError(id, nil, fmt.Sprintf(`"writes"[%d] "op" must be "set" or "append"`, i))
+			return
+		}
 		if err := json.Unmarshal(vraw, &writes[i].v); err != nil {
 			b.sendError(id, nil, fmt.Sprintf(`bad "writes"[%d].value: %v`, i, err))
 			return
 		}
-		writes[i].path = path
+		writes[i].path, writes[i].append = path, op == opAppend
 	}
 	// All or nothing (§18.1): Batch applies nothing when any write fails,
 	// and its error is the ack's text.
 	err := b.app.Batch(func(bt *host.Batch) error {
 		for _, w := range writes {
-			_ = bt.Set(w.path, w.v)
+			if w.append {
+				_ = bt.Append(w.path, w.v)
+			} else {
+				_ = bt.Set(w.path, w.v)
+			}
 		}
 		return nil
 	})

@@ -246,7 +246,7 @@
       "patterns": [
         {
           "name": "entity.name.tag.tcss",
-          "match": "(?<![\\w-])(?:tui|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|app)(?![\\w-])"
+          "match": "(?<![\\w-])(?:tui|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|textarea|span|app)(?![\\w-])"
         },
         {
           "name": "entity.name.tag.unknown.tcss invalid.illegal.unknown-tag.tcss",
@@ -452,7 +452,7 @@
         },
         {
           "name": "support.constant.property-value.tcss",
-          "match": "(?<![\\w-])(?:start|center|end|stretch|flex|none|single|double|rounded|thick|block|eighths|row|column|grid|hidden|scroll|visible|auto|space-between|top|right|bottom|left|default|wrap|nowrap|truncate-start|truncate-middle|truncate)(?![\\w-])"
+          "match": "(?<![\\w-])(?:start|center|end|stretch|flex|none|single|double|rounded|thick|block|eighths|row|column|grid|hidden|scroll|visible|auto|space-between|top|right|bottom|left|default|wrap|nowrap|truncate-start|truncate-middle|truncate|pre-wrap)(?![\\w-])"
         },
         {
           "name": "invalid.illegal.unknown-value.tcss",

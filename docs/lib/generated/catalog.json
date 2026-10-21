@@ -34,8 +34,9 @@
     "select",
     "slot",
     "template",
+    "textarea",
     "use"
   ],
   "properties": 35,
-  "diagnostics": 41
+  "diagnostics": 42
 }

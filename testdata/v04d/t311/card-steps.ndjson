@@ -1,0 +1,7 @@
+{"commit": {"template": "card", "props": {"role": "assistant"}}}
+{"set": {"path": "commit_buf", "value": {"blocks": [{"id": 0, "runs": ["first"]}, {"id": 1, "runs": ["second"]}]}}}
+{"commit": {"template": "commit-msg", "with": "commit_buf as msg", "props": {"role": "assistant"}}}
+{"set": {"path": "commit_buf", "value": null}}
+{"set": {"path": "approval.diff", "value": [{"text": "- old line\n"}, {"text": "+ new\tline", "class": "raw"}]}}
+{"commit": {"template": "diff"}}
+{"key": "y"}

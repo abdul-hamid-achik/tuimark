@@ -46,6 +46,8 @@ hints > row { gap: 1; }
 checkbox, select { width: auto; height: auto; wrap: truncate; }
 select > list { border: single; max-height: 12; reverse: false; wrap: truncate; }
 button:focus, checkbox:focus, select:focus { reverse: true; }
+textarea { width: auto; height: auto; max-height: 8; }
+row > textarea { width: 1fr; }
 `
 
 var uaSheetCurrent *Sheet

@@ -1,0 +1,22 @@
+{
+  "blocks": [
+    { "id": 0, "head": true, "runs": ["Fixing the flaky test"] },
+    {
+      "id": 1,
+      "runs": [
+        "The failure comes from ",
+        { "text": "retry()", "class": "k-code" },
+        " sleeping ",
+        { "text": "after", "class": "k-em" },
+        " the second attempt, so a ",
+        { "text": "fast", "class": "k-strong" },
+        " machine passes and a slow one times out."
+      ]
+    },
+    { "id": 2, "quote": true, "runs": ["Flaky tests are bugs in the test or in the code, never in the clock."] },
+    { "id": 3, "item": true, "runs": ["• move the sleep before the attempt"] },
+    { "id": 4, "item": true, "runs": ["• cap the backoff at 2s"] },
+    { "id": 5, "code": true, "runs": ["func retry(f func() error) error {\n\tfor i := 0; i < 3; i++ {\n\t\ttime.Sleep(backoff(i))\n\t\tif err := f(); err == nil {\n\t\t\treturn nil\n\t\t}\n\t}\n\treturn errTooMany\n}"] },
+    { "id": 6, "rule": true, "runs": [] }
+  ]
+}

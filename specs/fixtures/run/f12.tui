@@ -1,0 +1,9 @@
+<tui>
+  <keymap>
+    <bind keys="f12" action="dbg"/>
+    <bind keys="f2" action="two"/>
+  </keymap>
+  <screen id="s">
+    <text>F12APP</text>
+  </screen>
+</tui>

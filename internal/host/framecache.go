@@ -116,6 +116,8 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 	num(int64(rows))
 	str(css.EffectiveTheme(theme))
 	flag(a.strict)
+	flag(a.inline)      // SPEC v0.4d §26.15: the region's height is the frame's
+	str(a.keyboard)     // SPEC v0.4d §26.14.3: <hints> shows the keys the keyboard can send
 	num(int64(a.phase)) // SPEC v0.4b §26.13: the spinner phase is an input of the frame
 	num(int64(a.storeGen))
 	num(int64(a.writes))
@@ -168,6 +170,9 @@ func (a *App) frameInputs(cols, rows int, theme string) string {
 		str(st.value)
 		num(int64(st.cursor))
 		flag(st.init)
+		num(int64(st.goal))
+		flag(st.goalSet)
+		flag(st.follow)
 	}
 	b = append(b, "|c"...)
 	for _, k := range sortedKeys(a.checks) {
@@ -225,6 +230,9 @@ type docKinds struct {
 	tabs  bool
 	hints bool
 	scale bool
+	// textarea is set when the document holds a textarea (SPEC v0.4d
+	// §6.19): only then does step 6a look at the hints again.
+	textarea bool
 	// spinner is set when the document holds a spinner (SPEC v0.4b
 	// §6.4.1): only then does the spinner phase take part in a Run frame
 	// (App.HasSpinner), so a document without one keeps the frame skip
@@ -236,7 +244,7 @@ type docKinds struct {
 // document. With noCache every step runs. The caller holds a.mu.
 func (a *App) kinds() docKinds {
 	if a.noCache {
-		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true, spinner: true}
+		return docKinds{doc: a.doc, tabs: true, hints: true, scale: true, spinner: true, textarea: true}
 	}
 	if a.docKinds.doc == a.doc {
 		return a.docKinds
@@ -249,6 +257,8 @@ func (a *App) kinds() docKinds {
 			k.tabs = true
 		case "hints":
 			k.hints = true
+		case "textarea":
+			k.textarea = true
 		case "progress":
 			if n.Spinner {
 				k.spinner = true

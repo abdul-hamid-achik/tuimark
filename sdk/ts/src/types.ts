@@ -25,6 +25,12 @@ export interface Ready {
   catalog: CatalogEntry[];
   /** The document's static diagnostics, in the §14 JSON form. */
   diagnostics: unknown[];
+  /**
+   * The fd 3 message types this child accepts (SPEC §19.1, 0.4d). A child
+   * older than 0.4d does not send it and accepts exactly `set`, `bind`,
+   * `batch`, `get`, and `reply`.
+   */
+  messages?: string[];
 }
 
 /** A host action that fired: the §15.4 event record without `step`. */
@@ -46,13 +52,40 @@ export interface HostEvent {
  */
 export type HostHandler = (event: HostEvent) => unknown;
 
-/** One write of a `batch`. */
+/**
+ * One write of a `batch`. `op` is `"set"` (the default) or `"append"`, which
+ * adds `value` to the string or array at `path` as `append` does (SPEC
+ * §18.3). A batch holding an `op` other than `"set"` needs a child that
+ * lists `append` in `ready.messages`.
+ */
 export interface Write {
   path: string;
   value: unknown;
+  op?: "set" | "append";
 }
 
-/** The child's answer to a `set`, `batch`, or `get` that carried an `id`. */
+/**
+ * One run of a committed line: its `text` and, optionally, the style classes
+ * it carries (SPEC §6.20.2).
+ */
+export interface CommitRun {
+  text: string;
+  class?: string;
+}
+
+/** A committed line: a string, or an array of runs (strings or {@link CommitRun}s). */
+export type CommitLine = string | Array<string | CommitRun>;
+
+/**
+ * What `commit` prints into the scrollback of an inline session (SPEC §18.3):
+ * `lines`, or a copy of `template`, with the `with` clauses and the `props`
+ * of a `<use>`.
+ */
+export type Commit =
+  | { lines: CommitLine[]; template?: undefined; with?: undefined; props?: undefined }
+  | { template: string; with?: string; props?: Record<string, string>; lines?: undefined };
+
+/** The child's answer to a `set`, `append`, `commit`, `batch`, or `get` that carried an `id`. */
 export interface Ack {
   id: number | string;
   ok: boolean;
@@ -105,6 +138,17 @@ export interface SpawnHostOptions {
    * number of milliseconds.
    */
   replyTimeout?: string | number;
+  /**
+   * `--inline`: run the session inline, in the terminal's scrollback, rather
+   * than on the alternate screen (SPEC §26.15).
+   */
+  inline?: boolean;
+  /**
+   * `--screen ID`: the screen the session starts on, applied before the first
+   * frame (SPEC §15.1). An id no screen has makes `spawnHost` reject: the
+   * child prints `tuimark: host: no screen with id "ID"` and exits 1.
+   */
+  screen?: string;
   /**
    * The `tuimark` executable. By default the one for this package's release:
    * `TUIMARK_BINARY`, else the cached copy, else a checked download (see

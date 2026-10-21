@@ -1,0 +1,7 @@
+<tui>
+  <keymap><bind keys="q" action="quit"/></keymap>
+  <screen id="main">
+    <text>HOSTAPP live={live.text}|busy={busy}</text>
+    <list id="msgs" each="messages as m" key="m.text"><item><text>msg-{m.text}</text></item></list>
+  </screen>
+</tui>

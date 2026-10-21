@@ -1,4 +1,11 @@
 {
+  "composer_change": [
+    {"path": "status.text", "value": "typing in the composer"}
+  ],
+  "composer_submit": [
+    {"path": "chat.composer.draft", "value": ""},
+    {"path": "status.text", "value": "message sent"}
+  ],
   "button_press": [
     {"path": "status.text", "value": "pressed a button"}
   ],

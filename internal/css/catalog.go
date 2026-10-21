@@ -73,7 +73,8 @@ func PropertySince(name string) int {
 
 // PropertyKeywords lists the literal values of an enumerated property or
 // a boolean one, each with the version that accepts it: layout's grid is
-// version 2 and wrap's truncate-start and truncate-middle are version 3.
+// version 2, wrap's truncate-start and truncate-middle are version 3, and
+// wrap's pre-wrap is 4, the current language (SPEC v0.4d).
 // A property that takes only numbers, sizes, colors, or cell values has
 // none. The order is the declaration order of the table (the one
 // PropertyValues prints).
@@ -96,6 +97,9 @@ func PropertyKeywords(name string) []Keyword {
 		}
 		for _, v := range p.v3Values {
 			out = append(out, Keyword{v, 3})
+		}
+		for _, v := range p.v4Values {
+			out = append(out, Keyword{v, 4})
 		}
 	}
 	return out

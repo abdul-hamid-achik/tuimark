@@ -10,7 +10,7 @@ npm install -g @thelacanians/tuimark      # the `tuimark` command everywhere
 
 ## The `tuimark` command
 
-The package has a `bin` named `tuimark`. It runs the Go binary of the Tuimark release that has the same version as this package (`@thelacanians/tuimark@0.4.5` runs `v0.4.5`), with your arguments, your terminal, and your signals, and exits with its exit code. It needs Node 18 or later, or Bun, and no `postinstall` script (bun and pnpm 10 block those). `tuimark host` also works through it when a parent starts the installed command directly (a global install, or `node_modules/.bin/tuimark`) with its pipes on fd 3 and fd 4; through `npx` or `bunx` the runtime owns those descriptors, so a parent should start `tuimark host` itself, or, from TypeScript, use `spawnHost`, which runs the binary directly.
+The package has a `bin` named `tuimark`. It runs the Go binary of the Tuimark release that has the same version as this package (`@thelacanians/tuimark@0.4.6` runs `v0.4.6`), with your arguments, your terminal, and your signals, and exits with its exit code. It needs Node 18 or later, or Bun, and no `postinstall` script (bun and pnpm 10 block those). `tuimark host` also works through it when a parent starts the installed command directly (a global install, or `node_modules/.bin/tuimark`) with its pipes on fd 3 and fd 4; through `npx` or `bunx` the runtime owns those descriptors, so a parent should start `tuimark host` itself, or, from TypeScript, use `spawnHost`, which runs the binary directly.
 
 The binary is found in this order:
 
@@ -67,6 +67,8 @@ It rejects with `HostError` when the child cannot be started, or exits before it
 | `data` | `string \| object` | The document's data, bound at the root, as `--data`. A string is the path of a JSON file. An object is written to a temporary file (mode 0600) that is removed as soon as the child is up. |
 | `theme` | `"dark" \| "light"` | `--theme`. `TUIMARK_THEME` still beats it. |
 | `replyTimeout` | `string \| number` | `--reply-timeout`: a Go duration from `100ms` to `1m` (`"5s"`), or milliseconds. The child's default is `5s`. |
+| `inline` | `boolean` | `--inline`: run the session inline, in the terminal's own scrollback, instead of on the alternate screen. Needs a document without `version`. |
+| `screen` | `string` | `--screen ID`: the screen the session starts on, applied before the first frame. An id no screen has makes `spawnHost` reject (`error.code` is 1; the child's stderr says `no screen with id "ID"`). |
 | `bin` | `string` | The executable. Defaults to the binary of this package's release: `TUIMARK_BINARY` (also read from `env`), the cache, or a checked download. A bare name such as `"tuimark"` is looked up on `PATH`. |
 | `handlers` | `Record<string, handler>` | Handlers registered before the first event can arrive. |
 | `onError` | `(ev, err) => unknown` | See [Replies](#replies). |
@@ -78,22 +80,40 @@ It rejects with `HostError` when the child cannot be started, or exits before it
 
 | Member | |
 |---|---|
-| `ready` | The `ready` message: `protocol`, `version`, `cols`, `rows`, `theme`, `catalog`, `diagnostics`. |
+| `ready` | The `ready` message: `protocol`, `version`, `cols`, `rows`, `theme`, `catalog`, `diagnostics`, and `messages`, the message types the child accepts (absent for a child older than 0.4d). |
 | `pid` | The child's process id. |
 | `on(action, handler)` | Registers the handler of one action (a later call for the same action replaces it). Returns the host. |
 | `set(path, value)` | `Set`. Resolves with the ack. |
-| `batch(writes)` | `Batch`, all or nothing. `writes` is `[{path, value}, …]`. Resolves with the ack. |
+| `append(path, value)` | `Append`: adds `value` to the string at `path` (it must be a string too) or to the array there, as one element (an array value is one element, never spread). Resolves with the ack. |
+| `commit(commit)` | `Commit`: prints `{lines}`, or a copy of `{template, with?, props?}`, into the scrollback of an inline session, above the live region. Resolves with the ack once the rows are written. |
+| `batch(writes)` | `Batch`, all or nothing. `writes` is `[{path, value, op?}, …]`, where `op` is `"set"` (the default) or `"append"`, checked when the batch is applied, so it sees the writes before it. Resolves with the ack. |
 | `get(path)` | `Get`. Resolves with `{found, value}`; `value` is absent unless `found`. |
 | `exited` | Settles when the child has exited. See [Ending](#ending). |
 | `close()` | Sends `SIGTERM`, then `SIGKILL` after 2 seconds if the child is still running. Resolves once it has exited, whatever the outcome. Safe to call twice. |
 
 ### Messages
 
-`set`, `batch`, and `get` each send their message with a fresh `id` and resolve with the child's `ack`. When the child refuses (`ok: false`), the promise rejects with a `RequestError` carrying the message and the ack (`error.ack`). The same happens when the child answers the `id` with an `error` instead, which is what it does for a malformed message. If the child exits first, pending requests reject with a `HostError`.
+`set`, `append`, `commit`, `batch`, and `get` each send their message with a fresh `id` and resolve with the child's `ack`. When the child refuses (`ok: false`), the promise rejects with a `RequestError` carrying the message and the ack (`error.ack`). The same happens when the child answers the `id` with an `error` instead, which is what it does for a malformed message. If the child exits first, pending requests reject with a `HostError`.
 
 A value of `undefined` is sent as `null`. A message whose line is 64 MiB or more is refused with a `RangeError` before it is sent, because the child ends the session on such a line.
 
-Messages are applied in the order they are sent, from one reader. Writes made before a handler returns are applied before its reply, so the frame drawn after the handler shows them. `set`, `batch`, and `get` are served while an event waits for its reply, so a handler can read and write state first.
+Messages are applied in the order they are sent, from one reader. Writes made before a handler returns are applied before its reply, so the frame drawn after the handler shows them. `set`, `append`, `commit`, `batch`, and `get` are served while an event waits for its reply, so a handler can read and write state first. A `commit` sent then prints at once, above the live region, so an approval can print its diff before the user answers.
+
+#### Older children
+
+A child tells which message types it accepts in `ready.messages`. Before it sends a type or a `batch` entry with an `op` other than `"set"`, the client checks that list: if the child does not list it, the call rejects with an `UnsupportedMessageError` (`the tuimark child does not accept "commit" messages`) and nothing is sent. That way a newer parent fails with a message against an older child, not with the child's malformed-message error, and a `batch` entry with `op: "append"` is never applied as a `set`. A child whose `ready` has no `messages` is taken to accept `set`, `bind`, `batch`, `get`, and `reply`, so those calls, and a `batch` without such an entry, go to it unchanged.
+
+#### Submit and clear
+
+A handler that takes the text of an input or a textarea should clear it before it replies, so the next frame is drawn without the sent text (`enter` changes nothing in a textarea, so a composer's `on:submit` handler always does this):
+
+```ts
+ui.on("send", async (ev) => {
+  const text = String(ev.value);
+  await ui.set("draft", ""); // applied before the reply, so the next frame shows an empty input
+  await ui.append("messages", { role: "user", text });
+});
+```
 
 ### Replies
 
@@ -149,7 +169,8 @@ All are exported and extend `HostError` (which extends `Error`).
 |---|---|
 | `HostError` | The child could not start, ended before `ready`, or ended without an `exit` message; the transport failed. `code` is the child's exit code when known. |
 | `ProtocolVersionError` | `ready.protocol` is not 1. `protocol` holds the value. |
-| `RequestError` | A `set`, `batch`, or `get` was refused. `ack` holds the ack when there was one. |
+| `RequestError` | A `set`, `append`, `commit`, `batch`, or `get` was refused. `ack` holds the ack when there was one. |
+| `UnsupportedMessageError` | The call needs a message type the child's `ready.messages` does not list. `messageType` holds it. Nothing was sent. |
 
 ## Develop
 
@@ -160,7 +181,7 @@ bunx tsc --noEmit
 bun run build   # dist/, for publishing
 ```
 
-The tests need no terminal and no `tuimark` binary (the download tests use a local HTTP server). `bin/tuimark.js` runs the TypeScript source under Bun when `dist/` is not built; after `bun run build` its tests also run it under Node.
+The tests need no terminal and no `tuimark` binary (the download tests use a local HTTP server). `test/real-child.test.ts` also runs a real child on a pseudo-terminal (it needs `python3`), against the binary named by `TUIMARK_TEST_CHILD` and a 0.4.5 one named by `TUIMARK_TEST_OLD_CHILD`; each is skipped, with its reason, when the variable is not set. `bin/tuimark.js` runs the TypeScript source under Bun when `dist/` is not built; after `bun run build` its tests also run it under Node.
 
 The package version is the Tuimark release it drives. `.github/workflows/release.yml` publishes it with npm trusted publishing after GoReleaser has uploaded the release's binaries: the `npm-pack` and `npm-publish` jobs set the version from the `v*` tag, so the `version` in this `package.json` only matters for local runs.
 

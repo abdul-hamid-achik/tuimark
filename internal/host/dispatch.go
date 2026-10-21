@@ -239,7 +239,8 @@ func (a *App) whenMatches(sel *css.Selector, v keyView) bool {
 //
 //   - an input: every single-character key and space (typed), backspace,
 //     ctrl+h, ctrl+u, left, right, home, end, ctrl+a, ctrl+e, and enter
-//     when it has on:submit;
+//     when it has on:submit; in the current language also delete, alt+b,
+//     alt+f, and alt+backspace (SPEC v0.4d §8.6, decision 223);
 //   - a list or a table with at least one row: up, down, home, end, pgup,
 //     pgdn, and, with single="true", space (SPEC v0.4b §6.14.1);
 //   - a checkbox: space, which toggles it (SPEC v0.4b §6.16.2);
@@ -259,11 +260,20 @@ func (a *App) consumes(b *layout.Box, k Key) bool {
 		switch k.Name {
 		case "backspace", "ctrl+h", "ctrl+u", "left", "right", "home", "end", "ctrl+a", "ctrl+e":
 			return true
+		case "delete", "alt+b", "alt+f", "alt+backspace":
+			// The current language only (SPEC v0.4d §8.6, decision 223):
+			// a pinned document never decodes them, and an input does not
+			// take ctrl+w or ctrl+k, so rows bound to them still fire
+			// while it has focus.
+			return a.doc.Lang.V4()
 		case "enter":
 			_, ok := b.Src.On["submit"]
 			return ok
 		}
 		return false
+	case "textarea":
+		// SPEC v0.4d §6.19.3, decisions 227-229, 259 (textarea.go).
+		return textareaConsumes(b, k)
 	case "list", "table":
 		if a.rows(b) > 0 {
 			switch k.Name {
@@ -372,15 +382,16 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 		// backspace move over or delete a whole cluster (SPEC v0.2 §12.1).
 		st, runes, bounds := a.inputCursor(b)
 		changed, cursor := false, st.cursor
-		switch k.Name {
-		case "backspace", "ctrl+h", "ctrl+u":
+		name := inputKeyName(k)
+		switch name {
+		case "backspace", "ctrl+h", "ctrl+u", "delete", "alt+backspace":
 			// An edit of an input bound to a derived path changes
 			// nothing (SPEC v0.4a §18.2).
 			if a.inputBlocked(b) {
 				return nil
 			}
 		}
-		switch k.Name {
+		switch name {
 		case "backspace", "ctrl+h":
 			if st.cursor > 0 {
 				p := boundBefore(bounds, st.cursor)
@@ -392,6 +403,22 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 			if len(runes) > 0 {
 				runes, st.cursor, changed = nil, 0, true
 			}
+		case "delete":
+			if st.cursor < len(runes) {
+				p := boundAfter(bounds, st.cursor)
+				runes = append(runes[:st.cursor], runes[p:]...)
+				changed = true
+			}
+		case "alt+backspace":
+			if p := wordStart(runes, bounds, st.cursor); p < st.cursor {
+				runes = append(runes[:p], runes[st.cursor:]...)
+				st.cursor = p
+				changed = true
+			}
+		case "alt+b":
+			st.cursor = wordStart(runes, bounds, st.cursor)
+		case "alt+f":
+			st.cursor = wordEnd(runes, bounds, st.cursor)
 		case "left":
 			st.cursor = boundBefore(bounds, st.cursor)
 		case "right":
@@ -413,6 +440,8 @@ func (a *App) widgetKey(b *layout.Box, k Key) []Event {
 			a.markStale()
 		}
 		return nil
+	case "textarea":
+		return a.textareaKey(b, k)
 	case "list", "table":
 		// A table moves its cursor exactly as a list does, with P =
 		// max(1, V), its body viewport (SPEC §6.9.2). moveList marks the
@@ -593,6 +622,10 @@ func (a *App) compatible(action string, t *layout.Box) bool {
 				return false
 			}
 			return len(enabledTabs(t)) > 0 && !a.bindBlocked(t)
+		case "textarea":
+			// Its caret and offset are its own (SPEC v0.4d §6.19.7,
+			// decision 240).
+			return false
 		}
 		return t.Scrolls()
 	case action == "check-toggle" || action == "check-all" || action == "check-none":

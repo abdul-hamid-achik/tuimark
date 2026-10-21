@@ -1,0 +1,111 @@
+version: 1
+name: host_ts_inline_cancel
+intent: |
+    examples/host-ts's inline mode, cancelling a reply (SPEC v0.4d §26.15.4,
+    test 305): while a reply streams by blocks, esc stops it. The parent
+    commits the partial tail block (the paragraph that was still being
+    written) and a "(cancelled)" line above the live region, the live region
+    drops the tail, the status says ready, and the composer takes focus
+    again, so a second message can be typed. The rest of the reply never
+    arrives. ctrl+q then leaves. The checks use ASCII markers and grep
+    only, so they hold in the C locale too.
+target:
+    cmd: ["bun", "run", "examples/host-ts/inline.ts", "${vars.tuimark}"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "Ask anything"
+        timeoutMs: 8000
+    - send:
+        bytes: 'cancel me\r'
+    - wait:
+        screen:
+            contains: "keeps the scrollback"
+        timeoutMs: 8000
+    - press: esc
+    - wait:
+        screen:
+            contains: "(cancelled)"
+        timeoutMs: 5000
+    - wait:
+        screen:
+            contains: "ready"
+        timeoutMs: 5000
+    - snapshot: cancelled
+    - send:
+        bytes: 'again'
+    - wait:
+        screen:
+            contains: "again"
+        timeoutMs: 3000
+    - snapshot: typing
+    - press: ctrl+q
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 8000
+outcomes:
+    - id: partial_tail_is_committed
+      description: the paragraph that was streaming is in the terminal as far as it had arrived, above the cancelled line, and the heading before it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                all="$d/cancelled.all.txt"
+                { cat "$d/cancelled.scrollback.txt" 2>/dev/null; cat "$d/cancelled.txt"; } > "$all"
+                h=$(grep -n -F -- 'A reply, streamed' "$all" | head -n 1 | cut -d: -f1)
+                p=$(grep -n -F -- 'Streaming by blocks keeps the scrollback' "$all" | head -n 1 | cut -d: -f1)
+                c=$(grep -n -F -- '(cancelled)' "$all" | head -n 1 | cut -d: -f1)
+                if [ -n "$h" ] && [ -n "$p" ] && [ -n "$c" ] && [ "$h" -lt "$p" ] && [ "$p" -lt "$c" ]; then
+                  echo '{"ok": true, "evidence": "heading, partial paragraph, cancelled line, in order"}'
+                else
+                  echo '{"ok": false, "evidence": "heading '"$h"', paragraph '"$p"', cancelled '"$c"'"}'
+                fi
+    - id: the_rest_never_arrives
+      description: nothing after the cancel is committed, not the list, the code, or the last paragraph
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if cat "$d/typing.scrollback.txt" "$d/typing.txt" 2>/dev/null | grep -q -e 'You asked' -e 'blockCommit' -e 'Commit per block'; then
+                  echo '{"ok": false, "evidence": "text of a later block is on the screen"}'
+                else
+                  echo '{"ok": true, "evidence": "no later block"}'
+                fi
+    - id: composer_is_back
+      description: after the cancel the status says ready and the composer has focus again, so typed text appears in it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                c="$GLYPHRUN_RUN_DIR/snapshots/cancelled.txt"
+                t="$GLYPHRUN_RUN_DIR/snapshots/typing.txt"
+                if grep -q '^ready' "$c" && ! grep -q 'streaming - esc cancels' "$c" && grep -q '^again' "$t"; then
+                  echo '{"ok": true, "evidence": "ready, and the typed text is in the composer"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected screens after the cancel"}'
+                fi
+    - id: parent_reports_quit
+      description: the parent reports the chat ended with reason quit and no protocol error
+      verify:
+        screen:
+            includeScrollback: true
+            contains: "host-ts: the chat ended (quit)"
+    - id: no_protocol_error
+      description: the child sent the parent no error message
+      verify:
+        screen:
+            includeScrollback: true
+            notContains: "protocol error"
+    - id: clean_exit
+      description: the parent exits with the child's code, 0 for quit
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:4ee11ac94a6119acfbb2e9b366cc0d308637af942bac05e138c6b023c58acef8

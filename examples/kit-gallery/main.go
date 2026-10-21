@@ -1,7 +1,7 @@
 // Command kit-gallery runs examples/kit-gallery/app.tui, a gallery of every
 // component in kit/ (badges, buttons, alerts, cards, stats, progress, forms,
 // a data table, a log panel, dialogs, a command palette, toasts, a help
-// overlay, a master/detail split) on five tabs.
+// overlay, a master/detail split) on six tabs.
 //
 //	go run ./examples/kit-gallery                    # from the repo root
 //	go run ./examples/kit-gallery -dump 120x40       # print Dump() as JSON and exit
