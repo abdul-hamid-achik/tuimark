@@ -142,6 +142,12 @@ type Node struct {
 	// multi-select as in 0.4.1.
 	Single bool
 
+	// Runs is the path of a <text runs="path"> of the current language
+	// (SPEC v0.4d §6.20.1): the host paints the runs at that path as the
+	// text's content. "" for every other node, for a runs that is not a
+	// path (V003), and for one a pinned document writes (V002).
+	Runs string
+
 	Line, Col int
 	Path      string
 	// Org says where an element of an expanded document was written and

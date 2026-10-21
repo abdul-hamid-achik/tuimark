@@ -98,6 +98,9 @@ type propSpec struct {
 	// on top of values (SPEC v0.3b §10.3): wrap's truncate-start and
 	// truncate-middle.
 	v3Values []string
+	// v4Values are extra enum values only the current language (a <tui>
+	// without version) accepts (SPEC v0.4d §10.3): wrap's pre-wrap.
+	v4Values []string
 }
 
 // layoutGrid is the value of layout that only version="2" stylesheets
@@ -134,7 +137,7 @@ var props = map[string]propSpec{
 	"italic":        {kind: pBool},
 	"underline":     {kind: pBool},
 	"reverse":       {kind: pBool},
-	"wrap":          {kind: pEnum, values: []string{"wrap", "nowrap", "truncate"}, v3Values: []string{"truncate-start", "truncate-middle"}},
+	"wrap":          {kind: pEnum, values: []string{"wrap", "nowrap", "truncate"}, v3Values: []string{"truncate-start", "truncate-middle"}, v4Values: []string{"pre-wrap"}},
 	"visibility":    {kind: pEnum, values: []string{"visible", "hidden"}},
 	// version="2" (SPEC §10.2, §10.3).
 	"grid-columns":   {kind: pGridColumns, v2: true},
@@ -186,7 +189,7 @@ func PropertyValues(name string) string {
 			return strings.Join(p.values, " | ") + " | grid (version=\"2\")"
 		}
 		if name == "wrap" {
-			return strings.Join(p.values, " | ") + " | " + strings.Join(p.v3Values, " | ") + " (version=\"3\")"
+			return strings.Join(p.values, " | ") + " | " + strings.Join(p.v3Values, " | ") + " (version=\"3\") | " + strings.Join(p.v4Values, " | ") + " (<tui> without version)"
 		}
 		return strings.Join(p.values, " | ")
 	case pGridColumns:
@@ -235,7 +238,7 @@ func CheckDecl(prop, val string) error { return CheckDeclIn(prop, val, false, fa
 // §5.1). The current language adds no property and no value in 0.4b's
 // first phase, so it checks exactly what a version="3" document does.
 func CheckDeclLang(prop, val string, l ir.Lang) error {
-	return CheckDeclIn(prop, val, l.V2(), l.V3())
+	return checkDecl(prop, val, gateOf(l))
 }
 
 // CheckDeclIn validates a declaration's syntax for a document of the
@@ -247,6 +250,13 @@ func CheckDeclLang(prop, val string, l ir.Lang) error {
 // (SPEC §5.1), but callers pass both explicitly rather than have this
 // function assume it.
 func CheckDeclIn(prop, val string, v2, v3 bool) error {
+	return checkDecl(prop, val, gate{v2: v2, v3: v3})
+}
+
+// checkDecl is CheckDeclIn for a gate, whose v4 is the current language
+// (SPEC v0.4d §10.3: wrap's pre-wrap).
+func checkDecl(prop, val string, g gate) error {
+	v2, v3, v4 := g.v2, g.v3, g.v4
 	val = strings.TrimSpace(val)
 	if strings.HasPrefix(prop, "--") {
 		return fmt.Errorf("custom property %s is only allowed in :root", prop)
@@ -278,6 +288,13 @@ func CheckDeclIn(prop, val string, v2, v3 bool) error {
 				}
 			}
 		}
+		if v4 {
+			for _, v := range p.v4Values {
+				if v == val {
+					return nil
+				}
+			}
+		}
 		if prop == "layout" && val == layoutGrid {
 			if v2 {
 				return nil
@@ -298,6 +315,19 @@ func CheckDeclIn(prop, val string, v2, v3 bool) error {
 			want += " | " + layoutGrid
 		case len(p.v3Values) > 0 && v3:
 			want += " | " + strings.Join(p.v3Values, " | ")
+		}
+		if len(p.v4Values) > 0 {
+			for _, v := range p.v4Values {
+				if v == val && !v4 {
+					// A current-language value in a pinned document (SPEC
+					// v0.4d §5.1, decision 202): "value", not "bad value",
+					// and the hint, with the list that document accepts.
+					return fmt.Errorf("%s: value %q (want %s)%s", prop, val, want, ir.VersionHintCurrent)
+				}
+			}
+			if v4 {
+				want += " | " + strings.Join(p.v4Values, " | ")
+			}
 		}
 		return fmt.Errorf("%s: bad value %q (want %s)", prop, val, want)
 	case pGridColumns:
@@ -526,6 +556,29 @@ func inherit(st *Style, parent *Style, prop string) {
 	case "wrap":
 		st.Wrap = parent.Wrap
 		st.WrapWritten = parent.WrapWritten
+	}
+}
+
+// CopyLook sets the look property prop (color, background, bold, dim,
+// italic, underline, or reverse) of dst to its value in src: what a span
+// that a rule styles takes over from its computed style (SPEC v0.4d
+// §6.20.4). Any other property is left alone.
+func CopyLook(dst, src *Style, prop string) {
+	switch prop {
+	case "color":
+		dst.Color = src.Color
+	case "background":
+		dst.Background = src.Background
+	case "bold":
+		dst.Bold = src.Bold
+	case "dim":
+		dst.Dim = src.Dim
+	case "italic":
+		dst.Italic = src.Italic
+	case "underline":
+		dst.Underline = src.Underline
+	case "reverse":
+		dst.Reverse = src.Reverse
 	}
 }
 

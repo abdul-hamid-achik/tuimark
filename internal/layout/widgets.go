@@ -464,14 +464,15 @@ func SelectShown(b *Box, w int) (s string, dim bool) {
 
 // CutByWrap cuts s to n columns by a computed wrap, as a table cell is cut
 // (SPEC §6.9.4, v0.4b §12.5): truncate, truncate-start, and
-// truncate-middle cut that way, wrap is painted as truncate, and nowrap
+// truncate-middle cut that way, wrap and pre-wrap (v0.4d) are painted as
+// truncate, and nowrap
 // (or no value) is clipped with no ellipsis.
 func CutByWrap(s string, n int, wrap string) string {
 	if n <= 0 {
 		return ""
 	}
 	switch wrap {
-	case "truncate", "wrap":
+	case "truncate", "wrap", ModePreWrap:
 		return Truncate(s, n)
 	case "truncate-start":
 		return TruncateStart(s, n)

@@ -1214,7 +1214,10 @@ func (e *Engine) checkTextClip(n *Box) {
 	// truncate-start and truncate-middle (version="3", v0.3b) mark their
 	// cut with an ellipsis exactly as truncate does, so they never
 	// produce L008a either (SPEC §11.5.2).
-	nowrap := mode != "wrap" && mode != "truncate" && mode != "truncate-start" && mode != "truncate-middle"
+	// pre-wrap (the current language, SPEC v0.4d decision 214) measures as
+	// nowrap but never cuts columns, so it never produces L008a either; its
+	// lines are counted by PreWrap for L008b.
+	nowrap := mode != "wrap" && mode != ModePreWrap && mode != "truncate" && mode != "truncate-start" && mode != "truncate-middle"
 	if nowrap && !n.Style.WrapWritten {
 		if w, c := n.textInfo().w, n.Content.W; w > c {
 			if e.clipFirst(n, "L008a") {
@@ -1427,8 +1430,8 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 	case "text":
 		if horizontal {
 			v = b.textInfo().w
-		} else if b.Style.Wrap == "wrap" && avail > 0 {
-			v = b.lineCount(max(1, avail-fh), "wrap")
+		} else if (b.Style.Wrap == "wrap" || b.Style.Wrap == ModePreWrap) && avail > 0 {
+			v = b.lineCount(max(1, avail-fh), b.Style.Wrap)
 		} else {
 			v = b.textInfo().paras
 		}

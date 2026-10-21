@@ -40,6 +40,8 @@ var htmlTagHintsCurrent = map[string]string{
 	"option":    `use <select each=… key=… label=…>`,
 	"component": `write it once in a <template id=…> and place it with <use template=…>`,
 	"import":    `use <include src=…> for markup, <style src=…> for a stylesheet`,
+	// SPEC v0.4d §6.20.4, decision 211: a span is generated, never written.
+	"span": `spans are generated from <text runs="…">`,
 }
 
 // htmlHint returns the HTML-name hint of tag in this document's language,

@@ -236,6 +236,7 @@ var propTextAttrs = map[string]bool{
 var propPathAttrs = map[string]bool{
 	"bind": true, "each": true, "key": true, "checked": true, "if": true,
 	"hidden": true, "disabled": true, "open": true, "with": true,
+	"runs": true, // SPEC v0.4d §6.20.1
 }
 
 func placeOf(name string) propPlace {
@@ -886,6 +887,8 @@ func (pn *propNode) restore(b *builder, n *ir.Node, r *RawNode) {
 		switch {
 		case a.Name == "bind":
 			n.Bind = a.Value
+		case a.Name == "runs":
+			n.Runs = a.Value
 		case a.Name == "each":
 			n.Each = a.Value
 		case a.Name == "if":

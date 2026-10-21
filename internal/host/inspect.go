@@ -37,6 +37,22 @@ type Inspection struct {
 	// uses that placed it (SPEC v0.4b §15.7); nil for a document that
 	// writes version, whose inspect output is 0.4.1's (decision 19).
 	Source *SourceInfo `json:"source,omitempty"`
+	// Run is the run of a <text runs> that painted the cell --at named
+	// (SPEC v0.4d §6.20.6); nil for every other cell and for --id.
+	Run *RunInfo `json:"run,omitempty"`
+}
+
+// RunInfo explains the run that painted a cell (SPEC v0.4d §6.20.6,
+// §15.7): its index in the array at the runs path (0 for a string value),
+// its text after the rules of §6.20.2, its classes in order, and its
+// style, the StyleInfo entries of the seven properties a span styles
+// (§6.20.4). A property no rule sets on the span has its text's value and
+// the origin "inherited".
+type RunInfo struct {
+	Index   int         `json:"index"`
+	Text    string      `json:"text"`
+	Classes []string    `json:"classes"`
+	Style   []StyleInfo `json:"style"`
 }
 
 // SourceInfo is where the element a node was built from is written (SPEC
@@ -158,6 +174,9 @@ func (a *App) Inspect(f *Frame, t InspectTarget) (*Inspection, error) {
 	in.Style = a.styleInfo(f, b)
 	if a.doc.Lang.V4() {
 		in.Source = a.sourceInfo(b)
+		if t.At {
+			in.Run = a.runInfo(f, b, t.X, t.Y)
+		}
 	}
 	return in, nil
 }

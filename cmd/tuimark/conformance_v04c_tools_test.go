@@ -307,14 +307,15 @@ func TestV04cTools247Fmt(t *testing.T) {
 }
 
 // 249, the catalog bullet: slot, props on template, use's open_attrs, and
-// nothing else; current 4, catalog 1, 41 diagnostics; the output
-// validates against schema/catalog.v1.json.
+// nothing else; current 4, catalog 1, and 42 diagnostics since 0.4d's B013
+// (it was 41 in 0.4c; SPEC 0.4d test 309); the output validates against
+// schema/catalog.v1.json.
 func TestV04cTools249Catalog(t *testing.T) {
 	raw, c := catalogOutput(t)
 	if errs := validateSchema(t, catalogSchema, decodeJSON(t, []byte(raw))); len(errs) != 0 {
 		t.Fatalf("catalog vs catalog.v1.json: %v", errs)
 	}
-	if c.Current != 4 || c.Catalog != 1 || len(c.Diagnostics) != 41 {
+	if c.Current != 4 || c.Catalog != 1 || len(c.Diagnostics) != 42 {
 		t.Errorf("current %d, catalog %d, %d diagnostics", c.Current, c.Catalog, len(c.Diagnostics))
 	}
 	var slot *catalog.Tag

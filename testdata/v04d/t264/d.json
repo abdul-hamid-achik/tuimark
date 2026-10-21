@@ -1,0 +1,1 @@
+{"msg": {"runs": ["Use ", {"text": "go build", "class": "code"}, " and then check the ", {"text": "go.mod", "class": "code i"}, " file"]}}

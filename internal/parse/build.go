@@ -290,6 +290,7 @@ var TagAttrsCurrent = map[string]map[string]bool{
 	"select":   selectAttrs(),         // SPEC v0.4b §6.17 (forms.go)
 	"list":     only("single"),        // SPEC v0.4b §6.14.1
 	"table":    only("single"),        // SPEC v0.4b §6.14.1
+	"text":     only("runs"),          // SPEC v0.4d §6.20.1 (runs.go)
 }
 
 // tableItemAttrs are the attributes of a table's row template <item>
@@ -1503,6 +1504,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			return
 		}
 		n.Bind = val
+	case "runs":
+		// SPEC v0.4d §6.20.1: the path of the runs a <text> paints. Only
+		// the current language gets here (the version gate comes first).
+		b.runsAttr(n, a)
 	case "open":
 		if val != "true" && val != "false" {
 			if _, err := ir.ParseGuard(val); err != nil {
@@ -1817,6 +1822,11 @@ func (b *builder) content(n *ir.Node, r *RawNode) {
 		// characters inside the text itself are V007. A version="2"
 		// <column>'s body is its cell template, a template like a <text>
 		// body (SPEC §6.9.1, §7).
+		if b.runsBody(n, body) {
+			// A <text runs> takes no body text (SPEC v0.4d §6.20.1): its
+			// text comes from the runs, so the body is ignored.
+			break
+		}
 		clean := b.sanitize(n, textLine, textCol, NormalizeText(body))
 		n.Text = NormalizeText(clean)
 		if (n.Tag == "text" || n.Tag == "column") && !b.doc.Spike {

@@ -999,6 +999,12 @@ func (b *builder) copyContent(n *ir.Node, r *RawNode) {
 	if v, ok := n.Attrs["checked"]; ok {
 		n.Attrs["checked"] = cp.substAt("checked", 0, v)
 	}
+	if n.Runs != "" {
+		// SPEC v0.4d §6.20.1: runs resolves through the with aliases as
+		// bind does.
+		n.Runs = cp.substAt("runs", 0, n.Runs)
+		n.Attrs["runs"] = n.Runs
+	}
 	for _, k := range [...]string{"title", "placeholder", "label", "short"} {
 		if v, ok := n.Attrs[k]; ok && !(k == "label" && n.Tag == "select") {
 			n.Attrs[k] = cp.substText(k, v)

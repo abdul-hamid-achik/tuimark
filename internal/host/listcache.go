@@ -210,7 +210,10 @@ func (a *App) listPlan(n *ir.Node) *listPlan {
 	var walk func(t *ir.Node)
 	walk = func(t *ir.Node) {
 		p.size++
-		if !listCacheKinds[t.Kind] {
+		if !listCacheKinds[t.Kind] || t.Runs != "" {
+			// A <text runs> (SPEC v0.4d §6.20) keeps its runs beside its
+			// text, which a prototype box does not carry: its rows are
+			// inflated every frame, as a row with an input is.
 			ok = false
 			return
 		}

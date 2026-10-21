@@ -309,7 +309,7 @@ func (p *sheetParser) rules(sheet *Sheet, media *Media) {
 					p.errAt(d.Line, d.Col, "token %s: %v", d.Prop, err)
 					continue
 				}
-			} else if err := CheckDeclIn(d.Prop, d.Value, p.v2, p.v3); err != nil {
+			} else if err := checkDecl(d.Prop, d.Value, p.gate); err != nil {
 				p.errAt(d.Line, d.Col, "%v", err)
 				continue
 			}
@@ -460,12 +460,16 @@ func ParseDeclsAll(src string) ([]Decl, []error) { return ParseDeclsAllIn(src, f
 // ParseDeclsAllLang is ParseDeclsAllIn for a document of language l
 // (SPEC v0.4b §5.1).
 func ParseDeclsAllLang(src string, l ir.Lang) ([]Decl, []error) {
-	return ParseDeclsAllIn(src, l.V2(), l.V3())
+	return parseDeclsAll(src, gateOf(l))
 }
 
 // ParseDeclsAllIn is ParseDeclsAll for a document of the given version
 // (v0.3b: v3).
 func ParseDeclsAllIn(src string, v2, v3 bool) ([]Decl, []error) {
+	return parseDeclsAll(src, gate{v2: v2, v3: v3})
+}
+
+func parseDeclsAll(src string, g gate) ([]Decl, []error) {
 	var out []Decl
 	var errs []error
 	for _, part := range strings.Split(src, ";") {
@@ -479,7 +483,7 @@ func ParseDeclsAllIn(src string, v2, v3 bool) ([]Decl, []error) {
 			continue
 		}
 		d := Decl{Prop: strings.TrimSpace(part[:colon]), Value: strings.TrimSpace(part[colon+1:])}
-		if err := CheckDeclIn(d.Prop, d.Value, v2, v3); err != nil {
+		if err := checkDecl(d.Prop, d.Value, g); err != nil {
 			errs = append(errs, err)
 			continue
 		}
