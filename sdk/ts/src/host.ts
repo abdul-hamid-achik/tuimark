@@ -3,11 +3,12 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { constants as osConstants, tmpdir } from "node:os";
 import { join } from "node:path";
 import { BinaryError, resolveBinary } from "./binary.ts";
-import { HostError, ProtocolVersionError, RequestError } from "./errors.ts";
+import { HostError, ProtocolVersionError, RequestError, UnsupportedMessageError } from "./errors.ts";
 import { readLines } from "./lines.ts";
 import { FdWriter } from "./sink.ts";
 import type {
   Ack,
+  Commit,
   GetResult,
   HostEvent,
   HostExit,
@@ -19,6 +20,12 @@ import type {
 
 /** The protocol this package speaks (SPEC §19.1). */
 const PROTOCOL = 1;
+
+/**
+ * The message types a child whose `ready` has no `messages` accepts: every
+ * child older than 0.4d (SPEC §19.1, decision 254).
+ */
+const LEGACY_MESSAGES: readonly string[] = ["set", "bind", "batch", "get", "reply"];
 
 /** SPEC §19.1, "Line bound": a line of this many bytes or more ends the session. */
 const MAX_LINE_BYTES = 64 * 1024 * 1024;
@@ -243,6 +250,9 @@ export class Host {
           typeof options.replyTimeout === "number" ? `${options.replyTimeout}ms` : options.replyTimeout;
         args.push("--reply-timeout", timeout);
       }
+      // SPEC §19.2 (0.4d): --inline and --screen ID, decision 260.
+      if (options.inline) args.push("--inline");
+      if (options.screen !== undefined) args.push("--screen", options.screen);
 
       let proc: Subprocess;
       try {
@@ -312,11 +322,55 @@ export class Host {
     return this.#request("set", { path, value: value === undefined ? null : value });
   }
 
-  /** `Batch`: all the writes or none (SPEC §18.1). Resolves with the ack. */
+  /**
+   * `Append(path, value)` (SPEC §18.3): adds `value` to the string at `path`
+   * (it must be a string too) or to the array there (as one element, an array
+   * value included). Resolves with the ack; rejects with {@link RequestError}
+   * when the child refuses it (a missing path, a value of another type, …),
+   * and with {@link UnsupportedMessageError}, sending nothing, when the child
+   * is older than 0.4d.
+   */
+  async append(path: string, value: unknown): Promise<Ack> {
+    return this.#request("append", { path, value: value === undefined ? null : value }, ["append"]);
+  }
+
+  /**
+   * `Commit` (SPEC §18.3): prints `lines`, or a copy of `template`, into the
+   * scrollback of an inline session, above the live region. Resolves with the
+   * ack once the rows are written. Rejects with {@link RequestError} when the
+   * child refuses it (`commit: not in inline mode` without `inline: true`,
+   * or a rule of §18.3), and with {@link UnsupportedMessageError}, sending
+   * nothing, when the child is older than 0.4d.
+   */
+  async commit(commit: Commit): Promise<Ack> {
+    const members: Record<string, unknown> = {};
+    if (commit.lines !== undefined) members.lines = commit.lines;
+    if (commit.template !== undefined) members.template = commit.template;
+    if (commit.with !== undefined) members.with = commit.with;
+    if (commit.props !== undefined) members.props = commit.props;
+    return this.#request("commit", members, ["commit"]);
+  }
+
+  /**
+   * `Batch`: all the writes or none (SPEC §18.1). Resolves with the ack. An
+   * entry with `op: "append"` appends, checked when the batch is applied, so
+   * it sees the writes before it (SPEC §18.3); the child must list `append` in
+   * `ready.messages`, else this rejects with {@link UnsupportedMessageError}
+   * and sends nothing, since an older child would apply the entry as a `set`.
+   */
   async batch(writes: readonly Write[]): Promise<Ack> {
-    return this.#request("batch", {
-      writes: writes.map((w) => ({ path: w.path, value: w.value === undefined ? null : w.value })),
-    });
+    const needsAppend = writes.some((w) => w.op !== undefined && w.op !== "set");
+    return this.#request(
+      "batch",
+      {
+        writes: writes.map((w) => ({
+          ...(w.op === undefined ? {} : { op: w.op }),
+          path: w.path,
+          value: w.value === undefined ? null : w.value,
+        })),
+      },
+      needsAppend ? ["append"] : [],
+    );
   }
 
   /** `Get(path)`: `{found, value}`. */
@@ -484,9 +538,19 @@ export class Host {
     this.#out.write(`${line}\n`);
   }
 
-  #request(type: string, members: Record<string, unknown>): Promise<Ack> {
+  /**
+   * Sends `type` with a fresh id and waits for its ack. `needs` are message
+   * types the child must list in `ready.messages` (a child without the member
+   * is taken to list the 0.4c ones): when one is missing the call rejects
+   * before an id is taken or anything is written (SPEC §19.2).
+   */
+  #request(type: string, members: Record<string, unknown>, needs: readonly string[] = []): Promise<Ack> {
     if (this.#failure) return Promise.reject(this.#failure);
     if (this.#finished) return Promise.reject(new HostError("the host has exited"));
+    const accepted = this.#ready?.messages ?? LEGACY_MESSAGES;
+    for (const need of needs) {
+      if (!accepted.includes(need)) return Promise.reject(new UnsupportedMessageError(need));
+    }
     return new Promise<Ack>((resolve, reject) => {
       const id = this.#nextId++;
       try {

@@ -40,3 +40,19 @@ export class RequestError extends HostError {
     if (ack) this.ack = ack;
   }
 }
+
+/**
+ * The child does not accept a message type this call needs (SPEC §19.2,
+ * decisions 254 and 255): its `ready.messages` does not list it, so it is
+ * older than the call. Nothing was sent.
+ */
+export class UnsupportedMessageError extends HostError {
+  override name = "UnsupportedMessageError";
+  /** The message type the child does not accept, e.g. `"commit"`. */
+  readonly messageType: string;
+
+  constructor(messageType: string) {
+    super(`the tuimark child does not accept "${messageType}" messages`);
+    this.messageType = messageType;
+  }
+}
