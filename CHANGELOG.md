@@ -69,8 +69,9 @@ writes `version`, behave as in 0.4.4.
     - `k-kv`: one key/value row,
       `<use template="k-kv" label="Owner" with="svc.owner as v"/>`.
   - `k-alert`, `k-empty` and `k-confirm` take content too.
-  - Every template takes a `style` prop for its root, which has no id of
-    its own.
+  - Every template takes a `style` prop for its root, which a rule cannot
+    name unless the template gives it an id (the overlays' `U__dialog`,
+    the log's `U__view`).
   - `k-stat` takes `min` and `max`, the sparkline's range.
   - `k-help` lists its keys in a scroll (`U__keys`), which takes the focus,
     so a long keymap scrolls without a height rule in the app.
@@ -83,6 +84,8 @@ writes `version`, behave as in 0.4.4.
 
 - **Messages.** "Tuimark has no slots" is gone from every message.
   Content in an `<include>` now says to wrap it with a template and a slot.
+  The `V002` of an attribute a `<use>` does not take now ends with "or
+  declare it in the template's props" when the name could be a prop.
 - **Help overlay.** The kit's help overlay shows "? close help" as its own
   line, above the list of keys, and the kit's `.k-help` keymap row has no
   label any more.
@@ -101,7 +104,7 @@ writes `version`, behave as in 0.4.4.
     - `k-help`: `title`.
   - The members they replace are no longer read. A use that still passes
     them only through `with` shows no title or label, with no diagnostic.
-    The kit README has a migration table.
+    The kit README's "Upgrading from kit v1" section has a migration table.
 - **`k-empty`.** Its call to action is the use's content: your button,
   your id, your action. The kit no longer has `empty_create` or
   `U__create`.

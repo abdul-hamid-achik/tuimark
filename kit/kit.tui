@@ -22,8 +22,9 @@
 
   - A variant is a static class on the <use> (`class="danger"`). It lands on
     the copy's root, and the kit's rules style the parts from there.
-  - `style` is a prop of every template: it lands on the copy's root, which
-    has no id of its own (`style="height: 10"`).
+  - `style` is a prop of every template: it lands on the copy's root, which a
+    rule cannot name unless the template gives it an id (the overlays'
+    U__dialog, the log's U__view): `style="height: 10"`.
   - A template that holds ids needs an id on its <use>, which scopes them:
     `<use id="del" template="k-confirm" …/>` makes del__dialog, del__no and
     del__yes. The use id is the instance a host routes by (the part of an

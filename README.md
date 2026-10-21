@@ -36,7 +36,7 @@ agent edits again
 
 Release history is in the [Changelog](CHANGELOG.md).
 
-The Tuimark specification (the SPEC, currently v0.3) is the source of truth
+The Tuimark specification (the SPEC) is the source of truth
 for the language and the runtime. It is maintained by the author outside
 this repository; "SPEC §N" references in code and docs point to it. This
 file is the map of what's in the repo and how to drive it.
@@ -305,10 +305,10 @@ takes over), proving the loop end to end. This one example touches:
 A `<tui>` needs no `version`: without one it is the current language, with
 everything this section describes plus the 0.4b and 0.4c additions in the
 Language notes below (composition, props and the slot, and a few defaults
-and key rules). It is
-not `version="3"`: a document that writes `version="1"`, `"2"`, or `"3"` is
-pinned to the meaning it had in 0.4.1, defaults included, and its dumps do
-not change; new vocabulary in a pinned document is a diagnostic that ends
+and key rules). It is not
+`version="3"`: a document that writes `version="1"`, `"2"`, or `"3"` is pinned
+to the meaning it had in 0.4.1, defaults included, and its dumps do not
+change; new vocabulary in a pinned document is a diagnostic that ends
 `(requires a <tui> without version)`. There is no `version="4"` (it is
 `V003`). A `version="1"` document keeps the vocabulary and meaning it has
 always had, and its dumps stay byte-identical. `version="2"` adds the 0.2b
@@ -716,7 +716,8 @@ tuimark version
   that accepts it (`since`). It is generated from the runtime's own tables,
   takes no flags, and reads no environment variable. `schema/catalog.v1.json`
   validates it; `catalog: 1` is the format version, and adding members,
-  items, or versions keeps it.
+  items, or versions keeps it. A tag with an `open_attrs` member also takes
+  the attributes it names (`use`: the props of its template).
 - `new NAME [--go | --ts]` (0.4a) creates a project in the directory `NAME`,
   which must not exist or must be empty (otherwise it is a usage error that
   writes nothing, and no file is ever overwritten): `app.tui` (the newest
@@ -1653,9 +1654,9 @@ kept with the maintainer's project notes, outside this repository.
   FILE:LINE:COL`. `tuimark inspect` ends with the `source` of a node and a
   `via` line for each use, include, or slot that placed it, and
   `tuimark ir` gives each placed node a `from`, keeps a copy's `<slot/>` as
-  a `slot` node holding its content, and shows props already substituted. A fragment is not a document: `validate`
-  (`ok (fragment checked on its own)`) and `fmt` accept it, and the other
-  commands give it `V005`.
+  a `slot` node holding its content, and shows props already substituted. A
+  fragment is not a document: `validate` (`ok (fragment checked on its own)`)
+  and `fmt` accept it, and the other commands give it `V005`.
 
 - **Props (0.4c).** `<template id="T" props="title max">` declares text
   props (lowercase names, `[a-z_][a-z0-9_-]*`, separated by exactly one

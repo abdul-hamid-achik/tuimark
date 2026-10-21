@@ -62,7 +62,8 @@ stands. A `<use>` passes three kinds of arguments:
 - **Props** are literal text: a title, a label, a placeholder, an icon, the
   sparkline's limits (`title="CPU"`, `min="0"`). A prop is text, never a path
   (`title="{card.title}"` is V003); a title that comes from data is the class
-  markup (`<box class="k-card" title="{PATH}">`) or a path under `with`. A prop
+  markup (`<box class="k-card" title="{PATH}">`); only the confirm dialog and
+  the log read their title from `with`. A prop
   you leave out is an attribute the copy does not write, or an empty text that
   the kit hides (`:empty`: the alert's icon, the empty state's text).
 - **Data** comes through the `with` alias: values, arrays, the flags in `if`,
@@ -78,9 +79,9 @@ stands. A `<use>` passes three kinds of arguments:
   alert (more body after `text`), empty state (the call to action) and confirm
   (more body under `d.body`). Content stays in the place where you wrote it:
   its paths are the document's (the alias of the `with` does not exist there:
-  write `{confirm.detail}`, not `{d.detail}`), its ids are yours (the `<use>`
-  does not scope them: `deploy__create`, not `create`), and its actions are the
-  app's. Two uses of one template with the same content would repeat its ids
+  write `{confirm.detail}`, not `{d.detail}`), its ids are yours (you write
+  the full id, e.g. `deploy__create`: the `<use>` adds no prefix), and its
+  actions are the app's. Two uses of one template with the same content would repeat its ids
   (V004). Content in a template with no slot is V013.
 
 Besides:
@@ -89,8 +90,9 @@ Besides:
   on the copy's root, and the kit's rules style the parts from there
   (`.k-alert.danger > .k-alert-row > .k-alert-icon`). It is a modifier, not a
   prop.
-- **`style`** is a prop of every template. It lands on the copy's root, which
-  has no id of its own, so it is how an instance gets a size
+- **`style`** is a prop of every template. It lands on the copy's root, which a
+  rule cannot name (unless the template gives it an id: the overlays' `U__dialog`,
+  the log's `U__view`), so it is how an instance gets a size
   (`<use template="k-card" title="Empty state" style="height: 10">`); a prop
   you do not pass writes no `style` at all.
 - **Ids** come from the use: a template that holds ids needs an `id` on its
@@ -122,6 +124,26 @@ the component needs from the store and the host:
 ```
 k-NAME · Contract: <the props, the with alias and the paths it reads and writes, the slot> · Actions: <named actions> · Keys: <keys> · Requires: <other kit classes>
 ```
+
+## Upgrading from kit v1
+
+Kit v2 reads literal text as props, and a use that still passes the v1 `with`
+members shows no title or label, with no diagnostic. Move each one as follows.
+
+| v1 | v2 |
+|---|---|
+| `k-alert` with `a.title`, `a.icon`, `a.text` | props `title`, `icon`, `text`; a line that comes from data goes in the content |
+| `k-stat` with `s.title` | prop `title` (and `min`, `max`); `value`, `delta`, `hist`, `good`, `bad` stay in `with` |
+| `k-meter` with `m.label` | prop `label`; `text`, `pct` and the flags stay in `with` |
+| `k-empty` with `e.icon`, `e.title`, `e.text`, `e.action`, the button `U__create` and the action `empty_create` | props `icon`, `title`, `text`; your own button, with your id and your action, inside the `<use>` |
+| `k-field` with `f.label`, `f.placeholder`, `f.help` | props `label`, `placeholder`, `help`; `f.value` and `f.error` stay in `with` |
+| `k-palette` with `p.title`, `p.placeholder` | props `title`, `placeholder`; the palette helpers no longer write defaults |
+| `k-help` with `h.title` | prop `title`; drop any app height rule on `#U__dialog` |
+| `k-confirm` | unchanged; optional content under the body |
+| `<box class="k-card" title=…>` | `<use template="k-card" title=…>…</use>`; the class form stays valid, and it is the one for a title that comes from data |
+| `<row class="k-appbar">` | `<use template="k-appbar" brand=… title=…>`, the right side as content |
+| `k-card-row` rows | `<use template="k-kv" label=… with="PATH as v"/>` |
+| an app rule on a copy's id | `style="…"` on the `<use>` |
 
 ## Tokens
 

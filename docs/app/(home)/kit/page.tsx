@@ -22,7 +22,7 @@ const HEAD = `<tui theme="auto">
   <style src="app.tcss"/>       <!-- yours, after it: token overrides -->
   <screen id="main">
     …
-    <use template="k-alert" class="warn" with="quota as a"/>
+    <use template="k-alert" class="warn" title="Quota" icon="!" text="92% of the build minutes used."/>
   </screen>
 </tui>`;
 
@@ -38,7 +38,7 @@ function inline(text: string) {
 /** The contract comment's parts, leaving out the ones that are "none". */
 function Contract({ c }: { c: KitComponent }) {
   const rows: [string, string][] = [
-    ['store', c.contract],
+    ['takes', c.contract],
     ['actions', c.actions],
     ['keys', c.keys],
     ['needs', c.requires],
@@ -162,9 +162,10 @@ export default function KitPage() {
             </span>
             <p>
               Include the kit first and your own sheet after it, so a token you re-declare rebrands the whole kit. Use a
-              template with <code>&lt;use&gt;</code>, passing your data with <code>with</code> and a variant with{' '}
-              <code>class</code>; a class component’s markup is below, to copy. Each one’s contract says which store
-              paths, actions, and keys it needs.
+              template with <code>&lt;use&gt;</code>, passing literal text as props, your data with <code>with</code>, a
+              body as the content between <code>&lt;use&gt;</code> and <code>&lt;/use&gt;</code>, and a variant with{' '}
+              <code>class</code>; a class component’s markup is below, to copy. Each one’s contract says which props,
+              store paths, actions, and keys it takes.
             </p>
             <ServerCodeBlock code={HEAD} lang="xml" themes={THEMES} defaultColor={false} />
           </div>

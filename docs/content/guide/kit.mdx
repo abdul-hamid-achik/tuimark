@@ -50,7 +50,7 @@ A prop is an attribute of the `<use>` that the template reads: a title, a label,
 <use template="k-field" id="profile__email" label="Email" placeholder="you@example.com" help="We never share it." with="forms.profile.email as f"/>
 ```
 
-A prop is text, never a path: `title="{card.title}"` is a `V003`. A title that comes from your data goes through `with`, or uses the class markup (`<box class="k-card" title="{PATH}">`, which stays valid next to the template). A prop you leave out is an attribute the copy does not write, or an empty text that the kit hides, so `k-alert` without `icon` has no icon and no gap. Every template takes a `style` prop, which lands on the copy's root.
+A prop is text, never a path: `title="{card.title}"` is a `V003`. A title that comes from your data uses the class markup (`<box class="k-card" title="{PATH}">`, which stays valid next to the template); only the confirm dialog and the log read their title from `with`. A prop you leave out is an attribute the copy does not write, or an empty text that the kit hides, so `k-alert` without `icon` has no icon and no gap. Every template takes a `style` prop, which lands on the copy's root.
 
 ### Content: the slot
 
@@ -68,7 +68,7 @@ The templates that have a body take it as the content of the `<use>`: `k-card` (
 </use>
 ```
 
-The content stays in the place where you wrote it. Its paths are the document's, so the `with` aliases of the `<use>` do not exist inside it (`{confirm.detail}`, not `{d.detail}`); its ids are yours, not scoped by the `<use>` (`deploy__create`, not `create`), so two uses of one template cannot repeat the same id; and its actions are the app's: `k-empty` has no action of its own, the button and its action are yours. Content in a `<use>` of a template with no slot is `V013`, and a template has one slot.
+The content stays in the place where you wrote it. Its paths are the document's, so the `with` aliases of the `<use>` do not exist inside it (`{confirm.detail}`, not `{d.detail}`); its ids are yours: you write the full id (`deploy__create`), and the `<use>` adds no prefix, so two uses of one template cannot repeat the same id; and its actions are the app's: `k-empty` has no action of its own, the button and its action are yours. Content in a `<use>` of a template with no slot is `V013`, and a template has one slot.
 
 ### Data: `with`
 
@@ -89,7 +89,7 @@ A variant is a static class on the `<use>`: `<use template="k-alert" class="dang
 
 ### Size: `style`
 
-A copy has no id of its own (a `<use>` is not a node), so a rule in your sheet cannot name it. The `style` prop lands on its root: `<use template="k-card" title="Empty state" style="height: 10">`. If a media rule needs an id, wrap the copy in an element that has one.
+A copy has no id of its own (a `<use>` is not a node), and the root of most templates has none either, so a rule in your sheet cannot name it (the overlays' root is `U__dialog` and the log's is `U__view`). The `style` prop lands on its root: `<use template="k-card" title="Empty state" style="height: 10">`. If a media rule needs an id, wrap the copy in an element that has one.
 
 ### Ids and actions
 

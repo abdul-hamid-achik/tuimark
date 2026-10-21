@@ -63,7 +63,7 @@ function collect(dir: string, out: string[] = []): string[] {
 const rejected = /(^|\/)(bad_[^/]*|broken)\.tui$/;
 
 describe("repository documents have no illegal tokens", () => {
-  const docs = [...collect(join(repo, "examples")), ...collect(join(repo, "specs/fixtures"))]
+  const docs = [...collect(join(repo, "examples")), ...collect(join(repo, "specs/fixtures")), ...collect(join(repo, "kit"))]
     .filter((p) => !rejected.test(p))
     // Frozen inputs of the runtime's own tests, copied verbatim from older releases.
     .filter((p) => !p.includes("/testdata/"));
@@ -140,6 +140,20 @@ describe(".tui: what the runtime rejects is marked", () => {
     for (const t of ["radio", "option"]) {
       expect(illegal(tui, `<${t} id='a'/>`).length, t).toBe(1);
     }
+  });
+  test("the 0.4c slot and {$name} prop references are known", () => {
+    expect(illegal(tui, "<slot/>")).toEqual([]);
+    expect(scopesAt(tui, "<slot/>", "slot")).toContain("entity.name.tag.tui");
+    expect(illegal(tui, '<template id="c" props="title style">\n  <box title="{$title}" style="{$style}"><slot/></box>\n</template>')).toEqual([]);
+    expect(illegal(tui, '<template id="c" props="t w a">\n  <text style="width: {$w}">{$t}: {x.y}</text>\n  <button on:click="{$a}" label="{$t}"/>\n</template>')).toEqual([]);
+    expect(scopesAt(tui, "<text>{$title}</text>", "title")).toContain("variable.parameter.prop.tui");
+    expect(scopesAt(tui, '<box title="{$title}"/>', "title}")).toContain("variable.parameter.prop.tui");
+    expect(scopesAt(tui, '<box style="{$style}"/>', "style}")).toContain("variable.parameter.prop.tui");
+  });
+  test("a brace pair with a dollar sign that is not a prop name is still marked", () => {
+    expect(illegal(tui, "<text>{$Title}</text>").length).toBe(1);
+    expect(illegal(tui, "<text>{$}</text>").length).toBe(1);
+    expect(illegal(tui, "<text>{$a b}</text>").length).toBe(1);
   });
   test("braces that do not hold exactly a path (V003)", () => {
     expect(illegal(tui, "<text>{ folder }</text>").length).toBe(1);

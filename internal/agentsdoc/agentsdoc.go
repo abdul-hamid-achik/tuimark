@@ -406,6 +406,7 @@ func writeAttrsPerTag(b *strings.Builder) {
 			fmt.Fprintf(b, "- `%s`: %s\n", tag, strings.Join(attrs, ", "))
 		}
 		b.WriteString("\n")
+		b.WriteString("A `<use>` also takes one attribute per prop its template declares in `props` (`tuimark catalog` shows this as `\"open_attrs\": \"props\"` on `use`).\n\n")
 	}
 }
 
