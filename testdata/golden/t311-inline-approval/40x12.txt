@@ -1,0 +1,18 @@
+=== grid 40x2 ===
+h                                       
+waiting                                 
+=== nodes ===
+inline    screen    40x2 @(0,0)
+composer  textarea  40x1 @(0,0) focus
+-         text      40x1 @(0,1)
+=== errors ===
+ok
+=== events ===
+1 approve - {} null
+2 deny - {} null
+3 deny - {} null
+4 deny - {} null
+6 cancel composer {} ""
+7 typed composer {} "h"
+=== scrollback ===
+none

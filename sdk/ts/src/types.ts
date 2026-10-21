@@ -70,7 +70,7 @@ export interface Write {
  */
 export interface CommitRun {
   text: string;
-  class?: string[];
+  class?: string;
 }
 
 /** A committed line: a string, or an array of runs (strings or {@link CommitRun}s). */

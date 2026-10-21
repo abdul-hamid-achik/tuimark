@@ -41,7 +41,92 @@ A line is a string or an array of [runs](/guide/language). It is styled by your 
 
 A commit prints at once while your handler runs and is otherwise queued before the next frame; it is safe from any goroutine. A commit that fails prints nothing, and its error says why (`commit: no <template id="T">`, `commit: line 1 is a number, not a string or an array of runs`, and so on). Commits made before the session ends are printed before the region is erased, so a host that wants to keep its last state commits it before it quits.
 
-To stream a long reply, commit each block as soon as it is finished and keep only the unfinished tail in the region.
+## Streaming a reply by blocks
+
+A long reply is committed block by block. Each commit redraws the region once, so commit a finished paragraph, a list, or a fenced code block, never a token, and keep only the unfinished tail block in the region. The region shows the tail (`live.blocks`, one block of the [kit's transcript schema](/guide/kit#chat-and-inline-components)) and the scrollback holds everything before it:
+
+```tui
+<col if="live.active" each="live.blocks as b" key="b.id" width="1fr" height="auto">
+  <use template="k-block" with="b as blk"/>
+</col>
+<template id="commit-block">
+  <col height="auto">
+    <use template="k-block" with="cb as blk"/>
+    <spacer style="height: 1" if="!cb.item"/>
+  </col>
+</template>
+```
+
+A block is `{"id", "runs", …}` with the optional flags `code`, `head`, `quote`, `item`, and `rule`; the `runs` of a markdown paragraph are strings and `{"text", "class"}` objects, and a code block keeps its line breaks and spaces (`pre-wrap`). Turning markdown into blocks is the host's work: `examples/host-ts/markdown.ts` is a reference `markdownToBlocks(md, {streaming})` in TypeScript (paragraphs, headings, fenced code, lists, and quotes). Its streaming mode closes an open fence, leaves an unclosed `**` as text, and holds back a last line that is only the start of a marker, so the tail never flashes a stray `#`.
+
+The loop of the host, as `examples/host-ts/stream.ts` writes it:
+
+```ts
+for await (const chunk of model) {
+  buf += chunk;
+  const blocks = markdownToBlocks(buf, { streaming: true });
+  // Every block before the last is finished: commit it, and show the last.
+  for (const block of blocks.slice(committed, -1)) {
+    await ui.batch([{ path: "commit_buf", value: block }]);
+    await ui.commit({ template: "commit-block", with: "commit_buf as cb" });
+    committed++;
+  }
+  await ui.batch([
+    { path: "commit_buf", value: null },
+    { path: "live.blocks", value: blocks.slice(-1) },
+  ]);
+}
+```
+
+A commit is printed before the frame that shows the write that follows it, so the commit and the write that removes the block from the region, sent together (in one handler, or in one read of the host protocol's fd 3), are drawn as one frame: the block is never on the screen twice. On a cancel or a quit the host commits the partial tail before it replies, since the region is erased on the way out. A copy reads its item through a `with` alias, so the host writes the block to a scratch path of the store (`commit_buf`) before the commit and clears it after.
+
+## A card with a slot
+
+A committed copy's `<slot/>` stays empty, so a card whose content comes through its slot prints its header alone. To commit one, write a wrapper template without a slot whose body is the card's `<use>` with the content in place, reading an alias:
+
+```tui
+<template id="card" props="role"><text class="who">{$role}</text><slot/></template>
+<template id="commit-msg" props="role">
+  <use template="card" role="{$role}">
+    <col each="msg.blocks as b" key="b.id"><text runs="b.runs"/></col>
+  </use>
+</template>
+```
+
+The host writes the item to `commit_buf`, commits `commit-msg` with `with: "commit_buf as msg"` and `props: {"role": "assistant"}`, and clears the path.
+
+## An approval inside the region
+
+An approval, inline, is a block of the region in flow, not a modal, which the region would clip. A focused `textarea` takes every printable key before the keymap, so the approval's `y` and `n` rows would never fire while the composer has focus. Disable the composer while the approval shows, and scope the rows to a class the screen has meanwhile:
+
+```tui
+<screen id="inline" focus="#composer" class:approving="approval.open">
+  <text if="approval.open" class="ask">{approval.title}? y approve · n deny</text>
+  <textarea id="composer" bind="draft" disabled="approval.open" placeholder="Message the model" on:change="typed" on:submit="send"/>
+</screen>
+<keymap when="#inline.approving">
+  <bind keys="y" action="approve"/>
+  <bind keys="n,enter" action="deny"/>
+  <bind keys="esc" action="deny"/>
+</keymap>
+<keymap>
+  <bind keys="esc" action="cancel"/>
+</keymap>
+```
+
+While `approval.open` is true nothing has focus, so the rows of the first keymap fire; when the host writes it back to `false` the composer takes focus again and typing works. The host can commit the diff the approval asks about while it waits for the answer, since a commit made while an event waits for its reply is printed at once. With the kit's `k-composer` the flag is `composer.disabled`.
+
+## Over the host protocol
+
+`tuimark host FILE --inline` runs the session inline for a parent in any language, and `spawnHost(file, { inline: true })` passes it. The parent's `commit` message is `Commit`:
+
+```ts
+const ui = await spawnHost("app.tui", { inline: true });
+await ui.commit({ lines: ["You: hello"] });
+await ui.commit({ template: "card", with: "last as m", props: { who: "Claude" } });
+```
+
+It is acked once its rows are written, a failure (`commit: no <template id="T">`, and so on) is acked `ok: false` with the error, and in a session that is not inline every commit is `commit: not in inline mode`. A commit made while an event waits for its reply is printed before the reply is sent, and one sent just before a `reply` with `quit`, even in the same write, stays above the cursor. A document that writes `version` is `tuimark: host: inline mode needs a <tui> without version`, exit 1, with nothing on fd 4. See the [host protocol](/guide/host-protocol) and the [TypeScript client](/guide/typescript).
 
 ## Checking an inline screen
 
@@ -58,4 +143,6 @@ tuimark play app.tui --data sample.json --inline --frames --format json --script
 
 Rows already committed belong to the terminal, which rewraps them or not when it is resized: Tuimark never repaints them, and a part of the region the terminal rewrapped before the redraw may stay in the scrollback. Tuimark wraps a committed line at the terminal's width, so a long line copied from the scrollback breaks where it wrapped; keep text meant to be copied whole (a command) shorter than the terminal.
 
-The `examples/inline` program is a small chat that commits what you send.
+There is no mouse in an inline session. A session killed with `SIGKILL` under a terminal that answered the Kitty keyboard query cannot pop the mode, so the shell reads CSI-u keys until the terminal is reset. A terminal without bracketed paste delivers a paste as keys, and each carriage return in it is an `enter` that submits a composer; and text a host shows that may hold tabs, a tool's output for one, goes in `runs`, not in a `{path}`, which removes a tab where run text makes it four spaces.
+
+The `examples/inline` program is a small chat that commits what you send; `examples/host-ts/inline.ts` is a chat that streams a reply into the scrollback by blocks from a Bun parent.

@@ -1,0 +1,20 @@
+=== grid 40x3 ===
+Edit src/a.ts? y approve · n deny       
+Message the model                       
+waiting                                 
+=== nodes ===
+inline    screen    40x3 @(0,0)
+-         text      40x1 @(0,0)
+composer  textarea  40x1 @(0,1)
+-         text      40x1 @(0,2)
+=== errors ===
+ok
+=== events ===
+7 approve - {} null
+=== scrollback ===
+assistant                               
+assistant                               
+first                                   
+second                                  
+- old line                              
++ new    line                           

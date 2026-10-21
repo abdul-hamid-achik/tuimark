@@ -651,7 +651,7 @@ tuimark inspect  FILE (--at X,Y | --id ID) [--cols 80] [--rows 24] [--data FILE.
                       [--theme dark|light] [--strict] [--json]
 tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
                       [--mock FILE.json] [--strip] [--screen ID]
-tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
+tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID] [--inline]
 tuimark mcp
 tuimark lsp
 tuimark version
@@ -760,7 +760,8 @@ tuimark version
   language: the terminal stays on fd 0/1/2 as with `Run()`, the parent
   writes `set`/`bind`/`batch`/`get`/`reply` JSON lines to fd 3 (and, since
   0.4d, `append` and `commit`, and `batch` entries with `"op": "append"`;
-  `ready.messages` lists what the child accepts) and reads
+  `ready.messages` lists what the child accepts; `--inline` runs the
+  session inline) and reads
   `ready`/`event`/`ack`/`error`/`exit` JSON lines from fd 4.
   `--screen ID` (0.4d) starts the session on that screen; an id no screen
   has is `tuimark: host: no screen with id "ID"`, with nothing on fd 4. POSIX only
@@ -1305,7 +1306,7 @@ the app's `-demo` mode).
   spirit of shadcn (`kit/kit.tui`, a fragment of templates you include and
   copy with `<use>`; design tokens and `k-` component classes; and 21 small
   documents, one per component, under `kit/components/`) and an app that
-  shows every component on five tabs. You copy the kit into your project and
+  shows every component on six tabs. You copy the kit into your project and
   own it; the kit adds no tag, attribute, or property. Its host
   helpers do what markup cannot (toasts that expire, filter, sort and pages,
   form validation, dialog routing, the palette's commands, async loads,
@@ -1797,6 +1798,23 @@ kept with the maintainer's project notes, outside this repository.
   copied from the scrollback breaks where it wrapped (keep text meant to be
   copied whole shorter than the terminal). A host that wants its last state
   to stay commits it before it quits: the region is erased on every way out.
+  `tuimark host FILE --inline` runs a parent's session inline: its fd 3
+  `commit` message is `Commit`, acked once the rows are written, printed at
+  once while an event waits for its reply, and printed before the leave
+  sequence when it comes before a `reply` with `quit` (a document that writes
+  `version` is `tuimark: host: inline mode needs a <tui> without version`,
+  exit 1, with nothing on fd 4). The kit's `k-composer`, `k-block`, and
+  `k-receipt` and `examples/host-ts/inline.ts` show a chat that streams a
+  reply into the scrollback by blocks. Three more limits are worth knowing:
+  a terminal without bracketed paste delivers a paste into a `textarea` as
+  keys, so each carriage return in it is an `enter` that submits when there
+  is an `on:submit` (Tuimark guesses nothing from timing: a host that cares
+  submits after a short quiet time); a session killed with `SIGKILL` under a
+  terminal that answered the Kitty keyboard query cannot pop the mode, so
+  the shell reads CSI-u keys until the terminal is reset (inline, the push
+  applies to the main screen); and text a host shows that may hold TABs, such
+  as a tool's output, belongs in `runs`, not in a `{path}`: a `{path}`
+  removes a TAB as any other control, and run text makes it four spaces.
 
 ## Status per phase (SPEC §4)
 

@@ -424,6 +424,30 @@
     "cmd": "tuimark play kit/components/field.tui --data kit/components/field.sample.json --cols 72 --rows 14"
   },
   {
+    "name": "kit-composer",
+    "light": true,
+    "cols": 72,
+    "rows": 8,
+    "alt": "a composer at the bottom of the screen: a rule, the placeholder text of an empty message box, and a row of key hints",
+    "cmd": "tuimark play kit/components/composer.tui --data kit/components/composer.sample.json --cols 72 --rows 8"
+  },
+  {
+    "name": "kit-block",
+    "light": true,
+    "cols": 72,
+    "rows": 26,
+    "alt": "a transcript block by block: a heading, a paragraph with code, emphasis and bold runs, a quote, two list items, a Go code block that keeps its indentation, and a rule",
+    "cmd": "tuimark play kit/components/block.tui --data kit/components/block.sample.json --cols 72 --rows 26"
+  },
+  {
+    "name": "kit-receipt",
+    "light": true,
+    "cols": 72,
+    "rows": 16,
+    "alt": "two tool receipts: a successful ls with its tab-separated columns kept and a failed test run with its error in bold, each a bordered box with its status below",
+    "cmd": "tuimark play kit/components/receipt.tui --data kit/components/receipt.sample.json --cols 72 --rows 16"
+  },
+  {
     "name": "kit-confirm",
     "light": true,
     "cols": 72,

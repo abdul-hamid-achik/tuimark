@@ -44,6 +44,7 @@ func (c *cli) cmdHost(args []string) int {
 	theme := fs.String("theme", "", "dark or light; applied as Set(\"@theme\", …)")
 	replyTimeoutFlag := fs.String("reply-timeout", "5s", "how long a host action waits for the parent's reply (100ms to 1m)")
 	screen := fs.String("screen", "", "the screen the session starts on; applied as Set(\"@screen\", ID)")
+	inline := fs.Bool("inline", false, "run the session inline: a live region below the cursor, with commits into the scrollback")
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return 1
@@ -87,7 +88,15 @@ func (c *cli) cmdHost(args []string) int {
 			return c.hostFail(err)
 		}
 	}
-	return newHostBridge(app, fd3, fd4, replyTimeout).run(c.stdout, c.stderr)
+	// --inline needs a document in the current language (SPEC v0.4d
+	// §19.1, §26.15.1, test 298): checked before the terminal is touched,
+	// with nothing on fd 4.
+	if *inline && !app.Modern() {
+		return c.hostFail(host.ErrInlineNeedsCurrent)
+	}
+	b := newHostBridge(app, fd3, fd4, replyTimeout)
+	b.inline = *inline
+	return b.run(c.stdout, c.stderr)
 }
 
 // hostFail prints a usage or pre-session error as one "tuimark: host: …"
@@ -189,6 +198,9 @@ type hostBridge struct {
 	fd3          *os.File
 	out          *fd4Queue
 	replyTimeout time.Duration
+	// inline runs the session inline (--inline, SPEC v0.4d §19.1): a
+	// commit prints into the scrollback.
+	inline bool
 
 	mu       sync.Mutex
 	seq      int64
@@ -263,6 +275,7 @@ func (b *hostBridge) run(stdout, stderr io.Writer) int {
 		},
 		Stop:     b.stop,
 		Signaled: b.signaled,
+		Inline:   b.inline,
 	}
 	res := b.app.RunHost(stdout, hooks)
 	if !res.Started {

@@ -172,6 +172,11 @@
     "description": "A multi-line input that grows to eight rows: enter submits, shift+enter breaks the line (a document without version)",
     "body": "<textarea id=\"${1:composer}\" bind=\"${2:draft}\" placeholder=\"${3:Message}\" on:change=\"${4:typed}\" on:submit=\"${5:send}\"/>"
   },
+  "Kit composer (k-composer)": {
+    "prefix": ["k-composer", "composer-kit"],
+    "description": "The kit's message box: a rule, a textarea that grows, and the key hints (a document without version, with the kit included). The textarea is NAME__input.",
+    "body": "<use id=\"${1:composer}\" template=\"k-composer\" placeholder=\"${2:Message}\" with=\"${3:composer} as c\"/>"
+  },
   "Radio group (single list)": {
     "prefix": ["radio", "listsingle"],
     "description": "A list that holds one checked key: a radio group (a document without version)",

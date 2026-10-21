@@ -25,11 +25,12 @@
     <bind keys="?" action="help_open" label="help"/>
     <bind keys="ctrl+k" action="palette_open" keycap="^K" label="commands"/>
     <bind keys="t" action="theme_toggle" label="theme"/>
-    <bind keys="1" action="switch-to" to="#basics" keycap="1-5" label="tabs"/>
+    <bind keys="1" action="switch-to" to="#basics" keycap="1-6" label="tabs"/>
     <bind keys="2" action="switch-to" to="#forms"/>
     <bind keys="3" action="switch-to" to="#data"/>
     <bind keys="4" action="switch-to" to="#overlays"/>
     <bind keys="5" action="switch-to" to="#layouts"/>
+    <bind keys="6" action="switch-to" to="#chat"/>
     <bind keys="]" action="move-next" to="#nav"/>
     <bind keys="[" action="move-prev" to="#nav"/>
     <bind keys="esc" action="toast_dismiss"/>
@@ -217,6 +218,25 @@
               <use template="k-kv" label="Owner" with="detail.owner as v"/>
             </box>
           </row>
+        </tab>
+
+        <!-- ============================================================ -->
+        <!-- The chat components: a transcript of blocks, a tool receipt, and
+             the composer. No `focus=`: focus stays on the tab strip, so the
+             digits and ]/[ keep switching tabs; tab reaches the composer,
+             whose textarea takes every printable key. The composer's hints
+             are off (chat.composer.nohints): the app has its own below the
+             tabs. -->
+        <tab id="chat" label="6 chat" short="6 cht">
+          <col width="1fr" height="1fr">
+            <scroll id="transcript" width="1fr" height="1fr" pad="1" stick="bottom">
+              <col each="chat.blocks as b" key="b.id" width="1fr" height="auto">
+                <use template="k-block" with="b as blk"/>
+              </col>
+              <use template="k-receipt" with="chat.receipt as r"/>
+            </scroll>
+            <use id="composer" template="k-composer" placeholder="Message the model" with="chat.composer as c"/>
+          </col>
         </tab>
       </tabs>
 

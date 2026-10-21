@@ -1,0 +1,13 @@
+<tui>
+  <keymap>
+    <bind keys="a" action="ask"/>
+    <bind keys="q" action="quit"/>
+  </keymap>
+  <screen id="main">
+    <text>INLINEAPP</text>
+    <text>note={note}</text>
+  </screen>
+  <template id="card" props="who">
+    <text class="who">{$who}: {m.text}</text>
+  </template>
+</tui>

@@ -19,7 +19,7 @@
 //	                      [--theme dark|light] [--strict] [--json] [--inline]
 //	tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
 //	                      [--mock FILE.json] [--strip] [--screen ID] [--inline]
-//	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
+//	tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID] [--inline]
 //	tuimark mcp                                — a Model Context Protocol server on stdin/stdout
 //	tuimark lsp                                — a Language Server Protocol server on stdin/stdout
 //
@@ -89,7 +89,7 @@ usage:
   tuimark run      FILE [--data FILE.json] [--theme dark|light] [--events FILE.ndjson]
                         [--mock FILE.json] [--strip] [--screen ID] [--inline]
                                                run in the terminal: F12 shows the events, edits reload
-  tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID]
+  tuimark host     FILE [--data FILE.json] [--theme dark|light] [--reply-timeout 5s] [--screen ID] [--inline]
                                                run in the terminal for a parent program (fd 3 in, fd 4 out)
   tuimark mcp                                 a Model Context Protocol server on stdin/stdout
   tuimark lsp                                 a Language Server Protocol server on stdin/stdout

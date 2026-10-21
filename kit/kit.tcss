@@ -295,6 +295,33 @@
   .k-breadcrumb-item.current { display: flex; }
 }
 
+/* ------------------------------------------------- composer, blocks, receipt */
+
+.k-composer { width: 1fr; height: auto; }
+.k-composer-rule { width: 1fr; height: 1; color: $border; }
+.k-composer-input { width: 1fr; color: $fg; }
+.k-composer-input:disabled { dim: true; }
+
+/* A transcript block wraps at the width it is shown or committed at; a code
+ * block keeps its line breaks and its spaces (pre-wrap). A block leaves one
+ * blank row after it, a list item none. A committed copy is laid out as a
+ * root of its own, so a margin is not printed: a host that wants the blank
+ * row in the scrollback commits it (examples/host-ts). The classes of the
+ * runs (k-strong, k-code in theme.tcss, k-em below) style a span of a block. */
+.k-block { width: 1fr; height: auto; color: $fg; wrap: wrap; margin: 0 0 1 0; }
+.k-block.head { bold: true; color: $accent; }
+.k-block.quote { color: $muted; italic: true; }
+.k-block.item { padding: 0 0 0 2; margin: 0; }
+.k-block.code { wrap: pre-wrap; color: $code; background: $panel; padding: 0 1; }
+.k-block-rule { width: 1fr; height: 1; color: $border; margin: 0 0 1 0; }
+.k-em { italic: true; }
+
+.k-receipt { width: 1fr; height: auto; border: rounded; border-color: $border; title-color: $muted; padding: 0 1; }
+.k-receipt.ok { border-color: $ok; }
+.k-receipt.danger { border-color: $danger; }
+.k-receipt-out { width: 1fr; height: auto; wrap: pre-wrap; color: $fg; }
+.k-receipt-status { width: 1fr; height: 1; color: $muted; }
+
 /* --------------------------------------------------------- layout helpers */
 
 /* A scrolling page: put one in each tab. `k-page-body` is the column inside

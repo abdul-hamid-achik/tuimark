@@ -6,7 +6,8 @@ install it, you copy it into your project and own it.
 - `kit.tui`: the kit as one `<fragment>`. It loads the two sheets below, holds
   the overlays' keys, and has one `<template>` per component that takes text,
   data or content (card, key / value, app bar, alert, stat, meter, empty state,
-  form field, breadcrumb, log, toast, confirm dialog, command palette, help).
+  form field, breadcrumb, log, toast, confirm dialog, command palette, help,
+  and, for a chat, the composer, a transcript block, and a tool receipt).
   Include it once and copy a component with `<use>`.
 - `theme.tcss`: the design tokens (dark and light) and the base typography.
 - `kit.tcss`: the component classes.
@@ -23,7 +24,7 @@ install it, you copy it into your project and own it.
   tuimark run kit/components/confirm.tui --data kit/components/confirm.sample.json
   ```
 
-- `examples/kit-gallery`: every component in one app, on five tabs, with a Go
+- `examples/kit-gallery`: every component in one app, on six tabs, with a Go
   host. Start there to see them together.
 - `go/` and `ts/`: host helpers (toasts, filter, sort and pages, forms, dialogs,
   a palette, async loads, formatting) to copy the same way. See
@@ -182,7 +183,8 @@ colors.
 cannot style "text inside a card", and every part carries its own class. A
 **modifier** is a second, short class on the same node (`primary`, `secondary`,
 `danger`, `ghost`, `ok`, `warn`, `info`, `accent`, `good`, `bad`, `invalid`,
-`current`, `muted`). It is only ever written next to the component class
+`current`, `muted`, and the kinds of a `k-block`: `code`, `head`, `quote`,
+`item`). It is only ever written next to the component class
 (`.k-btn.danger`, `.k-badge.ok`), or as a `<use>`'s variant, which lands on a
 template's `k-` root (`.k-alert.warn`). No rule targets a bare
 modifier. A compound selector outranks a single class, so a modifier wins over

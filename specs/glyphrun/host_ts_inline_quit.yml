@@ -1,0 +1,73 @@
+version: 1
+name: host_ts_inline_quit
+intent: |
+    examples/host-ts's inline mode, quitting in the middle of a reply (SPEC
+    v0.4d §26.15.3, §26.15.4, §19.1, test 305): ctrl+q while a reply streams
+    makes the parent commit the partial tail block and a goodbye line before
+    it replies "quit". The child prints a commit that arrives before the
+    session ends before its leave sequence, so after the exit the partial
+    paragraph, the cancelled line, and "bye" are above the cursor, in that
+    order, the live region is gone, and the parent reports a quit with no
+    protocol error. The checks use ASCII markers and grep only, so they hold
+    in the C locale too.
+target:
+    cmd: ["bun", "run", "examples/host-ts/inline.ts", "${vars.tuimark}"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "Ask anything"
+        timeoutMs: 8000
+    - send:
+        bytes: 'quit me\r'
+    - wait:
+        screen:
+            contains: "keeps the scrollback"
+        timeoutMs: 8000
+    - press: ctrl+q
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 8000
+    - snapshot: left
+outcomes:
+    - id: tail_and_bye_above_the_cursor
+      description: the partial paragraph, the cancelled line and bye are on the terminal in order, and the region is gone
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                all="$d/left.all.txt"
+                { cat "$d/left.scrollback.txt" 2>/dev/null; cat "$d/left.txt"; } > "$all"
+                p=$(grep -n -F -- 'Streaming by blocks keeps the scrollback' "$all" | head -n 1 | cut -d: -f1)
+                c=$(grep -n -F -- '(cancelled)' "$all" | head -n 1 | cut -d: -f1)
+                b=$(grep -n -x -F -- 'bye' "$all" | head -n 1 | cut -d: -f1)
+                if grep -q -e 'Ask anything' -e 'esc cancel' "$d/left.txt"; then
+                  echo '{"ok": false, "evidence": "the region is still on the screen"}'
+                elif [ -n "$p" ] && [ -n "$c" ] && [ -n "$b" ] && [ "$p" -lt "$c" ] && [ "$c" -lt "$b" ]; then
+                  echo '{"ok": true, "evidence": "paragraph, cancelled, bye, in order"}'
+                else
+                  echo '{"ok": false, "evidence": "paragraph '"$p"', cancelled '"$c"', bye '"$b"'"}'
+                fi
+    - id: parent_reports_quit
+      description: the parent reports the chat ended with reason quit, after the child exited
+      verify:
+        screen:
+            includeScrollback: true
+            contains: "host-ts: the chat ended (quit)"
+    - id: no_protocol_error
+      description: the child sent the parent no error message
+      verify:
+        screen:
+            includeScrollback: true
+            notContains: "protocol error"
+    - id: clean_exit
+      description: the parent exits with the child's code, 0 for quit
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:3eeb98bfc6a966364847ed13fdf0b618587857b445f1b1817df9a267baf38be7

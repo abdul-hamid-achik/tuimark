@@ -22,7 +22,7 @@ describe("test 305: commit, append, op", () => {
 
   test("ui.commit({lines}) and ui.append resolve with their acks", async () => {
     const { host, received } = await start({ hang: true, store: { log: "a", rows: [1] } });
-    const commit = await host.commit({ lines: ["a", ["x", { text: "y", class: ["c"] }]] });
+    const commit = await host.commit({ lines: ["a", ["x", { text: "y", class: "c d" }]] });
     expect(commit).toMatchObject({ type: "ack", ok: true });
     const text = await host.append("log", "x");
     const row = await host.append("rows", { text: "hi" });
@@ -32,7 +32,7 @@ describe("test 305: commit, append, op", () => {
     expect(await host.get("log")).toEqual({ found: true, value: "ax" });
     expect(await host.get("rows")).toEqual({ found: true, value: [1, { text: "hi" }] });
     expect(received().slice(0, 3)).toEqual([
-      { type: "commit", lines: ["a", ["x", { text: "y", class: ["c"] }]], id: commit.id },
+      { type: "commit", lines: ["a", ["x", { text: "y", class: "c d" }]], id: commit.id },
       { type: "append", path: "log", value: "x", id: text.id },
       { type: "append", path: "rows", value: { text: "hi" }, id: row.id },
     ]);

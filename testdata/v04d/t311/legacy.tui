@@ -1,0 +1,19 @@
+<tui>
+  <style>text { wrap: wrap; } text.code { background: $panel; } .b { bold: true; } .i { italic: true; } .raw { color: $accent; }</style>
+  <screen id="inline" focus="#composer" class:approving="approval.open">
+    <col if="live.active" each="live.blocks as b" key="b.i">
+      <text class:code="b.code">{b.text}</text>
+    </col>
+    <text if="approval.open" class="ask">{approval.title}? y approve · n deny</text>
+    <input id="composer" bind="draft" disabled="approval.open" placeholder="Message the model" on:change="typed" on:submit="send"/>
+    <text class="status">{status}</text>
+  </screen>
+  <keymap when="#inline.approving">
+    <bind keys="y" action="approve"/>
+    <bind keys="n,enter" action="deny"/>
+    <bind keys="esc" action="deny"/>
+  </keymap>
+  <keymap>
+    <bind keys="esc" action="cancel"/>
+  </keymap>
+</tui>

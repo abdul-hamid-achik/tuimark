@@ -35,6 +35,7 @@ type parityEntry struct {
 	Script string   `json:"script,omitempty"`
 	Styles bool     `json:"styles,omitempty"`
 	Cells  bool     `json:"cells,omitempty"`
+	Inline bool     `json:"inline,omitempty"`
 }
 
 func parseParitySize(s string) (cols, rows int) {
@@ -60,7 +61,9 @@ func TestPlayParityWithGoldenManifest(t *testing.T) {
 	tested := 0
 	for _, e := range entries {
 		if e.Script != "" {
-			// No manifest entry currently uses "script": tuimark.Play's
+			// Only the inline commit entries (a commit step has no --input
+			// token) use "script", and `tuimark test` plays them.
+			// tuimark.Play's
 			// steps are always tuimark play's --input token grammar
 			// (SPEC v0.3 §18.1 rule 3), never raw NDJSON script lines, so
 			// exercising this would need translating each script step
@@ -104,7 +107,7 @@ func TestPlayParityWithGoldenManifest(t *testing.T) {
 					}
 					res, err := app.Play(tuimark.PlayOptions{
 						Cols: cols, Rows: rows, NoHandlers: true,
-						Styles: e.Styles, Cells: e.Cells,
+						Styles: e.Styles, Cells: e.Cells, Inline: e.Inline,
 					}, steps...)
 					if err != nil {
 						t.Fatalf("Play: %v", err)
@@ -122,7 +125,7 @@ func TestPlayParityWithGoldenManifest(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
-						got, err := json.MarshalIndent(&dump.Play{Dump: res.Dump, Events: res.Events}, "", "  ")
+						got, err := json.MarshalIndent(&dump.Play{Dump: res.Dump, Events: res.Events, Scrollback: res.Scrollback}, "", "  ")
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -138,6 +141,9 @@ func TestPlayParityWithGoldenManifest(t *testing.T) {
 						var b strings.Builder
 						b.WriteString(dump.Text(res.Dump))
 						play.WriteEventsSection(&b, res.Events)
+						if res.Scrollback != nil {
+							writeParityScrollback(&b, res.Scrollback)
+						}
 						if b.String() != string(want) {
 							t.Errorf("text golden mismatch for %s %s:\ngot:\n%s\nwant:\n%s", e.Name, size, b.String(), string(want))
 						}
@@ -149,5 +155,20 @@ func TestPlayParityWithGoldenManifest(t *testing.T) {
 	}
 	if tested == 0 {
 		t.Fatal("no manifest entries with \"input\" were found")
+	}
+}
+
+// writeParityScrollback is play --inline's "=== scrollback ===" text section
+// (SPEC v0.4d §15.4): the committed rows, one per line, or the single line
+// none.
+func writeParityScrollback(b *strings.Builder, sb *dump.Scrollback) {
+	b.WriteString("=== scrollback ===\n")
+	if len(sb.Grid) == 0 {
+		b.WriteString("none\n")
+		return
+	}
+	for _, row := range sb.Grid {
+		b.WriteString(row)
+		b.WriteByte('\n')
 	}
 }

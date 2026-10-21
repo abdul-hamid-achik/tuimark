@@ -1,0 +1,41 @@
+<!--
+  examples/host-ts/inline.tui: the screen of inline.ts, a chat that streams a
+  reply into the terminal's own scrollback (SPEC v0.4d §26.15). It runs inline
+  (spawnHost({inline: true}) passes the inline flag of `tuimark host`):
+  the screen is a live region below the shell's prompt, and the parent prints
+  what is finished above it with `commit`.
+
+  - `live.blocks` holds the unfinished tail of the reply, one block of the
+    kit's transcript schema ({id, runs, code?, head?, quote?, item?, rule?}),
+    drawn by k-block. A finished block is committed once, as the template
+    `commit-block`, which reads it through the scratch path `commit_buf`
+    (a copy reads its item through a `with` alias) and leaves the blank row
+    a paragraph gets, since a committed copy is laid out as a root of its own
+    and its margin is not printed.
+  - The composer is the kit's k-composer. It is disabled while a reply streams
+    (`composer.disabled`), so esc and ctrl+q reach the keymap.
+-->
+<tui>
+  <include src="../../kit/kit.tui"/>
+  <keymap>
+    <bind keys="esc" action="cancel" label="cancel"/>
+    <bind keys="ctrl+q,ctrl+c" action="leave" keycap="ctrl+q" label="quit"/>
+  </keymap>
+  <screen id="chat" focus="#composer__input">
+    <col if="live.active" each="live.blocks as b" key="b.id" width="1fr" height="auto">
+      <use template="k-block" with="b as blk"/>
+    </col>
+    <text class="k-muted">{status}</text>
+    <use id="composer" template="k-composer" placeholder="Ask anything" with="composer as c"/>
+  </screen>
+
+  <!-- A finished block, committed: the block, then a blank row unless it is a
+       list item. The col is the copy's one root: a root is as tall as its
+       content whatever height it writes, so the blank row is a child. -->
+  <template id="commit-block">
+    <col height="auto">
+      <use template="k-block" with="cb as blk"/>
+      <spacer style="height: 1" if="!cb.item"/>
+    </col>
+  </template>
+</tui>
