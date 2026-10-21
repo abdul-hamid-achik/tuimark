@@ -5,12 +5,11 @@
 // that file with this one.
 //
 // The component reads palette.commands (the registry, [{id, label, hint}]),
-// palette.title, palette.placeholder, palette.query, found.items and
-// found.any, and reads and writes palette.open and palette.cur. This helper
-// writes the registry from your Commands, a default title ("Command palette")
-// and placeholder ("type a command…") when the store has none, keeps found
-// with Filter (a Derive, so the list follows the query as the user types),
-// and implements the actions:
+// palette.query, found.items and found.any, and reads and writes palette.open
+// and palette.cur. Its title and its placeholder are props of the use
+// (title="Command palette"), not data. This helper writes the registry from
+// your Commands, keeps found with Filter (a Derive, so the list follows the
+// query as the user types), and implements the actions:
 //
 //	palette_open   resets the query and the cursor, opens the palette
 //	palette_close  closes it

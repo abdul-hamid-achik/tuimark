@@ -1,4 +1,4 @@
-<!-- k-alert · Contract: props title, icon, text (each optional); slot: more body, after the text; reads build.retry · Actions: none · Keys: none · Requires: k-title -->
+<!-- k-alert · Contract: props title, icon, text (each optional) and style; slot: more body, after the text; reads build.retry · Actions: none · Keys: none · Requires: k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo">

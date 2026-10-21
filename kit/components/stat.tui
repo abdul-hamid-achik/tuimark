@@ -1,4 +1,4 @@
-<!-- k-stat · Contract: props title, min, max (the sparkline range); with="PATH as s" reads s.value, s.delta, s.hist[] (numbers), and the flags s.good and s.bad · Actions: none · Keys: none · Requires: k-title -->
+<!-- k-stat · Contract: props title, min, max (the sparkline range), style; with="PATH as s" reads s.value, s.delta, s.hist[] (numbers), and the flags s.good and s.bad · Actions: none · Keys: none · Requires: k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo">

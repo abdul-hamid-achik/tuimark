@@ -343,10 +343,10 @@ them at the use's id on every open, so with it `PATH` is that id
 (`with="confirm as d"`), and the labels are `Confirm` and `Cancel` unless the
 request names its own. The use's content goes under `d.body` (a list, a
 checkbox), with its paths written in full. The variant `danger` (or the flag
-`d.danger`) makes a destructive dialog. The dialog takes its content's size, up to 60 columns where the text
-wraps, and at most the screen. `focus` puts the cursor on the safe button so a
-stray `enter` cancels; `on:escape` cancels. Keep the labels short so the row
-fits 40 columns.
+`d.danger`) makes a destructive dialog. The dialog takes its content's size, up
+to 60 columns where the text wraps, and at most the screen. `focus` puts the
+cursor on the safe button so a stray `enter` cancels; `on:escape` cancels. Keep
+the labels short so the row fits 40 columns.
 
 Ids: `confirm__dialog`, `confirm__no`, `confirm__yes` (and your trigger, such
 as `confirm__open`). Actions: `dialog_confirm`, `dialog_cancel`, and your
@@ -359,10 +359,10 @@ trigger's `dialog_open`. Keys: `y` confirms and `n` cancels (the kit's keymap
 placeholder="you@example.com" help="We never share it."
 with="forms.profile.email as f"/>`: a `col` with class `k-field` holding the
 `label` prop, an `input` with class `k-field-input` bound to `f.value` (the
-`placeholder` prop), the `help` line, and the error line `f.error`. The input has its own border
-and `height: 3`, which is what lets `:focus` change `border-color`. While
-`f.error` is non-empty the label and the input are red and the error line
-replaces the help.
+`placeholder` prop), the `help` line, and the error line `f.error`. The input
+has its own border and `height: 3`, which is what lets `:focus` change
+`border-color`. While `f.error` is non-empty the label and the input are red and
+the error line replaces the help.
 
 A form is named by the id prefix of its fields, and its state lives under that
 name: the fields `profile__name` and `profile__email` read
@@ -460,17 +460,16 @@ keymap).
 `<use id="palette" template="k-palette" title="Command palette"
 placeholder="type a command…" with="palette as p, found as f"/>`, the last
 child of the screen: a `modal` with class `k-palette` titled by the `title`
-prop,
-an `input` (`k-palette-input`, bound to `p.query`, with the `placeholder` prop) over a `list`
-(`k-palette-list`) of `f.items`, whose cursor is `p.cur`. The markup has no
-expressions, so the **host filters**: it keeps `found` (the matching commands,
-plus `any`) with `Derive` over `palette.query` and `palette.commands`, and the
-list reads it. `focusable="false"` on the list keeps focus in the input; while
-the palette is open, `up`/`down` (and `ctrl+n`/`ctrl+p`) are not consumed by
-the input, so they reach a keymap `when=".k-palette"` in your document, where
-`move-next`/`move-prev` with `to="#palette__list"` move the cursor (these rows
-name your copy's id, so the kit cannot hold them). Enter is the input's
-`on:submit`.
+prop, an `input` (`k-palette-input`, bound to `p.query`, with the `placeholder`
+prop) over a `list` (`k-palette-list`) of `f.items`, whose cursor is `p.cur`.
+The markup has no expressions, so the **host filters**: it keeps `found` (the
+matching commands, plus `any`) with `Derive` over `palette.query` and
+`palette.commands`, and the list reads it. `focusable="false"` on the list keeps
+focus in the input; while the palette is open, `up`/`down` (and
+`ctrl+n`/`ctrl+p`) are not consumed by the input, so they reach a keymap
+`when=".k-palette"` in your document, where `move-next`/`move-prev` with
+`to="#palette__list"` move the cursor (these rows name your copy's id, so the
+kit cannot hold them). Enter is the input's `on:submit`.
 
 Ids: `palette__dialog`, `palette__q`, `palette__list`. Actions: `palette_open`
 (your `ctrl+k`), `palette_close` (`esc`), `palette_run` (the host does the

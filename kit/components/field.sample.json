@@ -1,14 +1,8 @@
 {
   "forms": {
     "profile": {
-      "name": {
-        "value": "Ada",
-        "error": ""
-      },
-      "email": {
-        "value": "ada@",
-        "error": "Enter a full address like name@host."
-      },
+      "name": { "value": "Ada", "error": "" },
+      "email": { "value": "ada@", "error": "Enter a full address like name@host." },
       "valid": false
     }
   }

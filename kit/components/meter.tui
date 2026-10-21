@@ -1,4 +1,4 @@
-<!-- k-meter · Contract: prop label; with="PATH as m" reads m.text, m.pct (0 to 100), and the flags m.ok, m.warn and m.danger · Actions: none · Keys: none · Requires: k-title -->
+<!-- k-meter · Contract: props label, style; with="PATH as m" reads m.text, m.pct (0 to 100), and the flags m.ok, m.warn and m.danger · Actions: none · Keys: none · Requires: k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo">

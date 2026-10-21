@@ -108,13 +108,19 @@ const SLOT = "\u0000slot\u0000";
  * that is not self-closing is not supported.
  */
 export function component(name: string): string {
+  const src = readFileSync(new URL(`../components/${name}.tui`, import.meta.url), "utf8");
+  return expandUses(src, `${name}.tui`);
+}
+
+/** component() over markup you give it: the kit's uses in `source` expanded; `label` names it in errors. */
+export function expandUses(source: string, label: string): string {
   const tpl = templates();
-  const src = stripComments(readFileSync(new URL(`../components/${name}.tui`, import.meta.url), "utf8"));
+  const src = stripComments(source);
   const expand = (text: string): string =>
     text.replace(/<use\b([^>]*?)(?:\/>|>([\s\S]*?)<\/use>)/g, (_all, attrs: string, fill: string | undefined) => {
       const attr = (n: string) => new RegExp(`(?:^|\\s)${n}="([^"]*)"`).exec(attrs)?.[1];
       const t = tpl.get(attr("template") ?? "");
-      if (t === undefined) throw new Error(`${name}.tui: <use${attrs}> names no kit template`);
+      if (t === undefined) throw new Error(`${label}: <use${attrs}> names no kit template`);
       let body = t.body;
       for (const prop of t.props) {
         const value = attr(prop);
@@ -122,7 +128,8 @@ export function component(name: string): string {
         if (value === undefined) {
           body = body.replace(new RegExp(`\\s+[\\w:-]+="${ref}"`, "g"), "").replace(new RegExp(ref, "g"), "");
         } else {
-          body = body.replace(new RegExp(ref, "g"), value);
+          // A function, so $& and $1 in a value stay literal.
+          body = body.replace(new RegExp(ref, "g"), () => value);
         }
       }
       body = body.replace(/<slot\s*\/>/g, SLOT);

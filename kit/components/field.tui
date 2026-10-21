@@ -1,4 +1,4 @@
-<!-- k-field · Contract: props label, placeholder, help; with="forms.FORM.FIELD as f" reads f.error ("" when fine; the host writes it), and reads and writes f.value; the host also writes forms.FORM.valid, which the markup does not read · Actions: form_validate, form_submit · Keys: ctrl+s saves, enter in an input submits · Requires: k-btn, k-hints, k-title -->
+<!-- k-field · Contract: props label, placeholder, help, style; with="forms.FORM.FIELD as f" reads f.error ("" when fine; the host writes it), and reads and writes f.value; the host also writes forms.FORM.valid, which the markup does not read · Actions: form_validate, form_submit · Keys: ctrl+s saves, enter in an input submits · Requires: k-btn, k-hints, k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <keymap>

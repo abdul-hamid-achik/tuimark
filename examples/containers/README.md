@@ -81,8 +81,9 @@ rewrites them).
   for several kinds of container and for an empty engine;
 - the kit's conventions hold (`kit_test.go`): `k-` classes and short modifiers,
   styling by id in `app.tcss`, `instance__part` ids, `component_verb` actions,
-  tokens defined for both themes, overlays that are kit templates with `on:escape` and a scoped keymap
-  that comes first, sized containers, `focusable` on every `tabs`, no `version`;
+  tokens defined for both themes, overlays that are kit templates with
+  `on:escape` and a scoped keymap that comes first, sized containers,
+  `focusable` on every `tabs`, no `version`;
 - `Play` flows work: filtering, marks, sort, opening the detail and its nested
   tabs, stop / start / restart / remove through the dialog, pruning, the palette,
   the help overlay, the theme toggle;

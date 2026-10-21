@@ -7,8 +7,8 @@ intent: |
     opens it; esc fires the modal's on:escape (help_close), the host writes
     the help's flag false, and the app comes back, still running, with
     `? help` in its hint bar. `close help` is the help's own `? close help`
-    line, shown only while the overlay is open; its keymap row has no label
-    (F15), so no hint bar lists it.
+    line, shown only while the overlay is open; its keymap row has no label,
+    so no hint bar lists it (an overlay names its own way out).
 target:
     cmd: ["${vars.containers}"]
     cwd: "."
@@ -61,4 +61,4 @@ outcomes:
                 else
                   echo '{"ok": false, "evidence": "esc did not close the help, or the app did not come back"}'
                 fi
-contractHash: sha256:f218e686b26c9ce14cafe2a8b06ae8b53b5886ad15f5a81ac8d3bee7c585e2ce
+contractHash: sha256:14e35e54061b77bff079e1dd8e826b09c8e38e49a1e31929e2131b4d3e032c4f

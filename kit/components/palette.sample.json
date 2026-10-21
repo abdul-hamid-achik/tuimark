@@ -5,46 +5,18 @@
     "cur": "deploy",
     "last": "none",
     "commands": [
-      {
-        "id": "deploy",
-        "label": "Deploy to production",
-        "hint": "d"
-      },
-      {
-        "id": "rollback",
-        "label": "Roll back the last deploy",
-        "hint": "r"
-      },
-      {
-        "id": "logs",
-        "label": "Open the logs",
-        "hint": "l"
-      },
-      {
-        "id": "theme",
-        "label": "Toggle the theme",
-        "hint": "t"
-      },
-      {
-        "id": "help",
-        "label": "Show the keys",
-        "hint": "?"
-      }
+      { "id": "deploy", "label": "Deploy to production", "hint": "d" },
+      { "id": "rollback", "label": "Roll back the last deploy", "hint": "r" },
+      { "id": "logs", "label": "Open the logs", "hint": "l" },
+      { "id": "theme", "label": "Toggle the theme", "hint": "t" },
+      { "id": "help", "label": "Show the keys", "hint": "?" }
     ]
   },
   "found": {
     "any": true,
     "items": [
-      {
-        "id": "deploy",
-        "label": "Deploy to production",
-        "hint": "d"
-      },
-      {
-        "id": "rollback",
-        "label": "Roll back the last deploy",
-        "hint": "r"
-      }
+      { "id": "deploy", "label": "Deploy to production", "hint": "d" },
+      { "id": "rollback", "label": "Roll back the last deploy", "hint": "r" }
     ]
   }
 }

@@ -1,3 +1,1 @@
-{
-  "app": { "user": "ada@example.com", "env": "prod" }
-}
+{ "app": { "user": "ada@example.com", "env": "prod" } }
