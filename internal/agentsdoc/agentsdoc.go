@@ -168,6 +168,7 @@ func Markdown() string {
 	writeV03bSection(&b)
 	writeV04aToolsSection(&b)
 	writeV04bSection(&b)
+	writeV04cSection(&b)
 	writeV04bDefaultsSection(&b)
 	writeNotes(&b)
 
