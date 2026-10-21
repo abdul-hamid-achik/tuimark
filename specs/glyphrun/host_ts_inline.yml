@@ -1,0 +1,143 @@
+version: 1
+name: host_ts_inline
+intent: |
+    examples/host-ts's inline mode (SPEC v0.4d §26.15.4, §19.1, test 305): a
+    Bun/TypeScript parent runs a chat with `tuimark host --inline` and streams
+    a reply by blocks. A message sent with enter is committed as a line, then
+    a tool receipt as a template's copy; the scripted reply arrives in chunks,
+    and each finished block (a heading, a paragraph, two list items, a fenced
+    code block that keeps its tab, a quote, a rule, the last paragraph) is
+    committed above the live region exactly once, in order, while only the
+    unfinished tail is drawn in the region, under a status that says the reply
+    is streaming. When the reply ends the status says ready; ctrl+q leaves,
+    the region is erased, "bye" is the last row, and the parent reports a quit
+    with no protocol error. (A cancel is host_ts_inline_cancel, a quit
+    mid-reply is host_ts_inline_quit.) The checks count characters with grep
+    on ASCII markers only, so they hold in the C locale too.
+target:
+    cmd: ["bun", "run", "examples/host-ts/inline.ts", "${vars.tuimark}"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 20
+steps:
+    - wait:
+        screen:
+            contains: "Ask anything"
+        timeoutMs: 8000
+    - send:
+        bytes: 'hello\r'
+    - wait:
+        screen:
+            contains: "keeps the"
+        timeoutMs: 8000
+    - snapshot: mid
+    - wait:
+        screen:
+            contains: "You asked: hello"
+        timeoutMs: 15000
+    - wait:
+        screen:
+            contains: "ready"
+        timeoutMs: 5000
+    - wait:
+        scrollback:
+            contains: "A reply, streamed"
+        timeoutMs: 5000
+    - snapshot: done
+    - press: ctrl+q
+    - wait:
+        process:
+            exitCode: 0
+        timeoutMs: 8000
+    - snapshot: left
+outcomes:
+    - id: blocks_committed_once_in_order
+      description: the message, the receipt, and every block of the reply are in the terminal once, in order, scrollback first
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                all="$d/done.all.txt"
+                { cat "$d/done.scrollback.txt" 2>/dev/null; cat "$d/done.txt"; } > "$all"
+                prev=0
+                for marker in 'You: hello' 'TODO src' 'A reply, streamed' 'keeps the scrollback clean' 'a finished block is committed' 'the tail is redrawn' 'for (const block of finished)' 'Commit per block' 'You asked: hello'; do
+                  n=$(grep -c -F -- "$marker" "$all")
+                  line=$(grep -n -F -- "$marker" "$all" | head -n 1 | cut -d: -f1)
+                  if [ "$n" -ne 1 ]; then
+                    echo '{"ok": false, "evidence": "'"$marker"' appears '"$n"' times"}'
+                    exit 0
+                  fi
+                  if [ "$line" -le "$prev" ]; then
+                    echo '{"ok": false, "evidence": "'"$marker"' is out of order"}'
+                    exit 0
+                  fi
+                  prev=$line
+                done
+                echo '{"ok": true, "evidence": "nine markers, each once, in order"}'
+    - id: code_block_keeps_its_tab
+      description: the fenced code block keeps its line breaks and the tab of its body line, shown as four spaces
+      verify:
+        script:
+            runtime: shell
+            run: |
+                d="$GLYPHRUN_RUN_DIR/snapshots"
+                if cat "$d/done.scrollback.txt" "$d/done.txt" 2>/dev/null | grep -q '^ *    await ui.commit(blockCommit());'; then
+                  echo '{"ok": true, "evidence": "the body line is indented by the tab"}'
+                else
+                  echo '{"ok": false, "evidence": "the code line lost its indentation"}'
+                fi
+    - id: only_the_tail_is_in_the_region
+      description: while the reply streams, the region shows the status line and the composer, and the finished heading is already above it
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/mid.txt"
+                if grep -q 'streaming - esc cancels' "$f" && grep -q 'Ask anything' "$f" && grep -q 'A reply, streamed' "$f" && grep -q 'keeps the' "$f"; then
+                  echo '{"ok": true, "evidence": "the tail, the status, the composer and the committed heading are on the screen"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected mid-stream screen"}'
+                fi
+    - id: ready_after_the_reply
+      description: when the reply ends the status says ready and the composer is back
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/done.txt"
+                if grep -q '^ready' "$f" && grep -q 'Ask anything' "$f" && ! grep -q 'streaming - esc cancels' "$f"; then
+                  echo '{"ok": true, "evidence": "ready and the composer"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected final screen of the reply"}'
+                fi
+    - id: leave_keeps_bye_above_the_cursor
+      description: after ctrl+q the region is gone and "bye" is the last committed row, just above the parent's report
+      verify:
+        script:
+            runtime: shell
+            run: |
+                f="$GLYPHRUN_RUN_DIR/snapshots/left.txt"
+                if ! grep -q 'Ask anything' "$f" && ! grep -q 'esc cancel' "$f" && [ "$(grep -c '^bye$' "$f")" -eq 1 ] && [ "$(grep -n '^bye$' "$f" | cut -d: -f1)" -lt "$(grep -n '^host-ts: the chat ended' "$f" | cut -d: -f1)" ]; then
+                  echo '{"ok": true, "evidence": "the region is erased and bye is above the parent report"}'
+                else
+                  echo '{"ok": false, "evidence": "unexpected screen after the quit"}'
+                fi
+    - id: parent_reports_quit
+      description: the parent reports the chat ended with reason quit, after the child exited, with no protocol error
+      verify:
+        screen:
+            contains: "host-ts: the chat ended (quit)"
+    - id: no_protocol_error
+      description: the child sent the parent no error message
+      verify:
+        screen:
+            includeScrollback: true
+            notContains: "protocol error"
+    - id: clean_exit
+      description: the parent exits with the child's code, 0 for quit
+      verify:
+        process:
+            exitCode: 0
+contractHash: sha256:3d1d50822a257cd8a204474995c6eaa1991936840b12e4866a123020a416c900
