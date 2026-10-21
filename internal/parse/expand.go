@@ -359,14 +359,14 @@ func (b *builder) template(n *ir.Node, c *RawNode, outer *ir.Node) {
 func (b *builder) templateBody(t *ir.Node, c *RawNode) {
 	cp := b.comp
 	saved, savedDef := cp.selfCheck, cp.defining
-	savedRaw, savedSlots, savedIncl := cp.defRaw, cp.defSlots, cp.inclAt
+	savedSlots, savedIncl := cp.defSlots, cp.inclAt
 	cp.selfCheck, cp.defining = true, t
-	cp.defRaw, cp.defSlots, cp.inclAt = c, nil, nil // its slots (v0.4c, slot.go)
+	cp.defSlots, cp.inclAt = nil, nil // its slots (v0.4c, slot.go)
 	cp.inTmpl++
 	b.depth++ // the template's own level, in the tree as written
 	defer func() {
 		cp.selfCheck, cp.defining = saved, savedDef
-		cp.defRaw, cp.defSlots, cp.inclAt = savedRaw, savedSlots, savedIncl
+		cp.defSlots, cp.inclAt = savedSlots, savedIncl
 		cp.inTmpl--
 		b.depth--
 	}()
