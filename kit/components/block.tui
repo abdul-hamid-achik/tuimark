@@ -13,7 +13,7 @@
            host commits one block at a time into the scrollback with
            Commit (see the inline guide). Flags are read through the alias,
            so a block that omits one reads it as false with no diagnostic. -->
-      <col each="blocks as b" key="b.id" height="auto">
+      <col each="blocks as b" key="b.id" width="1fr" height="auto">
         <use template="k-block" with="b as blk"/>
       </col>
     </scroll>

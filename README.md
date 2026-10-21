@@ -1306,7 +1306,7 @@ the app's `-demo` mode).
   spirit of shadcn (`kit/kit.tui`, a fragment of templates you include and
   copy with `<use>`; design tokens and `k-` component classes; and 21 small
   documents, one per component, under `kit/components/`) and an app that
-  shows every component on five tabs. You copy the kit into your project and
+  shows every component on six tabs. You copy the kit into your project and
   own it; the kit adds no tag, attribute, or property. Its host
   helpers do what markup cannot (toasts that expire, filter, sort and pages,
   form validation, dialog routing, the palette's commands, async loads,

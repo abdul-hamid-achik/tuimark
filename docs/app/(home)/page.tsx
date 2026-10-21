@@ -151,7 +151,7 @@ const gallery: { shot: string; title: string; anchor: string; text: string }[] =
   { shot: 'tasks-board', title: 'tasks', anchor: 'tasks', text: 'A kanban board with lanes, priorities, tags, and cards you move together.' },
   { shot: 'pipeline-demo', title: 'pipeline', anchor: 'pipeline', text: 'CI jobs in parallel with spinners and progress, a failure, and a retry.' },
   { shot: 'music-demo', title: 'music', anchor: 'music', text: 'A player with a spectrum visualizer, a position bar, and a queue.' },
-  { shot: 'kit-gallery-data', title: 'kit gallery', anchor: 'kit-gallery', text: 'Every kit component on five tabs; here a focused data table over a build log.' },
+  { shot: 'kit-gallery-data', title: 'kit gallery', anchor: 'kit-gallery', text: 'Every kit component on six tabs; here a focused data table over a build log.' },
   { shot: 'snake-demo', title: 'snake', anchor: 'snake', text: 'The classic, on an autopilot, with the score and speed climbing.' },
   { shot: 'tetris-demo', title: 'tetris', anchor: 'tetris', text: 'Falling pieces, line clears, and a next-piece preview.' },
   { shot: 'chess-demo', title: 'chess', anchor: 'chess', text: 'A famous game replayed move by move, with the move list.' },
@@ -483,7 +483,7 @@ export default async function HomePage() {
         }
       >
         <TermShot name="kit-gallery">
-          <code>examples/kit-gallery</code>: every component on five tabs, in the kit’s dark and light themes.
+          <code>examples/kit-gallery</code>: every component on six tabs, in the kit’s dark and light themes.
         </TermShot>
         <More
           links={[

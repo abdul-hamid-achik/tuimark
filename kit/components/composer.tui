@@ -4,7 +4,7 @@
   <keymap>
     <bind keys="ctrl+o" action="composer_tips" label="tips"/>
     <bind keys="ctrl+q" action="quit" label="quit"/>
-    <bind keys="up" action="composer_history_prev" when="#composer__input:focus" label="history"/>
+    <bind keys="up" action="composer_recall" when="#composer__input:focus" label="history"/>
   </keymap>
   <screen id="demo" focus="#composer__input">
     <col width="1fr" height="1fr">

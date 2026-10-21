@@ -46,7 +46,7 @@ A commit prints at once while your handler runs and is otherwise queued before t
 A long reply is committed block by block. Each commit redraws the region once, so commit a finished paragraph, a list, or a fenced code block, never a token, and keep only the unfinished tail block in the region. The region shows the tail (`live.blocks`, one block of the [kit's transcript schema](/guide/kit#chat-and-inline-components)) and the scrollback holds everything before it:
 
 ```tui
-<col if="live.active" each="live.blocks as b" key="b.id" height="auto">
+<col if="live.active" each="live.blocks as b" key="b.id" width="1fr" height="auto">
   <use template="k-block" with="b as blk"/>
 </col>
 <template id="commit-block">

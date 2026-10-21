@@ -22,7 +22,7 @@
     <bind keys="ctrl+q,ctrl+c" action="leave" keycap="ctrl+q" label="quit"/>
   </keymap>
   <screen id="chat" focus="#composer__input">
-    <col if="live.active" each="live.blocks as b" key="b.id" height="auto">
+    <col if="live.active" each="live.blocks as b" key="b.id" width="1fr" height="auto">
       <use template="k-block" with="b as blk"/>
     </col>
     <text class="k-muted">{status}</text>

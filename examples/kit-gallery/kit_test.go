@@ -29,6 +29,8 @@ var modifiers = map[string]bool{
 	"primary": true, "secondary": true, "danger": true, "ghost": true,
 	"ok": true, "warn": true, "info": true, "accent": true,
 	"good": true, "bad": true, "invalid": true, "current": true, "muted": true,
+	// The kinds of a transcript block (k-block).
+	"code": true, "head": true, "quote": true, "item": true,
 }
 
 // generated are the class names the runtime gives to nodes it generates; the
@@ -310,7 +312,7 @@ func TestEveryKitClassIsUsed(t *testing.T) {
 	}
 	// Utilities and layout helpers that a document may or may not need.
 	optional := map[string]bool{
-		"k-strong": true, "k-kbd": true, "k-code": true, "k-section": true,
+		"k-strong": true, "k-em": true, "k-kbd": true, "k-code": true, "k-section": true,
 		"k-text-accent": true, "k-text-ok": true, "k-text-warn": true,
 		"k-text-danger": true, "k-text-info": true, "k-subtitle": true,
 	}

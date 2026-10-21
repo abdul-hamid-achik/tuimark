@@ -33,6 +33,8 @@
 <text x="330.8" y="49" textLength="76.8" lengthAdjust="spacing" fill="#59636e">overlays</text>
 <text x="436.4" y="49" textLength="9.6" lengthAdjust="spacing" fill="#59636e">5</text>
 <text x="455.6" y="49" textLength="67.2" lengthAdjust="spacing" fill="#59636e">layouts</text>
+<text x="551.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#59636e">6</text>
+<text x="570.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#59636e">chat</text>
 <text x="52.4" y="69" textLength="76.8" lengthAdjust="spacing" fill="#0969da">Services</text>
 <text x="138.8" y="69" textLength="9.6" lengthAdjust="spacing" fill="#0969da">·</text>
 <text x="158" y="69" textLength="9.6" lengthAdjust="spacing" fill="#0969da">5</text>
@@ -119,7 +121,7 @@
 <text x="206" y="529" textLength="76.8" lengthAdjust="spacing" fill="#59636e">commands</text>
 <text x="302" y="529" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">t</text>
 <text x="321.2" y="529" textLength="48" lengthAdjust="spacing" fill="#59636e">theme</text>
-<text x="388.4" y="529" textLength="28.8" lengthAdjust="spacing" fill="#0969da" font-weight="700">1-5</text>
+<text x="388.4" y="529" textLength="28.8" lengthAdjust="spacing" fill="#0969da" font-weight="700">1-6</text>
 <text x="426.8" y="529" textLength="38.4" lengthAdjust="spacing" fill="#59636e">tabs</text>
 <text x="484.4" y="529" textLength="48" lengthAdjust="spacing" fill="#0969da" font-weight="700">enter</text>
 <text x="542" y="529" textLength="38.4" lengthAdjust="spacing" fill="#59636e">open</text>
