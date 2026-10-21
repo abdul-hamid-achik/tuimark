@@ -1,0 +1,5 @@
+// $ tuimark dump props.tui --data props.json --cols 40 --rows 4 --format json
+// excerpt: the nodes that have classes
+[
+  {"tag":"box","x":0,"y":0,"classes":["warn"]}
+]

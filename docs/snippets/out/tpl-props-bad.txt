@@ -1,0 +1,5 @@
+$ tuimark validate props-bad.tui
+error V003 props-bad.tui:4:22 /template/box/input {$field} cannot stand in bind: a prop is text; pass a path with with="…"
+error V002 props-bad.tui:9:45 /screen/col/use attribute "color" is not allowed on <use>: a <use> is not a node; give this copy a static class="…" and style that class, put the attribute on the template's element, or declare it in the template's props
+error V003 props-bad.tui:10:35 /screen/col/use prop "title" makes the pair "{user.name}": a prop is text; pass a path with with="…"
+error V003 props-bad.tui:11:13 /screen/col/text {$title} is outside a <template>: props exist only in a template's body

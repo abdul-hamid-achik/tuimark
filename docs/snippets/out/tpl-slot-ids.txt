@@ -1,0 +1,5 @@
+$ tuimark dump slot.tui --data slot.json --cols 36 --rows 4
+=== nodes (those with an id) ===
+main         screen  36x4 @(0,0)
+side__frame  col     36x4 @(0,0)
+note         input   34x1 @(1,1) focus
