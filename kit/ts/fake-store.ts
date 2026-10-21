@@ -76,35 +76,66 @@ export class FakeStore {
 
 const stripComments = (s: string) => s.replace(/<!--[\s\S]*?-->/g, "");
 
-/** The kit's templates (kit/kit.tui): id to body, comments removed. */
-function templates(): Map<string, string> {
+/** A kit template: its props and its body, comments removed. */
+interface Template {
+  props: string[];
+  body: string;
+}
+
+/** The kit's templates (kit/kit.tui): id to props and body, comments removed. */
+function templates(): Map<string, Template> {
   const kit = stripComments(readFileSync(new URL("../kit.tui", import.meta.url), "utf8"));
-  const out = new Map<string, string>();
-  for (const m of kit.matchAll(/<template\s+id="([^"]+)"\s*>([\s\S]*?)<\/template>/g)) out.set(m[1]!, m[2]!);
+  const out = new Map<string, Template>();
+  for (const m of kit.matchAll(/<template\s+id="([^"]+)"(?:\s+props="([^"]*)")?\s*>([\s\S]*?)<\/template>/g)) {
+    out.set(m[1]!, { props: (m[2] ?? "").split(/\s+/).filter(Boolean), body: m[3]! });
+  }
   return out;
 }
+
+const SLOT = "\u0000slot\u0000";
 
 /**
  * The markup of a kit component document with its comments removed, for
  * checking that the paths a helper writes are ones the markup reads (a header
  * comment lists paths too, and would make any such check pass). Each
- * `<use template="k-NAME" with="PATH as a">` is replaced by the template's
- * body from kit/kit.tui as its copy reads: every `a.` is written `PATH.` and
- * every id `x` (and `#x`) is the use's `ID__x`.
+ * `<use template="k-NAME" with="PATH as a">` (self-closing, or with content
+ * before `</use>`) is replaced by the template's body from kit/kit.tui as its
+ * copy reads: every `a.` is written `PATH.` and every id `x` (and `#x`) is the
+ * use's `ID__x`; a prop the use passes replaces its `{$name}`, and a prop it
+ * leaves out removes the attribute that reads it (or empties the text); the
+ * use's content replaces `<slot/>` and keeps its own paths and ids. A use
+ * inside another use's content is expanded first. A `</use>` nested in a use
+ * that is not self-closing is not supported.
  */
 export function component(name: string): string {
   const tpl = templates();
   const src = stripComments(readFileSync(new URL(`../components/${name}.tui`, import.meta.url), "utf8"));
-  return src.replace(/<use\b[^>]*\/>/g, (tag) => {
-    const attr = (n: string) => new RegExp(`\\b${n}="([^"]*)"`).exec(tag)?.[1];
-    let body = tpl.get(attr("template") ?? "");
-    if (body === undefined) throw new Error(`${name}.tui: ${tag} names no kit template`);
-    for (const pair of (attr("with") ?? "").split(",")) {
-      const [path, alias] = pair.trim().split(" as ");
-      if (path && alias) body = body.replace(new RegExp(`(?<=[{"\\s!])${alias}\\.`, "g"), `${path}.`);
-    }
-    const id = attr("id");
-    if (id) body = body.replace(/\bid="([^"]+)"/g, `id="${id}__$1"`).replace(/="#([^"]+)"/g, `="#${id}__$1"`);
-    return body;
-  });
+  const expand = (text: string): string =>
+    text.replace(/<use\b([^>]*?)(?:\/>|>([\s\S]*?)<\/use>)/g, (_all, attrs: string, fill: string | undefined) => {
+      const attr = (n: string) => new RegExp(`(?:^|\\s)${n}="([^"]*)"`).exec(attrs)?.[1];
+      const t = tpl.get(attr("template") ?? "");
+      if (t === undefined) throw new Error(`${name}.tui: <use${attrs}> names no kit template`);
+      let body = t.body;
+      for (const prop of t.props) {
+        const value = attr(prop);
+        const ref = `\\{\\$${prop}\\}`;
+        if (value === undefined) {
+          body = body.replace(new RegExp(`\\s+[\\w:-]+="${ref}"`, "g"), "").replace(new RegExp(ref, "g"), "");
+        } else {
+          body = body.replace(new RegExp(ref, "g"), value);
+        }
+      }
+      body = body.replace(/<slot\s*\/>/g, SLOT);
+      for (const pair of (attr("with") ?? "").split(",")) {
+        const [path, alias] = pair.trim().split(" as ");
+        if (!path || !alias) continue;
+        body = body
+          .replace(new RegExp(`(?<=[{"\\s!])${alias}\\.`, "g"), `${path}.`)
+          .replace(new RegExp(`\\{${alias}\\}`, "g"), `{${path}}`);
+      }
+      const id = attr("id");
+      if (id) body = body.replace(/\bid="([^"]+)"/g, `id="${id}__$1"`).replace(/="#([^"]+)"/g, `="#${id}__$1"`);
+      return body.split(SLOT).join(fill === undefined ? "" : expand(fill));
+    });
+  return expand(src);
 }

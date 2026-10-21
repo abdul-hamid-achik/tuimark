@@ -1,4 +1,4 @@
-<!-- k-field · Contract: with="forms.FORM.FIELD as f" reads f.label, f.placeholder, f.help and f.error ("" when fine; the host writes it), and reads and writes f.value; the host also writes forms.FORM.valid, which the markup does not read · Actions: form_validate, form_submit · Keys: ctrl+s saves, enter in an input submits · Requires: k-btn, k-hints, k-title -->
+<!-- k-field · Contract: props label, placeholder, help; with="forms.FORM.FIELD as f" reads f.error ("" when fine; the host writes it), and reads and writes f.value; the host also writes forms.FORM.valid, which the markup does not read · Actions: form_validate, form_submit · Keys: ctrl+s saves, enter in an input submits · Requires: k-btn, k-hints, k-title -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <keymap>
@@ -14,8 +14,8 @@
            forms.profile.name and forms.profile.email. The host writes the
            error ("" when fine): `invalid` turns the label and the border
            red, and the error line takes the help line's place. -->
-      <use id="profile__name" template="k-field" with="forms.profile.name as f"/>
-      <use id="profile__email" template="k-field" with="forms.profile.email as f"/>
+      <use id="profile__name" template="k-field" label="Name" placeholder="your name" help="Shown on your profile." with="forms.profile.name as f"/>
+      <use id="profile__email" template="k-field" label="Email" placeholder="you@example.com" help="We never share it." with="forms.profile.email as f"/>
       <row width="1fr" height="1" gap="2">
         <button id="profile__save" class="k-btn primary" label="Save" on:click="form_submit"/>
         <hints class="k-hints"/>

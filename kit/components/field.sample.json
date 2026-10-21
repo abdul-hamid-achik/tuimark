@@ -1,8 +1,14 @@
 {
   "forms": {
     "profile": {
-      "name": { "label": "Name", "placeholder": "your name", "help": "Shown on your profile.", "value": "Ada", "error": "" },
-      "email": { "label": "Email", "placeholder": "you@example.com", "help": "We never share it.", "value": "ada@", "error": "Enter a full address like name@host." },
+      "name": {
+        "value": "Ada",
+        "error": ""
+      },
+      "email": {
+        "value": "ada@",
+        "error": "Enter a full address like name@host."
+      },
       "valid": false
     }
   }

@@ -1,3 +1,5 @@
 {
-  "help": { "open": true, "title": "Keys" }
+  "help": {
+    "open": true
+  }
 }

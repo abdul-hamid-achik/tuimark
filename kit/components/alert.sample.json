@@ -1,8 +1,3 @@
 {
-  "alerts": {
-    "info": { "title": "Heads up", "icon": "i", "text": "Deploys are paused until 09:00 UTC." },
-    "ok": { "title": "Saved", "icon": "✓", "text": "Your changes are live in every region." },
-    "warn": { "title": "Quota", "icon": "!", "text": "You have used 92% of this month's build minutes." },
-    "danger": { "title": "Build failed", "icon": "✗", "text": "Step 3 exited with code 1: tests failed in pkg/router." }
-  }
+  "build": { "retry": "Retry with: tuimark run --mock mock.json" }
 }

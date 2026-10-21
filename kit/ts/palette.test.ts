@@ -97,26 +97,25 @@ describe("palette", () => {
   });
 
   test("an existing palette.last is not overwritten", async () => {
-    const store = new FakeStore({ palette: { last: "none", title: "Run", placeholder: "what to run" } });
+    const store = new FakeStore({ palette: { last: "none" } });
     await createPalette(store.host, {}, { id: "a", title: "A" });
     expect(store.at("palette.last")).toBe("none");
-    expect([store.at("palette.title"), store.at("palette.placeholder")]).toEqual(["Run", "what to run"]);
   });
 
   test("what it writes is every path palette.tui reads", async () => {
     const { store } = await setup();
-    expect([store.at("palette.title"), store.at("palette.placeholder")]).toEqual([
-      "Command palette",
-      "type a command…",
-    ]);
+    // The title and the placeholder are props of the use, not data.
+    expect([store.at("palette.title"), store.at("palette.placeholder")]).toEqual([undefined, undefined]);
     // The paths of the component, as its copy reads them: {path} templates and
     // the attributes that read the store (an each alias, cmd., is per row).
     const source = component("palette");
+    expect(source).toContain('title="Command palette"');
+    expect(source).toContain('placeholder="type a command…"');
     const paths = new Set<string>();
     for (const m of source.matchAll(/\{([^}\s]+)\}/g)) paths.add(m[1]!);
     for (const m of source.matchAll(/\s(?:bind|open|if|hidden|each|class:[a-z_][a-z0-9_-]*)="!?([^"\s]+)/g)) paths.add(m[1]!);
     const read = [...paths].filter((p) => p.startsWith("palette.") || p.startsWith("found."));
-    expect(read).toEqual(expect.arrayContaining(["palette.title", "palette.placeholder", "palette.query", "found.items"]));
+    expect(read).toEqual(expect.arrayContaining(["palette.query", "found.items"]));
     for (const p of read) expect({ path: p, found: (await store.get(p)).found }).toEqual({ path: p, found: true });
   });
 

@@ -1,4 +1,4 @@
-<!-- k-confirm · Contract: with="PATH as d" reads d.open, d.title, d.body, d.no and d.yes (the button labels) and the flag d.danger; the host writes d.open, and here confirm.result · Actions: dialog_open, dialog_confirm, dialog_cancel · Keys: y confirms, n and esc cancel · Requires: k-btn, k-title, k-muted -->
+<!-- k-confirm · Contract: with="PATH as d" reads d.open, d.title, d.body, d.no and d.yes (the button labels) and the flag d.danger; slot: more body under d.body; the host writes d.open, and here confirm.result · Actions: dialog_open, dialog_confirm, dialog_cancel · Keys: y confirms, n and esc cancel · Requires: k-btn, k-title, k-muted -->
 <tui theme="auto">
   <include src="../kit.tui"/>
   <screen id="demo" focus="#confirm__open">
@@ -21,6 +21,8 @@
          up to 60 columns (and the screen), where the text wraps, and as
          tall as its content. Keep the labels short: the action row must fit
          a 40-column terminal. -->
-    <use id="confirm" template="k-confirm" class="danger" with="confirm as d"/>
+    <use id="confirm" template="k-confirm" class="danger" with="confirm as d">
+      <text class="k-muted">{confirm.detail}</text>
+    </use>
   </screen>
 </tui>
