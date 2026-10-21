@@ -149,17 +149,27 @@ func (fb *builder) buildHints(casc *css.Cascade, root *layout.Box) {
 			its = a.hintItems(v, all)
 			items[all] = its
 		}
-		h.Children = h.Children[:0]
-		for _, it := range its {
-			row := &layout.Box{Tag: "row", Kind: "row", Role: layout.RoleHintItem, Parent: h, GenFrom: it.src, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
-			key := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintKey, Parent: row, GenFrom: it.src, Classes: []string{"hint-key"}, Text: it.keycap, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
-			label := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintLabel, Parent: row, GenFrom: it.src, Classes: []string{"hint-label"}, Text: it.label, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
-			row.Children = []*layout.Box{key, label}
-			row.Style = newStyle(casc.Compute(row, h.Style, nil, nil))
-			key.Style = newStyle(casc.Compute(key, row.Style, nil, nil))
-			label.Style = newStyle(casc.Compute(label, row.Style, nil, nil))
-			h.Children = append(h.Children, row)
+		if fb.hintsBuilt == nil {
+			fb.hintsBuilt = map[bool][]hintItem{}
 		}
+		fb.hintsBuilt[all] = its
+		setHintItems(casc, h, its)
+	}
+}
+
+// setHintItems gives hints h the item rows of its (the children it is
+// built with, SPEC §6.12) and cascades them.
+func setHintItems(casc *css.Cascade, h *layout.Box, its []hintItem) {
+	h.Children = h.Children[:0]
+	for _, it := range its {
+		row := &layout.Box{Tag: "row", Kind: "row", Role: layout.RoleHintItem, Parent: h, GenFrom: it.src, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+		key := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintKey, Parent: row, GenFrom: it.src, Classes: []string{"hint-key"}, Text: it.keycap, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+		label := &layout.Box{Tag: "text", Kind: "text", Role: layout.RoleHintLabel, Parent: row, GenFrom: it.src, Classes: []string{"hint-label"}, Text: it.label, Fixed: true, Disabled: h.Disabled, Follow: -1, Index: -1}
+		row.Children = []*layout.Box{key, label}
+		row.Style = newStyle(casc.Compute(row, h.Style, nil, nil))
+		key.Style = newStyle(casc.Compute(key, row.Style, nil, nil))
+		label.Style = newStyle(casc.Compute(label, row.Style, nil, nil))
+		h.Children = append(h.Children, row)
 	}
 }
 

@@ -1,0 +1,54 @@
+version: 1
+name: textarea_cursor_newline
+intent: |
+    After shift+enter, sent as `CSI 13 ; 2 u` (a sequence the decoder of the
+    current language reads in every session, so the spec needs no Kitty
+    reply), a focused textarea has a second line: the terminal's cursor is
+    visible at column 0 of the next row, and the status line below it has
+    moved down one row (SPEC v0.4d §6.19.4, §6.19.5, test 293, decisions
+    236 and 240). The textarea grows, and the layout follows it.
+target:
+    cmd: ["${vars.tuimark}", "run", "testdata/v04d/t284/t.tui", "--data", "testdata/v04d/t284/d.json"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "Message"
+        timeoutMs: 5000
+    - type: "hi"
+    - send:
+        bytes: '\x1b[13;2u'
+    - wait:
+        idle:
+            quietForMs: 400
+        timeoutMs: 3000
+outcomes:
+    - id: the_cursor_is_on_the_new_line
+      description: the cursor is visible at column 0 of row 2, the textarea's second line
+      verify:
+        cursor:
+            x: 0
+            y: 2
+            visible: true
+    - id: the_status_line_moved_down
+      description: the status line, at row 2 before the break, is at row 3 now
+      verify:
+        region:
+            x: 0
+            y: 3
+            width: 80
+            height: 1
+            contains: "ready"
+    - id: the_text_stays_on_the_first_line
+      description: the typed text is still on the textarea's first row
+      verify:
+        region:
+            x: 0
+            y: 1
+            width: 80
+            height: 1
+            contains: "hi"
+contractHash: sha256:616d1f114ab9b69a4e4db53763efbee7e1f38a609dba8eaba39f199b8736308c

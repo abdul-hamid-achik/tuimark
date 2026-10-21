@@ -62,6 +62,7 @@ var KindsCurrent = []string{
 	"checkbox", // SPEC v0.4b §6.16 (F8)
 	"select",   // SPEC v0.4b §6.17 (F9)
 	"slot",     // SPEC v0.4c §6.18.10 (C2): replaced by its fill, never laid out
+	"textarea", // SPEC v0.4d §6.19 (D3)
 }
 
 // IsKindCurrent reports whether tag is one of the current-language tags.

@@ -41,6 +41,7 @@ A single-line text field. `bind` holds its text.
 - `on:change` fires with the new text as the event's value; `on:submit` fires on `enter`.
 - A focused input takes printable keys, `space`, `backspace`, `left`, `right`, `home`, `end`, `ctrl+a`, `ctrl+e`, `ctrl+h`, and `ctrl+u` before the keymap sees them, so typing never triggers shortcuts. A paste arrives as one edit and one `on:change`.
 - An input is one row of text. With a border it is three rows tall, as above; a `height: 1` would leave the border no room.
+- For several lines, see [textarea](/guide/textarea), an input that grows with its text.
 
 ## checkbox and select
 

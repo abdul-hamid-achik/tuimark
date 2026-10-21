@@ -158,6 +158,10 @@ func (a *App) eventFor(action string, b *layout.Box) Event {
 		}
 	case "input":
 		ev.Value = a.inputValue(b)
+	case "textarea":
+		// Its text as everything reads it, keys {} (SPEC v0.4d §6.19.7,
+		// decision 238).
+		ev.Value = a.textareaText(b)
 	case "checkbox":
 		// A keymap row fired while a checkbox has focus carries its value
 		// (SPEC v0.4b §8.2, decision 65), keys {}.
@@ -221,7 +225,7 @@ func (a *App) HandleKeyRun(keys []Key) ([]Event, int) {
 	defer a.mu.Unlock()
 	// A printable key never reaches esc handling or the keymap while an
 	// enabled input has focus: the input takes it (handleKey step 2).
-	if b := a.focusedBox(); b != nil && !b.Disabled && b.Kind == "input" && isPrintable(keys[0]) {
+	if b := a.focusedBox(); b != nil && !b.Disabled && (b.Kind == "input" || b.Kind == "textarea") && isPrintable(keys[0]) {
 		n := 1
 		for n < len(keys) && isPrintable(keys[n]) {
 			n++
@@ -303,6 +307,9 @@ func (a *App) inputCursor(b *layout.Box) (*inputState, []rune, []int) {
 func (a *App) insertText(b *layout.Box, text []rune) []Event {
 	if a.inputBlocked(b) {
 		return nil
+	}
+	if b.Kind == "textarea" {
+		return a.insertTextarea(b, text)
 	}
 	st, runes, _ := a.inputCursor(b)
 	out := make([]rune, 0, len(runes)+len(text))

@@ -1,0 +1,12 @@
+<tui>
+  <screen id="main" focus="#composer">
+    <row>
+      <textarea id="composer" bind="draft" placeholder="Message" on:submit="send"/>
+      <hints/>
+    </row>
+  </screen>
+  <keymap when="#composer:focus">
+    <bind keys="up" action="history_prev" label="history"/>
+    <bind keys="ctrl+enter" action="send" label="send"/>
+  </keymap>
+</tui>

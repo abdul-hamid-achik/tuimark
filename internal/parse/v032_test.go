@@ -111,7 +111,7 @@ func TestDidYouMeanHints(t *testing.T) {
 		{"html dialog", "1", `<dialog/>`, "V001", "; use <modal>", false},
 		{"html checkbox", "1", `<checkbox/>`, "V001", `tag <checkbox> (requires a <tui> without version)`, false},
 		{"html select", "1", `<select/>`, "V001", `tag <select> (requires a <tui> without version)`, false},
-		{"html textarea", "1", `<textarea/>`, "V001", "use <input>", false},
+		{"html textarea", "1", `<textarea/>`, "V001", `tag <textarea> (requires a <tui> without version)`, false}, // a tag of the current language since 0.4d
 		{"html template", "1", `<template/>`, "V001", `tag <template> (requires a <tui> without version)`, false},
 		{"html use", "1", `<use/>`, "V001", `tag <use> (requires a <tui> without version)`, false},
 		{"html img", "1", `<img/>`, "V001", "images are not supported", false},

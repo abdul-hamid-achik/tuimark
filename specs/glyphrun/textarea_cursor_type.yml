@@ -1,0 +1,43 @@
+version: 1
+name: textarea_cursor_type
+intent: |
+    In `tuimark run`, the terminal's own cursor is the caret of a focused,
+    enabled textarea (SPEC v0.4d §6.19.5, test 293, decision 236): the
+    runtime paints no caret glyph, it shows the cursor at the caret's cell
+    so an input method opens its window there. The document of test 284 has
+    a one-row textarea at row 1 under a `log` line. After typing `hi` the
+    cursor is visible at column 2 of the textarea's row.
+target:
+    cmd: ["${vars.tuimark}", "run", "testdata/v04d/t284/t.tui", "--data", "testdata/v04d/t284/d.json"]
+    cwd: "."
+terminal:
+    cols: 80
+    rows: 24
+steps:
+    - wait:
+        screen:
+            contains: "Message"
+        timeoutMs: 5000
+    - type: "hi"
+    - wait:
+        screen:
+            contains: "hi"
+        timeoutMs: 3000
+outcomes:
+    - id: the_cursor_is_at_the_caret
+      description: the terminal's cursor is visible at column 2 of the textarea's row (row 1), right after the typed text
+      verify:
+        cursor:
+            x: 2
+            y: 1
+            visible: true
+    - id: the_text_is_on_the_textarea_row
+      description: the typed text is on the textarea's row, and the placeholder is gone
+      verify:
+        region:
+            x: 0
+            y: 1
+            width: 80
+            height: 1
+            contains: "hi"
+contractHash: sha256:5641765252a3275e7be223d57fe683a35d8101dbd8f7e79f14c418fc5cb807d3

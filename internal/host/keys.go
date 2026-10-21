@@ -781,11 +781,22 @@ func pasteEscapeLen(s string) int {
 // paste is discarded: it never reaches the keymap, a widget, or a
 // built-in, so pasting a q cannot quit. Caller must not hold a.mu.
 func (a *App) HandlePaste(payload string) []Event {
-	text := NormalizePaste(payload)
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	b := a.focusedBox()
-	if text == "" || b == nil || b.Disabled || b.Kind != "input" {
+	if b == nil || b.Disabled || (b.Kind != "input" && b.Kind != "textarea") {
+		return nil
+	}
+	// A textarea keeps the paste's line breaks and normalizes it as run
+	// text (SPEC v0.4d §6.19.6, decisions 234 and 265); an input keeps
+	// §26.7's order.
+	var text string
+	if b.Kind == "textarea" {
+		text = NormalizeTextareaPaste(payload)
+	} else {
+		text = NormalizePaste(payload)
+	}
+	if text == "" {
 		return nil
 	}
 	return a.insertText(b, []rune(text))

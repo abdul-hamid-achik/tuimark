@@ -50,7 +50,7 @@
         "list", "item", "input", "button", "progress",
         "modal",
         "table", "column", "tabs", "tab", "sparkline", "hints",
-        "checkbox", "select"
+        "checkbox", "select", "textarea"
       ]
     },
     "node": {
@@ -75,7 +75,19 @@
           "items": { "type": "string", "minLength": 1 }
         },
         "checked": { "const": true },
-        "clipped": { "enum": ["text", "children"] }
+        "clipped": { "enum": ["text", "children"] },
+        "caret": { "$ref": "#/$defs/caret" }
+      }
+    },
+    "caret": {
+      "type": "object",
+      "required": ["line", "col"],
+      "additionalProperties": false,
+      "properties": {
+        "line": { "type": "integer", "minimum": 0 },
+        "col": { "type": "integer", "minimum": 0 },
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 }
       }
     },
     "scroll": {

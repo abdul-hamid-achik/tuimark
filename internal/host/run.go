@@ -999,7 +999,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				}
 				focus := a.Focus()
 				if lg != nil {
-					lg.paste(NormalizePaste(ins[0].Paste), a.secretFocused())
+					lg.paste(a.pasteNormalized(ins[0].Paste), a.secretFocused())
 				}
 				evs := a.HandlePaste(ins[0].Paste)
 				ins = ins[1:]

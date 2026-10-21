@@ -1761,6 +1761,28 @@ kept with the maintainer's project notes, outside this repository.
   does before `Run`: a parent's own `set` of `@screen` lands after the
   first frame.
 
+- **`<textarea>` (0.4d).** A multi-line `input` for the current language:
+  `bind`, `placeholder`, `on:change`, and `on:submit` plus the common
+  attributes (`secret` is `V002`; it needs an `id`, takes no content, and
+  cannot stand in a list row or an `each` template). It is one row high when
+  empty, grows one row per visual line (the text wrapped at its width less
+  one, so the caret has a cell after a full line) up to `max-height: 8`, and
+  then scrolls: it moves the layout as it grows, and is a viewport for the
+  dump's `scroll`, the wheel, `scrollbar`, and `L006` but not for sizing.
+  `enter` submits when there is an `on:submit` and breaks the line
+  otherwise; `shift+enter`, `alt+enter`, and the LF byte always break it;
+  `up` and `down` move by visual lines to a goal column and go on to the
+  keymap from the first and last line; `ctrl+k`, `ctrl+w`, `alt+backspace`,
+  `alt+b`, and `alt+f` are word and line edits that cross line breaks as
+  the SPEC says. A paste keeps its line breaks. The text the host writes is
+  read as run text (TAB four spaces, controls removed), the store keeping
+  what it wrote until the next edit, and a change from outside puts the
+  caret at the end. The focused textarea's node has `caret` in the dump, and
+  `Run()` puts the terminal's cursor on it. Because it takes every
+  printable key, a keymap row for one never fires while it is enabled and
+  focused: disable it, or move the focus, while the row must act. In a
+  pinned document `<textarea>` is `V001`, `requires a <tui> without version`.
+
 ## Status per phase (SPEC §4)
 
 - **Phase 0 (spike)** — done: `app col row box text`, goldens frozen and

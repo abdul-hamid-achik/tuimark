@@ -59,9 +59,9 @@
     "tag": {
       "patterns": [
         {
-          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags, the 0.4b tags checkbox, select, include, fragment, template and use, the 0.4c tag slot, and the spike alias app).",
+          "comment": "A tag of the catalog (AGENTS.md: Catalog, plus the version=2 tags, the 0.4b tags checkbox, select, include, fragment, template and use, the 0.4c tag slot, the 0.4d tag textarea, and the spike alias app).",
           "name": "meta.tag.tui",
-          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|include|fragment|template|use|slot|app)(?![\\w:.-])",
+          "begin": "(</?)(tui|style|keymap|bind|screen|col|row|box|scroll|spacer|text|rule|list|item|input|button|progress|modal|table|column|tabs|tab|sparkline|hints|checkbox|select|textarea|include|fragment|template|use|slot|app)(?![\\w:.-])",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.tui" },
             "2": { "name": "entity.name.tag.tui" }
