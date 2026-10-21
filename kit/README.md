@@ -647,7 +647,7 @@ and does not turn red a field the user has not reached; `form_submit` checks
 every field, focuses the first invalid input, and otherwise calls your
 `OnSubmit`. `Reset` writes only each field's `forms.profile.<field>.value` and
 `.error` and the form's `forms.profile.valid`; a field's `label`,
-`placeholder` and `help` come from your own data under the same path.
+`placeholder` and `help` are props of its `<use>`, not data.
 
 ```go
 forms := kit.NewForms(app)
