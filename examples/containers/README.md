@@ -3,7 +3,9 @@
 A container-engine dashboard in the spirit of Docker Desktop or k9s, built
 only from the [Tuimark kit](../../kit/README.md). Twelve simulated containers
 (no Docker is touched) with live CPU and memory, logs that grow, and the odd
-crash. The view is `app.tui` over the kit's two stylesheets and a short
+crash. The view is `app.tui`, which includes `kit/kit.tui` (the kit's sheets,
+its overlay keys and its templates: the app bar, key / value rows, stat cards,
+the toast, the confirm dialog, the palette and the help) over a short
 `app.tcss`; the Go host simulates the engine and implements the named actions.
 
 ```sh
@@ -59,7 +61,10 @@ code.
   matches), so typing in the filter or moving the cursor updates every pane;
   no handler recomputes the views (one only keeps the cursor on a visible row).
 - The kit's actions are generic (`dialog_confirm`, `palette_run`); the dialog's
-  instance is the prefix of the event's `source` before the last `__`.
+  instance is the prefix of the event's `source` before the last `__`. One
+  dialog serves every operation, so the host writes its title, body and button
+  labels (`confirm.yes`, `confirm.no`) on every open; the palette's and the
+  help's titles are props of their `<use>`, not data.
 
 `sample.json` and `mock.json` are snapshots of the real app twelve simulated
 seconds in, derived paths included, so `validate`, `dump` and `run --mock` work
@@ -76,7 +81,7 @@ rewrites them).
   for several kinds of container and for an empty engine;
 - the kit's conventions hold (`kit_test.go`): `k-` classes and short modifiers,
   styling by id in `app.tcss`, `instance__part` ids, `component_verb` actions,
-  tokens defined for both themes, overlays with `on:escape` and a scoped keymap
+  tokens defined for both themes, overlays that are kit templates with `on:escape` and a scoped keymap
   that comes first, sized containers, `focusable` on every `tabs`, no `version`;
 - `Play` flows work: filtering, marks, sort, opening the detail and its nested
   tabs, stop / start / restart / remove through the dialog, pruning, the palette,

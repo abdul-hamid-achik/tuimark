@@ -199,8 +199,11 @@ func detailOf(get getter) map[string]any {
 		return map[string]any{
 			"any": false, "id": "", "name": "no container", "image": "", "state": "", "ok": false, "warn": false, "bad": false,
 			"up": "", "command": "", "network": "", "restart": "", "created": "", "mounts": "",
-			"cpu_txt": "", "cpu_avg": "", "mem_txt": "", "mem_avg": "",
-			"cpu_hist": []any{}, "mem_hist": []any{}, "env": []any{}, "port_rows": []any{},
+			"stats": map[string]any{
+				"cpu": map[string]any{"value": "", "delta": "", "hist": []any{}},
+				"mem": map[string]any{"value": "", "delta": "", "hist": []any{}},
+			},
+			"env": []any{}, "port_rows": []any{},
 			"logs": []any{}, "nlogs": float64(0), "nports": float64(0), "nenv": float64(0),
 		}
 	}

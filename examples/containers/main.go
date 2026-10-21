@@ -188,7 +188,7 @@ func (a *app) publish() error {
 			b.Set("sel", []any{}),
 			b.Set("filter", map[string]any{"q": ""}),
 			b.Set("sort", map[string]any{"key": sortKeys[0].key}),
-			b.Set("confirm", map[string]any{"open": false, "title": "", "message": "", "danger": false}),
+			b.Set("confirm", map[string]any{"open": false, "title": "", "body": "", "yes": "Confirm", "no": "Cancel", "danger": false}),
 			b.Set("palette", map[string]any{"open": false, "query": "", "cur": "stop", "commands": commands}),
 			b.Set("help", map[string]any{"open": false}),
 			b.Set("toast", map[string]any{"show": false, "text": "", "is_ok": false, "is_warn": false, "is_danger": false}),

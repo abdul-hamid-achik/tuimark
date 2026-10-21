@@ -1,21 +1,15 @@
 <tui theme="auto">
-  <!-- The kit's tokens, then its components, then this app's own sheet last. -->
-  <style src="../../kit/theme.tcss"/>
-  <style src="../../kit/kit.tcss"/>
+  <!-- The kit (its sheets, its overlay keys, its templates), then this app's
+       own sheet last. -->
+  <include src="../../kit/kit.tui"/>
   <style src="app.tcss"/>
 
   <!-- Overlay keys come first: the first matching row in document order
-       wins, and each overlay is scoped to its own component class. -->
-  <keymap when=".k-dialog">
-    <bind keys="y" action="dialog_confirm" label="confirm"/>
-    <bind keys="n" action="dialog_cancel" label="cancel"/>
-  </keymap>
+       wins. The dialog's and the help's came with the kit; the palette's
+       arrows name this document's copy, palette__list. -->
   <keymap when=".k-palette">
     <bind keys="down,ctrl+n" action="move-next" to="#palette__list"/>
     <bind keys="up,ctrl+p" action="move-prev" to="#palette__list"/>
-  </keymap>
-  <keymap when=".k-help">
-    <bind keys="q,?" action="help_close" keycap="?" label="close help"/>
   </keymap>
 
   <!-- Global keys, before the per-context ones so their hints come first
@@ -92,13 +86,10 @@
 
   <screen id="engine" focus="#ctrs">
     <col id="app" width="1fr" height="1fr">
-      <row class="k-appbar">
-        <text class="k-appbar-brand">◆ containers</text>
-        <text class="k-appbar-title">local engine</text>
-        <spacer/>
+      <use template="k-appbar" brand="◆ containers" title="local engine">
         <text class="k-appbar-meta">{clock}</text>
         <text class="k-badge ok">{counts.up} up</text>
-      </row>
+      </use>
 
       <tabs id="nav" class="k-tabs" bind="view" mark="▸" focusable="true">
         <!-- ============================================================ -->
@@ -122,47 +113,20 @@
           <col id="detail__page" width="1fr" height="1fr">
             <row id="detail__top" width="1fr" height="auto" gap="1">
               <box id="detail__overview" class="k-card" title="{detail.name}">
-                <row class="k-card-row">
-                  <text class="k-card-muted" width="8">status</text>
+                <row class="k-kv">
+                  <text class="k-kv-label">status</text>
                   <text class="k-badge" class:ok="detail.ok" class:warn="detail.warn" class:danger="detail.bad">{detail.state}</text>
                   <text class="k-card-muted">up {detail.up}</text>
                 </row>
-                <row class="k-card-row">
-                  <text class="k-card-muted" width="8">image</text>
-                  <text class="k-card-text" width="1fr">{detail.image}</text>
-                </row>
-                <row class="k-card-row">
-                  <text class="k-card-muted" width="8">id</text>
-                  <text class="k-card-text" width="1fr">{detail.id}</text>
-                </row>
-                <row class="k-card-row">
-                  <text class="k-card-muted" width="8">network</text>
-                  <text class="k-card-text" width="1fr">{detail.network}</text>
-                </row>
-                <row class="k-card-row">
-                  <text class="k-card-muted" width="8">restart</text>
-                  <text class="k-card-text" width="1fr">{detail.restart}</text>
-                </row>
-                <row class="k-card-row">
-                  <text class="k-card-muted" width="8">created</text>
-                  <text class="k-card-text" width="1fr">{detail.created}</text>
-                </row>
+                <use template="k-kv" label="image" with="detail.image as v"/>
+                <use template="k-kv" label="id" with="detail.id as v"/>
+                <use template="k-kv" label="network" with="detail.network as v"/>
+                <use template="k-kv" label="restart" with="detail.restart as v"/>
+                <use template="k-kv" label="created" with="detail.created as v"/>
               </box>
               <col id="detail__stats" width="1fr" height="auto">
-                <box id="detail__cpu" class="k-stat" title="CPU">
-                  <text class="k-stat-value">{detail.cpu_txt}</text>
-                  <row class="k-stat-row">
-                    <text class="k-stat-delta">{detail.cpu_avg}</text>
-                    <sparkline class="k-stat-spark" bind="detail.cpu_hist" min="0"/>
-                  </row>
-                </box>
-                <box id="detail__mem" class="k-stat" title="Memory">
-                  <text class="k-stat-value">{detail.mem_txt}</text>
-                  <row class="k-stat-row">
-                    <text class="k-stat-delta">{detail.mem_avg}</text>
-                    <sparkline class="k-stat-spark" bind="detail.mem_hist" min="0" max="100"/>
-                  </row>
-                </box>
+                <use template="k-stat" title="CPU" min="0" with="detail.stats.cpu as s"/>
+                <use template="k-stat" title="Memory" min="0" max="100" with="detail.stats.mem as s"/>
               </col>
             </row>
             <tabs id="dtabs" class="k-tabs" bind="detail_tab" mark="▸" focusable="true">
@@ -226,12 +190,7 @@
       <hints class="k-hints"/>
 
       <!-- toast: always one row, so nothing jumps when it appears -->
-      <row class="k-toast-slot">
-        <row class="k-toast" if="toast.show" class:ok="toast.is_ok" class:warn="toast.is_warn" class:danger="toast.is_danger">
-          <text class="k-toast-text">{toast.text}</text>
-          <text class="k-toast-key">esc</text>
-        </row>
-      </row>
+      <use template="k-toast" with="toast as t"/>
 
       <row class="k-statusbar">
         <text class="k-statusbar-seg" class:ok="engine.ok" class:warn="engine.warn">{engine.label}</text>
@@ -243,32 +202,8 @@
     </col>
 
     <!-- modals: always the last children of the screen -->
-    <modal id="confirm__dialog" class="k-dialog" class:danger="confirm.danger" open="confirm.open" title="{confirm.title}" focus="#confirm__no" on:escape="dialog_cancel">
-      <text class="k-dialog-text">{confirm.message}</text>
-      <row class="k-dialog-actions">
-        <spacer/>
-        <button id="confirm__no" class="k-btn secondary" label="Cancel" on:click="dialog_cancel"/>
-        <button id="confirm__yes" class="k-btn" class:primary="!confirm.danger" class:danger="confirm.danger" label="Confirm" on:click="dialog_confirm"/>
-      </row>
-    </modal>
-
-    <modal id="palette__dialog" class="k-palette" open="palette.open" title="Command palette" focus="#palette__q" on:escape="palette_close">
-      <input id="palette__q" class="k-palette-input" bind="palette.query" placeholder="type a command…" on:submit="palette_run"/>
-      <text class="k-palette-empty" if="!found.any">No command matches “{palette.query}”.</text>
-      <list id="palette__list" class="k-palette-list" each="found.items as r" key="r.id" bind="palette.cur" focusable="false">
-        <item>
-          <row class="k-palette-row">
-            <text class="k-palette-label">{r.label}</text>
-            <text class="k-palette-hint">{r.hint}</text>
-          </row>
-        </item>
-      </list>
-    </modal>
-
-    <modal id="help__dialog" class="k-help" open="help.open" title="Keys" on:escape="help_close">
-      <scroll id="help__keys" class="k-page" focusable="true">
-        <hints class="k-hints k-help-keys" scope="all"/>
-      </scroll>
-    </modal>
+    <use id="confirm" template="k-confirm" with="confirm as d"/>
+    <use id="palette" template="k-palette" title="Command palette" placeholder="type a command…" with="palette as p, found as f"/>
+    <use id="help" template="k-help" title="Keys" with="help as h"/>
   </screen>
 </tui>
