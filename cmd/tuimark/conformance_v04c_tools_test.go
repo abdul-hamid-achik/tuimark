@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -500,4 +501,125 @@ func TestV04cTools256FillVia(t *testing.T) {
 		`via <include src="f.tui"> app.tui:7:7`,
 		`via <slot/> of <use id="c" template="card"> app.tui:2:28`,
 	})
+}
+
+// fmtShape is fmt's output for src.
+func fmtShape(t *testing.T, src string) string {
+	t.Helper()
+	code, out, errw := runCLI("fmt", writeTemp(t, "app.tui", src))
+	if code != 0 {
+		t.Fatalf("fmt: exit %d %s\n%s", code, errw, src)
+	}
+	return out
+}
+
+// 247, the rules of decision 180 beyond the test's document: a use whose
+// content is only whitespace self-closes, one whose content holds a
+// comment stays open with it, a slot written open self-closes, {$name}
+// and props stay as written, and a fragment is formatted as a document.
+func TestV04cTools247FmtShapes(t *testing.T) {
+	cases := []struct{ name, in, want string }{
+		{"whitespace content", "<tui><screen id=\"main\"><use template=\"t\">\n   \t\n  </use></screen></tui>",
+			"<tui>\n  <screen id=\"main\">\n    <use template=\"t\"/>\n  </screen>\n</tui>\n"},
+		{"comment content", "<tui><screen id=\"main\"><use template=\"t\">  <!-- later -->  </use></screen></tui>",
+			"<tui>\n  <screen id=\"main\">\n    <use template=\"t\">\n      <!-- later -->\n    </use>\n  </screen>\n</tui>\n"},
+		{"props and slot", "<tui><template id=\"k\" props=\"tone  title\"><box class=\"k {$tone}\"   title=\"{$title}: x\"><text>{$title}</text>\n<slot>\n</slot></box></template><screen id=\"main\"/></tui>",
+			"<tui>\n  <template id=\"k\" props=\"tone  title\">\n    <box class=\"k {$tone}\" title=\"{$title}: x\">\n      <text>{$title}</text>\n      <slot/>\n    </box>\n  </template>\n  <screen id=\"main\"/>\n</tui>\n"},
+		{"forwarding", "<fragment><template id=\"w\" props=\"t\"><use template=\"k\" title=\"{$t}\" id=\"u\"><slot/><text>after</text></use></template></fragment>",
+			"<fragment>\n  <template id=\"w\" props=\"t\">\n    <use id=\"u\" template=\"k\" title=\"{$t}\">\n      <slot/>\n      <text>after</text>\n    </use>\n  </template>\n</fragment>\n"},
+	}
+	for _, c := range cases {
+		got := fmtShape(t, c.in)
+		if got != c.want {
+			t.Errorf("%s:\n got:\n%s\nwant:\n%s", c.name, got, c.want)
+		}
+		if again := fmtShape(t, got); again != got {
+			t.Errorf("%s: fmt of the output changes it:\n%s", c.name, again)
+		}
+	}
+}
+
+// 247, round trip: fmt of every 0.4c fixture is a fixed point, and it
+// changes no document's meaning: each fixture directory, formatted,
+// dumps the nodes, grid, and focus of the fixtures as written, and the
+// same diagnostics but for their positions, which formatting moves.
+func TestV04cTools247FmtRoundTrip(t *testing.T) {
+	dirs, err := os.ReadDir(propsFixtures)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type meaning struct {
+		Ok     bool
+		Focus  any
+		Nodes  any
+		Grid   any
+		Errors []struct{ Severity, Code, Path, ID string }
+	}
+	dumpMeaning := func(file, data string) (meaning, bool) {
+		args := []string{"dump", file, "--format", "json"}
+		if data != "" {
+			args = append(args, "--data", data)
+		}
+		code, out, _ := runCLI(args...)
+		var m meaning
+		if code != 0 && code != 2 || json.Unmarshal([]byte(out), &m) != nil {
+			return m, false
+		}
+		return m, true
+	}
+	for _, d := range dirs {
+		if !d.IsDir() || d.Name() == "247" {
+			continue
+		}
+		src := propsFixtures + d.Name() + "/"
+		dst := t.TempDir() + "/"
+		err := filepath.WalkDir(src, func(p string, e os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			rel, _ := filepath.Rel(src, p)
+			if e.IsDir() {
+				return os.MkdirAll(filepath.Join(dst, rel), 0o755)
+			}
+			raw, err := os.ReadFile(p)
+			if err != nil {
+				return err
+			}
+			if strings.HasSuffix(p, ".tui") {
+				code, out, _ := runCLI("fmt", p)
+				if code != 0 {
+					t.Errorf("fmt %s: exit %d", p, code)
+					return nil
+				}
+				if again := fmtShape(t, out); again != out {
+					t.Errorf("fmt %s is not a fixed point", p)
+				}
+				raw = []byte(out)
+			}
+			return os.WriteFile(filepath.Join(dst, rel), raw, 0o644)
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		files, err := os.ReadDir(src)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = os.Stat(src + "d.json")
+		hasData := err == nil
+		for _, f := range files {
+			if f.IsDir() || !strings.HasSuffix(f.Name(), ".tui") {
+				continue
+			}
+			da, db := "", ""
+			if hasData {
+				da, db = src+"d.json", dst+"d.json"
+			}
+			a, okA := dumpMeaning(src+f.Name(), da)
+			b, okB := dumpMeaning(dst+f.Name(), db)
+			if okA != okB || okA && !reflect.DeepEqual(a, b) {
+				t.Errorf("%s%s: the formatted fixture means something else", src, f.Name())
+			}
+		}
+	}
 }
