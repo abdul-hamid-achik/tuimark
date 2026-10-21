@@ -64,8 +64,9 @@ outcomes:
                   want=$(echo "$pair" | cut -d: -f2)
                   f="$GLYPHRUN_RUN_DIR/snapshots/$name.txt"
                   n=$(grep -c '^─' "$f")
-                  width=$(grep '^─' "$f" | head -1 | wc -m | tr -d ' ')
-                  width=$((width - 1))
+                  # Count the rule's cells, not its bytes: wc -m depends on
+                  # the locale, and CI runs under C, where it counts bytes.
+                  width=$(grep -m1 '^─' "$f" | grep -o '─' | wc -l | tr -d ' ')
                   below=$(grep -A3 '^─' "$f" | grep -c -e '^Message' -e '^ready')
                   if [ "$n" -ne 1 ] || [ "$width" -ne "$want" ] || [ "$below" -ne 2 ]; then
                     ok=0
@@ -91,4 +92,4 @@ outcomes:
                 else
                   echo '{"ok": false, "evidence": "unexpected screen after the commit"}'
                 fi
-contractHash: sha256:504731d0ca1af1e459151267faeeed993565727794be203f637c8ddb3ebe9ea8
+contractHash: sha256:bcdd537f2cea314047c5e2bc5106d743ea14d8924304b106d6ce7d4448f5f870
