@@ -37,7 +37,7 @@ func TestSymlinkedIncludeCycleLoadBuffers(t *testing.T) {
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("diagnostics:\n%v\nwant\n%v", got, want)
 		}
-	case <-time.After(30 * time.Second):
+	case <-time.After(30 * slowdown * time.Second):
 		t.Fatal("LoadBuffers hangs on the symlinked include cycle")
 	}
 }

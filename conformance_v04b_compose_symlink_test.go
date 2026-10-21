@@ -56,7 +56,7 @@ func TestSymlinkedIncludeCycle(t *testing.T) {
 				t.Errorf("%s:\n%v\nwant\n%v", name, got, want)
 			}
 		}
-	case <-time.After(30 * time.Second):
+	case <-time.After(30 * slowdown * time.Second):
 		t.Fatal("the symlinked include cycle is not found: the expansion hangs")
 	}
 }

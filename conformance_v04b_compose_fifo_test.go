@@ -47,7 +47,7 @@ func TestIncludeOfAFIFOIsRefused(t *testing.T) {
 		if len(out) != 2 {
 			t.Errorf("only %d loaders answered", len(out))
 		}
-	case <-time.After(20 * time.Second):
+	case <-time.After(20 * slowdown * time.Second):
 		t.Fatal("an include of a FIFO hangs")
 	}
 }
