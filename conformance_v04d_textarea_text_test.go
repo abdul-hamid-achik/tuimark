@@ -71,6 +71,11 @@ func TestD3Textarea290PasteAndHostValue(t *testing.T) {
 	if got := taEvents(res); len(got) != 1 || got[0] != `typed composer {} "a    b"` {
 		t.Errorf("paste ESC TAB: %q", got)
 	}
+	// The string of the host-value half of the test, pasted: the same text.
+	res = taPlay(t, src, empty, 30, 6, "paste:a\tb\x1bc")
+	if got := taEvents(res); len(got) != 1 || got[0] != `typed composer {} "a    b"` {
+		t.Errorf("paste a TAB b ESC c: %q", got)
+	}
 	res = taPlay(t, in, `{"q": ""}`, 30, 3, "paste:a\x1b\tb")
 	if got := taEvents(res); len(got) != 1 || got[0] != `ch q {} "a"` {
 		t.Errorf("input paste ESC TAB: %q", got)

@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -81,6 +82,50 @@ func TestD3LSPTextarea(t *testing.T) {
 	p = c.nextPublish(c.open(filepath.Join(dir, "pin.tui"), "tuimark", pinned))
 	if len(p.Diagnostics) != 1 || p.Diagnostics[0].Code != "V001" || p.Diagnostics[0].Message != "tag <textarea> (requires a <tui> without version)" {
 		t.Errorf("pinned textarea: %+v", p.Diagnostics)
+	}
+	// Test 274's document: the nine diagnostics, as validate gives them.
+	raw, err := os.ReadFile("../../testdata/v04d/t274/pin.tui")
+	if err != nil {
+		t.Fatal(err)
+	}
+	p = c.nextPublish(c.open(filepath.Join(dir, "pin274.tui"), "tuimark", string(raw)))
+	wantMsgs := []string{
+		`V003 selector "text > span.code": type "span" (requires a <tui> without version)`,
+		`V003 selector "textarea": type "textarea" (requires a <tui> without version)`,
+		`V001 tag <textarea> (requires a <tui> without version)`,
+		`V002 attribute "runs" on <text> (requires a <tui> without version)`,
+		`V003 wrap: value "pre-wrap" (want wrap | nowrap | truncate | truncate-start | truncate-middle) (requires a <tui> without version)`,
+		`V001 unknown tag <span>; use <text>`,
+		`V003 key "delete" (requires a <tui> without version)`,
+		`V003 key "alt+x" (requires a <tui> without version)`,
+		`V003 key "shift+enter" (requires a <tui> without version)`,
+	}
+	var got274 []string
+	for _, d := range p.Diagnostics {
+		got274 = append(got274, d.Code+" "+d.Message)
+	}
+	if strings.Join(got274, "\n") != strings.Join(wantMsgs, "\n") {
+		t.Errorf("test 274 through the server:\n got %q\nwant %q", got274, wantMsgs)
+	}
+	// The other documents of test 285: an element child, a row, a template, B007.
+	for _, tc := range []struct{ body, tail, want string }{
+		{`<textarea id="t"><text>a</text></textarea>`, "", "V013 <textarea> cannot contain elements (found <text>)"},
+		{`<list id="l" each="xs as x" key="x"><item><textarea id="t"/></item></list>`, "", "V001 <textarea> inside a list <item> can never take focus"},
+		{`<col each="xs as x" key="x"><textarea id="t"/></col>`, "", "V001 <textarea> inside an each template"},
+		{`<textarea id="t"/>`, `<keymap><bind keys="n" action="move-next" to="#t"/></keymap>`, `B007 action="move-next": its target #t (from to="#t") is a <textarea>, whose caret and offset only its own keys and the wheel move (want a list, a table, a tabs, or a viewport)`},
+		{`<textarea id="t"/>`, `<keymap><bind keys="n" action="check-all" to="#t"/></keymap>`, `B007 action="check-all": its target #t (from to="#t") is a <textarea>, not a list or table with checked= (the array of checked row keys)`},
+	} {
+		doc := `<tui><screen id="main">` + tc.body + `</screen>` + tc.tail + `</tui>`
+		p = c.nextPublish(c.open(filepath.Join(dir, "d285.tui"), "tuimark", doc))
+		found := false
+		for _, d := range p.Diagnostics {
+			if strings.HasPrefix(d.Code+" "+d.Message, tc.want) {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%q: no %q in %+v", tc.body+tc.tail, tc.want, p.Diagnostics)
+		}
 	}
 	// Hover names the tag and its attributes with their language.
 	hov := "<tui>\n  <screen id=\"main\"><textarea id=\"c\" bind=\"d\" placeholder=\"m\"/></screen>\n</tui>\n"

@@ -92,6 +92,15 @@ func TestTextareaCaretOnOutsideChange(t *testing.T) {
 	if c := caret(); c != 2 {
 		t.Errorf("Batch: caret %d", c)
 	}
+	// An Append is an outside change too.
+	a.HandleKey(Key{Name: "home"})
+	if err := a.Append("d", "zz"); err != nil {
+		t.Fatal(err)
+	}
+	if c := caret(); c != 4 {
+		t.Errorf("Append: caret %d, want 4", c)
+	}
+	_ = a.Set("d", "xy")
 	// The textarea's own edit is not an outside change.
 	a.HandleKey(Key{Name: "home"})
 	a.HandleKey(Key{Name: "x", Rune: 'x'})
