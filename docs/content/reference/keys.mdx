@@ -17,6 +17,7 @@ A `<bind keys="…">` row takes one or more of these tokens, separated by commas
 | `tab` | Tab |
 | `backspace` | Backspace |
 | `space` | Space bar |
+| `delete` | Delete (forward delete) |
 | `up` | Arrow up |
 | `down` | Arrow down |
 | `left` | Arrow left |
@@ -25,8 +26,26 @@ A `<bind keys="…">` row takes one or more of these tokens, separated by commas
 | `end` | End |
 | `pgup` | Page up |
 | `pgdn` | Page down |
+| `f1` | Function key F1 |
+| `f2` | Function key F2 |
+| `f3` | Function key F3 |
+| `f4` | Function key F4 |
+| `f5` | Function key F5 |
+| `f6` | Function key F6 |
+| `f7` | Function key F7 |
+| `f8` | Function key F8 |
+| `f9` | Function key F9 |
+| `f10` | Function key F10 |
+| `f11` | Function key F11 |
+| `f12` | Function key F12 |
 | `shift+tab` | Shift + Tab |
+| `shift+enter` | Shift + Enter |
+| `ctrl+enter` | Ctrl + Enter |
+| `alt+enter` | Alt + Enter |
+| `alt+backspace` | Alt + Backspace |
 
 ## Other tokens
+
+Only in a `<tui>` without `version` (V003 with `(requires a <tui> without version)` in a document that writes it): delete, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, shift+enter, ctrl+enter, alt+enter, alt+backspace, and `alt+` a letter (`a`-`z` or `A`-`Z`) or a digit (`a-z A-Z 0-9`). Not tokens: `alt+` a punctuation character, `alt+space`, `shift+` a letter (write the upper-case letter), `ctrl+` a named key, `alt+` a named key other than `enter` and `backspace`, and anything after `f12`.
 
 Also valid: `ctrl+<a-z>` (`ctrl+i`, `ctrl+j`, and `ctrl+m` arrive as `tab`/`enter` and never match: in a keymap of a `<tui>` without `version` each is V003, so write `tab` or `enter`; a document that writes `version` accepts them, never matching, as before; `play` steps accept them in every document and deliver `tab`/`enter`), and any single printable ASCII character except space (write `space`) and `,` (the `keys=` list separator; a token of `,` binds nothing).
