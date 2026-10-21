@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -47,7 +48,7 @@ func d5Get(t *testing.T, r *hostRig, from int, id, path string) (int, string) {
 	return i, string(v)
 }
 
-// Test 304: ready has messages after diagnostics, and protocol is 1.
+// SPEC 0.4d test 304: ready has messages after diagnostics, and protocol is 1.
 func TestD5aReadyMessages304(t *testing.T) {
 	r := startHost(t, hostOpts{}, "host", d5Msgs, "--data", d5Data)
 	if !r.waitFor(r.screen, "HOSTAPP", 10*slowdown*time.Second) {
@@ -63,7 +64,7 @@ func TestD5aReadyMessages304(t *testing.T) {
 	d5Quit(t, r)
 }
 
-// Test 303 over fd 3: append, batch entries with op, malformed ops.
+// SPEC 0.4d test 303 over fd 3: append, batch entries with op, malformed ops.
 func TestD5aWireAppend303(t *testing.T) {
 	r := startHost(t, hostOpts{}, "host", d5Msgs, "--data", d5Data)
 	if !r.waitFor(r.screen, "HOSTAPP", 10*slowdown*time.Second) {
@@ -79,6 +80,21 @@ func TestD5aWireAppend303(t *testing.T) {
 	var got string
 	i, got = d5Get(t, r, i, "g1", "messages")
 	if got != `[{"text":"hi"}]` {
+		t.Errorf("messages = %s", got)
+	}
+
+	// Streaming: appends one after another, each frame showing every row
+	// so far (the store appends in place, and the list cache must see it).
+	for n := 2; n <= 7; n++ {
+		id := 200 + n
+		r.send(t, map[string]any{"type": "append", "id": id, "path": "messages", "value": map[string]any{"text": fmt.Sprintf("m%d", n)}})
+		i, _ = r.waitMsg(t, i, func(l hostLine) bool { return l.m["type"] == "ack" && l.m["id"] == float64(id) })
+		if !r.waitFor(r.screen, fmt.Sprintf("msg-m%d", n), 5*slowdown*time.Second) {
+			t.Fatalf("the frame never showed row m%d; %s", n, r.describe())
+		}
+	}
+	i, got = d5Get(t, r, i, "g1a", "messages")
+	if got != `[{"text":"hi"},{"text":"m2"},{"text":"m3"},{"text":"m4"},{"text":"m5"},{"text":"m6"},{"text":"m7"}]` {
 		t.Errorf("messages = %s", got)
 	}
 
@@ -166,7 +182,7 @@ func TestD5aWireAppend303(t *testing.T) {
 	d5Quit(t, r)
 }
 
-// Test 301's non-inline line, and the parse of `commit` (§19.1): without
+// SPEC 0.4d test 301's non-inline line, and the parse of `commit` (§19.1): without
 // --inline a well-formed commit is acked with the error of §18.3; a
 // malformed one is an error message, and nothing is printed either way.
 func TestD5aWireCommit301(t *testing.T) {
@@ -218,7 +234,7 @@ func TestD5aWireCommit301(t *testing.T) {
 	d5Quit(t, r)
 }
 
-// Test 313 over `host`: --screen picks the first frame's screen, a get of
+// SPEC 0.4d test 313 over `host`: --screen picks the first frame's screen, a get of
 // @screen says so, and an unknown id is a pre-session error with nothing
 // on fd 4 and the terminal untouched.
 func TestD5aHostScreen313(t *testing.T) {
@@ -277,7 +293,7 @@ func TestD5aHostScreen313(t *testing.T) {
 	}
 }
 
-// Test 313 over `run`: --screen b shows b from the first frame, and a
+// SPEC 0.4d test 313 over `run`: --screen b shows b from the first frame, and a
 // reload keeps it; an unknown id is a pre-session error.
 func TestD5aRunScreen313(t *testing.T) {
 	dir := t.TempDir()

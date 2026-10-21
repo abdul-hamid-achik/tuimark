@@ -35,7 +35,7 @@ func d5PlayJSON(t *testing.T, args ...string) (d5Play, int, string) {
 	return p, code, errw
 }
 
-// Test 303: play --input 'append:messages={"text":"hi"}' and the script
+// SPEC 0.4d test 303: play --input 'append:messages={"text":"hi"}' and the script
 // step {"append": {"path": "messages", "value": {"text": "hi"}}} append.
 func TestD5PlayAppendStep303(t *testing.T) {
 	p, code, errw := d5PlayJSON(t, "--input", `append:messages={"text":"hi"} append:live.text="!"`)
@@ -66,7 +66,7 @@ func TestD5PlayAppendStep303(t *testing.T) {
 	}
 }
 
-// Test 303: a failing append step is a usage error with the reason of
+// SPEC 0.4d test 303: a failing append step is a usage error with the reason of
 // §18.3: step N (INPUT): REASON on stderr, nothing on stdout, exit 1.
 func TestD5PlayAppendErrors303(t *testing.T) {
 	cases := []struct{ input, want string }{
