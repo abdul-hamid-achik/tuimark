@@ -137,10 +137,11 @@ func (s *Server) completeTUI(sn *snapshot, doc *document, off int) *completionLi
 	switch ctx.kind {
 	case tuiTagName:
 		c := newCompleter(doc.text, ctx.start, off)
-		// A <slot/> stands only in a template's body (SPEC v0.4c §15.12).
-		inTemplate := enclosingTemplate(ctx.stack) != nil
+		// A <slot/> stands only in a template's body, or in a fragment,
+		// which an <include> may place in one (SPEC v0.4c §15.12, test 263).
+		slot := enclosingTemplate(ctx.stack) != nil || len(ctx.stack) > 0 && ctx.stack[0].name == "fragment"
 		for _, t := range s.cat.Tags {
-			if t.Since <= ver && (t.Name != "slot" || inTemplate) {
+			if t.Since <= ver && (t.Name != "slot" || slot) {
 				c.add(t.Name, kindClass, sinceDetail(t.Since), "", false)
 			}
 		}

@@ -10,7 +10,7 @@ import (
 // SPEC v0.4c §15.12 "Props and the slot" (decision 181), test 249's
 // language-server part (phase C3): completion of a <use>'s props and of
 // {$name} in a template's body, `slot` as a tag name only in a template's
-// body, hover on a {$name}, a prop attribute, and <slot/>, definition from
+// body or in a fragment, hover on a {$name}, a prop attribute, and <slot/>, definition from
 // either to the name in the template's props, and the diagnostics, which
 // stay validate's.
 
@@ -48,7 +48,8 @@ func TestV04cLSP249(t *testing.T) {
 // after the cursor, is not offered again; the props come after the use's
 // own attributes; {$ in an attribute value of a template's body offers the
 // props too; nothing outside a template, in a pinned document, or on a use
-// whose template is unknown; `slot` only in a template's body.
+// whose template is unknown; `slot` only in a template's body or in a
+// fragment, which an <include> may place in one (test 263).
 func TestV04cLSPCompletion(t *testing.T) {
 	dir := writeTree(t, map[string]string{
 		"parts.tui": "<fragment>\n  <template id=\"far\" props=\"label width\"><text>{$label}</text></template>\n</fragment>\n",
@@ -92,7 +93,13 @@ func TestV04cLSPCompletion(t *testing.T) {
 			want: []string{"slot"}},
 		{name: "no slot in a screen", text: "<tui>\n  <screen id=\"main\"><sl|",
 			absent: []string{"slot"}},
-		{name: "no slot at the top of a fragment", text: "<fragment>\n  <sl|",
+		{name: "slot at the top of a fragment (test 263's card-slot.tui)", text: "<fragment>\n  <sl|\n</fragment>\n",
+			want: []string{"slot"}},
+		{name: "slot deeper in a fragment", text: "<fragment>\n  <box>\n    <|\n  </box>\n</fragment>\n",
+			want: []string{"slot", "text"}},
+		{name: "no slot before a fragment's root", text: "<|",
+			absent: []string{"slot"}},
+		{name: "no slot in a pinned document's template", text: "<tui version=\"3\">\n  <template id=\"t\"><box><sl|",
 			absent: []string{"slot"}},
 		{name: "slot in a fragment's template", text: "<fragment>\n  <template id=\"t\"><sl|",
 			want: []string{"slot"}},
