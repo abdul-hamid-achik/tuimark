@@ -7,6 +7,40 @@ line.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-23
+
+Hyperlinks and images. A `<text href>` paints OSC 8 hyperlinks, and an
+`<img>` element renders images: photo-quality through the kitty graphics
+protocol where the terminal supports it (Ghostty), halfblocks everywhere
+else. Every document that uses neither behaves as in 0.4.6.
+
+### Added
+
+- **Hyperlinks.**
+  - `href` on `<text>` is a current-language attribute; the painted cells
+    carry a link index into a per-frame side table, deduplicated by URL.
+  - The renderer opens and closes `ESC ] 8 ; id ; URL ST` around linked
+    runs like any style transition, after SGR, coalesced per run, and a
+    stable id survives partial diffs.
+  - `Options.NoLinks` strips every OSC 8 byte; `dump --cells` exposes the
+    per-cell `link` index.
+- **Images.**
+  - `<img src alt width height>` is a leaf element. `src` is a path
+    relative to the document or a `data:image/png|jpeg|gif|webp;base64,`
+    URI; the decode registry caches by source and file mtime.
+  - Halfblock rendering: each cell is `▀` with the upper pixel as the
+    foreground and the lower as the background, truecolor, quantized at
+    SGR time for 256/16-color profiles. Natural width is 40 cells clamped
+    to the container; height follows the aspect ratio at a 1:2 cell
+    assumption.
+  - `quality="auto|photo|blocks"` picks the path. Photo mode probes the
+    kitty graphics protocol at startup (query before DA1): with support,
+    truecolor, and no tmux, each `(src, width, height)` is transmitted once
+    as PNG (delete-before-retransmit, base64 chunks) and painted as
+    `U+10EEEE` placeholder cells with digit-wise row/column diacritics and
+    the image id as a truecolor foreground; all images are deleted on exit.
+    Without support, inside tmux, or with `quality="blocks"`, halfblocks.
+
 ## [0.4.6] - 2026-10-21
 
 Terminal and agent features for a `<tui>` without `version` (0.4d). It adds:
