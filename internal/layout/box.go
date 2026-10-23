@@ -7,6 +7,8 @@
 package layout
 
 import (
+	"image"
+
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 )
@@ -64,6 +66,11 @@ type Box struct {
 	// Content (resolved by the host; the members only some kinds of box
 	// use, from Placeholder on, are at the end).
 	Text string // text body, button label, or input value
+
+	// Href is the OSC 8 hyperlink target of a <text href="…">: every run
+	// the box itself paints shares it. The host sets it from the source
+	// attribute; layout measures it as nothing (it paints no cell).
+	Href string
 
 	// Chan is the mark channel of a row of a list with checked and mark
 	// (SPEC §6.14): the columns just inside the row's left border and
@@ -196,6 +203,12 @@ type Box struct {
 	// each run ends in it and what look its span gives it. nil for every
 	// other box, which is all but a few of a frame's.
 	Runs *TextRuns
+	// Img is the decoded image an <img> shows (0.5.0), ImgW/ImgH its pixel
+	// size. The host decodes and caches it (internal/img) before Layout;
+	// layout derives the natural cell size (Engine.measure's img case) and
+	// paint draws it as halfblocks or kitty placeholders.
+	Img        image.Image
+	ImgW, ImgH int
 }
 
 // ResetOutputs zeroes what laying out a frame and the steps after it

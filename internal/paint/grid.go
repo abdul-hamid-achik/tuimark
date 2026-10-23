@@ -6,10 +6,12 @@ package paint
 import (
 	"math"
 	"math/bits"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
+	"github.com/abdul-hamid-achik/tuimark/internal/img"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 	"github.com/abdul-hamid-achik/tuimark/internal/uniwidth"
 )
@@ -39,6 +41,10 @@ type Cell struct {
 	BG    css.Color
 	Attrs uint8
 	Owner string // id of the nearest id-bearing box that painted this cell
+	// Link is the 1-based index into Grid.Links of the hyperlink that
+	// covers this cell (0: none). A continuation carries its lead's Link
+	// (settle), like its style and owner.
+	Link uint16
 }
 
 // Grapheme returns the cluster a lead cell holds, or "" for a continuation.
@@ -83,10 +89,20 @@ type Grid struct {
 	// it; Run uses it to know which cells take the ASCII glyphs and
 	// whether to arm the spinner timer (§26.13).
 	Spinners []SpinnerCell
+	// Links is the frame's hyperlink table: Link-1 of a cell indexes it.
+	// It is filled lazily by linkFor, in paint order, so two frames built
+	// from the same layout give the same ids.
+	Links []GridLink
 }
 
 // SpinnerCell is the position of a visible spinner's glyph (Grid.Spinners).
 type SpinnerCell struct{ X, Y int }
+
+// GridLink is one hyperlink of a frame (Grid.Links): the OSC 8 id and URI
+// the terminal is told when a run of cells covered by it is written. Links
+// are deduped per frame by (ID, URL), so the same href painted by two
+// boxes shares one id.
+type GridLink struct{ ID, URL string }
 
 // NewGrid returns a grid filled with spaces.
 func NewGrid(w, h int) *Grid {
@@ -143,6 +159,49 @@ type painter struct {
 	// spin holds the cell index (y*W+x) of every spinner glyph painted
 	// and not yet written over by a later painter (Grid.Spinners).
 	spin map[int]struct{}
+	// linkIdx maps a sanitized href to its 1-based Grid.Links index
+	// (Grid.Links is filled in paint order).
+	linkIdx map[string]uint16
+}
+
+// linkFor registers href for this frame and returns its 1-based index
+// into Grid.Links (0 when href sanitizes to nothing): the first
+// registration of a href assigns the id "l<n>", n counting from 1 in
+// paint order, and later boxes with the same href share it, so a frame's
+// link ids are stable across frames built from the same layout.
+func (p *painter) linkFor(href string) uint16 {
+	href = SanitizeURI(href)
+	if href == "" {
+		return 0
+	}
+	if i, ok := p.linkIdx[href]; ok {
+		return i
+	}
+	if p.linkIdx == nil {
+		p.linkIdx = map[string]uint16{}
+	}
+	i := uint16(len(p.g.Links) + 1)
+	p.linkIdx[href] = i
+	p.g.Links = append(p.g.Links, GridLink{ID: "l" + strconv.Itoa(int(i)), URL: href})
+	return i
+}
+
+// MaxURI is the longest hyperlink URI kept (SanitizeURI); beyond it a URI
+// is cut, the de-facto browser limit.
+const MaxURI = 2083
+
+// SanitizeURI makes s safe to carry in an OSC 8 hyperlink: printable ASCII
+// only (33-126, so no ';' of the params field either — a ':' stays, it is
+// the scheme separator), everything else dropped, and the result cut at
+// MaxURI bytes. "" means no link.
+func SanitizeURI(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s) && b.Len() < MaxURI; i++ {
+		if c := s[i]; c > 32 && c < 127 && c != ';' {
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
 }
 
 // inside reports whether (x, y) is inside both clip and the grid.
@@ -191,11 +250,12 @@ func (p *painter) put(clip layout.Rect, x, y int, r rune, ext string, w int, st 
 		c.BG = st.bg
 	}
 	c.Attrs = st.attrs
+	c.Link = st.link
 	if st.owner != "" || st.clearOwner {
 		c.Owner = st.owner
 	}
 	if w == 2 {
-		*p.g.At(x+1, y) = Cell{Cont: true, FG: c.FG, BG: c.BG, Attrs: c.Attrs, Owner: c.Owner}
+		*p.g.At(x+1, y) = Cell{Cont: true, FG: c.FG, BG: c.BG, Attrs: c.Attrs, Owner: c.Owner, Link: st.link}
 	}
 }
 
@@ -229,7 +289,7 @@ func (p *painter) settle() {
 		for x := 1; x < len(row); x++ {
 			if row[x].Cont {
 				l := row[x-1]
-				row[x].FG, row[x].BG, row[x].Attrs, row[x].Owner = l.FG, l.BG, l.Attrs, l.Owner
+				row[x].FG, row[x].BG, row[x].Attrs, row[x].Owner, row[x].Link = l.FG, l.BG, l.Attrs, l.Owner, l.Link
 			}
 		}
 	}
@@ -347,6 +407,9 @@ type cellStyle struct {
 	attrs      uint8
 	owner      string
 	clearOwner bool
+	// link is the hyperlink that covers the runs painted in this style
+	// (0: none); it comes from Box.Href.
+	link uint16
 }
 
 func attrsOf(s *css.Style) uint8 {
@@ -481,7 +544,13 @@ func (p *painter) box(b *layout.Box, owner string) {
 		}
 		p.border(b, owner)
 		p.scrollbar(b, owner)
-		p.content(b, base)
+		// A box's own runs share its hyperlink (Box.Href): its content,
+		// not its background, border, or mark, which are no text of its.
+		cs := base
+		if b.Href != "" {
+			cs.link = p.linkFor(b.Href)
+		}
+		p.content(b, cs)
 		p.mark(b, base)
 	}
 	for _, c := range b.Children {
@@ -672,6 +741,8 @@ func (p *painter) content(b *layout.Box, st cellStyle) {
 		p.textarea(b, clip, st) // SPEC v0.4d §12.8 (textarea.go)
 	case "sparkline":
 		p.sparkline(b, clip, st)
+	case "img":
+		p.img(b, clip, st)
 	case "progress":
 		if c.W <= 0 || c.H <= 0 {
 			return
@@ -808,6 +879,38 @@ func (p *painter) sparkline(b *layout.Box, clip layout.Rect, st cellStyle) {
 			case level > 8*r:
 				p.set(clip, x, y, sparkRamp[level-8*r], st)
 			}
+		}
+	}
+}
+
+// img paints a decoded image as halfblocks (v0.4d phase 2b): the source
+// is resized once per (image, W, H) — the cache of internal/img — to a
+// W×2H pixel buffer with ApproxBiLinear, and each cell shows the average
+// color of its upper pixel as the foreground and of its lower pixel as
+// the background of a ▀ (U+2580). The colors are truecolor RGB; a
+// 256/16-color profile quantizes them when its SGR is written
+// (colorCode), nearest in RGB — no dithering. Clip, ownership, and the
+// put rules are the ones every cell takes; a box that did not decode its
+// source paints nothing.
+func (p *painter) img(b *layout.Box, clip layout.Rect, st cellStyle) {
+	c := b.Content
+	if b.Img == nil || c.W <= 0 || c.H <= 0 {
+		return
+	}
+	buf := img.Halfblocks(b.Img, c.W, c.H)
+	if buf == nil {
+		return
+	}
+	vis := p.visible(c, clip)
+	for y := vis.Y; y < vis.Y+vis.H; y++ {
+		py := (y - c.Y) * 2
+		for x := vis.X; x < vis.X+vis.W; x++ {
+			px := x - c.X
+			up, lo := buf.RGBAAt(px, py), buf.RGBAAt(px, py+1)
+			s := st
+			s.fg = css.Color{Kind: css.ColorRGB, R: up.R, G: up.G, B: up.B}
+			s.bg = css.Color{Kind: css.ColorRGB, R: lo.R, G: lo.G, B: lo.B}
+			p.set(clip, x, y, '▀', s)
 		}
 	}
 }

@@ -103,6 +103,9 @@ type Cell struct {
 	Ch string `json:"ch"`
 	ID string `json:"id,omitempty"`
 	W  int    `json:"w,omitempty"`
+	// Link is the cell's 1-based index into the frame's hyperlink table
+	// (a <text href="…">); 0, omitted, when the cell is no part of a link.
+	Link uint16 `json:"link,omitempty"`
 }
 
 // Dump is the frame IR.
@@ -374,10 +377,11 @@ func BuildWith(cols, rows int, root *layout.Box, modals []*layout.Box, g *paint.
 // continuation ("" and its lead's id). (x, y) must be inside g.
 func CellAt(g *paint.Grid, x, y int) Cell {
 	c := g.At(x, y)
-	dc := Cell{X: x, Y: y, Ch: c.Grapheme(), ID: c.Owner}
+	dc := Cell{X: x, Y: y, Ch: c.Grapheme(), ID: c.Owner, Link: c.Link}
 	switch {
 	case c.Cont && x > 0:
 		dc.ID = g.At(x-1, y).Owner // a continuation belongs to its lead
+		dc.Link = g.At(x-1, y).Link
 	case c.Wide:
 		dc.W = 2
 	}

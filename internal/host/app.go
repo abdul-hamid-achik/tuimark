@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
+	"github.com/abdul-hamid-achik/tuimark/internal/img"
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 	"github.com/abdul-hamid-achik/tuimark/internal/parse"
@@ -175,7 +176,12 @@ type App struct {
 	// SPEC v0.3b §11.4), the maximum y offset its last live layout
 	// computed (EXTENT - viewport): "that frame's maximum" the stick rule
 	// compares the offset a frame brings in against.
-	stickMax   map[string]int
+	stickMax map[string]int
+	// images decodes and caches the sources of the document's <img>
+	// elements (v0.4d phase 2b, img.go): one registry per app, so a src
+	// painted by every frame decodes once (a file again when its mtime
+	// or size changed).
+	images     *img.Registry
 	openModals []*ir.Node   // modals open in the last frame, document order (top last)
 	modalStack []modalEntry // modals that took the focus trap, bottom first
 	pending    []Event

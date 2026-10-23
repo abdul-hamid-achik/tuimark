@@ -114,7 +114,7 @@ func TestDidYouMeanHints(t *testing.T) {
 		{"html textarea", "1", `<textarea/>`, "V001", `tag <textarea> (requires a <tui> without version)`, false}, // a tag of the current language since 0.4d
 		{"html template", "1", `<template/>`, "V001", `tag <template> (requires a <tui> without version)`, false},
 		{"html use", "1", `<use/>`, "V001", `tag <use> (requires a <tui> without version)`, false},
-		{"html img", "1", `<img/>`, "V001", "images are not supported", false},
+		{"html img", "1", `<img/>`, "V001", "(requires a <tui> without version)", false},
 		{"attr typo", "1", `<box padd="1"/>`, "V002", `; did you mean "pad"?`, false},
 		{"attr typo gap", "1", `<box gaps="1"/>`, "V002", `; did you mean "gap"?`, false},
 		{"event typo", "1", `<list id="l" each="xs as x" key="x" on:selct="go"><item/></list>`, "V002", `; did you mean "on:select"?`, false},

@@ -40,7 +40,17 @@ func SGRWith(c Cell, p Profile) string {
 }
 
 func sameStyle(a, b Cell) bool {
-	return a.FG == b.FG && a.BG == b.BG && a.Attrs == b.Attrs
+	return a.FG == b.FG && a.BG == b.BG && a.Attrs == b.Attrs && a.Link == b.Link
+}
+
+// osc8Close ends whichever hyperlink is open (OSC 8).
+const osc8Close = "\x1b]8;;\x1b\\"
+
+// osc8Open is the sequence that opens the hyperlink Links[i-1] (OSC 8):
+// the id lets a terminal merge adjacent runs of the same link.
+func (g *Grid) osc8Open(i uint16) string {
+	l := g.Links[i-1]
+	return "\x1b]8;id=" + l.ID + ";" + l.URL + "\x1b\\"
 }
 
 // Options tunes how Diff and Full encode a frame for a terminal. The zero
@@ -59,6 +69,10 @@ type Options struct {
 	// first and the unit after it is written too (see DiffWith). Run sets
 	// NoCHA when the terminal has grapheme cluster mode 2027 on.
 	NoCHA bool
+	// NoLinks turns off OSC 8 hyperlink emission: the zero value (the
+	// default) writes the open/close sequences around linked runs; with
+	// it set, a cell's Link is ignored and no link bytes are emitted.
+	NoLinks bool
 }
 
 // cluster writes the lead cell c at 0-based column x of a w-column row and
@@ -114,6 +128,7 @@ func FullWith(g *Grid, o Options) string {
 	b.WriteString(AutowrapOff)
 	for y := 0; y < g.H; y++ {
 		var last *Cell
+		open := uint16(0) // the hyperlink the terminal has open on this line
 		for x := 0; x < g.W; {
 			c := g.At(x, y)
 			if c.Cont {
@@ -123,8 +138,20 @@ func FullWith(g *Grid, o Options) string {
 			if last == nil || !sameStyle(*last, *c) {
 				b.WriteString(SGRWith(*c, o.Profile))
 			}
+			if !o.NoLinks && c.Link != open {
+				if open != 0 {
+					b.WriteString(osc8Close)
+				}
+				if c.Link != 0 {
+					b.WriteString(g.osc8Open(c.Link))
+				}
+				open = c.Link
+			}
 			x, _ = o.cluster(&b, c, x, g.W, false)
 			last = c
+		}
+		if open != 0 {
+			b.WriteString(osc8Close)
 		}
 		b.WriteString("\x1b[0m\n")
 	}
@@ -166,6 +193,7 @@ func DiffWith(prev, next *Grid, o Options) string {
 		return 1
 	}
 	var style *Cell
+	open := uint16(0) // the hyperlink the terminal has open
 	for y := 0; y < next.H; y++ {
 		x := 0
 		for x < next.W {
@@ -185,9 +213,21 @@ func DiffWith(prev, next *Grid, o Options) string {
 					cc := *c
 					style = &cc
 				}
+				if !o.NoLinks && c.Link != open {
+					if open != 0 {
+						b.WriteString(osc8Close)
+					}
+					if c.Link != 0 {
+						b.WriteString(next.osc8Open(c.Link))
+					}
+					open = c.Link
+				}
 				x, force = o.cluster(&b, c, x, next.W, !full)
 			}
 		}
+	}
+	if open != 0 {
+		b.WriteString(osc8Close)
 	}
 	b.WriteString("\x1b[0m")
 	if next.CursorOn {

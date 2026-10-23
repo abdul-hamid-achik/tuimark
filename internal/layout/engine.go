@@ -1077,6 +1077,12 @@ func (e *Engine) shrinkable(b *Box, horizontal bool) bool {
 		// in the current language (v0.4b).
 		return e.hintsShrinkable(b, horizontal)
 	}
+	if b.Kind == "img" {
+		// An <img> shrinks to the width its container offers (its
+		// natural width, imgNaturalW, clamps there), never down: its
+		// natural height derives from its width (v0.4d phase 2b).
+		return horizontal
+	}
 	if !b.IsContainer() {
 		return false
 	}
@@ -1520,6 +1526,8 @@ func (e *Engine) measure(b *Box, horizontal bool, avail int) int {
 		v = e.tabsIntrinsic(b, horizontal, max(0, inner))
 	case "hints":
 		v = hintsIntrinsic(b, horizontal, e.V3)
+	case "img":
+		v = e.imgIntrinsic(b, horizontal, avail)
 	default:
 		if b.IsContainer() {
 			inner := avail - fv

@@ -290,11 +290,16 @@ var TagAttrsCurrent = map[string]map[string]bool{
 	"select":   selectAttrs(),         // SPEC v0.4b §6.17 (forms.go)
 	"list":     only("single"),        // SPEC v0.4b §6.14.1
 	"table":    only("single"),        // SPEC v0.4b §6.14.1
-	"text":     only("runs"),          // SPEC v0.4d §6.20.1 (runs.go)
+	"text":     with("runs", "href"),  // runs: SPEC v0.4d §6.20.1; href: OSC 8
 	// SPEC v0.4d §6.15, §6.19.1: the common set C, plus bind, placeholder,
 	// on:change, and on:submit. No secret: a hidden text of several lines
 	// has no use (decision 225).
 	"textarea": with("bind", "placeholder", "on:submit", "on:change"),
+	// 0.5.0: an image. src is required (checkNode), alt its literal
+	// description; width/height are the common size attributes, plain cell
+	// counts on an img (an image has no natural size in cells, so the
+	// omitted one is derived, imgIntrinsic).
+	"img": with("src", "alt"),
 }
 
 // tableItemAttrs are the attributes of a table's row template <item>
@@ -346,7 +351,7 @@ func attrAllowed(tag, parent, name string) (ok bool, need int) {
 var needsID = map[string]bool{"list": true, "input": true, "button": true, "modal": true, "checkbox": true, "select": true, "textarea": true}
 
 // Kinds that may not contain element children.
-var leafKinds = map[string]bool{"text": true, "input": true, "textarea": true, "button": true, "progress": true, "rule": true, "spacer": true, "style": true, "bind": true}
+var leafKinds = map[string]bool{"text": true, "input": true, "textarea": true, "button": true, "progress": true, "rule": true, "spacer": true, "style": true, "bind": true, "img": true}
 
 type builder struct {
 	doc  *Document
@@ -849,8 +854,9 @@ var htmlTagHints = map[string]string{
 	"radio":     "a <list> with on:select picks one row",
 	"component": "Tuimark has no components or includes; only <style src> loads another file",
 	"import":    "Tuimark has no components or includes; only <style src> loads another file",
-	"img":       "images are not supported",
-	"image":     "images are not supported",
+	// ("img" is a tag of the current language since v0.4d phase 2b, so
+	// it no longer carries an html hint.)
+	"image": "images are not supported; the current language's tag is <img>",
 }
 
 // didYouMean formats the "; did you mean X?" suffix of a V001/V002/V003
@@ -1416,6 +1422,12 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 			b.attrErr(n, a, "V003", "%s: %v", name, err)
 			return
 		}
+		if tag == "img" && !isNonNegInt(val) {
+			// An image has no natural size in cells, so an <img>'s
+			// width/height are plain cell counts (v0.4d phase 2b).
+			b.attrErr(n, a, "V003", "img %s=%q: want a cell count (a non-negative integer)", name, val)
+			return
+		}
 		n.Hints = append(n.Hints, ir.Prop{Name: name, Value: val, Line: a.Line, Col: a.Col, Attr: attrText(a)})
 	case "gap":
 		if err := css.CheckDecl("gap", val); err != nil {
@@ -1574,6 +1586,10 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		case ir.HasInterp(clean):
 			b.attrErr(n, a, "V003", "%s: {path} is only allowed in <text>, title, and placeholder", name)
 		}
+	case "href":
+		// An OSC 8 hyperlink target on a <text> (TagAttrsCurrent): a
+		// literal URI, sanitized like text (V007), resolved nowhere.
+		n.Attrs[name] = b.sanitize(n, a.Line, a.Col, a.Value)
 	case "axis":
 		ok := val == "x" || val == "y" || (tag == "scroll" && val == "both")
 		if !ok {
@@ -1658,7 +1674,18 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 		if val != "bottom" {
 			b.attrErr(n, a, "V003", "stick=%q: want bottom", val)
 		}
-	case "keys", "action", "when", "to", "src":
+	case "src":
+		// An <img>'s source (v0.4d phase 2b): a filesystem path relative
+		// to the document or a data:image/…;base64,… URI, a literal,
+		// sanitized like text (V007), resolved and decoded by the host
+		// (internal/img). A <style>/<include> src keeps its own loader.
+		if tag == "img" {
+			n.Attrs[name] = b.sanitize(n, a.Line, a.Col, val)
+		}
+	case "alt":
+		// An <img>'s literal description, sanitized like text (V007).
+		n.Attrs[name] = b.sanitize(n, a.Line, a.Col, val)
+	case "keys", "action", "when", "to":
 		// validated with the keymap / stylesheet loader
 	}
 }
@@ -2109,6 +2136,16 @@ func (b *builder) checkNode(n *ir.Node) {
 	if n.Tag == "rule" || n.Tag == "spacer" {
 		if n.Text != "" {
 			b.errN(n, "V013", "<%s> takes no content", n.Tag)
+		}
+	}
+	if n.Tag == "img" {
+		// v0.4d phase 2b: self-closing, no content, and src is the one
+		// required attribute.
+		if n.Text != "" {
+			b.errN(n, "V013", "<img> takes no content")
+		}
+		if !b.wrote(n, "src") {
+			b.errN(n, "V003", "<img> needs src=\"…\": the image it shows (a path or a data:image/…;base64,… URI)")
 		}
 	}
 }

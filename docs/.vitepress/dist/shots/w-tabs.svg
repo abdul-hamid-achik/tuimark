@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="450.4" height="68" viewBox="0 0 450.4 68" role="img" aria-label="a tab strip with the active tab marked and highlighted">
+<title>a tab strip with the active tab marked and highlighted</title>
+<rect width="450.4" height="68" rx="6" fill="#0d1117"/>
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+</g>
+<g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">1</text>
+<text x="42.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">overview</text>
+<text x="138.8" y="29" textLength="19.2" lengthAdjust="spacing" fill="#39c5cf" font-weight="700">▸2</text>
+<text x="167.6" y="29" textLength="86.4" lengthAdjust="spacing" fill="#39c5cf" font-weight="700">processes</text>
+<text x="282.8" y="29" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">3</text>
+<text x="302" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">settings</text>
+<text x="14" y="49" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
+<text x="52.4" y="49" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">process</text>
+<text x="129.2" y="49" textLength="48" lengthAdjust="spacing" fill="#e6edf3">table</text>
+</g>
+</svg>

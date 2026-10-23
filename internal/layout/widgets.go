@@ -2,6 +2,7 @@ package layout
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/ir"
 )
@@ -28,6 +29,36 @@ func SparkShown(b *Box) []float64 {
 		out = append(out, b.Series[n-w+j])
 	}
 	return out
+}
+
+// imgNaturalW is the natural width of an <img> that writes no width=, in
+// cells (v0.4d phase 2b). The engine cannot know the terminal's cell
+// pixel geometry, so it assumes the usual terminal cell aspect, a cell
+// twice as tall as wide, and a natural width of 40 cells, clamped to the
+// width the container offers (the img case of shrinkable): the natural
+// height then keeps the image's pixel aspect, round(w·imgH/imgW / 2).
+const imgNaturalW = 40
+
+// imgIntrinsic is the natural size of an <img> (v0.4d phase 2b). With
+// width=/height= written they are plain cell counts and this is not
+// asked (crossSize reads the spec); only an omitted axis derives here.
+// avail is the content size on the other axis: measuring down it is the
+// width the container offers. An image that did not decode (ImgW 0) has
+// no natural size and the box collapses.
+func (e *Engine) imgIntrinsic(b *Box, horizontal bool, avail int) int {
+	if b.ImgW <= 0 || b.ImgH <= 0 {
+		return 0
+	}
+	if horizontal {
+		return imgNaturalW
+	}
+	w := imgNaturalW
+	if s := sizeSpec(b, true); s.Kind == ir.Cell {
+		w = cells(s.N)
+	} else if avail > 0 {
+		w = min(w, avail)
+	}
+	return int(math.Round(float64(w) * float64(b.ImgH) / float64(b.ImgW) / 2))
 }
 
 // tabParts returns the label boxes of tabs t (its children with
