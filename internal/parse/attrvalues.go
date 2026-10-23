@@ -35,6 +35,7 @@ var attrKeywords = map[string][]AttrKeyword{
 	"version":       {{"1", 1}, {"2", 2}, {"3", 3}},
 	"scope":         {{"active", 2}, {"all", 2}},
 	"stick":         {{"bottom", 3}},
+	"img.quality":   {{"auto", 4}, {"photo", 4}, {"blocks", 4}},
 }
 
 func cssKeywords(prop string) []AttrKeyword {

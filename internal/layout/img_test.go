@@ -17,7 +17,7 @@ func imgBox(decls string, pw, ph int) *Box {
 // runCurrent styles with the current language's built-in sheet (an <img>
 // exists only there, so its width/height: auto rule does) and lays out
 // root.
-func runCurrent(t *testing.T, root *Box, cols, rows int) *Engine {
+func runImgCurrent(t *testing.T, root *Box, cols, rows int) *Engine {
 	t.Helper()
 	c := css.NewCascadeLang(nil, css.Env{Cols: cols, Rows: rows}, ir.LangCurrent)
 	styleTree(c, root, nil)
@@ -52,7 +52,7 @@ func TestImgNaturalSize(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			root := n("screen", "", n("col", "align: start", imgBox(c.decls, c.pw, c.ph)))
-			runCurrent(t, root, c.cols, 50)
+			runImgCurrent(t, root, c.cols, 50)
 			b := root.Children[0].Children[0]
 			if b.W != c.wantW || b.H != c.wantH {
 				t.Fatalf("img %dx%d, want %dx%d", b.W, b.H, c.wantW, c.wantH)
@@ -65,7 +65,7 @@ func TestImgNaturalSize(t *testing.T) {
 // box collapses to nothing instead of guessing.
 func TestImgUndecodedCollapses(t *testing.T) {
 	root := n("screen", "", n("col", "align: start", imgBox("", 0, 0)))
-	runCurrent(t, root, 80, 24)
+	runImgCurrent(t, root, 80, 24)
 	if b := root.Children[0].Children[0]; b.W != 0 || b.H != 0 {
 		t.Fatalf("undecoded img %dx%d, want 0x0", b.W, b.H)
 	}

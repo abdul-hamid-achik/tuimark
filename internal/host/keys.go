@@ -109,6 +109,9 @@ type reply struct {
 	// §26.2. osc11 marks such a reply.
 	osc11 bool
 	bg    string
+	// kittyGfx: an APC _G answer naming i=31, the reply to the probe's
+	// kitty graphics query (v0.4d phase 3, caps.go).
+	kittyGfx bool
 }
 
 // decoder is the stateful input decoder behind Run's loop. A read may cut
@@ -646,7 +649,7 @@ func scanString(p []byte, osc bool) unit {
 			if osc {
 				return oscUnit(p[2:k], k+2)
 			}
-			return unit{n: k + 2}
+			return apcUnit(p, k+2)
 		}
 	}
 	if len(p) >= maxStringSeq {
@@ -657,6 +660,19 @@ func scanString(p []byte, osc bool) unit {
 		return unit{n: maxStringSeq, discard: mode}
 	}
 	return unit{}
+}
+
+// apcUnit is a complete APC (p starts ESC _, p[:n] holds it through its
+// ST): an answer of the kitty graphics protocol naming the probe's query
+// id (i=31) is a reply the probe reads (v0.4d phase 3, SPEC v0.2 §26.2,
+// §26.8); any other APC produces nothing. Either way it never produces
+// a key.
+func apcUnit(p []byte, n int) unit {
+	body := p[2 : n-2]
+	if bytes.HasPrefix(body, []byte("Gi=31;")) {
+		return unit{kind: unitReply, n: n, reply: reply{kittyGfx: true}}
+	}
+	return unit{n: n}
 }
 
 // oscUnit is a complete OSC whose body (between ESC ] and its terminator)

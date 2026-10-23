@@ -129,7 +129,7 @@ func TestAttrKeywordTablesNameRealAttributes(t *testing.T) {
 func sortedTags() []string {
 	seen := map[string]bool{}
 	var out []string
-	for _, m := range []map[string]map[string]bool{TagAttrs, TagAttrsV2, TagAttrsV3} {
+	for _, m := range []map[string]map[string]bool{TagAttrs, TagAttrsV2, TagAttrsV3, TagAttrsCurrent} {
 		for tag := range m {
 			if !seen[tag] {
 				seen[tag] = true

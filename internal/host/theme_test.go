@@ -125,9 +125,9 @@ func TestProbePlanWithTheme(t *testing.T) {
 		probe      bool
 		queries    string
 	}{
-		{"auto", plain, true, true, true, queryBackground + "\x1b[?2026$p\x1b[?2027$p\x1b[c"},
-		{"no auto", plain, true, false, true, "\x1b[?2026$p\x1b[?2027$p\x1b[c"},
-		{"skip rule, auto", apple, true, true, true, queryBackground + "\x1b[c"},
+		{"auto", plain, true, true, true, queryBackground + queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[c"},
+		{"no auto", plain, true, false, true, queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[c"},
+		{"skip rule, auto", apple, true, true, true, queryBackground + queryKittyGfx + "\x1b[c"},
 		{"skip rule, no auto", apple, true, false, false, ""},
 		{"dumb", dumb, true, true, false, ""},
 		{"not a tty", plain, false, true, false, ""},
@@ -202,7 +202,7 @@ func TestProbeResolvesAutoTheme(t *testing.T) {
 		{"\x1b]11;rgba:1e1e/1e1e/2e2e/ffff\a", darkBG, lightBG},
 	} {
 		r := startSession(t, autoDoc, &termSession{probe: true, themeQuery: true, wait: 10 * time.Second})
-		want := enterScreen + queryBackground + "\x1b[?2026$p\x1b[?2027$p\x1b[c"
+		want := enterScreen + queryBackground + queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[c"
 		r.waitOut(t, want)
 		time.Sleep(20 * time.Millisecond)
 		if got := r.out.String(); got != want {

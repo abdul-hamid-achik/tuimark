@@ -43,6 +43,16 @@ const (
 	// (SPEC v0.2b §26.2); only when the theme is resolved from the
 	// terminal (theme="auto").
 	queryBackground = "\x1b]11;?\a"
+	// queryKittyGfx probes the kitty graphics protocol (v0.4d phase 3):
+	// a transmission query (a=q) for a 1×1 direct RGB image, id 31; a
+	// terminal that has the protocol answers with an APC _G reply naming
+	// i=31 before the probe's DA1 sentinel ends the wait. The answer is
+	// routed to termCaps.kittyGfx by the input decoder (keys.go).
+	queryKittyGfx = "\x1b_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\"
+	// kittyDeleteAll deletes every image the session transmitted
+	// (a=d,d=a), written before the session leaves the alternate screen
+	// (v0.4d phase 3).
+	kittyDeleteAll = "\x1b_Ga=d,d=a\x1b\\"
 	// mouseModesOn and mouseModesOff turn mode 1000 (presses, releases,
 	// and the wheel) and mode 1006 (SGR encoding) on and off together
 	// (SPEC v0.2b §26.11). Mode 1003 (motion) is never written.
@@ -214,7 +224,11 @@ type termCaps struct {
 	sync     int    // Ps of the DECRPM reply for mode 2026 (0: none)
 	grapheme int    // Ps of the DECRPM reply for mode 2027 (0: none)
 	bg       string // the background of the first OSC 11 reply: dark, light, or "" (none)
-	done     bool   // the DA1 sentinel arrived: later replies are ignored
+	// kittyGfx: an APC _G answer to the graphics query arrived before the
+	// DA1 sentinel (v0.4d phase 3) — the terminal has the kitty graphics
+	// protocol, so photo-mode <img> rendering is possible.
+	kittyGfx bool
+	done     bool // the DA1 sentinel arrived: later replies are ignored
 }
 
 // record takes one reply; it reports whether the probe is over (the DA1
@@ -225,6 +239,8 @@ func (c *termCaps) record(r reply) bool {
 		return true
 	}
 	switch {
+	case r.kittyGfx:
+		c.kittyGfx = true
 	case r.da1:
 		c.done = true
 	case r.kitty:
@@ -309,21 +325,34 @@ type termSession struct {
 	fed func()
 	// noPoll switches the 250 ms size poll off (tests only).
 	noPoll bool
+	// tmux: the session runs inside tmux (TERM starts with tmux or TMUX
+	// is set), where the kitty graphics protocol is unreliable (Ghostty
+	// bug #13056), so photo-mode <img> degrades to halfblocks (v0.4d
+	// phase 3). Set by run from the environment.
+	tmux bool
 
 	mu       sync.Mutex
 	grapheme bool   // mode 2027 was turned on: leaving turns it off
 	mouse    bool   // the mouse modes are on: leaving turns them off
 	kbPop    string // the sequence that undoes the keyboard push (kittyPop or mokPop), "" with none: leaving writes it right after the mouse modes
+	// kittyImgs: the session transmitted a kitty image, so leaving
+	// deletes every image first (0.5.0). Recorded before the
+	// transmission is written.
+	kittyImgs bool
 }
 
-// leave is the leave sequence: mode 2027 off when the session turned it
-// on, the mouse modes off while they are on (SPEC v0.2b §26.1), then
-// leaveScreen. The loop's own way out and the signal restore
-// path both write it.
+// leave is the leave sequence: every kitty image deleted when the session
+// transmitted one (v0.4d phase 3, before the alternate screen is left),
+// mode 2027 off when the session turned it on, the mouse modes off while
+// they are on (SPEC v0.2b §26.1), then leaveScreen. The loop's own way
+// out and the signal restore path both write it.
 func (s *termSession) leave() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	out := ""
+	if s.kittyImgs {
+		out += kittyDeleteAll
+	}
 	if s.inl != nil {
 		// SPEC v0.4d §26.15.3: the commits accepted before the end are
 		// printed, then the region is erased from its first row.
@@ -372,6 +401,15 @@ func (s *termSession) keyboardPush(c termCaps) (seq, name string) {
 	return mokPush, KeyboardModifyOtherKeys
 }
 
+// setKittyImgs records that the session is transmitting a kitty image.
+// It is recorded before the transmission is written, so a leave that
+// races with the write still deletes the images.
+func (s *termSession) setKittyImgs() {
+	s.mu.Lock()
+	s.kittyImgs = true
+	s.mu.Unlock()
+}
+
 // mouseChange returns the sequence that brings the terminal's mouse
 // modes to on, or "" when they are already there, and records the new
 // state (SPEC v0.2b §26.11). It is recorded before the sequence is
@@ -399,12 +437,14 @@ func (s *termSession) setGrapheme() {
 }
 
 // queries is the probe's write, in one string (SPEC v0.2b §26.2): OSC 11
-// when the theme is resolved from the terminal, then the DECRQM queries
-// unless the skip rule leaves them out, then the DA1 sentinel.
+// when the theme is resolved from the terminal, then the kitty graphics
+// query (v0.4d phase 3: its APC _G answer is read alongside the rest),
+// then the DECRQM queries unless the skip rule leaves them out, then
+// the DA1 sentinel.
 func (s *termSession) queries() string {
-	q := ""
+	q := queryKittyGfx
 	if s.themeQuery {
-		q = queryBackground
+		q = queryBackground + q
 	}
 	if s.skipDECRQM {
 		return q + s.kittyQuery() + queryDA1

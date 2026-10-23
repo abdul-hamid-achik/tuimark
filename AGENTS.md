@@ -114,6 +114,7 @@ Only in a `<tui>` without `version` (V001 or V002 with ` (requires a <tui> witho
 
 - `checkbox`: bind, border, class, disabled, focusable, gap, height, hidden, id, if, label, on:change, on:focus, pad, style, title, width
 - `fragment`: (no attributes)
+- `img`: alt, border, class, disabled, focusable, gap, height, hidden, id, if, on:click, on:focus, pad, quality, src, style, title, width
 - `include`: src
 - `list`: single
 - `progress`: indeterminate
@@ -121,7 +122,7 @@ Only in a `<tui>` without `version` (V001 or V002 with ` (requires a <tui> witho
 - `slot`: (no attributes)
 - `table`: single
 - `template`: id, props
-- `text`: runs
+- `text`: border, class, disabled, focusable, gap, height, hidden, href, id, if, on:click, on:focus, pad, runs, style, title, width
 - `textarea`: bind, border, class, disabled, focusable, gap, height, hidden, id, if, on:change, on:click, on:focus, on:submit, pad, placeholder, style, title, width
 - `use`: class, hidden, id, if, template, with
 

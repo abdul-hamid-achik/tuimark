@@ -181,7 +181,14 @@ type App struct {
 	// elements (v0.4d phase 2b, img.go): one registry per app, so a src
 	// painted by every frame decodes once (a file again when its mtime
 	// or size changed).
-	images     *img.Registry
+	images *img.Registry
+	// imgPhoto is the session's resolved image quality (v0.4d phase 3):
+	// true when the probe found the kitty graphics protocol on a
+	// truecolor terminal outside tmux, so an <img> without
+	// quality="blocks" paints kitty unicode placeholders instead of
+	// halfblocks (kitty.go). The session sets it before the first frame;
+	// every headless render leaves it false.
+	imgPhoto   bool
 	openModals []*ir.Node   // modals open in the last frame, document order (top last)
 	modalStack []modalEntry // modals that took the focus trap, bottom first
 	pending    []Event

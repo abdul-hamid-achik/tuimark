@@ -124,3 +124,29 @@ func TestImgNeedsCurrentLanguage(t *testing.T) {
 		t.Fatalf("diags = %v, want V002", doc.Diags)
 	}
 }
+
+// An <img>'s quality is auto (the default), photo, or blocks (v0.4d
+// phase 3); any other value is V003, and no other tag takes it.
+func TestImgQuality(t *testing.T) {
+	for _, val := range []string{"auto", "photo", "blocks"} {
+		doc := imgDiags(t, `<tui><screen><img src="a.png" quality="`+val+`"/></screen></tui>`)
+		if doc.Diags.HasErrors() {
+			t.Fatalf("quality=%q: %v", val, doc.Diags)
+		}
+		if got := findImg(doc.Root).Attrs["quality"]; got != val {
+			t.Errorf("quality=%q parsed as %q", val, got)
+		}
+	}
+	doc := imgDiags(t, `<tui><screen><img src="a.png" quality="high"/></screen></tui>`)
+	if !doc.Diags.HasErrors() || doc.Diags[0].Code != "V003" {
+		t.Fatalf("quality=high: diags = %v, want V003", doc.Diags)
+	}
+	if !strings.Contains(doc.Diags[0].Msg, "auto, photo, or blocks") {
+		t.Errorf("V003 message = %q", doc.Diags[0].Msg)
+	}
+	// The keyword table of `tuimark catalog` names the same three.
+	if kws := parse.AttrKeywords("img", "quality"); len(kws) != 3 ||
+		kws[0] != (parse.AttrKeyword{"auto", 4}) || kws[1] != (parse.AttrKeyword{"photo", 4}) || kws[2] != (parse.AttrKeyword{"blocks", 4}) {
+		t.Errorf("img.quality keywords = %+v", kws)
+	}
+}

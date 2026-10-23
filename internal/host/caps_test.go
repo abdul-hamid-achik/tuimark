@@ -251,9 +251,9 @@ var chaRe = regexp.MustCompile(`微\x1b\[\d+G`)
 // lifecycle events).
 func TestProbeWithReplies(t *testing.T) {
 	r := startSession(t, probeDoc, &termSession{probe: true, wait: 10 * time.Second})
-	r.waitOut(t, "\x1b[?2026$p\x1b[?2027$p\x1b[c")
+	r.waitOut(t, queryKittyGfx+"\x1b[?2026$p\x1b[?2027$p\x1b[c")
 	r.send(t, "ab") // typed while the probe waits
-	if got, want := r.out.String(), enterScreen+"\x1b[?2026$p\x1b[?2027$p\x1b[c"; got != want {
+	if got, want := r.out.String(), enterScreen+queryKittyGfx+"\x1b[?2026$p\x1b[?2027$p\x1b[c"; got != want {
 		t.Fatalf("before the replies the session wrote %q, want %q", got, want)
 	}
 	r.send(t, "\x1b[?2026;2$y\x1b[?2027;2$y\x1b[?64;1;2;22c")
@@ -268,7 +268,7 @@ func TestProbeWithReplies(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := r.out.String()
-	afterProbe := strings.TrimPrefix(out, enterScreen+"\x1b[?2026$p\x1b[?2027$p\x1b[c")
+	afterProbe := strings.TrimPrefix(out, enterScreen+queryKittyGfx+"\x1b[?2026$p\x1b[?2027$p\x1b[c")
 	if !strings.HasPrefix(afterProbe, graphemeOn+syncBegin+"\x1b[0m\x1b[2J") {
 		t.Errorf("mode 2027 and a synchronized first frame should follow the probe: %q", afterProbe[:min(60, len(afterProbe))])
 	}

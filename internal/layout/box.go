@@ -209,6 +209,15 @@ type Box struct {
 	// paint draws it as halfblocks or kitty placeholders.
 	Img        image.Image
 	ImgW, ImgH int
+	// ImgSrc is the <img>'s src as written (v0.4d phase 3), the identity
+	// of its transmitted kitty image; ImgPhoto is the resolved quality:
+	// with it set paint draws kitty unicode placeholders instead of
+	// halfblocks. The host's session sets it (the probe found the kitty
+	// graphics protocol on a truecolor, non-tmux terminal, and the
+	// document did not force quality="blocks"); headless renders never
+	// set it.
+	ImgSrc   string
+	ImgPhoto bool
 }
 
 // ResetOutputs zeroes what laying out a frame and the steps after it

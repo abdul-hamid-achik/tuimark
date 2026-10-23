@@ -74,7 +74,7 @@ func TestSessionHostStartHook(t *testing.T) {
 	if c.cols != 20 || c.rows != 6 || c.theme != "light" {
 		t.Errorf("Start(%d, %d, %q), want (20, 6, \"light\")", c.cols, c.rows, c.theme)
 	}
-	if want := enterScreen + queryBackground + "\x1b[?2026$p\x1b[?2027$p\x1b[c"; c.out != want {
+	if want := enterScreen + queryBackground + queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[c"; c.out != want {
 		t.Errorf("at Start the session had written %q, want the enter sequence and the probe only (no frame): %q", c.out, want)
 	}
 	r.waitOut(t, "AUTO")

@@ -68,7 +68,7 @@ func TestRunPtyV2(t *testing.T) {
 		}
 		r.write(t, "\x1b]11;rgb:ffff/ffff/ffff\x1b\\\x1b[?2026;2$y\x1b[?2027;2$y\x1b[?64;1;22c")
 		s := finish(t, r)
-		probe := enterScreen + queryBackground + "\x1b[?2026$p\x1b[?2027$p\x1b[c"
+		probe := enterScreen + queryBackground + queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[c"
 		if !strings.HasPrefix(s, probe) {
 			t.Errorf("start = %q, want %q", s[:min(len(s), len(probe)+8)], probe)
 		}
@@ -105,7 +105,7 @@ func TestRunPtyV2(t *testing.T) {
 			t.Fatalf("no probe; %s", r.describe())
 		}
 		s := finish(t, r) // no reply: the cap, then COLORFGBG (dark)
-		if !strings.HasPrefix(s, enterScreen+queryBackground+"\x1b[c") || strings.Contains(s, "$p") {
+		if !strings.HasPrefix(s, enterScreen+queryBackground+queryKittyGfx+"\x1b[c") || strings.Contains(s, "$p") {
 			t.Errorf("start = %q", s[:min(len(s), 60)])
 		}
 		if !strings.Contains(s, darkBG) {

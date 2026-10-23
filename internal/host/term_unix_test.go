@@ -560,7 +560,7 @@ func TestRunPty(t *testing.T) {
 		r.slave.Close()
 		time.Sleep(50 * time.Millisecond)
 		s := r.screen.String()
-		enter := "\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[H\x1b[2J\x1b[?2004h\x1b[?2026$p\x1b[?2027$p\x1b[c\x1b[?2027h\x1b[?2026h"
+		enter := "\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[H\x1b[2J\x1b[?2004h" + queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[c\x1b[?2027h\x1b[?2026h"
 		if !strings.HasPrefix(s, enter) {
 			t.Errorf("start = %q, want %q", s[:min(len(s), len(enter)+10)], enter)
 		}

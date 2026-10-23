@@ -89,6 +89,12 @@ type Grid struct {
 	// it; Run uses it to know which cells take the ASCII glyphs and
 	// whether to arm the spinner timer (§26.13).
 	Spinners []SpinnerCell
+	// Imgs is the side table of the frame's photo-mode images (v0.4d
+	// phase 3): each <img> painted as kitty unicode placeholders, deduped
+	// by id (the id of a (src, W, H) size class). It is not part of the
+	// cells, so the frame diff ignores it; Run reads it to transmit each
+	// image once before the frame diff that first shows it.
+	Imgs []GridImage
 	// Links is the frame's hyperlink table: Link-1 of a cell indexes it.
 	// It is filled lazily by linkFor, in paint order, so two frames built
 	// from the same layout give the same ids.
@@ -103,6 +109,16 @@ type SpinnerCell struct{ X, Y int }
 // are deduped per frame by (ID, URL), so the same href painted by two
 // boxes shares one id.
 type GridLink struct{ ID, URL string }
+
+// GridImage is one photo-mode <img> of a frame (Grid.Imgs, v0.4d phase
+// 3): the id its placeholder cells carry in their foreground color, the
+// source that id names, and its cell size — what Run transmits once as a
+// kitty virtual placement (a=t,i=ID,U=1,c=W,r=H,q=2).
+type GridImage struct {
+	ID   int32
+	Src  string
+	W, H int
+}
 
 // NewGrid returns a grid filled with spaces.
 func NewGrid(w, h int) *Grid {
@@ -895,6 +911,12 @@ func (p *painter) sparkline(b *layout.Box, clip layout.Rect, st cellStyle) {
 func (p *painter) img(b *layout.Box, clip layout.Rect, st cellStyle) {
 	c := b.Content
 	if b.Img == nil || c.W <= 0 || c.H <= 0 {
+		return
+	}
+	// Photo mode (v0.4d phase 3): kitty unicode placeholders instead of
+	// halfblocks, when the session resolved the quality so.
+	if b.ImgPhoto && b.ImgSrc != "" {
+		p.imgPlaceholders(b, clip, st)
 		return
 	}
 	buf := img.Halfblocks(b.Img, c.W, c.H)

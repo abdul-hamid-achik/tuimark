@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -290,6 +291,10 @@ func (a *App) run(ctx context.Context, w io.Writer, hooks HostHooks, opts RunOpt
 	sess.themeQuery = themeQuery && sess.probe
 	sess.kbQuery = modern && sess.probe
 	defer a.overrideTheme(cfg.theme)()
+	// tmux: the kitty graphics protocol is unreliable inside it (Ghostty
+	// bug #13056), so photo-mode <img> degrades to halfblocks (v0.4d
+	// phase 3).
+	sess.tmux = os.Getenv("TMUX") != "" || strings.HasPrefix(os.Getenv("TERM"), "tmux")
 	// Catch the signals before raw mode; release them only after the
 	// terminal is restored (defers run last-in, first-out).
 	caught, release := stopSignals()
@@ -802,6 +807,15 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	}
 	opts := paint.Options{Profile: sess.profile, NoCHA: caps.graphemeActive()}
 	syncFrames := sess.syncFrames(caps)
+	// Photo-mode images (v0.4d phase 3): the probe found the kitty
+	// graphics protocol on a truecolor terminal outside tmux, so an
+	// <img> without quality="blocks" paints placeholders (emit writes
+	// each image's one-time transmission before the frame diff that
+	// first shows it).
+	a.mu.Lock()
+	a.imgPhoto = caps.kittyGfx && !sess.tmux && sess.profile == paint.TrueColor
+	a.mu.Unlock()
+	sentImgs := map[int32]bool{}
 	inl.configure(opts, syncFrames)
 	// theme="auto" (§26.4): the probe's background, else COLORFGBG, else
 	// dark, for the first frame and for a later @theme "auto".
@@ -846,6 +860,21 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		if hooks.Overlay != nil {
 			if top, bottom := hooks.Overlay(cols, rows); len(top) > 0 || len(bottom) > 0 {
 				g = overlay(g, top, bottom)
+			}
+		}
+		// A photo-mode image the terminal does not hold yet is
+		// transmitted first (v0.4d phase 3), before the frame's diff
+		// bytes and outside the synchronized-output wrapper, like the
+		// mouse modes.
+		if len(g.Imgs) > 0 {
+			a.mu.Lock()
+			up := a.kittyUploads(g, sentImgs)
+			a.mu.Unlock()
+			if up != "" {
+				sess.setKittyImgs()
+				if _, err := io.WriteString(out, up); err != nil {
+					return 0, err
+				}
 			}
 		}
 		if inl != nil {

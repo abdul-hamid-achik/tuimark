@@ -32,9 +32,17 @@ func (a *App) imageOf(n *ir.Node) image.Image {
 }
 
 // inflateImg sets an img box's decoded image and its pixel size, the
-// inputs its layout (natural size) and paint (halfblocks) read.
+// inputs its layout (natural size) and paint (halfblocks) read, and the
+// photo-mode flags of phase 3: the src as written (the identity of the
+// transmitted kitty image) and whether this session renders photo
+// quality — the session's probe found the kitty graphics protocol on a
+// truecolor terminal outside tmux, and the document did not force
+// quality="blocks" (quality="photo" is the same as the default "auto"
+// here: without the protocol there is nothing to force).
 func (fb *builder) inflateImg(n *ir.Node, b *layout.Box) {
 	b.Img = fb.a.imageOf(n)
+	b.ImgSrc = n.Attrs["src"]
+	b.ImgPhoto = fb.a.imgPhoto && n.Attrs["quality"] != "blocks"
 	if b.Img == nil {
 		return
 	}

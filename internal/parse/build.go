@@ -298,8 +298,9 @@ var TagAttrsCurrent = map[string]map[string]bool{
 	// 0.5.0: an image. src is required (checkNode), alt its literal
 	// description; width/height are the common size attributes, plain cell
 	// counts on an img (an image has no natural size in cells, so the
-	// omitted one is derived, imgIntrinsic).
-	"img": with("src", "alt"),
+	// omitted one is derived, imgIntrinsic). Phase 3 adds quality: auto
+	// (the default), photo, or blocks.
+	"img": with("src", "alt", "quality"),
 }
 
 // tableItemAttrs are the attributes of a table's row template <item>
@@ -1685,6 +1686,17 @@ func (b *builder) attr(n *ir.Node, a RawAttr) {
 	case "alt":
 		// An <img>'s literal description, sanitized like text (V007).
 		n.Attrs[name] = b.sanitize(n, a.Line, a.Col, val)
+	case "quality":
+		// An <img>'s render mode (v0.4d phase 3): auto (the default) is
+		// kitty unicode placeholders when the terminal has the graphics
+		// protocol and halfblocks otherwise, photo the same but never
+		// halfblocks-first, blocks always halfblocks.
+		switch val {
+		case "auto", "photo", "blocks":
+			n.Attrs[name] = val
+		default:
+			b.attrErr(n, a, "V003", "img quality=%q: want auto, photo, or blocks", val)
+		}
 	case "keys", "action", "when", "to":
 		// validated with the keymap / stylesheet loader
 	}
