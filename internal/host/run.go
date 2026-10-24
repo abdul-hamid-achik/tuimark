@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"os"
 	"strings"
@@ -815,7 +816,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	a.mu.Lock()
 	a.imgPhoto = caps.kittyGfx && !sess.tmux && sess.profile == paint.TrueColor
 	a.mu.Unlock()
-	sentImgs := map[int32]bool{}
+	heldImgs := map[int32]image.Image{} // the kitty images the terminal holds (kittyUploads)
 	inl.configure(opts, syncFrames)
 	// theme="auto" (§26.4): the probe's background, else COLORFGBG, else
 	// dark, for the first frame and for a later @theme "auto".
@@ -862,17 +863,20 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				g = overlay(g, top, bottom)
 			}
 		}
-		// A photo-mode image the terminal does not hold yet is
-		// transmitted first (v0.4d phase 3), before the frame's diff
-		// bytes and outside the synchronized-output wrapper, like the
-		// mouse modes.
-		if len(g.Imgs) > 0 {
+		// The photo-mode images the terminal does not hold yet, or holds
+		// in an older version, are transmitted first (v0.4d phase 3),
+		// and those the frame no longer shows are freed, before the
+		// frame's diff bytes and outside the synchronized-output
+		// wrapper, like the mouse modes.
+		if len(g.Imgs) > 0 || len(heldImgs) > 0 {
 			a.mu.Lock()
-			up := a.kittyUploads(g, sentImgs)
+			up, added, freed := a.kittyUploads(g, heldImgs)
 			a.mu.Unlock()
 			if up != "" {
-				sess.setKittyImgs()
-				if _, err := io.WriteString(out, up); err != nil {
+				sess.holdKitty(added)
+				_, err := io.WriteString(out, up)
+				sess.dropKitty(freed)
+				if err != nil {
 					return 0, err
 				}
 			}

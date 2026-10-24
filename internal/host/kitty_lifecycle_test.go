@@ -1,9 +1,18 @@
 package host
 
 import (
+	"bytes"
+	"fmt"
 	"image/color"
+	"image/png"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/abdul-hamid-achik/tuimark/internal/paint"
 )
 
 // apcControls returns the control-data part (before ";") of every kitty
@@ -74,17 +83,142 @@ func TestKittyUploadFreesThePreviousImageWithUppercaseDelete(t *testing.T) {
 	}
 }
 
-// Leaving frees the images with the uppercase delete (d=A): the
-// lowercase d=a only removes the placements and leaves the image data in
-// the terminal's memory.
-func TestKittyLeaveFreesWithUppercaseDelete(t *testing.T) {
-	out := (&termSession{kittyImgs: true}).leave()
-	if !strings.Contains(out, "\x1b_Ga=d,d=A") {
-		t.Errorf("leave = %q, want a d=A delete", out)
+// pngFile writes a w×h solid png into dir/name.
+func pngFile(t *testing.T, dir, name string, w, h int, c color.RGBA) string {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, solidImg(w, h, c)); err != nil {
+		t.Fatal(err)
 	}
-	for _, c := range apcControls(out) {
-		if strings.Contains(c, "d=a") || strings.Contains(c, "d=i") {
-			t.Errorf("lowercase delete %q frees nothing", c)
+	p := filepath.Join(dir, name)
+	if err := os.WriteFile(p, buf.Bytes(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
+func uploadsOf(out string) int { return strings.Count(out, "a=t,i=") }
+
+// waitUploads waits until the output holds n transmissions.
+func (r *sessRig) waitUploads(t *testing.T, n int) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for uploadsOf(r.out.String()) < n {
+		if time.Now().After(deadline) {
+			t.Fatalf("want %d transmissions, got %d: %q", n, uploadsOf(r.out.String()), r.out.String())
 		}
+		time.Sleep(2 * time.Millisecond)
+	}
+}
+
+// An image whose file content changes is transmitted again, under the
+// same id (the placeholder cells do not change), after the delete of the
+// old one; a frame that changes nothing about the image transmits
+// nothing (v0.5.2: a transmitted image was never refreshed).
+func TestKittyRetransmitsWhenTheFileChanges(t *testing.T) {
+	dir := t.TempDir()
+	src := pngFile(t, dir, "pic.png", 6, 6, color.RGBA{R: 255, A: 255})
+	id := paint.KittyID(src, 4, 2)
+	r := startSessionWith(t, `<tui><screen><img src="`+src+`" width="4" height="2"/><text>[{text}]</text></screen></tui>`,
+		&termSession{probe: true, wait: 10 * time.Second, profile: paint.TrueColor}, func(*App) {})
+	r.waitOut(t, "\x1b[c")
+	r.send(t, "\x1b_Gi=31;OK\x1b\\\x1b[?62c")
+	r.waitUploads(t, 1)
+
+	// A frame that leaves the file alone does not transmit again.
+	if err := r.app.Set("text", "one"); err != nil {
+		t.Fatal(err)
+	}
+	r.waitOut(t, "one]")
+	if n := uploadsOf(r.out.String()); n != 1 {
+		t.Fatalf("an unchanged file was transmitted %d times, want 1", n)
+	}
+
+	// New content at the same path: another size and mtime.
+	pngFile(t, dir, "pic.png", 8, 8, color.RGBA{B: 255, A: 255})
+	later := time.Now().Add(time.Hour)
+	if err := os.Chtimes(src, later, later); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.app.Set("text", "two"); err != nil {
+		t.Fatal(err)
+	}
+	r.waitUploads(t, 2)
+	out := r.out.String()
+	second := out[strings.LastIndex(out, "\x1b_Ga=d"):]
+	if !strings.HasPrefix(second, fmt.Sprintf("\x1b_Ga=d,d=I,i=%d", id)) || !strings.Contains(second, fmt.Sprintf("a=t,i=%d,", id)) {
+		t.Errorf("the retransmission does not delete then send id %d: %q", id, second[:min(len(second), 120)])
+	}
+	r.in.Close()
+	if err := r.wait(t); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// An image the current frame no longer shows is freed (uppercase delete
+// by id); showing it again transmits it again; leaving frees what is
+// still held, before the alternate screen is left (v0.5.2: nothing was
+// ever freed until exit, and then only by a lowercase delete-all).
+func TestKittyFreesUnreferencedImagesAndAllOnLeave(t *testing.T) {
+	dir := t.TempDir()
+	src := pngFile(t, dir, "pic.png", 6, 6, color.RGBA{R: 255, A: 255})
+	id := paint.KittyID(src, 4, 2)
+	r := startSessionWith(t, `<tui><screen><img if="show" src="`+src+`" width="4" height="2"/><text>[{text}]</text></screen></tui>`,
+		&termSession{probe: true, wait: 10 * time.Second, profile: paint.TrueColor},
+		func(a *App) { _ = a.Set("show", true) })
+	r.waitOut(t, "\x1b[c")
+	r.send(t, "\x1b_Gi=31;OK\x1b\\\x1b[?62c")
+	r.waitUploads(t, 1)
+	free := fmt.Sprintf("\x1b_Ga=d,d=I,i=%d", id)
+	anyDelete := regexp.MustCompile(fmt.Sprintf(`a=d,d=[iI],i=%d[,\x1b]`, id))
+	if n := len(anyDelete.FindAllString(r.out.String(), -1)); n != 1 {
+		t.Fatalf("before hiding: %d deletes of the id, want 1 (the one before the upload)", n)
+	}
+
+	if err := r.app.Set("show", false); err != nil {
+		t.Fatal(err)
+	}
+	// The image left the frame: it is freed, by an uppercase delete.
+	deadline := time.Now().Add(2 * time.Second)
+	for len(anyDelete.FindAllString(r.out.String(), -1)) < 2 {
+		if time.Now().After(deadline) {
+			t.Fatalf("a hidden image was never freed: %q", r.out.String())
+		}
+		time.Sleep(2 * time.Millisecond)
+	}
+	r.waitCount(t, free, 2)
+	if err := r.app.Set("show", true); err != nil {
+		t.Fatal(err)
+	}
+	r.waitUploads(t, 2) // shown again: transmitted again
+	r.in.Close()
+	if err := r.wait(t); err != nil {
+		t.Fatal(err)
+	}
+	out := r.out.String()
+	last := strings.LastIndex(out, free)
+	if last < strings.LastIndex(out, "a=t,i=") && !strings.Contains(out[strings.LastIndex(out, "a=t,i="):], free) {
+		t.Errorf("leaving did not free the image still held: %q", out[max(0, len(out)-120):])
+	}
+	if idx := strings.LastIndex(out, free); idx > strings.Index(out, leaveScreen) {
+		t.Errorf("the last free comes after the alternate screen was left")
+	}
+	if regexp.MustCompile(`d=[ai][,\x1b]`).MatchString(out) {
+		t.Errorf("a lowercase delete was written: it frees no image data: %q", out)
+	}
+	if strings.Contains(out, "d=A") {
+		t.Errorf("a delete-all was written: only the session's own ids may be freed")
+	}
+}
+
+// waitCount waits until the output holds want n times.
+func (r *sessRig) waitCount(t *testing.T, want string, n int) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for strings.Count(r.out.String(), want) < n {
+		if time.Now().After(deadline) {
+			t.Fatalf("output has %d of %q, want %d: %q", strings.Count(r.out.String(), want), want, n, r.out.String())
+		}
+		time.Sleep(2 * time.Millisecond)
 	}
 }

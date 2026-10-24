@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"image/png"
 	"math/rand"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -173,11 +174,11 @@ func TestKittyUploadOnceAndDeleteOnExit(t *testing.T) {
 			if !strings.Contains(out, ph) {
 				t.Errorf("%s: no placeholder cell written", c.name)
 			}
-			del := strings.Index(out, kittyDeleteAll)
+			del := strings.LastIndex(out, kittyDelete(paint.KittyID(srcOf(t, kittyDoc(t, c.attrs)), 4, 2)))
 			if del < 0 || del > strings.Index(out, leaveScreen) {
 				t.Errorf("%s: leave = %q, want the image delete before the leave screen", c.name, out[max(0, len(out)-40):])
 			}
-		} else if strings.Contains(out, kittyDeleteAll) {
+		} else if strings.Contains(out, "d=I") {
 			t.Errorf("%s: images deleted although none was sent", c.name)
 		}
 	}
@@ -249,4 +250,14 @@ func TestKittyProbeErrorReplyIsNotACapability(t *testing.T) {
 			t.Errorf("%q: the DA1 sentinel after the reply did not end the probe", c.in)
 		}
 	}
+}
+
+// srcOf is the img src of a kittyDoc document.
+func srcOf(t *testing.T, doc string) string {
+	t.Helper()
+	m := regexp.MustCompile(`src="([^"]+)"`).FindStringSubmatch(doc)
+	if m == nil {
+		t.Fatalf("no src in %q", doc)
+	}
+	return m[1]
 }

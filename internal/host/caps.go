@@ -3,6 +3,7 @@ package host
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -49,11 +50,6 @@ const (
 	// i=31 before the probe's DA1 sentinel ends the wait. The answer is
 	// routed to termCaps.kittyGfx by the input decoder (keys.go).
 	queryKittyGfx = "\x1b_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\"
-	// kittyDeleteAll deletes every image the session transmitted and
-	// frees their data (a=d,d=A: the uppercase frees, the lowercase d=a
-	// only removes the placements), written before the session leaves
-	// the alternate screen (v0.4d phase 3).
-	kittyDeleteAll = "\x1b_Ga=d,d=A,q=2\x1b\\"
 	// mouseModesOn and mouseModesOff turn mode 1000 (presses, releases,
 	// and the wheel) and mode 1006 (SGR encoding) on and off together
 	// (SPEC v0.2b §26.11). Mode 1003 (motion) is never written.
@@ -336,14 +332,15 @@ type termSession struct {
 	grapheme bool   // mode 2027 was turned on: leaving turns it off
 	mouse    bool   // the mouse modes are on: leaving turns them off
 	kbPop    string // the sequence that undoes the keyboard push (kittyPop or mokPop), "" with none: leaving writes it right after the mouse modes
-	// kittyImgs: the session transmitted a kitty image, so leaving
-	// deletes every image first (0.5.0). Recorded before the
-	// transmission is written.
-	kittyImgs bool
+	// kittyIDs: the ids of the kitty images the session transmitted and
+	// has not freed, so leaving frees each one first (0.5.2; 0.5.0 sent
+	// one lowercase delete-all, which frees no image data). Recorded
+	// before the transmission is written.
+	kittyIDs map[int32]struct{}
 }
 
-// leave is the leave sequence: every kitty image deleted when the session
-// transmitted one (v0.4d phase 3, before the alternate screen is left),
+// leave is the leave sequence: every kitty image the session still holds
+// freed by id (v0.4d phase 3, before the alternate screen is left),
 // mode 2027 off when the session turned it on, the mouse modes off while
 // they are on (SPEC v0.2b §26.1), then leaveScreen. The loop's own way
 // out and the signal restore path both write it.
@@ -351,8 +348,13 @@ func (s *termSession) leave() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	out := ""
-	if s.kittyImgs {
-		out += kittyDeleteAll
+	ids := make([]int32, 0, len(s.kittyIDs))
+	for id := range s.kittyIDs {
+		ids = append(ids, id)
+	}
+	slices.Sort(ids)
+	for _, id := range ids {
+		out += kittyDelete(id)
 	}
 	if s.inl != nil {
 		// SPEC v0.4d §26.15.3: the commits accepted before the end are
@@ -402,13 +404,27 @@ func (s *termSession) keyboardPush(c termCaps) (seq, name string) {
 	return mokPush, KeyboardModifyOtherKeys
 }
 
-// setKittyImgs records that the session is transmitting a kitty image.
-// It is recorded before the transmission is written, so a leave that
-// races with the write still deletes the images.
-func (s *termSession) setKittyImgs() {
+// holdKitty records that the session is transmitting the kitty images
+// ids. It is recorded before the transmission is written, so a leave
+// that races with the write still frees them.
+func (s *termSession) holdKitty(ids []int32) {
 	s.mu.Lock()
-	s.kittyImgs = true
-	s.mu.Unlock()
+	defer s.mu.Unlock()
+	if s.kittyIDs == nil {
+		s.kittyIDs = map[int32]struct{}{}
+	}
+	for _, id := range ids {
+		s.kittyIDs[id] = struct{}{}
+	}
+}
+
+// dropKitty records that the kitty images ids were freed.
+func (s *termSession) dropKitty(ids []int32) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, id := range ids {
+		delete(s.kittyIDs, id)
+	}
 }
 
 // mouseChange returns the sequence that brings the terminal's mouse
