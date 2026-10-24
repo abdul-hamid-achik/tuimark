@@ -105,7 +105,7 @@ func TestRunPtyV2(t *testing.T) {
 			t.Fatalf("no probe; %s", r.describe())
 		}
 		s := finish(t, r) // no reply: the cap, then COLORFGBG (dark)
-		if !strings.HasPrefix(s, enterScreen+queryBackground+queryKittyGfx+"\x1b[c") || strings.Contains(s, "$p") {
+		if !strings.HasPrefix(s, enterScreen+queryBackground+"\x1b[c") || strings.Contains(s, "$p") {
 			t.Errorf("start = %q", s[:min(len(s), 60)])
 		}
 		if !strings.Contains(s, darkBG) {

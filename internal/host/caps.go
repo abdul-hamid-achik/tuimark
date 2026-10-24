@@ -442,7 +442,12 @@ func (s *termSession) setGrapheme() {
 // then the DECRQM queries unless the skip rule leaves them out, then
 // the DA1 sentinel.
 func (s *termSession) queries() string {
-	q := queryKittyGfx
+	// The skip rule (a terminal that mishandles queries) leaves the kitty
+	// graphics query out too: no kitty-capable terminal is under it.
+	q := ""
+	if !s.skipDECRQM {
+		q = queryKittyGfx
+	}
 	if s.themeQuery {
 		q = queryBackground + q
 	}

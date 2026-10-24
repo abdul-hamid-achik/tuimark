@@ -1190,7 +1190,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.4.6...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.0
 [0.4.6]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.6
 [0.4.5]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.5
 [0.4.4]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.4

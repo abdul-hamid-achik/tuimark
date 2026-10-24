@@ -1,5 +1,7 @@
 // Size budget of tuimark.wasm (ADR 0033): prints raw, gzip -9, and brotli
-// q11 sizes and fails when brotli is above 1.5 MB or gzip above 2.0 MB
+// q11 sizes and fails when brotli is above 1.8 MB or gzip above 2.5 MB
+// (raised in 0.5.0: the <img> decoders — png/jpeg/gif plus x/image webp —
+// legitimately cost ~0.3 MB and the playground renders example images).
 // (decimal megabytes). Brotli and gzip come from Node's zlib, so the check
 // never depends on a `brotli` binary being installed.
 //
@@ -8,8 +10,8 @@
 import { appendFileSync, readFileSync } from 'node:fs'
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib'
 
-const BROTLI_MAX = 1_500_000
-const GZIP_MAX = 2_000_000
+const BROTLI_MAX = 1_800_000
+const GZIP_MAX = 2_500_000
 
 const file = process.argv[2]
 if (!file) {

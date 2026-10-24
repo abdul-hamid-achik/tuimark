@@ -127,7 +127,7 @@ func TestProbePlanWithTheme(t *testing.T) {
 	}{
 		{"auto", plain, true, true, true, queryBackground + queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[c"},
 		{"no auto", plain, true, false, true, queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[c"},
-		{"skip rule, auto", apple, true, true, true, queryBackground + queryKittyGfx + "\x1b[c"},
+		{"skip rule, auto", apple, true, true, true, queryBackground + "\x1b[c"},
 		{"skip rule, no auto", apple, true, false, false, ""},
 		{"dumb", dumb, true, true, false, ""},
 		{"not a tty", plain, false, true, false, ""},

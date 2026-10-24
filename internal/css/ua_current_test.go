@@ -23,6 +23,7 @@ func TestUASheetCurrentIsUASheetWithTheCurrentRules(t *testing.T) {
 	want := strings.Replace(UASheet, old, repl, 1) +
 		"checkbox, select { width: auto; height: auto; wrap: truncate; }\n" +
 		"select > list { border: single; max-height: 12; reverse: false; wrap: truncate; }\n" +
+		"img    { width: auto; height: auto; }\n" +
 		"button:focus, checkbox:focus, select:focus { reverse: true; }\n" +
 		"textarea { width: auto; height: auto; max-height: 8; }\n" +
 		"row > textarea { width: 1fr; }\n"

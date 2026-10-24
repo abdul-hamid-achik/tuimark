@@ -103,7 +103,7 @@ tasks:
         exit 1
 
   wasm-check:
-    desc: Check bin/tuimark.wasm against its size budget (brotli 1.5 MB, gzip 2.0 MB) and run the Node
+    desc: Check bin/tuimark.wasm against its size budget (brotli 1.8 MB, gzip 2.5 MB) and run the Node
       smoke test, which also compares every example's wasm dump with the native CLI's. Skipped without `node`.
     deps: [wasm, build]
     cmds:

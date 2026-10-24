@@ -173,10 +173,11 @@ func TestKittyUploadOnceAndDeleteOnExit(t *testing.T) {
 			if !strings.Contains(out, ph) {
 				t.Errorf("%s: no placeholder cell written", c.name)
 			}
-			if !strings.HasSuffix(out, kittyDeleteAll+leaveScreen) {
+			del := strings.Index(out, kittyDeleteAll)
+			if del < 0 || del > strings.Index(out, leaveScreen) {
 				t.Errorf("%s: leave = %q, want the image delete before the leave screen", c.name, out[max(0, len(out)-40):])
 			}
-		} else if strings.HasSuffix(out, kittyDeleteAll+leaveScreen) {
+		} else if strings.Contains(out, kittyDeleteAll) {
 			t.Errorf("%s: images deleted although none was sent", c.name)
 		}
 	}

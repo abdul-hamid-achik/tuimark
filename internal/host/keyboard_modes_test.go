@@ -25,7 +25,7 @@ const kbDoc = `<tui mouse="true">
 
 // kbProbe is the probe of a document of the current language, with the
 // Kitty query right before DA1.
-const kbProbe = "\x1b[?2026$p\x1b[?2027$p\x1b[?u\x1b[c"
+const kbProbe = queryKittyGfx + "\x1b[?2026$p\x1b[?2027$p\x1b[?u\x1b[c"
 
 // kbReplies answers the probe: synchronized output and grapheme mode
 // reported off, DA1; kitty adds the reply to the Kitty query.
@@ -276,7 +276,7 @@ func TestKeyboardProbePlan(t *testing.T) {
 		t.Errorf("a skipped terminal's queries = %q, want %q", got, want)
 	}
 	s = &termSession{probe: true, themeQuery: true, sync: syncOn, kbQuery: true}
-	if got, want := s.queries(), queryBackground+"\x1b[?2027$p\x1b[?u\x1b[c"; got != want {
+	if got, want := s.queries(), queryBackground+queryKittyGfx+"\x1b[?2027$p\x1b[?u\x1b[c"; got != want {
 		t.Errorf("queries with OSC 11 and TUIMARK_SYNC = %q, want %q", got, want)
 	}
 }
