@@ -28,6 +28,10 @@ change.
 - A chunked kitty transmission repeats no control key after its first
   chunk (only `m` and `q`), and the deletes are the uppercase `d=I`, which
   frees the image data (the lowercase forms only remove placements).
+- An `<img>` reads its file through the same guard `<include>` uses
+  (`ReadRegular`): a FIFO, a device, or a link to `/dev/zero` named by a
+  data-bound `src` is a missing image, not a hang or an unbounded read,
+  and a file over 64 MiB is refused.
 - Photo images are retransmitted when their file changes, freed (by id)
   when the frame stops showing them, and all freed on leave, instead of
   being sent once and kept until exit.

@@ -3,6 +3,7 @@ package img
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"image"
 	"image/color"
 	"image/png"
@@ -144,5 +145,36 @@ func TestHalfblocksCache(t *testing.T) {
 	}
 	if Halfblocks(nil, 2, 1) != nil || Halfblocks(im, 0, 1) != nil || Halfblocks(im, 2, 0) != nil {
 		t.Error("an empty request returned a buffer")
+	}
+}
+
+// An image file of more than MaxReadBytes is an error, not a 64 MiB+ read
+// into memory (v0.5.2: Image used os.ReadFile). A sparse file of one byte
+// over the bound keeps the test cheap on disk.
+func TestImageRefusesAnOversizedFile(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "huge.png")
+	f, err := os.Create(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(pngBytes(t, solid(2, 2, color.RGBA{A: 255}))); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Truncate(MaxReadBytes + 1); err != nil {
+		t.Skipf("no sparse files: %v", err)
+	}
+	f.Close()
+	im, err := (&Registry{}).Image("huge.png", dir)
+	if im != nil || !errors.Is(err, ErrTooLarge) {
+		t.Fatalf("image %v, err %v; want nil and ErrTooLarge", im, err)
+	}
+	// A regular file still decodes.
+	ok := filepath.Join(dir, "ok.png")
+	if err := os.WriteFile(ok, pngBytes(t, solid(2, 2, color.RGBA{A: 255})), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if im, err := (&Registry{}).Image("ok.png", dir); err != nil || im == nil {
+		t.Fatalf("a regular file: %v, %v", im, err)
 	}
 }

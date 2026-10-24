@@ -82,7 +82,9 @@ func (r *Registry) Image(src, dir string) (image.Image, error) {
 		return c.im, nil
 	}
 	r.mu.Unlock()
-	data, err := os.ReadFile(path)
+	// A data-bound src can name any path: a FIFO or /dev/zero must be an
+	// error (the image's nil fallback), not a hang or an unbounded read.
+	data, err := ReadRegular(path, 0)
 	if err != nil {
 		return nil, fmt.Errorf("img %s: %w", src, err)
 	}

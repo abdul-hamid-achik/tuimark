@@ -1,6 +1,6 @@
 //go:build !unix
 
-package host
+package img
 
 import "os"
 
