@@ -23,18 +23,37 @@ func TestImgDataBoundSrcFIFOIsAMissingImage(t *testing.T) {
 	if err := a.Bind("", map[string]any{"p": fifo}); err != nil {
 		t.Fatal(err)
 	}
-	boundedBy(t, 5*time.Second, "Dump with a FIFO src", func() {
+	// The dump runs in a goroutine the test does not touch t from, so a
+	// timeout (the bug: the frame blocked on the FIFO) fails the test
+	// without a late t call from a goroutine still stuck in the read.
+	type result struct {
+		errs  int
+		grid  string
+		halfs int
+	}
+	ch := make(chan result, 1)
+	go func() {
 		d := a.Dump(20, 6, true)
-		if len(d.Errors) != 0 {
-			t.Errorf("errors: %v", d.Errors)
-		}
-		if got := strings.Join(d.Grid, "\n"); !strings.Contains(got, "after") {
-			t.Errorf("the frame after the img was not drawn:\n%s", got)
-		}
+		r := result{errs: len(d.Errors), grid: strings.Join(d.Grid, "\n")}
 		for _, c := range d.Cells {
 			if c.Ch == "▀" {
-				t.Errorf("a FIFO painted halfblocks")
+				r.halfs++
 			}
 		}
-	})
+		ch <- r
+	}()
+	select {
+	case r := <-ch:
+		if r.errs != 0 {
+			t.Errorf("%d diagnostics, want none", r.errs)
+		}
+		if !strings.Contains(r.grid, "after") {
+			t.Errorf("the frame after the img was not drawn:\n%s", r.grid)
+		}
+		if r.halfs != 0 {
+			t.Errorf("a FIFO painted %d halfblock cells", r.halfs)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Dump with a FIFO src did not return within 5s")
+	}
 }
