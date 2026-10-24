@@ -196,9 +196,11 @@ func TestKittyFreesUnreferencedImagesAndAllOnLeave(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := r.out.String()
-	last := strings.LastIndex(out, free)
-	if last < strings.LastIndex(out, "a=t,i=") && !strings.Contains(out[strings.LastIndex(out, "a=t,i="):], free) {
-		t.Errorf("leaving did not free the image still held: %q", out[max(0, len(out)-120):])
+	// Leaving frees the id again: a free for it appears after the last
+	// transmission.
+	lastSend := strings.LastIndex(out, "a=t,i=")
+	if lastSend < 0 || !strings.Contains(out[lastSend:], free) {
+		t.Errorf("no free of id %d after the last transmission: %q", id, out[max(0, len(out)-120):])
 	}
 	if idx := strings.LastIndex(out, free); idx > strings.Index(out, leaveScreen) {
 		t.Errorf("the last free comes after the alternate screen was left")
