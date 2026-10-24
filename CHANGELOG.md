@@ -23,18 +23,22 @@ change.
 - The frame diff compares a cell's hyperlink by id and URI, not by its
   index in the frame's table: a data-bound `href` whose URL changes under
   unchanged text now emits the new OSC 8.
-- The kitty graphics probe accepts only the `OK` reply to its query; an
-  error reply no longer turns photo mode on.
+- The kitty graphics probe accepts only an `OK` reply to its query (any
+  reply with `i=31`, extra keys allowed); an error reply no longer turns
+  photo mode on.
 - A chunked kitty transmission repeats no control key after its first
   chunk (only `m` and `q`), and the deletes are the uppercase `d=I`, which
   frees the image data (the lowercase forms only remove placements).
 - An `<img>` reads its file through the same guard `<include>` uses
   (`ReadRegular`): a FIFO, a device, or a link to `/dev/zero` named by a
   data-bound `src` is a missing image, not a hang or an unbounded read,
-  and a file over 64 MiB is refused.
+  and a file over 64 MiB is refused. An image declaring more than 32 Mi
+  pixels is refused before any pixel buffer is allocated. The file is
+  opened first and judged by `fstat` on unix.
 - Photo images are retransmitted when their file changes, freed (by id)
   when the frame stops showing them, and all freed on leave, instead of
-  being sent once and kept until exit.
+  being sent once and kept until exit. With synchronized output on, a
+  retransmission is written inside the frame's wrapper.
 
 ## [0.5.1] - 2026-10-24
 
