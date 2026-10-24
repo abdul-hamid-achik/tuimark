@@ -7,9 +7,12 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/dump"
 )
@@ -202,4 +205,36 @@ func TestImgAndHrefDataBound(t *testing.T) {
 	if linked == 0 {
 		t.Error("no cell carries a link index for the data-bound href")
 	}
+}
+
+// A data-bound href whose bound value changes under unchanged text (0.5.2):
+// the loop's next frame diff must write the cells again under an OSC 8
+// with the new URI, not leave the old link on screen.
+func TestLoopRelinksWhenOnlyTheBoundURLChanges(t *testing.T) {
+	a := doc(t, `<tui><screen><text href="{u}">read</text></screen></tui>`)
+	if err := a.Bind("", map[string]any{"u": "https://example.com/old"}); err != nil {
+		t.Fatal(err)
+	}
+	pr, pw := io.Pipe()
+	defer pw.Close()
+	out := &syncBuf{}
+	done := make(chan error, 1)
+	go func() { done <- a.Loop(pr, out, func() (int, int) { return 30, 4 }, nil) }()
+	waitOut := func(want string) {
+		t.Helper()
+		deadline := time.Now().Add(3 * time.Second)
+		for !strings.Contains(out.String(), want) {
+			if time.Now().After(deadline) {
+				t.Fatalf("output never held %q:\n%q", want, out.String())
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+	waitOut(";https://example.com/old\x1b\\")
+	if err := a.Set("u", "https://example.com/new"); err != nil {
+		t.Fatal(err)
+	}
+	waitOut(";https://example.com/new\x1b\\")
+	pw.Close()
+	<-done
 }
