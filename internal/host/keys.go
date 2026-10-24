@@ -664,15 +664,29 @@ func scanString(p []byte, osc bool) unit {
 
 // apcUnit is a complete APC (p starts ESC _, p[:n] holds it through its
 // ST): the OK answer of the kitty graphics protocol to the probe's query
-// (id i=31) is a reply the probe reads (v0.4d phase 3, SPEC v0.2 §26.2,
+// (a reply whose keys include i=31, whatever else the terminal echoes,
+// such as I=0 or p=0, and whose payload is exactly OK) is a reply the
+// probe reads (v0.4d phase 3, SPEC v0.2 §26.2,
 // §26.8); an error answer to the same query (ENOENT, EINVAL, …) and any
 // other APC produce nothing. Either way it never produces a key.
 func apcUnit(p []byte, n int) unit {
 	body := p[2 : n-2]
-	if bytes.Equal(body, []byte("Gi=31;OK")) {
+	if keys, payload, ok := bytes.Cut(body, []byte(";")); ok && bytes.HasPrefix(keys, []byte("G")) &&
+		string(payload) == "OK" && apcHasKey(keys[1:], "i=31") {
 		return unit{kind: unitReply, n: n, reply: reply{kittyGfx: true}}
 	}
 	return unit{n: n}
+}
+
+// apcHasKey reports whether the comma-separated control keys hold exactly
+// the key=value pair kv.
+func apcHasKey(keys []byte, kv string) bool {
+	for _, k := range bytes.Split(keys, []byte(",")) {
+		if string(k) == kv {
+			return true
+		}
+	}
+	return false
 }
 
 // oscUnit is a complete OSC whose body (between ESC ] and its terminator)

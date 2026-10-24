@@ -234,6 +234,11 @@ func TestKittyProbeErrorReplyIsNotACapability(t *testing.T) {
 		{"\x1b_Gi=31;OK\x1b\\", true},
 		{"\x1b_Gi=31;ENOENT:cannot transmit\x1b\\", false},
 		{"\x1b_Gi=31;EINVAL:bad format\x1b\\", false},
+		{"\x1b_Gi=31,I=0;OK\x1b\\", true}, // a terminal that echoes more keys
+		{"\x1b_GI=0,i=31,p=0;OK\x1b\\", true},
+		{"\x1b_Gi=31,I=0;ENOENT:cannot transmit\x1b\\", false},
+		{"\x1b_Gi=7,I=0;OK\x1b\\", false}, // another query's answer
+		{"\x1b_Gi=311;OK\x1b\\", false},
 		{"\x1b_Gi=31;OKAY\x1b\\", false},
 		{"\x1b_Gi=31;\x1b\\", false},
 	} {
