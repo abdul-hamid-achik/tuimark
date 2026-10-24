@@ -224,8 +224,8 @@ type termCaps struct {
 	sync     int    // Ps of the DECRPM reply for mode 2026 (0: none)
 	grapheme int    // Ps of the DECRPM reply for mode 2027 (0: none)
 	bg       string // the background of the first OSC 11 reply: dark, light, or "" (none)
-	// kittyGfx: an APC _G answer to the graphics query arrived before the
-	// DA1 sentinel (v0.4d phase 3) — the terminal has the kitty graphics
+	// kittyGfx: the OK APC _G answer to the graphics query arrived
+	// before the DA1 sentinel (v0.4d phase 3) — the terminal has the kitty graphics
 	// protocol, so photo-mode <img> rendering is possible.
 	kittyGfx bool
 	done     bool // the DA1 sentinel arrived: later replies are ignored

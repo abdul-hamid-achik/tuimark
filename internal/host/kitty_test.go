@@ -219,3 +219,34 @@ func TestPhotoModeSelection(t *testing.T) {
 		}
 	}
 }
+
+// Only the OK answer to the graphics query turns photo mode on: a
+// terminal that knows the protocol but cannot do the query's transfer
+// answers with an error (i=31;ENOENT:..., EINVAL:..., ENOTSUPPORTED...),
+// and that is not a capability (v0.5.2: any reply starting "Gi=31;" set
+// kittyGfx, errors included).
+func TestKittyProbeErrorReplyIsNotACapability(t *testing.T) {
+	for _, c := range []struct {
+		in   string
+		want bool
+	}{
+		{"\x1b_Gi=31;OK\x1b\\", true},
+		{"\x1b_Gi=31;ENOENT:cannot transmit\x1b\\", false},
+		{"\x1b_Gi=31;EINVAL:bad format\x1b\\", false},
+		{"\x1b_Gi=31;OKAY\x1b\\", false},
+		{"\x1b_Gi=31;\x1b\\", false},
+	} {
+		var d decoder
+		_, reps := d.feed([]byte(c.in+"\x1b[?62c"), true)
+		var caps termCaps
+		for _, r := range reps {
+			caps.record(r)
+		}
+		if caps.kittyGfx != c.want {
+			t.Errorf("%q: kittyGfx = %v, want %v", c.in, caps.kittyGfx, c.want)
+		}
+		if !caps.done {
+			t.Errorf("%q: the DA1 sentinel after the reply did not end the probe", c.in)
+		}
+	}
+}

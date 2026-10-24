@@ -109,7 +109,7 @@ type reply struct {
 	// §26.2. osc11 marks such a reply.
 	osc11 bool
 	bg    string
-	// kittyGfx: an APC _G answer naming i=31, the reply to the probe's
+	// kittyGfx: the APC _G answer "i=31;OK", the reply to the probe's
 	// kitty graphics query (v0.4d phase 3, caps.go).
 	kittyGfx bool
 }
@@ -663,13 +663,13 @@ func scanString(p []byte, osc bool) unit {
 }
 
 // apcUnit is a complete APC (p starts ESC _, p[:n] holds it through its
-// ST): an answer of the kitty graphics protocol naming the probe's query
-// id (i=31) is a reply the probe reads (v0.4d phase 3, SPEC v0.2 §26.2,
-// §26.8); any other APC produces nothing. Either way it never produces
-// a key.
+// ST): the OK answer of the kitty graphics protocol to the probe's query
+// (id i=31) is a reply the probe reads (v0.4d phase 3, SPEC v0.2 §26.2,
+// §26.8); an error answer to the same query (ENOENT, EINVAL, …) and any
+// other APC produce nothing. Either way it never produces a key.
 func apcUnit(p []byte, n int) unit {
 	body := p[2 : n-2]
-	if bytes.HasPrefix(body, []byte("Gi=31;")) {
+	if bytes.Equal(body, []byte("Gi=31;OK")) {
 		return unit{kind: unitReply, n: n, reply: reply{kittyGfx: true}}
 	}
 	return unit{n: n}
