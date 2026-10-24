@@ -12,6 +12,13 @@ change.
 
 ### Fixed
 
+- Photo-mode images are transmitted with `a=T` instead of `a=t`. The
+  kitty graphics protocol documents a virtual placement (`U=1`) only as
+  `a=p,U=1,…` after a transmit or combined with the transmit as
+  `a=T,…,U=1`; `a=t` only stores the image, so the U+10EEEE placeholder
+  cells named an image with no placement and showed blank cells in kitty.
+  Continuation chunks still carry only `m` and `q`; the delete-first and
+  `q=2` are unchanged.
 - `schema/dump.v0.2.json` lists `img` in its tag enum: the dump of a
   document with an `<img>` failed validation.
 - Kitty Unicode placeholders name a row or column with one combining

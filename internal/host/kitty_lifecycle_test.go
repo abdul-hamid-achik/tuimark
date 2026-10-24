@@ -48,7 +48,7 @@ func TestKittyUploadContinuationChunksCarryOnlyMAndQ(t *testing.T) {
 	if len(chunks) < 3 {
 		t.Fatalf("a noise image should need 3+ chunks, got %d: %q", len(chunks), chunks)
 	}
-	if want := "a=t,i=7,U=1,c=100,r=100,q=2,f=100,t=d,m=1"; chunks[0] != want {
+	if want := "a=T,i=7,U=1,c=100,r=100,q=2,f=100,t=d,m=1"; chunks[0] != want {
 		t.Errorf("first chunk = %q, want %q", chunks[0], want)
 	}
 	for i, c := range chunks[1:] {
@@ -97,7 +97,7 @@ func pngFile(t *testing.T, dir, name string, w, h int, c color.RGBA) string {
 	return p
 }
 
-func uploadsOf(out string) int { return strings.Count(out, "a=t,i=") }
+func uploadsOf(out string) int { return strings.Count(out, "a=T,i=") }
 
 // waitUploads waits until the output holds n transmissions.
 func (r *sessRig) waitUploads(t *testing.T, n int) {
@@ -146,7 +146,7 @@ func TestKittyRetransmitsWhenTheFileChanges(t *testing.T) {
 	r.waitUploads(t, 2)
 	out := r.out.String()
 	second := out[strings.LastIndex(out, "\x1b_Ga=d"):]
-	if !strings.HasPrefix(second, fmt.Sprintf("\x1b_Ga=d,d=I,i=%d", id)) || !strings.Contains(second, fmt.Sprintf("a=t,i=%d,", id)) {
+	if !strings.HasPrefix(second, fmt.Sprintf("\x1b_Ga=d,d=I,i=%d", id)) || !strings.Contains(second, fmt.Sprintf("a=T,i=%d,", id)) {
 		t.Errorf("the retransmission does not delete then send id %d: %q", id, second[:min(len(second), 120)])
 	}
 	r.in.Close()
@@ -198,7 +198,7 @@ func TestKittyFreesUnreferencedImagesAndAllOnLeave(t *testing.T) {
 	out := r.out.String()
 	// Leaving frees the id again: a free for it appears after the last
 	// transmission.
-	lastSend := strings.LastIndex(out, "a=t,i=")
+	lastSend := strings.LastIndex(out, "a=T,i=")
 	if lastSend < 0 || !strings.Contains(out[lastSend:], free) {
 		t.Errorf("no free of id %d after the last transmission: %q", id, out[max(0, len(out)-120):])
 	}
@@ -262,7 +262,7 @@ func TestKittyRetransmitIsInsideTheSyncWrapper(t *testing.T) {
 			t.Errorf("%s transmission is not right after %q: %q", which, syncBegin, out[max(0, i-20):min(len(out), i+30)])
 		}
 		end := strings.Index(out[i:], syncEnd)
-		if end < 0 || !strings.Contains(out[i:i+end], "a=t,i=") {
+		if end < 0 || !strings.Contains(out[i:i+end], "a=T,i=") {
 			t.Errorf("%s transmission is not inside the wrapper", which)
 		}
 	}

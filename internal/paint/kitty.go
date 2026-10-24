@@ -9,7 +9,7 @@ import (
 )
 
 // The kitty graphics protocol's Unicode placeholders (v0.4d phase 3): an
-// image transmitted once as a virtual placement (a=t,…,U=1,c,r) is then
+// image transmitted once with a virtual placement (a=T,…,U=1,c,r) is then
 // shown by ordinary text — a U+10EEEE placeholder cell whose foreground
 // color carries the image id and whose combining diacritics name the row
 // and column inside the image. The terminal scales the image to the

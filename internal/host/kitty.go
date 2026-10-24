@@ -34,8 +34,12 @@ func kittyDelete(id int32) string {
 // a delete of the id first (a terminal that still holds the image or a
 // placement of it must not blend the new one into it — Ghostty bug
 // #13719 — and a retransmission replaces the old data), then the image
-// as PNG (f=100), in a virtual placement (U=1) of c columns and r rows,
-// quiet (q=2, no reply can confuse the host application),
+// as PNG (f=100), transmitted and displayed in one command (a=T) as a
+// virtual placement (U=1) of c columns and r rows. a=T, not a=t: a=t only
+// stores the image, and the protocol documents a virtual placement only as
+// a separate a=p,U=1 after a transmit or combined with it as a=T,…,U=1, so
+// with a=t the placeholder cells would name an image that has no
+// placement and stay blank. Quiet (q=2, no reply can confuse the host application),
 // base64-chunked with m=1 except the last chunk's m=0. Only the first
 // chunk carries the control keys: the protocol allows nothing but m (and
 // q) on a continuation chunk. im is the decoded source; it is
@@ -47,7 +51,7 @@ func kittyUpload(id int32, c, r int, im image.Image) string {
 		return "" // an image that decoded cannot fail to re-encode; guard anyway
 	}
 	b64 := base64.StdEncoding.EncodeToString(buf.Bytes())
-	ctl := fmt.Sprintf("a=t,i=%d,U=1,c=%d,r=%d,q=2,f=100,t=d", id, c, r)
+	ctl := fmt.Sprintf("a=T,i=%d,U=1,c=%d,r=%d,q=2,f=100,t=d", id, c, r)
 	out := kittyDelete(id)
 	for len(b64) > kittyChunk {
 		out += "\x1b_G" + ctl + ",m=1;" + b64[:kittyChunk] + "\x1b\\"

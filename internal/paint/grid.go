@@ -113,7 +113,7 @@ type GridLink struct{ ID, URL string }
 // GridImage is one photo-mode <img> of a frame (Grid.Imgs, v0.4d phase
 // 3): the id its placeholder cells carry in their foreground color, the
 // source that id names, and its cell size — what Run transmits once as a
-// kitty virtual placement (a=t,i=ID,U=1,c=W,r=H,q=2).
+// kitty virtual placement (a=T,i=ID,U=1,c=W,r=H,q=2).
 type GridImage struct {
 	ID   int32
 	Src  string

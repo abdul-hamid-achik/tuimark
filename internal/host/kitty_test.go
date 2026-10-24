@@ -61,8 +61,9 @@ func TestKittyProbeReply(t *testing.T) {
 }
 
 // kittyUpload transmits an image once: the id is deleted first (Ghostty
-// bug #13719), the transmission is a virtual placement (U=1) of c×r
-// cells, quiet, PNG, base64 in m=1 chunks of at most 4096 bytes with one
+// bug #13719), the transmission is a=T (transmit and display: a=t would
+// store the image with no virtual placement behind the placeholder cells)
+// with a virtual placement (U=1) of c×r cells, quiet, PNG, base64 in m=1 chunks of at most 4096 bytes with one
 // final m=0 chunk.
 func TestKittyUploadFormat(t *testing.T) {
 	im := solidImg(6, 6, color.RGBA{R: 255, A: 255})
@@ -70,7 +71,7 @@ func TestKittyUploadFormat(t *testing.T) {
 	if !strings.HasPrefix(s, "\x1b_Ga=d,d=I,i=42,q=2\x1b\\") {
 		t.Errorf("upload does not delete the id first: %q", s[:40])
 	}
-	if !strings.Contains(s, "a=t,i=42,U=1,c=4,r=2,q=2,f=100,t=d,m=0;") {
+	if !strings.Contains(s, "a=T,i=42,U=1,c=4,r=2,q=2,f=100,t=d,m=0;") {
 		t.Errorf("upload head wrong: %q", s)
 	}
 	// Every APC payload is at most kittyChunk base64 bytes, the last (and
@@ -161,7 +162,7 @@ func TestKittyUploadOnceAndDeleteOnExit(t *testing.T) {
 			t.Fatal(err)
 		}
 		out := r.out.String()
-		if uploads := strings.Count(out, "a=t,i="); c.photo && uploads != 1 {
+		if uploads := strings.Count(out, "a=T,i="); c.photo && uploads != 1 {
 			t.Errorf("%s: %d transmissions, want 1", c.name, uploads)
 		}
 		if !c.photo && strings.Contains(out, "\x1b_Ga=") {
