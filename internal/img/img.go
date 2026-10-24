@@ -17,6 +17,7 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,7 +91,7 @@ func (r *Registry) Image(src, dir string) (image.Image, error) {
 	}
 	im, err := Decode(data)
 	if err != nil {
-		return nil, fmt.Errorf("img %s: %v", src, err)
+		return nil, fmt.Errorf("img %s: %w", src, err)
 	}
 	r.mu.Lock()
 	r.images[path] = cachedImage{im: im, mtime: st.ModTime(), size: st.Size()}
@@ -118,11 +119,11 @@ func (r *Registry) dataURI(src string) (image.Image, error) {
 	}
 	data, err := base64.StdEncoding.DecodeString(rest[semi+len(";base64,"):])
 	if err != nil {
-		return nil, fmt.Errorf("img data URI %q: %v", clip(src), err)
+		return nil, fmt.Errorf("img data URI %q: %w", clip(src), err)
 	}
 	im, err := Decode(data)
 	if err != nil {
-		return nil, fmt.Errorf("img data URI %q: %v", clip(src), err)
+		return nil, fmt.Errorf("img data URI %q: %w", clip(src), err)
 	}
 	r.mu.Lock()
 	if r.images == nil {
@@ -142,20 +143,45 @@ func clip(src string) string {
 	return src
 }
 
+// MaxPixels bounds the pixels of an image Decode accepts (32 Mi): the
+// decoders allocate width×height×4 bytes (or more) from a header a few
+// bytes long, so the byte cap on the file does not bound the memory a
+// small file can ask for (a 1 MB PNG can declare 16000×16000).
+const MaxPixels = 32 << 20
+
+// ErrTooManyPixels is Decode's refusal of an image that declares more
+// than MaxPixels; the image is then missing like any unreadable one.
+var ErrTooManyPixels = errors.New("image has too many pixels")
+
 // Decode decodes encoded image bytes by their magic bytes: png, jpeg,
-// gif (the standard library) and webp (golang.org/x/image/webp).
+// gif (the standard library) and webp (golang.org/x/image/webp). The
+// declared size is read first (DecodeConfig, header only) and an image of
+// more than MaxPixels is refused before any pixel buffer is allocated.
 func Decode(data []byte) (image.Image, error) {
+	var (
+		cfg    func(io.Reader) (image.Config, error)
+		decode func(io.Reader) (image.Image, error)
+	)
 	switch {
 	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
-		return png.Decode(bytes.NewReader(data))
+		cfg, decode = png.DecodeConfig, png.Decode
 	case bytes.HasPrefix(data, []byte("\xff\xd8\xff")):
-		return jpeg.Decode(bytes.NewReader(data))
+		cfg, decode = jpeg.DecodeConfig, jpeg.Decode
 	case bytes.HasPrefix(data, []byte("GIF8")):
-		return gif.Decode(bytes.NewReader(data))
+		cfg, decode = gif.DecodeConfig, gif.Decode
 	case len(data) >= 12 && string(data[0:4]) == "RIFF" && string(data[8:12]) == "WEBP":
-		return webp.Decode(bytes.NewReader(data))
+		cfg, decode = webp.DecodeConfig, webp.Decode
+	default:
+		return nil, errors.New("not a png, jpeg, gif, or webp image")
 	}
-	return nil, errors.New("not a png, jpeg, gif, or webp image")
+	c, err := cfg(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	if c.Width <= 0 || c.Height <= 0 || int64(c.Width)*int64(c.Height) > MaxPixels {
+		return nil, fmt.Errorf("%w (%d×%d, over %d)", ErrTooManyPixels, c.Width, c.Height, MaxPixels)
+	}
+	return decode(bytes.NewReader(data))
 }
 
 // halfKey identifies one resized buffer: the source image (decoded
@@ -183,6 +209,11 @@ const halfCacheMax = 64
 // or every frame of a running app, resizes once.
 func Halfblocks(im image.Image, w, h int) *image.RGBA {
 	if im == nil || w <= 0 || h <= 0 {
+		return nil
+	}
+	// An image that did not come through Decode may be any size; the
+	// resize reads every source pixel it scales from.
+	if b := im.Bounds(); int64(b.Dx())*int64(b.Dy()) > MaxPixels {
 		return nil
 	}
 	k := halfKey{im: im, w: w, h: h}
