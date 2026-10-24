@@ -21,27 +21,38 @@ import (
 // (the protocol's limit).
 const kittyChunk = 4096
 
+// kittyDelete frees image id: its placements (the virtual one included)
+// and its data. The uppercase d=I is what frees the data; the lowercase
+// d=i would only remove the placements and leave the pixels in the
+// terminal's memory. Quiet, like the transmission.
+func kittyDelete(id int32) string {
+	return fmt.Sprintf("\x1b_Ga=d,d=I,i=%d,q=2\x1b\\", id)
+}
+
 // kittyUpload builds the one-time transmission of one photo-mode image:
 // a delete of the id first (a terminal that still holds a placement of
-// it must not blend the new one into it — Ghostty bug #13719), then the
-// image as PNG (f=100), in a virtual placement (U=1) of c columns and
-// r rows, quiet (q=2, no reply can confuse the host application),
-// base64-chunked with m=1 except the last chunk's m=0. im is the decoded
-// source; it is re-encoded, so every format internal/img reads
-// (png/jpeg/gif/webp) transmits.
+// it must not blend the new one into it — Ghostty bug #13719 — and the
+// old data is freed with it), then the image as PNG (f=100), in a
+// virtual placement (U=1) of c columns and r rows, quiet (q=2, no reply
+// can confuse the host application), base64-chunked with m=1 except the
+// last chunk's m=0. Only the first chunk carries the control keys: the
+// protocol allows nothing but m (and q) on a continuation chunk. im is
+// the decoded source; it is re-encoded, so every format internal/img
+// reads (png/jpeg/gif/webp) transmits.
 func kittyUpload(id int32, c, r int, im image.Image) string {
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, im); err != nil {
 		return "" // an image that decoded cannot fail to re-encode; guard anyway
 	}
 	b64 := base64.StdEncoding.EncodeToString(buf.Bytes())
-	head := fmt.Sprintf("a=t,i=%d,U=1,c=%d,r=%d,q=2,f=100,t=d", id, c, r)
-	out := fmt.Sprintf("\x1b_Ga=d,d=i,i=%d\x1b\\", id)
+	ctl := fmt.Sprintf("a=t,i=%d,U=1,c=%d,r=%d,q=2,f=100,t=d", id, c, r)
+	out := kittyDelete(id)
 	for len(b64) > kittyChunk {
-		out += "\x1b_G" + head + ",m=1;" + b64[:kittyChunk] + "\x1b\\"
+		out += "\x1b_G" + ctl + ",m=1;" + b64[:kittyChunk] + "\x1b\\"
 		b64 = b64[kittyChunk:]
+		ctl = "q=2"
 	}
-	return out + "\x1b_G" + head + ",m=0;" + b64 + "\x1b\\"
+	return out + "\x1b_G" + ctl + ",m=0;" + b64 + "\x1b\\"
 }
 
 // kittyUploads builds the transmissions of the images of frame g that

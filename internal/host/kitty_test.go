@@ -66,7 +66,7 @@ func TestKittyProbeReply(t *testing.T) {
 func TestKittyUploadFormat(t *testing.T) {
 	im := solidImg(6, 6, color.RGBA{R: 255, A: 255})
 	s := kittyUpload(42, 4, 2, im)
-	if !strings.HasPrefix(s, "\x1b_Ga=d,d=i,i=42\x1b\\") {
+	if !strings.HasPrefix(s, "\x1b_Ga=d,d=I,i=42,q=2\x1b\\") {
 		t.Errorf("upload does not delete the id first: %q", s[:40])
 	}
 	if !strings.Contains(s, "a=t,i=42,U=1,c=4,r=2,q=2,f=100,t=d,m=0;") {

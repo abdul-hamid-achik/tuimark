@@ -49,10 +49,11 @@ const (
 	// i=31 before the probe's DA1 sentinel ends the wait. The answer is
 	// routed to termCaps.kittyGfx by the input decoder (keys.go).
 	queryKittyGfx = "\x1b_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\"
-	// kittyDeleteAll deletes every image the session transmitted
-	// (a=d,d=a), written before the session leaves the alternate screen
-	// (v0.4d phase 3).
-	kittyDeleteAll = "\x1b_Ga=d,d=a\x1b\\"
+	// kittyDeleteAll deletes every image the session transmitted and
+	// frees their data (a=d,d=A: the uppercase frees, the lowercase d=a
+	// only removes the placements), written before the session leaves
+	// the alternate screen (v0.4d phase 3).
+	kittyDeleteAll = "\x1b_Ga=d,d=A,q=2\x1b\\"
 	// mouseModesOn and mouseModesOff turn mode 1000 (presses, releases,
 	// and the wheel) and mode 1006 (SGR encoding) on and off together
 	// (SPEC v0.2b §26.11). Mode 1003 (motion) is never written.
