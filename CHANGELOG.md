@@ -7,6 +7,31 @@ line.
 
 ## [Unreleased]
 
+Fixes to the 0.5 hyperlink and kitty graphics protocol output. No language
+change.
+
+### Fixed
+
+- `schema/dump.v0.2.json` lists `img` in its tag enum: the dump of a
+  document with an `<img>` failed validation.
+- Kitty Unicode placeholders name a row or column with one combining
+  mark of kitty's `rowcolumn-diacritics` table (all 297 entries), not its
+  decimal digits: a photo `<img>` of 10 or more rows or columns placed
+  wrong. The first visible cell of a row names its own column, so an image
+  clipped on the left places right. Cells past row or column 296 are not
+  painted.
+- The frame diff compares a cell's hyperlink by id and URI, not by its
+  index in the frame's table: a data-bound `href` whose URL changes under
+  unchanged text now emits the new OSC 8.
+- The kitty graphics probe accepts only the `OK` reply to its query; an
+  error reply no longer turns photo mode on.
+- A chunked kitty transmission repeats no control key after its first
+  chunk (only `m` and `q`), and the deletes are the uppercase `d=I`, which
+  frees the image data (the lowercase forms only remove placements).
+- Photo images are retransmitted when their file changes, freed (by id)
+  when the frame stops showing them, and all freed on leave, instead of
+  being sent once and kept until exit.
+
 ## [0.5.1] - 2026-10-24
 
 Data-bound `href` and `src`. `{path}` in a `<text href>` and an `<img>`
