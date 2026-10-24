@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 )
 
 // ReadRegular lives here, not in internal/host, because img reads files
@@ -31,20 +30,16 @@ var (
 // /dev/stdin or /dev/zero, or a FIFO, is an error and not a hang, a stolen
 // protocol stream, or an unbounded read.
 //
-// The path is checked before it is opened, because opening a FIFO for
-// reading blocks before anything can be asked of the descriptor; the open
-// is then non-blocking where the platform has that, and the opened
-// descriptor is checked again, so a path swapped in between is caught.
+// On unix the file is opened first, without waiting (O_NONBLOCK) and
+// without a Stat of the path, and what it is is decided by fstat on the
+// opened descriptor, so nothing can be swapped in between a check and the
+// open. Elsewhere (see readfile_other.go) the path is checked before the
+// open, which is the only FIFO guard there.
 func ReadRegular(path string, limit int64) ([]byte, error) {
 	if limit <= 0 {
 		limit = MaxReadBytes
 	}
-	if fi, err := os.Stat(path); err != nil {
-		return nil, err
-	} else if !fi.Mode().IsRegular() {
-		return nil, fmt.Errorf("%s: %w", path, ErrNotRegular)
-	}
-	f, err := openNoBlock(path)
+	f, err := openRegular(path)
 	if err != nil {
 		return nil, err
 	}

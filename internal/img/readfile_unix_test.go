@@ -5,6 +5,7 @@ package img
 import (
 	"errors"
 	"image"
+	"net"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -53,6 +54,90 @@ func TestImageRefusesSpecialFiles(t *testing.T) {
 		})
 		if got.im != nil || !errors.Is(got.err, ErrNotRegular) {
 			t.Errorf("%s: image %v, err %v; want nil and ErrNotRegular", name, got.im, got.err)
+		}
+	}
+}
+
+// A unix socket cannot be opened for reading (ENXIO, EOPNOTSUPP on macOS); ReadRegular still
+// calls it what it is, ErrNotRegular, as when the path was checked first.
+func TestReadRegularCallsASocketNotRegular(t *testing.T) {
+	dir, err := os.MkdirTemp("", "s")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	sock := filepath.Join(dir, "s.sock")
+	l, err := net.Listen("unix", sock)
+	if err != nil {
+		t.Skipf("no unix sockets: %v", err)
+	}
+	defer l.Close()
+	err = within(t, 5*time.Second, "ReadRegular(socket)", func() error {
+		_, err := ReadRegular(sock, 0)
+		return err
+	})
+	if !errors.Is(err, ErrNotRegular) {
+		t.Errorf("socket: %v, want ErrNotRegular", err)
+	}
+}
+
+// ReadRegular decides by the opened descriptor, not by a look at the path
+// beforehand: while a path flips between a link to a regular file and a
+// link to a FIFO, every call either reads the file's exact bytes or is
+// ErrNotRegular, and none blocks. (A race cannot fail the old
+// check-then-open code deterministically, since it also verified the
+// descriptor; this pins the contract of the descriptor-first opener.)
+func TestReadRegularSurvivesAPathSwap(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "real.png")
+	if err := os.WriteFile(file, []byte("PAYLOAD"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	fifo := filepath.Join(dir, "pipe")
+	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
+		t.Skipf("no mkfifo: %v", err)
+	}
+	link := filepath.Join(dir, "swap")
+	stop := make(chan struct{})
+	swapped := make(chan struct{})
+	go func() {
+		defer close(swapped)
+		for i := 0; ; i++ {
+			select {
+			case <-stop:
+				return
+			default:
+			}
+			target, tmp := file, filepath.Join(dir, "tmp")
+			if i%2 == 1 {
+				target = fifo
+			}
+			os.Remove(tmp)
+			if os.Symlink(target, tmp) == nil {
+				os.Rename(tmp, link) // atomic: the path is never absent
+			}
+		}
+	}()
+	defer func() { close(stop); <-swapped }()
+	for i := 0; i < 2000; i++ {
+		if _, err := os.Lstat(link); err != nil {
+			time.Sleep(time.Millisecond) // the swapper has not made it yet
+			continue
+		}
+		type result struct {
+			data []byte
+			err  error
+		}
+		got := within(t, 5*time.Second, "ReadRegular(swapping path)", func() result {
+			d, err := ReadRegular(link, 0)
+			return result{d, err}
+		})
+		switch {
+		case got.err == nil && string(got.data) == "PAYLOAD":
+		case errors.Is(got.err, ErrNotRegular):
+		case errors.Is(got.err, os.ErrNotExist):
+		default:
+			t.Fatalf("call %d: %q, %v; want the file's bytes or ErrNotRegular", i, got.data, got.err)
 		}
 	}
 }
