@@ -29,10 +29,13 @@ const MaxPlaceholderCells = len(rowColumnDiacritics)
 
 // Diacritics encodes n (a row or column number of a placeholder image) as
 // kitty's combining mark: ONE mark, entry n of rowColumnDiacritics (0 →
-// U+0305, 1 → U+030D, … 9 → U+034A, 10 → U+034B), never the decimal digits of n. A negative n encodes as 0 and an
-// n past the table as its last entry; the painter never asks for one.
+// U+0305, 1 → U+030D, … 9 → U+034A, 10 → U+034B), never the decimal
+// digits of n. A number outside the table (negative, or past
+// MaxPlaceholderCells-1) has no mark: "". The painter never asks for one.
 func Diacritics(n int) string {
-	n = max(0, min(n, MaxPlaceholderCells-1))
+	if n < 0 || n >= MaxPlaceholderCells {
+		return ""
+	}
 	return string(rowColumnDiacritics[n])
 }
 

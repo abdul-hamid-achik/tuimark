@@ -29,6 +29,9 @@ func TestDiacritics(t *testing.T) {
 		{11, "\u034c"},
 		{12, "\u0350"},
 		{296, "\U0001d244"},
+		{297, ""}, // past the table: no mark, not a silent clamp
+		{1000, ""},
+		{-1, ""},
 	} {
 		if got := Diacritics(c.n); got != c.want {
 			t.Errorf("Diacritics(%d) = %+q, want %+q", c.n, got, c.want)
