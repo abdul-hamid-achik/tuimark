@@ -52,7 +52,7 @@
         "list", "item", "input", "button", "progress",
         "modal",
         "table", "column", "tabs", "tab", "sparkline", "hints",
-        "checkbox", "select", "textarea"
+        "checkbox", "select", "textarea", "img"
       ]
     },
     "node": {
