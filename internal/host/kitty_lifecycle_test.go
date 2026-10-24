@@ -222,3 +222,50 @@ func (r *sessRig) waitCount(t *testing.T, want string, n int) {
 		time.Sleep(2 * time.Millisecond)
 	}
 }
+
+// With synchronized output on, a retransmission (the delete of the id and
+// the new data) is written inside the frame's wrapper, in the same write
+// as the cells that show it, so the terminal never presents the frame
+// between the delete and the new image.
+func TestKittyRetransmitIsInsideTheSyncWrapper(t *testing.T) {
+	dir := t.TempDir()
+	src := pngFile(t, dir, "pic.png", 6, 6, color.RGBA{R: 255, A: 255})
+	id := paint.KittyID(src, 4, 2)
+	r := startSessionWith(t, `<tui><screen><img src="`+src+`" width="4" height="2"/><text>[{text}]</text></screen></tui>`,
+		&termSession{probe: true, wait: 10 * time.Second, profile: paint.TrueColor}, func(*App) {})
+	r.waitOut(t, "\x1b[c")
+	// The terminal answers: kitty graphics OK, 2026 supported (off), DA1.
+	r.send(t, "\x1b_Gi=31;OK\x1b\\\x1b[?2026;2$y\x1b[?62c")
+	r.waitUploads(t, 1)
+	pngFile(t, dir, "pic.png", 8, 8, color.RGBA{B: 255, A: 255})
+	later := time.Now().Add(time.Hour)
+	if err := os.Chtimes(src, later, later); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.app.Set("text", "two"); err != nil {
+		t.Fatal(err)
+	}
+	r.waitUploads(t, 2)
+	r.waitOut(t, "two]")
+	out := r.out.String()
+	del := fmt.Sprintf("\x1b_Ga=d,d=I,i=%d", id)
+	for _, which := range []string{"first", "second"} {
+		var i int
+		if which == "first" {
+			i = strings.Index(out, del)
+		} else {
+			i = strings.LastIndex(out, del)
+		}
+		if i < len(syncBegin) || out[i-len(syncBegin):i] != syncBegin {
+			t.Errorf("%s transmission is not right after %q: %q", which, syncBegin, out[max(0, i-20):min(len(out), i+30)])
+		}
+		end := strings.Index(out[i:], syncEnd)
+		if end < 0 || !strings.Contains(out[i:i+end], "a=t,i=") {
+			t.Errorf("%s transmission is not inside the wrapper", which)
+		}
+	}
+	r.in.Close()
+	if err := r.wait(t); err != nil {
+		t.Fatal(err)
+	}
+}

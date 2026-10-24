@@ -66,8 +66,11 @@ func kittyUpload(id int32, c, r int, im image.Image) string {
 // retransmission under the same id, which the placeholder cells already
 // name. held is updated; added and freed list the ids touched, for the
 // session's bookkeeping. The session writes the result before the
-// frame's diff bytes, outside the synchronized-output wrapper. Caller
-// holds a.mu.
+// frame's diff bytes (inside the synchronized-output wrapper when the
+// frame has one). An image that cannot be read at this moment (the file
+// vanished between paint and here) counts as not shown: its id is freed
+// and the image is transmitted again on the next frame that reads fine,
+// which is intended. Caller holds a.mu.
 func (a *App) kittyUploads(g *paint.Grid, held map[int32]image.Image) (out string, added, freed []int32) {
 	shown := map[int32]bool{}
 	var sends bytes.Buffer
@@ -80,6 +83,12 @@ func (a *App) kittyUploads(g *paint.Grid, held map[int32]image.Image) (out strin
 			continue
 		}
 		shown[k.ID] = true
+		// Interface equality is pointer identity here: every decoder
+		// internal/img uses (png, jpeg, gif, webp) returns a pointer
+		// type (*image.RGBA, *image.NRGBA, *image.YCbCr, *image.Paletted,
+		// …), and the registry hands back the same pointer until the
+		// file changes. A decoder returning a non-comparable image value
+		// would panic here.
 		if held[k.ID] == im {
 			continue
 		}
