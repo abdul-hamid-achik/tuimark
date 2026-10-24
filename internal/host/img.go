@@ -16,8 +16,7 @@ import (
 // not a png/jpeg/gif/webp image gives nil: the box collapses to nothing
 // and paint skips it — the frame's diagnostics stay as they are (an
 // <img> without src is already a parse-time V003).
-func (a *App) imageOf(n *ir.Node) image.Image {
-	src := n.Attrs["src"]
+func (a *App) imageOf(src string) image.Image {
 	if src == "" {
 		return nil
 	}
@@ -39,9 +38,10 @@ func (a *App) imageOf(n *ir.Node) image.Image {
 // truecolor terminal outside tmux, and the document did not force
 // quality="blocks" (quality="photo" is the same as the default "auto"
 // here: without the protocol there is nothing to force).
-func (fb *builder) inflateImg(n *ir.Node, b *layout.Box) {
-	b.Img = fb.a.imageOf(n)
-	b.ImgSrc = n.Attrs["src"]
+func (fb *builder) inflateImg(n *ir.Node, b *layout.Box, sc *scope) {
+	src := fb.interp(n, "src", n.Attrs["src"], sc)
+	b.Img = fb.a.imageOf(src)
+	b.ImgSrc = src
 	b.ImgPhoto = fb.a.imgPhoto && n.Attrs["quality"] != "blocks"
 	if b.Img == nil {
 		return

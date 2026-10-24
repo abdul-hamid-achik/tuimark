@@ -946,7 +946,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 	}
 	switch n.Kind {
 	case "text":
-		b.Href = n.Attrs["href"]
+		b.Href = fb.interp(n, "href", n.Attrs["href"], sc)
 		if n.Runs != "" {
 			fb.inflateRuns(n, b, sc) // SPEC v0.4d §6.20 (runs_frame.go)
 		} else {
@@ -1038,7 +1038,7 @@ func (fb *builder) inflate(n *ir.Node, parent *layout.Box, sc *scope, inItem boo
 		fb.inflateSparkline(n, b, sc)
 		return b
 	case "img":
-		fb.inflateImg(n, b)
+		fb.inflateImg(n, b, sc)
 		return b
 	case "hints":
 		// No children: a hints' items come from the keymap (step 5).

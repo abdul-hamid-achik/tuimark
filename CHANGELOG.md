@@ -7,6 +7,18 @@ line.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-24
+
+Data-bound `href` and `src`. `{path}` in a `<text href>` and an `<img>`
+`src` resolves per frame like a text body, so lists of links and images
+can come from the data store. Everything else behaves as in 0.5.0.
+
+### Added
+
+- `href` on `<text>` and `src` on `<img>` interpolate `{path}` before the
+  link is registered and the image resolves; a missing path is B003 and
+  the empty string, like a text body.
+
 ## [0.5.0] - 2026-10-23
 
 Hyperlinks and images. A `<text href>` paints OSC 8 hyperlinks, and an
@@ -1190,7 +1202,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.1
 [0.5.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.0
 [0.4.6]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.6
 [0.4.5]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.5

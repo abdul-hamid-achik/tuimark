@@ -3,6 +3,7 @@ package host
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"image"
 	"image/color"
 	"image/png"
@@ -121,5 +122,84 @@ func TestImgDataURIAndMissingSrc(t *testing.T) {
 	// still stretch to the column's, like an empty text's).
 	if n := byID["gone"]; n.H != 0 {
 		t.Errorf("missing src img %dx%d, want height 0", n.W, n.H)
+	}
+}
+
+// Data-bound src and href (0.5.1): {path} interpolates before the image
+// resolves and before the link is registered, sprite-style.
+func TestImgAndHrefDataBound(t *testing.T) {
+	var b bytes.Buffer
+	if err := png.Encode(&b, solidImg(2, 2, color.RGBA{R: 255, A: 255})); err != nil {
+		t.Fatal(err)
+	}
+	uri := "data:image/png;base64," + base64.StdEncoding.EncodeToString(b.Bytes())
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.tui")
+	src := `<tui><screen>
+  <col>
+    <text href="{link.url}">read</text>
+    <img id="bound" src="{img.src}"/>
+  </col>
+</screen></tui>`
+	if err := os.WriteFile(path, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	data := filepath.Join(dir, "data.json")
+	payload, _ := json.Marshal(map[string]any{
+		"link": map[string]any{"url": "https://tuimark.dev/x"},
+		"img":  map[string]any{"src": uri},
+	})
+	if err := os.WriteFile(data, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := os.ReadFile(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var values map[string]any
+	if err := json.Unmarshal(store, &values); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Batch(func(b *Batch) error {
+		for k, v := range values {
+			if err := b.Set(k, v); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// The 2x2 image's natural height exceeds the 10-row screen: the clip
+	// warning is expected, nothing else.
+	d := a.Dump(40, 10, false)
+	for _, e := range d.Errors {
+		if e.Code != "L009" {
+			t.Fatalf("errors: %v", d.Errors)
+		}
+	}
+	var n dump.Node
+	for _, node := range d.Nodes {
+		if node.ID == "bound" {
+			n = node
+		}
+	}
+	if n.H == 0 {
+		t.Errorf("bound img %dx%d, want a natural size from the data URI", n.W, n.H)
+	}
+	// The link cells carry an index: the href interpolated and registered.
+	g := a.Dump(40, 10, true)
+	linked := 0
+	for _, c := range g.Cells {
+		if c.Link != 0 {
+			linked++
+		}
+	}
+	if linked == 0 {
+		t.Error("no cell carries a link index for the data-bound href")
 	}
 }
