@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -197,6 +200,43 @@ func TestVersionThreeFixturesIR(t *testing.T) {
 		}
 		if errs := validateSchema(t, irV03Schema, decodeJSON(t, []byte(out))); len(errs) > 0 {
 			t.Errorf("%s: IR vs ir.v0.3.json: %v", name, errs)
+		}
+	}
+}
+
+// A dump of a document with an <img> validates against
+// schema/dump.v0.2.json: 0.5 added the img tag to the dump (tag "img" in
+// nodes) but the schema's tag enum did not list it.
+func TestImgDumpValidatesAgainstDumpSchema(t *testing.T) {
+	dir := t.TempDir()
+	var pngBuf bytes.Buffer
+	im := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	for i := range im.Pix {
+		im.Pix[i] = 0xff
+	}
+	if err := png.Encode(&pngBuf, im); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(dir, "dot.png"), pngBuf.String())
+	tui := filepath.Join(dir, "img.tui")
+	writeFile(t, tui, `<tui><screen><col>
+<img id="pic" src="dot.png" alt="a dot" width="4" height="2"/>
+<text href="https://example.com">link</text>
+</col></screen></tui>`)
+	for _, args := range [][]string{
+		{"dump", tui, "--format", "json"},
+		{"dump", tui, "--format", "json", "--cells", "--styles"},
+		{"play", tui, "--input", "tab", "--format", "json", "--cells", "--styles", "--frames"},
+	} {
+		code, out, errw := runCLI(args...)
+		if code != 0 {
+			t.Fatalf("%v: exit %d; stderr=%s", args, code, errw)
+		}
+		if !strings.Contains(out, `"tag": "img"`) {
+			t.Fatalf("%v: output has no img node:\n%s", args, out)
+		}
+		if errs := validateSchema(t, dumpV02Schema, decodeJSON(t, []byte(out))); len(errs) > 0 {
+			t.Errorf("%v: img dump does not validate against schema/dump.v0.2.json:\n%s", args, strings.Join(errs, "\n"))
 		}
 	}
 }

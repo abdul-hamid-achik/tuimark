@@ -133,3 +133,44 @@ func TestSanitizeURI(t *testing.T) {
 		t.Errorf("only separators sanitized to %q", got)
 	}
 }
+
+// Only the URL under unchanged text changes (a data-bound href, 0.5.1):
+// both frames paint the same cells with the same link index and the same
+// id "l1", so the cells compare equal, but the terminal holds the OLD
+// URI. The diff must write the cells again under an OSC 8 with the new
+// URI (v0.5.2: it compared the index, so the old link stayed).
+func TestDiffWithChangedLinkURL(t *testing.T) {
+	frame := func(url string) *Grid {
+		a := tx("go", "")
+		a.Href = url
+		return render(t, bx("col", "", bx("row", "height: 1", a)), 4, 1)
+	}
+	prev, next := frame("https://x/old"), frame("https://x/new")
+	if prev.At(0, 0).Link != next.At(0, 0).Link || prev.Links[0].ID != next.Links[0].ID {
+		t.Fatalf("setup: the link index and id must be the same (%d %s vs %d %s)",
+			prev.At(0, 0).Link, prev.Links[0].ID, next.At(0, 0).Link, next.Links[0].ID)
+	}
+	got := DiffWith(prev, next, Options{})
+	if want := "\x1b]8;id=l1;https://x/new\x1b\\"; !strings.Contains(got, want) {
+		t.Errorf("diff after a URL-only change has no %q:\n%q", want, got)
+	}
+	if strings.Contains(got, "https://x/old") {
+		t.Errorf("diff re-opens the old URI: %q", got)
+	}
+	// Identical frames still write no cell and no link.
+	if got := DiffWith(prev, frame("https://x/old"), Options{}); strings.Contains(got, "\x1b]8") || strings.Contains(got, "go") {
+		t.Errorf("an unchanged linked frame wrote cells or a link: %q", got)
+	}
+	// A cell that moved from link 1 to link 2 with the same URL (the table
+	// was reordered by an earlier link vanishing) is rewritten under its
+	// new id, so the terminal's hover grouping matches the cells.
+	a, b := tx("a", ""), tx("b", "")
+	a.Href, b.Href = "https://x/a", "https://x/b"
+	both := render(t, bx("col", "", bx("row", "height: 1", a, b)), 4, 1)
+	b2 := tx("b", "")
+	b2.Href = "https://x/b"
+	alone := render(t, bx("col", "", bx("row", "height: 1", tx("a", ""), b2)), 4, 1)
+	if got := DiffWith(both, alone, Options{}); !strings.Contains(got, "\x1b]8;id=l1;https://x/b\x1b\\") {
+		t.Errorf("a link whose id changed was not rewritten: %q", got)
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"image/png"
 	"math/rand"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -60,16 +61,17 @@ func TestKittyProbeReply(t *testing.T) {
 }
 
 // kittyUpload transmits an image once: the id is deleted first (Ghostty
-// bug #13719), the transmission is a virtual placement (U=1) of c×r
-// cells, quiet, PNG, base64 in m=1 chunks of at most 4096 bytes with one
+// bug #13719), the transmission is a=T (transmit and display: a=t would
+// store the image with no virtual placement behind the placeholder cells)
+// with a virtual placement (U=1) of c×r cells, quiet, PNG, base64 in m=1 chunks of at most 4096 bytes with one
 // final m=0 chunk.
 func TestKittyUploadFormat(t *testing.T) {
 	im := solidImg(6, 6, color.RGBA{R: 255, A: 255})
 	s := kittyUpload(42, 4, 2, im)
-	if !strings.HasPrefix(s, "\x1b_Ga=d,d=i,i=42\x1b\\") {
+	if !strings.HasPrefix(s, "\x1b_Ga=d,d=I,i=42,q=2\x1b\\") {
 		t.Errorf("upload does not delete the id first: %q", s[:40])
 	}
-	if !strings.Contains(s, "a=t,i=42,U=1,c=4,r=2,q=2,f=100,t=d,m=0;") {
+	if !strings.Contains(s, "a=T,i=42,U=1,c=4,r=2,q=2,f=100,t=d,m=0;") {
 		t.Errorf("upload head wrong: %q", s)
 	}
 	// Every APC payload is at most kittyChunk base64 bytes, the last (and
@@ -160,7 +162,7 @@ func TestKittyUploadOnceAndDeleteOnExit(t *testing.T) {
 			t.Fatal(err)
 		}
 		out := r.out.String()
-		if uploads := strings.Count(out, "a=t,i="); c.photo && uploads != 1 {
+		if uploads := strings.Count(out, "a=T,i="); c.photo && uploads != 1 {
 			t.Errorf("%s: %d transmissions, want 1", c.name, uploads)
 		}
 		if !c.photo && strings.Contains(out, "\x1b_Ga=") {
@@ -173,11 +175,11 @@ func TestKittyUploadOnceAndDeleteOnExit(t *testing.T) {
 			if !strings.Contains(out, ph) {
 				t.Errorf("%s: no placeholder cell written", c.name)
 			}
-			del := strings.Index(out, kittyDeleteAll)
+			del := strings.LastIndex(out, kittyDelete(paint.KittyID(srcOf(t, kittyDoc(t, c.attrs)), 4, 2)))
 			if del < 0 || del > strings.Index(out, leaveScreen) {
 				t.Errorf("%s: leave = %q, want the image delete before the leave screen", c.name, out[max(0, len(out)-40):])
 			}
-		} else if strings.Contains(out, kittyDeleteAll) {
+		} else if strings.Contains(out, "d=I") {
 			t.Errorf("%s: images deleted although none was sent", c.name)
 		}
 	}
@@ -218,4 +220,50 @@ func TestPhotoModeSelection(t *testing.T) {
 			t.Errorf("%s (photo %v): no %q cell in the dump", c.attrs, c.photo, c.want)
 		}
 	}
+}
+
+// Only the OK answer to the graphics query turns photo mode on: a
+// terminal that knows the protocol but cannot do the query's transfer
+// answers with an error (i=31;ENOENT:..., EINVAL:..., ENOTSUPPORTED...),
+// and that is not a capability (v0.5.2: any reply starting "Gi=31;" set
+// kittyGfx, errors included).
+func TestKittyProbeErrorReplyIsNotACapability(t *testing.T) {
+	for _, c := range []struct {
+		in   string
+		want bool
+	}{
+		{"\x1b_Gi=31;OK\x1b\\", true},
+		{"\x1b_Gi=31;ENOENT:cannot transmit\x1b\\", false},
+		{"\x1b_Gi=31;EINVAL:bad format\x1b\\", false},
+		{"\x1b_Gi=31,I=0;OK\x1b\\", true}, // a terminal that echoes more keys
+		{"\x1b_GI=0,i=31,p=0;OK\x1b\\", true},
+		{"\x1b_Gi=31,I=0;ENOENT:cannot transmit\x1b\\", false},
+		{"\x1b_Gi=7,I=0;OK\x1b\\", false}, // another query's answer
+		{"\x1b_Gi=311;OK\x1b\\", false},
+		{"\x1b_Gi=31;OKAY\x1b\\", false},
+		{"\x1b_Gi=31;\x1b\\", false},
+	} {
+		var d decoder
+		_, reps := d.feed([]byte(c.in+"\x1b[?62c"), true)
+		var caps termCaps
+		for _, r := range reps {
+			caps.record(r)
+		}
+		if caps.kittyGfx != c.want {
+			t.Errorf("%q: kittyGfx = %v, want %v", c.in, caps.kittyGfx, c.want)
+		}
+		if !caps.done {
+			t.Errorf("%q: the DA1 sentinel after the reply did not end the probe", c.in)
+		}
+	}
+}
+
+// srcOf is the img src of a kittyDoc document.
+func srcOf(t *testing.T, doc string) string {
+	t.Helper()
+	m := regexp.MustCompile(`src="([^"]+)"`).FindStringSubmatch(doc)
+	if m == nil {
+		t.Fatalf("no src in %q", doc)
+	}
+	return m[1]
 }

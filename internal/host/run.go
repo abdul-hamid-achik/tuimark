@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"os"
 	"strings"
@@ -815,7 +816,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 	a.mu.Lock()
 	a.imgPhoto = caps.kittyGfx && !sess.tmux && sess.profile == paint.TrueColor
 	a.mu.Unlock()
-	sentImgs := map[int32]bool{}
+	heldImgs := map[int32]image.Image{} // the kitty images the terminal holds (kittyUploads)
 	inl.configure(opts, syncFrames)
 	// theme="auto" (§26.4): the probe's background, else COLORFGBG, else
 	// dark, for the first frame and for a later @theme "auto".
@@ -862,18 +863,34 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 				g = overlay(g, top, bottom)
 			}
 		}
-		// A photo-mode image the terminal does not hold yet is
-		// transmitted first (v0.4d phase 3), before the frame's diff
-		// bytes and outside the synchronized-output wrapper, like the
-		// mouse modes.
-		if len(g.Imgs) > 0 {
+		// The photo-mode images the terminal does not hold yet, or holds
+		// in an older version, are transmitted first (v0.4d phase 3),
+		// and those the frame no longer shows are freed, before the
+		// frame's diff bytes. With synchronized output on, a full-screen
+		// frame carries them inside its wrapper, in the same write, so a
+		// retransmission (the delete of the id, then the new data) and
+		// the cells that show it appear together; without it, and in an
+		// inline session (whose region is drawn by inl.frame, outside
+		// this wrapper), they are written before the frame, and a
+		// retransmitted image can blink for the one frame between the
+		// delete and the new data.
+		var up string
+		if len(g.Imgs) > 0 || len(heldImgs) > 0 {
 			a.mu.Lock()
-			up := a.kittyUploads(g, sentImgs)
+			var added, freed []int32
+			up, added, freed = a.kittyUploads(g, heldImgs)
 			a.mu.Unlock()
 			if up != "" {
-				sess.setKittyImgs()
-				if _, err := io.WriteString(out, up); err != nil {
-					return 0, err
+				sess.holdKitty(added)
+				if !(syncFrames && inl == nil) {
+					_, err := io.WriteString(out, up)
+					up = ""
+					sess.dropKitty(freed)
+					if err != nil {
+						return 0, err
+					}
+				} else {
+					defer sess.dropKitty(freed)
 				}
 			}
 		}
@@ -889,7 +906,7 @@ func (a *App) session(in io.Reader, out io.Writer, size func() (int, int), resiz
 		}
 		s := paint.DiffWith(prev, g, opts)
 		if syncFrames {
-			s = syncBegin + s + syncEnd
+			s = syncBegin + up + s + syncEnd
 		}
 		if _, err := io.WriteString(out, s); err != nil {
 			return 0, err

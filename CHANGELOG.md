@@ -7,6 +7,46 @@ line.
 
 ## [Unreleased]
 
+Fixes to the 0.5 hyperlink and kitty graphics protocol output. No language
+change.
+
+### Fixed
+
+- Photo-mode images are transmitted with `a=T` instead of `a=t`. The
+  kitty graphics protocol documents a virtual placement (`U=1`) only as
+  `a=p,U=1,…` after a transmit or combined with the transmit as
+  `a=T,…,U=1`; `a=t` only stores the image, so the U+10EEEE placeholder
+  cells named an image with no placement and showed blank cells in kitty.
+  Continuation chunks still carry only `m` and `q`; the delete-first and
+  `q=2` are unchanged.
+- `schema/dump.v0.2.json` lists `img` in its tag enum: the dump of a
+  document with an `<img>` failed validation.
+- Kitty Unicode placeholders name a row or column with one combining
+  mark of kitty's `rowcolumn-diacritics` table (all 297 entries), not its
+  decimal digits: a photo `<img>` of 10 or more rows or columns placed
+  wrong. The first visible cell of a row names its own column, so an image
+  clipped on the left places right. Cells past row or column 296 are not
+  painted.
+- The frame diff compares a cell's hyperlink by id and URI, not by its
+  index in the frame's table: a data-bound `href` whose URL changes under
+  unchanged text now emits the new OSC 8.
+- The kitty graphics probe accepts only an `OK` reply to its query (any
+  reply with `i=31`, extra keys allowed); an error reply no longer turns
+  photo mode on.
+- A chunked kitty transmission repeats no control key after its first
+  chunk (only `m` and `q`), and the deletes are the uppercase `d=I`, which
+  frees the image data (the lowercase forms only remove placements).
+- An `<img>` reads its file through the same guard `<include>` uses
+  (`ReadRegular`): a FIFO, a device, or a link to `/dev/zero` named by a
+  data-bound `src` is a missing image, not a hang or an unbounded read,
+  and a file over 64 MiB is refused. An image declaring more than 32 Mi
+  pixels is refused before any pixel buffer is allocated. The file is
+  opened first and judged by `fstat` on unix.
+- Photo images are retransmitted when their file changes, freed (by id)
+  when the frame stops showing them, and all freed on leave, instead of
+  being sent once and kept until exit. With synchronized output on, a
+  retransmission is written inside the frame's wrapper.
+
 ## [0.5.1] - 2026-10-24
 
 Data-bound `href` and `src`. `{path}` in a `<text href>` and an `<img>`

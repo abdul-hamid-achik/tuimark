@@ -3,11 +3,15 @@ package img
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/binary"
+	"errors"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/png"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -146,3 +150,100 @@ func TestHalfblocksCache(t *testing.T) {
 		t.Error("an empty request returned a buffer")
 	}
 }
+
+// An image file of more than MaxReadBytes is an error, not a 64 MiB+ read
+// into memory (v0.5.2: Image used os.ReadFile). A sparse file of one byte
+// over the bound keeps the test cheap on disk.
+func TestImageRefusesAnOversizedFile(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "huge.png")
+	f, err := os.Create(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(pngBytes(t, solid(2, 2, color.RGBA{A: 255}))); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Truncate(MaxReadBytes + 1); err != nil {
+		t.Skipf("no sparse files: %v", err)
+	}
+	f.Close()
+	im, err := (&Registry{}).Image("huge.png", dir)
+	if im != nil || !errors.Is(err, ErrTooLarge) {
+		t.Fatalf("image %v, err %v; want nil and ErrTooLarge", im, err)
+	}
+	// A regular file still decodes.
+	ok := filepath.Join(dir, "ok.png")
+	if err := os.WriteFile(ok, pngBytes(t, solid(2, 2, color.RGBA{A: 255})), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if im, err := (&Registry{}).Image("ok.png", dir); err != nil || im == nil {
+		t.Fatalf("a regular file: %v, %v", im, err)
+	}
+}
+
+// bombPNG is a PNG of a few dozen bytes whose header declares w×h RGBA
+// pixels, with an IDAT holding one zlib stream of zeros (a real bomb
+// compresses to about 1 MB; the stream here is cut short, which is
+// enough: png.Decode allocates the pixel buffer from the header before it
+// reads the data).
+func bombPNG(t *testing.T, w, h int) []byte {
+	t.Helper()
+	small := pngBytes(t, solid(1, 1, color.RGBA{A: 255}))
+	// IHDR is the first chunk: 8 signature bytes, 4 length, 4 type, then
+	// 13 bytes of data (width, height, ...), then its CRC.
+	b := append([]byte(nil), small...)
+	binary.BigEndian.PutUint32(b[16:], uint32(w))
+	binary.BigEndian.PutUint32(b[20:], uint32(h))
+	binary.BigEndian.PutUint32(b[29:], crc32.ChecksumIEEE(b[12:29]))
+	return b
+}
+
+// An image whose header declares more than MaxPixels is refused before
+// its pixel buffer is allocated (v0.5.2: a ~1 MB PNG declaring
+// 16000×16000 took 1 GB of memory in png.Decode), on both the file path
+// and the data-URI path, and Halfblocks refuses an oversized image it is
+// handed.
+func TestDecodeRefusesAPixelBomb(t *testing.T) {
+	bomb := bombPNG(t, 16000, 16000)
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	im, err := Decode(bomb)
+	runtime.ReadMemStats(&after)
+	if im != nil || !errors.Is(err, ErrTooManyPixels) {
+		t.Fatalf("Decode = %v, %v; want nil and ErrTooManyPixels", im, err)
+	}
+	if grew := after.TotalAlloc - before.TotalAlloc; grew > 64<<20 {
+		t.Errorf("refusing the bomb still allocated %d MiB", grew>>20)
+	}
+	// Both Image paths take the error (the image is missing).
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "bomb.png"), bomb, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r := &Registry{}
+	if im, err := r.Image("bomb.png", dir); im != nil || !errors.Is(err, ErrTooManyPixels) {
+		t.Errorf("file: %v, %v", im, err)
+	}
+	uri := "data:image/png;base64," + base64.StdEncoding.EncodeToString(bomb)
+	if im, err := r.Image(uri, dir); im != nil || !errors.Is(err, ErrTooManyPixels) {
+		t.Errorf("data URI: %v, %v", im, err)
+	}
+	// Just over the bound by width alone, and the bound itself decodes.
+	if _, err := Decode(bombPNG(t, MaxPixels+1, 1)); !errors.Is(err, ErrTooManyPixels) {
+		t.Errorf("MaxPixels+1 × 1: %v", err)
+	}
+	if got := Halfblocks(hugeImage{}, 4, 2); got != nil {
+		t.Errorf("Halfblocks of an oversized image = %v, want nil", got)
+	}
+	if got := Halfblocks(solid(8, 8, color.RGBA{A: 255}), 4, 2); got == nil {
+		t.Error("Halfblocks of a normal image is nil")
+	}
+}
+
+// hugeImage is an image that claims 20000×20000 pixels and holds none.
+type hugeImage struct{}
+
+func (hugeImage) ColorModel() color.Model { return color.RGBAModel }
+func (hugeImage) Bounds() image.Rectangle { return image.Rect(0, 0, 20000, 20000) }
+func (hugeImage) At(int, int) color.Color { return color.RGBA{} }

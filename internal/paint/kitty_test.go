@@ -3,14 +3,18 @@ package paint
 import (
 	"image/color"
 	"testing"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
+	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 )
 
-// Diacritics encodes 0-9 as one mark each (kitty's rowcolumn-diacritics
-// table order: 0 → U+0305, 1 → U+030D, 2 → U+030E, … 9 → U+034A) and a
-// larger number as its decimal digits, most significant first (v0.4d
-// phase 3).
+// Diacritics encodes one row or column number as ONE mark of kitty's
+// rowcolumn-diacritics table, indexed by the number: 0 → U+0305, 1 →
+// U+030D, … 9 → U+034A, 10 → U+034B, 11 → U+034C, 12 → U+0350 (v0.5.2: the
+// 0.5 code spelled a number of 10 or more digit by digit, so row 12 named
+// rows 1 and 2 and an image of 10+ rows placed wrong).
 func TestDiacritics(t *testing.T) {
 	for _, c := range []struct {
 		n    int
@@ -21,14 +25,94 @@ func TestDiacritics(t *testing.T) {
 		{2, "\u030e"},
 		{3, "\u0310"},
 		{9, "\u034a"},
-		{10, "\u030d\u0305"},
-		{23, "\u030e\u0310"},
-		{100, "\u030d\u0305\u0305"},
-		{8025, "\u0346\u0305\u030e\u033d"},
+		{10, "\u034b"},
+		{11, "\u034c"},
+		{12, "\u0350"},
+		{296, "\U0001d244"},
+		{297, ""}, // past the table: no mark, not a silent clamp
+		{1000, ""},
+		{-1, ""},
 	} {
 		if got := Diacritics(c.n); got != c.want {
-			t.Errorf("Diacritics(%d) = %q, want %q", c.n, got, c.want)
+			t.Errorf("Diacritics(%d) = %+q, want %+q", c.n, got, c.want)
 		}
+	}
+}
+
+// The table is kitty's: 297 entries in file order, every one a
+// non-spacing combining mark, strictly increasing (the file is sorted),
+// with the entries the protocol documents at both ends.
+func TestRowColumnDiacriticsTable(t *testing.T) {
+	if len(rowColumnDiacritics) != 297 {
+		t.Fatalf("table has %d entries, want 297", len(rowColumnDiacritics))
+	}
+	for i, r := range rowColumnDiacritics {
+		if !unicode.Is(unicode.Mn, r) {
+			t.Errorf("entry %d U+%04X is not a non-spacing mark", i, r)
+		}
+		if i > 0 && r <= rowColumnDiacritics[i-1] {
+			t.Errorf("entry %d U+%04X does not follow U+%04X", i, r, rowColumnDiacritics[i-1])
+		}
+	}
+	for i, want := range map[int]rune{0: 0x0305, 9: 0x034A, 10: 0x034B, 11: 0x034C, 12: 0x0350, 13: 0x0351, 14: 0x0352, 296: 0x1D244} {
+		if rowColumnDiacritics[i] != want {
+			t.Errorf("entry %d = U+%04X, want U+%04X", i, rowColumnDiacritics[i], want)
+		}
+	}
+}
+
+// A photo-mode <img> 12 rows tall names each row with ONE mark: row 10 is
+// U+034B, row 11 U+034C, not the digit pairs of rows 1 and 0/1.
+func TestImgPlaceholdersTallImage(t *testing.T) {
+	b := bx("img", "width: 12; height: 12")
+	b.Img, b.ImgW, b.ImgH = halfImg(6, 6, color.RGBA{R: 255, A: 255}, color.RGBA{B: 255, A: 255}), 6, 6
+	b.ImgSrc, b.ImgPhoto = "img.png", true
+	g := render(t, bx("col", "", b), 12, 12)
+	for y := range 12 {
+		want := Diacritics(y) + Diacritics(0)
+		if got := g.At(0, y).Ext; got != want {
+			t.Errorf("row %d first cell ext = %+q, want %+q", y, got, want)
+		}
+		if n := utf8.RuneCountInString(g.At(0, y).Ext); n != 2 {
+			t.Errorf("row %d first cell carries %d marks, want 2 (row, column)", y, n)
+		}
+	}
+	if got := g.At(0, 10).Ext; got != "\u034b\u0305" {
+		t.Errorf("row 10 ext = %+q, want U+034B U+0305", got)
+	}
+	if got := g.At(0, 11).Ext; got != "\u034c\u0305" {
+		t.Errorf("row 11 ext = %+q, want U+034C U+0305", got)
+	}
+}
+
+// A photo-mode <img> 20 columns wide: column 0 names row and column, the
+// cells to its right inherit (kitty's left-inheritance rule). Scrolled 12
+// columns to the left, the first visible cell has no neighbour to inherit
+// from, so it names its own row and column (by table index).
+func TestImgPlaceholdersWideAndClipped(t *testing.T) {
+	mk := func() *layout.Box {
+		b := bx("img", "width: 20; height: 1")
+		b.Img, b.ImgW, b.ImgH = halfImg(6, 6, color.RGBA{R: 255, A: 255}, color.RGBA{B: 255, A: 255}), 6, 6
+		b.ImgSrc, b.ImgPhoto = "img.png", true
+		return b
+	}
+	g := render(t, bx("col", "", mk()), 20, 1)
+	if got := g.At(0, 0).Ext; got != Diacritics(0)+Diacritics(0) {
+		t.Errorf("column 0 ext = %+q", got)
+	}
+	for x := 1; x < 20; x++ {
+		if got := g.At(x, 0).Ext; got != "" {
+			t.Errorf("column %d ext = %+q, want none (left inheritance)", x, got)
+		}
+	}
+	s := bx("scroll#s", "width: 5; height: 1", mk())
+	s.Axis, s.ScrollX = "x", 12
+	g = render(t, bx("col", "", s), 5, 1)
+	if got, want := g.At(0, 0).Ext, Diacritics(0)+Diacritics(12); got != want {
+		t.Errorf("first visible cell (column 12) ext = %+q, want %+q\n%s", got, want, lines(g))
+	}
+	if got := g.At(1, 0).Ext; got != "" {
+		t.Errorf("second visible cell ext = %+q, want none", got)
 	}
 }
 

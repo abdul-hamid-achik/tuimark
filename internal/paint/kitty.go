@@ -3,14 +3,13 @@ package paint
 import (
 	"hash/fnv"
 	"strconv"
-	"strings"
 
 	"github.com/abdul-hamid-achik/tuimark/internal/css"
 	"github.com/abdul-hamid-achik/tuimark/internal/layout"
 )
 
 // The kitty graphics protocol's Unicode placeholders (v0.4d phase 3): an
-// image transmitted once as a virtual placement (a=t,…,U=1,c,r) is then
+// image transmitted once with a virtual placement (a=T,…,U=1,c,r) is then
 // shown by ordinary text — a U+10EEEE placeholder cell whose foreground
 // color carries the image id and whose combining diacritics name the row
 // and column inside the image. The terminal scales the image to the
@@ -23,36 +22,21 @@ import (
 // like every cell of the grid.
 const Placeholder = '\U0010EEEE'
 
-// rowDiacritics are the combining marks of the digits 0-9, the first ten
-// entries of kitty's gen/rowcolumn-diacritics.txt (Unicode 6.0 combining
-// chars of class 230 that never decompose), in table order: 0 → U+0305
-// COMBINING OVERLINE, 1 → U+030D, 2 → U+030E, … 9 → U+034A. A value of
-// one digit is that one mark; a larger value composes its decimal digits,
-// most significant first (kitty's table itself carries the same marks for
-// its values 0-9, which is every row and column a cell names here
-// digit-wise).
-var rowDiacritics = [10]rune{
-	0x0305, 0x030D, 0x030E, 0x0310, 0x0312,
-	0x033D, 0x033E, 0x033F, 0x0346, 0x034A,
-}
+// MaxPlaceholderCells is how many rows and columns kitty's diacritic table
+// can name (the length of rowColumnDiacritics): the cells of a photo <img>
+// past row or column 296 cannot be addressed and are not painted.
+const MaxPlaceholderCells = len(rowColumnDiacritics)
 
-// Diacritics encodes n (a row or column number of a placeholder image)
-// as kitty's combining marks: each decimal digit, most significant first,
-// becomes its mark of rowDiacritics (0 → U+0305, 1 → U+030D, 2 → U+030E,
-// so 23 → U+030E U+034A). Negative n never occurs; it encodes as 0.
+// Diacritics encodes n (a row or column number of a placeholder image) as
+// kitty's combining mark: ONE mark, entry n of rowColumnDiacritics (0 →
+// U+0305, 1 → U+030D, … 9 → U+034A, 10 → U+034B), never the decimal
+// digits of n. A number outside the table (negative, or past
+// MaxPlaceholderCells-1) has no mark: "". The painter never asks for one.
 func Diacritics(n int) string {
-	if n < 0 {
-		n = 0
+	if n < 0 || n >= MaxPlaceholderCells {
+		return ""
 	}
-	if n < 10 {
-		return string(rowDiacritics[n])
-	}
-	s := strconv.Itoa(n)
-	var b strings.Builder
-	for i := range len(s) {
-		b.WriteRune(rowDiacritics[s[i]-'0'])
-	}
-	return b.String()
+	return string(rowColumnDiacritics[n])
 }
 
 // KittyID is the 24-bit image id of a photo-mode <img>: a stable hash of
@@ -78,13 +62,16 @@ func IDColor(id int32) css.Color {
 
 // imgPlaceholders paints a photo-mode <img> as kitty placeholder cells
 // (v0.4d phase 3): one U+10EEEE per cell, the image id in every cell's
-// truecolor foreground, and the row and column in combining diacritics.
-// Only the first column of each row carries diacritics — the row's own
-// number and column 0's — because a placeholder cell inherits row,
-// column, and id from the cell to its left when it carries none (kitty's
-// left-inheritance rule); a bare placeholder cell one column on is the
-// same row, the next column. The frame's Imgs side table records the
-// image once for Run's one-time transmission.
+// truecolor foreground, and the row and column in combining diacritics
+// (one mark each, kitty's table). Only the first visible cell of each
+// row carries diacritics — the row's own number and its own column's
+// (column 0 unless the image is clipped on the left) — because a
+// placeholder cell inherits row, column, and id from the cell to its left
+// when it carries none (kitty's left-inheritance rule); a bare
+// placeholder cell one column on is the same row, the next column. Cells
+// past kitty's table (MaxPlaceholderCells rows or columns) are not
+// painted. The frame's Imgs side table records the image once for Run's
+// one-time transmission.
 func (p *painter) imgPlaceholders(b *layout.Box, clip layout.Rect, st cellStyle) {
 	c := b.Content
 	id := KittyID(b.ImgSrc, c.W, c.H)
@@ -100,14 +87,14 @@ func (p *painter) imgPlaceholders(b *layout.Box, clip layout.Rect, st cellStyle)
 		p.g.Imgs = append(p.g.Imgs, GridImage{ID: id, Src: b.ImgSrc, W: c.W, H: c.H})
 	}
 	vis := p.visible(c, clip)
-	for y := vis.Y; y < vis.Y+vis.H; y++ {
+	for y := vis.Y; y < vis.Y+vis.H && y-c.Y < MaxPlaceholderCells; y++ {
 		row := y - c.Y
-		for x := vis.X; x < vis.X+vis.W; x++ {
+		for x := vis.X; x < vis.X+vis.W && x-c.X < MaxPlaceholderCells; x++ {
 			s := st
 			s.fg = fg
 			ext := ""
-			if x == c.X {
-				ext = Diacritics(row) + Diacritics(0)
+			if x == vis.X {
+				ext = Diacritics(row) + Diacritics(x-c.X)
 			}
 			p.put(clip, x, y, Placeholder, ext, 1, s)
 		}

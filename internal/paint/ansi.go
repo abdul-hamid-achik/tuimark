@@ -53,6 +53,15 @@ func (g *Grid) osc8Open(i uint16) string {
 	return "\x1b]8;id=" + l.ID + ";" + l.URL + "\x1b\\"
 }
 
+// linkOf returns the hyperlink a cell's Link index names in g's table: the
+// zero GridLink for 0 or an index outside the table.
+func (g *Grid) linkOf(i uint16) GridLink {
+	if i == 0 || int(i) > len(g.Links) {
+		return GridLink{}
+	}
+	return g.Links[i-1]
+}
+
 // Options tunes how Diff and Full encode a frame for a terminal. The zero
 // value is the default: truecolor, CHA re-positioning on.
 type Options struct {
@@ -180,11 +189,25 @@ func DiffWith(prev, next *Grid, o Options) string {
 	}
 	// changed reports whether the unit led by next's cell (x, y) differs
 	// from prev: its lead or, for a wide cluster, its continuation.
-	changed := func(x, y int) bool {
-		if full || *prev.At(x, y) != *next.At(x, y) {
+	// Two cells are the same when everything but the link index agrees and,
+	// unless links are off, the links they name are the same link (id and
+	// URI): the index is positional in each frame's table, so an unchanged
+	// index can name a different URI (a data-bound href that changed under
+	// unchanged text) and a changed index the same one.
+	differs := func(x, y int) bool {
+		p, n := *prev.At(x, y), *next.At(x, y)
+		pl, nl := p.Link, n.Link
+		p.Link, n.Link = 0, 0
+		if p != n {
 			return true
 		}
-		return next.At(x, y).Wide && x+1 < next.W && *prev.At(x+1, y) != *next.At(x+1, y)
+		return !o.NoLinks && prev.linkOf(pl) != next.linkOf(nl)
+	}
+	changed := func(x, y int) bool {
+		if full || differs(x, y) {
+			return true
+		}
+		return next.At(x, y).Wide && x+1 < next.W && differs(x+1, y)
 	}
 	unit := func(x, y int) int {
 		if next.At(x, y).Wide {
