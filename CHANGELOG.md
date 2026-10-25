@@ -7,6 +7,21 @@ line.
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-10-25
+
+One file-reading fix. No language change.
+
+### Fixed
+
+- `ReadRegular`, which reads the files a document names (its `<img>`
+  sources and the files it loads, on disk and in the language server),
+  checks the path with a Stat again before opening it, so a FIFO, a
+  socket, or a link to a device that sits there is refused without being
+  opened; 0.5.2 opened each one and refused it afterwards, and opening
+  some devices has side effects. A node swapped in between the Stat and
+  the open is still opened, as in 0.5.2, with `O_NONBLOCK` and `O_NOCTTY`,
+  and refused by the fstat of the descriptor.
+
 ## [0.5.2] - 2026-10-25
 
 Fixes to the 0.5 hyperlink and kitty graphics protocol output. No language
@@ -1244,7 +1259,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.3
 [0.5.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.2
 [0.5.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.1
 [0.5.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.0

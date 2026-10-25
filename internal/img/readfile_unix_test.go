@@ -147,3 +147,54 @@ func TestReadRegularSurvivesAPathSwap(t *testing.T) {
 		}
 	}
 }
+
+// A FIFO, a link to a device and a socket already in place are refused by
+// the Stat before the open: none of them is opened (v0.5.2 opened each
+// one and refused it by fstat, and opening some devices has side
+// effects). A regular file is opened once.
+func TestReadRegularOpensOnlyARegularFile(t *testing.T) {
+	dir, err := os.MkdirTemp("", "o")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	opens := 0
+	openFile = func(name string, flag int, perm os.FileMode) (*os.File, error) {
+		opens++
+		return os.OpenFile(name, flag, perm)
+	}
+	t.Cleanup(func() { openFile = os.OpenFile })
+
+	if err := syscall.Mkfifo(filepath.Join(dir, "fifo"), 0o644); err != nil {
+		t.Skipf("no mkfifo: %v", err)
+	}
+	for name, target := range map[string]string{"null": "/dev/null", "zero": "/dev/zero"} {
+		if err := os.Symlink(target, filepath.Join(dir, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	special := []string{"fifo", "null", "zero"}
+	if l, err := net.Listen("unix", filepath.Join(dir, "s.sock")); err == nil {
+		defer l.Close()
+		special = append(special, "s.sock")
+	}
+	for _, name := range special {
+		opens = 0
+		err := within(t, 5*time.Second, "ReadRegular("+name+")", func() error {
+			_, err := ReadRegular(filepath.Join(dir, name), 0)
+			return err
+		})
+		if !errors.Is(err, ErrNotRegular) || opens != 0 {
+			t.Errorf("%s: err %v after %d opens; want ErrNotRegular and no open", name, err, opens)
+		}
+	}
+
+	file := filepath.Join(dir, "real.png")
+	if err := os.WriteFile(file, []byte("PAYLOAD"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	opens = 0
+	if data, err := ReadRegular(file, 0); err != nil || string(data) != "PAYLOAD" || opens != 1 {
+		t.Errorf("regular file: %q, %v after %d opens; want PAYLOAD after one", data, err, opens)
+	}
+}
