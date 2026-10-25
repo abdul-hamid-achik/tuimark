@@ -83,8 +83,8 @@ func TestReadRegularCallsASocketNotRegular(t *testing.T) {
 
 // ReadRegular decides by the opened descriptor, not by a look at the path
 // beforehand: while a path flips between a link to a regular file and a
-// link to a FIFO, every call either reads the file's exact bytes or is
-// ErrNotRegular, and none blocks. (A race cannot fail the old
+// link to a FIFO, every call either reads the file's exact bytes, is
+// ErrNotRegular, or fails to open the path mid-swap, and none blocks. (A race cannot fail the old
 // check-then-open code deterministically, since it also verified the
 // descriptor; this pins the contract of the descriptor-first opener.)
 func TestReadRegularSurvivesAPathSwap(t *testing.T) {
@@ -136,6 +136,12 @@ func TestReadRegularSurvivesAPathSwap(t *testing.T) {
 		case got.err == nil && string(got.data) == "PAYLOAD":
 		case errors.Is(got.err, ErrNotRegular):
 		case errors.Is(got.err, os.ErrNotExist):
+		case got.data == nil && errors.Is(got.err, syscall.EINVAL):
+			// While the link is atomically replaced, the kernel's path walk
+			// can lose the old link under the open: ENOENT everywhere, and
+			// EINVAL on macOS (the walk reads a link that is gone). The open
+			// failed, so nothing was read and nothing could block; that is
+			// the contract this test pins (CI: macos-latest).
 		default:
 			t.Fatalf("call %d: %q, %v; want the file's bytes or ErrNotRegular", i, got.data, got.err)
 		}
