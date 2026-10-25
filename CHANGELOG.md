@@ -7,6 +7,10 @@ line.
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-10-25
+
+One file-reading fix. No language change.
+
 ### Fixed
 
 - `ReadRegular`, which reads the files a document names (its `<img>`
@@ -1255,7 +1259,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.3
 [0.5.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.2
 [0.5.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.1
 [0.5.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.0
