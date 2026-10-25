@@ -30,6 +30,7 @@
   "tagsCurrent": [
     "checkbox",
     "fragment",
+    "img",
     "include",
     "select",
     "slot",
