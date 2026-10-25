@@ -7,6 +7,17 @@ line.
 
 ## [Unreleased]
 
+### Fixed
+
+- `ReadRegular`, which reads the files a document names (its `<img>`
+  sources and the files it loads, on disk and in the language server),
+  checks the path with a Stat again before opening it, so a FIFO, a
+  socket, or a link to a device that sits there is refused without being
+  opened; 0.5.2 opened each one and refused it afterwards, and opening
+  some devices has side effects. A node swapped in between the Stat and
+  the open is still opened, as in 0.5.2, with `O_NONBLOCK` and `O_NOCTTY`,
+  and refused by the fstat of the descriptor.
+
 ## [0.5.2] - 2026-10-25
 
 Fixes to the 0.5 hyperlink and kitty graphics protocol output. No language

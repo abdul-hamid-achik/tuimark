@@ -2,6 +2,7 @@ package paint
 
 import (
 	"image/color"
+	"strconv"
 	"testing"
 	"unicode"
 	"unicode/utf8"
@@ -113,6 +114,55 @@ func TestImgPlaceholdersWideAndClipped(t *testing.T) {
 	}
 	if got := g.At(1, 0).Ext; got != "" {
 		t.Errorf("second visible cell ext = %+q, want none", got)
+	}
+}
+
+// Kitty's table names rows and columns 0 to 296 (MaxPlaceholderCells).
+// A photo <img> of 299 rows paints placeholders in rows 0 to 296, each
+// naming its own row, and leaves rows 297 and 298 blank: no mark can name
+// them. The same holds for columns, and for an image scrolled so that the
+// rows past the table are the visible ones.
+func TestImgPlaceholdersStopAtTheTable(t *testing.T) {
+	mk := func(w, h int) *layout.Box {
+		b := bx("img", "width: "+strconv.Itoa(w)+"; height: "+strconv.Itoa(h))
+		b.Img, b.ImgW, b.ImgH = halfImg(6, 6, color.RGBA{R: 255, A: 255}, color.RGBA{B: 255, A: 255}), 6, 6
+		b.ImgSrc, b.ImgPhoto = "img.png", true
+		return b
+	}
+	g := render(t, bx("col", "", mk(1, 299)), 1, 299)
+	for y := range 299 {
+		c := g.At(0, y)
+		if y < MaxPlaceholderCells {
+			if want := Diacritics(y) + Diacritics(0); c.Ch != Placeholder || c.Ext != want {
+				t.Errorf("row %d = %q ext %+q, want a placeholder with %+q", y, c.Ch, c.Ext, want)
+			}
+		} else if c.Ch != ' ' || c.Ext != "" {
+			t.Errorf("row %d = %q ext %+q, want blank (past the table)", y, c.Ch, c.Ext)
+		}
+	}
+	g = render(t, bx("col", "", mk(299, 1)), 299, 1)
+	for x := range 299 {
+		c := g.At(x, 0)
+		if x < MaxPlaceholderCells {
+			if c.Ch != Placeholder {
+				t.Errorf("column %d = %q, want a placeholder", x, c.Ch)
+			}
+		} else if c.Ch != ' ' {
+			t.Errorf("column %d = %q, want blank (past the table)", x, c.Ch)
+		}
+	}
+	s := bx("scroll#s", "width: 1; height: 10", mk(1, 300))
+	s.Axis, s.ScrollY = "y", 290
+	g = render(t, bx("col", "", s), 1, 10)
+	for y := range 10 {
+		c, row := g.At(0, y), 290+y
+		if row < MaxPlaceholderCells {
+			if want := Diacritics(row) + Diacritics(0); c.Ch != Placeholder || c.Ext != want {
+				t.Errorf("scrolled row %d = %q ext %+q, want a placeholder with %+q\n%s", row, c.Ch, c.Ext, want, lines(g))
+			}
+		} else if c.Ch != ' ' {
+			t.Errorf("scrolled row %d = %q, want blank (past the table)", row, c.Ch)
+		}
 	}
 }
 

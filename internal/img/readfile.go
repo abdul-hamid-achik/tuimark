@@ -30,11 +30,13 @@ var (
 // /dev/stdin or /dev/zero, or a FIFO, is an error and not a hang, a stolen
 // protocol stream, or an unbounded read.
 //
-// On unix the file is opened first, without waiting (O_NONBLOCK) and
-// without a Stat of the path, and what it is is decided by fstat on the
-// opened descriptor, so nothing can be swapped in between a check and the
-// open. Elsewhere (see readfile_other.go) the path is checked before the
-// open, which is the only FIFO guard there.
+// The path is checked with a Stat before the open, so what sits there and
+// is not a regular file is never opened. On unix the open is then made
+// without waiting (O_NONBLOCK) and without taking a terminal (O_NOCTTY),
+// so a node swapped in after that check neither blocks nor becomes the
+// controlling terminal, and fstat on the opened descriptor makes the
+// final call. Elsewhere (see readfile_other.go) the Stat is the only FIFO
+// guard.
 func ReadRegular(path string, limit int64) ([]byte, error) {
 	if limit <= 0 {
 		limit = MaxReadBytes

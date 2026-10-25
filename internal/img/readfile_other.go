@@ -9,9 +9,10 @@ import (
 
 // openRegular is os.Open behind a Stat of the path. There is no
 // O_NONBLOCK here (js/wasm, Windows), so this Stat is the ONLY guard that
-// keeps a FIFO or device out of the open, and it leaves the window the
-// unix opener closes: a node swapped in between the Stat and the open is
-// opened. ReadRegular's fstat afterwards still refuses to read it.
+// keeps a FIFO or device out of the open, and a node swapped in between
+// the Stat and the open is opened, with none of the unix opener's
+// O_NONBLOCK and O_NOCTTY. ReadRegular's fstat afterwards still refuses
+// to read it.
 func openRegular(path string) (*os.File, error) {
 	if fi, err := os.Stat(path); err != nil {
 		return nil, err
