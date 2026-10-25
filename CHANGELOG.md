@@ -7,6 +7,8 @@ line.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-25
+
 Fixes to the 0.5 hyperlink and kitty graphics protocol output. No language
 change.
 
@@ -1242,7 +1244,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.2
 [0.5.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.1
 [0.5.0]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.0
 [0.4.6]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.4.6
