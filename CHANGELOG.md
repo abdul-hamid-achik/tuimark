@@ -7,6 +7,16 @@ line.
 
 ## [Unreleased]
 
+### Fixed
+
+- In photo mode, an `<img>` enters the frame's image table, and so is
+  transmitted to the terminal, only when the frame writes one of its
+  placeholder cells. An image of which only the border or padding was in
+  view, or whose visible rows or columns lay past kitty's table (cell 297
+  on), was transmitted although none of it showed. An image the terminal
+  holds is freed while no frame shows it and transmitted again when one
+  does.
+
 ## [0.5.3] - 2026-10-25
 
 One file-reading fix. No language change.
