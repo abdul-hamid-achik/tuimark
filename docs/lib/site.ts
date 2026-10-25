@@ -4,7 +4,7 @@
 export const SITE_URL = 'https://tuimark.dev';
 export const SITE_NAME = 'Tuimark';
 export const REPO_URL = 'https://github.com/abdul-hamid-achik/tuimark';
-export const VERSION = 'v0.5.3';
+export const VERSION = 'v0.5.4';
 export const AUTHOR = 'Abdul Hamid Achik';
 
 export const TAGLINE = 'Terminal UIs as documents';
