@@ -137,11 +137,11 @@ func TestReadRegularSurvivesAPathSwap(t *testing.T) {
 		case errors.Is(got.err, ErrNotRegular):
 		case errors.Is(got.err, os.ErrNotExist):
 		case got.data == nil && errors.Is(got.err, syscall.EINVAL):
-			// While the link is atomically replaced, the kernel's path walk
-			// can lose the old link under the open: ENOENT everywhere, and
-			// EINVAL on macOS (the walk reads a link that is gone). The open
-			// failed, so nothing was read and nothing could block; that is
-			// the contract this test pins (CI: macos-latest).
+			// macos-latest CI has failed this open with EINVAL mid-swap
+			// (not reproduced on a local macOS; the likeliest cause is the
+			// path walk losing the link being replaced, as ENOENT does
+			// elsewhere). The open failed, so nothing was read and nothing
+			// could block, which is the contract this test pins.
 		default:
 			t.Fatalf("call %d: %q, %v; want the file's bytes or ErrNotRegular", i, got.data, got.err)
 		}
