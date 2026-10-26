@@ -7,6 +7,19 @@ line.
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-10-25
+
+The kit's palettes read at WCAG AA. No language change.
+
+### Changed
+
+- Every text token of the kit (`kit/theme.tcss`) reads at 4.5:1 on `bg`,
+  `panel`, `raised` and `sel`, and every `on-*` token on its fill, in both
+  palettes. Nine values move along their own hue: in dark `muted`, `subtle`
+  and `danger`; in light `subtle`, `accent`, `ok`, `warn`, `danger` and
+  `code`. In dark, `muted` and `subtle` now read close to each other (1.13:1).
+  `TestPaletteContrast` (`examples/kit-gallery`) fails a palette that misses.
+
 ## [0.5.4] - 2026-10-25
 
 One photo-mode fix. No language change.
