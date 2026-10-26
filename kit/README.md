@@ -151,7 +151,10 @@ members shows no title or label, with no diagnostic. Move each one as follows.
 All color lives in `:root` of `theme.tcss`, read as `$name`. Edit the values to
 retheme the whole kit; `@media (theme: light)` holds the light values. The
 first ten tokens are the runtime's own required tokens (the same names its
-built-in themes define); the rest are the kit's.
+built-in themes define); the rest are the kit's. Every text token reads at
+WCAG AA (4.5:1) on `bg`, `panel`, `raised` and `sel`, and every `on-*` token on
+the fill it sits on, in both palettes; `TestPaletteContrast` in
+`examples/kit-gallery` fails a palette that does not.
 
 | Token | Use |
 |---|---|

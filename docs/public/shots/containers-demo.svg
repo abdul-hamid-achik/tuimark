@@ -341,9 +341,9 @@
 <text x="158" y="29" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">local</text>
 <text x="935.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">up</text>
 <text x="23.6" y="489" textLength="76.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">DEGRADED</text>
-<text x="791.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">27.1.1</text>
-<text x="858.8" y="489" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="878" y="489" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">simulated</text>
+<text x="791.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">27.1.1</text>
+<text x="858.8" y="489" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="878" y="489" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">simulated</text>
 <g class="a a0">
 <text x="215.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">exited</text>
 </g>
@@ -356,11 +356,11 @@
 </g>
 <g class="a a2">
 <text x="215.6" y="29" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">engine</text>
-<text x="273.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">3</text>
-<text x="292.4" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">images</text>
-<text x="378.8" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">4</text>
-<text x="398" y="49" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">volumes</text>
-<text x="724.4" y="489" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">docker</text>
+<text x="273.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">3</text>
+<text x="292.4" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">images</text>
+<text x="378.8" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">4</text>
+<text x="398" y="49" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">volumes</text>
+<text x="724.4" y="489" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">docker</text>
 </g>
 <g class="a a3">
 <text x="52.4" y="169" textLength="105.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">api-gateway</text>
@@ -375,48 +375,48 @@
 <text x="225.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff">12</text>
 <text x="254" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">·</text>
 <text x="302" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">/</text>
-<text x="321.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">filter</text>
+<text x="321.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">filter</text>
 <text x="398" y="449" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">space</text>
-<text x="455.6" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">mark</text>
+<text x="455.6" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">mark</text>
 <text x="513.2" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">s</text>
-<text x="532.4" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">stop</text>
+<text x="532.4" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">stop</text>
 <text x="590" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">u</text>
-<text x="609.2" y="449" textLength="48" lengthAdjust="spacing" fill="#8b949e">start</text>
+<text x="609.2" y="449" textLength="48" lengthAdjust="spacing" fill="#939ca5">start</text>
 <text x="676.4" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">r</text>
-<text x="695.6" y="449" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">restart</text>
+<text x="695.6" y="449" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">restart</text>
 <text x="782" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">d</text>
-<text x="801.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">remove</text>
+<text x="801.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">remove</text>
 <text x="878" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">o</text>
-<text x="897.2" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">sort</text>
+<text x="897.2" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">sort</text>
 </g>
 <g class="a a14">
 <text x="23.6" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="42.8" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">help</text>
+<text x="42.8" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">help</text>
 <text x="100.4" y="449" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">^K</text>
-<text x="129.2" y="449" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">commands</text>
+<text x="129.2" y="449" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">commands</text>
 <text x="225.2" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
-<text x="244.4" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">quit</text>
+<text x="244.4" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">quit</text>
 </g>
 <g class="a a17" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">11:59:59</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">11:59:59</text>
 </g>
 <g class="a a18">
 <text x="14" y="49" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">▸1</text>
 <rect x="14" y="51" width="19.2" height="1" fill="#58a6ff"/>
 <text x="42.8" y="49" textLength="96" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">containers</text>
 <rect x="42.8" y="51" width="96" height="1" fill="#58a6ff"/>
-<text x="52.4" y="149" textLength="38.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">NAME</text>
-<text x="830" y="149" textLength="48" lengthAdjust="spacing" fill="#8b949e" font-weight="700">PORTS</text>
+<text x="52.4" y="149" textLength="38.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">NAME</text>
+<text x="830" y="149" textLength="48" lengthAdjust="spacing" fill="#939ca5" font-weight="700">PORTS</text>
 </g>
 <g class="a a19">
-<text x="167.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">2</text>
+<text x="167.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">2</text>
 </g>
 <g class="a a20">
-<text x="186.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">detail</text>
+<text x="186.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">detail</text>
 </g>
 <g class="a a21">
-<text x="494" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">5</text>
-<text x="513.2" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">events</text>
+<text x="494" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">5</text>
+<text x="513.2" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">events</text>
 </g>
 <g class="a a22">
 <text x="33.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3" fill-opacity="0.55">/</text>
@@ -429,7 +429,7 @@
 <text x="321.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3" fill-opacity="0.55">status</text>
 <text x="52.4" y="389" textLength="134.4" lengthAdjust="spacing" fill="#e6edf3">worker-reports</text>
 <text x="801.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
-<text x="830" y="389" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="389" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 </g>
 <g class="a a23">
 <text x="273.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">sort</text>
@@ -439,11 +439,11 @@
 <text x="369.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">↑</text>
 </g>
 <g class="a a25">
-<text x="234.8" y="149" textLength="48" lengthAdjust="spacing" fill="#8b949e" font-weight="700">IMAGE</text>
-<text x="484.4" y="149" textLength="57.6" lengthAdjust="spacing" fill="#8b949e" font-weight="700">STATUS</text>
-<text x="609.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">CPU%</text>
-<text x="695.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#8b949e" font-weight="700">MEM</text>
-<text x="753.2" y="149" textLength="57.6" lengthAdjust="spacing" fill="#8b949e" font-weight="700">UPTIME</text>
+<text x="234.8" y="149" textLength="48" lengthAdjust="spacing" fill="#939ca5" font-weight="700">IMAGE</text>
+<text x="484.4" y="149" textLength="57.6" lengthAdjust="spacing" fill="#939ca5" font-weight="700">STATUS</text>
+<text x="609.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">CPU%</text>
+<text x="695.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#939ca5" font-weight="700">MEM</text>
+<text x="753.2" y="149" textLength="57.6" lengthAdjust="spacing" fill="#939ca5" font-weight="700">UPTIME</text>
 </g>
 <g class="a a26">
 <text x="484.4" y="169" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">running</text>
@@ -457,10 +457,10 @@
 </g>
 <g class="a a29">
 <text x="52.4" y="189" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">billing-api</text>
-<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3001→3001</text>
+<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3001→3001</text>
 </g>
 <g class="a a30">
-<text x="234.8" y="189" textLength="172.8" lengthAdjust="spacing" fill="#8b949e">acme/billing:1.9.3</text>
+<text x="234.8" y="189" textLength="172.8" lengthAdjust="spacing" fill="#939ca5">acme/billing:1.9.3</text>
 </g>
 <g class="a a31">
 <text x="484.4" y="189" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
@@ -488,27 +488,27 @@
 <g class="a a34">
 <text x="52.4" y="209" textLength="96" lengthAdjust="spacing" fill="#e6edf3">db-migrate</text>
 <text x="52.4" y="249" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">grafana</text>
-<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3030→3000</text>
+<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3030→3000</text>
 <text x="52.4" y="269" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">postgres</text>
-<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5432→5432</text>
+<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5432→5432</text>
 <text x="52.4" y="309" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">rabbitmq</text>
-<text x="830" y="309" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5672→5672</text>
-<text x="926" y="309" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="309" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5672→5672</text>
+<text x="926" y="309" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="52.4" y="329" textLength="48" lengthAdjust="spacing" fill="#e6edf3">redis</text>
-<text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">6379→6379</text>
+<text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">6379→6379</text>
 <text x="52.4" y="349" textLength="96" lengthAdjust="spacing" fill="#e6edf3">search-api</text>
-<text x="830" y="349" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3002→3002</text>
+<text x="830" y="349" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3002→3002</text>
 </g>
 <g class="a a35">
-<text x="234.8" y="209" textLength="172.8" lengthAdjust="spacing" fill="#8b949e">acme/migrate:1.4.0</text>
+<text x="234.8" y="209" textLength="172.8" lengthAdjust="spacing" fill="#939ca5">acme/migrate:1.4.0</text>
 <text x="484.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">exit</text>
 <text x="532.4" y="209" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">0</text>
-<text x="234.8" y="249" textLength="211.2" lengthAdjust="spacing" fill="#8b949e">grafana/grafana:11.1.0</text>
+<text x="234.8" y="249" textLength="211.2" lengthAdjust="spacing" fill="#939ca5">grafana/grafana:11.1.0</text>
 <text x="762.8" y="249" textLength="48" lengthAdjust="spacing" fill="#e6edf3">1d23h</text>
-<text x="234.8" y="269" textLength="124.8" lengthAdjust="spacing" fill="#8b949e">postgres:16.3</text>
-<text x="234.8" y="309" textLength="230.4" lengthAdjust="spacing" fill="#8b949e">rabbitmq:3.13-management</text>
+<text x="234.8" y="269" textLength="124.8" lengthAdjust="spacing" fill="#939ca5">postgres:16.3</text>
+<text x="234.8" y="309" textLength="230.4" lengthAdjust="spacing" fill="#939ca5">rabbitmq:3.13-management</text>
 <text x="762.8" y="309" textLength="48" lengthAdjust="spacing" fill="#e6edf3">3d23h</text>
-<text x="234.8" y="329" textLength="153.6" lengthAdjust="spacing" fill="#8b949e">redis:7.2-alpine</text>
+<text x="234.8" y="329" textLength="153.6" lengthAdjust="spacing" fill="#939ca5">redis:7.2-alpine</text>
 </g>
 <g class="a a36">
 <text x="638" y="209" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
@@ -516,15 +516,15 @@
 </g>
 <g class="a a37">
 <text x="801.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
-<text x="830" y="209" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="209" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 </g>
 <g class="a a38">
 <text x="52.4" y="229" textLength="96" lengthAdjust="spacing" fill="#e6edf3">edge-proxy</text>
-<text x="830" y="229" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">8080→80</text>
-<text x="906.8" y="229" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="229" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">8080→80</text>
+<text x="906.8" y="229" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 </g>
 <g class="a a39">
-<text x="234.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">nginx:1.27-alpine</text>
+<text x="234.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">nginx:1.27-alpine</text>
 <text x="772.4" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">3d2h</text>
 </g>
 <g class="a a40">
@@ -547,10 +547,10 @@
 </g>
 <g class="a a45">
 <text x="52.4" y="289" textLength="96" lengthAdjust="spacing" fill="#e6edf3">prometheus</text>
-<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">9090→9090</text>
+<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">9090→9090</text>
 </g>
 <g class="a a46">
-<text x="234.8" y="289" textLength="220.8" lengthAdjust="spacing" fill="#8b949e">prom/prometheus:v2.53.0</text>
+<text x="234.8" y="289" textLength="220.8" lengthAdjust="spacing" fill="#939ca5">prom/prometheus:v2.53.0</text>
 </g>
 <g class="a a47" visibility="hidden">
 <text x="762.8" y="289" textLength="48" lengthAdjust="spacing" fill="#e6edf3">1d23h</text>
@@ -565,13 +565,13 @@
 <text x="695.6" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">30M</text>
 </g>
 <g class="a a51">
-<text x="234.8" y="349" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/search:0.8.1</text>
+<text x="234.8" y="349" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/search:0.8.1</text>
 </g>
 <g class="a a52">
 <text x="484.4" y="349" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
-<text x="234.8" y="389" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
-<text x="484.4" y="389" textLength="38.4" lengthAdjust="spacing" fill="#f85149">exit</text>
-<text x="532.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#f85149">1</text>
+<text x="234.8" y="389" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
+<text x="484.4" y="389" textLength="38.4" lengthAdjust="spacing" fill="#f85c55">exit</text>
+<text x="532.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#f85c55">1</text>
 <text x="638" y="389" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
 <text x="714.8" y="389" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
 </g>
@@ -582,7 +582,7 @@
 <text x="52.4" y="369" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">worker-email</text>
 </g>
 <g class="a a55">
-<text x="234.8" y="369" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
+<text x="234.8" y="369" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
 </g>
 <g class="a a56">
 <text x="484.4" y="369" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
@@ -591,7 +591,7 @@
 <text x="686" y="369" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">108M</text>
 </g>
 <g class="a a58">
-<text x="830" y="369" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="369" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 </g>
 <g class="a a59" visibility="hidden">
 <text x="570.8" y="489" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">no</text>
@@ -600,41 +600,41 @@
 </g>
 <g class="a a60" visibility="hidden">
 <text x="23.6" y="449" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">^K</text>
-<text x="52.4" y="449" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">commands</text>
+<text x="52.4" y="449" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">commands</text>
 <text x="148.4" y="449" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">enter</text>
-<text x="206" y="449" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">to</text>
-<text x="234.8" y="449" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">the</text>
-<text x="273.2" y="449" textLength="48" lengthAdjust="spacing" fill="#8b949e">table</text>
+<text x="206" y="449" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">to</text>
+<text x="234.8" y="449" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">the</text>
+<text x="273.2" y="449" textLength="48" lengthAdjust="spacing" fill="#939ca5">table</text>
 <text x="340.4" y="449" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">esc</text>
-<text x="378.8" y="449" textLength="48" lengthAdjust="spacing" fill="#8b949e">clear</text>
-<text x="436.4" y="449" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">filter</text>
+<text x="378.8" y="449" textLength="48" lengthAdjust="spacing" fill="#939ca5">clear</text>
+<text x="436.4" y="449" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">filter</text>
 </g>
 <g class="a a61" visibility="hidden">
 <text x="484.4" y="169" textLength="67.2" lengthAdjust="spacing" fill="#3fb950" font-weight="700">running</text>
 </g>
 <g class="a a64" visibility="hidden">
-<text x="42.8" y="129" textLength="96" lengthAdjust="spacing" fill="#8b949e">Containers</text>
-<text x="148.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
+<text x="42.8" y="129" textLength="96" lengthAdjust="spacing" fill="#939ca5">Containers</text>
+<text x="148.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
 </g>
 <g class="a a70" visibility="hidden">
-<text x="167.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">12</text>
+<text x="167.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">12</text>
 </g>
 <g class="a a71" visibility="hidden">
-<text x="196.4" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">of</text>
-<text x="225.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">12</text>
-<text x="254" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
+<text x="196.4" y="129" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">of</text>
+<text x="225.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">12</text>
+<text x="254" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
 </g>
 <g class="a a72" visibility="hidden">
-<text x="273.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">sort</text>
-<text x="321.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">name</text>
-<text x="369.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">↑</text>
+<text x="273.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">sort</text>
+<text x="321.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">name</text>
+<text x="369.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">↑</text>
 </g>
 <g class="a a73" visibility="hidden">
 <text x="52.4" y="169" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">api-gateway</text>
-<text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">3000→3000</text>
+<text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">3000→3000</text>
 </g>
 <g class="a a74" visibility="hidden">
-<text x="234.8" y="169" textLength="182.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">acme/gateway:2.14.0</text>
+<text x="234.8" y="169" textLength="182.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">acme/gateway:2.14.0</text>
 </g>
 <g class="a a75" visibility="hidden">
 <text x="618.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">8.1</text>
@@ -642,39 +642,39 @@
 <text x="772.4" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">3d2h</text>
 </g>
 <g class="a a76" visibility="hidden">
-<text x="186.8" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">of</text>
-<text x="215.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">12</text>
-<text x="244.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="263.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">sort</text>
-<text x="311.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">name</text>
-<text x="359.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">↑</text>
-<text x="234.8" y="189" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
-<text x="830" y="189" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="186.8" y="129" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">of</text>
+<text x="215.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">12</text>
+<text x="244.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="263.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">sort</text>
+<text x="311.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">name</text>
+<text x="359.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">↑</text>
+<text x="234.8" y="189" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
+<text x="830" y="189" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 </g>
 <g class="a a77" visibility="hidden">
 <text x="33.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">w</text>
-<text x="167.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">3</text>
+<text x="167.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">3</text>
 <text x="52.4" y="189" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">worker-email</text>
 <text x="618.8" y="189" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">5.7</text>
 <text x="686" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">108M</text>
 <text x="753.2" y="189" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">19h41m</text>
 <text x="52.4" y="209" textLength="134.4" lengthAdjust="spacing" fill="#e6edf3">worker-reports</text>
-<text x="234.8" y="209" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
-<text x="484.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#f85149">exit</text>
-<text x="532.4" y="209" textLength="9.6" lengthAdjust="spacing" fill="#f85149">1</text>
+<text x="234.8" y="209" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
+<text x="484.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#f85c55">exit</text>
+<text x="532.4" y="209" textLength="9.6" lengthAdjust="spacing" fill="#f85c55">1</text>
 </g>
 <g class="a a78" visibility="hidden">
 <text x="33.2" y="89" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">wo</text>
 </g>
 <g class="a a79" visibility="hidden">
-<text x="167.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">2</text>
+<text x="167.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">2</text>
 <text x="52.4" y="169" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">worker-email</text>
-<text x="234.8" y="169" textLength="163.2" lengthAdjust="spacing" fill="#8b949e" font-weight="700">acme/worker:3.2.0</text>
+<text x="234.8" y="169" textLength="163.2" lengthAdjust="spacing" fill="#939ca5" font-weight="700">acme/worker:3.2.0</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">108M</text>
-<text x="830" y="169" textLength="9.6" lengthAdjust="spacing" fill="#8b949e" font-weight="700">-</text>
+<text x="830" y="169" textLength="9.6" lengthAdjust="spacing" fill="#939ca5" font-weight="700">-</text>
 <text x="52.4" y="189" textLength="134.4" lengthAdjust="spacing" fill="#e6edf3">worker-reports</text>
-<text x="484.4" y="189" textLength="38.4" lengthAdjust="spacing" fill="#f85149">exit</text>
-<text x="532.4" y="189" textLength="9.6" lengthAdjust="spacing" fill="#f85149">1</text>
+<text x="484.4" y="189" textLength="38.4" lengthAdjust="spacing" fill="#f85c55">exit</text>
+<text x="532.4" y="189" textLength="9.6" lengthAdjust="spacing" fill="#f85c55">1</text>
 <text x="638" y="189" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
 <text x="714.8" y="189" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
 <text x="801.2" y="189" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
@@ -690,7 +690,7 @@
 <text x="33.2" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">work</text>
 </g>
 <g class="a a83" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:01</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:01</text>
 </g>
 <g class="a a84" visibility="hidden">
 <text x="618.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">3.3</text>
@@ -712,8 +712,8 @@
 <text x="52.4" y="169" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">api-gateway</text>
 </g>
 <g class="a a87" visibility="hidden">
-<text x="234.8" y="169" textLength="182.4" lengthAdjust="spacing" fill="#8b949e">acme/gateway:2.14.0</text>
-<text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3000→3000</text>
+<text x="234.8" y="169" textLength="182.4" lengthAdjust="spacing" fill="#939ca5">acme/gateway:2.14.0</text>
+<text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3000→3000</text>
 </g>
 <g class="a a88" visibility="hidden">
 <text x="484.4" y="169" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
@@ -807,7 +807,7 @@
 <text x="33.2" y="189" textLength="9.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">✓</text>
 </g>
 <g class="a a113" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:02</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:02</text>
 <text x="609.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">14.9</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">210M</text>
 <text x="618.8" y="349" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">8.0</text>
@@ -835,19 +835,19 @@
 <text x="686" y="309" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">180M</text>
 </g>
 <g class="a a119" visibility="hidden">
-<text x="273.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">2</text>
-<text x="292.4" y="129" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">selected</text>
-<text x="378.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="398" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">sort</text>
-<text x="446" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">name</text>
-<text x="494" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">↑</text>
+<text x="273.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">2</text>
+<text x="292.4" y="129" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">selected</text>
+<text x="378.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="398" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">sort</text>
+<text x="446" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">name</text>
+<text x="494" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">↑</text>
 <text x="33.2" y="189" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">✓</text>
 <text x="52.4" y="189" textLength="105.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">billing-api</text>
 <text x="234.8" y="189" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">Stop</text>
 <text x="282.8" y="189" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">2</text>
 <text x="302" y="189" textLength="105.6" lengthAdjust="spacing" fill="#58a6ff">containers?</text>
 <text x="782" y="189" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">d4h</text>
-<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">3001→3001</text>
+<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">3001→3001</text>
 <text x="350" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">and</text>
 <text x="388.4" y="229" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">billing-api</text>
 <text x="503.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">will</text>
@@ -884,7 +884,7 @@
 <text x="782" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">d0h</text>
 </g>
 <g class="a a122" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:03</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:03</text>
 <text x="609.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">16.3</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">213M</text>
 </g>
@@ -903,7 +903,7 @@
 <text x="254" y="469" textLength="105.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">billing-api</text>
 </g>
 <g class="a a126" visibility="hidden">
-<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:03</text>
+<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:03</text>
 <text x="618.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">3.8</text>
 <text x="618.8" y="269" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.8</text>
 <text x="609.2" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">11.7</text>
@@ -945,7 +945,7 @@
 <text x="599.6" y="489" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">billing-api</text>
 </g>
 <g class="a a133" visibility="hidden">
-<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:04</text>
+<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:04</text>
 <text x="618.8" y="249" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.6</text>
 <text x="686" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">137M</text>
 <text x="618.8" y="269" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.5</text>
@@ -969,7 +969,7 @@
 <text x="686" y="369" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">107M</text>
 </g>
 <g class="a a138" visibility="hidden">
-<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:05</text>
+<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:05</text>
 </g>
 <g class="a a139" visibility="hidden">
 <text x="618.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">3.9</text>
@@ -991,7 +991,7 @@
 <text x="618.8" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.7</text>
 </g>
 <g class="a a143" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:05</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:05</text>
 <text x="618.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff">5.8</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">191M</text>
 <text x="791.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff">0s</text>
@@ -1006,7 +1006,7 @@
 <text x="369.2" y="489" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">Started</text>
 </g>
 <g class="a a146" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:06</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:06</text>
 <text x="609.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">12.3</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">194M</text>
 <text x="791.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff">1s</text>
@@ -1032,7 +1032,7 @@
 <text x="686" y="369" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">109M</text>
 </g>
 <g class="a a151" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:07</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:07</text>
 <text x="618.8" y="289" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">4.2</text>
 </g>
 <g class="a a152" visibility="hidden">
@@ -1085,17 +1085,17 @@
 <g class="a a164" visibility="hidden">
 <text x="359.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">↓</text>
 <text x="52.4" y="169" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">billing-api</text>
-<text x="234.8" y="169" textLength="172.8" lengthAdjust="spacing" fill="#8b949e">acme/billing:1.9.3</text>
-<text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3001→3001</text>
+<text x="234.8" y="169" textLength="172.8" lengthAdjust="spacing" fill="#939ca5">acme/billing:1.9.3</text>
+<text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3001→3001</text>
 <text x="52.4" y="249" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">rabbitmq</text>
-<text x="234.8" y="249" textLength="230.4" lengthAdjust="spacing" fill="#8b949e">rabbitmq:3.13-management</text>
+<text x="234.8" y="249" textLength="230.4" lengthAdjust="spacing" fill="#939ca5">rabbitmq:3.13-management</text>
 <text x="762.8" y="249" textLength="48" lengthAdjust="spacing" fill="#e6edf3">3d23h</text>
-<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5672→5672</text>
-<text x="926" y="249" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5672→5672</text>
+<text x="926" y="249" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="52.4" y="349" textLength="48" lengthAdjust="spacing" fill="#e6edf3">redis</text>
-<text x="234.8" y="349" textLength="153.6" lengthAdjust="spacing" fill="#8b949e">redis:7.2-alpine</text>
+<text x="234.8" y="349" textLength="153.6" lengthAdjust="spacing" fill="#939ca5">redis:7.2-alpine</text>
 <text x="772.4" y="349" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
-<text x="830" y="349" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">6379→6379</text>
+<text x="830" y="349" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">6379→6379</text>
 <text x="561.2" y="489" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">sorted</text>
 <text x="628.4" y="489" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">by</text>
 </g>
@@ -1108,17 +1108,17 @@
 <text x="686" y="189" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">195M</text>
 <text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">3000→3000</text>
 <text x="52.4" y="209" textLength="96" lengthAdjust="spacing" fill="#e6edf3">search-api</text>
-<text x="234.8" y="209" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/search:0.8.1</text>
+<text x="234.8" y="209" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/search:0.8.1</text>
 <text x="618.8" y="209" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">7.3</text>
 <text x="686" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">143M</text>
 <text x="772.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">1d2h</text>
-<text x="830" y="209" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3002→3002</text>
+<text x="830" y="209" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3002→3002</text>
 <text x="52.4" y="229" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">worker-email</text>
-<text x="234.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
+<text x="234.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
 <text x="618.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">5.6</text>
 <text x="686" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">109M</text>
 <text x="753.2" y="229" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">19h42m</text>
-<text x="830" y="229" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="229" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 <text x="618.8" y="249" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">4.8</text>
 <text x="686" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">178M</text>
 <text x="618.8" y="309" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.0</text>
@@ -1131,22 +1131,22 @@
 </g>
 <g class="a a167" visibility="hidden">
 <text x="52.4" y="269" textLength="96" lengthAdjust="spacing" fill="#e6edf3">edge-proxy</text>
-<text x="234.8" y="269" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">nginx:1.27-alpine</text>
+<text x="234.8" y="269" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">nginx:1.27-alpine</text>
 <text x="695.6" y="269" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">36M</text>
 <text x="772.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">3d2h</text>
-<text x="830" y="269" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">8080→80</text>
-<text x="906.8" y="269" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="269" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">8080→80</text>
+<text x="906.8" y="269" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="52.4" y="329" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">grafana</text>
-<text x="234.8" y="329" textLength="211.2" lengthAdjust="spacing" fill="#8b949e">grafana/grafana:11.1.0</text>
+<text x="234.8" y="329" textLength="211.2" lengthAdjust="spacing" fill="#939ca5">grafana/grafana:11.1.0</text>
 <text x="762.8" y="329" textLength="48" lengthAdjust="spacing" fill="#e6edf3">1d23h</text>
-<text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3030→3000</text>
+<text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3030→3000</text>
 <text x="695.6" y="349" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">30M</text>
 </g>
 <g class="a a168" visibility="hidden">
 <text x="618.8" y="269" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">4.5</text>
 <text x="52.4" y="309" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">postgres</text>
-<text x="234.8" y="309" textLength="124.8" lengthAdjust="spacing" fill="#8b949e">postgres:16.3</text>
-<text x="830" y="309" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5432→5432</text>
+<text x="234.8" y="309" textLength="124.8" lengthAdjust="spacing" fill="#939ca5">postgres:16.3</text>
+<text x="830" y="309" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5432→5432</text>
 </g>
 <g class="a a169" visibility="hidden">
 <text x="772.4" y="309" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
@@ -1156,7 +1156,7 @@
 </g>
 <g class="a a171" visibility="hidden">
 <text x="52.4" y="369" textLength="96" lengthAdjust="spacing" fill="#e6edf3">db-migrate</text>
-<text x="234.8" y="369" textLength="172.8" lengthAdjust="spacing" fill="#8b949e">acme/migrate:1.4.0</text>
+<text x="234.8" y="369" textLength="172.8" lengthAdjust="spacing" fill="#939ca5">acme/migrate:1.4.0</text>
 <text x="484.4" y="369" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">exit</text>
 <text x="532.4" y="369" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">0</text>
 </g>
@@ -1175,32 +1175,32 @@
 <text x="830" y="209" textLength="86.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">3000→3000</text>
 </g>
 <g class="a a175" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:08</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:08</text>
 <text x="609.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">25.8</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">558M</text>
 <text x="791.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">3s</text>
 <text x="52.4" y="189" textLength="96" lengthAdjust="spacing" fill="#e6edf3">search-api</text>
-<text x="234.8" y="189" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/search:0.8.1</text>
+<text x="234.8" y="189" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/search:0.8.1</text>
 <text x="609.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">11.3</text>
 <text x="686" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">145M</text>
 <text x="772.4" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">1d2h</text>
-<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3002→3002</text>
+<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3002→3002</text>
 <text x="618.8" y="209" textLength="28.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">7.4</text>
 <text x="686" y="209" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">193M</text>
 <text x="791.6" y="209" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">3s</text>
 <text x="52.4" y="229" textLength="96" lengthAdjust="spacing" fill="#e6edf3">prometheus</text>
-<text x="234.8" y="229" textLength="220.8" lengthAdjust="spacing" fill="#8b949e">prom/prometheus:v2.53.0</text>
+<text x="234.8" y="229" textLength="220.8" lengthAdjust="spacing" fill="#939ca5">prom/prometheus:v2.53.0</text>
 <text x="618.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">5.1</text>
 <text x="686" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">231M</text>
 <text x="772.4" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">2d0h</text>
-<text x="830" y="229" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">9090→9090</text>
+<text x="830" y="229" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">9090→9090</text>
 <text x="686" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">179M</text>
 <text x="618.8" y="269" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">3.5</text>
 <text x="52.4" y="289" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">postgres</text>
-<text x="234.8" y="289" textLength="124.8" lengthAdjust="spacing" fill="#8b949e">postgres:16.3</text>
+<text x="234.8" y="289" textLength="124.8" lengthAdjust="spacing" fill="#939ca5">postgres:16.3</text>
 <text x="686" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">199M</text>
 <text x="772.4" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
-<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5432→5432</text>
+<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5432→5432</text>
 <text x="618.8" y="309" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.5</text>
 <text x="618.8" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.3</text>
 <text x="686" y="329" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">139M</text>
@@ -1211,36 +1211,36 @@
 </g>
 <g class="a a177" visibility="hidden">
 <text x="52.4" y="309" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">worker-email</text>
-<text x="234.8" y="309" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
+<text x="234.8" y="309" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
 <text x="686" y="309" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">107M</text>
 <text x="753.2" y="309" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">19h42m</text>
-<text x="830" y="309" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="309" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 </g>
 <g class="a a178" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:09</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:09</text>
 </g>
 <g class="a a179" visibility="hidden">
 <text x="609.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">17.7</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">563M</text>
 <text x="791.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">4s</text>
 <text x="52.4" y="189" textLength="96" lengthAdjust="spacing" fill="#e6edf3">prometheus</text>
-<text x="234.8" y="189" textLength="220.8" lengthAdjust="spacing" fill="#8b949e">prom/prometheus:v2.53.0</text>
+<text x="234.8" y="189" textLength="220.8" lengthAdjust="spacing" fill="#939ca5">prom/prometheus:v2.53.0</text>
 <text x="609.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">14.0</text>
 <text x="686" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">230M</text>
 <text x="772.4" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">2d0h</text>
-<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">9090→9090</text>
+<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">9090→9090</text>
 <text x="618.8" y="249" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">5.4</text>
 <text x="686" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">180M</text>
 <text x="52.4" y="289" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">grafana</text>
-<text x="234.8" y="289" textLength="211.2" lengthAdjust="spacing" fill="#8b949e">grafana/grafana:11.1.0</text>
+<text x="234.8" y="289" textLength="211.2" lengthAdjust="spacing" fill="#939ca5">grafana/grafana:11.1.0</text>
 <text x="686" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">140M</text>
-<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3030→3000</text>
+<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3030→3000</text>
 <text x="52.4" y="329" textLength="96" lengthAdjust="spacing" fill="#e6edf3">edge-proxy</text>
-<text x="234.8" y="329" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">nginx:1.27-alpine</text>
+<text x="234.8" y="329" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">nginx:1.27-alpine</text>
 <text x="695.6" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">36M</text>
 <text x="772.4" y="329" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">3d2h</text>
-<text x="830" y="329" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">8080→80</text>
-<text x="906.8" y="329" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="329" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">8080→80</text>
+<text x="906.8" y="329" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="618.8" y="349" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.1</text>
 <text x="695.6" y="349" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">31M</text>
 </g>
@@ -1249,27 +1249,27 @@
 <text x="686" y="209" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">195M</text>
 <text x="791.6" y="209" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">4s</text>
 <text x="52.4" y="229" textLength="96" lengthAdjust="spacing" fill="#e6edf3">search-api</text>
-<text x="234.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/search:0.8.1</text>
+<text x="234.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/search:0.8.1</text>
 <text x="609.2" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">11.2</text>
 <text x="686" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">147M</text>
 <text x="772.4" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">1d2h</text>
-<text x="830" y="229" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3002→3002</text>
+<text x="830" y="229" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3002→3002</text>
 <text x="52.4" y="269" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">worker-email</text>
-<text x="234.8" y="269" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
+<text x="234.8" y="269" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
 <text x="686" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">107M</text>
 <text x="753.2" y="269" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">19h42m</text>
-<text x="830" y="269" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="269" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 <text x="618.8" y="309" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.1</text>
 <text x="686" y="309" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">201M</text>
 </g>
 <g class="a a181" visibility="hidden">
 <text x="321.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff">mem</text>
 <text x="52.4" y="209" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">postgres</text>
-<text x="234.8" y="209" textLength="124.8" lengthAdjust="spacing" fill="#8b949e">postgres:16.3</text>
+<text x="234.8" y="209" textLength="124.8" lengthAdjust="spacing" fill="#939ca5">postgres:16.3</text>
 <text x="618.8" y="209" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.1</text>
 <text x="686" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">201M</text>
 <text x="772.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
-<text x="830" y="209" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5432→5432</text>
+<text x="830" y="209" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5432→5432</text>
 <text x="52.4" y="229" textLength="105.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">api-gateway</text>
 <text x="234.8" y="229" textLength="182.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">acme/gateway:2.14.0</text>
 <text x="484.4" y="229" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">running</text>
@@ -1278,11 +1278,11 @@
 <text x="791.6" y="229" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">4s</text>
 <text x="830" y="229" textLength="86.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">3000→3000</text>
 <text x="52.4" y="269" textLength="96" lengthAdjust="spacing" fill="#e6edf3">search-api</text>
-<text x="234.8" y="269" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/search:0.8.1</text>
+<text x="234.8" y="269" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/search:0.8.1</text>
 <text x="609.2" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">11.2</text>
 <text x="686" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">147M</text>
 <text x="772.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">1d2h</text>
-<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3002→3002</text>
+<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3002→3002</text>
 <text x="657.2" y="489" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">mem</text>
 </g>
 <g class="a a182" visibility="hidden">
@@ -1292,41 +1292,41 @@
 <text x="321.2" y="129" textLength="57.6" lengthAdjust="spacing" fill="#58a6ff">uptime</text>
 <text x="388.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">↓</text>
 <text x="52.4" y="169" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">postgres</text>
-<text x="234.8" y="169" textLength="124.8" lengthAdjust="spacing" fill="#8b949e">postgres:16.3</text>
+<text x="234.8" y="169" textLength="124.8" lengthAdjust="spacing" fill="#939ca5">postgres:16.3</text>
 <text x="618.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.1</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">201M</text>
 <text x="772.4" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
-<text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5432→5432</text>
+<text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5432→5432</text>
 <text x="52.4" y="189" textLength="48" lengthAdjust="spacing" fill="#e6edf3">redis</text>
-<text x="234.8" y="189" textLength="153.6" lengthAdjust="spacing" fill="#8b949e">redis:7.2-alpine</text>
+<text x="234.8" y="189" textLength="153.6" lengthAdjust="spacing" fill="#939ca5">redis:7.2-alpine</text>
 <text x="618.8" y="189" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.1</text>
 <text x="695.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">31M</text>
 <text x="772.4" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
-<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">6379→6379</text>
+<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">6379→6379</text>
 <text x="52.4" y="209" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">rabbitmq</text>
-<text x="234.8" y="209" textLength="230.4" lengthAdjust="spacing" fill="#8b949e">rabbitmq:3.13-management</text>
+<text x="234.8" y="209" textLength="230.4" lengthAdjust="spacing" fill="#939ca5">rabbitmq:3.13-management</text>
 <text x="618.8" y="209" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">5.4</text>
 <text x="686" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">180M</text>
 <text x="762.8" y="209" textLength="48" lengthAdjust="spacing" fill="#e6edf3">3d23h</text>
-<text x="830" y="209" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5672→5672</text>
-<text x="926" y="209" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="209" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5672→5672</text>
+<text x="926" y="209" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="52.4" y="249" textLength="96" lengthAdjust="spacing" fill="#e6edf3">prometheus</text>
-<text x="234.8" y="249" textLength="220.8" lengthAdjust="spacing" fill="#8b949e">prom/prometheus:v2.53.0</text>
+<text x="234.8" y="249" textLength="220.8" lengthAdjust="spacing" fill="#939ca5">prom/prometheus:v2.53.0</text>
 <text x="609.2" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">14.0</text>
 <text x="686" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">230M</text>
 <text x="772.4" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">2d0h</text>
-<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">9090→9090</text>
+<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">9090→9090</text>
 <text x="52.4" y="269" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">grafana</text>
-<text x="234.8" y="269" textLength="211.2" lengthAdjust="spacing" fill="#8b949e">grafana/grafana:11.1.0</text>
+<text x="234.8" y="269" textLength="211.2" lengthAdjust="spacing" fill="#939ca5">grafana/grafana:11.1.0</text>
 <text x="686" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">140M</text>
 <text x="762.8" y="269" textLength="48" lengthAdjust="spacing" fill="#e6edf3">1d23h</text>
-<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3030→3000</text>
+<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3030→3000</text>
 <text x="52.4" y="289" textLength="96" lengthAdjust="spacing" fill="#e6edf3">search-api</text>
-<text x="234.8" y="289" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/search:0.8.1</text>
+<text x="234.8" y="289" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/search:0.8.1</text>
 <text x="609.2" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">11.2</text>
 <text x="686" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">147M</text>
 <text x="772.4" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">1d2h</text>
-<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3002→3002</text>
+<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3002→3002</text>
 <text x="52.4" y="329" textLength="105.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">api-gateway</text>
 <text x="234.8" y="329" textLength="182.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">acme/gateway:2.14.0</text>
 <text x="484.4" y="329" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">running</text>
@@ -1335,11 +1335,11 @@
 <text x="791.6" y="329" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">4s</text>
 <text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">3000→3000</text>
 <text x="52.4" y="349" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">billing-api</text>
-<text x="234.8" y="349" textLength="172.8" lengthAdjust="spacing" fill="#8b949e">acme/billing:1.9.3</text>
+<text x="234.8" y="349" textLength="172.8" lengthAdjust="spacing" fill="#939ca5">acme/billing:1.9.3</text>
 <text x="609.2" y="349" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">17.7</text>
 <text x="686" y="349" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">563M</text>
 <text x="791.6" y="349" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">4s</text>
-<text x="830" y="349" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3001→3001</text>
+<text x="830" y="349" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3001→3001</text>
 <text x="532.4" y="489" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">sorted</text>
 <text x="599.6" y="489" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">by</text>
 <text x="628.4" y="489" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">uptime</text>
@@ -1350,53 +1350,53 @@
 <g class="a a185" visibility="hidden">
 <text x="321.2" y="129" textLength="57.6" lengthAdjust="spacing" fill="#58a6ff">status</text>
 <text x="52.4" y="209" textLength="96" lengthAdjust="spacing" fill="#e6edf3">edge-proxy</text>
-<text x="234.8" y="209" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">nginx:1.27-alpine</text>
+<text x="234.8" y="209" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">nginx:1.27-alpine</text>
 <text x="618.8" y="209" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.0</text>
 <text x="695.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">36M</text>
 <text x="772.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">3d2h</text>
-<text x="830" y="209" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">8080→80</text>
-<text x="906.8" y="209" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="209" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">8080→80</text>
+<text x="906.8" y="209" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="52.4" y="229" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">grafana</text>
-<text x="234.8" y="229" textLength="211.2" lengthAdjust="spacing" fill="#8b949e">grafana/grafana:11.1.0</text>
+<text x="234.8" y="229" textLength="211.2" lengthAdjust="spacing" fill="#939ca5">grafana/grafana:11.1.0</text>
 <text x="618.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.9</text>
 <text x="686" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">140M</text>
 <text x="762.8" y="229" textLength="48" lengthAdjust="spacing" fill="#e6edf3">1d23h</text>
-<text x="830" y="229" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3030→3000</text>
+<text x="830" y="229" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3030→3000</text>
 <text x="52.4" y="249" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">postgres</text>
-<text x="234.8" y="249" textLength="124.8" lengthAdjust="spacing" fill="#8b949e">postgres:16.3</text>
+<text x="234.8" y="249" textLength="124.8" lengthAdjust="spacing" fill="#939ca5">postgres:16.3</text>
 <text x="618.8" y="249" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">2.1</text>
 <text x="686" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">201M</text>
 <text x="772.4" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
-<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5432→5432</text>
+<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5432→5432</text>
 <text x="52.4" y="269" textLength="96" lengthAdjust="spacing" fill="#e6edf3">prometheus</text>
-<text x="234.8" y="269" textLength="220.8" lengthAdjust="spacing" fill="#8b949e">prom/prometheus:v2.53.0</text>
+<text x="234.8" y="269" textLength="220.8" lengthAdjust="spacing" fill="#939ca5">prom/prometheus:v2.53.0</text>
 <text x="609.2" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">14.0</text>
 <text x="686" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">230M</text>
 <text x="772.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">2d0h</text>
-<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">9090→9090</text>
+<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">9090→9090</text>
 <text x="52.4" y="289" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">rabbitmq</text>
-<text x="234.8" y="289" textLength="230.4" lengthAdjust="spacing" fill="#8b949e">rabbitmq:3.13-management</text>
+<text x="234.8" y="289" textLength="230.4" lengthAdjust="spacing" fill="#939ca5">rabbitmq:3.13-management</text>
 <text x="618.8" y="289" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">5.4</text>
 <text x="686" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">180M</text>
 <text x="762.8" y="289" textLength="48" lengthAdjust="spacing" fill="#e6edf3">3d23h</text>
-<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5672→5672</text>
-<text x="926" y="289" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5672→5672</text>
+<text x="926" y="289" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="52.4" y="309" textLength="48" lengthAdjust="spacing" fill="#e6edf3">redis</text>
-<text x="234.8" y="309" textLength="153.6" lengthAdjust="spacing" fill="#8b949e">redis:7.2-alpine</text>
+<text x="234.8" y="309" textLength="153.6" lengthAdjust="spacing" fill="#939ca5">redis:7.2-alpine</text>
 <text x="618.8" y="309" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.1</text>
 <text x="695.6" y="309" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">31M</text>
-<text x="830" y="309" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">6379→6379</text>
+<text x="830" y="309" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">6379→6379</text>
 <text x="52.4" y="329" textLength="96" lengthAdjust="spacing" fill="#e6edf3">search-api</text>
-<text x="234.8" y="329" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/search:0.8.1</text>
+<text x="234.8" y="329" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/search:0.8.1</text>
 <text x="609.2" y="329" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">11.2</text>
 <text x="686" y="329" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">147M</text>
 <text x="772.4" y="329" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">1d2h</text>
-<text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3002→3002</text>
+<text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3002→3002</text>
 <text x="52.4" y="349" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">worker-email</text>
-<text x="234.8" y="349" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
+<text x="234.8" y="349" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
 <text x="686" y="349" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">107M</text>
 <text x="753.2" y="349" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">19h42m</text>
-<text x="830" y="349" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="349" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 <text x="647.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">status</text>
 </g>
 <g class="a a186" visibility="hidden">
@@ -1442,50 +1442,50 @@
 <rect x="158" y="51" width="19.2" height="1" fill="#58a6ff"/>
 <text x="186.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">detail</text>
 <rect x="186.8" y="51" width="57.6" height="1" fill="#58a6ff"/>
-<text x="42.8" y="69" textLength="105.6" lengthAdjust="spacing" fill="#8b949e">api-gateway</text>
-<text x="522.8" y="69" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">CPU</text>
-<text x="33.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">status</text>
+<text x="42.8" y="69" textLength="105.6" lengthAdjust="spacing" fill="#939ca5">api-gateway</text>
+<text x="522.8" y="69" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">CPU</text>
+<text x="33.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">status</text>
 <text x="129.2" y="89" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">running</text>
-<text x="215.6" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">up</text>
-<text x="33.2" y="109" textLength="48" lengthAdjust="spacing" fill="#8b949e">image</text>
+<text x="215.6" y="89" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">up</text>
+<text x="33.2" y="109" textLength="48" lengthAdjust="spacing" fill="#939ca5">image</text>
 <text x="119.6" y="109" textLength="182.4" lengthAdjust="spacing" fill="#e6edf3">acme/gateway:2.14.0</text>
-<text x="513.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">avg</text>
-<text x="33.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">id</text>
+<text x="513.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">avg</text>
+<text x="33.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">id</text>
 <text x="119.6" y="129" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">a2780edec237</text>
-<text x="33.2" y="149" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">network</text>
+<text x="33.2" y="149" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">network</text>
 <text x="119.6" y="149" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">acme_default</text>
 <text x="244.4" y="149" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">·</text>
 <text x="263.6" y="149" textLength="96" lengthAdjust="spacing" fill="#e6edf3">172.18.0.3</text>
-<text x="522.8" y="149" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">Memory</text>
-<text x="33.2" y="169" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">restart</text>
+<text x="522.8" y="149" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">Memory</text>
+<text x="33.2" y="169" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">restart</text>
 <text x="119.6" y="169" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">always</text>
 <text x="561.2" y="169" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">/</text>
 <text x="580.4" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">512M</text>
-<text x="33.2" y="189" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">created</text>
+<text x="33.2" y="189" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">created</text>
 <text x="119.6" y="189" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">3</text>
 <text x="138.8" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">days</text>
 <text x="186.8" y="189" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">ago</text>
-<text x="513.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">avg</text>
-<text x="551.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">37%</text>
-<text x="590" y="189" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">of</text>
-<text x="618.8" y="189" textLength="48" lengthAdjust="spacing" fill="#8b949e">limit</text>
+<text x="513.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">avg</text>
+<text x="551.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">37%</text>
+<text x="590" y="189" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">of</text>
+<text x="618.8" y="189" textLength="48" lengthAdjust="spacing" fill="#939ca5">limit</text>
 <text x="302" y="449" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">l/e/p</text>
-<text x="359.6" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">logs</text>
-<text x="407.6" y="449" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="426.8" y="449" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">env</text>
-<text x="465.2" y="449" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="484.4" y="449" textLength="48" lengthAdjust="spacing" fill="#8b949e">ports</text>
+<text x="359.6" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">logs</text>
+<text x="407.6" y="449" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="426.8" y="449" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">env</text>
+<text x="465.2" y="449" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="484.4" y="449" textLength="48" lengthAdjust="spacing" fill="#939ca5">ports</text>
 <text x="551.6" y="449" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">esc</text>
-<text x="590" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">back</text>
+<text x="590" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">back</text>
 <text x="647.6" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">s</text>
-<text x="666.8" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">stop</text>
+<text x="666.8" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">stop</text>
 <text x="724.4" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">u</text>
-<text x="743.6" y="449" textLength="48" lengthAdjust="spacing" fill="#8b949e">start</text>
+<text x="743.6" y="449" textLength="48" lengthAdjust="spacing" fill="#939ca5">start</text>
 <text x="810.8" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">r</text>
-<text x="830" y="449" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">restart</text>
+<text x="830" y="449" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">restart</text>
 </g>
 <g class="a a197" visibility="hidden">
-<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">4s</text>
+<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">4s</text>
 <text x="513.2" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">11.5%</text>
 <text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">195M</text>
 </g>
@@ -1536,19 +1536,19 @@
 <text x="119.6" y="409" textLength="28.8" lengthAdjust="spacing" fill="#39c5cf">GET</text>
 </g>
 <g class="a a217" visibility="hidden">
-<text x="23.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">1</text>
-<text x="42.8" y="49" textLength="96" lengthAdjust="spacing" fill="#8b949e">containers</text>
+<text x="23.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">1</text>
+<text x="42.8" y="49" textLength="96" lengthAdjust="spacing" fill="#939ca5">containers</text>
 </g>
 <g class="a a218" visibility="hidden">
-<text x="551.6" y="109" textLength="48" lengthAdjust="spacing" fill="#8b949e">11.4%</text>
+<text x="551.6" y="109" textLength="48" lengthAdjust="spacing" fill="#939ca5">11.4%</text>
 </g>
 <g class="a a219" visibility="hidden">
-<text x="138.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">env</text>
-<text x="177.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">(6)</text>
+<text x="138.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">env</text>
+<text x="177.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">(6)</text>
 </g>
 <g class="a a220" visibility="hidden">
-<text x="234.8" y="229" textLength="48" lengthAdjust="spacing" fill="#8b949e">ports</text>
-<text x="292.4" y="229" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">(1)</text>
+<text x="234.8" y="229" textLength="48" lengthAdjust="spacing" fill="#939ca5">ports</text>
+<text x="292.4" y="229" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">(1)</text>
 </g>
 <g class="a a221" visibility="hidden">
 <text x="119.6" y="289" textLength="28.8" lengthAdjust="spacing" fill="#39c5cf">GET</text>
@@ -1561,17 +1561,17 @@
 <text x="282.8" y="409" textLength="28.8" lengthAdjust="spacing" fill="#39c5cf">200</text>
 </g>
 <g class="a a224" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:10</text>
-<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">5s</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:10</text>
+<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">5s</text>
 <text x="513.2" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">13.7%</text>
 <text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">193M</text>
 </g>
 <g class="a a225" visibility="hidden">
-<text x="551.6" y="109" textLength="48" lengthAdjust="spacing" fill="#8b949e">11.5%</text>
+<text x="551.6" y="109" textLength="48" lengthAdjust="spacing" fill="#939ca5">11.5%</text>
 </g>
 <g class="a a234" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:11</text>
-<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">6s</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:11</text>
+<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">6s</text>
 <text x="513.2" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">8.6%</text>
 <text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">190M</text>
 </g>
@@ -1613,7 +1613,7 @@
 <text x="282.8" y="349" textLength="28.8" lengthAdjust="spacing" fill="#39c5cf">200</text>
 </g>
 <g class="a a245" visibility="hidden">
-<text x="23.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">logs</text>
+<text x="23.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">logs</text>
 </g>
 <g class="a a246" visibility="hidden">
 <text x="129.2" y="229" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">▸env</text>
@@ -1621,30 +1621,30 @@
 <text x="177.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">(6)</text>
 <rect x="177.2" y="231" width="28.8" height="1" fill="#58a6ff"/>
 <text x="42.8" y="249" textLength="105.6" lengthAdjust="spacing" fill="#58a6ff">Environment</text>
-<text x="33.2" y="269" textLength="76.8" lengthAdjust="spacing" fill="#8b949e" font-weight="700">VARIABLE</text>
-<text x="417.2" y="269" textLength="48" lengthAdjust="spacing" fill="#8b949e" font-weight="700">VALUE</text>
+<text x="33.2" y="269" textLength="76.8" lengthAdjust="spacing" fill="#939ca5" font-weight="700">VARIABLE</text>
+<text x="417.2" y="269" textLength="48" lengthAdjust="spacing" fill="#939ca5" font-weight="700">VALUE</text>
 <text x="33.2" y="289" textLength="76.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">NODE_ENV</text>
 <text x="417.2" y="289" textLength="96" lengthAdjust="spacing" fill="#0d1117" font-weight="700">production</text>
-<text x="33.2" y="309" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">PORT</text>
+<text x="33.2" y="309" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">PORT</text>
 <text x="417.2" y="309" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">3000</text>
-<text x="33.2" y="329" textLength="153.6" lengthAdjust="spacing" fill="#8b949e">UPSTREAM_BILLING</text>
+<text x="33.2" y="329" textLength="153.6" lengthAdjust="spacing" fill="#939ca5">UPSTREAM_BILLING</text>
 <text x="417.2" y="329" textLength="220.8" lengthAdjust="spacing" fill="#e6edf3">http://billing-api:3001</text>
-<text x="33.2" y="349" textLength="144" lengthAdjust="spacing" fill="#8b949e">UPSTREAM_SEARCH</text>
+<text x="33.2" y="349" textLength="144" lengthAdjust="spacing" fill="#939ca5">UPSTREAM_SEARCH</text>
 <text x="417.2" y="349" textLength="211.2" lengthAdjust="spacing" fill="#e6edf3">http://search-api:3002</text>
-<text x="33.2" y="369" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">LOG_LEVEL</text>
+<text x="33.2" y="369" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">LOG_LEVEL</text>
 <text x="417.2" y="369" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">info</text>
-<text x="33.2" y="389" textLength="96" lengthAdjust="spacing" fill="#8b949e">JWT_SECRET</text>
+<text x="33.2" y="389" textLength="96" lengthAdjust="spacing" fill="#939ca5">JWT_SECRET</text>
 <text x="417.2" y="389" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">********</text>
 </g>
 <g class="a a247" visibility="hidden">
-<text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">(20)</text>
+<text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">(20)</text>
 </g>
 <g class="a a248" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:12</text>
-<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">7s</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:12</text>
+<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">7s</text>
 <text x="513.2" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">13.4%</text>
 <text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">189M</text>
-<text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">(21)</text>
+<text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">(21)</text>
 </g>
 <g class="a a254" visibility="hidden">
 <text x="225.2" y="229" textLength="57.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">▸ports</text>
@@ -1653,23 +1653,23 @@
 <rect x="292.4" y="231" width="28.8" height="1" fill="#58a6ff"/>
 <text x="42.8" y="249" textLength="86.4" lengthAdjust="spacing" fill="#58a6ff">Published</text>
 <text x="138.8" y="249" textLength="48" lengthAdjust="spacing" fill="#58a6ff">ports</text>
-<text x="52.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">HOST</text>
-<text x="110" y="269" textLength="86.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">CONTAINER</text>
-<text x="215.6" y="269" textLength="48" lengthAdjust="spacing" fill="#8b949e" font-weight="700">PROTO</text>
-<text x="292.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">BIND</text>
+<text x="52.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">HOST</text>
+<text x="110" y="269" textLength="86.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">CONTAINER</text>
+<text x="215.6" y="269" textLength="48" lengthAdjust="spacing" fill="#939ca5" font-weight="700">PROTO</text>
+<text x="292.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">BIND</text>
 <text x="52.4" y="289" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">3000</text>
 <text x="158" y="289" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">3000</text>
 <text x="215.6" y="289" textLength="28.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">tcp</text>
 <text x="292.4" y="289" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">0.0.0.0</text>
 </g>
 <g class="a a255" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:13</text>
-<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">8s</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:13</text>
+<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">8s</text>
 <text x="513.2" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">8.3%</text>
 <text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">191M</text>
 </g>
 <g class="a a259" visibility="hidden">
-<text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">(22)</text>
+<text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">(22)</text>
 </g>
 <g class="a a260" visibility="hidden">
 <text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">(22)</text>
@@ -1707,16 +1707,16 @@
 <text x="263.6" y="369" textLength="28.8" lengthAdjust="spacing" fill="#39c5cf">200</text>
 </g>
 <g class="a a262" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:14</text>
-<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">9s</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:14</text>
+<text x="244.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">9s</text>
 <text x="513.2" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">10.1%</text>
-<text x="551.6" y="109" textLength="48" lengthAdjust="spacing" fill="#8b949e">11.3%</text>
+<text x="551.6" y="109" textLength="48" lengthAdjust="spacing" fill="#939ca5">11.3%</text>
 <text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">188M</text>
 </g>
 <g class="a a264" visibility="hidden">
-<text x="244.4" y="89" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">10s</text>
+<text x="244.4" y="89" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">10s</text>
 <text x="513.2" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">8.2%</text>
-<text x="551.6" y="109" textLength="48" lengthAdjust="spacing" fill="#8b949e">11.2%</text>
+<text x="551.6" y="109" textLength="48" lengthAdjust="spacing" fill="#939ca5">11.2%</text>
 <text x="513.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">185M</text>
 <text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">(23)</text>
 <text x="33.2" y="269" textLength="76.8" lengthAdjust="spacing" fill="#39c5cf">12:00:05</text>
@@ -1747,7 +1747,7 @@
 <text x="321.2" y="409" textLength="28.8" lengthAdjust="spacing" fill="#39c5cf">7ms</text>
 </g>
 <g class="a a265" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:15</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:15</text>
 </g>
 <g class="a a266" visibility="hidden">
 <text x="618.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">8.2</text>
@@ -1785,8 +1785,8 @@
 <g class="a a274" visibility="hidden">
 <text x="234.8" y="109" textLength="67.2" lengthAdjust="spacing" fill="#58a6ff">Command</text>
 <text x="311.6" y="109" textLength="67.2" lengthAdjust="spacing" fill="#58a6ff">palette</text>
-<text x="196.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">o</text>
-<text x="782" y="149" textLength="28.8" lengthAdjust="spacing" fill="#8b949e" font-weight="700">IME</text>
+<text x="196.4" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">o</text>
+<text x="782" y="149" textLength="28.8" lengthAdjust="spacing" fill="#939ca5" font-weight="700">IME</text>
 <text x="782" y="349" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">d2h</text>
 <text x="782" y="369" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">42m</text>
 </g>
@@ -1797,15 +1797,15 @@
 <text x="225.2" y="349" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">Go</text>
 <text x="254" y="349" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">to</text>
 <text x="282.8" y="349" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">images</text>
-<text x="753.2" y="349" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">3</text>
+<text x="753.2" y="349" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">3</text>
 <text x="225.2" y="369" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">Go</text>
 <text x="254" y="369" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">to</text>
 <text x="282.8" y="369" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">volumes</text>
-<text x="753.2" y="369" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">4</text>
+<text x="753.2" y="369" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">4</text>
 <text x="225.2" y="389" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">Go</text>
 <text x="254" y="389" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">to</text>
 <text x="282.8" y="389" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">events</text>
-<text x="753.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">5</text>
+<text x="753.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">5</text>
 </g>
 <g class="a a276" visibility="hidden">
 <text x="782" y="169" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">10s</text>
@@ -1820,34 +1820,34 @@
 <text x="282.8" y="209" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
 <text x="321.2" y="209" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">selected</text>
 <text x="407.6" y="209" textLength="96" lengthAdjust="spacing" fill="#e6edf3">containers</text>
-<text x="753.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">u</text>
+<text x="753.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">u</text>
 <text x="225.2" y="229" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">Restart</text>
 <text x="302" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
 <text x="340.4" y="229" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">selected</text>
 <text x="426.8" y="229" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">containers…</text>
-<text x="753.2" y="229" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">r</text>
+<text x="753.2" y="229" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">r</text>
 <text x="225.2" y="249" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">Remove</text>
 <text x="292.4" y="249" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
 <text x="330.8" y="249" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">selected</text>
 <text x="417.2" y="249" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">containers…</text>
-<text x="753.2" y="249" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">d</text>
+<text x="753.2" y="249" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">d</text>
 <text x="225.2" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">Show</text>
 <text x="273.2" y="269" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
 <text x="311.6" y="269" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">container's</text>
 <text x="426.8" y="269" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">detail</text>
-<text x="714.8" y="269" textLength="48" lengthAdjust="spacing" fill="#6e7681">enter</text>
+<text x="714.8" y="269" textLength="48" lengthAdjust="spacing" fill="#8a929c">enter</text>
 <text x="225.2" y="289" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">Filter</text>
 <text x="292.4" y="289" textLength="96" lengthAdjust="spacing" fill="#e6edf3">containers</text>
-<text x="753.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">/</text>
+<text x="753.2" y="289" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">/</text>
 <text x="225.2" y="309" textLength="48" lengthAdjust="spacing" fill="#e6edf3">Cycle</text>
 <text x="282.8" y="309" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
 <text x="321.2" y="309" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">sort</text>
 <text x="369.2" y="309" textLength="48" lengthAdjust="spacing" fill="#e6edf3">order</text>
-<text x="753.2" y="309" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">o</text>
+<text x="753.2" y="309" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">o</text>
 <text x="225.2" y="329" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">Go</text>
 <text x="254" y="329" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">to</text>
 <text x="282.8" y="329" textLength="96" lengthAdjust="spacing" fill="#e6edf3">containers</text>
-<text x="753.2" y="329" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">1</text>
+<text x="753.2" y="329" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">1</text>
 </g>
 <g class="a a278" visibility="hidden">
 <text x="244.4" y="149" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">r</text>
@@ -1864,7 +1864,7 @@
 <text x="292.4" y="209" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
 <text x="330.8" y="209" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">selected</text>
 <text x="417.2" y="209" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">containers…</text>
-<text x="753.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">d</text>
+<text x="753.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">d</text>
 </g>
 <g class="a a280" visibility="hidden">
 <text x="225.2" y="189" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">Restart</text>
@@ -1901,7 +1901,7 @@
 <text x="436.4" y="249" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">dropped.</text>
 </g>
 <g class="a a285" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:16</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:16</text>
 <text x="609.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">13.5</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">188M</text>
 <text x="782" y="169" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">11s</text>
@@ -1922,7 +1922,7 @@
 <text x="350" y="489" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">exited</text>
 </g>
 <g class="a a288" visibility="hidden">
-<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:16</text>
+<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:16</text>
 <text x="609.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">13.2</text>
 <text x="686" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">554M</text>
 <text x="618.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">3.4</text>
@@ -1948,7 +1948,7 @@
 <text x="599.6" y="489" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">api-gateway</text>
 </g>
 <g class="a a292" visibility="hidden">
-<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:17</text>
+<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:17</text>
 <text x="609.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">16.4</text>
 <text x="686" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">549M</text>
 <text x="782" y="189" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">12s</text>
@@ -1969,7 +1969,7 @@
 <text x="618.8" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.0</text>
 </g>
 <g class="a a296" visibility="hidden">
-<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:18</text>
+<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:18</text>
 <text x="618.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">5.8</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">191M</text>
 <text x="791.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">0s</text>
@@ -1993,7 +1993,7 @@
 <text x="686" y="309" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">171M</text>
 </g>
 <g class="a a300" visibility="hidden">
-<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:19</text>
+<text x="810.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:19</text>
 </g>
 <g class="a a301" visibility="hidden">
 <text x="618.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">6.4</text>
@@ -2036,13 +2036,13 @@
 <text x="302" y="189" textLength="105.6" lengthAdjust="spacing" fill="#d29922">api-gateway</text>
 <text x="225.2" y="209" textLength="48" lengthAdjust="spacing" fill="#39c5cf">start</text>
 <text x="282.8" y="209" textLength="105.6" lengthAdjust="spacing" fill="#39c5cf">api-gateway</text>
-<text x="225.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#f85149">die</text>
-<text x="263.6" y="229" textLength="115.2" lengthAdjust="spacing" fill="#f85149">worker-email</text>
-<text x="388.4" y="229" textLength="48" lengthAdjust="spacing" fill="#f85149">(exit</text>
-<text x="446" y="229" textLength="38.4" lengthAdjust="spacing" fill="#f85149">137,</text>
-<text x="494" y="229" textLength="28.8" lengthAdjust="spacing" fill="#f85149">out</text>
-<text x="532.4" y="229" textLength="19.2" lengthAdjust="spacing" fill="#f85149">of</text>
-<text x="561.2" y="229" textLength="67.2" lengthAdjust="spacing" fill="#f85149">memory)</text>
+<text x="225.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#f85c55">die</text>
+<text x="263.6" y="229" textLength="115.2" lengthAdjust="spacing" fill="#f85c55">worker-email</text>
+<text x="388.4" y="229" textLength="48" lengthAdjust="spacing" fill="#f85c55">(exit</text>
+<text x="446" y="229" textLength="38.4" lengthAdjust="spacing" fill="#f85c55">137,</text>
+<text x="494" y="229" textLength="28.8" lengthAdjust="spacing" fill="#f85c55">out</text>
+<text x="532.4" y="229" textLength="19.2" lengthAdjust="spacing" fill="#f85c55">of</text>
+<text x="561.2" y="229" textLength="67.2" lengthAdjust="spacing" fill="#f85c55">memory)</text>
 <text x="225.2" y="249" textLength="67.2" lengthAdjust="spacing" fill="#d29922">restart</text>
 <text x="302" y="249" textLength="115.2" lengthAdjust="spacing" fill="#d29922">worker-email</text>
 <text x="426.8" y="249" textLength="19.2" lengthAdjust="spacing" fill="#d29922">in</text>
@@ -2050,11 +2050,11 @@
 <text x="484.4" y="249" textLength="67.2" lengthAdjust="spacing" fill="#d29922">(policy</text>
 <text x="561.2" y="249" textLength="105.6" lengthAdjust="spacing" fill="#d29922">on-failure)</text>
 <text x="302" y="449" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">j/k</text>
-<text x="340.4" y="449" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">scroll</text>
+<text x="340.4" y="449" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">scroll</text>
 <text x="417.2" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">G</text>
-<text x="436.4" y="449" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">follow</text>
+<text x="436.4" y="449" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">follow</text>
 <text x="513.2" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">g</text>
-<text x="532.4" y="449" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">top</text>
+<text x="532.4" y="449" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">top</text>
 </g>
 <g class="a a305" visibility="hidden">
 <text x="129.2" y="69" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">9</text>
@@ -2074,13 +2074,13 @@
 <text x="129.2" y="189" textLength="86.4" lengthAdjust="spacing" fill="#d29922">container</text>
 <text x="33.2" y="209" textLength="76.8" lengthAdjust="spacing" fill="#39c5cf">12:00:18</text>
 <text x="129.2" y="209" textLength="86.4" lengthAdjust="spacing" fill="#39c5cf">container</text>
-<text x="33.2" y="229" textLength="76.8" lengthAdjust="spacing" fill="#f85149">12:00:18</text>
-<text x="129.2" y="229" textLength="86.4" lengthAdjust="spacing" fill="#f85149">container</text>
+<text x="33.2" y="229" textLength="76.8" lengthAdjust="spacing" fill="#f85c55">12:00:18</text>
+<text x="129.2" y="229" textLength="86.4" lengthAdjust="spacing" fill="#f85c55">container</text>
 <text x="33.2" y="249" textLength="76.8" lengthAdjust="spacing" fill="#d29922">12:00:18</text>
 <text x="129.2" y="249" textLength="86.4" lengthAdjust="spacing" fill="#d29922">container</text>
 </g>
 <g class="a a307" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:20</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:20</text>
 </g>
 <g class="a a308" visibility="hidden">
 <text x="129.2" y="69" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff">10</text>
@@ -2092,70 +2092,70 @@
 <text x="129.2" y="269" textLength="86.4" lengthAdjust="spacing" fill="#39c5cf">container</text>
 </g>
 <g class="a a310" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:21</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:21</text>
 </g>
 <g class="a a311" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:22</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:22</text>
 </g>
 <g class="a a312" visibility="hidden">
 <text x="215.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">e</text>
 <text x="254" y="29" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">Keys</text>
-<text x="186.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">deta</text>
-<text x="42.8" y="69" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">Events</text>
-<text x="110" y="69" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="129.2" y="69" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">10</text>
+<text x="186.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">deta</text>
+<text x="42.8" y="69" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">Events</text>
+<text x="110" y="69" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="129.2" y="69" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">10</text>
 <text x="254" y="69" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="273.2" y="69" textLength="48" lengthAdjust="spacing" fill="#8b949e">close</text>
-<text x="330.8" y="69" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">help</text>
+<text x="273.2" y="69" textLength="48" lengthAdjust="spacing" fill="#939ca5">close</text>
+<text x="330.8" y="69" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">help</text>
 <text x="254" y="89" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="273.2" y="89" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">help</text>
+<text x="273.2" y="89" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">help</text>
 <text x="254" y="109" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">^K</text>
-<text x="282.8" y="109" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">commands</text>
+<text x="282.8" y="109" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">commands</text>
 <text x="254" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
-<text x="273.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">quit</text>
+<text x="273.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">quit</text>
 <text x="254" y="149" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">enter</text>
-<text x="311.6" y="149" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">to</text>
-<text x="340.4" y="149" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">the</text>
-<text x="378.8" y="149" textLength="48" lengthAdjust="spacing" fill="#8b949e">table</text>
+<text x="311.6" y="149" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">to</text>
+<text x="340.4" y="149" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">the</text>
+<text x="378.8" y="149" textLength="48" lengthAdjust="spacing" fill="#939ca5">table</text>
 <text x="254" y="169" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">esc</text>
-<text x="292.4" y="169" textLength="48" lengthAdjust="spacing" fill="#8b949e">clear</text>
-<text x="350" y="169" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">filter</text>
+<text x="292.4" y="169" textLength="48" lengthAdjust="spacing" fill="#939ca5">clear</text>
+<text x="350" y="169" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">filter</text>
 <text x="254" y="189" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">/</text>
-<text x="273.2" y="189" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">filter</text>
+<text x="273.2" y="189" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">filter</text>
 <text x="254" y="209" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">space</text>
-<text x="311.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">mark</text>
+<text x="311.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">mark</text>
 <text x="254" y="229" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">s</text>
-<text x="273.2" y="229" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">stop</text>
+<text x="273.2" y="229" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">stop</text>
 <text x="254" y="249" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">u</text>
-<text x="273.2" y="249" textLength="48" lengthAdjust="spacing" fill="#8b949e">start</text>
+<text x="273.2" y="249" textLength="48" lengthAdjust="spacing" fill="#939ca5">start</text>
 <text x="254" y="269" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">r</text>
-<text x="273.2" y="269" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">restart</text>
+<text x="273.2" y="269" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">restart</text>
 <text x="254" y="289" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">d</text>
-<text x="273.2" y="289" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">remove</text>
+<text x="273.2" y="289" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">remove</text>
 <text x="254" y="309" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">o</text>
-<text x="273.2" y="309" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">sort</text>
+<text x="273.2" y="309" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">sort</text>
 <text x="254" y="329" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">enter</text>
-<text x="311.6" y="329" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">detail</text>
+<text x="311.6" y="329" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">detail</text>
 <text x="254" y="349" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">a</text>
-<text x="273.2" y="349" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">mark</text>
-<text x="321.2" y="349" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">all</text>
+<text x="273.2" y="349" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">mark</text>
+<text x="321.2" y="349" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">all</text>
 <text x="254" y="369" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">c</text>
-<text x="273.2" y="369" textLength="48" lengthAdjust="spacing" fill="#8b949e">clear</text>
-<text x="330.8" y="369" textLength="48" lengthAdjust="spacing" fill="#8b949e">marks</text>
+<text x="273.2" y="369" textLength="48" lengthAdjust="spacing" fill="#939ca5">clear</text>
+<text x="330.8" y="369" textLength="48" lengthAdjust="spacing" fill="#939ca5">marks</text>
 <text x="254" y="389" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">l/e/p</text>
-<text x="311.6" y="389" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">logs</text>
-<text x="359.6" y="389" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="378.8" y="389" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">env</text>
-<text x="417.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="436.4" y="389" textLength="48" lengthAdjust="spacing" fill="#8b949e">ports</text>
+<text x="311.6" y="389" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">logs</text>
+<text x="359.6" y="389" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="378.8" y="389" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">env</text>
+<text x="417.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="436.4" y="389" textLength="48" lengthAdjust="spacing" fill="#939ca5">ports</text>
 <text x="254" y="409" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">esc</text>
-<text x="292.4" y="409" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">back</text>
+<text x="292.4" y="409" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">back</text>
 <text x="254" y="429" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">s</text>
-<text x="273.2" y="429" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">stop</text>
+<text x="273.2" y="429" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">stop</text>
 <text x="254" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">u</text>
-<text x="273.2" y="449" textLength="48" lengthAdjust="spacing" fill="#8b949e">start</text>
+<text x="273.2" y="449" textLength="48" lengthAdjust="spacing" fill="#939ca5">start</text>
 <text x="215.6" y="489" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">e</text>
-<text x="762.8" y="489" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">er</text>
+<text x="762.8" y="489" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">er</text>
 </g>
 <g class="a a313" visibility="hidden">
 <text x="609.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">13.0</text>
@@ -2179,7 +2179,7 @@
 <text x="695.6" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">32M</text>
 </g>
 <g class="a a316" visibility="hidden">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:23</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:23</text>
 <text x="609.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">15.1</text>
 <text x="791.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">5s</text>
 <text x="609.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">15.5</text>
@@ -2197,7 +2197,7 @@
 <text x="686" y="349" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">150M</text>
 </g>
 <g class="a a318">
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:24</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:24</text>
 <text x="618.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">8.5</text>
 <text x="686" y="169" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">190M</text>
 <text x="791.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">6s</text>

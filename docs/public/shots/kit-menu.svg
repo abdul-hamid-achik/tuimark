@@ -16,8 +16,8 @@
 <text x="81.2" y="69" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff">to</text>
 <text x="62" y="89" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">⌂</text>
 <text x="81.2" y="89" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">Overview</text>
-<text x="647.6" y="89" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">g</text>
-<text x="666.8" y="89" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">o</text>
+<text x="647.6" y="89" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">g</text>
+<text x="666.8" y="89" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">o</text>
 <text x="62" y="109" textLength="9.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">▲</text>
 <text x="81.2" y="109" textLength="105.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">Deployments</text>
 <text x="647.6" y="109" textLength="9.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">g</text>
@@ -25,14 +25,14 @@
 <text x="42.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">✓</text>
 <text x="62" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">≡</text>
 <text x="81.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">Logs</text>
-<text x="647.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">g</text>
-<text x="666.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">l</text>
+<text x="647.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">g</text>
+<text x="666.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">l</text>
 <text x="81.2" y="149" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">Metrics</text>
-<text x="647.6" y="149" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">g</text>
-<text x="666.8" y="149" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">m</text>
+<text x="647.6" y="149" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">g</text>
+<text x="666.8" y="149" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">m</text>
 <text x="33.2" y="189" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">space</text>
-<text x="90.8" y="189" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">mark</text>
+<text x="90.8" y="189" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">mark</text>
 <text x="148.4" y="189" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">enter</text>
-<text x="206" y="189" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">open</text>
+<text x="206" y="189" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">open</text>
 </g>
 </svg>

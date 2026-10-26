@@ -12,17 +12,17 @@
 <text x="177.2" y="29" textLength="67.2" lengthAdjust="spacing" fill="#58a6ff">palette</text>
 <text x="23.6" y="49" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">comma</text>
 <text x="110" y="69" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">dep</text>
-<text x="23.6" y="89" textLength="48" lengthAdjust="spacing" fill="#8b949e">ctrl+</text>
+<text x="23.6" y="89" textLength="48" lengthAdjust="spacing" fill="#939ca5">ctrl+</text>
 <text x="90.8" y="109" textLength="57.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">Deploy</text>
 <text x="158" y="109" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">to</text>
 <text x="186.8" y="109" textLength="96" lengthAdjust="spacing" fill="#0d1117" font-weight="700">production</text>
 <text x="618.8" y="109" textLength="9.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">d</text>
-<text x="23.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">last</text>
+<text x="23.6" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">last</text>
 <text x="90.8" y="129" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">Roll</text>
 <text x="138.8" y="129" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">back</text>
 <text x="186.8" y="129" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">the</text>
 <text x="225.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">last</text>
 <text x="273.2" y="129" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">deploy</text>
-<text x="618.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#6e7681">r</text>
+<text x="618.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8a929c">r</text>
 </g>
 </svg>

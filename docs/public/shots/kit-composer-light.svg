@@ -14,11 +14,11 @@
 <text x="14" y="149" textLength="67.2" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">Message</text>
 <text x="90.8" y="149" textLength="28.8" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">the</text>
 <text x="129.2" y="149" textLength="48" lengthAdjust="spacing" fill="#1f2328" fill-opacity="0.55">model</text>
-<text x="23.6" y="169" textLength="57.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">ctrl+o</text>
+<text x="23.6" y="169" textLength="57.6" lengthAdjust="spacing" fill="#0967d5" font-weight="700">ctrl+o</text>
 <text x="90.8" y="169" textLength="38.4" lengthAdjust="spacing" fill="#59636e">tips</text>
-<text x="148.4" y="169" textLength="57.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">ctrl+q</text>
+<text x="148.4" y="169" textLength="57.6" lengthAdjust="spacing" fill="#0967d5" font-weight="700">ctrl+q</text>
 <text x="215.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#59636e">quit</text>
-<text x="273.2" y="169" textLength="19.2" lengthAdjust="spacing" fill="#0969da" font-weight="700">up</text>
+<text x="273.2" y="169" textLength="19.2" lengthAdjust="spacing" fill="#0967d5" font-weight="700">up</text>
 <text x="302" y="169" textLength="67.2" lengthAdjust="spacing" fill="#59636e">history</text>
 </g>
 </svg>

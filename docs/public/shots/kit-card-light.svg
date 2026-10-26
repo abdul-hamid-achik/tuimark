@@ -11,7 +11,7 @@
 <text x="23.6" y="49" textLength="38.4" lengthAdjust="spacing" fill="#1f2328" font-weight="700">card</text>
 <text x="71.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#1f2328" font-weight="700">/</text>
 <text x="90.8" y="49" textLength="48" lengthAdjust="spacing" fill="#1f2328" font-weight="700">panel</text>
-<text x="52.4" y="89" textLength="57.6" lengthAdjust="spacing" fill="#0969da">Deploy</text>
+<text x="52.4" y="89" textLength="57.6" lengthAdjust="spacing" fill="#0967d5">Deploy</text>
 <text x="42.8" y="109" textLength="105.6" lengthAdjust="spacing" fill="#1f2328" font-weight="700">api-gateway</text>
 <text x="158" y="109" textLength="57.6" lengthAdjust="spacing" fill="#1f2328" font-weight="700">2.14.0</text>
 <text x="42.8" y="129" textLength="57.6" lengthAdjust="spacing" fill="#59636e">Rolled</text>

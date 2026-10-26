@@ -8,25 +8,25 @@
 <g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
 <text x="23.6" y="49" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">help</text>
 <text x="71.6" y="49" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">overlay</text>
-<text x="23.6" y="89" textLength="48" lengthAdjust="spacing" fill="#8b949e">press</text>
-<text x="81.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">?</text>
+<text x="23.6" y="89" textLength="48" lengthAdjust="spacing" fill="#939ca5">press</text>
+<text x="81.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">?</text>
 <text x="119.6" y="89" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">Keys</text>
 <text x="119.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="138.8" y="129" textLength="48" lengthAdjust="spacing" fill="#8b949e">close</text>
-<text x="196.4" y="129" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">help</text>
+<text x="138.8" y="129" textLength="48" lengthAdjust="spacing" fill="#939ca5">close</text>
+<text x="196.4" y="129" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">help</text>
 <text x="119.6" y="149" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="138.8" y="149" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">help</text>
+<text x="138.8" y="149" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">help</text>
 <text x="119.6" y="169" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">n</text>
-<text x="138.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">new</text>
-<text x="177.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">item</text>
+<text x="138.8" y="169" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">new</text>
+<text x="177.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">item</text>
 <text x="119.6" y="189" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">d</text>
-<text x="138.8" y="189" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">delete</text>
-<text x="206" y="189" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">item</text>
+<text x="138.8" y="189" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">delete</text>
+<text x="206" y="189" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">item</text>
 <text x="119.6" y="209" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">j/k</text>
-<text x="158" y="209" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">move</text>
+<text x="158" y="209" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">move</text>
 <text x="119.6" y="229" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">^S</text>
-<text x="148.4" y="229" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">save</text>
+<text x="148.4" y="229" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">save</text>
 <text x="119.6" y="249" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
-<text x="138.8" y="249" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">quit</text>
+<text x="138.8" y="249" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">quit</text>
 </g>
 </svg>

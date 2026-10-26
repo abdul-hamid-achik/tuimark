@@ -10,17 +10,17 @@
 <rect x="14" y="31" width="19.2" height="1" fill="#58a6ff"/>
 <text x="42.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">overview</text>
 <rect x="42.8" y="31" width="76.8" height="1" fill="#58a6ff"/>
-<text x="148.4" y="29" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">2</text>
-<text x="167.6" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">activity</text>
-<text x="254" y="29" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">(3)</text>
-<text x="311.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">3</text>
-<text x="330.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">settings</text>
-<text x="42.8" y="49" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">Overview</text>
+<text x="148.4" y="29" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">2</text>
+<text x="167.6" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">activity</text>
+<text x="254" y="29" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">(3)</text>
+<text x="311.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">3</text>
+<text x="330.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">settings</text>
+<text x="42.8" y="49" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">Overview</text>
 <text x="33.2" y="69" textLength="96" lengthAdjust="spacing" fill="#e6edf3">Everything</text>
 <text x="138.8" y="69" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">at</text>
 <text x="167.6" y="69" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">a</text>
 <text x="186.8" y="69" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">glance.</text>
 <text x="23.6" y="169" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">]/[</text>
-<text x="62" y="169" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">tab</text>
+<text x="62" y="169" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">tab</text>
 </g>
 </svg>

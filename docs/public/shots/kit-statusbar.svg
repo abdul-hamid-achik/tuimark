@@ -7,17 +7,17 @@
 <g fill="none" stroke-linecap="square" stroke-linejoin="miter">
 </g>
 <g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
-<text x="23.6" y="49" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">The</text>
-<text x="62" y="49" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">page</text>
-<text x="110" y="49" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">content</text>
-<text x="186.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">goes</text>
-<text x="234.8" y="49" textLength="48" lengthAdjust="spacing" fill="#8b949e">here.</text>
+<text x="23.6" y="49" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">The</text>
+<text x="62" y="49" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">page</text>
+<text x="110" y="49" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">content</text>
+<text x="186.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">goes</text>
+<text x="234.8" y="49" textLength="48" lengthAdjust="spacing" fill="#939ca5">here.</text>
 <text x="23.6" y="129" textLength="57.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">NORMAL</text>
 <text x="100.4" y="129" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">deploy.yaml</text>
 <text x="494" y="129" textLength="57.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">synced</text>
-<text x="580.4" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">Ln</text>
-<text x="609.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">12,</text>
-<text x="647.6" y="129" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">Col</text>
-<text x="686" y="129" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">4</text>
+<text x="580.4" y="129" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">Ln</text>
+<text x="609.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">12,</text>
+<text x="647.6" y="129" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">Col</text>
+<text x="686" y="129" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">4</text>
 </g>
 </svg>

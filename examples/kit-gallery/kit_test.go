@@ -3,12 +3,14 @@ package main
 import (
 	"bytes"
 	"errors"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -383,6 +385,80 @@ func TestTokens(t *testing.T) {
 			t.Errorf("%s holds a literal color %s; use a token", p, m)
 		}
 	}
+}
+
+// colorDef matches a color token's declaration in theme.tcss.
+var colorDef = regexp.MustCompile(`--([a-z][a-z0-9-]*)\s*:\s*(#[0-9a-fA-F]{6})\b`)
+
+// TestPaletteContrast holds both palettes to WCAG AA: every text token reads
+// at 4.5:1 on each surface, every on-* token at 4.5:1 on the fill it sits on,
+// and fg, muted and subtle stay a visible step apart on bg (1.1:1).
+func TestPaletteContrast(t *testing.T) {
+	theme := stripComments(readFile(t, "../../kit/theme.tcss"))
+	i := strings.Index(theme, "@media (theme: light)")
+	if i < 0 {
+		t.Fatal("theme.tcss has no light palette")
+	}
+	text := []string{"fg", "muted", "subtle", "accent", "ok", "warn", "danger", "info", "code"}
+	surfaces := []string{"bg", "panel", "raised", "sel"}
+	fills := [][2]string{
+		{"bg", "fg"}, {"on-accent", "accent"}, {"on-accent", "info"}, {"on-accent", "focus"},
+		{"on-ok", "ok"}, {"on-warn", "warn"}, {"on-danger", "danger"},
+	}
+	for _, p := range []struct{ name, src string }{{"dark", theme[:i]}, {"light", theme[i:]}} {
+		c := map[string]string{}
+		for _, m := range colorDef.FindAllStringSubmatch(p.src, -1) {
+			c[m[1]] = strings.ToLower(m[2])
+		}
+		check := func(a, b string, min float64) {
+			if c[a] == "" || c[b] == "" {
+				t.Errorf("%s palette: --%s or --%s is not defined", p.name, a, b)
+				return
+			}
+			if r := contrastRatio(c[a], c[b]); r < min {
+				t.Errorf("%s palette: --%s on --%s is %.2f:1, under %.1f:1", p.name, a, b, r, min)
+			}
+		}
+		for _, tok := range text {
+			for _, s := range surfaces {
+				check(tok, s, 4.5)
+			}
+		}
+		for _, f := range fills {
+			check(f[0], f[1], 4.5)
+		}
+		if c["bg"] != "" && c["muted"] != "" && c["subtle"] != "" {
+			fgOverMuted := contrastRatio(c["fg"], c["bg"]) / contrastRatio(c["muted"], c["bg"])
+			mutedOverSubtle := contrastRatio(c["muted"], c["bg"]) / contrastRatio(c["subtle"], c["bg"])
+			if fgOverMuted < 1.1 || mutedOverSubtle < 1.1 {
+				t.Errorf("%s palette: fg/muted is %.2f and muted/subtle %.2f on bg; each needs 1.1", p.name, fgOverMuted, mutedOverSubtle)
+			}
+		}
+	}
+}
+
+// relLuminance is the WCAG relative luminance of a #rrggbb color.
+func relLuminance(hex string) float64 {
+	var lin [3]float64
+	for k := range lin {
+		v, _ := strconv.ParseInt(hex[1+2*k:3+2*k], 16, 0)
+		c := float64(v) / 255
+		if c <= 0.03928 {
+			lin[k] = c / 12.92
+		} else {
+			lin[k] = math.Pow((c+0.055)/1.055, 2.4)
+		}
+	}
+	return 0.2126*lin[0] + 0.7152*lin[1] + 0.0722*lin[2]
+}
+
+// contrastRatio is the WCAG contrast ratio of two #rrggbb colors.
+func contrastRatio(a, b string) float64 {
+	la, lb := relLuminance(a), relLuminance(b)
+	if la < lb {
+		la, lb = lb, la
+	}
+	return (la + 0.05) / (lb + 0.05)
 }
 
 // ---- ids and actions ----
