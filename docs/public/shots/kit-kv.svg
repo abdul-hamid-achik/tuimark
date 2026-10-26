@@ -9,14 +9,14 @@
 <text x="23.6" y="49" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">key</text>
 <text x="62" y="49" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">/</text>
 <text x="81.2" y="49" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">value</text>
-<text x="52.4" y="89" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">Service</text>
-<text x="42.8" y="109" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">Name</text>
+<text x="52.4" y="89" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">Service</text>
+<text x="42.8" y="109" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">Name</text>
 <text x="129.2" y="109" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">api-gateway</text>
-<text x="42.8" y="129" textLength="48" lengthAdjust="spacing" fill="#8b949e">Owner</text>
+<text x="42.8" y="129" textLength="48" lengthAdjust="spacing" fill="#939ca5">Owner</text>
 <text x="129.2" y="129" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">platform</text>
-<text x="42.8" y="149" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">Region</text>
+<text x="42.8" y="149" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">Region</text>
 <text x="129.2" y="149" textLength="86.4" lengthAdjust="spacing" fill="#e6edf3">eu-west-1</text>
-<text x="42.8" y="169" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">Version</text>
+<text x="42.8" y="169" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">Version</text>
 <text x="129.2" y="169" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">2.14.0</text>
 </g>
 </svg>

@@ -9,12 +9,12 @@
 <text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">◆</text>
 <text x="42.8" y="29" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">orbit</text>
 <text x="110" y="29" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">Deployments</text>
-<text x="474.8" y="29" textLength="144" lengthAdjust="spacing" fill="#8b949e">ada@example.com</text>
+<text x="474.8" y="29" textLength="144" lengthAdjust="spacing" fill="#939ca5">ada@example.com</text>
 <text x="647.6" y="29" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">prod</text>
-<text x="23.6" y="69" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">The</text>
-<text x="62" y="69" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">page</text>
-<text x="110" y="69" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">content</text>
-<text x="186.8" y="69" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">goes</text>
-<text x="234.8" y="69" textLength="48" lengthAdjust="spacing" fill="#8b949e">here.</text>
+<text x="23.6" y="69" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">The</text>
+<text x="62" y="69" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">page</text>
+<text x="110" y="69" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">content</text>
+<text x="186.8" y="69" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">goes</text>
+<text x="234.8" y="69" textLength="48" lengthAdjust="spacing" fill="#939ca5">here.</text>
 </g>
 </svg>

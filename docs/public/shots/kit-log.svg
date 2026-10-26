@@ -33,28 +33,28 @@
 <text x="119.6" y="129" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">ok</text>
 <text x="167.6" y="129" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">pkg/auth</text>
 <text x="292.4" y="129" textLength="48" lengthAdjust="spacing" fill="#e6edf3">0.18s</text>
-<text x="33.2" y="149" textLength="76.8" lengthAdjust="spacing" fill="#f85149">12:00:10</text>
-<text x="119.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#f85149">FAIL</text>
-<text x="167.6" y="149" textLength="105.6" lengthAdjust="spacing" fill="#f85149">pkg/billing</text>
-<text x="292.4" y="149" textLength="48" lengthAdjust="spacing" fill="#f85149">1.02s</text>
-<text x="33.2" y="169" textLength="76.8" lengthAdjust="spacing" fill="#f85149">12:00:10</text>
-<text x="119.6" y="169" textLength="182.4" lengthAdjust="spacing" fill="#f85149">billing_test.go:88:</text>
-<text x="311.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#f85149">want</text>
-<text x="359.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#f85149">200,</text>
-<text x="407.6" y="169" textLength="28.8" lengthAdjust="spacing" fill="#f85149">got</text>
-<text x="446" y="169" textLength="28.8" lengthAdjust="spacing" fill="#f85149">504</text>
+<text x="33.2" y="149" textLength="76.8" lengthAdjust="spacing" fill="#f85c55">12:00:10</text>
+<text x="119.6" y="149" textLength="38.4" lengthAdjust="spacing" fill="#f85c55">FAIL</text>
+<text x="167.6" y="149" textLength="105.6" lengthAdjust="spacing" fill="#f85c55">pkg/billing</text>
+<text x="292.4" y="149" textLength="48" lengthAdjust="spacing" fill="#f85c55">1.02s</text>
+<text x="33.2" y="169" textLength="76.8" lengthAdjust="spacing" fill="#f85c55">12:00:10</text>
+<text x="119.6" y="169" textLength="182.4" lengthAdjust="spacing" fill="#f85c55">billing_test.go:88:</text>
+<text x="311.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#f85c55">want</text>
+<text x="359.6" y="169" textLength="38.4" lengthAdjust="spacing" fill="#f85c55">200,</text>
+<text x="407.6" y="169" textLength="28.8" lengthAdjust="spacing" fill="#f85c55">got</text>
+<text x="446" y="169" textLength="28.8" lengthAdjust="spacing" fill="#f85c55">504</text>
 <text x="33.2" y="189" textLength="76.8" lengthAdjust="spacing" fill="#d29922">12:00:11</text>
 <text x="119.6" y="189" textLength="9.6" lengthAdjust="spacing" fill="#d29922">1</text>
 <text x="138.8" y="189" textLength="67.2" lengthAdjust="spacing" fill="#d29922">package</text>
 <text x="215.6" y="189" textLength="57.6" lengthAdjust="spacing" fill="#d29922">failed</text>
-<text x="33.2" y="209" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:11</text>
-<text x="119.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">exit</text>
-<text x="167.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">1</text>
+<text x="33.2" y="209" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:11</text>
+<text x="119.6" y="209" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">exit</text>
+<text x="167.6" y="209" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">1</text>
 <text x="23.6" y="249" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">j/k</text>
-<text x="62" y="249" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">scroll</text>
+<text x="62" y="249" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">scroll</text>
 <text x="138.8" y="249" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">G</text>
-<text x="158" y="249" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">follow</text>
+<text x="158" y="249" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">follow</text>
 <text x="234.8" y="249" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">g</text>
-<text x="254" y="249" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">top</text>
+<text x="254" y="249" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">top</text>
 </g>
 </svg>

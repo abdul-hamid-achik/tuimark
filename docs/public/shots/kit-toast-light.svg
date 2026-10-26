@@ -2,7 +2,7 @@
 <title>a toast along the bottom row saying the settings were saved, with esc to dismiss</title>
 <rect width="719.2" height="228" rx="6" fill="#ffffff"/>
 <path fill="#1f2328" d="M23.6 74h76.8v20h-76.8z"/>
-<path fill="#1a7f37" d="M23.6 174h672v20h-672z"/>
+<path fill="#197a35" d="M23.6 174h672v20h-672z"/>
 <g fill="none" stroke-linecap="square" stroke-linejoin="miter">
 </g>
 <g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">

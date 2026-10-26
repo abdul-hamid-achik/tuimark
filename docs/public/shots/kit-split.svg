@@ -2,7 +2,7 @@
 <title>a list of incidents beside a detail pane that shows the selected one</title>
 <rect width="719.2" height="228" rx="6" fill="#161b22"/>
 <path fill="#0d1117" d="M244.4 14h9.6v20h-9.6zM244.4 34h9.6v20h-9.6zM244.4 54h9.6v20h-9.6zM244.4 74h9.6v20h-9.6zM244.4 94h9.6v20h-9.6zM244.4 114h9.6v20h-9.6zM244.4 134h9.6v20h-9.6zM244.4 154h9.6v20h-9.6zM244.4 174h9.6v20h-9.6zM244.4 194h9.6v20h-9.6z"/>
-<path fill="#f85149" d="M273.2 34h57.6v20h-57.6z"/>
+<path fill="#f85c55" d="M273.2 34h57.6v20h-57.6z"/>
 <path fill="#58a6ff" d="M33.2 54h192v20h-192z"/>
 <g fill="none" stroke-linecap="square" stroke-linejoin="miter">
 <path stroke="#58a6ff" stroke-width="1.1" d="M23.6 21.6H16.4V34M23.6 26.4H21.2V34M23.6 21.6H33.2M23.6 26.4H33.2M138.8 21.6H148.4M138.8 26.4H148.4M148.4 21.6H158M148.4 26.4H158M158 21.6H167.6M158 26.4H167.6M167.6 21.6H177.2M167.6 26.4H177.2M177.2 21.6H186.8M177.2 26.4H186.8M186.8 21.6H196.4M186.8 26.4H196.4M196.4 21.6H206M196.4 26.4H206M206 21.6H215.6M206 26.4H215.6M215.6 21.6H225.2M215.6 26.4H225.2M225.2 21.6H234.8M225.2 26.4H234.8M234.8 21.6H242V34M234.8 26.4H237.2V34M16.4 34V54M21.2 34V54M237.2 34V54M242 34V54M16.4 54V74M21.2 54V74M237.2 54V74M242 54V74M16.4 74V94M21.2 74V94M237.2 74V94M242 74V94M16.4 94V114M21.2 94V114M237.2 94V114M242 94V114M16.4 114V134M21.2 114V134M237.2 114V134M242 114V134M16.4 134V154M21.2 134V154M237.2 134V154M242 134V154M16.4 154V174M21.2 154V174M237.2 154V174M242 154V174M16.4 174V194M21.2 174V194M237.2 174V194M242 174V194M23.6 206.4H16.4V194M23.6 201.6H21.2V194M23.6 201.6H33.2M23.6 206.4H33.2M33.2 201.6H42.8M33.2 206.4H42.8M42.8 201.6H52.4M42.8 206.4H52.4M52.4 201.6H62M52.4 206.4H62M62 201.6H71.6M62 206.4H71.6M71.6 201.6H81.2M71.6 206.4H81.2M81.2 201.6H90.8M81.2 206.4H90.8M90.8 201.6H100.4M90.8 206.4H100.4M100.4 201.6H110M100.4 206.4H110M110 201.6H119.6M110 206.4H119.6M119.6 201.6H129.2M119.6 206.4H129.2M129.2 201.6H138.8M129.2 206.4H138.8M138.8 201.6H148.4M138.8 206.4H148.4M148.4 201.6H158M148.4 206.4H158M158 201.6H167.6M158 206.4H167.6M167.6 201.6H177.2M167.6 206.4H177.2M177.2 201.6H186.8M177.2 206.4H186.8M186.8 201.6H196.4M186.8 206.4H196.4M196.4 201.6H206M196.4 206.4H206M206 201.6H215.6M206 206.4H215.6M215.6 201.6H225.2M215.6 206.4H225.2M225.2 201.6H234.8M225.2 206.4H234.8M234.8 206.4H242V194M234.8 201.6H237.2V194"/>
@@ -10,14 +10,14 @@
 </g>
 <g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
 <text x="42.8" y="29" textLength="86.4" lengthAdjust="spacing" fill="#58a6ff">Incidents</text>
-<text x="282.8" y="29" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">Billing</text>
-<text x="359.6" y="29" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">errors</text>
+<text x="282.8" y="29" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">Billing</text>
+<text x="359.6" y="29" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">errors</text>
 <text x="33.2" y="49" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">Checkout</text>
 <text x="119.6" y="49" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">latency</text>
-<text x="206" y="49" textLength="19.2" lengthAdjust="spacing" fill="#6e7681">2h</text>
+<text x="206" y="49" textLength="19.2" lengthAdjust="spacing" fill="#8a929c">2h</text>
 <text x="282.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">open</text>
-<text x="340.4" y="49" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">14m</text>
-<text x="378.8" y="49" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">ago</text>
+<text x="340.4" y="49" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">14m</text>
+<text x="378.8" y="49" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">ago</text>
 <text x="33.2" y="69" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">Billing</text>
 <text x="110" y="69" textLength="57.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">errors</text>
 <text x="196.4" y="69" textLength="28.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">14m</text>
@@ -31,12 +31,12 @@
 <text x="33.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">Search</text>
 <text x="100.4" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3">index</text>
 <text x="158" y="89" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">lag</text>
-<text x="206" y="89" textLength="19.2" lengthAdjust="spacing" fill="#6e7681">1d</text>
+<text x="206" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8a929c">1d</text>
 <text x="273.2" y="89" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">invoices</text>
 <text x="359.6" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">with</text>
 <text x="407.6" y="89" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">a</text>
 <text x="426.8" y="89" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">timeout.</text>
-<text x="273.2" y="109" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">owner:</text>
-<text x="340.4" y="109" textLength="48" lengthAdjust="spacing" fill="#8b949e">grace</text>
+<text x="273.2" y="109" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">owner:</text>
+<text x="340.4" y="109" textLength="48" lengthAdjust="spacing" fill="#939ca5">grace</text>
 </g>
 </svg>

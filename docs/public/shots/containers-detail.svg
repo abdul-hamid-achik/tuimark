@@ -15,60 +15,60 @@
 <text x="42.8" y="29" textLength="96" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">containers</text>
 <text x="158" y="29" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">local</text>
 <text x="215.6" y="29" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">engine</text>
-<text x="897.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:12</text>
+<text x="897.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:12</text>
 <text x="1002.8" y="29" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">10</text>
 <text x="1031.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">up</text>
-<text x="23.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">1</text>
-<text x="42.8" y="49" textLength="96" lengthAdjust="spacing" fill="#8b949e">containers</text>
+<text x="23.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">1</text>
+<text x="42.8" y="49" textLength="96" lengthAdjust="spacing" fill="#939ca5">containers</text>
 <text x="158" y="49" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">▸2</text>
 <rect x="158" y="51" width="19.2" height="1" fill="#58a6ff"/>
 <text x="186.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">detail</text>
 <rect x="186.8" y="51" width="57.6" height="1" fill="#58a6ff"/>
-<text x="273.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">3</text>
-<text x="292.4" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">images</text>
-<text x="378.8" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">4</text>
-<text x="398" y="49" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">volumes</text>
-<text x="494" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">5</text>
-<text x="513.2" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">events</text>
-<text x="42.8" y="69" textLength="105.6" lengthAdjust="spacing" fill="#8b949e">api-gateway</text>
-<text x="570.8" y="69" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">CPU</text>
-<text x="33.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">status</text>
+<text x="273.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">3</text>
+<text x="292.4" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">images</text>
+<text x="378.8" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">4</text>
+<text x="398" y="49" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">volumes</text>
+<text x="494" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">5</text>
+<text x="513.2" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">events</text>
+<text x="42.8" y="69" textLength="105.6" lengthAdjust="spacing" fill="#939ca5">api-gateway</text>
+<text x="570.8" y="69" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">CPU</text>
+<text x="33.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">status</text>
 <text x="129.2" y="89" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">running</text>
-<text x="215.6" y="89" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">up</text>
-<text x="244.4" y="89" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">3d2h</text>
+<text x="215.6" y="89" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">up</text>
+<text x="244.4" y="89" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">3d2h</text>
 <text x="561.2" y="89" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">10.0%</text>
-<text x="33.2" y="109" textLength="48" lengthAdjust="spacing" fill="#8b949e">image</text>
+<text x="33.2" y="109" textLength="48" lengthAdjust="spacing" fill="#939ca5">image</text>
 <text x="119.6" y="109" textLength="182.4" lengthAdjust="spacing" fill="#e6edf3">acme/gateway:2.14.0</text>
-<text x="561.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">avg</text>
-<text x="599.6" y="109" textLength="48" lengthAdjust="spacing" fill="#8b949e">12.6%</text>
-<text x="33.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">id</text>
+<text x="561.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">avg</text>
+<text x="599.6" y="109" textLength="48" lengthAdjust="spacing" fill="#939ca5">12.6%</text>
+<text x="33.2" y="129" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">id</text>
 <text x="119.6" y="129" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">a2780edec237</text>
-<text x="33.2" y="149" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">network</text>
+<text x="33.2" y="149" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">network</text>
 <text x="119.6" y="149" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">acme_default</text>
 <text x="244.4" y="149" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">·</text>
 <text x="263.6" y="149" textLength="96" lengthAdjust="spacing" fill="#e6edf3">172.18.0.3</text>
-<text x="570.8" y="149" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">Memory</text>
-<text x="33.2" y="169" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">restart</text>
+<text x="570.8" y="149" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">Memory</text>
+<text x="33.2" y="169" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">restart</text>
 <text x="119.6" y="169" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">always</text>
 <text x="561.2" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">210M</text>
 <text x="609.2" y="169" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">/</text>
 <text x="628.4" y="169" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">512M</text>
-<text x="33.2" y="189" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">created</text>
+<text x="33.2" y="189" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">created</text>
 <text x="119.6" y="189" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">3</text>
 <text x="138.8" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">days</text>
 <text x="186.8" y="189" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">ago</text>
-<text x="561.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">avg</text>
-<text x="599.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">41%</text>
-<text x="638" y="189" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">of</text>
-<text x="666.8" y="189" textLength="48" lengthAdjust="spacing" fill="#8b949e">limit</text>
+<text x="561.2" y="189" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">avg</text>
+<text x="599.6" y="189" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">41%</text>
+<text x="638" y="189" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">of</text>
+<text x="666.8" y="189" textLength="48" lengthAdjust="spacing" fill="#939ca5">limit</text>
 <text x="14" y="229" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">▸logs</text>
 <rect x="14" y="231" width="48" height="1" fill="#58a6ff"/>
 <text x="71.6" y="229" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">(20)</text>
 <rect x="71.6" y="231" width="38.4" height="1" fill="#58a6ff"/>
-<text x="138.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">env</text>
-<text x="177.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">(6)</text>
-<text x="234.8" y="229" textLength="48" lengthAdjust="spacing" fill="#8b949e">ports</text>
-<text x="292.4" y="229" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">(1)</text>
+<text x="138.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">env</text>
+<text x="177.2" y="229" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">(6)</text>
+<text x="234.8" y="229" textLength="48" lengthAdjust="spacing" fill="#939ca5">ports</text>
+<text x="292.4" y="229" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">(1)</text>
 <text x="42.8" y="249" textLength="105.6" lengthAdjust="spacing" fill="#58a6ff">api-gateway</text>
 <text x="158" y="249" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">·</text>
 <text x="177.2" y="249" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff">log</text>
@@ -133,27 +133,27 @@
 <text x="282.8" y="489" textLength="28.8" lengthAdjust="spacing" fill="#d29922">200</text>
 <text x="321.2" y="489" textLength="57.6" lengthAdjust="spacing" fill="#d29922">1032ms</text>
 <text x="23.6" y="529" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="42.8" y="529" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">help</text>
+<text x="42.8" y="529" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">help</text>
 <text x="100.4" y="529" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">^K</text>
-<text x="129.2" y="529" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">commands</text>
+<text x="129.2" y="529" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">commands</text>
 <text x="225.2" y="529" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
-<text x="244.4" y="529" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">quit</text>
+<text x="244.4" y="529" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">quit</text>
 <text x="302" y="529" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">l/e/p</text>
-<text x="359.6" y="529" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">logs</text>
-<text x="407.6" y="529" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="426.8" y="529" textLength="28.8" lengthAdjust="spacing" fill="#8b949e">env</text>
-<text x="465.2" y="529" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="484.4" y="529" textLength="48" lengthAdjust="spacing" fill="#8b949e">ports</text>
+<text x="359.6" y="529" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">logs</text>
+<text x="407.6" y="529" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="426.8" y="529" textLength="28.8" lengthAdjust="spacing" fill="#939ca5">env</text>
+<text x="465.2" y="529" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="484.4" y="529" textLength="48" lengthAdjust="spacing" fill="#939ca5">ports</text>
 <text x="551.6" y="529" textLength="28.8" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">esc</text>
-<text x="590" y="529" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">back</text>
+<text x="590" y="529" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">back</text>
 <text x="647.6" y="529" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">s</text>
-<text x="666.8" y="529" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">stop</text>
+<text x="666.8" y="529" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">stop</text>
 <text x="724.4" y="529" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">u</text>
-<text x="743.6" y="529" textLength="48" lengthAdjust="spacing" fill="#8b949e">start</text>
+<text x="743.6" y="529" textLength="48" lengthAdjust="spacing" fill="#939ca5">start</text>
 <text x="810.8" y="529" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">r</text>
-<text x="830" y="529" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">restart</text>
+<text x="830" y="529" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">restart</text>
 <text x="916.4" y="529" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">d</text>
-<text x="935.6" y="529" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">remove</text>
+<text x="935.6" y="529" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">remove</text>
 <text x="23.6" y="569" textLength="76.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">DEGRADED</text>
 <text x="119.6" y="569" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">10</text>
 <text x="148.4" y="569" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">up</text>
@@ -163,9 +163,9 @@
 <text x="666.8" y="569" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">no</text>
 <text x="695.6" y="569" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">actions</text>
 <text x="772.4" y="569" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">yet</text>
-<text x="820.4" y="569" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">docker</text>
-<text x="887.6" y="569" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">27.1.1</text>
-<text x="954.8" y="569" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="974" y="569" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">simulated</text>
+<text x="820.4" y="569" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">docker</text>
+<text x="887.6" y="569" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">27.1.1</text>
+<text x="954.8" y="569" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="974" y="569" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">simulated</text>
 </g>
 </svg>

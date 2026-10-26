@@ -10,12 +10,12 @@
 <text x="42.8" y="29" textLength="76.8" lengthAdjust="spacing" fill="#58a6ff">Services</text>
 <text x="129.2" y="29" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">·</text>
 <text x="148.4" y="29" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">5</text>
-<text x="33.2" y="49" textLength="67.2" lengthAdjust="spacing" fill="#8b949e" font-weight="700">SERVICE</text>
-<text x="292.4" y="49" textLength="48" lengthAdjust="spacing" fill="#8b949e" font-weight="700">STATE</text>
-<text x="398" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e" font-weight="700">REGION</text>
-<text x="542" y="49" textLength="48" lengthAdjust="spacing" fill="#8b949e" font-weight="700">REQ/S</text>
-<text x="628.4" y="49" textLength="28.8" lengthAdjust="spacing" fill="#8b949e" font-weight="700">P95</text>
-<text x="666.8" y="49" textLength="19.2" lengthAdjust="spacing" fill="#8b949e" font-weight="700">MS</text>
+<text x="33.2" y="49" textLength="67.2" lengthAdjust="spacing" fill="#939ca5" font-weight="700">SERVICE</text>
+<text x="292.4" y="49" textLength="48" lengthAdjust="spacing" fill="#939ca5" font-weight="700">STATE</text>
+<text x="398" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5" font-weight="700">REGION</text>
+<text x="542" y="49" textLength="48" lengthAdjust="spacing" fill="#939ca5" font-weight="700">REQ/S</text>
+<text x="628.4" y="49" textLength="28.8" lengthAdjust="spacing" fill="#939ca5" font-weight="700">P95</text>
+<text x="666.8" y="49" textLength="19.2" lengthAdjust="spacing" fill="#939ca5" font-weight="700">MS</text>
 <text x="33.2" y="69" textLength="105.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">api-gateway</text>
 <text x="292.4" y="69" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">running</text>
 <text x="398" y="69" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">us-east</text>
@@ -23,25 +23,25 @@
 <text x="666.8" y="69" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">42</text>
 <text x="33.2" y="89" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">auth</text>
 <text x="292.4" y="89" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
-<text x="398" y="89" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">us-east</text>
+<text x="398" y="89" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">us-east</text>
 <text x="561.2" y="89" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">310</text>
 <text x="666.8" y="89" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">18</text>
 <text x="33.2" y="109" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">billing</text>
-<text x="292.4" y="109" textLength="76.8" lengthAdjust="spacing" fill="#f85149">degraded</text>
-<text x="398" y="109" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">eu-west</text>
+<text x="292.4" y="109" textLength="76.8" lengthAdjust="spacing" fill="#f85c55">degraded</text>
+<text x="398" y="109" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">eu-west</text>
 <text x="570.8" y="109" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">27</text>
 <text x="657.2" y="109" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">910</text>
 <text x="33.2" y="129" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">search</text>
 <text x="292.4" y="129" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
-<text x="398" y="129" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">eu-west</text>
+<text x="398" y="129" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">eu-west</text>
 <text x="570.8" y="129" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">88</text>
 <text x="657.2" y="129" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">133</text>
 <text x="33.2" y="149" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">mailer</text>
-<text x="292.4" y="149" textLength="67.2" lengthAdjust="spacing" fill="#f85149">stopped</text>
-<text x="398" y="149" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">ap-south</text>
+<text x="292.4" y="149" textLength="67.2" lengthAdjust="spacing" fill="#f85c55">stopped</text>
+<text x="398" y="149" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">ap-south</text>
 <text x="580.4" y="149" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">0</text>
 <text x="676.4" y="149" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">0</text>
 <text x="23.6" y="209" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">enter</text>
-<text x="81.2" y="209" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">open</text>
+<text x="81.2" y="209" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">open</text>
 </g>
 </svg>

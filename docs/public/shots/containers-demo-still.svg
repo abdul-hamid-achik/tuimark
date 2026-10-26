@@ -15,21 +15,21 @@
 <text x="42.8" y="29" textLength="96" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">containers</text>
 <text x="158" y="29" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">local</text>
 <text x="215.6" y="29" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">engine</text>
-<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">12:00:24</text>
+<text x="801.2" y="29" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">12:00:24</text>
 <text x="906.8" y="29" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">10</text>
 <text x="935.6" y="29" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">up</text>
 <text x="14" y="49" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">▸1</text>
 <rect x="14" y="51" width="19.2" height="1" fill="#58a6ff"/>
 <text x="42.8" y="49" textLength="96" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">containers</text>
 <rect x="42.8" y="51" width="96" height="1" fill="#58a6ff"/>
-<text x="167.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">2</text>
-<text x="186.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">detail</text>
-<text x="273.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">3</text>
-<text x="292.4" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">images</text>
-<text x="378.8" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">4</text>
-<text x="398" y="49" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">volumes</text>
-<text x="494" y="49" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">5</text>
-<text x="513.2" y="49" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">events</text>
+<text x="167.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">2</text>
+<text x="186.8" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">detail</text>
+<text x="273.2" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">3</text>
+<text x="292.4" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">images</text>
+<text x="378.8" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">4</text>
+<text x="398" y="49" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">volumes</text>
+<text x="494" y="49" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">5</text>
+<text x="513.2" y="49" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">events</text>
 <text x="33.2" y="89" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3" fill-opacity="0.55">/</text>
 <text x="52.4" y="89" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3" fill-opacity="0.55">to</text>
 <text x="81.2" y="89" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3" fill-opacity="0.55">filter</text>
@@ -47,13 +47,13 @@
 <text x="273.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">sort</text>
 <text x="321.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#58a6ff">name</text>
 <text x="369.2" y="129" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff">↑</text>
-<text x="52.4" y="149" textLength="38.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">NAME</text>
-<text x="234.8" y="149" textLength="48" lengthAdjust="spacing" fill="#8b949e" font-weight="700">IMAGE</text>
-<text x="484.4" y="149" textLength="57.6" lengthAdjust="spacing" fill="#8b949e" font-weight="700">STATUS</text>
-<text x="609.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#8b949e" font-weight="700">CPU%</text>
-<text x="695.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#8b949e" font-weight="700">MEM</text>
-<text x="753.2" y="149" textLength="57.6" lengthAdjust="spacing" fill="#8b949e" font-weight="700">UPTIME</text>
-<text x="830" y="149" textLength="48" lengthAdjust="spacing" fill="#8b949e" font-weight="700">PORTS</text>
+<text x="52.4" y="149" textLength="38.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">NAME</text>
+<text x="234.8" y="149" textLength="48" lengthAdjust="spacing" fill="#939ca5" font-weight="700">IMAGE</text>
+<text x="484.4" y="149" textLength="57.6" lengthAdjust="spacing" fill="#939ca5" font-weight="700">STATUS</text>
+<text x="609.2" y="149" textLength="38.4" lengthAdjust="spacing" fill="#939ca5" font-weight="700">CPU%</text>
+<text x="695.6" y="149" textLength="28.8" lengthAdjust="spacing" fill="#939ca5" font-weight="700">MEM</text>
+<text x="753.2" y="149" textLength="57.6" lengthAdjust="spacing" fill="#939ca5" font-weight="700">UPTIME</text>
+<text x="830" y="149" textLength="48" lengthAdjust="spacing" fill="#939ca5" font-weight="700">PORTS</text>
 <text x="52.4" y="169" textLength="105.6" lengthAdjust="spacing" fill="#0d1117" font-weight="700">api-gateway</text>
 <text x="234.8" y="169" textLength="182.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">acme/gateway:2.14.0</text>
 <text x="484.4" y="169" textLength="67.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">running</text>
@@ -62,106 +62,106 @@
 <text x="791.6" y="169" textLength="19.2" lengthAdjust="spacing" fill="#0d1117" font-weight="700">6s</text>
 <text x="830" y="169" textLength="86.4" lengthAdjust="spacing" fill="#0d1117" font-weight="700">3000→3000</text>
 <text x="52.4" y="189" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">billing-api</text>
-<text x="234.8" y="189" textLength="172.8" lengthAdjust="spacing" fill="#8b949e">acme/billing:1.9.3</text>
+<text x="234.8" y="189" textLength="172.8" lengthAdjust="spacing" fill="#939ca5">acme/billing:1.9.3</text>
 <text x="484.4" y="189" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="609.2" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">12.1</text>
 <text x="686" y="189" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">567M</text>
 <text x="782" y="189" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">19s</text>
-<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3001→3001</text>
+<text x="830" y="189" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3001→3001</text>
 <text x="52.4" y="209" textLength="96" lengthAdjust="spacing" fill="#e6edf3">db-migrate</text>
-<text x="234.8" y="209" textLength="172.8" lengthAdjust="spacing" fill="#8b949e">acme/migrate:1.4.0</text>
+<text x="234.8" y="209" textLength="172.8" lengthAdjust="spacing" fill="#939ca5">acme/migrate:1.4.0</text>
 <text x="484.4" y="209" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">exit</text>
 <text x="532.4" y="209" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">0</text>
 <text x="638" y="209" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
 <text x="714.8" y="209" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
 <text x="801.2" y="209" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
-<text x="830" y="209" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="209" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 <text x="52.4" y="229" textLength="96" lengthAdjust="spacing" fill="#e6edf3">edge-proxy</text>
-<text x="234.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">nginx:1.27-alpine</text>
+<text x="234.8" y="229" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">nginx:1.27-alpine</text>
 <text x="484.4" y="229" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="618.8" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">4.1</text>
 <text x="695.6" y="229" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">35M</text>
 <text x="772.4" y="229" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">3d2h</text>
-<text x="830" y="229" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">8080→80</text>
-<text x="906.8" y="229" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="229" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">8080→80</text>
+<text x="906.8" y="229" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="52.4" y="249" textLength="67.2" lengthAdjust="spacing" fill="#e6edf3">grafana</text>
-<text x="234.8" y="249" textLength="211.2" lengthAdjust="spacing" fill="#8b949e">grafana/grafana:11.1.0</text>
+<text x="234.8" y="249" textLength="211.2" lengthAdjust="spacing" fill="#939ca5">grafana/grafana:11.1.0</text>
 <text x="484.4" y="249" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="618.8" y="249" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.8</text>
 <text x="686" y="249" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">150M</text>
 <text x="762.8" y="249" textLength="48" lengthAdjust="spacing" fill="#e6edf3">1d23h</text>
-<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3030→3000</text>
+<text x="830" y="249" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3030→3000</text>
 <text x="52.4" y="269" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">postgres</text>
-<text x="234.8" y="269" textLength="124.8" lengthAdjust="spacing" fill="#8b949e">postgres:16.3</text>
+<text x="234.8" y="269" textLength="124.8" lengthAdjust="spacing" fill="#939ca5">postgres:16.3</text>
 <text x="484.4" y="269" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="618.8" y="269" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">3.7</text>
 <text x="686" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">201M</text>
 <text x="772.4" y="269" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
-<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5432→5432</text>
+<text x="830" y="269" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5432→5432</text>
 <text x="52.4" y="289" textLength="96" lengthAdjust="spacing" fill="#e6edf3">prometheus</text>
-<text x="234.8" y="289" textLength="220.8" lengthAdjust="spacing" fill="#8b949e">prom/prometheus:v2.53.0</text>
+<text x="234.8" y="289" textLength="220.8" lengthAdjust="spacing" fill="#939ca5">prom/prometheus:v2.53.0</text>
 <text x="484.4" y="289" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="618.8" y="289" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">7.5</text>
 <text x="686" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">235M</text>
 <text x="772.4" y="289" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">2d0h</text>
-<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">9090→9090</text>
+<text x="830" y="289" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">9090→9090</text>
 <text x="52.4" y="309" textLength="76.8" lengthAdjust="spacing" fill="#e6edf3">rabbitmq</text>
-<text x="234.8" y="309" textLength="230.4" lengthAdjust="spacing" fill="#8b949e">rabbitmq:3.13-management</text>
+<text x="234.8" y="309" textLength="230.4" lengthAdjust="spacing" fill="#939ca5">rabbitmq:3.13-management</text>
 <text x="484.4" y="309" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="618.8" y="309" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">6.8</text>
 <text x="686" y="309" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">173M</text>
 <text x="762.8" y="309" textLength="48" lengthAdjust="spacing" fill="#e6edf3">3d23h</text>
-<text x="830" y="309" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">5672→5672</text>
-<text x="926" y="309" textLength="19.2" lengthAdjust="spacing" fill="#8b949e">+1</text>
+<text x="830" y="309" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">5672→5672</text>
+<text x="926" y="309" textLength="19.2" lengthAdjust="spacing" fill="#939ca5">+1</text>
 <text x="52.4" y="329" textLength="48" lengthAdjust="spacing" fill="#e6edf3">redis</text>
-<text x="234.8" y="329" textLength="153.6" lengthAdjust="spacing" fill="#8b949e">redis:7.2-alpine</text>
+<text x="234.8" y="329" textLength="153.6" lengthAdjust="spacing" fill="#939ca5">redis:7.2-alpine</text>
 <text x="484.4" y="329" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="618.8" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">1.4</text>
 <text x="695.6" y="329" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">32M</text>
 <text x="772.4" y="329" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">4d0h</text>
-<text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">6379→6379</text>
+<text x="830" y="329" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">6379→6379</text>
 <text x="52.4" y="349" textLength="96" lengthAdjust="spacing" fill="#e6edf3">search-api</text>
-<text x="234.8" y="349" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/search:0.8.1</text>
+<text x="234.8" y="349" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/search:0.8.1</text>
 <text x="484.4" y="349" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="609.2" y="349" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">10.9</text>
 <text x="686" y="349" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">150M</text>
 <text x="772.4" y="349" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3">1d2h</text>
-<text x="830" y="349" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">3002→3002</text>
+<text x="830" y="349" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">3002→3002</text>
 <text x="52.4" y="369" textLength="115.2" lengthAdjust="spacing" fill="#e6edf3">worker-email</text>
-<text x="234.8" y="369" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
+<text x="234.8" y="369" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
 <text x="484.4" y="369" textLength="67.2" lengthAdjust="spacing" fill="#3fb950">running</text>
 <text x="618.8" y="369" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">3.5</text>
 <text x="695.6" y="369" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3">87M</text>
 <text x="791.6" y="369" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">4s</text>
-<text x="830" y="369" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="369" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 <text x="52.4" y="389" textLength="134.4" lengthAdjust="spacing" fill="#e6edf3">worker-reports</text>
-<text x="234.8" y="389" textLength="163.2" lengthAdjust="spacing" fill="#8b949e">acme/worker:3.2.0</text>
-<text x="484.4" y="389" textLength="38.4" lengthAdjust="spacing" fill="#f85149">exit</text>
-<text x="532.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#f85149">1</text>
+<text x="234.8" y="389" textLength="163.2" lengthAdjust="spacing" fill="#939ca5">acme/worker:3.2.0</text>
+<text x="484.4" y="389" textLength="38.4" lengthAdjust="spacing" fill="#f85c55">exit</text>
+<text x="532.4" y="389" textLength="9.6" lengthAdjust="spacing" fill="#f85c55">1</text>
 <text x="638" y="389" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
 <text x="714.8" y="389" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
 <text x="801.2" y="389" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3">-</text>
-<text x="830" y="389" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">-</text>
+<text x="830" y="389" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">-</text>
 <text x="23.6" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">?</text>
-<text x="42.8" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">help</text>
+<text x="42.8" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">help</text>
 <text x="100.4" y="449" textLength="19.2" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">^K</text>
-<text x="129.2" y="449" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">commands</text>
+<text x="129.2" y="449" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">commands</text>
 <text x="225.2" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">q</text>
-<text x="244.4" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">quit</text>
+<text x="244.4" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">quit</text>
 <text x="302" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">/</text>
-<text x="321.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">filter</text>
+<text x="321.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">filter</text>
 <text x="398" y="449" textLength="48" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">space</text>
-<text x="455.6" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">mark</text>
+<text x="455.6" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">mark</text>
 <text x="513.2" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">s</text>
-<text x="532.4" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">stop</text>
+<text x="532.4" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">stop</text>
 <text x="590" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">u</text>
-<text x="609.2" y="449" textLength="48" lengthAdjust="spacing" fill="#8b949e">start</text>
+<text x="609.2" y="449" textLength="48" lengthAdjust="spacing" fill="#939ca5">start</text>
 <text x="676.4" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">r</text>
-<text x="695.6" y="449" textLength="67.2" lengthAdjust="spacing" fill="#8b949e">restart</text>
+<text x="695.6" y="449" textLength="67.2" lengthAdjust="spacing" fill="#939ca5">restart</text>
 <text x="782" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">d</text>
-<text x="801.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">remove</text>
+<text x="801.2" y="449" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">remove</text>
 <text x="878" y="449" textLength="9.6" lengthAdjust="spacing" fill="#58a6ff" font-weight="700">o</text>
-<text x="897.2" y="449" textLength="38.4" lengthAdjust="spacing" fill="#8b949e">sort</text>
+<text x="897.2" y="449" textLength="38.4" lengthAdjust="spacing" fill="#939ca5">sort</text>
 <text x="23.6" y="489" textLength="76.8" lengthAdjust="spacing" fill="#0d1117" font-weight="700">DEGRADED</text>
 <text x="119.6" y="489" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">10</text>
 <text x="148.4" y="489" textLength="19.2" lengthAdjust="spacing" fill="#e6edf3">up</text>
@@ -170,9 +170,9 @@
 <text x="215.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3">exited</text>
 <text x="494" y="489" textLength="96" lengthAdjust="spacing" fill="#e6edf3">Restarting</text>
 <text x="599.6" y="489" textLength="105.6" lengthAdjust="spacing" fill="#e6edf3">api-gateway</text>
-<text x="724.4" y="489" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">docker</text>
-<text x="791.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">27.1.1</text>
-<text x="858.8" y="489" textLength="9.6" lengthAdjust="spacing" fill="#8b949e">·</text>
-<text x="878" y="489" textLength="86.4" lengthAdjust="spacing" fill="#8b949e">simulated</text>
+<text x="724.4" y="489" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">docker</text>
+<text x="791.6" y="489" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">27.1.1</text>
+<text x="858.8" y="489" textLength="9.6" lengthAdjust="spacing" fill="#939ca5">·</text>
+<text x="878" y="489" textLength="86.4" lengthAdjust="spacing" fill="#939ca5">simulated</text>
 </g>
 </svg>

@@ -9,15 +9,15 @@
 <text x="110" y="49" textLength="67.2" lengthAdjust="spacing" fill="#59636e">content</text>
 <text x="186.8" y="49" textLength="38.4" lengthAdjust="spacing" fill="#59636e">goes</text>
 <text x="234.8" y="49" textLength="48" lengthAdjust="spacing" fill="#59636e">here.</text>
-<text x="23.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">n</text>
+<text x="23.6" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0967d5" font-weight="700">n</text>
 <text x="42.8" y="129" textLength="28.8" lengthAdjust="spacing" fill="#59636e">new</text>
-<text x="90.8" y="129" textLength="48" lengthAdjust="spacing" fill="#0969da" font-weight="700">enter</text>
+<text x="90.8" y="129" textLength="48" lengthAdjust="spacing" fill="#0967d5" font-weight="700">enter</text>
 <text x="148.4" y="129" textLength="38.4" lengthAdjust="spacing" fill="#59636e">open</text>
-<text x="206" y="129" textLength="28.8" lengthAdjust="spacing" fill="#0969da" font-weight="700">j/k</text>
+<text x="206" y="129" textLength="28.8" lengthAdjust="spacing" fill="#0967d5" font-weight="700">j/k</text>
 <text x="244.4" y="129" textLength="38.4" lengthAdjust="spacing" fill="#59636e">move</text>
-<text x="302" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">/</text>
+<text x="302" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0967d5" font-weight="700">/</text>
 <text x="321.2" y="129" textLength="57.6" lengthAdjust="spacing" fill="#59636e">search</text>
-<text x="398" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">q</text>
+<text x="398" y="129" textLength="9.6" lengthAdjust="spacing" fill="#0967d5" font-weight="700">q</text>
 <text x="417.2" y="129" textLength="38.4" lengthAdjust="spacing" fill="#59636e">quit</text>
 </g>
 </svg>

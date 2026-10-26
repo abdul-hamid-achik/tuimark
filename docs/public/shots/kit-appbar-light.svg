@@ -2,12 +2,12 @@
 <title>an app bar: the product mark and name, the page title, the signed-in user and an environment badge on one row</title>
 <rect width="719.2" height="108" rx="6" fill="#ffffff"/>
 <path fill="#eef1f4" d="M14 14h624v20h-624zM695.6 14h9.6v20h-9.6z"/>
-<path fill="#1a7f37" d="M638 14h57.6v20h-57.6z"/>
+<path fill="#197a35" d="M638 14h57.6v20h-57.6z"/>
 <g fill="none" stroke-linecap="square" stroke-linejoin="miter">
 </g>
 <g font-family="'JetBrains Mono','SF Mono',SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Noto Sans Mono',monospace" font-size="16" xml:space="preserve">
-<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#0969da" font-weight="700">◆</text>
-<text x="42.8" y="29" textLength="48" lengthAdjust="spacing" fill="#0969da" font-weight="700">orbit</text>
+<text x="23.6" y="29" textLength="9.6" lengthAdjust="spacing" fill="#0967d5" font-weight="700">◆</text>
+<text x="42.8" y="29" textLength="48" lengthAdjust="spacing" fill="#0967d5" font-weight="700">orbit</text>
 <text x="110" y="29" textLength="105.6" lengthAdjust="spacing" fill="#1f2328" font-weight="700">Deployments</text>
 <text x="474.8" y="29" textLength="144" lengthAdjust="spacing" fill="#59636e">ada@example.com</text>
 <text x="647.6" y="29" textLength="38.4" lengthAdjust="spacing" fill="#ffffff" font-weight="700">prod</text>

@@ -11,8 +11,8 @@
 <text x="71.6" y="49" textLength="9.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">/</text>
 <text x="90.8" y="49" textLength="28.8" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">KPI</text>
 <text x="129.2" y="49" textLength="38.4" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">card</text>
-<text x="52.4" y="89" textLength="76.8" lengthAdjust="spacing" fill="#8b949e">Requests</text>
-<text x="388.4" y="89" textLength="57.6" lengthAdjust="spacing" fill="#8b949e">Errors</text>
+<text x="52.4" y="89" textLength="76.8" lengthAdjust="spacing" fill="#939ca5">Requests</text>
+<text x="388.4" y="89" textLength="57.6" lengthAdjust="spacing" fill="#939ca5">Errors</text>
 <text x="42.8" y="109" textLength="57.6" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">128.4k</text>
 <text x="378.8" y="109" textLength="48" lengthAdjust="spacing" fill="#e6edf3" font-weight="700">0.31%</text>
 <text x="42.8" y="129" textLength="9.6" lengthAdjust="spacing" fill="#3fb950">▲</text>
