@@ -71,9 +71,18 @@ func IDColor(id int32) css.Color {
 // placeholder cell one column on is the same row, the next column. Cells
 // past kitty's table (MaxPlaceholderCells rows or columns) are not
 // painted. The frame's Imgs side table records the image once for Run's
-// one-time transmission.
+// one-time transmission, and only when the frame writes one of its cells:
+// an image whose content box is clipped away (only its border or padding
+// in view) or whose visible part lies past the table is not transmitted,
+// and one the terminal holds is freed until a frame shows it again.
 func (p *painter) imgPlaceholders(b *layout.Box, clip layout.Rect, st cellStyle) {
 	c := b.Content
+	vis := p.visible(c, clip)
+	bottom := min(vis.Y+vis.H, c.Y+MaxPlaceholderCells)
+	right := min(vis.X+vis.W, c.X+MaxPlaceholderCells)
+	if vis.Y >= bottom || vis.X >= right {
+		return
+	}
 	id := KittyID(b.ImgSrc, c.W, c.H)
 	fg := IDColor(id)
 	known := false
@@ -86,10 +95,9 @@ func (p *painter) imgPlaceholders(b *layout.Box, clip layout.Rect, st cellStyle)
 	if !known {
 		p.g.Imgs = append(p.g.Imgs, GridImage{ID: id, Src: b.ImgSrc, W: c.W, H: c.H})
 	}
-	vis := p.visible(c, clip)
-	for y := vis.Y; y < vis.Y+vis.H && y-c.Y < MaxPlaceholderCells; y++ {
+	for y := vis.Y; y < bottom; y++ {
 		row := y - c.Y
-		for x := vis.X; x < vis.X+vis.W && x-c.X < MaxPlaceholderCells; x++ {
+		for x := vis.X; x < right; x++ {
 			s := st
 			s.fg = fg
 			ext := ""

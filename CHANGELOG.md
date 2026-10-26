@@ -7,6 +7,20 @@ line.
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-10-25
+
+One photo-mode fix. No language change.
+
+### Fixed
+
+- In photo mode, an `<img>` enters the frame's image table, and so is
+  transmitted to the terminal, only when the frame writes one of its
+  placeholder cells. An image of which only the border or padding was in
+  view, or whose visible rows or columns lay past kitty's table (cell 297
+  on), was transmitted although none of it showed. An image the terminal
+  holds is freed while no frame shows it and transmitted again when one
+  does.
+
 ## [0.5.3] - 2026-10-25
 
 One file-reading fix. No language change.
@@ -1259,7 +1273,8 @@ published as a release.
 - **Tests.** Conformance tests, golden dumps, and end-to-end terminal specs
   run with [Glyphrun](https://github.com/abdul-hamid-achik/glyphrun).
 
-[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/abdul-hamid-achik/tuimark/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.4
 [0.5.3]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.3
 [0.5.2]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.2
 [0.5.1]: https://github.com/abdul-hamid-achik/tuimark/releases/tag/v0.5.1

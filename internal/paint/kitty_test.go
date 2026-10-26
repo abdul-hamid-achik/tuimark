@@ -166,6 +166,41 @@ func TestImgPlaceholdersStopAtTheTable(t *testing.T) {
 	}
 }
 
+// A photo-mode image enters the frame's Imgs only when the frame writes
+// one of its cells, so Run transmits only what is shown: not an image of
+// which only the border is in view, nor one whose visible rows lie past
+// kitty's table.
+func TestImgPlaceholdersRegisterOnlyWhatTheyPaint(t *testing.T) {
+	mk := func(decls string) *layout.Box {
+		b := bx("img", decls)
+		b.Img, b.ImgW, b.ImgH = halfImg(6, 6, color.RGBA{R: 255, A: 255}, color.RGBA{B: 255, A: 255}), 6, 6
+		b.ImgSrc, b.ImgPhoto = "img.png", true
+		return b
+	}
+	framed := mk("width: 3; height: 3; border: single")
+	s := bx("scroll#s", "width: 3; height: 1", framed)
+	s.Axis = "y"
+	g := render(t, bx("col", "", s), 3, 1)
+	if framed.Content.W <= 0 || framed.Content.H <= 0 || framed.Clip.W <= 0 || framed.Clip.H <= 0 || framed.Content.Intersect(framed.Clip).H > 0 {
+		t.Fatalf("setup: want the border in view and the content clipped, got clip %+v content %+v", framed.Clip, framed.Content)
+	}
+	if len(g.Imgs) != 0 {
+		t.Errorf("border only in view: Imgs = %+v, want none\n%s", g.Imgs, lines(g))
+	}
+	for _, tc := range []struct {
+		scroll int
+		want   int
+	}{{MaxPlaceholderCells - 3, 1}, {MaxPlaceholderCells, 0}} {
+		tall := mk("width: 1; height: 300")
+		s := bx("scroll#s", "width: 1; height: 3", tall)
+		s.Axis, s.ScrollY = "y", tc.scroll
+		g := render(t, bx("col", "", s), 1, 3)
+		if len(g.Imgs) != tc.want {
+			t.Errorf("rows %d to %d in view: Imgs = %+v, want %d entries", tc.scroll, tc.scroll+2, g.Imgs, tc.want)
+		}
+	}
+}
+
 // KittyID is stable, never 0, always under 2^24 (it rides a truecolor
 // foreground), and a new size class is a new id.
 func TestKittyID(t *testing.T) {
